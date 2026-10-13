@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { stringAdapter, type RendererComponentProps } from '@nop-chaos/flux-core';
-import { useInputComponentHandle } from '@nop-chaos/flux-react';
+import { resolveFieldFrameErrorRefs } from '@nop-chaos/flux-react';
+import { useStandardFieldHandle } from '../use-standard-field-handle.js';
 import { t } from '@nop-chaos/flux-i18n';
 import { Button, cn, Textarea, useIsMobile } from '@nop-chaos/ui';
 import { XIcon } from 'lucide-react';
@@ -39,24 +40,23 @@ export function TextareaRenderer(props: RendererComponentProps<TextareaSchema>) 
   // FieldFrame injects the instance-unique error/hint/description reference
   // list (its error element id is cid-suffixed, not `${name}-error`). Prefer
   // the injected chain; the local fallback only covers bare harnesses.
-  const injected = props as unknown as { 'aria-describedby'?: string; 'aria-errormessage'?: string };
-  const describedBy = injected['aria-describedby'] ?? (presentation.showError ? errorId : undefined);
-  const errorMessageId = presentation.showError
-    ? (injected['aria-errormessage'] ?? errorId)
-    : undefined;
+  const { describedBy, errorMessageId } = resolveFieldFrameErrorRefs(props, {
+    errorId,
+    showError: presentation.showError,
+  });
 
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const initialValueRef = useRef<string>(textareaValue);
 
-  useInputComponentHandle({
+  useStandardFieldHandle({
     id: props.id,
     name,
     type: 'textarea',
     cid: props.meta.cid,
     methods: TEXTAREA_METHODS,
     getFocusTarget: () => textareaRef.current,
-    isInteractive: () => presentation.interactive,
-    isVisible: () => props.meta.visible !== false,
+    interactive: presentation.interactive,
+    visible: props.meta.visible !== false,
     clearValue: () => handlers.onChange(''),
     resetValue: () => {
       handlers.onChange(initialValueRef.current);

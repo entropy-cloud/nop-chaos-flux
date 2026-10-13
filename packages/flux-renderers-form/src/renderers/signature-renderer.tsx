@@ -1,6 +1,6 @@
 import { startTransition, useCallback, useEffect, useId, useRef, useState } from 'react';
 import { stringAdapter, type RendererComponentProps } from '@nop-chaos/flux-core';
-import { useInputComponentHandle } from '@nop-chaos/flux-react';
+import { useStandardFieldHandle } from '../use-standard-field-handle.js';
 import { Button, cn } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
 import { useFormFieldFromProps } from '../field-utils.js';
@@ -265,15 +265,15 @@ export function InputSignatureRenderer(props: RendererComponentProps<InputSignat
     commit();
   };
 
-  useInputComponentHandle({
+  useStandardFieldHandle({
     id: props.id,
     name,
     type: 'input-signature',
     cid: props.meta.cid,
     methods: SIGNATURE_METHODS,
     getFocusTarget: () => canvasRef.current ?? wrapperRef.current,
-    isInteractive: () => presentation.interactive,
-    isVisible: () => props.meta.visible !== false,
+    interactive: presentation.interactive,
+    visible: props.meta.visible !== false,
     clearValue: () => {
       strokesRef.current = [];
       redraw();

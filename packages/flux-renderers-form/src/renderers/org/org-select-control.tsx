@@ -1,6 +1,7 @@
 import { useMemo, useRef, useState } from 'react';
 import { type RendererComponentProps } from '@nop-chaos/flux-core';
-import { useInputComponentHandle } from '@nop-chaos/flux-react';
+import { useStandardFieldHandle } from '../../use-standard-field-handle.js';
+import { queryFocusTarget } from '../focus-target.js';
 import { cn } from '@nop-chaos/ui';
 import { choiceSingleAdapter, checkboxGroupAdapter } from '../input-choice-renderers.js';
 import { useFormFieldFromProps } from '../../field-utils.js';
@@ -57,16 +58,16 @@ export function OrgSelectRendererControl(input: {
   });
 
   const rootRef = useRef<HTMLDivElement | null>(null);
-  useInputComponentHandle({
+  useStandardFieldHandle({
     id: props.id,
     name,
     type: rendererType,
     cid: props.meta.cid,
     methods: ORG_SELECT_METHODS,
     getFocusTarget: () =>
-      rootRef.current?.querySelector<HTMLElement>('[data-slot="org-select-trigger"]') ?? rootRef.current,
-    isInteractive: () => presentation.interactive,
-    isVisible: () => props.meta.visible !== false,
+      queryFocusTarget(rootRef.current, '[data-slot="org-select-trigger"]'),
+    interactive: presentation.interactive,
+    visible: props.meta.visible !== false,
     clearValue: () => handlers.onChange(undefined),
     resetValue: () => {
       handlers.onChange(value);

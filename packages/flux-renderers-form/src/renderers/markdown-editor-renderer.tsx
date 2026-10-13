@@ -20,7 +20,8 @@ import {
   type RendererDefinition,
   type SchemaFieldRule,
 } from '@nop-chaos/flux-core';
-import { useInputComponentHandle } from '@nop-chaos/flux-react';
+import { resolveFieldFrameErrorRefs } from '@nop-chaos/flux-react';
+import { useStandardFieldHandle } from '../use-standard-field-handle.js';
 import { useFluxTranslation } from '@nop-chaos/flux-i18n';
 import { Button, cn, Textarea, useIsMobile } from '@nop-chaos/ui';
 import { formFieldRules, useFormFieldFromProps } from '../field-utils.js';
@@ -168,8 +169,10 @@ export function MarkdownEditorRenderer(props: RendererComponentProps<MarkdownEdi
   // FieldFrame injects the instance-unique error reference chain (its error
   // element id is cid-suffixed, not `${name}-error`); local id is the bare
   // harness fallback.
-  const injected = props as unknown as { 'aria-describedby'?: string };
-  const describedBy = injected['aria-describedby'] ?? (presentation.showError ? errorId : undefined);
+  const { describedBy } = resolveFieldFrameErrorRefs(props, {
+    errorId,
+    showError: presentation.showError,
+  });
 
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const pendingSelectionRef = useRef<{ start: number; end: number } | null>(null);
@@ -183,15 +186,15 @@ export function MarkdownEditorRenderer(props: RendererComponentProps<MarkdownEdi
   const showToolbar = props.props.toolbar !== false;
   const interactive = presentation.interactive;
 
-  useInputComponentHandle({
+  useStandardFieldHandle({
     id: props.id,
     name,
     type: 'markdown-editor',
     cid: props.meta.cid,
     methods: MARKDOWN_EDITOR_METHODS,
     getFocusTarget: () => textareaRef.current,
-    isInteractive: () => presentation.interactive,
-    isVisible: () => props.meta.visible !== false,
+    interactive: presentation.interactive,
+    visible: props.meta.visible !== false,
     clearValue: () => handlers.onChange(''),
   });
 

@@ -1,7 +1,8 @@
 import { useRef } from 'react';
 import { XIcon } from 'lucide-react';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
-import { useInputComponentHandle } from '@nop-chaos/flux-react';
+import { resolveFieldFrameErrorRefs } from '@nop-chaos/flux-react';
+import { useStandardFieldHandle } from '../use-standard-field-handle.js';
 import { t } from '@nop-chaos/flux-i18n';
 import { Button, Input, NativeSelect, NativeSelectOption, cn } from '@nop-chaos/ui';
 import { useFormFieldFromProps } from '../field-utils.js';
@@ -93,8 +94,10 @@ export function PeriodRenderer(
   // FieldFrame injects the instance-unique error reference chain (its error
   // element id is cid-suffixed, not `${name}-error`); local id is the bare
   // harness fallback.
-  const injected = props as unknown as { 'aria-describedby'?: string };
-  const describedBy = injected['aria-describedby'] ?? (presentation.showError ? errorId : undefined);
+  const { describedBy } = resolveFieldFrameErrorRefs(props, {
+    errorId,
+    showError: presentation.showError,
+  });
   const triggerRef = useRef<HTMLElement | null>(null);
 
   const minPeriod = parsePeriod(
@@ -108,15 +111,15 @@ export function PeriodRenderer(
     valueFormat,
   );
 
-  useInputComponentHandle({
+  useStandardFieldHandle({
     id: props.id,
     name,
     type: periodFieldType(kind),
     cid: props.meta.cid,
     methods: PERIOD_METHODS,
     getFocusTarget: () => triggerRef.current,
-    isInteractive: () => presentation.interactive,
-    isVisible: () => props.meta.visible !== false,
+    interactive: presentation.interactive,
+    visible: props.meta.visible !== false,
     clearValue: () => handlers.onChange(undefined),
   });
 

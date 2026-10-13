@@ -1,6 +1,7 @@
 import { useRef } from 'react';
 import { numberAdapter, type RendererComponentProps } from '@nop-chaos/flux-core';
-import { useInputComponentHandle } from '@nop-chaos/flux-react';
+import { useStandardFieldHandle } from '../use-standard-field-handle.js';
+import { queryFocusTarget } from './focus-target.js';
 import { t } from '@nop-chaos/flux-i18n';
 import { Rating, cn } from '@nop-chaos/ui';
 import { useFormFieldFromProps } from '../field-utils.js';
@@ -21,15 +22,15 @@ export function RatingRenderer(props: RendererComponentProps<RatingSchema>) {
   const numericValue = typeof value === 'number' ? value : undefined;
   const rootRef = useRef<HTMLDivElement | null>(null);
 
-  useInputComponentHandle({
+  useStandardFieldHandle({
     id: props.id,
     name,
     type: 'rating',
     cid: props.meta.cid,
     methods: RATING_METHODS,
-    getFocusTarget: () => rootRef.current?.querySelector<HTMLElement>('[data-slot="rating-star"]') ?? rootRef.current,
-    isInteractive: () => presentation.interactive,
-    isVisible: () => props.meta.visible !== false,
+    getFocusTarget: () => queryFocusTarget(rootRef.current, '[data-slot="rating-star"]'),
+    interactive: presentation.interactive,
+    visible: props.meta.visible !== false,
     clearValue: () => handlers.onChange(undefined),
     resetValue: () => {
       handlers.onChange(numericValue);

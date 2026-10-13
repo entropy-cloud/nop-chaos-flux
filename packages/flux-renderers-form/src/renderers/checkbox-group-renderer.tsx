@@ -1,6 +1,7 @@
 import { useMemo, useRef, useState } from 'react';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
-import { useInputComponentHandle, type SourceTransientState } from '@nop-chaos/flux-react';
+import { type SourceTransientState } from '@nop-chaos/flux-react';
+import { useStandardFieldHandle } from '../use-standard-field-handle.js';
 import { t } from '@nop-chaos/flux-i18n';
 import { Checkbox, cn, Label, Spinner, useIsMobile } from '@nop-chaos/ui';
 import { useFormFieldFromProps } from '../field-utils.js';
@@ -12,6 +13,7 @@ import {
   getSourceErrorMessage,
   sanitizeChoiceOptions,
 } from './input-choice-renderers.js';
+import { resolveSourceErrorRefs } from './source-error-refs.js';
 import { shouldStackChoicesVertically } from './mobile-touch-utils.js';
 
 // plan 549 (IS-component-handles-001): clear was a dead control — the handle
@@ -34,12 +36,14 @@ export function CheckboxGroupRenderer(props: RendererComponentProps<CheckboxGrou
   const errorMessage = getSourceErrorMessage(optionsSourceState);
   // cid-qualified so same-name instances (combo rows) don't collide; the id
   // and its aria reference derive from the same variable, so they stay paired.
-  const instanceKey = props.meta.cid != null ? `${name}-${props.meta.cid}` : name;
-  const errorId = name ? `${instanceKey}-source-error` : undefined;
+  const sourceError = resolveSourceErrorRefs({
+    instanceKey: props.meta.cid != null ? `${name}-${props.meta.cid}` : name,
+    errorMessage,
+  });
   const groupLabel = String((props.props.label ?? name) || '') || undefined;
   const wrapperRef = useRef<HTMLDivElement | null>(null);
 
-  useInputComponentHandle({
+  useStandardFieldHandle({
     id: props.id,
     name,
     type: 'checkbox-group',
@@ -47,8 +51,8 @@ export function CheckboxGroupRenderer(props: RendererComponentProps<CheckboxGrou
     methods: CHECKBOX_GROUP_METHODS,
     getFocusTarget: () =>
       wrapperRef.current?.querySelector<HTMLElement>('button, [role="checkbox"], input') ?? null,
-    isInteractive: () => presentation.interactive,
-    isVisible: () => props.meta.visible !== false,
+    interactive: presentation.interactive,
+    visible: props.meta.visible !== false,
     clearValue: () => commit([]),
   });
 
@@ -160,7 +164,7 @@ export function CheckboxGroupRenderer(props: RendererComponentProps<CheckboxGrou
       aria-label={groupLabel}
       aria-required={props.props.required ? true : undefined}
       aria-readonly={presentation.readOnly ? true : undefined}
-      aria-describedby={errorMessage ? errorId : undefined}
+      aria-describedby={sourceError.describedby}
     >
       {loading ? (
         <span data-slot="checkbox-group-loading" role="status" aria-live="polite">
@@ -206,8 +210,8 @@ export function CheckboxGroupRenderer(props: RendererComponentProps<CheckboxGrou
               disabled={effectiveOptionDisabled}
               aria-invalid={presentation.showError ? true : undefined}
               aria-label={option.label}
-              aria-describedby={errorMessage ? errorId : undefined}
-              aria-errormessage={errorMessage ? errorId : undefined}
+              aria-describedby={sourceError.describedby}
+              aria-errormessage={sourceError.errormessage}
               onFocus={handlers.onFocus}
               onCheckedChange={(nextChecked) => {
                 if (optionDisabled) {
@@ -229,8 +233,8 @@ export function CheckboxGroupRenderer(props: RendererComponentProps<CheckboxGrou
           {activeLimitHint}
         </span>
       ) : null}
-      {errorMessage ? (
-        <span id={errorId} data-slot="checkbox-group-error" role="alert">
+      {sourceError.spanProps ? (
+        <span {...sourceError.spanProps} data-slot="checkbox-group-error">
           {errorMessage}
         </span>
       ) : null}

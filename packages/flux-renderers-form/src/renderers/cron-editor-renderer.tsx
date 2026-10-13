@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
 import { type RendererComponentProps } from '@nop-chaos/flux-core';
-import { useInputComponentHandle } from '@nop-chaos/flux-react';
+import { useStandardFieldHandle } from '../use-standard-field-handle.js';
 import { Button, Input, cn } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
 import { builtinPresets, deriveFrequency, fireSequence, validateCronScheduleValue, type CronScheduleValue, type CronFrequency, type ValueDiagnosticCode } from '../cron/index.js';
@@ -107,7 +107,7 @@ export function CronEditorRenderer(props: RendererComponentProps<CronEditorSchem
       ? fireSequence(boundValue, PREVIEW_CURSOR.nowMs, previewCount, PREVIEW_CURSOR.offsetMinutes)
       : null;
 
-  useInputComponentHandle({
+  useStandardFieldHandle({
     id: props.id,
     name,
     type: 'cron-editor',
@@ -115,8 +115,8 @@ export function CronEditorRenderer(props: RendererComponentProps<CronEditorSchem
     methods: ['clear', 'reset', 'focus'] as const,
     getFocusTarget: () =>
       (activeMode === 'text' ? textInputRef.current : firstSegmentRef.current) ?? rootRef.current,
-    isInteractive: () => presentation.interactive,
-    isVisible: () => props.meta.visible !== false,
+    interactive: presentation.interactive,
+    visible: props.meta.visible !== false,
     clearValue: () => handlers.onChange(undefined),
     resetValue: () => {
       handlers.onChange(boundValue);

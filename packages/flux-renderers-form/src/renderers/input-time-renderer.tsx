@@ -1,12 +1,14 @@
 import { useRef } from 'react';
 import type { ChangeEvent } from 'react';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
-import { useInputComponentHandle } from '@nop-chaos/flux-react';
+import { resolveFieldFrameErrorRefs } from '@nop-chaos/flux-react';
+import { useStandardFieldHandle } from '../use-standard-field-handle.js';
 import { t } from '@nop-chaos/flux-i18n';
 import { Button, Input, cn } from '@nop-chaos/ui';
 import { XIcon } from 'lucide-react';
 import { useFormFieldFromProps } from '../field-utils.js';
 import type { InputTimeSchema } from '../schemas.js';
+import { clampIntoWindow } from './date/date-clamp.js';
 import {
   DEFAULT_TIME_FORMAT,
   DEFAULT_TIME_SECONDS_FORMAT,
@@ -57,11 +59,10 @@ export function InputTimeRenderer(props: RendererComponentProps<InputTimeSchema>
   // FieldFrame injects the instance-unique error reference chain (its error
   // element id is cid-suffixed, not `${name}-error`); local id is the bare
   // harness fallback.
-  const injected = props as unknown as { 'aria-describedby'?: string; 'aria-errormessage'?: string };
-  const describedBy = injected['aria-describedby'] ?? (presentation.showError ? errorId : undefined);
-  const errorMessageId = presentation.showError
-    ? (injected['aria-errormessage'] ?? errorId)
-    : undefined;
+  const { describedBy, errorMessageId } = resolveFieldFrameErrorRefs(props, {
+    errorId,
+    showError: presentation.showError,
+  });
   const inputRef = useRef<HTMLInputElement | null>(null);
 
   const timeInputFormat = resolveTimeInputFormat([valueFormat, displayFormat]);
@@ -78,33 +79,20 @@ export function InputTimeRenderer(props: RendererComponentProps<InputTimeSchema>
     valueFormat,
   );
 
-  useInputComponentHandle({
+  useStandardFieldHandle({
     id: props.id,
     name,
     type: 'input-time',
     cid: props.meta.cid,
     methods: INPUT_TIME_METHODS,
     getFocusTarget: () => inputRef.current,
-    isInteractive: () => presentation.interactive,
-    isVisible: () => props.meta.visible !== false,
+    interactive: presentation.interactive,
+    visible: props.meta.visible !== false,
     clearValue: () => handlers.onChange(undefined),
   });
 
-  function clampIntoWindow(date: Date): Date {
-    if (isWithinRange(date, minDate, maxDate)) {
-      return date;
-    }
-    if (minDate && date.getTime() < minDate.getTime()) {
-      return new Date(minDate);
-    }
-    if (maxDate) {
-      return new Date(maxDate);
-    }
-    return date;
-  }
-
   function commitDate(date: Date) {
-    handlers.onChange(formatDate(clampIntoWindow(date), valueFormat));
+    handlers.onChange(formatDate(clampIntoWindow(date, minDate, maxDate), valueFormat));
   }
 
   function handleChange(event: ChangeEvent<HTMLInputElement>) {

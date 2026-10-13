@@ -1,7 +1,7 @@
 import { useRef } from 'react';
 import { type RendererComponentProps } from '@nop-chaos/flux-core';
 import type { SourceTransientState } from '@nop-chaos/flux-react';
-import { useInputComponentHandle } from '@nop-chaos/flux-react';
+import { useStandardFieldHandle } from '../use-standard-field-handle.js';
 import { useDictOptions } from './use-dict-options.js';
 import { t } from '@nop-chaos/flux-i18n';
 import { Button, ButtonGroup, Spinner, cn } from '@nop-chaos/ui';
@@ -15,6 +15,7 @@ import {
   getSourceErrorMessage,
   sanitizeChoiceOptions,
 } from './input-choice-renderers.js';
+import { resolveSourceErrorRefs } from './source-error-refs.js';
 
 const FOCUS_ONLY_METHODS = ['focus'] as const;
 
@@ -46,11 +47,13 @@ export function ButtonGroupSelectRenderer(
   const errorMessage = dictState.errorMessage ?? getSourceErrorMessage(optionsSourceState);
   // cid-qualified so same-name instances (combo rows) don't collide; the id
   // and its aria reference derive from the same variable, so they stay paired.
-  const instanceKey = props.meta.cid != null ? `${name}-${props.meta.cid}` : name;
-  const errorId = errorMessage && name ? `${instanceKey}-source-error` : undefined;
+  const sourceError = resolveSourceErrorRefs({
+    instanceKey: props.meta.cid != null ? `${name}-${props.meta.cid}` : name,
+    errorMessage,
+  });
   const groupRef = useRef<HTMLDivElement | null>(null);
 
-  useInputComponentHandle({
+  useStandardFieldHandle({
     id: props.id,
     name,
     type: 'button-group-select',
@@ -59,8 +62,8 @@ export function ButtonGroupSelectRenderer(
     getFocusTarget: () =>
       groupRef.current?.querySelector<HTMLElement>('button[data-slot="button-group-select-item"]') ??
       null,
-    isInteractive: () => presentation.interactive,
-    isVisible: () => props.meta.visible !== false,
+    interactive: presentation.interactive,
+    visible: props.meta.visible !== false,
   });
 
   const isSelected = (optionValue: ChoiceOption['value']): boolean => {
@@ -125,8 +128,8 @@ export function ButtonGroupSelectRenderer(
           );
         })}
       </ButtonGroup>
-      {errorMessage ? (
-        <span id={errorId} data-slot="button-group-select-error" role="alert">
+      {sourceError.spanProps ? (
+        <span {...sourceError.spanProps} data-slot="button-group-select-error">
           {errorMessage}
         </span>
       ) : null}

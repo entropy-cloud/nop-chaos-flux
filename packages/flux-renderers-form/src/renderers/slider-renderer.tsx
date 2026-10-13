@@ -1,6 +1,7 @@
 import { useRef } from 'react';
 import { numberAdapter, type RendererComponentProps } from '@nop-chaos/flux-core';
-import { useInputComponentHandle } from '@nop-chaos/flux-react';
+import { useStandardFieldHandle } from '../use-standard-field-handle.js';
+import { queryFocusTarget } from './focus-target.js';
 import { Slider, cn } from '@nop-chaos/ui';
 import { useFormFieldFromProps } from '../field-utils.js';
 import type { SliderSchema } from '../schemas.js';
@@ -20,16 +21,16 @@ export function SliderRenderer(props: RendererComponentProps<SliderSchema>) {
   const numericValue = typeof value === 'number' ? value : undefined;
   const rootRef = useRef<HTMLDivElement | null>(null);
 
-  useInputComponentHandle({
+  useStandardFieldHandle({
     id: props.id,
     name,
     type: 'slider',
     cid: props.meta.cid,
     methods: SLIDER_METHODS,
     getFocusTarget: () =>
-      rootRef.current?.querySelector<HTMLElement>('[data-slot="slider-thumb"]') ?? rootRef.current,
-    isInteractive: () => presentation.interactive,
-    isVisible: () => props.meta.visible !== false,
+      queryFocusTarget(rootRef.current, '[data-slot="slider-thumb"]'),
+    interactive: presentation.interactive,
+    visible: props.meta.visible !== false,
     clearValue: () => handlers.onChange(undefined),
     resetValue: () => {
       handlers.onChange(numericValue);

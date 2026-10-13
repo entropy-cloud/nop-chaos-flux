@@ -6,6 +6,7 @@ import type {
   RendererDefinition,
   ValidationRule,
 } from '@nop-chaos/flux-core';
+import { writeFieldValue } from './write-field-value.js';
 import { getIn } from '@nop-chaos/flux-core';
 import {
   useCurrentForm,
@@ -20,7 +21,6 @@ import type { TransferSchema } from './composite-field/composite-schemas.js';
 import { normalizeOptions, type NormalizedOption } from './option-normalize.js';
 import {
   formFieldRules,
-  shouldValidateOn,
   useFieldPresentation,
 } from '@nop-chaos/flux-renderers-form';
 import { useCurrentValidationScope } from '@nop-chaos/flux-react';
@@ -167,9 +167,7 @@ export function TransferRenderer(props: RendererComponentProps<TransferSchema>) 
           currentForm.touchField(name);
         }
         currentForm.setValue(name, next);
-        if (shouldValidateOn(name, currentForm, 'change')) {
-          void currentForm.validateField(name, 'change');
-        }
+        writeFieldValue(currentForm, name, name, 'change');
         return;
       }
       scope.update(name, next);

@@ -6,6 +6,7 @@ import type {
   RuntimeFieldRegistration,
   ValidationRule,
 } from '@nop-chaos/flux-core';
+import { writeFieldValue } from './write-field-value.js';
 import { getIn } from '@nop-chaos/flux-core';
 import {
   useCompositeFieldHandle,
@@ -19,7 +20,6 @@ import { PlusIcon } from 'lucide-react';
 import {
   formFieldRules,
   getFieldValidationBehavior,
-  shouldValidateOn,
   useFormFieldFromProps,
 } from '@nop-chaos/flux-renderers-form';
 import type { KeyValuePair, KeyValueSchema } from '@nop-chaos/flux-renderers-form';
@@ -140,9 +140,7 @@ export function KeyValueRenderer(props: RendererComponentProps<KeyValueSchema>) 
 
       currentForm.setValue(name, nextPairs);
 
-      if (shouldValidateOn(name, currentForm, 'change')) {
-        void currentForm.validateField(name, 'change');
-      }
+      writeFieldValue(currentForm, name, name, 'change');
     },
     [currentForm, name, scope],
   );
@@ -207,9 +205,7 @@ export function KeyValueRenderer(props: RendererComponentProps<KeyValueSchema>) 
 
       if (currentForm && name) {
         currentForm.moveValue(name, index, to);
-        if (shouldValidateOn(name, currentForm, 'change')) {
-          void currentForm.validateField(name, 'change');
-        }
+        writeFieldValue(currentForm, name, name, 'change');
         return;
       }
 
@@ -259,9 +255,7 @@ export function KeyValueRenderer(props: RendererComponentProps<KeyValueSchema>) 
       compatAppend();
       if (currentForm && name) {
         currentForm.appendValue(name, nextEntry);
-        if (shouldValidateOn(name, currentForm, 'change')) {
-          void currentForm.validateField(name, 'change');
-        }
+        writeFieldValue(currentForm, name, name, 'change');
       } else {
         syncField(nextPairs);
       }
@@ -305,9 +299,7 @@ export function KeyValueRenderer(props: RendererComponentProps<KeyValueSchema>) 
       compatMove(from, to);
       if (currentForm && name) {
         currentForm.moveValue(name, from, to);
-        if (shouldValidateOn(name, currentForm, 'change')) {
-          void currentForm.validateField(name, 'change');
-        }
+        writeFieldValue(currentForm, name, name, 'change');
       } else {
         syncField(nextPairs);
       }
@@ -426,9 +418,7 @@ export function KeyValueRenderer(props: RendererComponentProps<KeyValueSchema>) 
 
           if (currentForm && name) {
             currentForm.appendValue(name, nextEntry);
-            if (shouldValidateOn(name, currentForm, 'change')) {
-              void currentForm.validateField(name, 'change');
-            }
+            writeFieldValue(currentForm, name, name, 'change');
             return;
           }
 

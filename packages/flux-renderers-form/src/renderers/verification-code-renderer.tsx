@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { stringAdapter, type RendererComponentProps } from '@nop-chaos/flux-core';
-import { useInputComponentHandle } from '@nop-chaos/flux-react';
+import { useStandardFieldHandle } from '../use-standard-field-handle.js';
+import { queryFocusTarget } from './focus-target.js';
 import { InputOTP, InputOTPGroup, InputOTPSlot, cn } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
 import { useFormFieldFromProps } from '../field-utils.js';
@@ -54,16 +55,16 @@ export function VerificationCodeRenderer(props: RendererComponentProps<Verificat
     handlers.onChange(next.length === length ? next : undefined);
   };
 
-  useInputComponentHandle({
+  useStandardFieldHandle({
     id: props.id,
     name,
     type: 'verification-code',
     cid: props.meta.cid,
     methods: VERIFICATION_METHODS,
     getFocusTarget: () =>
-      rootRef.current?.querySelector<HTMLElement>('[data-slot="input-otp"]') ?? rootRef.current,
-    isInteractive: () => presentation.interactive,
-    isVisible: () => props.meta.visible !== false,
+      queryFocusTarget(rootRef.current, '[data-slot="input-otp"]'),
+    interactive: presentation.interactive,
+    visible: props.meta.visible !== false,
     clearValue: () => handlers.onChange(undefined),
     resetValue: () => {
       handlers.onChange(value);

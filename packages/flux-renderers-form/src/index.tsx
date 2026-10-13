@@ -36,4 +36,5 @@ export {
   MarkdownEditorRenderer,
   markdownEditorFieldRules,
 } from './renderers/markdown-editor-renderer.js';
+export { resolveSourceErrorRefs } from './renderers/source-error-refs.js';
 export * from './schemas.js';

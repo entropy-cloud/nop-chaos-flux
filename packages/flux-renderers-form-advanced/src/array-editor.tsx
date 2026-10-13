@@ -8,6 +8,7 @@ import type {
   RuntimeFieldRegistration,
   ValidationRule,
 } from '@nop-chaos/flux-core';
+import { writeFieldValue } from './write-field-value.js';
 import { getIn } from '@nop-chaos/flux-core';
 import {
   useCompositeFieldHandle,
@@ -128,18 +129,14 @@ function ArrayEditorRow(props: {
               currentForm.touchField(itemPath);
               currentForm.setValue(itemPath, event.target.value);
 
-              if (shouldValidateOn(name, currentForm, 'change')) {
-                void currentForm.validateField(itemPath, 'change');
-              }
+              writeFieldValue(currentForm, name, itemPath, 'change');
             }
           }}
           onBlur={() => {
             if (currentForm) {
               currentForm.touchField(itemPath);
 
-              if (shouldValidateOn(name, currentForm, 'blur')) {
-                void currentForm.validateField(itemPath, 'blur');
-              }
+              writeFieldValue(currentForm, name, itemPath, 'blur');
             }
           }}
         />
@@ -337,9 +334,7 @@ export function ArrayEditorRenderer(props: RendererComponentProps<ArrayEditorSch
 
       currentForm.setValue(name, nextItems);
 
-      if (shouldValidateOn(name, currentForm, 'change')) {
-        void currentForm.validateField(name, 'change');
-      }
+      writeFieldValue(currentForm, name, name, 'change');
     },
     [currentForm, name, scope],
   );
@@ -382,9 +377,7 @@ export function ArrayEditorRenderer(props: RendererComponentProps<ArrayEditorSch
 
       if (currentForm && name) {
         currentForm.moveValue(name, index, to);
-        if (shouldValidateOn(name, currentForm, 'change')) {
-          void currentForm.validateField(name, 'change');
-        }
+        writeFieldValue(currentForm, name, name, 'change');
         return;
       }
 
@@ -434,9 +427,7 @@ export function ArrayEditorRenderer(props: RendererComponentProps<ArrayEditorSch
       pendingFocusRef.current = { kind: 'add' };
       if (currentForm && name) {
         currentForm.appendValue(name, nextItem);
-        if (shouldValidateOn(name, currentForm, 'change')) {
-          void currentForm.validateField(name, 'change');
-        }
+        writeFieldValue(currentForm, name, name, 'change');
       } else {
         syncItems(nextItems);
       }
@@ -477,9 +468,7 @@ export function ArrayEditorRenderer(props: RendererComponentProps<ArrayEditorSch
       compatMove(from, to);
       if (currentForm && name) {
         currentForm.moveValue(name, from, to);
-        if (shouldValidateOn(name, currentForm, 'change')) {
-          void currentForm.validateField(name, 'change');
-        }
+        writeFieldValue(currentForm, name, name, 'change');
       } else {
         syncItems(nextItems);
       }
@@ -586,9 +575,7 @@ export function ArrayEditorRenderer(props: RendererComponentProps<ArrayEditorSch
           if (currentForm && name) {
             currentForm.appendValue(name, nextItem);
 
-            if (shouldValidateOn(name, currentForm, 'change')) {
-              void currentForm.validateField(name, 'change');
-            }
+            writeFieldValue(currentForm, name, name, 'change');
 
             return;
           }

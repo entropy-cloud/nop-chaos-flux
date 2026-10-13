@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type KeyboardEvent, type PointerEvent as ReactPointerEvent } from 'react';
 import { numberAdapter, type RendererComponentProps } from '@nop-chaos/flux-core';
-import { useInputComponentHandle } from '@nop-chaos/flux-react';
+import { resolveFieldFrameErrorRefs } from '@nop-chaos/flux-react';
+import { useStandardFieldHandle } from '../use-standard-field-handle.js';
 import { t } from '@nop-chaos/flux-i18n';
 import { Button, cn, Input, useIsMobile } from '@nop-chaos/ui';
 import { ChevronDownIcon, ChevronUpIcon } from 'lucide-react';
@@ -70,11 +71,10 @@ export function InputNumberRenderer(props: RendererComponentProps<InputNumberSch
   // FieldFrame injects the instance-unique error/hint/description reference
   // list (its error element id is cid-suffixed, not `${name}-error`). Prefer
   // the injected chain; the local fallback only covers bare harnesses.
-  const injected = props as unknown as { 'aria-describedby'?: string; 'aria-errormessage'?: string };
-  const describedBy = injected['aria-describedby'] ?? (presentation.showError ? errorId : undefined);
-  const errorMessageId = presentation.showError
-    ? (injected['aria-errormessage'] ?? errorId)
-    : undefined;
+  const { describedBy, errorMessageId } = resolveFieldFrameErrorRefs(props, {
+    errorId,
+    showError: presentation.showError,
+  });
 
   const inputRef = useRef<HTMLInputElement | null>(null);
   const initialValueRef = useRef<number | undefined>(numericValue);
@@ -106,15 +106,15 @@ export function InputNumberRenderer(props: RendererComponentProps<InputNumberSch
     };
   }, []);
 
-  useInputComponentHandle({
+  useStandardFieldHandle({
     id: props.id,
     name,
     type: 'input-number',
     cid: props.meta.cid,
     methods: INPUT_NUMBER_METHODS,
     getFocusTarget: () => inputRef.current,
-    isInteractive: () => presentation.interactive,
-    isVisible: () => props.meta.visible !== false,
+    interactive: presentation.interactive,
+    visible: props.meta.visible !== false,
     clearValue: () => handlers.onChange(undefined),
     resetValue: () => {
       handlers.onChange(initialValueRef.current);

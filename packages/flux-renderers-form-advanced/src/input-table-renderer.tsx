@@ -6,6 +6,7 @@ import type {
   RendererDefinition,
   ValidationRule,
 } from '@nop-chaos/flux-core';
+import { writeFieldValue } from './write-field-value.js';
 import { getIn } from '@nop-chaos/flux-core';
 import {
   hasRendererSlotContent,
@@ -237,9 +238,7 @@ export function InputTableRenderer(props: RendererComponentProps<InputTableSchem
       compatMove(from, to);
       if (parentForm && name) {
         parentForm.moveValue(name, from, to);
-        if (shouldValidateOn(name, parentForm, 'change')) {
-          void parentForm.validateField(name, 'change');
-        }
+        writeFieldValue(parentForm, name, name, 'change');
       } else {
         const next = itemsArray.slice();
         const [moved] = next.splice(from, 1);
@@ -271,9 +270,7 @@ export function InputTableRenderer(props: RendererComponentProps<InputTableSchem
       compatAppend();
       if (parentForm && name) {
         parentForm.appendValue(name, newRow);
-        if (shouldValidateOn(name, parentForm, 'change')) {
-          void parentForm.validateField(name, 'change');
-        }
+        writeFieldValue(parentForm, name, name, 'change');
       } else {
         writeValue([...itemsArray, newRow]);
       }
@@ -312,9 +309,7 @@ export function InputTableRenderer(props: RendererComponentProps<InputTableSchem
       compatMove(from, to);
       if (parentForm && name) {
         parentForm.moveValue(name, from, to);
-        if (shouldValidateOn(name, parentForm, 'change')) {
-          void parentForm.validateField(name, 'change');
-        }
+        writeFieldValue(parentForm, name, name, 'change');
       } else {
         const next = itemsArray.slice();
         const [moved] = next.splice(from, 1);

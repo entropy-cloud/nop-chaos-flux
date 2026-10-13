@@ -1,12 +1,14 @@
 import { useRef, useState, type ChangeEvent } from 'react';
 import { CalendarIcon, XIcon } from 'lucide-react';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
-import { useInputComponentHandle } from '@nop-chaos/flux-react';
+import { resolveFieldFrameErrorRefs } from '@nop-chaos/flux-react';
+import { useStandardFieldHandle } from '../use-standard-field-handle.js';
 import { useFluxTranslation, t } from '@nop-chaos/flux-i18n';
 import { enUS as enUSLocale, zhCN as zhCNLocale } from 'react-day-picker/locale';
 import { Button, Calendar, Input, Popover, PopoverContent, PopoverTrigger, cn } from '@nop-chaos/ui';
 import { useFormFieldFromProps } from '../field-utils.js';
 import type { DateRangeSchema } from '../schemas.js';
+import { clamp, clampToRange } from './date/date-clamp.js';
 import {
   DEFAULT_TIME_FORMAT,
   type DateOptions,
@@ -45,12 +47,6 @@ function asRangeKind(value: unknown): RangeKind {
   return value === 'datetime' || value === 'time' ? value : 'date';
 }
 
-function clamp(value: number, min: number, max: number): number {
-  if (value < min) return min;
-  if (value > max) return max;
-  return value;
-}
-
 function buildDisabledMatchers(
   minDate: Date | undefined,
   maxDate: Date | undefined,
@@ -59,24 +55,6 @@ function buildDisabledMatchers(
   if (minDate) matchers.push({ before: minDate });
   if (maxDate) matchers.push({ after: maxDate });
   return matchers.length > 0 ? matchers : undefined;
-}
-
-/**
- * Clamp a date into `[minDate, maxDate]` (calendar-local bounds, same frame as
- * `startDate`/`endDate`). Mirrors `date-field-control`'s `clampToRange` so a
- * time typed via `setTimeOn` (or any path through `commitRange`) cannot land
- * outside the declared bounds — the calendar path already constrains via
- * disabled matchers, but the time inputs bypass them.
- */
-function clampDateToRange(
-  date: Date | undefined,
-  minDate: Date | undefined,
-  maxDate: Date | undefined,
-): Date | undefined {
-  if (!date) return date;
-  if (minDate && date.getTime() < minDate.getTime()) return new Date(minDate);
-  if (maxDate && date.getTime() > maxDate.getTime()) return new Date(maxDate);
-  return date;
 }
 
 export function DateRangeRenderer(props: RendererComponentProps<DateRangeSchema>) {
@@ -120,11 +98,10 @@ export function DateRangeRenderer(props: RendererComponentProps<DateRangeSchema>
   // FieldFrame injects the instance-unique error reference chain (its error
   // element id is cid-suffixed, not `${name}-error`); local id is the bare
   // harness fallback.
-  const injected = props as unknown as { 'aria-describedby'?: string; 'aria-errormessage'?: string };
-  const describedBy = injected['aria-describedby'] ?? (presentation.showError ? errorId : undefined);
-  const errorMessageId = presentation.showError
-    ? (injected['aria-errormessage'] ?? errorId)
-    : undefined;
+  const { describedBy, errorMessageId } = resolveFieldFrameErrorRefs(props, {
+    errorId,
+    showError: presentation.showError,
+  });
   const triggerRef = useRef<HTMLButtonElement | null>(null);
   const [open, setOpen] = useState(false);
   // Plan 552 / IS-lab-date-range-001: with react-day-picker's default
@@ -176,15 +153,15 @@ export function DateRangeRenderer(props: RendererComponentProps<DateRangeSchema>
 
   const presets: DateRangePresetEntry[] = sanitizePresets(props.props.presets);
 
-  useInputComponentHandle({
+  useStandardFieldHandle({
     id: props.id,
     name,
     type: 'date-range',
     cid: props.meta.cid,
     methods: DATE_RANGE_METHODS,
     getFocusTarget: () => triggerRef.current,
-    isInteractive: () => presentation.interactive,
-    isVisible: () => props.meta.visible !== false,
+    interactive: presentation.interactive,
+    visible: props.meta.visible !== false,
     clearValue: () => handlers.onChange(undefined),
   });
 
@@ -200,8 +177,8 @@ export function DateRangeRenderer(props: RendererComponentProps<DateRangeSchema>
     // Enforce minDate/maxDate on every write path (time inputs, native time
     // change, calendar select) so a value cannot be committed outside bounds —
     // consistent with the single-field date control.
-    const clampedStart = clampDateToRange(nextStart, minDate, maxDate);
-    const clampedEnd = clampDateToRange(nextEnd, minDate, maxDate);
+    const clampedStart = clampToRange(nextStart, minDate, maxDate);
+    const clampedEnd = clampToRange(nextEnd, minDate, maxDate);
     const startStr = formatDate(toStorageDate(clampedStart, utc), valueFormat, options);
     const endStr = formatDate(toStorageDate(clampedEnd, utc), valueFormat, options);
     // Normalize order so start <= end whenever both are present.

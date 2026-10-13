@@ -19,7 +19,8 @@ import {
   cn,
   useIsMobile,
 } from '@nop-chaos/ui';
-import { useInputComponentHandle } from '@nop-chaos/flux-react';
+import { resolveFieldFrameErrorRefs, type FieldFrameInjectedAria } from '@nop-chaos/flux-react';
+import { useStandardFieldHandle } from '../use-standard-field-handle.js';
 import { t } from '@nop-chaos/flux-i18n';
 import { Eye, EyeOff, XIcon } from 'lucide-react';
 import { formFieldRules, formFieldContracts, useFormFieldFromProps } from '../field-utils.js';
@@ -104,17 +105,11 @@ function mergeAriaSpace(...values: Array<string | undefined | false>): string | 
   return tokens.length > 0 ? tokens.join(' ') : undefined;
 }
 
-type FrameInjectedAriaProps = {
-  id?: string;
-  'aria-labelledby'?: string;
-  'aria-describedby'?: string;
-  'aria-errormessage'?: string;
-  'aria-invalid'?: boolean;
-  onFocus?: (event: unknown) => void;
-  onBlur?: (event: unknown) => void;
-};
-
-type InputGroupFieldControlProps = FrameInjectedAriaProps & {
+// FieldFrame's cloneElement injection face (shared flux-react contract type).
+// `aria-required` is part of the injected face but stays intentionally
+// unconsumed here: InputGroupFieldControl destructures explicitly (no rest
+// spread), so the key is dropped exactly as before this type adoption.
+type InputGroupFieldControlProps = FieldFrameInjectedAria & {
   className?: string;
   inputProps: ComponentProps<typeof InputGroupInput>;
   prefix?: string;
@@ -214,27 +209,23 @@ export function createInputRenderer(inputType: string) {
     // FieldFrame injects the instance-unique error reference chain (its error
     // element id is cid-suffixed, not `${name}-error`); local id is the bare
     // harness fallback.
-    const injected = props as unknown as {
-      'aria-describedby'?: string;
-      'aria-errormessage'?: string;
-    };
-    const describedBy = injected['aria-describedby'] ?? (presentation.showError ? errorId : undefined);
-    const errorMessageId = presentation.showError
-      ? (injected['aria-errormessage'] ?? errorId)
-      : undefined;
+    const { describedBy, errorMessageId } = resolveFieldFrameErrorRefs(props, {
+      errorId,
+      showError: presentation.showError,
+    });
 
     const inputRef = useRef<HTMLInputElement | null>(null);
     const initialValueRef = useRef(inputValue);
 
-    useInputComponentHandle({
+    useStandardFieldHandle({
       id: props.id,
       name,
       type: inputType === 'text' ? 'input-text' : `input-${inputType}`,
       cid: props.meta.cid,
       methods: INPUT_TEXT_METHODS,
       getFocusTarget: () => inputRef.current,
-      isInteractive: () => presentation.interactive,
-      isVisible: () => props.meta.visible !== false,
+      interactive: presentation.interactive,
+      visible: props.meta.visible !== false,
       clearValue: () => handlers.onChange(''),
       resetValue: () => {
         const initial = initialValueRef.current;

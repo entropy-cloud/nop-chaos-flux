@@ -6,7 +6,12 @@ import type {
   ActionSchema,
   RendererComponentProps,
 } from '@nop-chaos/flux-core';
-import { useInputComponentHandle, useRenderScope, useRendererRuntime } from '@nop-chaos/flux-react';
+import {
+  useInputComponentHandle,
+  useRenderScope,
+  useRendererRuntime,
+  resolveFieldFrameErrorRefs,
+} from '@nop-chaos/flux-react';
 import { t } from '@nop-chaos/flux-i18n';
 import { Button, Spinner, cn } from '@nop-chaos/ui';
 import {
@@ -185,8 +190,10 @@ export function UploadFieldRenderer(
   // FieldFrame injects the instance-unique error reference chain (its error
   // element id is cid-suffixed, not `${name}-error`); local id is the bare
   // harness fallback.
-  const injected = props as unknown as { 'aria-describedby'?: string };
-  const describedBy = injected['aria-describedby'] ?? (presentation.showError ? errorId : undefined);
+  const { describedBy } = resolveFieldFrameErrorRefs(props, {
+    errorId,
+    showError: presentation.showError,
+  });
   const interactive = presentation.interactive;
 
   useInputComponentHandle({

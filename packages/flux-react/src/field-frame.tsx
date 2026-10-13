@@ -63,6 +63,41 @@ export interface FieldFrameProps {
   children: ReactNode;
 }
 
+/**
+ * The exact contract face FieldFrame injects into a wrapped field renderer via
+ * cloneElement (the injected keys land on the renderer COMPONENT props, not on
+ * its DOM root). Field renderers consume the error-reference chain through
+ * `resolveFieldFrameErrorRefs` instead of untyped `as unknown as` casts.
+ */
+export interface FieldFrameInjectedAria {
+  id?: string;
+  'aria-required'?: boolean;
+  'aria-labelledby'?: string;
+  'aria-describedby'?: string;
+  'aria-errormessage'?: string;
+  'aria-invalid'?: boolean;
+  onFocus?: (event: unknown) => void;
+  onBlur?: (event: unknown) => void;
+}
+
+/**
+ * Resolve the FieldFrame-injected error-reference chain against the renderer's
+ * local `${name}-error` fallback: the injected chain wins when present (the
+ * FieldFrame-wrapped path); the fallback covers bare harnesses. `errorMessageId`
+ * is only produced while `showError` is true, matching the aria-errormessage
+ * presence contract.
+ */
+export function resolveFieldFrameErrorRefs(
+  componentProps: object,
+  refs: { errorId?: string; showError: boolean },
+): { describedBy: string | undefined; errorMessageId: string | undefined } {
+  const injected = componentProps as FieldFrameInjectedAria;
+  return {
+    describedBy: injected['aria-describedby'] ?? (refs.showError ? refs.errorId : undefined),
+    errorMessageId: refs.showError ? (injected['aria-errormessage'] ?? refs.errorId) : undefined,
+  };
+}
+
 function mergeDescribedBy(...values: Array<string | undefined>) {
   const tokens = values
     .flatMap((value) => (value ?? '').split(/\s+/))
@@ -182,15 +217,7 @@ export function FieldFrame(props: FieldFrameProps) {
   const descriptionId = name && showDescription ? `${fieldUid}-description` : undefined;
   const describedBy = mergeDescribedBy(showError ? errorId : undefined, hintId, descriptionId);
   const childProps = isValidElement(children)
-    ? (children.props as {
-        id?: string;
-        'aria-describedby'?: string;
-        'aria-errormessage'?: string;
-        'aria-labelledby'?: string;
-        'aria-invalid'?: boolean;
-        onFocus?: (event: unknown) => void;
-        onBlur?: (event: unknown) => void;
-      })
+    ? (children.props as FieldFrameInjectedAria)
     : undefined;
   const child = isValidElement(children)
     ? cloneElement(children, {

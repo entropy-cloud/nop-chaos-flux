@@ -1,4 +1,5 @@
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
+import { resolveFieldFrameErrorRefs } from '@nop-chaos/flux-react';
 import { cn } from '@nop-chaos/ui';
 import { useFormFieldFromProps } from '../field-utils.js';
 import type { InputDatetimeSchema } from '../schemas.js';
@@ -52,9 +53,10 @@ export function InputDatetimeRenderer(props: RendererComponentProps<InputDatetim
   // FieldFrame injects the instance-unique error reference chain (its error
   // element id is cid-suffixed, not `${name}-error`); local id is the bare
   // harness fallback.
-  const injected = props as unknown as { 'aria-describedby'?: string; 'aria-errormessage'?: string };
-  const errorIdForControl =
-    injected['aria-describedby'] ?? (presentation.showError ? errorId : undefined);
+  const { describedBy: errorIdForControl } = resolveFieldFrameErrorRefs(props, {
+    errorId,
+    showError: presentation.showError,
+  });
 
   const minDate = toCalendarDate(
     parseDate(

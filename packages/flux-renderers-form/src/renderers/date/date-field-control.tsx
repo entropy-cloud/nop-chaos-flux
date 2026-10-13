@@ -1,15 +1,15 @@
 import { useRef, useState } from 'react';
 import { CalendarIcon, XIcon } from 'lucide-react';
 import { Button, Calendar, Input, Popover, PopoverContent, PopoverTrigger, cn } from '@nop-chaos/ui';
-import { useInputComponentHandle } from '@nop-chaos/flux-react';
+import { useStandardFieldHandle } from '../../use-standard-field-handle.js';
 import { useFluxTranslation } from '@nop-chaos/flux-i18n';
 import { enUS as enUSLocale, zhCN as zhCNLocale } from 'react-day-picker/locale';
+import { clamp, clampToRange } from './date-clamp.js';
 import {
   DEFAULT_DATETIME_FORMAT,
   DEFAULT_TIME_FORMAT,
   type DateOptions,
   formatDate,
-  isWithinRange,
   parseDate,
   toCalendarDate,
   toStorageDate,
@@ -55,12 +55,6 @@ export interface DateFieldControlProps {
   onChange: (stored: string | undefined) => void;
   onBlur: () => void;
   onFocus: () => void;
-}
-
-function clamp(value: number, min: number, max: number): number {
-  if (value < min) return min;
-  if (value > max) return max;
-  return value;
 }
 
 function buildDisabledMatchers(
@@ -125,15 +119,15 @@ export function DateFieldControl(props: DateFieldControlProps) {
   const second = selected ? selected.getSeconds() : 0;
   const withSeconds = withTime && timeFormat.includes('ss');
 
-  useInputComponentHandle({
+  useStandardFieldHandle({
     id,
     name,
     type: fieldType,
     cid,
     methods: DATE_FIELD_METHODS,
     getFocusTarget: () => triggerRef.current,
-    isInteractive: () => interactive,
-    isVisible: () => visible,
+    interactive: interactive,
+    visible: visible,
     clearValue: () => onChange(undefined),
   });
 
@@ -177,7 +171,7 @@ export function DateFieldControl(props: DateFieldControlProps) {
     // Time-typing must not bypass minDate/maxDate. Clamp the resulting datetime
     // into [minDate, maxDate] (calendar path already constrains via disabled
     // matchers). Bounds are calendar-local, same frame as `selected`/`base`.
-    commitDate(clampToRange(base));
+    commitDate(clampToRange(base, minDate, maxDate));
   }
 
   function handleSecondsChange(raw: string) {
@@ -185,7 +179,7 @@ export function DateFieldControl(props: DateFieldControlProps) {
     const numeric = clamp(Number(raw), 0, 59);
     const base = selected ? new Date(selected) : new Date();
     base.setHours(base.getHours(), base.getMinutes(), numeric, 0);
-    commitDate(clampToRange(base));
+    commitDate(clampToRange(base, minDate, maxDate));
   }
 
   function stepTimeField(field: 'hour' | 'minute', delta: number) {
@@ -200,20 +194,7 @@ export function DateFieldControl(props: DateFieldControlProps) {
       const wrapped = ((totalMinutes % 1440) + 1440) % 1440;
       next.setHours(Math.floor(wrapped / 60), wrapped % 60, withSeconds ? base.getSeconds() : 0, 0);
     }
-    commitDate(clampToRange(next));
-  }
-
-  function clampToRange(date: Date): Date {
-    if (isWithinRange(date, minDate, maxDate)) {
-      return date;
-    }
-    if (minDate && date.getTime() < minDate.getTime()) {
-      return new Date(minDate);
-    }
-    if (maxDate && date.getTime() > maxDate.getTime()) {
-      return new Date(maxDate);
-    }
-    return date;
+    commitDate(clampToRange(next, minDate, maxDate));
   }
 
   function handleClear() {

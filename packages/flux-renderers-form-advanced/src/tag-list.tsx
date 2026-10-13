@@ -9,11 +9,11 @@ import { cn } from '@nop-chaos/ui';
 import {
   formFieldRules,
   resolveFieldLabelText,
-  shouldValidateOn,
   shouldValidateOnOwner,
   useFormFieldFromProps,
 } from '@nop-chaos/flux-renderers-form';
 import type { TagListSchema } from '@nop-chaos/flux-renderers-form';
+import { writeFieldValue } from './write-field-value.js';
 import { WrappedFieldAction } from './wrapped-field-action.js';
 
 export function TagListRenderer(props: RendererComponentProps<TagListSchema>) {
@@ -36,8 +36,7 @@ export function TagListRenderer(props: RendererComponentProps<TagListSchema>) {
       return;
     }
 
-    if (currentForm && shouldValidateOn(name, currentForm, 'change')) {
-      void currentForm.validateField(name, 'change');
+    if (currentForm && writeFieldValue(currentForm, name, name, 'change')) {
       return;
     }
 

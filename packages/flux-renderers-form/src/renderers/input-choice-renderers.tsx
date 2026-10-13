@@ -7,7 +7,7 @@ import {
   type RenderRegionHandle,
   type ValueAdapter,
 } from '@nop-chaos/flux-core';
-import { useInputComponentHandle } from '@nop-chaos/flux-react';
+import { useStandardFieldHandle } from '../use-standard-field-handle.js';
 import { useDictOptions } from './use-dict-options.js';
 import { useSelectRemoteSearch } from './use-select-remote-search.js';
 import { t } from '@nop-chaos/flux-i18n';
@@ -41,6 +41,7 @@ import type {
 import { SelectMobile } from './select-mobile-renderer.js';
 import { StaticComboboxList, VirtualizedComboboxList } from './select-combobox-lists.js';
 import { shouldStackChoicesVertically } from './mobile-touch-utils.js';
+import { resolveSourceErrorRefs } from './source-error-refs.js';
 import {
   getChoiceOptionKey,
   getSourceErrorMessage,
@@ -134,8 +135,10 @@ export function SelectRenderer(props: RendererComponentProps<SelectSchema>) {
   const errorMessage = dictState.errorMessage ?? getSourceErrorMessage(optionsSourceState);
   // cid-qualified so same-name instances (combo rows) don't collide; the id
   // and its aria reference derive from the same variable, so they stay paired.
-  const instanceKey = props.meta.cid != null ? `${name}-${props.meta.cid}` : name;
-  const errorId = errorMessage && name ? `${instanceKey}-source-error` : undefined;
+  const sourceError = resolveSourceErrorRefs({
+    instanceKey: props.meta.cid != null ? `${name}-${props.meta.cid}` : name,
+    errorMessage,
+  });
   const placeholder = props.props.placeholder ? String(props.props.placeholder) : undefined;
   const searchPlaceholder = props.props.searchPlaceholder
     ? String(props.props.searchPlaceholder)
@@ -274,15 +277,15 @@ export function SelectRenderer(props: RendererComponentProps<SelectSchema>) {
     'aria-required': (props.props.required ? true : undefined) as boolean | undefined,
     'aria-invalid': (presentation.showError ? true : undefined) as boolean | undefined,
     'aria-readonly': presentation.readOnly ? true : undefined,
-    'aria-describedby': errorId,
-    'aria-errormessage': errorId,
+    'aria-describedby': sourceError.describedby,
+    'aria-errormessage': sourceError.errormessage,
     onFocus: handlers.onFocus,
     onBlur: handlers.onBlur,
   };
 
   const triggerPlaceholder = loadingWithRemote ? loadingText : placeholder;
 
-  useInputComponentHandle({
+  useStandardFieldHandle({
     id: props.id,
     name,
     type: 'select',
@@ -292,8 +295,8 @@ export function SelectRenderer(props: RendererComponentProps<SelectSchema>) {
       selectWrapperRef.current?.querySelector<HTMLElement>(
         '[data-slot="combobox-trigger"], [data-slot="combobox-input"], [data-slot="select-mobile-trigger"], input',
       ) ?? null,
-    isInteractive: () => effectiveInteractive,
-    isVisible: () => props.meta.visible !== false,
+    interactive: effectiveInteractive,
+    visible: props.meta.visible !== false,
     clearValue: () => {
       if (multiple) {
         handlers.onChange([]);
@@ -347,7 +350,7 @@ export function SelectRenderer(props: RendererComponentProps<SelectSchema>) {
           onClear={mobileClear}
           clearable={clearable}
           controlProps={controlProps}
-          errorId={errorId}
+          errorId={sourceError.errorId}
           handlers={handlers}
         />
       ) : (
@@ -441,7 +444,11 @@ export function SelectRenderer(props: RendererComponentProps<SelectSchema>) {
         </span>
       ) : null}
       {errorMessage || remoteError ? (
-        <span data-slot="select-error" id={errorId} role="alert">
+        <span
+          data-slot="select-error"
+          {...(sourceError.spanProps ?? {})}
+          role="alert"
+        >
           {remoteError ?? errorMessage}
         </span>
       ) : null}
@@ -502,7 +509,7 @@ export function SwitchRenderer(props: RendererComponentProps<SwitchSchema>) {
   const checked = value as boolean;
   const switchRef = useRef<HTMLLabelElement | null>(null);
 
-  useInputComponentHandle({
+  useStandardFieldHandle({
     id: props.id,
     name,
     type: 'switch',
@@ -510,8 +517,8 @@ export function SwitchRenderer(props: RendererComponentProps<SwitchSchema>) {
     methods: FOCUS_ONLY_METHODS,
     getFocusTarget: () =>
       switchRef.current?.querySelector<HTMLElement>('button, [role="switch"], input') ?? null,
-    isInteractive: () => presentation.interactive,
-    isVisible: () => props.meta.visible !== false,
+    interactive: presentation.interactive,
+    visible: props.meta.visible !== false,
   });
 
   return (
@@ -568,12 +575,14 @@ export function RadioGroupRenderer(props: RendererComponentProps<RadioGroupSchem
   const selectedValue = (value == null ? '' : value) as ChoiceOption['value'];
   // cid-qualified so same-name instances (combo rows) don't collide; the id
   // and its aria reference derive from the same variable, so they stay paired.
-  const instanceKey = props.meta.cid != null ? `${name}-${props.meta.cid}` : name;
-  const errorId = name ? `${instanceKey}-source-error` : undefined;
+  const sourceError = resolveSourceErrorRefs({
+    instanceKey: props.meta.cid != null ? `${name}-${props.meta.cid}` : name,
+    errorMessage,
+  });
   const groupLabel = String((props.props.label ?? name) || '') || undefined;
   const radioRef = useRef<HTMLDivElement | null>(null);
 
-  useInputComponentHandle({
+  useStandardFieldHandle({
     id: props.id,
     name,
     type: 'radio-group',
@@ -581,8 +590,8 @@ export function RadioGroupRenderer(props: RendererComponentProps<RadioGroupSchem
     methods: FOCUS_ONLY_METHODS,
     getFocusTarget: () =>
       radioRef.current?.querySelector<HTMLElement>('button, [role="radio"], input') ?? null,
-    isInteractive: () => presentation.interactive,
-    isVisible: () => props.meta.visible !== false,
+    interactive: presentation.interactive,
+    visible: props.meta.visible !== false,
   });
 
   return (
@@ -607,8 +616,8 @@ export function RadioGroupRenderer(props: RendererComponentProps<RadioGroupSchem
         aria-label={groupLabel}
         aria-required={props.props.required ? true : undefined}
         aria-invalid={presentation.showError ? true : undefined}
-        aria-describedby={errorMessage ? errorId : undefined}
-        aria-errormessage={errorMessage ? errorId : undefined}
+        aria-describedby={sourceError.describedby}
+        aria-errormessage={sourceError.errormessage}
         onFocus={handlers.onFocus}
         onValueChange={presentation.interactive ? (nextValue) => handlers.onChange(nextValue) : undefined}
         onBlur={handlers.onBlur}
@@ -628,8 +637,8 @@ export function RadioGroupRenderer(props: RendererComponentProps<RadioGroupSchem
           </Label>
         ))}
       </RadioGroup>
-      {errorMessage ? (
-        <span id={errorId} data-slot="radio-group-error" role="alert">
+      {sourceError.spanProps ? (
+        <span {...sourceError.spanProps} data-slot="radio-group-error">
           {errorMessage}
         </span>
       ) : null}

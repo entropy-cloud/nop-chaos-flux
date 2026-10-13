@@ -1,6 +1,7 @@
 import { useRef } from 'react';
 import { stringAdapter, type RendererComponentProps } from '@nop-chaos/flux-core';
-import { useInputComponentHandle } from '@nop-chaos/flux-react';
+import { useStandardFieldHandle } from '../use-standard-field-handle.js';
+import { queryFocusTarget } from './focus-target.js';
 import { t } from '@nop-chaos/flux-i18n';
 import { ColorPicker, cn } from '@nop-chaos/ui';
 import { useFormFieldFromProps } from '../field-utils.js';
@@ -22,16 +23,16 @@ export function InputColorRenderer(props: RendererComponentProps<InputColorSchem
   const colorValue = typeof value === 'string' && value.trim() !== '' ? value : undefined;
   const rootRef = useRef<HTMLDivElement | null>(null);
 
-  useInputComponentHandle({
+  useStandardFieldHandle({
     id: props.id,
     name,
     type: 'input-color',
     cid: props.meta.cid,
     methods: INPUT_COLOR_METHODS,
     getFocusTarget: () =>
-      rootRef.current?.querySelector<HTMLElement>('[data-slot="color-picker"] button') ?? rootRef.current,
-    isInteractive: () => presentation.interactive,
-    isVisible: () => props.meta.visible !== false,
+      queryFocusTarget(rootRef.current, '[data-slot="color-picker"] button'),
+    interactive: presentation.interactive,
+    visible: props.meta.visible !== false,
     clearValue: () => handlers.onChange(undefined),
     resetValue: () => {
       handlers.onChange(colorValue);

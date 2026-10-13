@@ -1,11 +1,11 @@
 import React from 'react';
 import type { CompiledValidationBehavior, FormRuntime } from '@nop-chaos/flux-core';
+import { writeFieldValue } from './write-field-value.js';
 import { t } from '@nop-chaos/flux-i18n';
 import { Button, Input } from '@nop-chaos/ui';
 import { ChevronDownIcon, ChevronUpIcon, Trash2Icon } from 'lucide-react';
 import {
   getChildFieldUiState,
-  shouldValidateOn,
   useCompositeChildFieldState,
   type KeyValuePair,
 } from '@nop-chaos/flux-renderers-form';
@@ -105,18 +105,14 @@ function KeyValueRowView(props: KeyValueRowProps) {
               currentForm.touchField(keyPath);
               currentForm.setValue(keyPath, event.target.value);
 
-              if (shouldValidateOn(name, currentForm, 'change')) {
-                void currentForm.validateField(keyPath, 'change');
-              }
+              writeFieldValue(currentForm, name, keyPath, 'change');
             }
           }}
           onBlur={() => {
             if (currentForm) {
               currentForm.touchField(keyPath);
 
-              if (shouldValidateOn(name, currentForm, 'blur')) {
-                void currentForm.validateField(keyPath, 'blur');
-              }
+              writeFieldValue(currentForm, name, keyPath, 'blur');
             }
           }}
         />
@@ -156,18 +152,14 @@ function KeyValueRowView(props: KeyValueRowProps) {
               currentForm.touchField(valuePath);
               currentForm.setValue(valuePath, event.target.value);
 
-              if (shouldValidateOn(name, currentForm, 'change')) {
-                void currentForm.validateField(valuePath, 'change');
-              }
+              writeFieldValue(currentForm, name, valuePath, 'change');
             }
           }}
           onBlur={() => {
             if (currentForm) {
               currentForm.touchField(valuePath);
 
-              if (shouldValidateOn(name, currentForm, 'blur')) {
-                void currentForm.validateField(valuePath, 'blur');
-              }
+              writeFieldValue(currentForm, name, valuePath, 'blur');
             }
           }}
         />

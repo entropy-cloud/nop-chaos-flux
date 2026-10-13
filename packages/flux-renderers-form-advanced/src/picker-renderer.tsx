@@ -7,6 +7,7 @@ import type {
   RendererDefinition,
   ValidationRule,
 } from '@nop-chaos/flux-core';
+import { writeFieldValue } from './write-field-value.js';
 import { getIn, isRecord } from '@nop-chaos/flux-core';
 import {
   useCurrentForm,
@@ -26,7 +27,6 @@ import type { PickerSchema } from './composite-field/composite-schemas.js';
 import { resolveSelectedLabel } from './option-normalize.js';
 import {
   formFieldRules,
-  shouldValidateOn,
   useFieldPresentation,
 } from '@nop-chaos/flux-renderers-form';
 import {
@@ -227,9 +227,7 @@ export function PickerRenderer(props: RendererComponentProps<PickerSchema>) {
           currentForm.touchField(name);
         }
         currentForm.setValue(name, next);
-        if (shouldValidateOn(name, currentForm, 'change')) {
-          void currentForm.validateField(name, 'change');
-        }
+        writeFieldValue(currentForm, name, name, 'change');
         return;
       }
       scope.update(name, next);

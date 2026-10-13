@@ -19,6 +19,7 @@ import { ChevronsUpDownIcon, XIcon } from 'lucide-react';
 import {
   createFieldValidation,
   formFieldRules,
+  resolveSourceErrorRefs,
   useFormFieldFromProps,
   validateInputFieldSchema,
 } from '@nop-chaos/flux-renderers-form';
@@ -127,7 +128,9 @@ function InputTreeRenderer(props: RendererComponentProps<InputTreeSchema>) {
   const sourceError = getSourceErrorMessage(optionsSourceState) ?? searchError;
   const fieldLabel = String((props.props.label ?? name) || 'tree');
   const searchLabel = `${t('flux.common.search')} ${fieldLabel}`;
-  const sourceErrorId = name ? `${name}-source-error` : undefined;
+  // plan 589 G1b ruling (a): this site's id strings stay name-only (VERBATIM,
+  // host-visible contract) — no cid qualification here, unlike the choice sites.
+  const sourceErrorRefs = resolveSourceErrorRefs({ instanceKey: name, errorMessage: sourceError });
   const loadingId = name ? `${name}-source-loading` : undefined;
 
   const rootRef = useRef<HTMLDivElement | null>(null);
@@ -192,10 +195,10 @@ function InputTreeRenderer(props: RendererComponentProps<InputTreeSchema>) {
           }}
           ariaLabel={fieldLabel}
           searchLabel={searchLabel}
-          describedBy={sourceError ? sourceErrorId : undefined}
+          describedBy={sourceErrorRefs.describedby}
           loadingDescriptionId={loadingId}
           loading={optionsSourceState?.loading === true || searchLoading}
-          errorMessage={sourceError ? sourceErrorId : undefined}
+          errorMessage={sourceErrorRefs.errormessage}
           invalid={Boolean(sourceError)}
           virtualThreshold={props.props.virtualThreshold}
           remoteSearch={remoteSearchActive}
@@ -205,8 +208,8 @@ function InputTreeRenderer(props: RendererComponentProps<InputTreeSchema>) {
           onLazyRetry={lazyRetryChildren}
         />
       </div>
-      {sourceError ? (
-        <span id={sourceErrorId} data-slot="input-tree-source-error" role="alert">
+      {sourceErrorRefs.spanProps ? (
+        <span {...sourceErrorRefs.spanProps} data-slot="input-tree-source-error">
           {sourceError}
         </span>
       ) : optionsSourceState?.loading === true || searchLoading ? (
@@ -313,7 +316,9 @@ function TreeSelectRenderer(props: RendererComponentProps<TreeSelectSchema>) {
   const sourceError = getSourceErrorMessage(optionsSourceState) ?? searchError;
   const fieldLabel = String(props.props.label ?? name);
   const searchLabel = `${t('flux.common.search')} ${fieldLabel || 'tree'}`;
-  const sourceErrorId = name ? `${name}-source-error` : undefined;
+  // plan 589 G1b ruling (a): this site's id strings stay name-only (VERBATIM,
+  // host-visible contract) — no cid qualification here, unlike the choice sites.
+  const sourceErrorRefs = resolveSourceErrorRefs({ instanceKey: name, errorMessage: sourceError });
   const loadingId = name ? `${name}-source-loading` : undefined;
 
   const rootRef = useRef<HTMLDivElement | null>(null);
@@ -365,10 +370,10 @@ function TreeSelectRenderer(props: RendererComponentProps<TreeSelectSchema>) {
       }}
       ariaLabel={fieldLabel}
       searchLabel={searchLabel}
-      describedBy={sourceError ? sourceErrorId : undefined}
+      describedBy={sourceErrorRefs.describedby}
       loadingDescriptionId={loadingId}
       loading={optionsSourceState?.loading === true || searchLoading}
-      errorMessage={sourceError ? sourceErrorId : undefined}
+      errorMessage={sourceErrorRefs.errormessage}
       invalid={Boolean(sourceError)}
       virtualThreshold={props.props.virtualThreshold}
       remoteSearch={remoteSearchActive}
@@ -409,8 +414,8 @@ function TreeSelectRenderer(props: RendererComponentProps<TreeSelectSchema>) {
             aria-label={fieldLabel}
             aria-haspopup="dialog"
             aria-expanded={sheetOpen}
-            aria-describedby={sourceError ? sourceErrorId : undefined}
-            aria-errormessage={sourceError ? sourceErrorId : undefined}
+            aria-describedby={sourceErrorRefs.describedby}
+            aria-errormessage={sourceErrorRefs.errormessage}
             aria-invalid={sourceError ? true : undefined}
             disabled={triggerDisabled}
             data-slot="tree-select-mobile-trigger"
@@ -427,8 +432,8 @@ function TreeSelectRenderer(props: RendererComponentProps<TreeSelectSchema>) {
                   type="button"
                   variant="outline"
                   aria-label={fieldLabel}
-                  aria-describedby={sourceError ? sourceErrorId : undefined}
-                  aria-errormessage={sourceError ? sourceErrorId : undefined}
+                  aria-describedby={sourceErrorRefs.describedby}
+                  aria-errormessage={sourceErrorRefs.errormessage}
                   aria-invalid={sourceError ? true : undefined}
                   disabled={triggerDisabled}
                 >
@@ -495,8 +500,8 @@ function TreeSelectRenderer(props: RendererComponentProps<TreeSelectSchema>) {
           </SheetContent>
         </Sheet>
       ) : null}
-      {sourceError ? (
-        <span id={sourceErrorId} data-slot="tree-select-source-error" role="alert">
+      {sourceErrorRefs.spanProps ? (
+        <span {...sourceErrorRefs.spanProps} data-slot="tree-select-source-error">
           {sourceError}
         </span>
       ) : optionsSourceState?.loading === true || searchLoading ? (

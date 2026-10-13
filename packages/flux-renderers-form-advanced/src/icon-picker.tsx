@@ -4,6 +4,7 @@ import type {
   RendererComponentProps,
   RendererDefinition,
 } from '@nop-chaos/flux-core';
+import { writeFieldValue } from './write-field-value.js';
 import { getIn } from '@nop-chaos/flux-core';
 import {
   useCurrentForm,
@@ -16,7 +17,6 @@ import { Button, cn, Input, Popover, PopoverContent, PopoverTrigger } from '@nop
 import { icons, SearchIcon, XIcon } from 'lucide-react';
 import {
   formFieldRules,
-  shouldValidateOn,
   useFieldPresentation,
   useDefaultValuePush,
 } from '@nop-chaos/flux-renderers-form';
@@ -124,9 +124,7 @@ export function IconPickerRenderer(props: RendererComponentProps<IconPickerSchem
           currentForm.touchField(name);
         }
         currentForm.setValue(name, next);
-        if (shouldValidateOn(name, currentForm, 'change')) {
-          void currentForm.validateField(name, 'change');
-        }
+        writeFieldValue(currentForm, name, name, 'change');
         return;
       }
       scope.update(name, next);

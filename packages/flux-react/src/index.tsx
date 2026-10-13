@@ -31,8 +31,8 @@ export type {
 } from './react-contracts.js';
 export { RenderNodes, resolveRendererSlotContent, hasRendererSlotContent, useSchemaProps } from './render-nodes.js';
 export { DialogHost } from './dialog-host.js';
-export { FieldFrame, toFieldRemarkProps } from './field-frame.js';
-export type { FieldFrameProps, FieldRemarkProps, FieldRemarkSchemaLike } from './field-frame.js';
+export { FieldFrame, toFieldRemarkProps, resolveFieldFrameErrorRefs } from './field-frame.js';
+export type { FieldFrameProps, FieldRemarkProps, FieldRemarkSchemaLike, FieldFrameInjectedAria } from './field-frame.js';
 export { NodeRenderer } from './node-renderer.js';
 export { createNormalizedActionEvent } from './renderer-helpers.js';
 export {

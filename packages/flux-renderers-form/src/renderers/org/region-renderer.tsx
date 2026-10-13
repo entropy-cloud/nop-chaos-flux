@@ -1,6 +1,7 @@
 import { useMemo, useRef, useState } from 'react';
 import type { ActionSchema, RendererComponentProps, SchemaValue } from '@nop-chaos/flux-core';
-import { useInputComponentHandle } from '@nop-chaos/flux-react';
+import { useStandardFieldHandle } from '../../use-standard-field-handle.js';
+import { queryFocusTarget } from '../focus-target.js';
 import { useIsMobile, cn } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
 import { choiceSingleAdapter } from '../input-choice-renderers.js';
@@ -50,16 +51,16 @@ export function InputCityRenderer(props: RendererComponentProps<InputCitySchema>
   });
 
   const rootRef = useRef<HTMLDivElement | null>(null);
-  useInputComponentHandle({
+  useStandardFieldHandle({
     id: props.id,
     name,
     type: 'input-city',
     cid: props.meta.cid,
     methods: REGION_METHODS,
     getFocusTarget: () =>
-      rootRef.current?.querySelector<HTMLElement>('[data-slot="region-trigger"]') ?? rootRef.current,
-    isInteractive: () => presentation.interactive,
-    isVisible: () => props.meta.visible !== false,
+      queryFocusTarget(rootRef.current, '[data-slot="region-trigger"]'),
+    interactive: presentation.interactive,
+    visible: props.meta.visible !== false,
     clearValue: () => handlers.onChange(undefined),
     resetValue: () => {
       handlers.onChange(value);
