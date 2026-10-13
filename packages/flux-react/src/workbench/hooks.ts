@@ -1,9 +1,10 @@
 import { useLayoutEffect, useState, useSyncExternalStore } from 'react';
 import type { ActionNamespaceProvider, ActionScope, ScopeRef } from '@nop-chaos/flux-core';
 import type { DomainBridge } from '@nop-chaos/flux-core';
+import { isHostProjectionScope } from '@nop-chaos/flux-runtime';
 import { useRendererRuntime, useRenderScope } from '../hooks.js';
 
-type DisposableScopeRef = ScopeRef & { dispose?: () => void; __fdDisposed__?: boolean };
+type DisposableScopeRef = ScopeRef & { dispose?: () => void };
 
 interface HostScopeStore {
   current: ScopeRef;
@@ -66,13 +67,12 @@ export function useHostScope(
   const scope = useSyncExternalStore(store.subscribe, store.getSnapshot, store.getSnapshot);
 
   useLayoutEffect(() => {
-    const current = store.current as DisposableScopeRef;
-    const expectedIdPrefix = `${path}:${scopeLabel}-host:`;
+    const current = store.current;
 
     if (
-      current.__fdDisposed__ !== true &&
-      current.parent === parentScope &&
-      current.id.startsWith(expectedIdPrefix)
+      isHostProjectionScope(current, { path, scopeLabel }) &&
+      !current.disposed &&
+      current.parent === parentScope
     ) {
       return;
     }

@@ -96,6 +96,7 @@ The following are architecture-level constraints distilled from historical regre
 - Reactive render paths must subscribe. Components that need reactive scope data in render must use selector/subscription APIs such as `useScopeSelector`, not imperative reads such as `scope.get(...)`.
 - Render phase must stay side-effect free. Renderer paths must not call store writers or state setters during render. If synchronization is needed, buffer and flush in an effect. Current live baseline: `NodeRenderer` installs prepared import frames and named-action namespaces from layout effects, and import-owned nodes may return `null` for the pre-commit pass instead of mutating runtime state during render.
 - Runtime-owned React boundaries must allocate owner resources only after commit. The current live baseline applies the same commit-safe rule to fragment child scopes, node-owned action scopes/component registries, host projection scopes, declarative surface scopes, and renderer-owned form runtimes; pre-commit passes may temporarily render a preparing/null state instead of creating runtime-owned resources during render.
+- Host projection scope identity is introspected through the flux-runtime contract, not string sniffing. `HostProjectionScopeRef` carries `origin: { path, scopeLabel }` and a `disposed` flag (set synchronously by `dispose()`), and `isHostProjectionScope(value, { path, scopeLabel })` is the single type guard — consumers (e.g. `useHostScope`) must not re-derive the `${path}:${scopeLabel}-host` scopeKey format from `id` or read unregistered flags.
 - Root page scope should be seeded when `SchemaRenderer` creates the page runtime. Effects should only reconcile subsequent prop changes so mount-time child effects do not lose writes to a later root-data sync.
 - Scope identity and lifecycle must stay stable. Fragment/dialog render paths should avoid unnecessary scope recreation and must preserve parent-child reactivity when parent scope data changes.
 - React host effects should not republish owner summaries that already belong to runtime owners. For example, `DialogHost` may render the mounted surface tree, but `statusPath` publication belongs to `SurfaceRuntime` so React rendering does not create a second source of truth or write to the wrong scope.
@@ -232,7 +233,7 @@ Meaning:
 - `schema.frameWrap` is the per-instance override for `RendererDefinition.wrap`; it can suppress wrapping or switch wrap-compatible renderers to grouped `<fieldset>` layout
 - `regions` is the map of precompiled child render handles
 - `events` is the map of runtime event handlers derived from declarative event fields
-- `reactions` is the map of `ReactionHandle` entries derived from `kind: 'reaction'` fields; it is a new channel parallel to `events` and `regions`, used for fields that are both reactive (auto-fire on declared `dependsOn` root changes) and imperative (renderer calls `dispatch()`/`force()`) with renderer-owned timing via `ready()`/`pause()`/`resume()`. A `ReactionHandle` starts in the `initial-paused` phase; the renderer must call `ready()` to enable firing.
+- `reactions` is the map of `ReactionHandle` entries derived from `kind: 'reaction'` fields; it is a new channel parallel to `events` and `regions`, used for fields that are both reactive (auto-fire on declared `dependsOn` root changes) and imperative (renderer calls `dispatch()`/`force()`) with renderer-owned timing via `ready()`/`pause()`/`resume()`. A `ReactionHandle` starts in the `initial-paused` phase; the renderer must call `ready()` to enable firing. Renderer-owned channels (`bindingsProvider`, `scopeOverride`, `ignoreWritesTo`, `loadCallbacks`) are registered through `handle.configure(...)` — there is no separate setter surface.
 - `helpers` exposes stable imperative runtime helpers
 - `templateNode.lifecycleActions` carries compiled `onMount` / `onUnmount` actions when the schema declares them
 - `templateNode.structuralWhen` is the compiled structural-activation guard for node-local `when`; React/runtime code owns executing this guard before renderer render and lifecycle/effect participation
@@ -869,7 +870,20 @@ interface ReactionHandle {
   pause(): void;
   resume(): void;
   dispose(): void;
+  configure(options: ReactionHandleConfigureOptions): void;
   getDebugState(): ReactionHandleDebugState;
+}
+
+interface ReactionHandleConfigureOptions {
+  bindingsProvider?: (() => Record<string, unknown>) | undefined;
+  scopeOverride?: ScopeRef | undefined;
+  ignoreWritesTo?: readonly string[] | undefined;
+  loadCallbacks?:
+    | {
+        onStart?: () => void;
+        onSettle?: (result: ActionResult) => void;
+      }
+    | undefined;
 }
 
 interface ReactionHandleDebugState {
@@ -889,9 +903,10 @@ Method semantics:
 - `ready()` — transition out of `initial-paused`; required for the handle to fire at all. Pending change accumulated before `ready()` is flushed once.
 - `pause()` / `resume()` — counter-based nested gating. While paused, `dependsOn` hits accumulate into `pendingChange`; `resume()` flushes once when the counter returns to zero.
 - `dispose()` — makes the handle inert; pending `dispatch()` promises resolve to the canonical cancelled result.
+- `configure(options)` — the single official channel for the four renderer-owned reaction settings: `bindingsProvider` (evaluation-bindings injection), `scopeOverride` (dispatch-scope projection), `ignoreWritesTo` (additional self-write suppression roots), and `loadCallbacks` (`onStart`/`onSettle` capture). Per-key present semantics: a key is applied when it is present on the options object (`'key in config'`, distinguishing "not provided" from "provided as `undefined`"); a key provided as `undefined` clears its channel; arrays are replaced wholesale, never merged; `configure` is idempotent per provided key, free of inter-call ordering constraints, and a single full-options call is equivalent to the accumulated sequence of partial calls. `configure` works before and after `ready()` and across the proxy's activation lifecycle.
 - `getDebugState()` — readonly diagnostic snapshot of phase, counters, and pending change.
 
-Lazy activation: `flux-react` constructs one stable `ReactionHandle` proxy per `reactionPlans` entry in `useMemo`, activates it against `runtime.registerRendererReaction(...)` in a `useLayoutEffect` (so child `useEffect`s calling `dispatch()` find a real handle), and disposes on cleanup. The proxy buffers pre-activation calls and drains them on activation, and is StrictMode-safe across the dispose → reactivate sequence.
+Lazy activation: `flux-react` constructs one stable `ReactionHandle` proxy per `reactionPlans` entry in `useMemo`, activates it against `runtime.registerRendererReaction(...)` in a `useLayoutEffect` (so child `useEffect`s calling `dispatch()` find a real handle), and disposes on cleanup. The proxy buffers pre-activation calls and drains them on activation, forwards pre-activation `configure()` keys through a local cache applied on activation and post-activation `configure()` calls live, and is StrictMode-safe across the dispose → reactivate sequence.
 
 Source design: `docs/plans/2026-07-07-loadAction-reaction-kind-plan.md`.
 

@@ -43,6 +43,39 @@ function collectNestedChangedPaths(
 
 export interface HostProjectionScopeRef extends ScopeRef {
   dispose(): void;
+  /**
+   * Projection origin (`path` + `scopeLabel`) supplied at creation. The
+   * runtime is the single-sided owner of the `${path}:${scopeLabel}-host`
+   * scopeKey format; consumers must not re-derive it from `id`.
+   */
+  readonly origin: { path: string; scopeLabel: string };
+  /**
+   * Synchronously set to `true` by {@link dispose}. Introspection channel for
+   * consumers holding a `ScopeRef` that may be a disposed host projection.
+   */
+  readonly disposed: boolean;
+}
+
+/**
+ * Contract guard for host projection scopes. Replaces the former id-prefix
+ * string sniffing (`id.startsWith(`${path}:${scopeLabel}-host:`)`) and the
+ * unregistered `__fdDisposed__` flag read: the scopeKey format convention is
+ * owned by this module alone.
+ */
+export function isHostProjectionScope(
+  value: unknown,
+  origin: { path: string; scopeLabel: string },
+): value is HostProjectionScopeRef {
+  if (typeof value !== 'object' || value === null) {
+    return false;
+  }
+  const candidate = value as Partial<HostProjectionScopeRef>;
+  return (
+    typeof candidate.dispose === 'function' &&
+    typeof candidate.disposed === 'boolean' &&
+    candidate.origin?.path === origin.path &&
+    candidate.origin?.scopeLabel === origin.scopeLabel
+  );
 }
 
 export function createHostProjectionScope(input: {
@@ -58,6 +91,7 @@ export function createHostProjectionScope(input: {
 }): HostProjectionScopeRef {
   let disposed = false;
   let reservedKeys = new Set(Object.keys(input.projection));
+  const origin = { path: input.path, scopeLabel: input.scopeLabel };
   const hostScope = input.createChildScope(input.parentScope, input.projection, {
     scopeKey: `${input.path}:${input.scopeLabel}-host`,
     pathSuffix: input.scopeLabel,
@@ -68,6 +102,10 @@ export function createHostProjectionScope(input: {
     path: hostScope.path,
     parent: hostScope.parent,
     store: hostScope.store,
+    origin,
+    get disposed() {
+      return disposed;
+    },
     get value() {
       return this.readVisible();
     },
@@ -141,7 +179,6 @@ export function createHostProjectionScope(input: {
     },
     dispose() {
       disposed = true;
-      (this as HostProjectionScopeRef & { __fdDisposed__?: boolean }).__fdDisposed__ = true;
       (hostScope as ScopeRef & { dispose?: () => void }).dispose?.();
     },
   };

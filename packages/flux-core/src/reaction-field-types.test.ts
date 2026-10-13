@@ -6,6 +6,7 @@ import type {
   CompiledReactionPlan,
   ForceableReactionRegistration,
   ReactionHandle,
+  ReactionHandleConfigureOptions,
   ReactionHandleDebugState,
   ReactionRegistration,
   ScopeRef,
@@ -85,7 +86,7 @@ describe('kind: "reaction" type contract (Phase 2)', () => {
     expectTypeOf<ReactionRegistration>().not.toMatchTypeOf<ForceableReactionRegistration>();
   });
 
-  it('exposes ReactionHandle with dispatch/force/ready/pause/resume/dispose/getDebugState', () => {
+  it('exposes ReactionHandle with dispatch/force/ready/pause/resume/dispose/configure/getDebugState', () => {
     const handle: ReactionHandle = {
       dispatch() {
         return Promise.resolve({ ok: true } as ActionResult);
@@ -95,6 +96,7 @@ describe('kind: "reaction" type contract (Phase 2)', () => {
       pause() {},
       resume() {},
       dispose() {},
+      configure() {},
       getDebugState() {
         return {
           phase: 'ready',
@@ -123,7 +125,28 @@ describe('kind: "reaction" type contract (Phase 2)', () => {
     expectTypeOf<ReactionHandle>().toHaveProperty('pause').toEqualTypeOf<() => void>();
     expectTypeOf<ReactionHandle>().toHaveProperty('resume').toEqualTypeOf<() => void>();
     expectTypeOf<ReactionHandle>().toHaveProperty('dispose').toEqualTypeOf<() => void>();
+    expectTypeOf<ReactionHandle>().toHaveProperty('configure').toEqualTypeOf<
+      (options: ReactionHandleConfigureOptions) => void
+    >();
     expectTypeOf<ReactionHandle>().toHaveProperty('getDebugState').toEqualTypeOf<() => ReactionHandleDebugState>();
+  });
+
+  it('exposes ReactionHandleConfigureOptions with per-key optional channels', () => {
+    expectTypeOf<ReactionHandleConfigureOptions>().toHaveProperty('bindingsProvider').toEqualTypeOf<
+      (() => Record<string, unknown>) | undefined
+    >();
+    expectTypeOf<ReactionHandleConfigureOptions>().toHaveProperty('scopeOverride').toEqualTypeOf<
+      ScopeRef | undefined
+    >();
+    expectTypeOf<ReactionHandleConfigureOptions>().toHaveProperty('ignoreWritesTo').toEqualTypeOf<
+      readonly string[] | undefined
+    >();
+    expectTypeOf<ReactionHandleConfigureOptions>().toHaveProperty('loadCallbacks').toEqualTypeOf<
+      {
+        onStart?: () => void;
+        onSettle?: (result: ActionResult) => void;
+      } | undefined
+    >();
   });
 
   it('RendererComponentProps exposes reactions channel (non-optional, defaults to {})', () => {

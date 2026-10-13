@@ -112,6 +112,7 @@ export type {
 } from './workbench/index.js';
 
 export type { StructuralLoopBindings, StructuralLoopRenderContext } from './types/renderer-hooks.js';
+export type { ReactionHandleConfigureOptions } from './types/renderer-core.js';
 
 export { isAbortError, buildScopeChain } from './runtime-inspection.js';
 

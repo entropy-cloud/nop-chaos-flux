@@ -1,33 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { createRendererRegistry } from '@nop-chaos/flux-core';
-import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
-import { compileActions } from '@nop-chaos/flux-compiler';
-import { createRendererRuntime } from '../index.js';
-import { env, textRenderer } from './test-fixtures.js';
-
-const expressionCompiler = createExpressionCompiler(createFormulaCompiler());
-
-function makePlan(dependsOn: readonly string[], ignoreWritesTo?: readonly string[]) {
-  return {
-    action: compileActions(
-      { action: 'record' },
-      expressionCompiler,
-      {},
-    ),
-    dependsOn,
-    ...(ignoreWritesTo ? { ignoreWritesTo } : {}),
-  };
-}
-
-function setup() {
-  const runtime = createRendererRuntime({
-    registry: createRendererRegistry([textRenderer]),
-    env,
-    expressionCompiler,
-  });
-  const page = runtime.createPageRuntime({ user: { id: 'u1' }, pagination: { page: 1 } });
-  return { runtime, page };
-}
+import { makePlan, setup } from './renderer-reaction-handle-fixtures.js';
 
 describe('registerRendererReaction (Phase 4)', () => {
   it('returns a ReactionHandle with all methods', () => {
@@ -358,13 +330,12 @@ describe('registerRendererReaction (Phase 4)', () => {
     });
 
     // Register bindings provider (simulates CRUD registering its state provider)
-    const handleWithSetter = handle as import('@nop-chaos/flux-core').ReactionHandle & {
-      _setBindingsProvider?(fn: (() => Record<string, unknown>) | undefined): void;
-    };
-    handleWithSetter._setBindingsProvider?.(() => ({
-      pagination: { currentPage: 1, pageSize: 10 },
-      query: { keywords: 'test' },
-    }));
+    handle.configure({
+      bindingsProvider: () => ({
+        pagination: { currentPage: 1, pageSize: 10 },
+        query: { keywords: 'test' },
+      }),
+    });
 
     handle.ready();
 
@@ -404,12 +375,11 @@ describe('registerRendererReaction (Phase 4)', () => {
       },
     });
 
-    const handleWithSetter = handle as import('@nop-chaos/flux-core').ReactionHandle & {
-      _setBindingsProvider?(fn: (() => Record<string, unknown>) | undefined): void;
-    };
-    handleWithSetter._setBindingsProvider?.(() => ({
-      pagination: { currentPage: 1, pageSize: 10 },
-    }));
+    handle.configure({
+      bindingsProvider: () => ({
+        pagination: { currentPage: 1, pageSize: 10 },
+      }),
+    });
 
     // Explicit dispatch with its own bindings — should override provider
     await handle.dispatch({

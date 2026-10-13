@@ -24,6 +24,9 @@ function makeFakeHandle(overrides: Partial<ReactionHandle> = {}): ReactionHandle
     dispose: vi.fn(() => {
       calls.push('dispose');
     }),
+    configure: vi.fn(() => {
+      calls.push('configure');
+    }),
     getDebugState: vi.fn((): ReactionHandleDebugState => ({
       phase: 'ready',
       fireCount: 0,
@@ -174,5 +177,70 @@ describe('createReactionHandleProxy (Phase 5)', () => {
     // The reactions object is what gets passed as props.reactions.
     expect(reactions.loadAction).toBe(proxy);
     expect(typeof reactions.loadAction.dispatch).toBe('function');
+  });
+});
+
+describe('reaction-handle-proxy configure forwarding (CX-7 WA-react-005)', () => {
+  const fakeScopeOverride = { id: 'override-scope' } as never;
+  const fakeBindings = () => ({ pagination: { page: 1 } });
+  const fakeCallbacks = { onStart: () => undefined, onSettle: () => undefined };
+
+  it('applies pre-activation configure cache to the real handle on __activate (cached timing)', () => {
+    const proxy = createReactionHandleProxy();
+    proxy.configure({ bindingsProvider: fakeBindings });
+    proxy.configure({ scopeOverride: fakeScopeOverride });
+
+    const fakeHandle = makeFakeHandle();
+    proxy.__activate(() => fakeHandle);
+
+    expect(fakeHandle.configure).toHaveBeenCalledTimes(1);
+    expect(fakeHandle.configure).toHaveBeenCalledWith({
+      bindingsProvider: fakeBindings,
+      scopeOverride: fakeScopeOverride,
+    });
+  });
+
+  it('forwards post-activation configure live (live timing)', () => {
+    const proxy = createReactionHandleProxy();
+    const fakeHandle = makeFakeHandle();
+    proxy.__activate(() => fakeHandle);
+
+    proxy.configure({ ignoreWritesTo: ['owner.slice'] });
+
+    expect(fakeHandle.configure).toHaveBeenCalledTimes(1);
+    expect(fakeHandle.configure).toHaveBeenCalledWith({ ignoreWritesTo: ['owner.slice'] });
+  });
+
+  it('forwards present-undefined configure as a clear (clear timing)', () => {
+    const proxy = createReactionHandleProxy();
+    const fakeHandle = makeFakeHandle();
+    proxy.__activate(() => fakeHandle);
+
+    proxy.configure({ bindingsProvider: fakeBindings });
+    proxy.configure({ bindingsProvider: undefined });
+
+    expect(vi.mocked(fakeHandle.configure).mock.calls).toEqual([
+      [{ bindingsProvider: fakeBindings }],
+      [{ bindingsProvider: undefined }],
+    ]);
+  });
+
+  it('accumulates repeated partial configure calls into the full effective config (stacking = full equivalence)', () => {
+    const proxy = createReactionHandleProxy();
+    const fakeHandle = makeFakeHandle();
+
+    proxy.configure({ bindingsProvider: fakeBindings });
+    proxy.configure({ scopeOverride: fakeScopeOverride });
+    proxy.configure({ ignoreWritesTo: ['a'] });
+    proxy.configure({ loadCallbacks: fakeCallbacks });
+    proxy.__activate(() => fakeHandle);
+
+    expect(fakeHandle.configure).toHaveBeenCalledTimes(1);
+    expect(fakeHandle.configure).toHaveBeenCalledWith({
+      bindingsProvider: fakeBindings,
+      scopeOverride: fakeScopeOverride,
+      ignoreWritesTo: ['a'],
+      loadCallbacks: fakeCallbacks,
+    });
   });
 });

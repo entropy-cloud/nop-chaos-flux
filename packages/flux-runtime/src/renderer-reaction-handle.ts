@@ -12,6 +12,7 @@ import {
   type CompiledRuntimeValue,
   type ForceableReactionRegistration,
   type ReactionHandle,
+  type ReactionHandleConfigureOptions,
   type ReactionHandleDebugState,
   type RendererRuntime,
   type ScopeRef,
@@ -338,6 +339,20 @@ export function createRendererReactionHandle(input: {
       pendingChange = false;
       pendingChangedPaths = [];
     },
+    configure(options: ReactionHandleConfigureOptions): void {
+      if ('bindingsProvider' in options) {
+        bindingsProvider = options.bindingsProvider;
+      }
+      if ('scopeOverride' in options) {
+        scopeOverride = options.scopeOverride;
+      }
+      if ('ignoreWritesTo' in options) {
+        rendererIgnoreRoots = options.ignoreWritesTo;
+      }
+      if ('loadCallbacks' in options) {
+        loadCallbacks = options.loadCallbacks;
+      }
+    },
     getDebugState(): ReactionHandleDebugState {
       return {
         phase,
@@ -348,42 +363,6 @@ export function createRendererReactionHandle(input: {
         disposed: phase === 'disposed',
       };
     },
-  };
-
-  /**
-   * Internal extension point: the lazy proxy (flux-react) uses this to register
-   * a bindings provider from the renderer (e.g. CRUD's evaluationBindings).
-   * Not part of the public ReactionHandle interface.
-   */
-  (handle as ReactionHandle & { _setBindingsProvider?: (fn: (() => Record<string, unknown>) | undefined) => void })._setBindingsProvider = (fn) => {
-    bindingsProvider = fn;
-  };
-
-  /**
-   * Internal extension point: the renderer may override the dispatch scope
-   * (e.g. CRUD's per-instance CRUD scope projection) so includeScope extraction
-   * and expression resolution see the renderer's own virtual scope.
-   */
-  (handle as ReactionHandle & { __setScopeOverride?: (scope: ScopeRef | undefined) => void }).__setScopeOverride = (scope) => {
-    scopeOverride = scope;
-  };
-
-  /**
-   * Internal extension point: the renderer declares additional ignored write
-   * roots (merged with plan-level `ignoreWritesTo`) — the scope paths it owns
-   * itself, so its own state writes do not re-trigger the reaction.
-   */
-  (handle as ReactionHandle & { __setIgnoreWritesTo?: (paths: readonly string[] | undefined) => void }).__setIgnoreWritesTo = (paths) => {
-    rendererIgnoreRoots = paths;
-  };
-
-  /**
-   * Internal extension point: the renderer may register load lifecycle
-   * callbacks so reactive `force()` dispatches (whose results the underlying
-   * reaction registry does not surface) can still be captured.
-   */
-  (handle as ReactionHandle & { __setLoadCallbacks?: (callbacks: { onStart?: () => void; onSettle?: (result: ActionResult) => void } | undefined) => void }).__setLoadCallbacks = (callbacks) => {
-    loadCallbacks = callbacks;
   };
 
   return handle;

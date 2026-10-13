@@ -3,7 +3,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, render } from '@testing-library/react';
 import { createRendererRegistry, type ScopeRef } from '@nop-chaos/flux-core';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
-import { createRendererRuntime } from '@nop-chaos/flux-runtime';
+import { isHostProjectionScope, createRendererRuntime } from '@nop-chaos/flux-runtime';
 import { RuntimeContext, ScopeContext } from '../contexts.js';
 import { useHostScope } from './hooks.js';
 
@@ -202,13 +202,18 @@ describe('useHostScope', () => {
 
     const original = testState.capturedScope as ScopeRef & {
       dispose?: () => void;
-      __fdDisposed__?: boolean;
     };
     expect(original.readOwn()).toEqual({ host: { status: 'ready' } });
 
     original.dispose?.();
     expect(original.readOwn()).toEqual({});
-    expect(original.__fdDisposed__).toBe(true);
+    const disposedHostScope = isHostProjectionScope(original, {
+      path: '$.body[0]',
+      scopeLabel: 'host',
+    })
+      ? original
+      : undefined;
+    expect(disposedHostScope?.disposed).toBe(true);
 
     view.rerender(
       <RuntimeContext.Provider value={view.runtime}>
@@ -224,5 +229,102 @@ describe('useHostScope', () => {
     );
 
     expect(testState.capturedScope?.readOwn()).toEqual({ host: { status: 'ready' } });
+  });
+});
+
+describe('useHostScope guard clauses characterization (CX-7 WA-react-004)', () => {
+  function probeElement(harness: {
+    runtime: ReturnType<typeof createRendererRuntime>;
+    page: ReturnType<ReturnType<typeof createRendererRuntime>['createPageRuntime']>;
+  }, opts: { scopeData: Record<string, unknown>; parentScope?: ScopeRef }) {
+    return (
+      <RuntimeContext.Provider value={harness.runtime}>
+        <ScopeContext.Provider value={opts.parentScope ?? harness.page.scope}>
+          <HostScopeProbe
+            scopeData={opts.scopeData}
+            onCapture={(scope) => {
+              testState.capturedScope = scope;
+            }}
+          />
+        </ScopeContext.Provider>
+      </RuntimeContext.Provider>
+    );
+  }
+
+  function renderGuardProbe(initialData: Record<string, unknown>) {
+    const runtime = createRendererRuntime({
+      registry: createRendererRegistry([]),
+      env,
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
+    });
+    const page = runtime.createPageRuntime({ pageValue: 'root' });
+    const createSpy = vi.spyOn(runtime, 'createHostProjectionScope');
+    const harness = { runtime, page };
+    const view = render(probeElement(harness, { scopeData: initialData }));
+
+    return {
+      harness,
+      view,
+      createSpy,
+      rerender(opts: { scopeData: Record<string, unknown>; parentScope?: ScopeRef }) {
+        view.rerender(probeElement(harness, opts));
+      },
+    };
+  }
+
+  it('keeps the created host scope when origin, liveness, and parent all match (positive clause)', () => {
+    const probe = renderGuardProbe({ host: { status: 'ready' } });
+    const initial = testState.capturedScope;
+    expect(initial).toBeDefined();
+    expect(probe.createSpy).toHaveBeenCalledTimes(1);
+
+    probe.rerender({ scopeData: { host: { status: 'ready' } } });
+
+    expect(testState.capturedScope).toBe(initial);
+    expect(probe.createSpy).toHaveBeenCalledTimes(1);
+    probe.view.unmount();
+  });
+
+  it('recreates the host scope when the current one was disposed (disposed clause)', () => {
+    const probe = renderGuardProbe({ host: { status: 'ready' } });
+    const initial = testState.capturedScope as ScopeRef & { dispose?: () => void };
+    initial.dispose?.();
+
+    probe.rerender({ scopeData: { host: { status: 'ready' } } });
+
+    expect(testState.capturedScope).not.toBe(initial);
+    expect(probe.createSpy).toHaveBeenCalledTimes(2);
+    probe.view.unmount();
+  });
+
+  it('recreates the host scope when the parent scope changed (parent clause)', () => {
+    const probe = renderGuardProbe({ host: { status: 'ready' } });
+    const initial = testState.capturedScope;
+    const other = probe.harness.runtime.createPageRuntime({ pageValue: 'other' });
+
+    probe.rerender({ scopeData: { host: { status: 'ready' } }, parentScope: other.scope });
+
+    expect(testState.capturedScope).not.toBe(initial);
+    expect(testState.capturedScope?.parent).toBe(other.scope);
+    probe.view.unmount();
+  });
+
+  it('recreates the host scope when its host identity no longer matches (origin/prefix clause)', () => {
+    const probe = renderGuardProbe({ host: { status: 'ready' } });
+    const initial = testState.capturedScope as ScopeRef & {
+      dispose?: () => void;
+      id: string;
+      origin?: unknown;
+    };
+    // Refactor-neutral seam: the pre-contract guard reads the id prefix, the
+    // contract guard reads `origin`. Mutate both so this pin survives the swap.
+    initial.id = '$.elsewhere:stranger-host:foreign';
+    initial.origin = { path: '$.elsewhere', scopeLabel: 'stranger' };
+
+    probe.rerender({ scopeData: { host: { status: 'ready' } } });
+
+    expect(testState.capturedScope).not.toBe(initial);
+    expect(probe.createSpy).toHaveBeenCalledTimes(2);
+    probe.view.unmount();
   });
 });

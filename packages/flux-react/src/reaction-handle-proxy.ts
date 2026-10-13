@@ -1,6 +1,7 @@
 import type {
   ActionResult,
   ReactionHandle,
+  ReactionHandleConfigureOptions,
   ReactionHandleDebugState,
   ScopeRef,
 } from '@nop-chaos/flux-core';
@@ -28,6 +29,10 @@ interface PendingCall {
  *    `pendingCalls`. `dispatch()` returns a Promise that resolves when the
  *    call drains on the next `__activate`; `force`/`ready`/`pause`/`resume`
  *    are buffered silently.
+ *  - `configure()` follows the per-key present semantics of
+ *    `ReactionHandleConfigureOptions`: pre-activation the provided keys are
+ *    merged into a local cache and applied to the real handle on the next
+ *    `__activate`; post-activation each call is forwarded live.
  *  - `__dispose` resolves any buffered Promises to a canonical cancelled
  *    result (per ZZ Bug 1 fix), disposes the underlying realHandle, and
  *    clears the buffer. New calls after dispose are buffered for the next
@@ -36,36 +41,6 @@ interface PendingCall {
 export interface ReactionHandleProxy extends ReactionHandle {
   __activate(register: () => ReactionHandle): void;
   __dispose(): void;
-  /**
-   * Register a bindings provider from the renderer (e.g. CRUD's
-   * evaluationBindings). The provider is passed to the real handle on
-   * activation so that reactive/force triggers inject renderer context
-   * into the action's evaluationBindings.
-   */
-  __setBindingsProvider?(fn: (() => Record<string, unknown>) | undefined): void;
-  /**
-   * Override the dispatch scope (e.g. CRUD's per-instance scope projection)
-   * so includeScope extraction and expression resolution see the renderer's
-   * virtual scope. Forwarded to the real handle on activation.
-   */
-  __setScopeOverride?(scope: ScopeRef | undefined): void;
-  /**
-   * Declare additional ignored write roots (the renderer-owned scope paths)
-   * so the renderer's own state writes do not re-trigger the reaction.
-   * Forwarded to the real handle on activation.
-   */
-  __setIgnoreWritesTo?(paths: readonly string[] | undefined): void;
-  /**
-   * Register load lifecycle callbacks so reactive `force()` dispatch results
-   * (dropped by the underlying reaction registry) can be captured by the
-   * renderer. Forwarded to the real handle on activation.
-   */
-  __setLoadCallbacks?(
-    callbacks: {
-      onStart?: () => void;
-      onSettle?: (result: ActionResult) => void;
-    } | undefined,
-  ): void;
 }
 
 const DEFAULT_DEBUG_STATE: ReactionHandleDebugState = {
@@ -167,41 +142,51 @@ export function createReactionHandleProxy(): ReactionHandleProxy {
       // again afterwards without harm.
       proxy.__dispose();
     },
+    configure(options) {
+      // Per-key present semantics: a provided key merges into the pre-
+      // activation cache (including provided-as-undefined, which clears).
+      if ('bindingsProvider' in options) {
+        bindingsProvider = options.bindingsProvider;
+      }
+      if ('scopeOverride' in options) {
+        scopeOverride = options.scopeOverride;
+      }
+      if ('ignoreWritesTo' in options) {
+        ignoreWritesTo = options.ignoreWritesTo;
+      }
+      if ('loadCallbacks' in options) {
+        loadCallbacks = options.loadCallbacks;
+      }
+      if (realHandle) {
+        // Post-activation: live-forward verbatim — the real handle applies the
+        // same per-key present judgment.
+        realHandle.configure(options);
+      }
+    },
     getDebugState() {
       return realHandle ? realHandle.getDebugState() : { ...DEFAULT_DEBUG_STATE };
     },
     __activate(register) {
       realHandle = register();
-      // Propagate bindings provider to the real handle so reactive/force
-      // triggers inject renderer context into evaluationBindings.
-      if (bindingsProvider) {
-        const handleWithSetter = realHandle as ReactionHandle & {
-          _setBindingsProvider?(fn: (() => Record<string, unknown>) | undefined): void;
-        };
-        handleWithSetter._setBindingsProvider?.(bindingsProvider);
+      // Apply the pre-activation cache so reactive/force triggers see the
+      // renderer-configured channels. Only configured (non-undefined) channels
+      // are forwarded — the real handle's channels default to undefined, so a
+      // present-undefined cache entry is observably equivalent to skipping it.
+      const cachedConfig: ReactionHandleConfigureOptions = {};
+      if (bindingsProvider !== undefined) {
+        cachedConfig.bindingsProvider = bindingsProvider;
       }
-      if (scopeOverride) {
-        const handleWithSetter = realHandle as ReactionHandle & {
-          __setScopeOverride?(scope: ScopeRef | undefined): void;
-        };
-        handleWithSetter.__setScopeOverride?.(scopeOverride);
+      if (scopeOverride !== undefined) {
+        cachedConfig.scopeOverride = scopeOverride;
       }
-      if (ignoreWritesTo) {
-        const handleWithSetter = realHandle as ReactionHandle & {
-          __setIgnoreWritesTo?(paths: readonly string[] | undefined): void;
-        };
-        handleWithSetter.__setIgnoreWritesTo?.(ignoreWritesTo);
+      if (ignoreWritesTo !== undefined) {
+        cachedConfig.ignoreWritesTo = ignoreWritesTo;
       }
-      if (loadCallbacks) {
-        const handleWithSetter = realHandle as ReactionHandle & {
-          __setLoadCallbacks?(
-            callbacks: {
-              onStart?: () => void;
-              onSettle?: (result: ActionResult) => void;
-            } | undefined,
-          ): void;
-        };
-        handleWithSetter.__setLoadCallbacks?.(loadCallbacks);
+      if (loadCallbacks !== undefined) {
+        cachedConfig.loadCallbacks = loadCallbacks;
+      }
+      if (Object.keys(cachedConfig).length > 0) {
+        realHandle.configure(cachedConfig);
       }
       drainPending(realHandle);
     },
@@ -216,47 +201,6 @@ export function createReactionHandleProxy(): ReactionHandleProxy {
       pendingCalls = [];
       realHandle?.dispose();
       realHandle = undefined;
-    },
-    __setBindingsProvider(fn) {
-      bindingsProvider = fn;
-      if (realHandle) {
-        const handleWithSetter = realHandle as ReactionHandle & {
-          _setBindingsProvider?(provider: (() => Record<string, unknown>) | undefined): void;
-        };
-        handleWithSetter._setBindingsProvider?.(fn);
-      }
-    },
-    __setScopeOverride(scope) {
-      scopeOverride = scope;
-      if (realHandle) {
-        const handleWithSetter = realHandle as ReactionHandle & {
-          __setScopeOverride?(scope: ScopeRef | undefined): void;
-        };
-        handleWithSetter.__setScopeOverride?.(scope);
-      }
-    },
-    __setIgnoreWritesTo(paths) {
-      ignoreWritesTo = paths;
-      if (realHandle) {
-        const handleWithSetter = realHandle as ReactionHandle & {
-          __setIgnoreWritesTo?(paths: readonly string[] | undefined): void;
-        };
-        handleWithSetter.__setIgnoreWritesTo?.(paths);
-      }
-    },
-    __setLoadCallbacks(callbacks) {
-      loadCallbacks = callbacks;
-      if (realHandle) {
-        const handleWithSetter = realHandle as ReactionHandle & {
-          __setLoadCallbacks?(
-            callbacks: {
-              onStart?: () => void;
-              onSettle?: (result: ActionResult) => void;
-            } | undefined,
-          ): void;
-        };
-        handleWithSetter.__setLoadCallbacks?.(callbacks);
-      }
     },
   };
 

@@ -188,24 +188,13 @@ export function useCrudLoadAction(args: {
     // synchronous scope-change notification. Also refreshes the CRUD scope
     // projection child scope so every dispatch (imperative + reactive) sees
     // current pagination/query/sort/filters/selection data.
-    const proxyHandle = loadReaction as ReactionHandle & {
-      __setBindingsProvider?(fn: (() => Record<string, unknown>) | undefined): void;
-      __setScopeOverride?(scope: ScopeRef | undefined): void;
-      __setIgnoreWritesTo?(paths: readonly string[] | undefined): void;
-      __setLoadCallbacks?(
-        callbacks: {
-          onStart?: () => void;
-          onSettle?: (result: ActionResult) => void;
-        } | undefined,
-      ): void;
-    };
     if (!crudScopeRef.current) {
       crudScopeRef.current = helpers.createScope({}, {
         pathSuffix: 'crud-load',
         scopeKey: `${(scope ?? nodeScope)?.id ?? 'crud'}:load`,
       });
     }
-    proxyHandle.__setScopeOverride?.(crudScopeRef.current);
+    loadReaction.configure({ scopeOverride: crudScopeRef.current });
 
     // Declare the scope paths this CRUD instance owns itself: its owner state
     // slice, the internal load-revision counter, and any configured
@@ -217,8 +206,8 @@ export function useCrudLoadAction(args: {
     // scope-authored `paginationStatePath`) must be declared too, otherwise a
     // CRUD-driven write fires BOTH the reactive force() dispatch and the
     // imperative load effect dispatch — the double-fetch defect (2-8).
-    proxyHandle.__setIgnoreWritesTo?.(
-      Array.from(
+    loadReaction.configure({
+      ignoreWritesTo: Array.from(
         new Set([
           ownerStatePath,
           '__crudLoadRevision',
@@ -231,108 +220,114 @@ export function useCrudLoadAction(args: {
           ...(dataStatePath ? [dataStatePath] : []),
         ]),
       ),
-    );
-    proxyHandle.__setBindingsProvider?.(() => {
-      const activeScope = scope ?? nodeScope;
-      const snapshot = activeScope?.readVisible() ?? {};
-      const bindings = createCrudEvaluationBindings({
-        pagination: normalizePagination(
-          getIn(snapshot, paginationStatePath),
-          pagination.pageSize,
-        ),
-        query: (getIn(snapshot, queryStatePath) as Record<string, unknown>) ?? {},
-        sort: (getIn(snapshot, sortStatePath) as CrudSortState) ?? {},
-        filters: (getIn(snapshot, filterStatePath) as CrudFilterState) ?? {},
-        selection: toStringArray(getIn(snapshot, selectionStatePath)),
-        pageField,
-        pageSizeField,
-      });
-      lastBindingsRef.current = bindings;
-      crudScopeRef.current?.replace?.({
-        pagination: bindings.pagination,
-        query: bindings.query,
-        sort: bindings.sort,
-        filters: bindings.filters,
-        selection: bindings.selection,
-      });
-      return bindings;
     });
-    proxyHandle.__setScopeOverride?.(crudScopeRef.current);
-
-    proxyHandle.__setLoadCallbacks?.({
-      onStart: () => {
-        setLoading(true);
-        setError(undefined);
+    loadReaction.configure({
+      bindingsProvider: () => {
+        const activeScope = scope ?? nodeScope;
+        const snapshot = activeScope?.readVisible() ?? {};
+        const bindings = createCrudEvaluationBindings({
+          pagination: normalizePagination(
+            getIn(snapshot, paginationStatePath),
+            pagination.pageSize,
+          ),
+          query: (getIn(snapshot, queryStatePath) as Record<string, unknown>) ?? {},
+          sort: (getIn(snapshot, sortStatePath) as CrudSortState) ?? {},
+          filters: (getIn(snapshot, filterStatePath) as CrudFilterState) ?? {},
+          selection: toStringArray(getIn(snapshot, selectionStatePath)),
+          pageField,
+          pageSizeField,
+        });
+        lastBindingsRef.current = bindings;
+        crudScopeRef.current?.replace?.({
+          pagination: bindings.pagination,
+          query: bindings.query,
+          sort: bindings.sort,
+          filters: bindings.filters,
+          selection: bindings.selection,
+        });
+        return bindings;
       },
-      onSettle: (result) => {
-        if (result.cancelled) {
-          // A newer dispatch owns loading state; do not touch it.
-          settleLoadMore(result);
-          return;
-        }
-        if (!result.ok) {
-          const err =
-            result.error instanceof Error
-              ? result.error
-              : typeof result.error === 'string'
-                ? new Error(result.error)
-                : new Error('loadAction failed');
-          reportError(err, lastBindingsRef.current);
+    });
+    loadReaction.configure({ scopeOverride: crudScopeRef.current });
+
+    loadReaction.configure({
+      loadCallbacks: {
+        onStart: () => {
+          setLoading(true);
+          setError(undefined);
+        },
+        onSettle: (result) => {
+          if (result.cancelled) {
+            // A newer dispatch owns loading state; do not touch it.
+            settleLoadMore(result);
+            return;
+          }
+          if (!result.ok) {
+            const err =
+              result.error instanceof Error
+                ? result.error
+                : typeof result.error === 'string'
+                  ? new Error(result.error)
+                  : new Error('loadAction failed');
+            reportError(err, lastBindingsRef.current);
+            setLoading(false);
+            settleLoadMore(result);
+            return;
+          }
+
+          const normalized = normalizeCrudSourceValue(result.data);
+          // totalField: custom response field name for the total count (amis:
+          // totalField). Overrides the built-in total/count keys when present.
+          if (totalField) {
+            const rawRecord = toRecord(result.data);
+            const customTotal = rawRecord[totalField];
+            if (typeof customTotal === 'number' && Number.isFinite(customTotal)) {
+              normalized.total = customTotal;
+            }
+          }
+          // Infinite+loadAction accumulate contract (design.md): each page load
+          // appends its rows via concat — the table expresses the accumulated
+          // count via pageSize growth (`currentPage * pageSize`). Strictly
+          // forward page numbers append; anything else (reload, query change,
+          // server correction) replaces. No key dedup: server offset pagination
+          // guarantees disjoint pages.
+          const page = pagination.currentPage;
+          if (accumulateRows && page > lastSettledPageRef.current) {
+            setRows((previousRows) => [...previousRows, ...normalized.rows]);
+          } else {
+            setRows(normalized.rows);
+          }
+          lastSettledPageRef.current = page;
+          setTotal(normalized.total);
+
+          if (normalized.serverPagination && (scope ?? nodeScope)) {
+            const correctedPage = normalized.serverPagination.currentPage ?? pagination.currentPage;
+            const correctedPageSize = normalized.serverPagination.pageSize ?? pagination.pageSize;
+            (scope ?? nodeScope)!.update(paginationStatePath, {
+              currentPage: correctedPage,
+              pageSize: correctedPageSize,
+            });
+          }
+
+          if (loadAllData) {
+            loadedAllRef.current = true;
+          }
+
           setLoading(false);
           settleLoadMore(result);
-          return;
-        }
-
-        const normalized = normalizeCrudSourceValue(result.data);
-        // totalField: custom response field name for the total count (amis:
-        // totalField). Overrides the built-in total/count keys when present.
-        if (totalField) {
-          const rawRecord = toRecord(result.data);
-          const customTotal = rawRecord[totalField];
-          if (typeof customTotal === 'number' && Number.isFinite(customTotal)) {
-            normalized.total = customTotal;
-          }
-        }
-        // Infinite+loadAction accumulate contract (design.md): each page load
-        // appends its rows via concat — the table expresses the accumulated
-        // count via pageSize growth (`currentPage * pageSize`). Strictly
-        // forward page numbers append; anything else (reload, query change,
-        // server correction) replaces. No key dedup: server offset pagination
-        // guarantees disjoint pages.
-        const page = pagination.currentPage;
-        if (accumulateRows && page > lastSettledPageRef.current) {
-          setRows((previousRows) => [...previousRows, ...normalized.rows]);
-        } else {
-          setRows(normalized.rows);
-        }
-        lastSettledPageRef.current = page;
-        setTotal(normalized.total);
-
-        if (normalized.serverPagination && (scope ?? nodeScope)) {
-          const correctedPage = normalized.serverPagination.currentPage ?? pagination.currentPage;
-          const correctedPageSize = normalized.serverPagination.pageSize ?? pagination.pageSize;
-          (scope ?? nodeScope)!.update(paginationStatePath, {
-            currentPage: correctedPage,
-            pageSize: correctedPageSize,
-          });
-        }
-
-        if (loadAllData) {
-          loadedAllRef.current = true;
-        }
-
-        setLoading(false);
-        settleLoadMore(result);
+        },
       },
     });
 
     loadReaction.ready();
 
     return () => {
-      proxyHandle.__setBindingsProvider?.(undefined);
-      proxyHandle.__setScopeOverride?.(undefined);
-      proxyHandle.__setIgnoreWritesTo?.(undefined);
-      proxyHandle.__setLoadCallbacks?.(undefined);
+      loadReaction.configure({
+        scopeOverride: undefined,
+        ignoreWritesTo: undefined,
+        bindingsProvider: undefined,
+        loadCallbacks: undefined,
+      });
     };
   }, [enabled, loadReaction, scope, nodeScope, ownerStatePath, statusPath, dataStatePath, totalField, paginationStatePath, queryStatePath, sortStatePath, filterStatePath, selectionStatePath, pagination.pageSize, pageField, pageSizeField, loadAllData, accumulateRows, pagination, reportError, helpers, settleLoadMore]);
 

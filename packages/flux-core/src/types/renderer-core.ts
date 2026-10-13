@@ -34,6 +34,7 @@ import type {
   RenderRegionHandle,
 } from './render-fragment-types.js';
 import type { RendererPlugin } from './renderer-plugin.js';
+import type { ReactionHandle } from './renderer-reaction-handle-types.js';
 import type {
   RendererDefinitionShape,
 } from './renderer-definition-types.js';
@@ -178,80 +179,12 @@ export type RendererEventHandler = (
 ) => Promise<ActionResult>;
 
 /**
- * Debug snapshot returned by `ReactionHandle.getDebugState()`. Diagnostic only;
- * external consumers should treat `phase` as `'ready' | 'paused'` even though
- * the runtime distinguishes initial-paused vs explicit-paused internally.
+ * Reaction-handle contract types (`ReactionHandle`,
+ * `ReactionHandleConfigureOptions`, `ReactionHandleDebugState`) live in their
+ * own module; re-exported here so the `renderer-core` surface stays the single
+ * import point for renderer contract types.
  */
-export interface ReactionHandleDebugState {
-  phase: 'initial-paused' | 'ready' | 'explicit-paused' | 'disposed';
-  fireCount: number;
-  pauseCount: number;
-  pendingChange: boolean;
-  pendingChangedPaths: readonly string[];
-  disposed: boolean;
-}
-
-/**
- * Imperative + reactive handle exposed to renderers for a `kind: 'reaction'`
- * field. The runtime wrapper (flux-runtime `renderer-reaction-handle.ts`)
- * subscribes to scope changes on `dependsOn` roots and uses `force()` to fire;
- * renderers own initial-fire timing via `ready()` and may temporarily suspend
- * firing via `pause()` / `resume()`.
- *
- * After dispose, `dispatch` resolves to a canonical cancelled result and
- * `force`/`ready`/`pause`/`resume` are silent no-ops; `getDebugState()` keeps
- * returning a snapshot with `phase: 'disposed'`.
- *
- * @see docs/plans/2026-07-07-loadAction-reaction-kind-plan.md
- */
-export interface ReactionHandle {
-  /**
-   * Dispatch the underlying action program imperatively. Renderers use this for
-   * renderer-internal triggers (page change, sort change, etc.). The wrapper
-   * injects `evaluationBindings` and per-fire `AbortController` before reaching
-   * the action dispatcher. Returns the full `ActionResult` so renderers can
-   * consume `data`, `error`, etc.
-   */
-  dispatch(ctx?: {
-    signal?: AbortSignal;
-    evaluationBindings?: Record<string, unknown>;
-    /**
-     * Optional dispatch scope override. When omitted, dispatches run against
-     * the reaction's registration scope (or the renderer-declared scope
-     * override, if set). Renderers may pass a child scope projection so the
-     * action's request layer resolves renderer-scoped variables.
-     */
-    scope?: ScopeRef;
-  }): Promise<ActionResult>;
-  /**
-   * Force the reaction to fire as if a scope change touched `paths` (or all
-   * declared dependency roots when omitted). No-op when paused or disposed.
-   */
-  force(paths?: readonly string[]): void;
-  /**
-   * Transition from the initial paused state to ready. Required for the
-   * reaction to fire on initial mount. No-op after the first call.
-   */
-  ready(): void;
-  /**
-   * Pause firing. Nested pauses are tracked via a counter; only the matching
-   * number of `resume()` calls resume firing. Pending changes accumulated
-   * during pause are flushed once on the final resume.
-   */
-  pause(): void;
-  /** Resume firing (counter-based). See `pause()`. */
-  resume(): void;
-  /**
-   * Dispose the handle and underlying registration. Aborts any in-flight
-   * dispatch (per-fire AbortController chain), unsubscribes from scope changes,
-   * and transitions the handle to `phase: 'disposed'`. After dispose, all
-   * methods become no-ops and `dispatch()` resolves to a canonical cancelled
-   * result. Idempotent.
-   */
-  dispose(): void;
-  /** Snapshot for debug tooling. */
-  getDebugState(): ReactionHandleDebugState;
-}
+export * from './renderer-reaction-handle-types.js';
 
 export interface RendererComponentProps<
   S extends BaseSchema = BaseSchema,
