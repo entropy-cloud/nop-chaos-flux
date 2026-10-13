@@ -23,6 +23,7 @@ import {
   collectRuntimeDependencies,
   writeDataToScope,
 } from './data-source-runtime-utils.js';
+import { isUnpopulatedScopeError } from '../unpopulated-scope-error.js';
 
 export function createFormulaDataSourceController(input: {
   runtime: RendererRuntime;
@@ -50,21 +51,6 @@ export function createFormulaDataSourceController(input: {
   let stopped = false;
   let state = createInitialDataSourceState(input.initialData);
   const asyncOwnerId = input.ownerId;
-
-  /**
-   * Matches "member access on a scope variable that has not been published
-   * yet" — the same sentinel tolerated by the stopWhen evaluation precedent
-   * (api-data-source-controller-state). The wrapped error comes from the
-   * formula compiler (`Expression evaluation failed for: …`, cause = the
-   * evaluator's null/undefined member access error).
-   */
-  function isUnpopulatedScopeError(error: unknown): boolean {
-    return (
-      error instanceof Error &&
-      error.cause instanceof Error &&
-      error.cause.message === 'Cannot access member of null or undefined'
-    );
-  }
 
   function reportPublishFailure(error: unknown) {
     reportRuntimeHostIssue({

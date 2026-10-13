@@ -11,6 +11,7 @@ import type {
   ScopeRef,
 } from '@nop-chaos/flux-core';
 import { shallowEqual } from '@nop-chaos/flux-core';
+import { isUnpopulatedScopeError } from './unpopulated-scope-error.js';
 
 function normalizeBooleanLike(value: unknown): boolean | undefined {
   return typeof value === 'boolean' ? value : undefined;
@@ -80,22 +81,6 @@ const WILDCARD_DEPENDENCIES: ScopeDependencySet = {
  * satisfied across pending re-resolutions, avoiding child re-render churn.
  */
 const EMPTY_NODE_PROPS: Record<string, unknown> = Object.freeze({});
-
-/**
- * Matches "member access on a scope variable that has not been published
- * yet" — the same sentinel tolerated by the stopWhen evaluation precedent
- * (api-data-source-controller-state). The wrapped error comes from the
- * formula compiler (`Expression evaluation failed for: …` /
- * `Template evaluation failed for: …`, cause = the evaluator's null/undefined
- * member access error).
- */
-function isUnpopulatedScopeError(error: unknown): boolean {
-  return (
-    error instanceof Error &&
-    error.cause instanceof Error &&
-    error.cause.message === 'Cannot access member of null or undefined'
-  );
-}
 
 function evaluateCompiledValue<T>(
   compiler: ExpressionCompiler,

@@ -57,6 +57,21 @@ function toPropertyKey(value: unknown): string | number | symbol {
 function createExpressionError(message: string): Error {
   return new Error(message);
 }
+
+/**
+ * Thrown by the evaluator for member access on a null/undefined base with a
+ * non-optional chain. This is a cross-package discrimination contract: the
+ * runtime layer tolerates it (wrapped once by the formula compiler) as
+ * "scope variable not published yet". The message is part of the public
+ * surface and must stay verbatim.
+ */
+export class UnpopulatedScopeAccessError extends Error {
+  constructor() {
+    super('Cannot access member of null or undefined');
+    this.name = 'UnpopulatedScopeAccessError';
+  }
+}
+
 function normalizeLogicalName(name: string): string {
   return name === 'and' ? '&&' : name === 'or' ? '||' : name;
 }
@@ -359,7 +374,7 @@ export function evaluateAst(ast: FormulaAstNode, options: EvaluateOptions): unkn
       if (node.optional) {
         return { value: undefined, receiver: undefined, name: undefined };
       }
-      throw createExpressionError('Cannot access member of null or undefined');
+      throw new UnpopulatedScopeAccessError();
     }
 
     const propertyValue = node.computed

@@ -1,12 +1,13 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { RendererRuntime, ScopeRef, ScopeDependencySet } from '@nop-chaos/flux-core';
+import { UnpopulatedScopeAccessError } from '@nop-chaos/flux-formula';
 import { createFormulaDataSourceController } from '../async-data/formula-data-source-controller.js';
 
-const SENTINEL = 'Cannot access member of null or undefined';
-
 function unpublishedScopeError(source: string): Error {
+  // Root cause is the evaluator's discriminated class (582 CX-4); the formula
+  // compiler adds the single "Expression evaluation failed for:" wrap.
   return new Error(`Expression evaluation failed for: ${source}`, {
-    cause: new Error(SENTINEL),
+    cause: new UnpopulatedScopeAccessError(),
   });
 }
 

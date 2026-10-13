@@ -134,6 +134,7 @@ Current implementation detail:
 - `flux-formula` now provides the workspace expression parser, AST evaluator, template compiler, and function/filter registry directly inside `@nop-chaos/flux-formula`.
 - Other packages still depend only on Flux contracts such as `FormulaCompiler`, `ExpressionCompiler`, and `EvalContext`; they do not depend on parser/evaluator internals.
 - Expression compile/evaluate failures are surfaced as thrown errors rather than being silently swallowed, so runtime/tests must use nullable-safe access when async data may not exist yet.
+- The evaluator's null/undefined member-access failure on a non-optional chain is a machine-readable cross-package contract: `@nop-chaos/flux-formula` throws the exported `UnpopulatedScopeAccessError` (message kept verbatim as `Cannot access member of null or undefined`), the formula compiler wraps it once, and the runtime layer discriminates it through the single-layer `error.cause instanceof UnpopulatedScopeAccessError` predicate to tolerate not-yet-published scope variables (2026-10-13, plan 582 CX-4).
 - When expression or template compilation falls back to a static value through compiler diagnostics, the diagnostic surface keeps the original failure detail in `cause` instead of flattening the error object into an opaque string.
 - Schema validation diagnostics for union-shaped value contracts keep per-branch failure detail in the emitted message so authoring surfaces can explain why each allowed option failed instead of only repeating the top-level union summary.
 

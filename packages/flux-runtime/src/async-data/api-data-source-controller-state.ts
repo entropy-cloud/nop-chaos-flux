@@ -12,6 +12,7 @@ import {
 } from './data-source-state.js';
 import { writeDataToScope } from './data-source-runtime-utils.js';
 import { toStopConditionErrorState } from './api-data-source-controller-helpers.js';
+import { isUnpopulatedScopeError } from '../unpopulated-scope-error.js';
 import type {
   ApiDataSourceControllerMutableState,
   CreateApiDataSourceControllerInput,
@@ -139,11 +140,7 @@ export function evaluateControllerStopCondition(
     }
     return input.runtime.evaluateCompiled<boolean>(input.stopWhen, input.scope) ?? false;
   } catch (error) {
-    if (
-      error instanceof Error &&
-      error.cause instanceof Error &&
-      error.cause.message === 'Cannot access member of null or undefined'
-    ) {
+    if (isUnpopulatedScopeError(error)) {
       if ((globalThis as { process?: { env?: { NODE_ENV?: string } } }).process?.env?.NODE_ENV !== 'production') {
         console.warn(
           `[stopWhen] null-member access during evaluation (scope may not yet have data): ${String(input.stopWhen)}`,

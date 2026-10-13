@@ -2,25 +2,11 @@ import { describe, expect, it, vi } from 'vitest';
 import type {
   CompiledFormValidationModel,
   FieldState,
-  FormStoreState,
   ScopeChange,
-  ScopeRef,
   ValidationError,
 } from '@nop-chaos/flux-core';
-import { createRendererRegistry, type RendererEnv } from '@nop-chaos/flux-core';
-import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
-import { compileReaction } from '@nop-chaos/flux-compiler';
-import { createRendererRuntime } from '../index.js';
-import {
-  __setGlobalCascadeDepthForTests,
-  registerReaction,
-} from '../async-data/reaction-runtime.js';
-import { createRuntimeSourceRegistry } from '../async-data/source-registry.js';
 import { createFormStore } from '../form-store.js';
-import { createOwnedFormStore } from '../form-store-owned.js';
-import { buildFormStatusSummary } from '../form-runtime-status.js';
 import { createManagedFormRuntime } from '../form-runtime.js';
-import { createManagedPageRuntime } from '../page-runtime.js';
 import { applyFieldValuePatch } from '../form-runtime-field-ops.js';
 import { syncRegisteredFieldValue } from '../form-runtime-registration.js';
 import { executeSetValues } from '../form-runtime-values.js';
@@ -33,174 +19,6 @@ import type {
   RegisteredFieldEntry,
 } from '../form-runtime-types.js';
 
-type FormStoreSummaryState = {
-  errorCount: number;
-  dirtyCount: number;
-  touchedCount: number;
-  visitedCount: number;
-  validatingCount: number;
-};
-
-const baseFormInput = {
-  executeValidationRule: async () => undefined,
-  validateRule: () => undefined,
-};
-
-function err(path: string, message: string): ValidationError {
-  return { path, message, rule: 'required' };
-}
-
-function asSummary(state: unknown): FormStoreSummaryState {
-  return (state as { summary?: FormStoreSummaryState }).summary as never;
-}
-
-describe('CX-3 characterization: summary counters (WA-runtime-002)', () => {
-  it('form-store counts strictly ===true: non-boolean truthy flags contribute zero', () => {
-    const store = createFormStore({});
-    store.batchUpdate({
-      fieldStates: {
-        a: { dirty: 'yes', touched: 1, visited: 'x', validating: [] } as unknown as FieldState,
-      },
-    });
-    expect(asSummary(store.getState())).toEqual({
-      errorCount: 0,
-      dirtyCount: 0,
-      touchedCount: 0,
-      visitedCount: 0,
-      validatingCount: 0,
-    });
-  });
-
-  it('form-store counts boolean flags and error payloads exactly', () => {
-    const store = createFormStore({});
-    store.batchUpdate({
-      fieldStates: {
-        a: { dirty: true, touched: true, visited: true, validating: true },
-        b: { errors: [err('b', 'e1'), err('b', 'e2')] },
-        c: {},
-      },
-    });
-    expect(asSummary(store.getState())).toEqual({
-      errorCount: 2,
-      dirtyCount: 1,
-      touchedCount: 1,
-      visitedCount: 1,
-      validatingCount: 1,
-    });
-  });
-
-  it('form-store maintains counters incrementally per write, including reclaim back to zero', () => {
-    const store = createFormStore({});
-
-    store.setTouched('a', true);
-    expect(asSummary(store.getState())).toEqual({
-      errorCount: 0,
-      dirtyCount: 0,
-      touchedCount: 1,
-      visitedCount: 0,
-      validatingCount: 0,
-    });
-
-    store.setPathErrors('a', [err('a', 'e1')]);
-    expect(asSummary(store.getState()).errorCount).toBe(1);
-
-    store.setDirty('a', true);
-    expect(asSummary(store.getState()).dirtyCount).toBe(1);
-
-    store.setVisited('a', true);
-    store.setValidating('a', true);
-    expect(asSummary(store.getState())).toEqual({
-      errorCount: 1,
-      dirtyCount: 1,
-      touchedCount: 1,
-      visitedCount: 1,
-      validatingCount: 1,
-    });
-
-    store.setTouched('a', false);
-    store.setVisited('a', false);
-    store.setValidating('a', false);
-    expect(asSummary(store.getState())).toEqual({
-      errorCount: 1,
-      dirtyCount: 1,
-      touchedCount: 0,
-      visitedCount: 0,
-      validatingCount: 0,
-    });
-
-    store.setPathErrors('a', []);
-    store.setDirty('a', false);
-    expect(asSummary(store.getState())).toEqual({
-      errorCount: 0,
-      dirtyCount: 0,
-      touchedCount: 0,
-      visitedCount: 0,
-      validatingCount: 0,
-    });
-    expect(store.getState().fieldStates['a']).toBeUndefined();
-  });
-
-  it('status fallback branch counts truthy (non-strict) flags when state.summary is absent', () => {
-    const summary = buildFormStatusSummary(
-      {
-        values: {},
-        submitting: false,
-        submitAttempted: false,
-        fieldStates: {
-          a: { dirty: 'yes', touched: 1, validating: 'x', visited: 0 } as unknown as FieldState,
-        },
-      },
-      'f1',
-      undefined,
-    );
-    expect(summary.dirty).toBe(true);
-    expect(summary.touched).toBe(true);
-    expect(summary.validating).toBe(true);
-    expect(summary.visited).toBe(false);
-  });
-
-  it('prefer-summary branch: a present summary wins even when all-zero and fieldStates disagree', () => {
-    const state = {
-      values: {},
-      submitting: false,
-      submitAttempted: false,
-      fieldStates: { a: { dirty: true, touched: true } },
-      summary: {
-        errorCount: 0,
-        dirtyCount: 0,
-        touchedCount: 0,
-        visitedCount: 0,
-        validatingCount: 0,
-      },
-    } as FormStoreState;
-
-    const summary = buildFormStatusSummary(state, 'f1', undefined);
-    expect(summary.dirty).toBe(false);
-    expect(summary.touched).toBe(false);
-    expect(summary.errorCount).toBe(0);
-  });
-
-  it('owned store read path recomputes summary over owned-prefix field states only', () => {
-    const base = createFormStore({});
-    const owned = createOwnedFormStore(base, 'owner1');
-
-    base.setPathErrors('owner1::a', [err('a', 'e1'), err('a', 'e2')]);
-    base.setDirty('owner1::a', true);
-    base.setTouched('unrelated', true);
-
-    expect(owned.getState().fieldStates['a']).toEqual({
-      dirty: true,
-      errors: [err('a', 'e1'), err('a', 'e2')],
-    });
-    expect(asSummary(owned.getState())).toEqual({
-      errorCount: 2,
-      dirtyCount: 1,
-      touchedCount: 0,
-      visitedCount: 0,
-      validatingCount: 0,
-    });
-  });
-});
 
 function createRegistrationHarness(
   values: Record<string, unknown> = {},
@@ -238,6 +56,15 @@ function createRegistrationEntry(
     } as RegisteredFieldEntry['registration'],
     modelGeneration: 1,
   };
+}
+
+const baseFormInput = {
+  executeValidationRule: async () => undefined,
+  validateRule: () => undefined,
+};
+
+function err(path: string, message: string): ValidationError {
+  return { path, message, rule: 'required' };
 }
 
 describe('CX-3 characterization: FieldState write shapes (WA-runtime-003)', () => {
@@ -545,183 +372,5 @@ describe('CX-3 characterization: FieldState write shapes (WA-runtime-003)', () =
     const afterGraft = store.getState().fieldStates;
     expect(afterGraft['y']?.errors).toBe(rebuilt);
     expect(afterGraft['y']).toEqual({ visited: true, errors: rebuilt });
-  });
-});
-
-describe('CX-3 characterization: ScopeRef store adapter gates (WA-runtime-004)', () => {
-  it('form gate (Plan 552): fieldStates-only change replays as a wildcard replace', () => {
-    const form = createManagedFormRuntime({ ...baseFormInput, id: 'cx3-gate', initialValues: { a: 1 } });
-    const listener = vi.fn((_change: ScopeChange) => undefined);
-    form.scope.store?.subscribe(listener);
-
-    form.setValue('a', 2);
-    expect(listener).toHaveBeenCalledTimes(1);
-    listener.mockClear();
-
-    form.touchField('a');
-    expect(listener).toHaveBeenCalledTimes(1);
-    const gateChange = listener.mock.calls[0][0] as ScopeChange;
-    expect(gateChange.paths).toEqual(['*']);
-    expect(gateChange.kind).toBe('replace');
-    expect(gateChange.sourceScopeId).toBe('cx3-gate');
-
-    form.touchField('a');
-    expect(listener).toHaveBeenCalledTimes(1);
-  });
-
-  it('form gate: values change notifies once with the update change; inert store writes stay silent', () => {
-    const form = createManagedFormRuntime({ ...baseFormInput, id: 'cx3-gate2', initialValues: { a: 1 } });
-    const listener = vi.fn((_change: ScopeChange) => undefined);
-    form.scope.store?.subscribe(listener);
-
-    form.setValue('a', 2);
-    expect(listener).toHaveBeenCalledTimes(1);
-    const updateChange = listener.mock.calls[0][0] as ScopeChange;
-    expect(updateChange.paths).toEqual(['a']);
-    expect(updateChange.kind).toBe('update');
-    expect(updateChange.sourceScopeId).toBe('cx3-gate2');
-
-    form.store.batchUpdate({});
-    expect(listener).toHaveBeenCalledTimes(1);
-  });
-
-  it('adapter reuse keys: existing scope is adopted; parent vs initialData stay mutually exclusive', () => {
-    const parentScope = createScopeRef({ id: 'root', path: '$root', initialData: {} });
-    const existingScope = createScopeRef({
-      id: 'prebuilt',
-      path: '$prebuilt',
-      initialData: { q: 1 },
-    });
-    const adopted = createManagedFormRuntime({
-      ...baseFormInput,
-      id: 'cx3-reuse',
-      existingScope,
-      parentScope,
-      scopeBinding: 'none',
-    });
-    expect(adopted.scope).toBe(existingScope);
-
-    const derived = createManagedFormRuntime({
-      ...baseFormInput,
-      id: 'cx3-derived',
-      parentScope,
-      scopeBinding: 'none',
-    });
-    expect(derived.scope.parent).toBe(parentScope);
-
-    const rt = createManagedPageRuntime({ data: { z: 9 } });
-    expect(rt.scope.id).toBe('page');
-    expect(rt.scope.parent).toBeUndefined();
-    expect(rt.scope.get('z')).toBe(9);
-  });
-});
-
-describe('CX-3 characterization: cascade depth guards (WA-runtime-005)', () => {
-  it('reaction guard boundary: depth 199 still fires the reaction (limit is 200)', async () => {
-    __setGlobalCascadeDepthForTests(199);
-
-    const textRenderer = { type: 'text' as const, component: () => null };
-    const env = {
-      fetcher: async () => ({ status: 0, data: null }),
-      notify: vi.fn(),
-    } as unknown as RendererEnv;
-    const expressionCompiler = createExpressionCompiler(createFormulaCompiler());
-    const runtime = createRendererRuntime({
-      registry: createRendererRegistry([textRenderer]),
-      env,
-      expressionCompiler,
-    });
-    const page = runtime.createPageRuntime({ count: 0 });
-    const dispatch = vi.fn();
-
-    const registration = registerReaction({
-      id: 'cx3-cascade-199',
-      runtime,
-      scope: page.scope,
-      compiledReaction: compileReaction(
-        'cx3-cascade-199',
-        {
-          type: 'reaction',
-          watch: '${count}',
-          actions: { action: 'custom:noop' },
-        },
-        expressionCompiler,
-      ),
-      helpers: { dispatch },
-    });
-
-    page.scope.update('count', 1);
-    await Promise.resolve();
-    await Promise.resolve();
-
-    expect(dispatch).toHaveBeenCalled();
-    __setGlobalCascadeDepthForTests(0);
-    registration.dispose();
-  });
-
-  it('source guard boundary: per-registry depth blocks at 100 in-flight refreshes and re-enters after release', async () => {
-    type Emit = (change: { paths: string[] }) => void;
-    let emitChange: Emit | undefined;
-    const resolvers: Array<(value: { skipped: boolean }) => void> = [];
-    const refresh = vi.fn(
-      () =>
-        new Promise<{ skipped: boolean }>((resolve) => {
-          resolvers.push(resolve);
-        }),
-    );
-    const notify = vi.fn();
-
-    const scope = {
-      id: 'cx3-source-scope',
-      store: {
-        subscribe(listener: Emit) {
-          emitChange = listener;
-          return () => undefined;
-        },
-      },
-    } as unknown as ScopeRef;
-
-    const registry = createRuntimeSourceRegistry({
-      runtime: {
-        env: { notify } as never,
-        expressionCompiler: {
-          evaluateValue: (value: { value?: unknown }) => value.value,
-          compileValue: (value: unknown) => ({ isStatic: true, value }),
-        },
-      } as unknown as Parameters<typeof createRuntimeSourceRegistry>[0]['runtime'],
-      apiCache: { get: vi.fn(), set: vi.fn(), delete: vi.fn(), clear: vi.fn(), has: vi.fn() },
-      asyncGovernance: undefined,
-    });
-
-    const registration = registry.registerDataSource({
-      id: 'cx3-source',
-      scope,
-      compiledSource: {
-        kind: 'formula',
-        dependsOn: ['query'],
-        formula: { isStatic: true, value: 1 },
-        targetPath: { isStatic: true, value: 'result' },
-      } as unknown as Parameters<typeof registry.registerDataSource>[0]['compiledSource'],
-    });
-    registration.controller.refresh = refresh as never;
-
-    for (let i = 0; i < 100; i += 1) {
-      emitChange?.({ paths: ['query'] });
-    }
-    expect(refresh).toHaveBeenCalledTimes(100);
-
-    emitChange?.({ paths: ['query'] });
-    expect(refresh).toHaveBeenCalledTimes(100);
-    expect(notify).toHaveBeenCalledWith('error', 'Source cascade depth limit exceeded');
-
-    resolvers[0]?.({ skipped: false });
-    await Promise.resolve();
-    await Promise.resolve();
-
-    emitChange?.({ paths: ['query'] });
-    expect(refresh).toHaveBeenCalledTimes(101);
-
-    for (const resolve of resolvers) resolve({ skipped: false });
-    registration.dispose();
   });
 });

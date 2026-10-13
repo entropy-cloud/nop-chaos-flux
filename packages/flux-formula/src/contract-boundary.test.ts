@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { EvalContext, RendererEnv, ScopeRef } from '@nop-chaos/flux-core';
 import { createFormulaCompiler, createFormulaRegistry } from './index.js';
-import { evaluateAst } from './evaluator.js';
+import { evaluateAst, UnpopulatedScopeAccessError } from './evaluator.js';
 import { parseFormula } from './parser.js';
 import { tokenizeFormula } from './lexer.js';
 
@@ -119,6 +119,32 @@ describe('contract: null/undefined boundary', () => {
         context: createContext({}),
       }),
     ).toThrow(/Cannot access member of null or undefined/);
+  });
+
+  it('discriminates null/undefined member access as UnpopulatedScopeAccessError with the message kept verbatim (582 CX-4)', () => {
+    let thrown: unknown;
+    try {
+      evaluateAst(parseFormula('user.address.city'), {
+        env,
+        context: createContext({ user: { address: null } }),
+      });
+    } catch (error) {
+      thrown = error;
+    }
+    expect(thrown).toBeInstanceOf(Error);
+    expect(thrown).toBeInstanceOf(UnpopulatedScopeAccessError);
+    expect((thrown as Error).message).toBe('Cannot access member of null or undefined');
+    expect((thrown as Error).name).toBe('UnpopulatedScopeAccessError');
+    expect((thrown as Error).constructor.name).toBe('UnpopulatedScopeAccessError');
+  });
+
+  it('optional-chain arm stays silent for the same null member target (582 CX-4 guard)', () => {
+    expect(
+      evaluateAst(parseFormula('user?.address?.city'), {
+        env,
+        context: createContext({ user: { address: null } }),
+      }),
+    ).toBeUndefined();
   });
 
   it('null coalesce returns fallback for null', () => {
