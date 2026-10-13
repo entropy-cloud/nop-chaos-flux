@@ -87,6 +87,8 @@ export { normalizeInstancePath } from './utils/instance-path.js';
 export { cancelPendingDebounce, scheduleDebounce } from './utils/debounce.js';
 export { isSafeNavigationUrl } from './utils/url.js';
 export type { SafeNavigationUrlOptions } from './utils/url.js';
+export { composeAbortSignals } from './utils/abort-signals.js';
+export type { AbortSignalLike } from './utils/abort-signals.js';
 export { matchesFluxValueShape, validateHostMethodPayload } from './schema-diagnostics/value-shape-runtime.js';
 export { defineRendererFamily } from './renderer-definition-builder.js';
 export {

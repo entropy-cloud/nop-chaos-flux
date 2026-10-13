@@ -21,7 +21,11 @@ import {
   shouldRunActionWhen,
   isAbortError,
 } from '../action-core.js';
-import { cancelPendingDebounce, scheduleDebounce } from '@nop-chaos/flux-core';
+import {
+  cancelPendingDebounce,
+  composeAbortSignals,
+  scheduleDebounce,
+} from '@nop-chaos/flux-core';
 import type { ActionDispatcherConfig, ActionDispatcherContext } from './types.js';
 import {
   isRequestBackedAction,
@@ -107,30 +111,12 @@ function mergeAbortSignals(rootSignal: AbortSignal, actionSignal?: AbortSignal):
     return { signal: actionSignal, cleanup() {} };
   }
 
-  const controller = new AbortController();
-  const abortFrom = (signal: AbortSignal) => {
-    if (!controller.signal.aborted) {
-      controller.abort(signal.reason);
-    }
-  };
-
-  const onRootAbort = () => abortFrom(rootSignal);
-  const onActionAbort = () => abortFrom(actionSignal);
-
-  rootSignal.addEventListener('abort', onRootAbort);
-  actionSignal.addEventListener('abort', onActionAbort);
-
-  let cleaned = false;
-  const cleanup = () => {
-    if (cleaned) return;
-    cleaned = true;
-    rootSignal.removeEventListener('abort', onRootAbort);
-    actionSignal.removeEventListener('abort', onActionAbort);
-  };
-
-  controller.signal.addEventListener('abort', cleanup, { once: true });
-
-  return { signal: controller.signal, cleanup };
+  // Dual-live: delegate to the shared flux-core primitive. `detachable: true`
+  // forces the manual listener composite so the cleanup below (invoked from
+  // dispatch's finally) is the only teardown mechanism — the root signal is
+  // page-lifetime, so a noop cleanup would leak listeners per dispatch and
+  // re-expose late root aborts (plan 583 张力点③).
+  return composeAbortSignals([rootSignal, actionSignal], { detachable: true });
 }
 
 function reportActionError(
