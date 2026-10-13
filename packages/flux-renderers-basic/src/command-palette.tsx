@@ -26,17 +26,9 @@ import {
   resolveLucideIcon,
 } from '@nop-chaos/ui';
 import type { CommandPaletteSchema } from './schemas.js';
+import { OPEN_BINDING_KIND, type SurfaceOpenBinding } from './surface-open-binding.js';
 
 const PALETTE_KIND = 'command-palette' as const;
-
-/** Compile-time sentinel marking the resolved `open` wrapper object (see compileOpenBinding). */
-export const OPEN_BINDING_KIND = 'command-palette-open' as const;
-
-interface CommandPaletteOpenBinding {
-  kind: typeof OPEN_BINDING_KIND;
-  path?: string;
-  value?: unknown;
-}
 
 interface CommandEntry {
   item: Record<string, unknown>;
@@ -280,7 +272,7 @@ export function CommandPaletteRenderer(props: RendererComponentProps<CommandPale
   const { id, node, props: resolvedProps, meta, events, helpers } = props;
   const resolved = resolvedProps as Record<string, unknown>;
 
-  const openBinding = resolved.open as CommandPaletteOpenBinding | undefined;
+  const openBinding = resolved.open as SurfaceOpenBinding | undefined;
   const controlled = Boolean(
     openBinding && typeof openBinding === 'object' && openBinding.kind === OPEN_BINDING_KIND,
   );

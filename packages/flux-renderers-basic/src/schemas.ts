@@ -73,7 +73,12 @@ export interface DialogSchema extends BaseSchema {
   actions?: BaseSchema[];
   data?: SchemaValue;
   isolate?: boolean;
-  open?: boolean;
+  /**
+   * Controlled open. A simple `${path}` expression is written back to `false`
+   * on user-initiated closes (plan-459 reopen parity) so idempotent
+   * setValue(path, true) can reopen; other expressions keep pure-latch semantics.
+   */
+  open?: boolean | string;
   defaultOpen?: boolean;
   statusPath?: string;
   closeOnOutsideClick?: boolean;
@@ -104,7 +109,12 @@ export interface DrawerSchema extends BaseSchema {
   actions?: BaseSchema[];
   data?: SchemaValue;
   isolate?: boolean;
-  open?: boolean;
+  /**
+   * Controlled open. A simple `${path}` expression is written back to `false`
+   * on user-initiated closes (plan-459 reopen parity) so idempotent
+   * setValue(path, true) can reopen; other expressions keep pure-latch semantics.
+   */
+  open?: boolean | string;
   defaultOpen?: boolean;
   side?: 'left' | 'right' | 'top' | 'bottom';
   statusPath?: string;

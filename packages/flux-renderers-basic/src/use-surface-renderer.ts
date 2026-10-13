@@ -7,26 +7,13 @@ import type {
 } from '@nop-chaos/flux-core';
 import { useCurrentActionScope, useCurrentComponentRegistry, useCurrentSurfaceRuntime, useRendererRuntime, useSurfaceComponentHandle } from '@nop-chaos/flux-react';
 import type { DialogSchema, DrawerSchema } from './schemas.js';
+import { OPEN_BINDING_KIND, type SurfaceOpenBinding } from './surface-open-binding.js';
 
 function getSurfaceScopeId(
   surfaceId: string,
   kind: 'dialog' | 'drawer',
 ) {
   return `${surfaceId}:${kind}-scope`;
-}
-
-/**
- * Extract a simple scope path from a controlled-open expression like
- * `"${todoDialogOpen}"` or `"${panel.open}"`. Returns undefined for booleans
- * or arbitrary expressions (those keep the pure-latch semantics).
- */
-function extractControlledOpenPath(raw: unknown): string | undefined {
-  if (typeof raw !== 'string') {
-    return undefined;
-  }
-  const trimmed = raw.trim();
-  const match = trimmed.match(/^\$\{([a-zA-Z_$][\w$]*(\.[a-zA-Z_$][\w$]*)*)\}$/);
-  return match?.[1];
 }
 
 function disposeSurfaceScope(runtime: { disposeScope: (scopeId: string) => void }, scope: ScopeRef | undefined) {
@@ -56,7 +43,22 @@ export function useSurfaceRenderer(
   const { id, node, templateNode, props: resolvedProps, meta: resolvedMeta, regions, events } = props;
   const runtime = useRendererRuntime();
   const surfaceRuntime = useCurrentSurfaceRuntime();
-  const controlledOpen = resolvedProps.open;
+  // Controlled-open wrapper consumption (palette-style, surface-open-binding):
+  // props resolve asynchronously (the first render sees an empty prop bag), so
+  // the value must be shape-checked — only a well-formed compiled wrapper
+  // counts as controlled. A simple `${path}` carries its scope path for the
+  // user-close writeback; other shapes keep pure-latch semantics.
+  const openBinding = (resolvedProps as Record<string, unknown>).open as
+    | SurfaceOpenBinding
+    | undefined;
+  const openControlled = Boolean(
+    openBinding && typeof openBinding === 'object' && openBinding.kind === OPEN_BINDING_KIND,
+  );
+  const openPath =
+    openControlled && typeof openBinding?.path === 'string' && openBinding.path.length > 0
+      ? openBinding.path
+      : undefined;
+  const controlledOpen = openControlled ? Boolean(openBinding?.value) : undefined;
   const defaultOpen = Boolean(resolvedProps.defaultOpen ?? false);
   const closedPublishedRef = React.useRef(false);
   const statusPath = typeof resolvedProps.statusPath === 'string' ? resolvedProps.statusPath : undefined;
@@ -215,8 +217,6 @@ export function useSurfaceRenderer(
         surfaceRuntime?.close(id);
         if (controlledOpen !== undefined) {
           setUserClosed(true);
-          const rawOpen = (templateNode.schema as { open?: unknown } | undefined)?.open;
-          const openPath = extractControlledOpenPath(rawOpen);
           if (openPath) {
             node.scope.update(openPath, false);
           }
@@ -228,7 +228,7 @@ export function useSurfaceRenderer(
       const payload = { surfaceId: id, kind, open: true };
       void eventHandlers.onOpen?.(payload, eventCtx(payload));
     },
-    [controlledOpen, eventCtx, eventHandlers, id, kind, node.scope, surfaceRuntime, templateNode],
+    [controlledOpen, eventCtx, eventHandlers, id, kind, node.scope, openPath, surfaceRuntime],
   );
   const surfacePayload = React.useMemo(
     () => ({
@@ -536,12 +536,10 @@ export function useSurfaceRenderer(
     if (!wasOpen || summary.open || !controlledOpen) {
       return;
     }
-    const rawOpen = (templateNode.schema as { open?: unknown } | undefined)?.open;
-    const openPath = extractControlledOpenPath(rawOpen);
     if (openPath) {
       node.scope.update(openPath, false);
     }
-  }, [controlledOpen, id, node.scope, summary.open, surfaceRuntime, templateNode]);
+  }, [controlledOpen, id, node.scope, openPath, summary.open, surfaceRuntime]);
 
   return {
     summary,

@@ -1,11 +1,10 @@
 import type {
-  FieldCompileContext,
   RendererDefinition,
-  SchemaFieldRule,
 } from '@nop-chaos/flux-core';
-import { CommandPaletteRenderer, OPEN_BINDING_KIND } from './command-palette.js';
+import { CommandPaletteRenderer } from './command-palette.js';
 import { DialogRenderer } from './dialog.js';
 import { DrawerRenderer } from './drawer.js';
+import { compileOpenBinding } from './surface-open-binding.js';
 
 const surfaceEventContracts = {
   onOpen: {
@@ -110,7 +109,7 @@ const sharedSurfaceFields = [
   { key: 'onClose', kind: 'event' as const },
   { key: 'onConfirm', kind: 'event' as const },
   { key: 'data', kind: 'prop' as const },
-  { key: 'open', kind: 'prop' as const },
+  compileOpenBinding,
   { key: 'defaultOpen', kind: 'prop' as const, valueType: 'boolean' as const },
   { key: 'statusPath', kind: 'prop' as const },
   { key: 'container', kind: 'prop' as const },
@@ -250,29 +249,6 @@ export const drawerRendererDefinition: RendererDefinition = {
     { key: 'closeOnOutside', kind: 'prop' as const, valueType: 'boolean' as const },
     { key: 'resizable', kind: 'prop' as const, valueType: 'boolean' as const },
   ]),
-};
-
-/**
- * Compile-time capture of the controlled `open` binding. A simple `${path}`
- * expression records its scope path so user-initiated closes can write `false`
- * back (dialog plan-459 reopen parity) WITHOUT a runtime raw-schema read
- * (compile-once: the raw value is only ever seen by this compile hook).
- */
-const compileOpenBinding: SchemaFieldRule = {
-  key: 'open',
-  kind: 'prop',
-  compile: (value: unknown, context: FieldCompileContext) => {
-    let path: string | undefined;
-    if (typeof value === 'string') {
-      const match = value.trim().match(/^\$\{([a-zA-Z_$][\w$]*(\.[a-zA-Z_$][\w$]*)*)\}$/);
-      path = match?.[1];
-    }
-    return {
-      kind: OPEN_BINDING_KIND,
-      path,
-      value: context.compileValue(value),
-    };
-  },
 };
 
 const commandPaletteEventContracts = {
