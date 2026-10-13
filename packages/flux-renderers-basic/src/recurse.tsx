@@ -1,17 +1,14 @@
-import React, { useMemo } from 'react';
-import type {
-  InstanceFrame,
-  RendererComponentProps,
-  StructuralLoopBindings,
-  StructuralLoopRenderContext,
-} from '@nop-chaos/flux-core';
-import { StructuralLoopProvider, useStructuralLoopContext } from '@nop-chaos/flux-react';
+import React from 'react';
+import type { CompiledRuntimeValue, RendererComponentProps } from '@nop-chaos/flux-core';
+import { useStructuralLoopContext } from '@nop-chaos/flux-react';
 import type { RecurseSchema } from './schemas.js';
 import {
   createStructuralRepeatedTemplateId,
   renderStructuralLoop,
   resolveLoopBindings,
 } from './structural-loop.js';
+import { useItemDataScratchEvaluator } from './structural-loop-scratch.js';
+import { StructuralLoopScopeProvider } from './structural-loop-scope-provider.js';
 import { asReactNode } from './utils.js';
 
 const DEFAULT_RECURSE_BINDINGS = {
@@ -19,48 +16,6 @@ const DEFAULT_RECURSE_BINDINGS = {
   indexName: 'index',
   keyName: undefined,
 } as const;
-
-interface RecurseProviderProps {
-  loopContext: StructuralLoopRenderContext;
-  bindings: StructuralLoopBindings;
-  itemData: Record<string, unknown> | undefined;
-  evaluateItemData?: (
-    item: unknown,
-    index: number,
-    itemKey: string,
-  ) => Record<string, unknown> | undefined;
-  keyBy: unknown;
-  instancePath: readonly InstanceFrame[];
-  depth: number;
-  children: React.ReactNode;
-}
-
-function RecurseProvider(props: RecurseProviderProps) {
-  const contextValue = useMemo<StructuralLoopRenderContext>(
-    () => ({
-      ...props.loopContext,
-      bindings: props.bindings,
-      itemData: props.itemData,
-      evaluateItemData: props.evaluateItemData,
-      keyBy: props.keyBy,
-      instancePath: props.instancePath,
-      depth: props.depth,
-    }),
-    [
-      props.loopContext,
-      props.bindings,
-      props.itemData,
-      props.evaluateItemData,
-      props.keyBy,
-      props.instancePath,
-      props.depth,
-    ],
-  );
-
-  return (
-    <StructuralLoopProvider value={contextValue}>{props.children}</StructuralLoopProvider>
-  );
-}
 
 export function RecurseRenderer(props: RendererComponentProps<RecurseSchema>) {
   const loopContext = useStructuralLoopContext();
@@ -74,29 +29,23 @@ export function RecurseRenderer(props: RendererComponentProps<RecurseSchema>) {
         indexName: indexName?.trim() || inheritedBindings.indexName,
         keyName: keyName?.trim() || inheritedBindings.keyName,
       });
+  const itemDataProgram = props.templateNode.structuralFields?.itemData as
+    | CompiledRuntimeValue<Record<string, unknown>>
+    | undefined;
+
+  const evaluateItemDataViaScratch = useItemDataScratchEvaluator({
+    helpers: props.helpers,
+    bindings,
+    itemDataProgram,
+  });
 
   if (!loopContext) {
     return null;
   }
 
-  const itemDataProgram = props.templateNode.structuralFields?.itemData as
-    | import('@nop-chaos/flux-core').CompiledRuntimeValue<Record<string, unknown>>
-    | undefined;
   const itemData = itemDataProgram ? undefined : loopContext.itemData;
   const evaluateItemData = itemDataProgram
-    ? (item: unknown, index: number, itemKey: string) => {
-        const bindingsScope = props.helpers.createScope({
-          [bindings.itemName]: item,
-          [bindings.indexName]: index,
-          ...(bindings.keyName ? { [bindings.keyName]: itemKey } : {}),
-        });
-
-        try {
-          return props.helpers.evaluateCompiled(itemDataProgram, bindingsScope);
-        } finally {
-          props.helpers.disposeScope(bindingsScope.id);
-        }
-      }
+    ? evaluateItemDataViaScratch
     : loopContext.evaluateItemData;
   const keyBy = props.props.keyBy ?? loopContext.keyBy;
   const maxDepth = typeof props.props.maxDepth === 'number' ? props.props.maxDepth : undefined;
@@ -116,9 +65,9 @@ export function RecurseRenderer(props: RendererComponentProps<RecurseSchema>) {
         maxDepth,
         currentDepth: loopContext.depth,
         renderItem: ({ itemKey, slotBindings, instancePath, depth }) => (
-          <RecurseProvider
+          <StructuralLoopScopeProvider
             key={itemKey}
-            loopContext={loopContext}
+            base={loopContext}
             bindings={bindings}
             itemData={itemData}
             evaluateItemData={evaluateItemData}
@@ -127,7 +76,7 @@ export function RecurseRenderer(props: RendererComponentProps<RecurseSchema>) {
             depth={depth}
           >
             {asReactNode(loopContext.renderBody(slotBindings, instancePath))}
-          </RecurseProvider>
+          </StructuralLoopScopeProvider>
         ),
       })}
     </>

@@ -63,18 +63,6 @@ function installRuntimeSpies(holder: { runtime: RendererRuntime | null }) {
   return { runtime, created, createSpy, disposeSpy };
 }
 
-function assertBindingsScopesDisposed(
-  created: Array<{ id: string; patch: Record<string, unknown> }>,
-  disposeSpy: ReturnType<typeof vi.fn>,
-) {
-  const bindingsScopes = created.filter((entry) => isBindingsScopePatch(entry.patch));
-  expect(bindingsScopes.length).toBeGreaterThan(0);
-  const disposedIds = disposeSpy.mock.calls.map((call) => call[0]);
-  for (const entry of bindingsScopes) {
-    expect(disposedIds).toContain(entry.id);
-  }
-}
-
 describe('loop/recurse itemData — one-shot bindings scope pairing (09-01)', () => {
   // plan 2026-09-28-6 P14: LoopRenderer now reuses ONE scratch child scope per
   // instance (created with an empty patch, re-published per item via merge) and
@@ -143,17 +131,29 @@ describe('loop/recurse itemData — one-shot bindings scope pairing (09-01)', ()
     }
   });
 
-  it('disposes every bindingsScope created for recurse itemData evaluation', async () => {
+  // plan 588 CX-10 (WA-basic-004): RecurseRenderer now reuses ONE scratch child
+  // scope per instance — the loop-side P14 shape landed in 23ee9a323 — instead
+  // of the former per-item create/dispose pairing (the plan 2026-09-28-6
+  // hotspot form; recurse was the same-shape unregistered site). The scratch
+  // scope is created lazily on the first itemData evaluation, re-published via
+  // merge across re-renders, and disposed at unmount. Declared behavior
+  // residuals (draft review m5): dispose-on-throw channel collapses into the
+  // unmount dispose, stale keys persist while the instance lives, and the
+  // scope id becomes instance-stable instead of per-item-fresh. Item-value
+  // correctness stays covered by loop-itemdata-parent-scope-baseline.test.tsx
+  // and the characterization pins in
+  // loop-recurse-scratch-provider-contract.test.tsx.
+  it('reuses one scratch bindings scope per recurse instance and disposes it at unmount', async () => {
     const holder: { runtime: RendererRuntime | null } = { runtime: null };
     const SchemaRenderer = createBasicSchemaRenderer([]);
 
+    // Start with no recurse items: the scratch scope is created lazily on the
+    // first itemData evaluation, so the runtime capture below can grab it.
     const view = render(
       <SchemaRenderer
         schemaUrl="test://basic/recurse-dispose"
         schema={RECURSE_SCHEMA}
-        data={{
-          nodes: [{ id: 'root', name: 'Root', children: [{ id: 'c1', name: 'Child1' }] }],
-        }}
+        data={{ nodes: [{ id: 'root', name: 'Root', children: [] }] }}
         env={env}
         formulaCompiler={formulaCompiler}
         onRuntimeChange={(runtime) => {
@@ -162,11 +162,7 @@ describe('loop/recurse itemData — one-shot bindings scope pairing (09-01)', ()
       />,
     );
 
-    await waitFor(() => {
-      expect(screen.getByText('Child1:0')).toBeTruthy();
-    });
-
-    const { created, createSpy, disposeSpy } = installRuntimeSpies(holder);
+    const { created, disposeSpy } = installRuntimeSpies(holder);
 
     view.rerender(
       <SchemaRenderer
@@ -197,7 +193,51 @@ describe('loop/recurse itemData — one-shot bindings scope pairing (09-01)', ()
       expect(screen.getByText('Child2:1')).toBeTruthy();
     });
 
-    expect(createSpy.mock.calls.length).toBeGreaterThan(0);
-    assertBindingsScopesDisposed(created, disposeSpy);
+    // exactly ONE empty-patch scratch scope, created lazily on the first
+    // itemData evaluation — the old per-item implementation created one
+    // bindings-shaped scope per item with a non-empty patch instead
+    const scratchScopes = created.filter((entry) => Object.keys(entry.patch).length === 0);
+    expect(scratchScopes.length).toBe(1);
+    const scratchId = scratchScopes[0]?.id;
+
+    // re-evaluation across renders REUSES the scratch scope: no further
+    // bindings-shaped child scopes may be created (loop-side P14 parity)
+    view.rerender(
+      <SchemaRenderer
+        schemaUrl="test://basic/recurse-dispose"
+        schema={RECURSE_SCHEMA}
+        data={{
+          nodes: [
+            {
+              id: 'root',
+              name: 'Root',
+              children: [
+                { id: 'c1', name: 'Child1x' },
+                { id: 'c2', name: 'Child2x' },
+              ],
+            },
+          ],
+        }}
+        env={env}
+        formulaCompiler={formulaCompiler}
+        onRuntimeChange={(runtime) => {
+          holder.runtime = runtime as RendererRuntime;
+        }}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Child1x:0')).toBeTruthy();
+      expect(screen.getByText('Child2x:1')).toBeTruthy();
+    });
+
+    const perItemCreates = created.filter(
+      (entry) => isBindingsScopePatch(entry.patch) && Object.keys(entry.patch).length > 0,
+    );
+    expect(perItemCreates.length).toBe(0);
+
+    // unmount disposes the scratch scope
+    expect(() => view.unmount()).not.toThrow();
+    expect(disposeSpy.mock.calls.map((call) => call[0])).toContain(scratchId);
   });
 });
