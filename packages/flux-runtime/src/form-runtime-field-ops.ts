@@ -5,6 +5,7 @@ import type {
   RuntimeFieldRegistration,
 } from '@nop-chaos/flux-core';
 import { getCompiledValidationField, setIn } from '@nop-chaos/flux-core';
+import { patchFieldStateInMap } from './form-field-state-patch.js';
 import { findRuntimeRegistration } from './form-runtime-registration.js';
 import type { ManagedFormRuntimeSharedState } from './form-runtime-types.js';
 
@@ -18,56 +19,7 @@ function updateFieldStateInMap(
   path: string,
   patch: Partial<FieldState>,
 ): Record<string, FieldState> {
-  const existing = fieldStates[path];
-  const merged: FieldState = { ...existing };
-
-  if ('touched' in patch) {
-    if (patch.touched === true) merged.touched = true;
-    else delete merged.touched;
-  }
-
-  if ('dirty' in patch) {
-    if (patch.dirty === true) merged.dirty = true;
-    else delete merged.dirty;
-  }
-
-  if ('visited' in patch) {
-    if (patch.visited === true) merged.visited = true;
-    else delete merged.visited;
-  }
-
-  if ('validating' in patch) {
-    if (patch.validating === true) merged.validating = true;
-    else delete merged.validating;
-  }
-
-  if ('errors' in patch) {
-    if (patch.errors && patch.errors.length > 0) merged.errors = patch.errors;
-    else delete merged.errors;
-  }
-
-  const hasKeys = Object.keys(merged).length > 0;
-
-  if (!hasKeys) {
-    if (!(path in fieldStates)) {
-      return fieldStates;
-    }
-    const { [path]: _removed, ...rest } = fieldStates;
-    return rest;
-  }
-
-  if (
-    existing &&
-    existing.touched === merged.touched &&
-    existing.dirty === merged.dirty &&
-    existing.visited === merged.visited &&
-    existing.validating === merged.validating &&
-    existing.errors === merged.errors
-  ) {
-    return fieldStates;
-  }
-
-  return { ...fieldStates, [path]: merged };
+  return patchFieldStateInMap({ fieldStates, path, patch, reuseMapWhenUnchanged: true });
 }
 
 export function applyFieldValuePatch(
@@ -255,7 +207,7 @@ function clearRegisteredSubtreeFieldStates(
 
   const fieldStates = sharedState.store.getState().fieldStates;
   let changed = false;
-  const nextFieldStates: Record<string, FieldState> = { ...fieldStates };
+  let nextFieldStates: Record<string, FieldState> = { ...fieldStates };
 
   for (const registeredPath of paths) {
     for (const [fieldPath, existingFieldState] of Object.entries(fieldStates)) {
@@ -268,15 +220,11 @@ function clearRegisteredSubtreeFieldStates(
       }
 
       changed = true;
-      const nextFieldState: FieldState = { ...existingFieldState };
-      delete nextFieldState.errors;
-      delete nextFieldState.validating;
-
-      if (Object.keys(nextFieldState).length > 0) {
-        nextFieldStates[fieldPath] = nextFieldState;
-      } else {
-        delete nextFieldStates[fieldPath];
-      }
+      nextFieldStates = patchFieldStateInMap({
+        fieldStates: nextFieldStates,
+        path: fieldPath,
+        patch: { errors: undefined, validating: undefined },
+      });
     }
   }
 
@@ -344,7 +292,7 @@ function clearHiddenSubtreesFieldStates(
   const rootList = [...roots];
   const fieldStates = sharedState.store.getState().fieldStates;
   let changed = false;
-  const nextFieldStates: Record<string, FieldState> = { ...fieldStates };
+  let nextFieldStates: Record<string, FieldState> = { ...fieldStates };
 
   for (const [fieldPath, existingFieldState] of Object.entries(fieldStates)) {
     const matchedRoot = rootList.find(
@@ -364,15 +312,11 @@ function clearHiddenSubtreesFieldStates(
     }
 
     changed = true;
-    const nextFieldState: FieldState = { ...existingFieldState };
-    delete nextFieldState.errors;
-    delete nextFieldState.validating;
-
-    if (Object.keys(nextFieldState).length > 0) {
-      nextFieldStates[fieldPath] = nextFieldState;
-    } else {
-      delete nextFieldStates[fieldPath];
-    }
+    nextFieldStates = patchFieldStateInMap({
+      fieldStates: nextFieldStates,
+      path: fieldPath,
+      patch: { errors: undefined, validating: undefined },
+    });
   }
 
   if (changed) {

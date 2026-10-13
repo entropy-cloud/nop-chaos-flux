@@ -16,6 +16,7 @@ import {
 import { isAbortError } from '../error-utils.js';
 
 const MAX_GLOBAL_CASCADE_DEPTH = 200;
+import { createCascadeGuard, type CascadeGuard } from './cascade-guard.js';
 import { createRootDependencySet, scopeChangeHitsDependencies } from '../scope-change.js';
 import {
   createReactionOwnerId,
@@ -49,31 +50,14 @@ function toReactionFailureError(result: import('@nop-chaos/flux-core').ActionRes
  */
 export type { ReactionRegistration };
 
-interface ReactionCascadeState {
-  depth: number;
-}
-
-const reactionCascadeTestState: ReactionCascadeState = { depth: 0 };
-
-function tryEnterGlobalCascade(state: ReactionCascadeState): boolean {
-  if (state.depth >= MAX_GLOBAL_CASCADE_DEPTH) {
-    return false;
-  }
-
-  state.depth += 1;
-  return true;
-}
-
-function leaveGlobalCascade(state: ReactionCascadeState) {
-  state.depth = Math.max(0, state.depth - 1);
-}
+const globalCascadeGuard = createCascadeGuard(MAX_GLOBAL_CASCADE_DEPTH);
 
 export function __getGlobalCascadeDepthForTests(): number {
-  return reactionCascadeTestState.depth;
+  return globalCascadeGuard.getDepth();
 }
 
 export function __setGlobalCascadeDepthForTests(value: number) {
-  reactionCascadeTestState.depth = Math.max(0, value);
+  globalCascadeGuard.setDepth(value);
 }
 
 export interface RuntimeReactionRegistry {
@@ -106,7 +90,7 @@ export function registerReaction(input: {
     async?: import('@nop-chaos/flux-core').AsyncOwnerDebugState;
   }) => void;
   onDispose?: () => void;
-  cascadeState?: ReactionCascadeState;
+  cascadeState?: CascadeGuard;
 }): ReactionRegistration {
   const compiled = input.compiledReaction;
 
@@ -173,8 +157,8 @@ export function registerReaction(input: {
     }),
     cascadeDepth = 0,
   ) {
-    const cascadeState = input.cascadeState ?? reactionCascadeTestState;
-    const enteredGlobalCascade = tryEnterGlobalCascade(cascadeState);
+    const cascadeGuard = input.cascadeState ?? globalCascadeGuard;
+    const enteredGlobalCascade = cascadeGuard.tryEnter();
     if (!enteredGlobalCascade) {
       const error = new Error('Global reaction cascade depth limit exceeded');
       reportRuntimeHostIssue({
@@ -330,7 +314,7 @@ export function registerReaction(input: {
       }
     } finally {
       if (enteredGlobalCascade) {
-        leaveGlobalCascade(cascadeState);
+        cascadeGuard.leave();
       }
       running = false;
       emitDebug();
@@ -473,7 +457,7 @@ export function registerReaction(input: {
 
 export function createRuntimeReactionRegistry(): RuntimeReactionRegistry {
   const scopeEntries = new Map<string, Map<string, OwnedReactionRegistration>>();
-  const cascadeState: ReactionCascadeState = { depth: 0 };
+  const cascadeState = createCascadeGuard(MAX_GLOBAL_CASCADE_DEPTH);
 
   function register(input: {
     id: string;

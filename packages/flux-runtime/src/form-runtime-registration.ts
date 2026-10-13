@@ -1,5 +1,5 @@
-import type { FieldState } from '@nop-chaos/flux-core';
 import { setIn } from '@nop-chaos/flux-core';
+import { patchFieldStateInMap } from './form-field-state-patch.js';
 import type { FormRuntimeRegistrationState, RegisteredFieldEntry } from './form-runtime-types.js';
 
 export function findRuntimeRegistration(
@@ -49,24 +49,13 @@ export function syncRegisteredFieldValue(sharedState: FormRuntimeRegistrationSta
   const state = sharedState.store.getState();
   const isDirty = !Object.is(baseline, nextValue);
 
-  const fieldStates = state.fieldStates;
-  const existingFieldState = fieldStates[path];
-  const nextFieldState: FieldState = { ...existingFieldState };
-
-  if (isDirty) {
-    nextFieldState.dirty = true;
-  } else {
-    delete nextFieldState.dirty;
-  }
-
-  const nextFieldStates =
-    Object.keys(nextFieldState).length > 0
-      ? { ...fieldStates, [path]: nextFieldState }
-      : (() => {
-          const next = { ...fieldStates };
-          delete next[path];
-          return next;
-        })();
+  // AUDIT-15: the patch touches the dirty key only — `validating` is NOT
+  // pre-cleared here (mirrors the owner revalidateDependents graft).
+  const nextFieldStates = patchFieldStateInMap({
+    fieldStates: state.fieldStates,
+    path,
+    patch: { dirty: isDirty ? true : undefined },
+  });
 
   sharedState.store.batchUpdate({
     fieldStates: nextFieldStates,

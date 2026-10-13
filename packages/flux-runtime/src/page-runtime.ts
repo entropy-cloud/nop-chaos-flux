@@ -5,9 +5,8 @@ import type {
   ScopeRef,
   ValidationScopeRuntime,
 } from '@nop-chaos/flux-core';
-import { getIn } from '@nop-chaos/flux-core';
 import { createPageStore } from './page-store.js';
-import { createScopeRef } from './scope.js';
+import { createStoreBackedScopeAdapter } from './store-backed-scope-adapter.js';
 
 export function createManagedPageRuntime(
   input: {
@@ -39,52 +38,20 @@ export function createManagedPageRuntime(
 
   const scope =
     input.scope ??
-    createScopeRef({
+    createStoreBackedScopeAdapter({
       id: 'page',
       path: '$page',
       initialData: store.getState().data,
-      store: {
-        getSnapshot: () => store.getState().data,
-        getLastChange: () => lastChange,
-        setSnapshot: (next, change) => {
-          setLastChange(
-            change ?? {
-              paths: ['*'],
-              sourceScopeId: 'page',
-              kind: 'replace',
-            },
-          );
-          store.setData(next);
-        },
-        subscribe: (listener) => {
-          let previousData = store.getState().data;
-
-          return store.subscribe(() => {
-            const nextData = store.getState().data;
-
-            if (nextData === previousData) {
-              return;
-            }
-
-            previousData = nextData;
-            listener(lastChange);
-          });
-        },
-      },
-      update: (path, value) => {
-        const currentData = store.getState().data;
-        const oldValue = path ? getIn(currentData, path) : currentData;
-        if (Object.is(oldValue, value)) {
-          return;
-        }
-        setLastChange({
-          paths: [path || '*'],
-          sourceScopeId: 'page',
-          kind: 'update',
-        });
-        store.updateData(path, value);
-      },
-    });
+      getLastChange: () => lastChange,
+      setLastChange,
+      getSnapshot: () => store.getState().data,
+      commitSnapshot: (next) => store.setData(next),
+      subscribeStore: (listener) => store.subscribe(listener),
+      readSignal: () => store.getState().data,
+      subscriptionGate: (nextData, previousData) =>
+        nextData === previousData ? 'skip' : 'emit',
+      applyUpdate: (path, value) => store.updateData(path, value),
+  });
   return {
     store,
     scope,

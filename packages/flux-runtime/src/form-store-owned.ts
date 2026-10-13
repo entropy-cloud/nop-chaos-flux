@@ -8,14 +8,10 @@ import type {
   FormStoreState,
 } from '@nop-chaos/flux-core';
 import { validationErrorsEqual } from '@nop-chaos/flux-core';
-
-interface FormStoreSummaryState {
-  errorCount: number;
-  dirtyCount: number;
-  touchedCount: number;
-  visitedCount: number;
-  validatingCount: number;
-}
+import {
+  computeSummaryFromFieldStates,
+  type FormStoreSummaryState,
+} from './form-store.js';
 
 type InternalFormStoreState = FormStoreState & {
   summary: FormStoreSummaryState;
@@ -23,66 +19,6 @@ type InternalFormStoreState = FormStoreState & {
 
 const ownedFormStoreMetadata = new WeakMap<FormStoreApi, { baseStore: FormStoreApi; ownerId: string }>();
 const OWNED_FIELD_STATE_SEPARATOR = '::';
-
-function countFieldStateErrors(fieldState: FieldState | undefined): number {
-  return fieldState?.errors?.length ?? 0;
-}
-
-function getFieldStateCounterFlags(fieldState: FieldState | undefined) {
-  return {
-    dirty: fieldState?.dirty === true ? 1 : 0,
-    touched: fieldState?.touched === true ? 1 : 0,
-    visited: fieldState?.visited === true ? 1 : 0,
-    validating: fieldState?.validating === true ? 1 : 0,
-  } as const;
-}
-
-function diffSummaryCounters(
-  before: FieldState | undefined,
-  after: FieldState | undefined,
-): FormStoreSummaryState {
-  const beforeFlags = getFieldStateCounterFlags(before);
-  const afterFlags = getFieldStateCounterFlags(after);
-
-  return {
-    errorCount: countFieldStateErrors(after) - countFieldStateErrors(before),
-    dirtyCount: afterFlags.dirty - beforeFlags.dirty,
-    touchedCount: afterFlags.touched - beforeFlags.touched,
-    visitedCount: afterFlags.visited - beforeFlags.visited,
-    validatingCount: afterFlags.validating - beforeFlags.validating,
-  };
-}
-
-function addSummaryDelta(
-  summary: FormStoreSummaryState,
-  delta: FormStoreSummaryState,
-): FormStoreSummaryState {
-  return {
-    errorCount: summary.errorCount + delta.errorCount,
-    dirtyCount: summary.dirtyCount + delta.dirtyCount,
-    touchedCount: summary.touchedCount + delta.touchedCount,
-    visitedCount: summary.visitedCount + delta.visitedCount,
-    validatingCount: summary.validatingCount + delta.validatingCount,
-  };
-}
-
-function computeSummaryFromFieldStates(
-  fieldStates: Record<string, FieldState>,
-): FormStoreSummaryState {
-  let summary = {
-    errorCount: 0,
-    dirtyCount: 0,
-    touchedCount: 0,
-    visitedCount: 0,
-    validatingCount: 0,
-  };
-
-  for (const fieldState of Object.values(fieldStates)) {
-    summary = addSummaryDelta(summary, diffSummaryCounters(undefined, fieldState));
-  }
-
-  return summary;
-}
 
 function fieldStateEqual(left: FieldState | undefined, right: FieldState | undefined): boolean {
   if (left === right) {

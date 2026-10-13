@@ -5,45 +5,14 @@ import type {
   ScopeRef,
 } from '@nop-chaos/flux-core';
 import { validationErrorsEqual } from '@nop-chaos/flux-core';
+import { summarizeFieldStates, type FormStoreSummaryState } from './form-store.js';
 import { createReadonlyScopeBinding } from './status-owner.js';
 
 type FormStoreStateWithSummary = FormStoreState & {
-  summary?: {
-    errorCount: number;
-    dirtyCount: number;
-    touchedCount: number;
-    visitedCount: number;
-    validatingCount: number;
-  };
+  summary?: FormStoreSummaryState;
 };
 
-function summarizeFieldStates(
-  fieldStates: FormStoreState['fieldStates'],
-): NonNullable<FormStoreStateWithSummary['summary']> {
-  let errorCount = 0;
-  let dirtyCount = 0;
-  let touchedCount = 0;
-  let visitedCount = 0;
-  let validatingCount = 0;
-
-  for (const fieldState of Object.values(fieldStates)) {
-    errorCount += fieldState.errors?.length ?? 0;
-    if (fieldState.dirty) dirtyCount += 1;
-    if (fieldState.touched) touchedCount += 1;
-    if (fieldState.visited) visitedCount += 1;
-    if (fieldState.validating) validatingCount += 1;
-  }
-
-  return {
-    errorCount,
-    dirtyCount,
-    touchedCount,
-    visitedCount,
-    validatingCount,
-  };
-}
-
-function getFormStoreSummary(state: FormStoreState): NonNullable<FormStoreStateWithSummary['summary']> {
+function getFormStoreSummary(state: FormStoreState): FormStoreSummaryState {
   return (state as FormStoreStateWithSummary).summary ?? summarizeFieldStates(state.fieldStates);
 }
 

@@ -15,7 +15,6 @@ import {
   getCompiledValidationField,
   getCompiledValidationTraversalOrder,
   getCompiledValidationNode,
-  getIn,
 } from '@nop-chaos/flux-core';
 import { createFormStore } from './form-store.js';
 import { createOwnedFormStore } from './form-store-owned.js';
@@ -64,7 +63,8 @@ import {
   replaceValueOp,
   type ArrayMutationContext,
 } from './form-runtime-array-ops.js';
-import { createScopeRef, toRecord } from './scope.js';
+import { createStoreBackedScopeAdapter } from './store-backed-scope-adapter.js';
+import { toRecord } from './scope.js';
 import { publishOwnerStatus } from './status-owner.js';
 
 function formStatusSummaryEqual(
@@ -138,71 +138,36 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
 
   const scope =
     inputValue.existingScope ??
-    createScopeRef({
+    createStoreBackedScopeAdapter({
       id: formId,
       path: inputValue.scopePath ?? `${inputValue.parentScope?.path ?? '$root'}.form`,
       parent: inputValue.parentScope,
-      store: {
-        getSnapshot: () => store.getState().values,
-        getLastChange: () => lastChange,
-        setSnapshot: (next, change) => {
-          setLastChange(
-            change ?? {
-              paths: ['*'],
-              sourceScopeId: formId,
-              kind: 'replace',
-            },
-          );
-          store.setValues(next);
-        },
-        subscribe: (listener) => {
-          let previousState = store.getState();
-
-          return store.subscribe(() => {
-            const nextState = store.getState();
-
-            // Plan 552 (IS-lab-input-password-001): values-only gating left
-            // fieldState-only transitions (validation errors attached on
-            // submit) invisible to scope subscribers — `${$form.valid}` /
-            // `${$form.errorCount}` templates latched their first evaluation.
-            // FieldState transitions are low-frequency (first edit/blur,
-            // validation runs), so replaying them as a wildcard change keeps
-            // the $form binding honest without widening per-keystroke churn.
-            if (
-              nextState.values === previousState.values &&
-              nextState.fieldStates === previousState.fieldStates
-            ) {
-              return;
-            }
-            if (nextState.values === previousState.values) {
-              previousState = nextState;
-              setLastChange({
-                paths: ['*'],
-                sourceScopeId: formId,
-                kind: 'replace',
-              });
-              listener(lastChange);
-              return;
-            }
-
-            previousState = nextState;
-            listener(lastChange);
-          });
-        },
-      },
-      update: (path, value) => {
-        const currentValues = store.getState().values;
-        const oldValue = path ? getIn(currentValues, path) : currentValues;
-        if (Object.is(oldValue, value)) {
-          return;
+      getLastChange: () => lastChange,
+      setLastChange,
+      getSnapshot: () => store.getState().values,
+      commitSnapshot: (next) => store.setValues(next),
+      subscribeStore: (listener) => store.subscribe(listener),
+      readSignal: () => store.getState(),
+      subscriptionGate: (nextState, previousState) => {
+        // Plan 552 (IS-lab-input-password-001): values-only gating left
+        // fieldState-only transitions (validation errors attached on
+        // submit) invisible to scope subscribers — `${$form.valid}` /
+        // `${$form.errorCount}` templates latched their first evaluation.
+        // FieldState transitions are low-frequency (first edit/blur,
+        // validation runs), so replaying them as a wildcard change keeps
+        // the $form binding honest without widening per-keystroke churn.
+        if (
+          nextState.values === previousState.values &&
+          nextState.fieldStates === previousState.fieldStates
+        ) {
+          return 'skip';
         }
-        setLastChange({
-          paths: [path || '*'],
-          sourceScopeId: formId,
-          kind: 'update',
-        });
-        store.setValue(path, value);
+        if (nextState.values === previousState.values) {
+          return 'wildcard-replace-emit';
+        }
+        return 'emit';
       },
+      applyUpdate: (path, value) => store.setValue(path, value),
     });
 
   const runtimeScope =

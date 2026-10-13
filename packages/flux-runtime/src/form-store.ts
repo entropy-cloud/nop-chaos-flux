@@ -10,8 +10,9 @@ import type {
   FormStoreState,
 } from '@nop-chaos/flux-core';
 import { getIn, setIn, validationErrorsEqual } from '@nop-chaos/flux-core';
+import { mergeFieldStatePatch } from './form-field-state-patch.js';
 
-interface FormStoreSummaryState {
+export interface FormStoreSummaryState {
   errorCount: number;
   dirtyCount: number;
   touchedCount: number;
@@ -86,7 +87,7 @@ function emptySummary(): FormStoreSummaryState {
   };
 }
 
-function computeSummaryFromFieldStates(
+export function computeSummaryFromFieldStates(
   fieldStates: Record<string, FieldState>,
 ): FormStoreSummaryState {
   let summary = {
@@ -102,6 +103,35 @@ function computeSummaryFromFieldStates(
   }
 
   return summary;
+}
+
+// Truthy-counting fallback (form-status read path): flags are counted by
+// truthiness, NOT by strict `=== true` — deliberately different from
+// getFieldStateCounterFlags above; the two semantics must not be unified.
+export function summarizeFieldStates(
+  fieldStates: Record<string, FieldState>,
+): FormStoreSummaryState {
+  let errorCount = 0;
+  let dirtyCount = 0;
+  let touchedCount = 0;
+  let visitedCount = 0;
+  let validatingCount = 0;
+
+  for (const fieldState of Object.values(fieldStates)) {
+    errorCount += fieldState.errors?.length ?? 0;
+    if (fieldState.dirty) dirtyCount += 1;
+    if (fieldState.touched) touchedCount += 1;
+    if (fieldState.visited) visitedCount += 1;
+    if (fieldState.validating) validatingCount += 1;
+  }
+
+  return {
+    errorCount,
+    dirtyCount,
+    touchedCount,
+    visitedCount,
+    validatingCount,
+  };
 }
 
 function fieldStateEqual(left: FieldState | undefined, right: FieldState | undefined): boolean {
@@ -162,34 +192,7 @@ function mergeFieldState(
   existing: FieldState | undefined,
   patch: Partial<FieldState>,
 ): FieldState | undefined {
-  const merged: FieldState = { ...existing };
-
-  if ('touched' in patch) {
-    if (patch.touched === true) merged.touched = true;
-    else delete merged.touched;
-  }
-
-  if ('dirty' in patch) {
-    if (patch.dirty === true) merged.dirty = true;
-    else delete merged.dirty;
-  }
-
-  if ('visited' in patch) {
-    if (patch.visited === true) merged.visited = true;
-    else delete merged.visited;
-  }
-
-  if ('validating' in patch) {
-    if (patch.validating === true) merged.validating = true;
-    else delete merged.validating;
-  }
-
-  if ('errors' in patch) {
-    if (patch.errors && patch.errors.length > 0) merged.errors = patch.errors;
-    else delete merged.errors;
-  }
-
-  return Object.keys(merged).length > 0 ? merged : undefined;
+  return mergeFieldStatePatch(existing, patch);
 }
 
 export function createFormStore(initialValues: Record<string, any>): FormStoreApi {

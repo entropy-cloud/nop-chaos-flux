@@ -10,8 +10,8 @@ import type {
 import {
   getCompiledValidationField,
   hasCompiledValidationNodes,
-  validationErrorsEqual,
 } from '@nop-chaos/flux-core';
+import { patchFieldStateInMap } from './form-field-state-patch.js';
 import {
   resolveArrayTemplateChildExpansion,
   validateArrayTemplateChildInstances,
@@ -111,34 +111,20 @@ function commitPathValidationState(input: {
   validating?: boolean;
 }) {
   const fieldStates = input.sharedState.store.getState().fieldStates;
-  const existing = fieldStates[input.path];
 
-  const nextFieldState: FieldState = { ...existing };
-
-  if (input.errors.length > 0) {
-    if (!validationErrorsEqual(existing?.errors, input.errors)) {
-      nextFieldState.errors = input.errors;
-    }
-  } else {
-    delete nextFieldState.errors;
-  }
-
+  const patch: Partial<FieldState> = {
+    errors: input.errors.length > 0 ? input.errors : undefined,
+  };
   if (typeof input.validating === 'boolean') {
-    if (input.validating) {
-      nextFieldState.validating = true;
-    } else {
-      delete nextFieldState.validating;
-    }
+    patch.validating = input.validating ? true : undefined;
   }
 
-  const nextFieldStates =
-    Object.keys(nextFieldState).length > 0
-      ? { ...fieldStates, [input.path]: nextFieldState }
-      : (() => {
-          const next = { ...fieldStates };
-          delete next[input.path];
-          return next;
-        })();
+  const nextFieldStates = patchFieldStateInMap({
+    fieldStates,
+    path: input.path,
+    patch,
+    errorsEqualGuard: true,
+  });
 
   if (nextFieldStates !== fieldStates) {
     input.sharedState.store.batchUpdate({ fieldStates: nextFieldStates });

@@ -13,6 +13,7 @@ import type {
 import { normalizeRootPaths } from '@nop-chaos/flux-core';
 
 const MAX_SOURCE_CASCADE_DEPTH = 100;
+import { createCascadeGuard } from './cascade-guard.js';
 import type { ApiCacheStore } from './api-cache.js';
 import { reportRuntimeHostIssue } from '@nop-chaos/flux-core';
 import {
@@ -39,11 +40,7 @@ interface RuntimeSourceEntry {
   dispose(): void;
 }
 
-interface SourceCascadeState {
-  depth: number;
-}
-
-const sourceCascadeTestState: SourceCascadeState = { depth: 0 };
+const sourceCascadeGuard = createCascadeGuard(MAX_SOURCE_CASCADE_DEPTH);
 
 /**
  * dashboard-filter 约定（`docs/components/dashboard-filter/design.md`）的 key
@@ -108,25 +105,12 @@ function reportDashboardFilterKeyMismatch(
   }
 }
 
-function tryEnterSourceCascade(state: SourceCascadeState): boolean {
-  if (state.depth >= MAX_SOURCE_CASCADE_DEPTH) {
-    return false;
-  }
-
-  state.depth += 1;
-  return true;
-}
-
-function leaveSourceCascade(state: SourceCascadeState) {
-  state.depth = Math.max(0, state.depth - 1);
-}
-
 export function __getSourceCascadeDepthForTests(): number {
-  return sourceCascadeTestState.depth;
+  return sourceCascadeGuard.getDepth();
 }
 
 export function __setSourceCascadeDepthForTests(value: number) {
-  sourceCascadeTestState.depth = Math.max(0, value);
+  sourceCascadeGuard.setDepth(value);
 }
 
 function extractExpressionSource(
@@ -169,7 +153,7 @@ export function createRuntimeSourceRegistry(input: {
 }): RuntimeSourceRegistry {
   const scopeEntries = new Map<string, Map<string, RuntimeSourceEntry>>();
   const nameIndex = new Map<string, RuntimeSourceEntry>();
-  const cascadeState: SourceCascadeState = { depth: 0 };
+  const cascadeState = createCascadeGuard(MAX_SOURCE_CASCADE_DEPTH);
 
   function registerDataSource(args: {
     id: string;
@@ -312,7 +296,7 @@ export function createRuntimeSourceRegistry(input: {
         return;
       }
 
-      if (!tryEnterSourceCascade(cascadeState)) {
+      if (!cascadeState.tryEnter()) {
         reportRuntimeHostIssue({
           env: input.runtime.env,
           level: 'error',
@@ -336,10 +320,10 @@ export function createRuntimeSourceRegistry(input: {
             reportRefreshFailure(error);
           })
           .finally(() => {
-            leaveSourceCascade(cascadeState);
+            cascadeState.leave();
           });
       } catch (error) {
-        leaveSourceCascade(cascadeState);
+        cascadeState.leave();
         reportRefreshFailure(error);
       }
     });

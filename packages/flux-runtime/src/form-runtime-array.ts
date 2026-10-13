@@ -1,5 +1,6 @@
 import type { FieldState, ScopeRef } from '@nop-chaos/flux-core';
 import { setIn } from '@nop-chaos/flux-core';
+import { patchFieldStateInMap } from './form-field-state-patch.js';
 import { remapFieldStates, transformArrayIndexedPath } from './form-path-state.js';
 import { remapExternalErrors } from './form-runtime-owner-external-errors.js';
 import type {
@@ -177,28 +178,18 @@ export function replaceManagedArrayValue(input: {
   const baseline = input.initialFieldState.initialValues[input.arrayPath];
   const isDirty = !Object.is(baseline, input.nextValue);
 
-  const nextFieldStates = { ...input.remappedState.fieldStates };
-  const arrayFieldState = nextFieldStates[input.arrayPath];
-
-  if (arrayFieldState) {
-    const updatedArrayState: FieldState = { ...arrayFieldState };
-    delete updatedArrayState.validating;
-    delete updatedArrayState.errors;
-
-    if (isDirty) {
-      updatedArrayState.dirty = true;
-    } else {
-      delete updatedArrayState.dirty;
-    }
-
-    if (Object.keys(updatedArrayState).length === 0) {
-      delete nextFieldStates[input.arrayPath];
-    } else {
-      nextFieldStates[input.arrayPath] = updatedArrayState;
-    }
-  } else if (isDirty) {
-    nextFieldStates[input.arrayPath] = { dirty: true };
-  }
+  // Pre-clears validating/errors and re-grafts dirty on the existing entry;
+  // a fresh graft ({ dirty: true }) is created when the array path had no
+  // field state and the new value is dirty.
+  const nextFieldStates = patchFieldStateInMap({
+    fieldStates: input.remappedState.fieldStates,
+    path: input.arrayPath,
+    patch: {
+      validating: undefined,
+      errors: undefined,
+      dirty: isDirty ? true : undefined,
+    },
+  });
 
   return {
     values: setIn(input.state.values, input.arrayPath, input.nextValue),

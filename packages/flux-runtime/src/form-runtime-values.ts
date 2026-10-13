@@ -1,6 +1,7 @@
 import type { FieldState, ScopeChange, ValidationError } from '@nop-chaos/flux-core';
 import { cancelValidationDebounce } from './form-runtime-validation.js';
 import { applyFieldValuePatch } from './form-runtime-field-ops.js';
+import { mergeFieldStateErrorsWithGuard } from './form-runtime-owner-field-states.js';
 import type { ManagedFormRuntimeSharedState } from './form-runtime-types.js';
 
 export interface SetValuesContext {
@@ -126,21 +127,10 @@ export async function executeSetValues(ctx: SetValuesContext, values: Record<str
     const currentFieldStates = store.getState().fieldStates;
     const nextErrors = rebuildStoreErrorsFromExternal(currentFieldStates);
 
-    const updatedFieldStates = { ...currentFieldStates };
-    for (const path of Object.keys(updatedFieldStates)) {
-      const fs = updatedFieldStates[path];
-      if (fs?.errors && !nextErrors[path]) {
-        const { errors: _removed, ...rest } = fs;
-        if (Object.keys(rest).length > 0) {
-          updatedFieldStates[path] = rest;
-        } else {
-          delete updatedFieldStates[path];
-        }
-      }
-    }
-    for (const [path, pathErrors] of Object.entries(nextErrors)) {
-      updatedFieldStates[path] = { ...updatedFieldStates[path], errors: pathErrors };
-    }
+    const { fieldStates: updatedFieldStates } = mergeFieldStateErrorsWithGuard({
+      currentFieldStates,
+      nextErrors,
+    });
     store.batchUpdate({ fieldStates: updatedFieldStates });
   }
 

@@ -21,7 +21,11 @@ import {
   rebuildStoreErrorsFromExternal,
   storeOwnedExternalErrors,
 } from './form-runtime-owner-external-errors.js';
-import { mergeFieldStateErrors } from './form-runtime-owner-field-states.js';
+import {
+  mergeFieldStateErrors,
+  mergeFieldStateErrorsWithGuard,
+} from './form-runtime-owner-field-states.js';
+import { patchFieldStateInMap } from './form-field-state-patch.js';
 import { disposeOwnerState, refreshCompiledModelState } from './form-runtime-owner-lifecycle.js';
 import { isAbortError } from './error-utils.js';
 import { collectSubtreeValidationTargets } from './form-runtime-subtree.js';
@@ -95,27 +99,17 @@ export function buildFormOwnerRuntime(input: {
       const isDirty = !Object.is(dependentBaseline, currentDependentValue);
 
       const fieldStates = input.sharedState.store.getState().fieldStates;
-      const existingFieldState = fieldStates[dependentPath];
 
-      const nextFieldState: FieldState = { ...existingFieldState };
-      // AUDIT-15: do NOT pre-clear `validating` here. Clearing it before
-      // batchUpdate opened a microtask flicker where async fields briefly showed
-      // not-validating before validateField (below) re-entered its validating
-      // lifecycle. validateField owns the validating flag for the whole run.
-      if (isDirty) {
-        nextFieldState.dirty = true;
-      } else {
-        delete nextFieldState.dirty;
-      }
-
-      const nextFieldStates =
-        Object.keys(nextFieldState).length > 0
-          ? { ...fieldStates, [dependentPath]: nextFieldState }
-          : (() => {
-              const next = { ...fieldStates };
-              delete next[dependentPath];
-              return next;
-            })();
+      // AUDIT-15: do NOT pre-clear `validating` here (the patch touches the
+      // dirty key only). Clearing it before batchUpdate opened a microtask
+      // flicker where async fields briefly showed not-validating before
+      // validateField (below) re-entered its validating lifecycle.
+      // validateField owns the validating flag for the whole run.
+      const nextFieldStates = patchFieldStateInMap({
+        fieldStates,
+        path: dependentPath,
+        patch: { dirty: isDirty ? true : undefined },
+      });
 
       input.setLastChange({
         paths: ['*'],
@@ -512,30 +506,18 @@ export function buildFormOwnerRuntime(input: {
       ...fieldErrors,
     };
 
-    const nextFieldStates = { ...currentFieldStates };
-    let changed = false;
-    for (const [path, pathErrors] of Object.entries(mergedErrors)) {
-      const existing = nextFieldStates[path];
-      if (!validationErrorsEqual(existing?.errors, pathErrors)) {
-        nextFieldStates[path] = { ...existing, errors: pathErrors };
-        changed = true;
-      }
-    }
-    for (const path of Object.keys(currentFieldStates)) {
-      if (!mergedErrors[path] && currentFieldStates[path]?.errors) {
-        const { errors: _removed, ...rest } = currentFieldStates[path];
-        nextFieldStates[path] = Object.keys(rest).length > 0 ? rest : undefined!;
-        if (!nextFieldStates[path]) delete nextFieldStates[path];
-        changed = true;
-      }
-    }
-    if (changed) {
+    const nextFieldStatesResult = mergeFieldStateErrorsWithGuard({
+      currentFieldStates,
+      nextErrors: mergedErrors,
+      errorsEqualGuard: validationErrorsEqual,
+    });
+    if (nextFieldStatesResult.changed) {
       input.setLastChange({
         paths: ['*'],
         sourceScopeId: input.formId,
         kind: 'update',
       });
-      input.sharedState.store.batchUpdate({ fieldStates: nextFieldStates });
+      input.sharedState.store.batchUpdate({ fieldStates: nextFieldStatesResult.fieldStates });
     }
 
     const finalFieldStates = input.sharedState.store.getState().fieldStates;
