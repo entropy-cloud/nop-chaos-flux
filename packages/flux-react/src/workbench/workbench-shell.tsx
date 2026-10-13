@@ -1,15 +1,17 @@
 import {
   useEffect,
-  useRef,
   useState,
   type CSSProperties,
-  type KeyboardEvent,
-  type PointerEvent as ReactPointerEvent,
   type ReactNode,
 } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button, cn } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
+import {
+  usePanelResizer,
+  workbenchPanelTrack,
+  WORKBENCH_PANEL_SIDE_CHROME,
+} from './panel-resizer.js';
 
 export interface WorkbenchShellProps {
   className?: string;
@@ -50,16 +52,12 @@ const COLLAPSED_RAIL =
 const RESIZE_HANDLE =
   'absolute top-0 bottom-0 w-1 cursor-col-resize bg-transparent hover:bg-border focus-visible:outline-none transition-colors';
 
-const DEFAULT_LEFT_WIDTH = 240;
-const DEFAULT_RIGHT_WIDTH = 352;
 const DEFAULT_MIN_WIDTH = 200;
 const DEFAULT_MAX_WIDTH = 600;
-const RESIZE_STEP = 16;
 const TABLET_BREAKPOINT = 1024;
 
-function clampWidth(width: number, min: number, max: number): number {
-  return Math.min(Math.max(width, min), max);
-}
+const LEFT_PANEL_CHROME = WORKBENCH_PANEL_SIDE_CHROME.left;
+const RIGHT_PANEL_CHROME = WORKBENCH_PANEL_SIDE_CHROME.right;
 
 function useWideWorkbenchViewport(): boolean {
   const [isWide, setIsWide] = useState<boolean>(() => {
@@ -92,17 +90,29 @@ function resolveWorkbenchGridCols(
   leftCollapsed: boolean,
   rightCollapsed: boolean,
 ): string {
+  const leftTrack = (collapsed: boolean) => workbenchPanelTrack('left', collapsed);
+  const rightTrack = (collapsed: boolean) => workbenchPanelTrack('right', collapsed);
   if (!hasLeft && !hasRight) return 'grid-cols-1';
   if (hasLeft && !hasRight) {
-    return leftCollapsed ? 'grid-cols-[2rem_minmax(0,1fr)]' : 'grid-cols-[15rem_minmax(0,1fr)]';
+    return leftCollapsed
+      ? `grid-cols-[${leftTrack(true)}_minmax(0,1fr)]`
+      : `grid-cols-[${leftTrack(false)}_minmax(0,1fr)]`;
   }
   if (!hasLeft && hasRight) {
-    return rightCollapsed ? 'grid-cols-[minmax(0,1fr)_2rem]' : 'grid-cols-[minmax(0,1fr)_22rem]';
+    return rightCollapsed
+      ? `grid-cols-[minmax(0,1fr)_${rightTrack(true)}]`
+      : `grid-cols-[minmax(0,1fr)_${rightTrack(false)}]`;
   }
-  if (leftCollapsed && rightCollapsed) return 'grid-cols-[2rem_minmax(0,1fr)_2rem]';
-  if (leftCollapsed) return 'grid-cols-[2rem_minmax(0,1fr)_22rem]';
-  if (rightCollapsed) return 'grid-cols-[15rem_minmax(0,1fr)_2rem]';
-  return 'grid-cols-[15rem_minmax(0,1fr)_22rem]';
+  if (leftCollapsed && rightCollapsed) {
+    return `grid-cols-[${leftTrack(true)}_minmax(0,1fr)_${rightTrack(true)}]`;
+  }
+  if (leftCollapsed) {
+    return `grid-cols-[${leftTrack(true)}_minmax(0,1fr)_${rightTrack(false)}]`;
+  }
+  if (rightCollapsed) {
+    return `grid-cols-[${leftTrack(false)}_minmax(0,1fr)_${rightTrack(true)}]`;
+  }
+  return `grid-cols-[${leftTrack(false)}_minmax(0,1fr)_${rightTrack(false)}]`;
 }
 
 export function WorkbenchShell({
@@ -149,156 +159,34 @@ export function WorkbenchShell({
   const isLeftWidthControlled = leftWidth !== undefined;
   const isRightWidthControlled = rightWidth !== undefined;
 
-  const [internalLeftWidth, setInternalLeftWidth] = useState<number>(() =>
-    clampWidth(leftWidth ?? DEFAULT_LEFT_WIDTH, leftMin, leftMax),
-  );
-  const [internalRightWidth, setInternalRightWidth] = useState<number>(() =>
-    clampWidth(rightWidth ?? DEFAULT_RIGHT_WIDTH, rightMin, rightMax),
-  );
-
-  const resolvedLeftWidth = isLeftWidthControlled ? (leftWidth as number) : internalLeftWidth;
-  const resolvedRightWidth = isRightWidthControlled ? (rightWidth as number) : internalRightWidth;
-
-  const leftResizeRef = useRef<{ startX: number; startWidth: number } | null>(null);
-  const rightResizeRef = useRef<{ startX: number; startWidth: number } | null>(null);
   // Drag-preview widths: pointermove only paints a local preview (rAF-coalesced);
   // the controlled onWidthChange (global store dispatch on the designer side)
   // fires once on pointerup. Keeps per-move renders local to the shell.
-  const [leftDragWidth, setLeftDragWidth] = useState<number | null>(null);
-  const [rightDragWidth, setRightDragWidth] = useState<number | null>(null);
-  const leftDragWidthRef = useRef<number | null>(null);
-  const rightDragWidthRef = useRef<number | null>(null);
-  const leftDragRafRef = useRef<number | null>(null);
-  const rightDragRafRef = useRef<number | null>(null);
-
-  useEffect(
-    () => () => {
-      if (leftDragRafRef.current !== null) cancelAnimationFrame(leftDragRafRef.current);
-      if (rightDragRafRef.current !== null) cancelAnimationFrame(rightDragRafRef.current);
+  const leftResizer = usePanelResizer({
+    side: 'left',
+    width: leftWidth,
+    min: leftMin,
+    max: leftMax,
+    isControlled: isLeftWidthControlled,
+    onCommit: (nextWidth) => {
+      onLeftWidthChange?.(nextWidth);
     },
-    [],
-  );
+  });
+  const rightResizer = usePanelResizer({
+    side: 'right',
+    width: rightWidth,
+    min: rightMin,
+    max: rightMax,
+    isControlled: isRightWidthControlled,
+    onCommit: (nextWidth) => {
+      onRightWidthChange?.(nextWidth);
+    },
+  });
+
+  const resolvedLeftWidth = leftResizer.width;
+  const resolvedRightWidth = rightResizer.width;
 
   const isWideViewport = useWideWorkbenchViewport();
-
-  function commitLeftWidth(nextWidth: number) {
-    const clamped = clampWidth(nextWidth, leftMin, leftMax);
-    if (isLeftWidthControlled) {
-      onLeftWidthChange?.(clamped);
-    } else {
-      setInternalLeftWidth(clamped);
-    }
-  }
-
-  function commitRightWidth(nextWidth: number) {
-    const clamped = clampWidth(nextWidth, rightMin, rightMax);
-    if (isRightWidthControlled) {
-      onRightWidthChange?.(clamped);
-    } else {
-      setInternalRightWidth(clamped);
-    }
-  }
-
-  function finishResize(event: ReactPointerEvent<HTMLDivElement>) {
-    try {
-      event.currentTarget.releasePointerCapture(event.pointerId);
-    } catch {
-      // pointer may already be released
-    }
-  }
-
-  const handleLeftPointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
-    if (event.button === 2) return; // ignore right-click
-    event.currentTarget.setPointerCapture(event.pointerId);
-    leftResizeRef.current = { startX: event.clientX, startWidth: resolvedLeftWidth };
-  };
-
-  const handleLeftPointerMove = (event: ReactPointerEvent<HTMLDivElement>) => {
-    if (!leftResizeRef.current) return;
-    const dx = event.clientX - leftResizeRef.current.startX;
-    const next = clampWidth(leftResizeRef.current.startWidth + dx, leftMin, leftMax);
-    leftDragWidthRef.current = next;
-    if (leftDragRafRef.current === null) {
-      leftDragRafRef.current = requestAnimationFrame(() => {
-        leftDragRafRef.current = null;
-        setLeftDragWidth(leftDragWidthRef.current);
-      });
-    }
-  };
-
-  const handleLeftPointerUp = (event: ReactPointerEvent<HTMLDivElement>) => {
-    const dragWidth = leftDragWidthRef.current;
-    leftResizeRef.current = null;
-    leftDragWidthRef.current = null;
-    if (leftDragRafRef.current !== null) {
-      cancelAnimationFrame(leftDragRafRef.current);
-      leftDragRafRef.current = null;
-    }
-    setLeftDragWidth(null);
-    if (dragWidth !== null) {
-      commitLeftWidth(dragWidth);
-    }
-    finishResize(event);
-  };
-
-  const handleLeftKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
-    if (event.key === 'ArrowLeft') {
-      event.preventDefault();
-      event.stopPropagation();
-      commitLeftWidth(resolvedLeftWidth - RESIZE_STEP);
-    } else if (event.key === 'ArrowRight') {
-      event.preventDefault();
-      event.stopPropagation();
-      commitLeftWidth(resolvedLeftWidth + RESIZE_STEP);
-    }
-  };
-
-  const handleRightPointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
-    if (event.button === 2) return; // ignore right-click
-    event.currentTarget.setPointerCapture(event.pointerId);
-    rightResizeRef.current = { startX: event.clientX, startWidth: resolvedRightWidth };
-  };
-
-  const handleRightPointerMove = (event: ReactPointerEvent<HTMLDivElement>) => {
-    if (!rightResizeRef.current) return;
-    // Dragging left on the right panel widens it.
-    const dx = rightResizeRef.current.startX - event.clientX;
-    const next = clampWidth(rightResizeRef.current.startWidth + dx, rightMin, rightMax);
-    rightDragWidthRef.current = next;
-    if (rightDragRafRef.current === null) {
-      rightDragRafRef.current = requestAnimationFrame(() => {
-        rightDragRafRef.current = null;
-        setRightDragWidth(rightDragWidthRef.current);
-      });
-    }
-  };
-
-  const handleRightPointerUp = (event: ReactPointerEvent<HTMLDivElement>) => {
-    const dragWidth = rightDragWidthRef.current;
-    rightResizeRef.current = null;
-    rightDragWidthRef.current = null;
-    if (rightDragRafRef.current !== null) {
-      cancelAnimationFrame(rightDragRafRef.current);
-      rightDragRafRef.current = null;
-    }
-    setRightDragWidth(null);
-    if (dragWidth !== null) {
-      commitRightWidth(dragWidth);
-    }
-    finishResize(event);
-  };
-
-  const handleRightKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
-    if (event.key === 'ArrowLeft') {
-      event.preventDefault();
-      event.stopPropagation();
-      commitRightWidth(resolvedRightWidth + RESIZE_STEP);
-    } else if (event.key === 'ArrowRight') {
-      event.preventDefault();
-      event.stopPropagation();
-      commitRightWidth(resolvedRightWidth - RESIZE_STEP);
-    }
-  };
 
   const gridColsClass = resolveWorkbenchGridCols(hasLeft, hasRight, leftCollapsed, rightCollapsed);
   // footer 存在时行模板补 auto 尾行（防 footer-无-header 组合下 footer 侵占 1fr 行）。
@@ -310,20 +198,20 @@ export function WorkbenchShell({
     if (hasLeft) {
       columns.push(
         leftCollapsed
-          ? '2rem'
+          ? workbenchPanelTrack('left', true)
           : leftResizeActive
-            ? `${leftDragWidth ?? resolvedLeftWidth}px`
-            : '15rem',
+            ? `${leftResizer.dragWidth ?? resolvedLeftWidth}px`
+            : workbenchPanelTrack('left', false),
       );
     }
     columns.push('minmax(0,1fr)');
     if (hasRight) {
       columns.push(
         rightCollapsed
-          ? '2rem'
+          ? workbenchPanelTrack('right', true)
           : rightResizeActive
-            ? `${rightDragWidth ?? resolvedRightWidth}px`
-            : '22rem',
+            ? `${rightResizer.dragWidth ?? resolvedRightWidth}px`
+            : workbenchPanelTrack('right', false),
       );
     }
     gridTemplateColumns = columns.join(' ');
@@ -367,15 +255,15 @@ export function WorkbenchShell({
               <Button
                 type="button"
                 variant="ghost"
-                className={cn(COLLAPSED_RAIL, 'justify-end')}
+                className={cn(COLLAPSED_RAIL, LEFT_PANEL_CHROME.railJustifyClass)}
                 onClick={onLeftToggle}
                 aria-label={leftLabel}
-                data-slot="workbench-left-panel"
-                data-testid="left-panel-collapsed"
+                data-slot={LEFT_PANEL_CHROME.dataSlot}
+                data-testid={`${LEFT_PANEL_CHROME.testidPrefix}-panel-collapsed`}
               >
                 <span
                   className="inline-flex size-7 items-center justify-center rounded-md border border-border bg-background"
-                  data-testid="expand-left-panel"
+                  data-testid={`expand-${LEFT_PANEL_CHROME.testidPrefix}-panel`}
                 >
                   <ChevronRight className="size-4" />
                 </span>
@@ -383,28 +271,24 @@ export function WorkbenchShell({
           ) : (
             <div
               className={cn(PANEL_CARD, leftResizeActive ? 'relative' : undefined)}
-              data-slot="workbench-left-panel"
-              data-testid="left-panel-expanded"
+              data-slot={LEFT_PANEL_CHROME.dataSlot}
+              data-testid={`${LEFT_PANEL_CHROME.testidPrefix}-panel-expanded`}
             >
               {leftPanel}
               {leftResizeActive && (
                 <div
                   data-slot="workbench-resize-handle"
-                  data-testid="left-resize-handle"
+                  data-testid={`${LEFT_PANEL_CHROME.testidPrefix}-resize-handle`}
                   role="separator"
                   aria-orientation="vertical"
-                  aria-label={leftResizeLabel ?? t('flux.workbench.resizeLeftPanel')}
+                  aria-label={leftResizeLabel ?? t(LEFT_PANEL_CHROME.resizeLabelKey)}
                   aria-valuenow={Math.round(resolvedLeftWidth)}
                   aria-valuemin={leftMin}
                   aria-valuemax={leftMax}
                   tabIndex={0}
-                  className={cn(RESIZE_HANDLE, 'right-0')}
+                  className={cn(RESIZE_HANDLE, LEFT_PANEL_CHROME.handlePositionClass)}
                   style={{ touchAction: 'none' }}
-                  onPointerDown={handleLeftPointerDown}
-                  onPointerMove={handleLeftPointerMove}
-                  onPointerUp={handleLeftPointerUp}
-                  onPointerCancel={handleLeftPointerUp}
-                  onKeyDown={handleLeftKeyDown}
+                  {...leftResizer.handleProps}
                 />
               )}
             </div>
@@ -421,15 +305,15 @@ export function WorkbenchShell({
               <Button
                 type="button"
                 variant="ghost"
-                className={cn(COLLAPSED_RAIL, 'justify-start')}
+                className={cn(COLLAPSED_RAIL, RIGHT_PANEL_CHROME.railJustifyClass)}
                 onClick={onRightToggle}
                 aria-label={rightLabel}
-                data-slot="workbench-right-panel"
-                data-testid="right-panel-collapsed"
+                data-slot={RIGHT_PANEL_CHROME.dataSlot}
+                data-testid={`${RIGHT_PANEL_CHROME.testidPrefix}-panel-collapsed`}
               >
                 <span
                   className="inline-flex size-7 items-center justify-center rounded-md border border-border bg-background"
-                  data-testid="expand-right-panel"
+                  data-testid={`expand-${RIGHT_PANEL_CHROME.testidPrefix}-panel`}
                 >
                   <ChevronLeft className="size-4" />
                 </span>
@@ -437,28 +321,24 @@ export function WorkbenchShell({
           ) : (
             <div
               className={cn(PANEL_CARD, rightResizeActive ? 'relative' : undefined)}
-              data-slot="workbench-right-panel"
-              data-testid="right-panel-expanded"
+              data-slot={RIGHT_PANEL_CHROME.dataSlot}
+              data-testid={`${RIGHT_PANEL_CHROME.testidPrefix}-panel-expanded`}
             >
               {rightPanel}
               {rightResizeActive && (
                 <div
                   data-slot="workbench-resize-handle"
-                  data-testid="right-resize-handle"
+                  data-testid={`${RIGHT_PANEL_CHROME.testidPrefix}-resize-handle`}
                   role="separator"
                   aria-orientation="vertical"
-                  aria-label={rightResizeLabel ?? t('flux.workbench.resizeRightPanel')}
+                  aria-label={rightResizeLabel ?? t(RIGHT_PANEL_CHROME.resizeLabelKey)}
                   aria-valuenow={Math.round(resolvedRightWidth)}
                   aria-valuemin={rightMin}
                   aria-valuemax={rightMax}
                   tabIndex={0}
-                  className={cn(RESIZE_HANDLE, 'left-0')}
+                  className={cn(RESIZE_HANDLE, RIGHT_PANEL_CHROME.handlePositionClass)}
                   style={{ touchAction: 'none' }}
-                  onPointerDown={handleRightPointerDown}
-                  onPointerMove={handleRightPointerMove}
-                  onPointerUp={handleRightPointerUp}
-                  onPointerCancel={handleRightPointerUp}
-                  onKeyDown={handleRightKeyDown}
+                  {...rightResizer.handleProps}
                 />
               )}
             </div>

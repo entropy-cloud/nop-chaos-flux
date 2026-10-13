@@ -21,6 +21,7 @@ import { RenderNodes, EMPTY_SCOPE_DATA } from './helpers.js';
 import { DialogHost } from './dialog-host.js';
 import { collectSchemaImports } from './node-renderer-utils.js';
 import { SchemaRootError, SchemaRootErrorBoundary, SchemaRootStatus } from './node-error-boundary.js';
+import { useDeferredDispose } from './use-deferred-dispose.js';
 
 const EMPTY_PREPARED_IMPORTS = new Map<string, import('@nop-chaos/flux-core').PreparedImportSpec>();
 
@@ -154,11 +155,6 @@ export function createSchemaRenderer(registryDefinitions: RendererDefinition[] =
     const onActionScopeChange = props.onActionScopeChange;
     const envRef = useRef(props.env);
     envRef.current = props.env;
-    const mountedRef = useRef(false);
-    const activeRuntimeRef = useRef<import('@nop-chaos/flux-core').RendererRuntime | null>(null);
-    const activeRootComponentRegistryRef =
-      useRef<import('@nop-chaos/flux-core').ComponentHandleRegistry | null>(null);
-    const activeRootActionScopeRef = useRef<import('@nop-chaos/flux-core').ActionScope | null>(null);
     const onActionErrorRef = useRef(props.onActionError);
     onActionErrorRef.current = props.onActionError;
     const creationErrorRef = useRef<unknown>(null);
@@ -280,21 +276,12 @@ export function createSchemaRenderer(registryDefinitions: RendererDefinition[] =
       page.refresh();
     }, [page, props.env, runtime]);
 
-    useEffect(() => {
-      mountedRef.current = true;
-      activeRuntimeRef.current = runtime;
-
-      return () => {
-        mountedRef.current = false;
-        const disposedRuntime = runtime;
-
-        queueMicrotask(() => {
-          if (!mountedRef.current || activeRuntimeRef.current !== disposedRuntime) {
-            disposedRuntime.dispose();
-          }
-        });
-      };
-    }, [runtime]);
+    useDeferredDispose({
+      value: runtime,
+      dispose: (disposedRuntime) => {
+        disposedRuntime.dispose();
+      },
+    });
 
     const rootScope = props.parentScope ?? page.scope;
     const rootValidationOwner: ValidationContextValue = props.parentScope
@@ -314,46 +301,21 @@ export function createSchemaRenderer(registryDefinitions: RendererDefinition[] =
     );
     const ownsRootComponentRegistry = props.componentRegistry == null;
 
-    useEffect(() => {
-      activeRootActionScopeRef.current = rootActionScope;
+    useDeferredDispose({
+      value: rootActionScope,
+      isEnabled: ownsRootActionScope,
+      dispose: (disposedScope) => {
+        runtime.releaseActionScope(disposedScope);
+      },
+    });
 
-      return () => {
-        if (!ownsRootActionScope) {
-          return;
-        }
-
-        const disposedScope = rootActionScope;
-
-        queueMicrotask(() => {
-          if (!disposedScope) {
-            return;
-          }
-
-          if (!mountedRef.current || activeRootActionScopeRef.current !== disposedScope) {
-            runtime.releaseActionScope(disposedScope);
-          }
-        });
-      };
-    }, [ownsRootActionScope, rootActionScope, runtime]);
-
-    useEffect(() => {
-      activeRootComponentRegistryRef.current = rootComponentRegistry;
-
-      return () => {
-        if (ownsRootComponentRegistry) {
-          const disposedRegistry = rootComponentRegistry;
-
-          queueMicrotask(() => {
-            if (
-              !mountedRef.current ||
-              activeRootComponentRegistryRef.current !== disposedRegistry
-            ) {
-              disposedRegistry.dispose?.();
-            }
-          });
-        }
-      };
-    }, [ownsRootComponentRegistry, rootComponentRegistry]);
+    useDeferredDispose({
+      value: rootComponentRegistry,
+      isEnabled: ownsRootComponentRegistry,
+      dispose: (disposedRegistry) => {
+        disposedRegistry.dispose?.();
+      },
+    });
 
     useEffect(() => {
       return () => {

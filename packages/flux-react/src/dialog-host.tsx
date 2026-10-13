@@ -1,12 +1,8 @@
 import React from 'react';
 import type { SurfaceEntry, SurfaceRuntime } from '@nop-chaos/flux-core';
 import { useCurrentPage, useCurrentSurfaceRuntime } from './hooks.js';
+import { renderSurfaceNode } from './dialog-host-surface.js';
 import {
-  renderSurfaceNode,
-  SurfaceScopeProviders,
-} from './dialog-host-surface.js';
-import {
-  Button,
   cn,
   Dialog,
   DialogBody,
@@ -24,8 +20,11 @@ import {
   useIsMobile,
 } from '@nop-chaos/ui';
 import { resolveContainerElement } from './container-hooks.js';
-import { NodeErrorBoundary } from './node-error-boundary.js';
 import { useSyncExternalStoreWithSelector } from './use-sync-external-store-with-selector.js';
+import {
+  SurfaceChromeShell,
+  type SurfaceConfirmButtons,
+} from './surface-chrome-shell.js';
 
 type FluxSurfaceSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl' | 'full';
 
@@ -87,21 +86,6 @@ function buildSurfaceInlineStyle(options: {
   return style;
 }
 
-type OpenChangeReason = 'outside-press' | 'escape-key' | string | undefined;
-
-function shouldSuppressClose(
-  reason: OpenChangeReason,
-  options: { closeOnOutside: boolean | undefined; closeOnEsc: boolean | undefined },
-): boolean {
-  if (reason === 'outside-press' && options.closeOnOutside === false) {
-    return true;
-  }
-  if (reason === 'escape-key' && options.closeOnEsc === false) {
-    return true;
-  }
-  return false;
-}
-
 interface ConfirmButtonOptions {
   confirm: boolean | string | undefined;
   hasExplicitActions: boolean;
@@ -109,14 +93,7 @@ interface ConfirmButtonOptions {
   onConfirm: () => void;
 }
 
-interface ConfirmButtonDescriptor {
-  cancelLabel: string;
-  confirmLabel: string;
-  onCancel: () => void;
-  onConfirm: () => void;
-}
-
-function resolveConfirmButtons(options: ConfirmButtonOptions): ConfirmButtonDescriptor | null {
+function resolveConfirmButtons(options: ConfirmButtonOptions): SurfaceConfirmButtons | null {
   if (!options.confirm || options.hasExplicitActions) {
     return null;
   }
@@ -130,10 +107,6 @@ function resolveConfirmButtons(options: ConfirmButtonOptions): ConfirmButtonDesc
     onCancel: options.onCancel,
     onConfirm: options.onConfirm,
   };
-}
-
-function SurfaceBodyBoundary(props: { surfaceId: string; children: React.ReactNode }) {
-  return <NodeErrorBoundary nodeId={`${props.surfaceId}:body`}>{props.children}</NodeErrorBoundary>;
 }
 
 function sameSurfaces(left: SurfaceEntry[], right: SurfaceEntry[]) {
@@ -335,122 +308,78 @@ function DialogView(props: {
   const headerClassName = surface.surface.headerClassName as string | undefined;
   const bodyClassName = surface.surface.bodyClassName as string | undefined;
   const footerClassName = surface.surface.footerClassName as string | undefined;
-  const handleOpenChange = (open: boolean, eventDetails: unknown) => {
-    if (open) {
-      return;
-    }
-    const reason = (eventDetails as { reason?: OpenChangeReason } | null)?.reason;
-    if (
-      shouldSuppressClose(reason, {
-        closeOnOutside: closeOnOutsideClick,
-        closeOnEsc,
-      })
-    ) {
-      return;
-    }
-    // Stacked-dialog fix: a dialog that is not the topmost one is interactionally
-    // inert — the user is interacting with whatever is on top of it (a nested
-    // openDialog, a picker, etc.). The Base UI click-outside and Esc detectors
-    // fire on every dialog that has them enabled, regardless of stacking, so an
-    // inner click reaches the outer's outside-press listener and the outer's
-    // controlled dialog then writes `openPath = false` into the page scope,
-    // closing the parent the user never asked to close. Suppress outside-press
-    // and Esc for any non-topmost dialog; surface close paths (closeDialog,
-    // closeOnSubmit, etc.) still work because they call surfaceRuntime.close
-    // directly without going through onOpenChange.
-    if (!isTopmost && (reason === 'outside-press' || reason === 'escape-key')) {
-      return;
-    }
-    handleClose();
-  };
 
   return (
-    <Dialog
-      open
-      onOpenChange={handleOpenChange}
-      containerElement={containerElement}
-      noOverlay={!showMask}
-      closeOnOutsideClick={closeOnOutsideClick}
-      modal={isTopmost}
+    <SurfaceChromeShell
+      kind="dialog"
+      chrome={{
+        Header: DialogHeader,
+        Title: DialogTitle,
+        Body: DialogBody,
+        Footer: DialogFooter,
+      }}
+      surfaceId={surface.id}
+      surfaceContext={surfaceContext}
+      titleNode={titleNode}
+      headerNode={headerNode}
+      bodyNode={renderSurfaceNode(surface.body ?? surface.surface.body, surfaceContext)}
+      actionsNode={actionsNode}
+      footerNode={footerNode}
+      headerClassName={headerClassName}
+      bodyClassName={bodyClassName}
+      footerClassName={footerClassName}
+      closeSlotName="dialog-close"
+      confirmBarClass="nop-dialog-confirm-bar"
+      closeOnOutside={closeOnOutsideClick}
+      closeOnEsc={closeOnEsc}
+      handleClose={handleClose}
+      shouldClose={(reason) => {
+        // Stacked-dialog fix: a dialog that is not the topmost one is interactionally
+        // inert — the user is interacting with whatever is on top of it (a nested
+        // openDialog, a picker, etc.). The Base UI click-outside and Esc detectors
+        // fire on every dialog that has them enabled, regardless of stacking, so an
+        // inner click reaches the outer's outside-press listener and the outer's
+        // controlled dialog then writes `openPath = false` into the page scope,
+        // closing the parent the user never asked to close. Suppress outside-press
+        // and Esc for any non-topmost dialog; surface close paths (closeDialog,
+        // closeOnSubmit, etc.) still work because they call surfaceRuntime.close
+        // directly without going through onOpenChange.
+        if (!isTopmost && (reason === 'outside-press' || reason === 'escape-key')) {
+          return false;
+        }
+        return true;
+      }}
+      confirmButtons={confirmButtons}
     >
-      <DialogContent
-        className={cn('nop-dialog', surface.meta?.className)}
-        data-testid={surface.meta?.testid || undefined}
-        data-cid={surface.meta?.cid || undefined}
-        data-renderer={surface.kind}
-        data-slot="dialog-surface"
-        data-close-on-outside={closeOnOutsideClick ? 'true' : 'false'}
-        data-close-on-esc={closeOnEsc ? 'true' : 'false'}
-        data-mobile-fullscreen={isMobile && !hasExplicitSize ? 'true' : undefined}
-        size={primitiveSize}
-        topAnchored={applyTopAnchored}
-        showCloseButton={showCloseButton}
-        style={surfaceStyle}
-        onClickCapture={(event) => {
-          const target = event.target;
-
-          if (!(target instanceof Element)) {
-            return;
-          }
-
-          if (target.closest('[data-slot="dialog-close"]')) {
-            handleClose();
-          }
-        }}
-      >
-        <SurfaceScopeProviders {...surfaceContext}>
-          {(titleNode || headerNode) && (
-            <DialogHeader className={headerClassName}>
-              {titleNode && (
-                <DialogTitle>
-                  <SurfaceBodyBoundary surfaceId={surface.id}>{titleNode}</SurfaceBodyBoundary>
-                </DialogTitle>
-              )}
-              {headerNode && (
-                <SurfaceBodyBoundary surfaceId={surface.id}>{headerNode}</SurfaceBodyBoundary>
-              )}
-            </DialogHeader>
-          )}
-          <DialogBody className={bodyClassName}>
-            <SurfaceBodyBoundary surfaceId={surface.id}>
-              {renderSurfaceNode(surface.body ?? surface.surface.body, surfaceContext)}
-            </SurfaceBodyBoundary>
-          </DialogBody>
-          {actionsNode || footerNode || confirmButtons ? (
-            <DialogFooter className={footerClassName}>
-              {footerNode && (
-                <SurfaceBodyBoundary surfaceId={surface.id}>{footerNode}</SurfaceBodyBoundary>
-              )}
-              {actionsNode && (
-                <SurfaceBodyBoundary surfaceId={surface.id}>{actionsNode}</SurfaceBodyBoundary>
-              )}
-              {confirmButtons && !actionsNode && (
-                <div className="nop-dialog-confirm-bar" data-slot="dialog-confirm-bar">
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    data-testid="surface-confirm-cancel"
-                    data-slot="surface-confirm-cancel"
-                    onClick={confirmButtons.onCancel}
-                  >
-                    {confirmButtons.cancelLabel}
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="default"
-                    data-testid="surface-confirm-submit"
-                    data-slot="surface-confirm-submit"
-                    onClick={confirmButtons.onConfirm}
-                  >
-                    {confirmButtons.confirmLabel}
-                  </Button>
-                </div>
-              )}
-            </DialogFooter>
-          ) : null}
-        </SurfaceScopeProviders>
-      </DialogContent>
-    </Dialog>
+      {({ handleOpenChange, handleCaptureCloseClick, content }) => (
+        <Dialog
+          open
+          onOpenChange={handleOpenChange}
+          containerElement={containerElement}
+          noOverlay={!showMask}
+          closeOnOutsideClick={closeOnOutsideClick}
+          modal={isTopmost}
+        >
+          <DialogContent
+            className={cn('nop-dialog', surface.meta?.className)}
+            data-testid={surface.meta?.testid || undefined}
+            data-cid={surface.meta?.cid || undefined}
+            data-renderer={surface.kind}
+            data-slot="dialog-surface"
+            data-close-on-outside={closeOnOutsideClick ? 'true' : 'false'}
+            data-close-on-esc={closeOnEsc ? 'true' : 'false'}
+            data-mobile-fullscreen={isMobile && !hasExplicitSize ? 'true' : undefined}
+            size={primitiveSize}
+            topAnchored={applyTopAnchored}
+            showCloseButton={showCloseButton}
+            style={surfaceStyle}
+            onClickCapture={handleCaptureCloseClick}
+          >
+            {content}
+          </DialogContent>
+        </Dialog>
+      )}
+    </SurfaceChromeShell>
   );
 }
 
@@ -495,114 +424,66 @@ function DrawerView(props: {
   const bodyClassName = surface.surface.bodyClassName as string | undefined;
   const footerClassName = surface.surface.footerClassName as string | undefined;
 
-  const handleOpenChange = (open: boolean, eventDetails: unknown) => {
-    if (open) {
-      return;
-    }
-    const reason = (eventDetails as { reason?: OpenChangeReason } | null)?.reason;
-    if (
-      shouldSuppressClose(reason, {
-        closeOnOutside,
-        closeOnEsc,
-      })
-    ) {
-      return;
-    }
-    handleClose();
-  };
-
   return (
-    <Drawer
-      open
-      onOpenChange={handleOpenChange}
-      direction={
-        effectiveSide === 'left'
-          ? 'left'
-          : effectiveSide === 'top'
-            ? 'top'
-            : effectiveSide === 'bottom'
-              ? 'bottom'
-              : 'right'
-      }
-      containerElement={containerElement}
+    <SurfaceChromeShell
+      kind="drawer"
+      chrome={{
+        Header: DrawerHeader,
+        Title: DrawerTitle,
+        Body: DrawerBody,
+        Footer: DrawerFooter,
+      }}
+      surfaceId={surface.id}
+      surfaceContext={surfaceContext}
+      titleNode={titleNode}
+      headerNode={headerNode}
+      bodyNode={renderSurfaceNode(surface.body ?? surface.surface.body, surfaceContext)}
+      actionsNode={actionsNode}
+      footerNode={footerNode}
+      headerClassName={headerClassName}
+      bodyClassName={bodyClassName}
+      footerClassName={footerClassName}
+      closeSlotName="drawer-close"
+      confirmBarClass="nop-drawer-confirm-bar"
+      closeOnOutside={closeOnOutside}
+      closeOnEsc={closeOnEsc}
+      handleClose={handleClose}
+      confirmButtons={confirmButtons}
     >
-      <DrawerContent
-        className={cn('nop-drawer', surface.meta?.className)}
-        data-testid={surface.meta?.testid || undefined}
-        data-cid={surface.meta?.cid || undefined}
-        data-renderer={surface.kind}
-        data-slot="drawer-surface"
-        data-close-on-outside={closeOnOutside ? 'true' : 'false'}
-        data-close-on-esc={closeOnEsc ? 'true' : 'false'}
-        data-mobile-side-overridden={isMobile && schemaSide !== 'bottom' ? 'true' : undefined}
-        showMask={showMask}
-        showCloseButton={showCloseButton}
-        resizable={resizable}
-        style={inlineStyle}
-        onClickCapture={(event) => {
-          const target = event.target;
-
-          if (!(target instanceof Element)) {
-            return;
+      {({ handleOpenChange, handleCaptureCloseClick, content }) => (
+        <Drawer
+          open
+          onOpenChange={handleOpenChange}
+          direction={
+            effectiveSide === 'left'
+              ? 'left'
+              : effectiveSide === 'top'
+                ? 'top'
+                : effectiveSide === 'bottom'
+                  ? 'bottom'
+                  : 'right'
           }
-
-          if (target.closest('[data-slot="drawer-close"]')) {
-            handleClose();
-          }
-        }}
-      >
-        <SurfaceScopeProviders {...surfaceContext}>
-          {(titleNode || headerNode) && (
-            <DrawerHeader className={headerClassName}>
-              {titleNode && (
-                <DrawerTitle>
-                  <SurfaceBodyBoundary surfaceId={surface.id}>{titleNode}</SurfaceBodyBoundary>
-                </DrawerTitle>
-              )}
-              {headerNode && (
-                <SurfaceBodyBoundary surfaceId={surface.id}>{headerNode}</SurfaceBodyBoundary>
-              )}
-            </DrawerHeader>
-          )}
-          <DrawerBody className={bodyClassName}>
-            <SurfaceBodyBoundary surfaceId={surface.id}>
-              {renderSurfaceNode(surface.body ?? surface.surface.body, surfaceContext)}
-            </SurfaceBodyBoundary>
-          </DrawerBody>
-          {actionsNode || footerNode || confirmButtons ? (
-            <DrawerFooter className={footerClassName}>
-              {footerNode && (
-                <SurfaceBodyBoundary surfaceId={surface.id}>{footerNode}</SurfaceBodyBoundary>
-              )}
-              {actionsNode && (
-                <SurfaceBodyBoundary surfaceId={surface.id}>{actionsNode}</SurfaceBodyBoundary>
-              )}
-              {confirmButtons && !actionsNode && (
-                <div className="nop-drawer-confirm-bar" data-slot="drawer-confirm-bar">
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    data-testid="surface-confirm-cancel"
-                    data-slot="surface-confirm-cancel"
-                    onClick={confirmButtons.onCancel}
-                  >
-                    {confirmButtons.cancelLabel}
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="default"
-                    data-testid="surface-confirm-submit"
-                    data-slot="surface-confirm-submit"
-                    onClick={confirmButtons.onConfirm}
-                  >
-                    {confirmButtons.confirmLabel}
-                  </Button>
-                </div>
-              )}
-            </DrawerFooter>
-          ) : null}
-        </SurfaceScopeProviders>
-      </DrawerContent>
-    </Drawer>
+          containerElement={containerElement}
+        >
+          <DrawerContent
+            className={cn('nop-drawer', surface.meta?.className)}
+            data-testid={surface.meta?.testid || undefined}
+            data-cid={surface.meta?.cid || undefined}
+            data-renderer={surface.kind}
+            data-slot="drawer-surface"
+            data-close-on-outside={closeOnOutside ? 'true' : 'false'}
+            data-close-on-esc={closeOnEsc ? 'true' : 'false'}
+            data-mobile-side-overridden={isMobile && schemaSide !== 'bottom' ? 'true' : undefined}
+            showMask={showMask}
+            showCloseButton={showCloseButton}
+            resizable={resizable}
+            style={inlineStyle}
+            onClickCapture={handleCaptureCloseClick}
+          >
+            {content}
+          </DrawerContent>
+        </Drawer>
+      )}
+    </SurfaceChromeShell>
   );
 }

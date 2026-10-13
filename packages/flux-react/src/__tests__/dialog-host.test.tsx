@@ -82,6 +82,7 @@ vi.mock('@nop-chaos/ui', () => ({
   DialogBody: ({ children }: any) => <div data-testid="dialog-body">{children}</div>,
   DialogHeader: ({ children }: any) => <div data-testid="dialog-header">{children}</div>,
   DialogTitle: ({ children }: any) => <div data-testid="dialog-title">{children}</div>,
+  DialogFooter: ({ children }: any) => <div data-testid="dialog-footer">{children}</div>,
   Drawer: ({ children, onOpenChange, direction }: any) => (
     <div data-testid="drawer-root" data-direction={direction}>
       <button
@@ -106,6 +107,7 @@ vi.mock('@nop-chaos/ui', () => ({
   DrawerBody: ({ children }: any) => <div data-testid="drawer-body">{children}</div>,
   DrawerHeader: ({ children }: any) => <div data-testid="drawer-header">{children}</div>,
   DrawerTitle: ({ children }: any) => <div data-testid="drawer-title">{children}</div>,
+  DrawerFooter: ({ children }: any) => <div data-testid="drawer-footer">{children}</div>,
   Alert: ({ children, ...props }: any) => <div {...props}>{children}</div>,
   AlertAction: ({ children }: any) => <div>{children}</div>,
   AlertDescription: ({ children, ...props }: any) => <div {...props}>{children}</div>,

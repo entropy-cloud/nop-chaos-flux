@@ -310,6 +310,82 @@ describe('WorkbenchShell resizable panels', () => {
     expect(body.style.gridTemplateColumns).toBe('340px minmax(0,1fr) 352px');
   });
 
+  // CX-8 plan 586 (m4): pin the expanded/collapsed track literals before the
+  // width constants converge into a single source — a silent width change
+  // ('15rem'/'22rem'/'2rem') must fail here.
+  it('pins the collapsed and expanded grid track literals for every rail combination', () => {
+    const combinations: Array<{
+      name: string;
+      props: {
+        leftPanel?: React.ReactNode;
+        rightPanel?: React.ReactNode;
+        leftCollapsed?: boolean;
+        rightCollapsed?: boolean;
+      };
+      expectedClass: string;
+    }> = [
+      {
+        name: 'both collapsed',
+        props: { leftPanel: <div>Left</div>, leftCollapsed: true, rightPanel: <div>Right</div>, rightCollapsed: true },
+        expectedClass: 'grid-cols-[2rem_minmax(0,1fr)_2rem]',
+      },
+      {
+        name: 'left collapsed, right expanded',
+        props: { leftPanel: <div>Left</div>, leftCollapsed: true, rightPanel: <div>Right</div> },
+        expectedClass: 'grid-cols-[2rem_minmax(0,1fr)_22rem]',
+      },
+      {
+        name: 'left expanded, right collapsed',
+        props: { leftPanel: <div>Left</div>, rightPanel: <div>Right</div>, rightCollapsed: true },
+        expectedClass: 'grid-cols-[15rem_minmax(0,1fr)_2rem]',
+      },
+      {
+        name: 'both expanded',
+        props: { leftPanel: <div>Left</div>, rightPanel: <div>Right</div> },
+        expectedClass: 'grid-cols-[15rem_minmax(0,1fr)_22rem]',
+      },
+    ];
+
+    for (const combination of combinations) {
+      cleanup();
+      render(<WorkbenchShell canvas={<div>Canvas</div>} {...combination.props} />);
+      expect(
+        screen.getByTestId('workbench-body').className,
+        `track literals for ${combination.name}`,
+      ).toContain(combination.expectedClass);
+    }
+  });
+
+  it('pins the resize-active style track fallback literals for the non-resized side', () => {
+    cleanup();
+    render(
+      <WorkbenchShell
+        leftPanel={<div>Left</div>}
+        leftResizable
+        leftWidth={240}
+        canvas={<div>Canvas</div>}
+        rightPanel={<div>Right</div>}
+      />,
+    );
+    expect(screen.getByTestId('workbench-body').style.gridTemplateColumns).toBe(
+      '240px minmax(0,1fr) 22rem',
+    );
+
+    cleanup();
+    render(
+      <WorkbenchShell
+        leftPanel={<div>Left</div>}
+        canvas={<div>Canvas</div>}
+        rightPanel={<div>Right</div>}
+        rightResizable
+        rightWidth={352}
+      />,
+    );
+    expect(screen.getByTestId('workbench-body').style.gridTemplateColumns).toBe(
+      '15rem minmax(0,1fr) 352px',
+    );
+  });
+
   it('labels resize handles through i18n (locale-provided, prop-overridable)', async () => {
     const { initFluxI18n, resetFluxI18n, changeLanguage } = await import('@nop-chaos/flux-i18n');
     initFluxI18n({ lng: 'en-US', fallbackLng: 'en-US' });

@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useRef } from 'react';
+import { useMemo } from 'react';
 import type { ActionScope, ComponentHandleRegistry, RendererRuntime } from '@nop-chaos/flux-core';
+import { useDeferredDispose } from './use-deferred-dispose.js';
 
 function createNodeOwnedActionScope(
   runtime: RendererRuntime,
@@ -36,9 +37,6 @@ export function useNodeScopes(
   activeActionScope: ActionScope | undefined;
   activeComponentRegistry: ComponentHandleRegistry | undefined;
 } {
-  const mountedRef = useRef(false);
-  const activeNodeActionScopeRef = useRef<ActionScope | undefined>(undefined);
-  const activeNodeComponentRegistryRef = useRef<ComponentHandleRegistry | undefined>(undefined);
   const nodeActionScope = useMemo(() => {
     if (input.actionScopePolicy !== 'new') {
       return undefined;
@@ -59,48 +57,19 @@ export function useNodeScopes(
   const activeComponentRegistry =
     input.componentRegistryPolicy === 'new' ? nodeComponentRegistry : componentRegistry;
 
-  useEffect(() => {
-    mountedRef.current = true;
+  useDeferredDispose({
+    value: nodeActionScope,
+    dispose: (disposedScope) => {
+      runtime.releaseActionScope(disposedScope);
+    },
+  });
 
-    return () => {
-      mountedRef.current = false;
-    };
-  }, []);
-
-  useEffect(() => {
-    activeNodeActionScopeRef.current = nodeActionScope;
-
-    return () => {
-      const disposedScope = nodeActionScope;
-
-      queueMicrotask(() => {
-        if (!disposedScope) {
-          return;
-        }
-
-        if (!mountedRef.current || activeNodeActionScopeRef.current !== disposedScope) {
-          runtime.releaseActionScope(disposedScope);
-        }
-      });
-    };
-  }, [nodeActionScope, runtime]);
-
-  useEffect(() => {
-    activeNodeComponentRegistryRef.current = nodeComponentRegistry;
-
-    return () => {
-      const disposedRegistry = nodeComponentRegistry;
-
-      queueMicrotask(() => {
-        if (
-          !mountedRef.current ||
-          activeNodeComponentRegistryRef.current !== disposedRegistry
-        ) {
-          disposedRegistry?.dispose?.();
-        }
-      });
-    };
-  }, [nodeComponentRegistry]);
+  useDeferredDispose({
+    value: nodeComponentRegistry,
+    dispose: (disposedRegistry) => {
+      disposedRegistry.dispose?.();
+    },
+  });
 
   return { activeActionScope, activeComponentRegistry };
 }
