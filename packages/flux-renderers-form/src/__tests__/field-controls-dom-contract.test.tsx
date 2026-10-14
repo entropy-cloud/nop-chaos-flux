@@ -1,6 +1,6 @@
 import React from 'react';
 import { afterEach, describe, expect, it } from 'vitest';
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { cleanup, render } from '@testing-library/react';
 import { createSchemaRenderer } from '@nop-chaos/flux-react';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { basicRendererDefinitions } from '@nop-chaos/flux-renderers-basic';
@@ -14,12 +14,11 @@ import { env, formStateProbeRenderer } from './form-test-support.js';
  * FluxAdapter、主题 CSS、辅助技术）依赖的稳定接口真相。任何 data-slot / role / id
  * 命名约定的变更都必须在此文件中显式更新，避免下游选择器反复试错。
  *
- * 覆盖范围：input-text、textarea、select(combobox)、checkbox、switch、radio-group、
- * checkbox-group、input-number。
+ * 覆盖范围：input-text、textarea、checkbox、switch、radio-group、checkbox-group、
+ * input-number。select/combobox 是下游最容易踩坑的控件，已拆到同目录
+ * `select-combobox-dom-contract.test.tsx`。
  *
- * 配套文档（nop-chaos-next）：
- * - docs/testing/04-flux-dom-selector-reference.md §6 表单字段
- * - docs/testing/06-flux-e2e-adapter-design.md §2 字段填写策略
+ * 配套文档：`docs/architecture/renderer-markers-and-selectors.md` § Field selector contract attributes。
  */
 const SchemaRenderer = createSchemaRenderer([
   ...basicRendererDefinitions,
@@ -200,149 +199,6 @@ describe('textarea DOM contract', () => {
     expect((container.querySelector('textarea#remark-control') as HTMLTextAreaElement).value).toBe(
       'some text',
     );
-  });
-});
-
-// ─────────────────────────── select / combobox ───────────────────────────
-// 这是下游最容易踩坑的控件。冻结以下真相：
-//  - 外层 .nop-select-wrapper[data-slot="select-wrapper"]
-//  - searchable=true  → 触发器是 input[role="combobox"]
-//  - searchable=false → 触发器是 button[data-slot="combobox-trigger"]
-//  - 选项可见文本 = option.label（**非 value**）；选项暴露 data-value=option.value（可按 value 精确定位）
-//  - 弹出层 portaled 到 document.body，用 screen.getByRole('option') 查询
-
-describe('select / combobox DOM contract', () => {
-  it('wrapper emits nop-select-wrapper + data-slot="select-wrapper"', () => {
-    const { container } = renderForm([
-      {
-        type: 'select',
-        name: 'role',
-        label: 'Role',
-        options: [{ label: 'Admin', value: 'admin' }],
-      },
-    ]);
-    const wrapper = container.querySelector('.nop-select-wrapper[data-slot="select-wrapper"]');
-    expect(wrapper).toBeTruthy();
-  });
-
-  it('non-searchable trigger is a button[data-slot="combobox-trigger"]', () => {
-    renderForm([
-      {
-        type: 'select',
-        name: 'role',
-        label: 'Role',
-        searchable: false,
-        options: [
-          { label: 'Admin', value: 'admin' },
-          { label: 'Viewer', value: 'viewer' },
-        ],
-      },
-    ]);
-    const trigger = document.querySelector('[data-slot="combobox-trigger"]');
-    expect(trigger).toBeTruthy();
-    expect(trigger?.tagName).toBe('BUTTON');
-    // 触发器 id = name-control（host-visible）
-    expect(document.getElementById('role-control')).toBeTruthy();
-  });
-
-  it('searchable trigger is an input[role="combobox"]', () => {
-    renderForm([
-      {
-        type: 'select',
-        name: 'role',
-        label: 'Role',
-        searchable: true,
-        options: [
-          { label: 'Admin', value: 'admin' },
-          { label: 'Viewer', value: 'viewer' },
-        ],
-      },
-    ]);
-    const control = document.getElementById('role-control');
-    expect(control).toBeTruthy();
-    expect(control?.tagName).toBe('INPUT');
-    expect(control?.getAttribute('role')).toBe('combobox');
-    // searchable input 的 data-slot 是 input-group-control（在 input-group 内）
-    expect(control?.getAttribute('data-slot')).toBe('input-group-control');
-  });
-
-  it('option visible text is option.label, NOT value', async () => {
-    renderForm([
-      {
-        type: 'select',
-        name: 'gender',
-        label: 'Gender',
-        searchable: true,
-        options: [
-          { label: 'Male', value: '1' },
-          { label: 'Female', value: '2' },
-        ],
-      },
-    ]);
-    const control = screen.getByRole('combobox', { name: 'Gender' });
-    fireEvent.mouseDown(control);
-    fireEvent.click(control);
-
-    await waitFor(() => {
-      // 选项文本是 label "Male"/"Female"，不是 value "1"/"2"
-      expect(screen.getByRole('option', { name: 'Male' })).toBeTruthy();
-      expect(screen.getByRole('option', { name: 'Female' })).toBeTruthy();
-    });
-  });
-
-  it('combobox-item exposes data-value equal to option.value', async () => {
-    renderForm([
-      {
-        type: 'select',
-        name: 'gender',
-        label: 'Gender',
-        searchable: true,
-        options: [{ label: 'Male', value: '1' }],
-      },
-    ]);
-    const control = screen.getByRole('combobox', { name: 'Gender' });
-    fireEvent.mouseDown(control);
-    fireEvent.click(control);
-
-    await waitFor(() => {
-      const item = document.querySelector('[data-slot="combobox-item"]');
-      expect(item).toBeTruthy();
-    });
-    const item = document.querySelector('[data-slot="combobox-item"]');
-    // 选项暴露 data-value：下游可用 [data-value="1"] 精确定位（替代文本模糊匹配）
-    expect(item?.getAttribute('data-value')).toBe('1');
-    // 选项 data-slot 标记
-    expect(item?.getAttribute('data-slot')).toBe('combobox-item');
-    // combobox-item 自身不带 role="option"（Base UI ComboboxItem 渲染为 div）；
-    // role="option" 由 ARIA 语义层提供，screen.getByRole('option') 仍可定位。
-    expect(item?.tagName).toBe('DIV');
-  });
-
-  it('selected value is rendered inside combobox-trigger (non-searchable)', async () => {
-    const { container } = renderForm(
-      [
-        {
-          type: 'select',
-          name: 'role',
-          label: 'Role',
-          searchable: false,
-          options: [
-            { label: 'Admin', value: 'admin' },
-            { label: 'Viewer', value: 'viewer' },
-          ],
-        },
-        { type: 'form-state-probe', name: 'role' },
-      ],
-      { role: 'admin' },
-    );
-    await waitFor(() => {
-      expect(screen.getByTestId('form-state:role').textContent).toBe('"admin"');
-    });
-    // ⚠ 选中值显示在 trigger 按钮内的普通 <span>（无 data-slot="combobox-value"）。
-    // 下游读取选中值应查 combobox-trigger 内的文本，而非 combobox-value。
-    const trigger = container.querySelector('[data-slot="combobox-trigger"]');
-    expect(trigger?.textContent).toContain('Admin');
-    expect(container.querySelector('[data-slot="combobox-value"]')).toBeNull();
   });
 });
 

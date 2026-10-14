@@ -105,10 +105,14 @@ Beyond structural `data-slot`, FieldFrame exposes stable, host-visible attribute
 
 Companion option/column hooks (not on FieldFrame):
 
-- combobox options: `[data-slot="combobox-item"][data-value={option.value}]` — locate a select option by value. The option's visible text is still `option.label`, not `value`.
+- combobox popup state: `[data-slot="combobox-content"][data-open]` — the **currently open** popup. Closed popups keep their options in the DOM in a real browser (the exit-animation layer retains them, `pointer-events: none`, zero-size), and a popup that has never been opened carries neither `data-open` nor `data-closed`. Consumers must scope through this attribute.
+- combobox options: `[data-slot="combobox-content"][data-open] [data-slot="combobox-item"][data-value={option.value}]` — locate a select option by value, **within the open popup**. The option's visible text is still `option.label`, not `value`.
+
+  Two scoping traps this contract exists to prevent: a bare `[data-slot="combobox-item"]` query matches options belonging to every select on the page (closed popups are not unmounted), and `:not([data-closed])` also matches never-opened popups, which have no options of the field you are targeting.
+
 - table cells: `<td data-field={column.name}>` — locate a column cell by field name, replacing fragile column-index arithmetic.
 
-Contract rules: these attributes are production-resident (never debug-gated), additive (existing `data-slot`/`controlId` are unchanged), and frozen by `packages/flux-renderers-form/src/__tests__/field-controls-dom-contract.test.tsx`.
+Contract rules: these attributes are production-resident (never debug-gated), additive (existing `data-slot`/`controlId` are unchanged), and frozen by `packages/flux-renderers-form/src/__tests__/field-controls-dom-contract.test.tsx` and `packages/flux-renderers-form/src/__tests__/select-combobox-dom-contract.test.tsx`.
 
 ### Layer 3: Visual classes
 
