@@ -1,7 +1,5 @@
 export type RawKeyValuePair = { id?: string; key: string; value: string };
 
-export const EMPTY_RAW_KEY_VALUE_PAIRS: RawKeyValuePair[] = [];
-
 /**
  * Normalize raw form/scope data into raw key-value pairs WITHOUT assigning a
  * positional fallback id. Items that carry no authored `id` keep `id: undefined`

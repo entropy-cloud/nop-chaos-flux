@@ -9,13 +9,7 @@ import type {
   ValidationRule,
 } from '@nop-chaos/flux-core';
 import { writeFieldValue } from './write-field-value.js';
-import { getIn } from '@nop-chaos/flux-core';
-import {
-  useCompositeFieldHandle,
-  useCurrentFormState,
-  useCurrentFormModelGeneration,
-  useScopeSelector,
-} from '@nop-chaos/flux-react';
+import { useCurrentFormModelGeneration } from '@nop-chaos/flux-react';
 import { t } from '@nop-chaos/flux-i18n';
 import { Button, Input, cn } from '@nop-chaos/ui';
 import { ChevronDownIcon, ChevronUpIcon, PlusIcon, Trash2Icon } from 'lucide-react';
@@ -23,18 +17,19 @@ import {
   formFieldRules,
   getChildFieldUiState,
   getFieldValidationBehavior,
-  shouldValidateOn,
   useCompositeChildFieldState,
   useFormFieldFromProps,
 } from '@nop-chaos/flux-renderers-form';
 import type { ArrayEditorItem, ArrayEditorSchema } from '@nop-chaos/flux-renderers-form';
 import { FieldHint } from '@nop-chaos/flux-renderers-form';
 import { createNextCompositeItemId } from './composite-field/composite-item-id.js';
-import { useCompatibilityItemKeys } from './composite-field/composite-item-keys.js';
 import {
   COMPOSITE_EDITOR_CAPABILITY_CONTRACTS,
-  COMPOSITE_EDITOR_METHODS,
 } from './composite-field/composite-editor-capability-contracts.js';
+import {
+  useArrayContainerController,
+  type UseArrayContainerControllerParams,
+} from './composite-field/array-container-controller.js';
 
 function ArrayEditorRow(props: {
   item: ArrayEditorItem;
@@ -198,8 +193,6 @@ function ArrayEditorRow(props: {
 
 type RawArrayEditorItem = { id?: string; value: string };
 
-const EMPTY_RAW_ARRAY_EDITOR_ITEMS: RawArrayEditorItem[] = [];
-
 function toRawArrayEditorItems(value: unknown): RawArrayEditorItem[] {
   if (!Array.isArray(value)) {
     return [];
@@ -220,261 +213,113 @@ function toRawArrayEditorItems(value: unknown): RawArrayEditorItem[] {
   });
 }
 
-function rawArrayItemsEqual(a: RawArrayEditorItem[], b: RawArrayEditorItem[]): boolean {
+function rawArrayItemsEqual(
+  a: RawArrayEditorItem[] | undefined,
+  b: RawArrayEditorItem[] | undefined,
+): boolean {
   if (a === b) return true;
-  if (a.length !== b.length) return false;
-  return a.every((item, index) => item.id === b[index].id && item.value === b[index].value);
+  if (!a || !b || a.length !== b.length) return false;
+  return a.every((item, index) => item.id === b[index]?.id && item.value === b[index]?.value);
+}
+
+function deriveArrayEditorItems(
+  raw: RawArrayEditorItem[],
+  compatKeyAt: (index: number) => string,
+): ArrayEditorItem[] {
+  return raw.map((item, index) => ({
+    id: item.id ?? compatKeyAt(index),
+    value: item.value,
+  }));
+}
+
+function arrayEditorUiNewEntry(items: ArrayEditorItem[]): ArrayEditorItem {
+  return { id: createNextCompositeItemId(items, 'item-'), value: '' };
+}
+
+function arrayEditorNewEntry(value: unknown, items: ArrayEditorItem[]): ArrayEditorItem {
+  return value && typeof value === 'object' && !Array.isArray(value)
+    ? {
+        id:
+          typeof (value as Record<string, unknown>).id === 'string'
+            ? ((value as Record<string, unknown>).id as string)
+            : createNextCompositeItemId(items, 'item-'),
+        value:
+          typeof (value as Record<string, unknown>).value === 'string'
+            ? ((value as Record<string, unknown>).value as string)
+            : '',
+      }
+    : { id: createNextCompositeItemId(items, 'item-'), value: '' };
 }
 
 export function ArrayEditorRenderer(props: RendererComponentProps<ArrayEditorSchema>) {
   const name = String(props.props.name ?? '');
-  const hasName = name.length > 0;
-  const minItems =
-    typeof props.props.minItems === 'number' && Number.isFinite(props.props.minItems)
-      ? Math.max(0, Math.floor(props.props.minItems))
-      : 1;
-  const maxItems =
-    typeof props.props.maxItems === 'number' && Number.isFinite(props.props.maxItems)
-      ? Math.max(0, Math.floor(props.props.maxItems))
-      : undefined;
   const { currentForm, scope, presentation } = useFormFieldFromProps(props);
   const childBehavior = getFieldValidationBehavior(name, currentForm);
-  const itemsRef = React.useRef<ArrayEditorItem[]>([]);
   const registrationRef = React.useRef<{ registrationId: string } | undefined>(undefined);
   const modelGeneration = useCurrentFormModelGeneration();
-  const inputRefs = React.useRef<Map<string, HTMLInputElement | null>>(new Map());
-  const addButtonRef = React.useRef<HTMLButtonElement>(null);
-  const pendingFocusRef = React.useRef<{ kind: 'add' } | { kind: 'remove'; index: number } | null>(null);
 
-  const formRawValue = useCurrentFormState(
-    (state) => (currentForm && hasName ? toRawArrayEditorItems(getIn(state.values, name)) : undefined),
-    (a, b) => {
-      if (a === b) return true;
-      if (!a || !b || a.length !== b.length) return false;
-      return rawArrayItemsEqual(a, b);
+  const controllerParams: UseArrayContainerControllerParams<RawArrayEditorItem, ArrayEditorItem> = {
+    id: props.id,
+    cid: props.meta.cid,
+    type: 'array-editor',
+    name,
+    parentForm: currentForm,
+    parentScope: scope,
+    isInteractive: () => !presentation.effectiveDisabled && !presentation.readOnly,
+    readRawValue: toRawArrayEditorItems,
+    rawValuesEqual: rawArrayItemsEqual,
+    deriveItems: deriveArrayEditorItems,
+    identity: {
+      mode: 'entry-id',
+      compatPrefix: 'item-',
+      buildItemInstancePath: false,
+      uiNewEntryFactory: arrayEditorUiNewEntry,
+      newEntryFactory: arrayEditorNewEntry,
     },
-    { enabled: Boolean(currentForm && hasName), path: hasName ? name : undefined },
-  );
-  const scopeRawValue = useScopeSelector(
-    (scopeData) =>
-      currentForm || !hasName ? undefined : toRawArrayEditorItems(getIn(scopeData, name)),
-    (a, b) => {
-      if (a === b) return true;
-      if (!a || !b || a.length !== b.length) return false;
-      return rawArrayItemsEqual(a, b);
+    minItemsDefault: 1,
+    minItems: props.props.minItems,
+    maxItems: props.props.maxItems,
+    minItemsGuard: 'button-only',
+    validate: {
+      uiAddDepth: 'field',
+      capabilityAddDepth: 'field',
+      removeDepth: 'subtree',
+      removeValidateGate: 'shouldValidateOn',
     },
-    { enabled: Boolean(!currentForm && hasName), fallback: undefined, paths: hasName ? [name] : undefined },
-  );
-  const rawValue = currentForm ? formRawValue : scopeRawValue;
-  const rawItems = rawValue ?? EMPTY_RAW_ARRAY_EDITOR_ITEMS;
+    uiAddMechanics: 'live-append',
+    handlerReads: 'snapshot',
+    syncRefOnMutate: true,
+    uiMoveBounds: 'to-bounds',
+    removeGate: 'none',
+    focusRestore: { timing: 'rAF', on: ['add', 'remove'] },
+    events: {},
+  };
+  const controller = useArrayContainerController(controllerParams);
+
   const {
-    keyAt: compatKeyAt,
-    removeAt: compatRemoveAt,
-    append: compatAppend,
-    move: compatMove,
-  } = useCompatibilityItemKeys(rawItems.length, 'item-');
-  const items = React.useMemo<ArrayEditorItem[]>(
-    () =>
-      rawItems.map((item, index) => ({
-        id: item.id ?? compatKeyAt(index),
-        value: item.value,
-      })),
-    [rawItems, compatKeyAt],
-  );
+    items,
+    itemsRef,
+    atMaxItems,
+    maxItems,
+    minItems,
+    handleAdd,
+    handleRemove,
+    handleMoveUp,
+    handleMoveDown,
+    syncAll,
+    registerItemInput,
+    addButtonRef,
+  } = controller;
   const childPaths = React.useMemo(
     () => Array.from({ length: items.length }, (_, index) => `${name}.${index}.value`),
     [items.length, name],
   );
 
   React.useEffect(() => {
-    itemsRef.current = items;
-  }, [items]);
-
-  React.useEffect(() => {
     if (registrationRef.current) {
       currentForm?.updateFieldRegistration(registrationRef.current.registrationId, { childPaths });
     }
   }, [childPaths, currentForm]);
-
-  React.useEffect(() => {
-    const pending = pendingFocusRef.current;
-    if (!pending) return;
-    pendingFocusRef.current = null;
-
-    requestAnimationFrame(() => {
-      if (pending.kind === 'add') {
-        const lastItem = items[items.length - 1];
-        if (lastItem) {
-          inputRefs.current.get(lastItem.id)?.focus();
-        }
-      } else {
-        const targetIndex = Math.min(pending.index, items.length - 1);
-        const targetItem = items[targetIndex];
-        if (targetItem) {
-          inputRefs.current.get(targetItem.id)?.focus();
-        } else {
-          addButtonRef.current?.focus();
-        }
-      }
-    });
-  }, [items]);
-
-  const syncItems = React.useCallback(
-    (nextItems: ArrayEditorItem[]) => {
-      itemsRef.current = nextItems;
-
-      if (!currentForm || !name) {
-        scope.update(name, nextItems);
-        return;
-      }
-
-      if (!currentForm.isTouched(name)) {
-        currentForm.touchField(name);
-      }
-
-      currentForm.setValue(name, nextItems);
-
-      writeFieldValue(currentForm, name, name, 'change');
-    },
-    [currentForm, name, scope],
-  );
-
-  const handleRemove = React.useCallback(
-    (index: number) => {
-      pendingFocusRef.current = { kind: 'remove', index };
-      const nextItems = items.filter((_, candidateIndex) => candidateIndex !== index);
-
-      itemsRef.current = nextItems;
-      compatRemoveAt(index);
-
-      if (currentForm && name) {
-        currentForm.removeValue(name, index);
-        if (shouldValidateOn(name, currentForm, 'change')) {
-          void currentForm.validateSubtree(name, 'change');
-        }
-        return;
-      }
-
-      syncItems(nextItems);
-    },
-    [currentForm, items, name, syncItems, compatRemoveAt],
-  );
-
-  const handleMove = React.useCallback(
-    (index: number, to: number) => {
-      if (index === to || to < 0 || to >= items.length) {
-        return;
-      }
-
-      const nextItems = items.slice();
-      const [moved] = nextItems.splice(index, 1);
-      if (!moved) {
-        return;
-      }
-      nextItems.splice(to, 0, moved);
-      itemsRef.current = nextItems;
-      compatMove(index, to);
-
-      if (currentForm && name) {
-        currentForm.moveValue(name, index, to);
-        writeFieldValue(currentForm, name, name, 'change');
-        return;
-      }
-
-      syncItems(nextItems);
-    },
-    [currentForm, items, name, syncItems, compatMove],
-  );
-
-  const handleMoveUp = React.useCallback(
-    (index: number) => handleMove(index, index - 1),
-    [handleMove],
-  );
-  const handleMoveDown = React.useCallback(
-    (index: number) => handleMove(index, index + 1),
-    [handleMove],
-  );
-
-  const atMaxItems = maxItems !== undefined && items.length >= maxItems;
-
-  useCompositeFieldHandle({
-    id: props.id,
-    name: name || undefined,
-    type: 'array-editor',
-    cid: props.meta.cid,
-    methods: COMPOSITE_EDITOR_METHODS,
-    isInteractive: () => !presentation.effectiveDisabled && !presentation.readOnly,
-    addItem: (value) => {
-      if (atMaxItems) {
-        return { skipped: true };
-      }
-      const nextItem =
-        value && typeof value === 'object' && !Array.isArray(value)
-          ? {
-              id:
-                typeof (value as Record<string, unknown>).id === 'string'
-                  ? ((value as Record<string, unknown>).id as string)
-                  : createNextCompositeItemId(items, 'item-'),
-              value:
-                typeof (value as Record<string, unknown>).value === 'string'
-                  ? ((value as Record<string, unknown>).value as string)
-                  : '',
-            }
-          : { id: createNextCompositeItemId(items, 'item-'), value: '' };
-      const nextItems = [...items, nextItem];
-      itemsRef.current = nextItems;
-      compatAppend();
-      pendingFocusRef.current = { kind: 'add' };
-      if (currentForm && name) {
-        currentForm.appendValue(name, nextItem);
-        writeFieldValue(currentForm, name, name, 'change');
-      } else {
-        syncItems(nextItems);
-      }
-      return { index: items.length };
-    },
-    removeItem: (index) => {
-      if (index < 0 || index >= items.length) {
-        return { outOfBounds: true };
-      }
-      if (items.length <= minItems) {
-        return { skipped: true };
-      }
-      pendingFocusRef.current = { kind: 'remove', index };
-      const nextItems = items.filter((_, candidateIndex) => candidateIndex !== index);
-      itemsRef.current = nextItems;
-      compatRemoveAt(index);
-      if (currentForm && name) {
-        currentForm.removeValue(name, index);
-        if (shouldValidateOn(name, currentForm, 'change')) {
-          void currentForm.validateSubtree(name, 'change');
-        }
-      } else {
-        syncItems(nextItems);
-      }
-      return {};
-    },
-    moveItem: (from, to) => {
-      if (from < 0 || from >= items.length || to < 0 || to >= items.length) {
-        return { outOfBounds: true };
-      }
-      const nextItems = items.slice();
-      const [moved] = nextItems.splice(from, 1);
-      if (!moved) {
-        return { outOfBounds: true };
-      }
-      nextItems.splice(to, 0, moved);
-      itemsRef.current = nextItems;
-      compatMove(from, to);
-      if (currentForm && name) {
-        currentForm.moveValue(name, from, to);
-        writeFieldValue(currentForm, name, name, 'change');
-      } else {
-        syncItems(nextItems);
-      }
-      return {};
-    },
-  });
 
   React.useEffect(() => {
     if (!currentForm || !name) {
@@ -519,7 +364,7 @@ export function ArrayEditorRenderer(props: RendererComponentProps<ArrayEditorSch
     const handle = currentForm.registerField(registration);
     registrationRef.current = handle.accepted ? { registrationId: handle.registrationId } : undefined;
     return handle.unregister;
-  }, [childPaths, currentForm, modelGeneration, name, props.props.itemLabel]);
+  }, [childPaths, currentForm, modelGeneration, name, itemsRef, props.props.itemLabel]);
 
   return (
     <div
@@ -537,7 +382,7 @@ export function ArrayEditorRenderer(props: RendererComponentProps<ArrayEditorSch
             name={name}
             currentForm={currentForm}
             childBehavior={childBehavior}
-            onChange={syncItems}
+            onChange={syncAll}
             onRemove={handleRemove}
             onMoveUp={handleMoveUp}
             onMoveDown={handleMoveDown}
@@ -546,11 +391,7 @@ export function ArrayEditorRenderer(props: RendererComponentProps<ArrayEditorSch
             disabled={presentation.effectiveDisabled || presentation.readOnly}
             readOnly={presentation.readOnly}
             inputRef={(el) => {
-              if (el) {
-                inputRefs.current.set(item.id, el);
-              } else {
-                inputRefs.current.delete(item.id);
-              }
+              registerItemInput(item.id, el);
             }}
           />
         );
@@ -566,21 +407,7 @@ export function ArrayEditorRenderer(props: RendererComponentProps<ArrayEditorSch
             return;
           }
 
-          const nextItem = { id: createNextCompositeItemId(items, 'item-'), value: '' };
-          const nextItems = [...items, nextItem];
-          itemsRef.current = nextItems;
-          compatAppend();
-          pendingFocusRef.current = { kind: 'add' };
-
-          if (currentForm && name) {
-            currentForm.appendValue(name, nextItem);
-
-            writeFieldValue(currentForm, name, name, 'change');
-
-            return;
-          }
-
-          syncItems(nextItems);
+          handleAdd();
         }}
       >
         <PlusIcon className="size-4" />

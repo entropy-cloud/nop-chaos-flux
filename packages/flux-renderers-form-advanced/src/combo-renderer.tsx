@@ -1,6 +1,7 @@
 import React from 'react';
 import type {
   BaseSchema,
+  CompiledRuntimeValue,
   FormRuntime,
   InstanceFrame,
   RendererComponentProps,
@@ -8,44 +9,30 @@ import type {
   ScopeRef,
   ValidationRule,
 } from '@nop-chaos/flux-core';
-import { writeFieldValue } from './write-field-value.js';
-import { getIn } from '@nop-chaos/flux-core';
 import {
   FormContext,
   FormLayoutContext,
   ScopeContext,
   ValidationContext,
-  useCompositeFieldHandle,
   useCurrentForm,
-  useCurrentFormState,
   useCurrentValidationScope,
   useRenderInstancePath,
   useRenderScope,
-  useScopeSelector,
 } from '@nop-chaos/flux-react';
 import { t } from '@nop-chaos/flux-i18n';
 import { Button, cn } from '@nop-chaos/ui';
 import { PlusIcon } from 'lucide-react';
 import type { ComboSchema } from './composite-field/composite-schemas.js';
-import { createItemScope } from './composite-field/array-field-runtime.js';
 import { ArrayItemActionButtons, useArrayItemContext } from './array-item-shared.js';
 import { instancePathEqual } from './composite-field/instance-path-equal.js';
-import { isRemoveBlockedByWhen, isRemoveWhenConfigured } from './composite-field/remove-when-gating.js';
-import {
-  buildStableObjectItemKeys,
-  useCompatibilityItemKeys,
-} from './composite-field/composite-item-keys.js';
 import {
   COMPOSITE_EDITOR_CAPABILITY_CONTRACTS,
-  COMPOSITE_EDITOR_METHODS,
 } from './composite-field/composite-editor-capability-contracts.js';
-import { formFieldRules, shouldValidateOn, useFieldPresentation } from '@nop-chaos/flux-renderers-form';
-
-const EMPTY_ITEMS: unknown[] = [];
-
-function toArrayItems(value: unknown): unknown[] {
-  return Array.isArray(value) ? value : [];
-}
+import {
+  useArrayContainerController,
+  type UseArrayContainerControllerParams,
+} from './composite-field/array-container-controller.js';
+import { formFieldRules, useFieldPresentation } from '@nop-chaos/flux-renderers-form';
 
 type ComboItemProps = {
   itemIdentity: string;
@@ -178,13 +165,36 @@ export const ComboItem = React.memo(ComboItemView, (prev, next) =>
   prev.itemRegion === next.itemRegion,
 );
 
+function toArrayItems(value: unknown): unknown[] {
+  return Array.isArray(value) ? value : [];
+}
+
+function comboItemsEqual(a: unknown[] | undefined, b: unknown[] | undefined): boolean {
+  if (a === b) return true;
+  if (!a || !b || a.length !== b.length) return false;
+  return a.every((item, i) => item === b[i]);
+}
+
+function deriveComboItems(raw: unknown[]): unknown[] {
+  return raw;
+}
+
+function comboUiNewEntry(): unknown {
+  return {};
+}
+
+function comboNewEntry(value: unknown): unknown {
+  return value && typeof value === 'object' && !Array.isArray(value)
+    ? { ...(value as Record<string, unknown>) }
+    : {};
+}
+
 export function ComboRenderer(props: RendererComponentProps<ComboSchema>) {
   const parentScope = useRenderScope();
   const parentForm = useCurrentForm();
   const parentValidationOwner = useCurrentValidationScope();
   const parentInstancePath = useRenderInstancePath();
   const name = String(props.props.name ?? '');
-  const hasName = name.length > 0;
   const itemKeyField =
     typeof props.props.itemKey === 'string' && props.props.itemKey.trim().length > 0
       ? props.props.itemKey.trim()
@@ -193,14 +203,6 @@ export function ComboRenderer(props: RendererComponentProps<ComboSchema>) {
   const removable = props.props.removable !== false;
   const reorderable = props.props.reorderable !== false;
   const readOnly = props.props.readOnly ?? false;
-  const minItems =
-    typeof props.props.minItems === 'number' && Number.isFinite(props.props.minItems)
-      ? Math.max(0, Math.floor(props.props.minItems))
-      : 0;
-  const maxItems =
-    typeof props.props.maxItems === 'number' && Number.isFinite(props.props.maxItems)
-      ? Math.max(0, Math.floor(props.props.maxItems))
-      : undefined;
   const removeWhenHandle = props.templateNode.structuralFields?.removeWhen;
 
   const presentation = useFieldPresentation(name, parentValidationOwner, {
@@ -208,239 +210,91 @@ export function ComboRenderer(props: RendererComponentProps<ComboSchema>) {
     readOnly,
   });
 
-  const formValue = useCurrentFormState(
-    (state) => (parentForm && hasName ? toArrayItems(getIn(state.values, name)) : undefined),
-    (a, b) => {
-      if (a === b) return true;
-      if (!a || !b || a.length !== b.length) return false;
-      return a.every((item, i) => item === b[i]);
-    },
-    { enabled: Boolean(parentForm && hasName), path: hasName ? name : undefined },
-  );
-  const scopeValue = useScopeSelector(
-    (scopeData) =>
-      parentForm || !hasName ? undefined : toArrayItems(getIn(scopeData, name)),
-    (a, b) => {
-      if (a === b) return true;
-      if (!a || !b || a.length !== b.length) return false;
-      return a.every((item, i) => item === b[i]);
-    },
-    { enabled: Boolean(!parentForm && hasName), fallback: undefined, paths: hasName ? [name] : undefined },
-  );
-  const items = parentForm ? formValue : scopeValue;
-  const itemsArray = React.useMemo(() => items ?? EMPTY_ITEMS, [items]);
-
-  const {
-    keyAt: compatKeyAt,
-    removeAt: compatRemoveAt,
-    append: compatAppend,
-    move: compatMove,
-  } = useCompatibilityItemKeys(itemsArray.length, 'combo-');
-  const objectItemKeyResolution = React.useMemo(
-    () => buildStableObjectItemKeys(itemsArray, itemKeyField, compatKeyAt),
-    [itemsArray, itemKeyField, compatKeyAt],
-  );
   const itemRepeatedTemplateId = `combo-item:${props.templateNode.templateNodeId ?? 'unknown'}`;
-  const itemEntries = React.useMemo(
-    () =>
-      itemsArray.map((item, index) => {
-        const itemIdentity = objectItemKeyResolution.itemKeys[index];
-        const itemInstancePath: readonly InstanceFrame[] = [
-          ...(parentInstancePath ?? []),
-          { repeatedTemplateId: itemRepeatedTemplateId, instanceKey: itemIdentity },
-        ];
-        return { item, index, itemIdentity, itemInstancePath };
-      }),
-    [itemsArray, objectItemKeyResolution.itemKeys, parentInstancePath, itemRepeatedTemplateId],
-  );
-
-  React.useEffect(() => {
-    if (objectItemKeyResolution.duplicatePreferredKeys.length === 0) {
-      return;
-    }
-    console.warn(
-      `[ComboRenderer] Duplicate itemKey values detected for "${name}": ${objectItemKeyResolution.duplicatePreferredKeys.join(', ')}. Falling back to compatibility identity for conflicting items.`,
-    );
-  }, [name, objectItemKeyResolution.duplicatePreferredKeys]);
-
-  const atMaxItems = maxItems !== undefined && itemsArray.length >= maxItems;
-
-  const removeBlockedByIndex = React.useMemo(() => {
-    if (!isRemoveWhenConfigured(removeWhenHandle)) {
-      return null;
-    }
-    return itemsArray.map((_, index) => {
-      const itemIdentity = objectItemKeyResolution.itemKeys[index];
-      const itemScope = createItemScope(
-        parentScope,
-        name,
-        index,
-        'object',
-        readOnly || presentation.effectiveDisabled,
-        itemIdentity,
+  const duplicateKeyWarn = React.useCallback(
+    (duplicates: string[]) => {
+      console.warn(
+        `[ComboRenderer] Duplicate itemKey values detected for "${name}": ${duplicates.join(', ')}. Falling back to compatibility identity for conflicting items.`,
       );
-      return isRemoveBlockedByWhen({
-        removeWhenHandle,
-        itemScope,
-        evaluateCompiled: (compiled, scope) => props.helpers.evaluateCompiled(compiled, scope),
-      });
-    });
-  }, [
-    removeWhenHandle,
-    itemsArray,
-    objectItemKeyResolution.itemKeys,
-    parentScope,
-    name,
-    readOnly,
-    presentation.effectiveDisabled,
-    props.helpers,
-  ]);
-
-  const isRemoveBlockedAt = React.useCallback(
-    (index: number) => Boolean(removeBlockedByIndex?.[index]),
-    [removeBlockedByIndex],
-  );
-
-  const writeValue = React.useCallback(
-    (next: unknown[]) => {
-      if (parentForm && name) {
-        if (!parentForm.isTouched(name)) {
-          parentForm.touchField(name);
-        }
-        parentForm.setValue(name, next);
-        if (shouldValidateOn(name, parentForm, 'change')) {
-          void parentForm.validateSubtree(name, 'change');
-        }
-        return;
-      }
-      parentScope.update(name, next);
     },
-    [name, parentForm, parentScope],
+    [name],
+  );
+  const identity = React.useMemo(
+    () => ({
+      mode: 'object-key' as const,
+      keyProp: itemKeyField,
+      compatPrefix: 'combo-',
+      repeatedTemplateId: itemRepeatedTemplateId,
+      buildItemInstancePath: true,
+      parentInstancePath,
+      onDuplicateKeys: duplicateKeyWarn,
+      uiNewEntryFactory: comboUiNewEntry,
+      newEntryFactory: comboNewEntry,
+    }),
+    [itemKeyField, itemRepeatedTemplateId, parentInstancePath, duplicateKeyWarn],
   );
 
-  const handleAdd = React.useCallback(() => {
-    if (atMaxItems) {
-      return;
-    }
-    compatAppend();
-    writeValue([...itemsArray, {}]);
-    void props.events.onAdd?.();
-  }, [atMaxItems, itemsArray, props.events, writeValue, compatAppend]);
-
-  const handleRemove = React.useCallback(
-    (index: number) => {
-      if (index < 0 || index >= itemsArray.length || itemsArray.length <= minItems) {
-        return;
-      }
-      if (isRemoveBlockedAt(index)) {
-        return;
-      }
-      compatRemoveAt(index);
-      if (parentForm && name) {
-        parentForm.removeValue(name, index);
-        if (shouldValidateOn(name, parentForm, 'change')) {
-          void parentForm.validateSubtree(name, 'change');
-        }
-      } else {
-        writeValue(itemsArray.filter((_, i) => i !== index));
-      }
-      void props.events.onRemove?.();
-    },
-    [itemsArray, minItems, name, parentForm, props.events, writeValue, isRemoveBlockedAt, compatRemoveAt],
+  const events = React.useMemo(
+    () => ({
+      onAdd: () => {
+        void props.events.onAdd?.();
+      },
+      onRemove: () => {
+        void props.events.onRemove?.();
+      },
+      onReorder: () => {
+        void props.events.onReorder?.();
+      },
+    }),
+    [props.events],
   );
 
-  const handleMove = React.useCallback(
-    (from: number, to: number) => {
-      if (from === to || from < 0 || to < 0 || from >= itemsArray.length || to >= itemsArray.length) {
-        return;
-      }
-      compatMove(from, to);
-      if (parentForm && name) {
-        parentForm.moveValue(name, from, to);
-        writeFieldValue(parentForm, name, name, 'change');
-      } else {
-        const next = itemsArray.slice();
-        const [moved] = next.splice(from, 1);
-        if (moved) {
-          next.splice(to, 0, moved);
-        }
-        writeValue(next);
-      }
-      void props.events.onReorder?.();
-    },
-    [itemsArray, name, parentForm, props.events, writeValue, compatMove],
+  const removeWhen = React.useMemo(
+    () =>
+      removeWhenHandle
+        ? {
+            handle: removeWhenHandle,
+            disabled: readOnly || presentation.effectiveDisabled,
+            evaluateCompiled: (compiled: CompiledRuntimeValue<unknown>, scope: ScopeRef) =>
+              props.helpers.evaluateCompiled(compiled, scope),
+          }
+        : undefined,
+    [removeWhenHandle, readOnly, presentation.effectiveDisabled, props.helpers],
   );
 
-  const handleMoveUp = React.useCallback((index: number) => handleMove(index, index - 1), [handleMove]);
-  const handleMoveDown = React.useCallback((index: number) => handleMove(index, index + 1), [handleMove]);
-
-  useCompositeFieldHandle({
+  const controllerParams: UseArrayContainerControllerParams<unknown, unknown> = {
     id: props.id,
-    name: name || undefined,
-    type: 'combo',
     cid: props.meta.cid,
-    methods: COMPOSITE_EDITOR_METHODS,
+    type: 'combo',
+    name,
+    parentForm,
+    parentScope,
     isInteractive: () => !presentation.effectiveDisabled && !presentation.readOnly,
-    addItem: (value) => {
-      if (atMaxItems) {
-        return { skipped: true };
-      }
-      const newItem = value && typeof value === 'object' && !Array.isArray(value) ? { ...(value as Record<string, unknown>) } : {};
-      compatAppend();
-      if (parentForm && name) {
-        parentForm.appendValue(name, newItem);
-        writeFieldValue(parentForm, name, name, 'change');
-      } else {
-        writeValue([...itemsArray, newItem]);
-      }
-      void props.events.onAdd?.();
-      return { index: itemsArray.length };
+    readRawValue: toArrayItems,
+    rawValuesEqual: comboItemsEqual,
+    deriveItems: deriveComboItems,
+    identity,
+    minItemsDefault: 0,
+    minItems: props.props.minItems,
+    maxItems: props.props.maxItems,
+    minItemsGuard: 'handler',
+    validate: {
+      uiAddDepth: 'subtree',
+      capabilityAddDepth: 'field',
+      removeDepth: 'subtree',
+      removeValidateGate: 'shouldValidateOn',
     },
-    removeItem: (index) => {
-      if (index < 0 || index >= itemsArray.length) {
-        return { outOfBounds: true };
-      }
-      if (itemsArray.length <= minItems) {
-        return { skipped: true };
-      }
-      if (isRemoveBlockedAt(index)) {
-        return { skipped: true };
-      }
-      compatRemoveAt(index);
-      if (parentForm && name) {
-        parentForm.removeValue(name, index);
-        if (shouldValidateOn(name, parentForm, 'change')) {
-          void parentForm.validateSubtree(name, 'change');
-        }
-      } else {
-        writeValue(itemsArray.filter((_, i) => i !== index));
-      }
-      void props.events.onRemove?.();
-      return {};
-    },
-    moveItem: (from, to) => {
-      if (from < 0 || from >= itemsArray.length || to < 0 || to >= itemsArray.length) {
-        return { outOfBounds: true };
-      }
-      if (from === to) {
-        return {};
-      }
-      compatMove(from, to);
-      if (parentForm && name) {
-        parentForm.moveValue(name, from, to);
-        writeFieldValue(parentForm, name, name, 'change');
-      } else {
-        const next = itemsArray.slice();
-        const [moved] = next.splice(from, 1);
-        if (moved) {
-          next.splice(to, 0, moved);
-        }
-        writeValue(next);
-      }
-      void props.events.onReorder?.();
-      return {};
-    },
-  });
+    uiAddMechanics: 'snapshot-replace',
+    handlerReads: 'snapshot',
+    syncRefOnMutate: false,
+    uiMoveBounds: 'both-bounds',
+    removeGate: 'handler+capability',
+    removeWhen,
+    focusRestore: { timing: 'none', on: [] },
+    events,
+  };
+  const controller = useArrayContainerController(controllerParams);
+  const { items, itemEntries, atMaxItems, maxItems, minItems, handleAdd, handleRemove, handleMoveUp, handleMoveDown, isRemoveBlockedAt } = controller;
 
   if (!props.meta.visible) {
     return null;
@@ -469,14 +323,14 @@ export function ComboRenderer(props: RendererComponentProps<ComboSchema>) {
           readOnly={interactionDisabled}
           removable={removable}
           reorderable={reorderable}
-          totalCount={itemsArray.length}
+          totalCount={items.length}
           minItems={minItems}
           removeBlocked={isRemoveBlockedAt(index)}
           onRemove={handleRemove}
           onMoveUp={handleMoveUp}
           onMoveDown={handleMoveDown}
           item={item}
-          itemInstancePath={itemInstancePath}
+          itemInstancePath={itemInstancePath ?? []}
           itemRegion={props.regions.items}
           columnCount={comboColumnCount}
         />
@@ -498,7 +352,7 @@ export function ComboRenderer(props: RendererComponentProps<ComboSchema>) {
           {atMaxItems && maxItems !== undefined ? (
             // [G2-R2-视角4-02] the cap disabled Add silently; announce count/cap.
             <span role="status" data-slot="combo-max-items" className="text-xs text-muted-foreground">
-              {t('flux.form.maxItemsReached', { count: itemsArray.length, max: maxItems })}
+              {t('flux.form.maxItemsReached', { count: items.length, max: maxItems })}
             </span>
           ) : null}
         </>
