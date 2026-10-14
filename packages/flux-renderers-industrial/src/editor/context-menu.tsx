@@ -3,10 +3,12 @@
  * 固定定位（client 坐标）、viewport 防溢出钳制、Escape/外部点击关闭、方向键项间移动 + Enter 触发。
  * items 由组件内构建（React Compiler refs 规则约束），宿主按目标（图元/空白）传入态别。
  * 挂载点须为 canvas 键盘层容器（data-slot=scada-editor-canvas div）的兄弟（scada-editor-canvas-wrap 内），
- * 规避容器 onKeyDown nudge 对菜单方向键导航的冒泡污染（组件内部 window capture 已 stopPropagation Escape）。
+ * 规避容器 onKeyDown nudge 对菜单方向键导航的冒泡污染（壳的 window capture 已 stopPropagation Escape）。
+ * 壳行为自 CX-16 plan 596 起由 ui `useContextMenuShell` 共享（组件保留自有壳/item map/
+ * 样式/i18n/testids）。
  */
 
-import { useEffect, useLayoutEffect, useRef } from 'react';
+import { useContextMenuShell } from '@nop-chaos/ui';
 import { useFluxTranslation } from '@nop-chaos/flux-i18n';
 
 export interface ScadaEditorContextMenuState {
@@ -27,8 +29,6 @@ export type ScadaEditorContextMenuAction =
   | 'selectAll'
   | 'fitCanvas';
 
-const VIEWPORT_MARGIN = 8;
-
 export function ScadaEditorContextMenu(props: {
   menu: ScadaEditorContextMenuState;
   hasClipboard: boolean;
@@ -47,7 +47,9 @@ export function ScadaEditorContextMenu(props: {
           testid: 'scada-editor-context-duplicate',
           disabled: false,
           destructive: false,
-          action: 'duplicate' as const,
+          onSelect: () => {
+            props.onAction('duplicate', props.menu.nodeId);
+          },
         },
         {
           key: 'delete',
@@ -55,7 +57,9 @@ export function ScadaEditorContextMenu(props: {
           testid: 'scada-editor-context-delete',
           disabled: false,
           destructive: true,
-          action: 'delete' as const,
+          onSelect: () => {
+            props.onAction('delete', props.menu.nodeId);
+          },
         },
         {
           key: 'toTop',
@@ -63,7 +67,9 @@ export function ScadaEditorContextMenu(props: {
           testid: 'scada-editor-context-totop',
           disabled: false,
           destructive: false,
-          action: 'toTop' as const,
+          onSelect: () => {
+            props.onAction('toTop', props.menu.nodeId);
+          },
         },
         {
           key: 'moveUp',
@@ -71,7 +77,9 @@ export function ScadaEditorContextMenu(props: {
           testid: 'scada-editor-context-moveup',
           disabled: false,
           destructive: false,
-          action: 'moveUp' as const,
+          onSelect: () => {
+            props.onAction('moveUp', props.menu.nodeId);
+          },
         },
         {
           key: 'moveDown',
@@ -79,7 +87,9 @@ export function ScadaEditorContextMenu(props: {
           testid: 'scada-editor-context-movedown',
           disabled: false,
           destructive: false,
-          action: 'moveDown' as const,
+          onSelect: () => {
+            props.onAction('moveDown', props.menu.nodeId);
+          },
         },
         {
           key: 'toBottom',
@@ -87,7 +97,9 @@ export function ScadaEditorContextMenu(props: {
           testid: 'scada-editor-context-tobottom',
           disabled: false,
           destructive: false,
-          action: 'toBottom' as const,
+          onSelect: () => {
+            props.onAction('toBottom', props.menu.nodeId);
+          },
         },
         {
           key: 'paste',
@@ -95,7 +107,9 @@ export function ScadaEditorContextMenu(props: {
           testid: 'scada-editor-context-paste',
           disabled: !props.hasClipboard,
           destructive: false,
-          action: 'paste' as const,
+          onSelect: () => {
+            props.onAction('paste', props.menu.nodeId);
+          },
         },
       ]
     : [
@@ -105,7 +119,9 @@ export function ScadaEditorContextMenu(props: {
           testid: 'scada-editor-context-paste',
           disabled: !props.hasClipboard,
           destructive: false,
-          action: 'paste' as const,
+          onSelect: () => {
+            props.onAction('paste', props.menu.nodeId);
+          },
         },
         {
           key: 'selectAll',
@@ -113,7 +129,9 @@ export function ScadaEditorContextMenu(props: {
           testid: 'scada-editor-context-selectall',
           disabled: !props.hasSymbols,
           destructive: false,
-          action: 'selectAll' as const,
+          onSelect: () => {
+            props.onAction('selectAll', props.menu.nodeId);
+          },
         },
         {
           key: 'fitCanvas',
@@ -121,66 +139,15 @@ export function ScadaEditorContextMenu(props: {
           testid: 'scada-editor-context-fitcanvas',
           disabled: false,
           destructive: false,
-          action: 'fitCanvas' as const,
+          onSelect: () => {
+            props.onAction('fitCanvas', props.menu.nodeId);
+          },
         },
       ];
-  const menuRef = useRef<HTMLDivElement | null>(null);
-  const onCloseRef = useRef(props.onClose);
-
-  useEffect(() => {
-    onCloseRef.current = props.onClose;
-  }, [props.onClose]);
-
-  useLayoutEffect(() => {
-    const el = menuRef.current;
-    if (!el) {
-      return;
-    }
-    const rect = el.getBoundingClientRect();
-    el.style.left = `${Math.max(VIEWPORT_MARGIN, Math.min(props.menu.x, window.innerWidth - rect.width - VIEWPORT_MARGIN))}px`;
-    el.style.top = `${Math.max(VIEWPORT_MARGIN, Math.min(props.menu.y, window.innerHeight - rect.height - VIEWPORT_MARGIN))}px`;
-    const first = el.querySelector<HTMLButtonElement>('[role="menuitem"]:not([disabled])');
-    first?.focus();
-  }, [props.menu.x, props.menu.y]);
-
-  useEffect(() => {
-    const handlePointerDown = (event: PointerEvent) => {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-        onCloseRef.current();
-      }
-    };
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        event.stopPropagation();
-        onCloseRef.current();
-      }
-    };
-    window.addEventListener('pointerdown', handlePointerDown, true);
-    window.addEventListener('keydown', handleKeyDown, true);
-    return () => {
-      window.removeEventListener('pointerdown', handlePointerDown, true);
-      window.removeEventListener('keydown', handleKeyDown, true);
-    };
-  }, []);
-
-  const handleMenuKeyDown = (event: React.KeyboardEvent) => {
-    if (event.key !== 'ArrowDown' && event.key !== 'ArrowUp') {
-      return;
-    }
-    event.preventDefault();
-    const items = Array.from(
-      menuRef.current?.querySelectorAll<HTMLButtonElement>('[role="menuitem"]:not([disabled])') ?? [],
-    );
-    if (items.length === 0) {
-      return;
-    }
-    const index = items.indexOf(document.activeElement as HTMLButtonElement);
-    const next =
-      event.key === 'ArrowDown'
-        ? items[(index + 1) % items.length]
-        : items[(index - 1 + items.length) % items.length];
-    next?.focus();
-  };
+  const { menuRef, handleMenuKeyDown } = useContextMenuShell({
+    position: { x: props.menu.x, y: props.menu.y },
+    onClose: props.onClose,
+  });
 
   return (
     <div
@@ -207,7 +174,7 @@ export function ScadaEditorContextMenu(props: {
               : 'text-foreground'
           }`}
           onClick={() => {
-            props.onAction(item.action, props.menu.nodeId);
+            item.onSelect();
             props.onClose();
           }}
         >

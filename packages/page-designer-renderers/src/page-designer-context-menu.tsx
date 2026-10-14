@@ -1,10 +1,12 @@
 /**
  * 右键上下文菜单（plan 527 Phase 2）：固定定位（client 坐标）、viewport 防溢出
  * 钳制、Escape/外部点击关闭、方向键项间移动。items 由宿主按目标（节点/空白）
- * 与 mode 过滤后传入。
+ * 与 mode 过滤后传入。壳行为（钳制/外点关闭/Escape 捕获/roving）自 CX-16
+ * plan 596 起由 ui `useContextMenuShell` 共享（组件保留自有壳/item map/样式/
+ * i18n/testids）。
  */
 
-import { useEffect, useLayoutEffect, useRef } from 'react';
+import { useContextMenuShell } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
 
 export interface PageDesignerContextMenuState {
@@ -15,8 +17,6 @@ export interface PageDesignerContextMenuState {
 }
 
 export type PageDesignerContextMenuAction = 'paste' | 'duplicate' | 'delete';
-
-const VIEWPORT_MARGIN = 8;
 
 export function PageDesignerContextMenu(props: {
   menu: PageDesignerContextMenuState;
@@ -33,20 +33,26 @@ export function PageDesignerContextMenu(props: {
           label: t('flux.pageDesigner.pasteHere'),
           disabled: !props.hasClipboard,
           testid: 'page-designer-context-paste',
-          action: 'paste' as const,
+          onSelect: () => {
+            props.onAction('paste', props.menu.nodeId);
+          },
         },
         {
           key: 'duplicate',
           label: t('flux.pageDesigner.duplicateNode'),
           testid: 'page-designer-context-duplicate',
-          action: 'duplicate' as const,
+          onSelect: () => {
+            props.onAction('duplicate', props.menu.nodeId);
+          },
         },
         {
           key: 'delete',
           label: t('flux.pageDesigner.deleteNode'),
           destructive: true,
           testid: 'page-designer-context-delete',
-          action: 'delete' as const,
+          onSelect: () => {
+            props.onAction('delete', props.menu.nodeId);
+          },
         },
       ]
     : [
@@ -55,66 +61,15 @@ export function PageDesignerContextMenu(props: {
           label: t('flux.pageDesigner.pasteHere'),
           disabled: !props.hasClipboard,
           testid: 'page-designer-context-paste',
-          action: 'paste' as const,
+          onSelect: () => {
+            props.onAction('paste', props.menu.nodeId);
+          },
         },
       ];
-  const menuRef = useRef<HTMLDivElement | null>(null);
-  const onCloseRef = useRef(props.onClose);
-
-  useEffect(() => {
-    onCloseRef.current = props.onClose;
-  }, [props.onClose]);
-
-  useLayoutEffect(() => {
-    const el = menuRef.current;
-    if (!el) {
-      return;
-    }
-    const rect = el.getBoundingClientRect();
-    el.style.left = `${Math.max(VIEWPORT_MARGIN, Math.min(props.menu.x, window.innerWidth - rect.width - VIEWPORT_MARGIN))}px`;
-    el.style.top = `${Math.max(VIEWPORT_MARGIN, Math.min(props.menu.y, window.innerHeight - rect.height - VIEWPORT_MARGIN))}px`;
-    const first = el.querySelector<HTMLButtonElement>('[role="menuitem"]:not([disabled])');
-    first?.focus();
-  }, [props.menu.x, props.menu.y]);
-
-  useEffect(() => {
-    const handlePointerDown = (event: PointerEvent) => {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-        onCloseRef.current();
-      }
-    };
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        event.stopPropagation();
-        onCloseRef.current();
-      }
-    };
-    window.addEventListener('pointerdown', handlePointerDown, true);
-    window.addEventListener('keydown', handleKeyDown, true);
-    return () => {
-      window.removeEventListener('pointerdown', handlePointerDown, true);
-      window.removeEventListener('keydown', handleKeyDown, true);
-    };
-  }, []);
-
-  const handleMenuKeyDown = (event: React.KeyboardEvent) => {
-    if (event.key !== 'ArrowDown' && event.key !== 'ArrowUp') {
-      return;
-    }
-    event.preventDefault();
-    const items = Array.from(
-      menuRef.current?.querySelectorAll<HTMLButtonElement>('[role="menuitem"]:not([disabled])') ?? [],
-    );
-    if (items.length === 0) {
-      return;
-    }
-    const index = items.indexOf(document.activeElement as HTMLButtonElement);
-    const next =
-      event.key === 'ArrowDown'
-        ? items[(index + 1) % items.length]
-        : items[(index - 1 + items.length) % items.length];
-    next?.focus();
-  };
+  const { menuRef, handleMenuKeyDown } = useContextMenuShell({
+    position: { x: props.menu.x, y: props.menu.y },
+    onClose: props.onClose,
+  });
 
   return (
     <div
@@ -141,7 +96,7 @@ export function PageDesignerContextMenu(props: {
               : 'text-foreground'
           }`}
           onClick={() => {
-            props.onAction(item.action, props.menu.nodeId);
+            item.onSelect();
             props.onClose();
           }}
         >
