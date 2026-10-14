@@ -370,6 +370,7 @@ export function createRendererRuntime(input: {
         parent,
         store,
         isolate: options?.isolate,
+        source: options?.source,
         onDispose: () => {
           ownedScopeDisposers.delete(scopeId);
         },
@@ -620,6 +621,7 @@ export function createRendererRuntime(input: {
         pathSuffix: kind,
         scopeKey: `${ownerId}:${kind}-scope`,
         isolate,
+        source: kind === 'drawer' ? 'drawer' : 'dialog',
       });
 
       // The opening scope id is not `${scope.id}:`-prefixed, so tree-dispose

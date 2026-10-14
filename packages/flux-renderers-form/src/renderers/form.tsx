@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useRef, useSyncExternalStore } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useSyncExternalStore } from 'react';
 import type { KeyboardEvent as ReactKeyboardEvent } from 'react';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
+import type { ScopeRef } from '@nop-chaos/flux-core';
 import {
   FormContext,
   FormLayoutContext,
@@ -45,6 +46,37 @@ function resolveErrorFocusTarget(element: HTMLElement): HTMLElement {
   return element;
 }
 
+// AMIS parity: a form rendered inside a dialog/drawer surface (no `data` of its
+// own) inherits the surface's data at open time as its initial values — that is
+// how readonly fields can echo the clicked row. Page-level forms keep their
+// previous behavior (no implicit seeding).
+function seedInitialValuesFromSurfaceScope(
+  scope: ScopeRef | undefined,
+): Record<string, unknown> | undefined {
+  let surface: ScopeRef | undefined;
+  let current = scope;
+  while (current) {
+    if (current.source === 'dialog' || current.source === 'drawer') {
+      surface = current;
+      break;
+    }
+    current = current.parent;
+  }
+  if (!surface) {
+    return undefined;
+  }
+  // readVisible() merges ancestors via the prototype chain — snapshot the
+  // materialized view (plain object incl. inherited row/page data) instead.
+  const visible = surface.materializeVisible();
+  const seeded: Record<string, unknown> =
+    visible && typeof visible === 'object' && !Array.isArray(visible)
+      ? { ...(visible as Record<string, unknown>) }
+      : {};
+  delete seeded.dialogId;
+  delete seeded.drawerId;
+  return Object.keys(seeded).length > 0 ? seeded : undefined;
+}
+
 export function FormRenderer(props: RendererComponentProps<FormSchema>) {
   'use no memo';
   const runtime = useRendererRuntime();
@@ -75,7 +107,7 @@ export function FormRenderer(props: RendererComponentProps<FormSchema>) {
   const initialValues =
     props.props.data && typeof props.props.data === 'object'
       ? (props.props.data as Record<string, unknown>)
-      : undefined;  
+      : seedInitialValuesFromSurfaceScope(parentScope);
   const initialValuesRef = useRef(initialValues);
   const mountedFormRef = useRef(false);
   const activeOwnedFormRef = useRef<ReturnType<typeof runtime.createFormRuntime> | null>(null);
@@ -343,6 +375,23 @@ export function FormRenderer(props: RendererComponentProps<FormSchema>) {
   const preventEnterSubmit = (props.props as FormSchema).preventEnterSubmit === true;
   const scrollToFirstError = (props.props as FormSchema).scrollToFirstError === true;
   const submitOnChange = (props.props as FormSchema).submitOnChange === true;
+  // AMIS parity: deliver values to a named component (typically a crud) on submit
+  const submitTarget = typeof (props.props as FormSchema).target === 'string'
+    ? ((props.props as FormSchema).target as string)
+    : undefined;
+
+  const deliverToSubmitTarget = useCallback(async () => {
+    if (!submitTarget) {
+      return;
+    }
+    const handle = currentComponentRegistry?.resolve({ componentId: submitTarget });
+    if (handle?.capabilities?.hasMethod?.('querySubmit')) {
+      const values = ownedForm.store.getState().values;
+      await Promise.resolve(
+        handle.capabilities.invoke('querySubmit', { values }, {} as never),
+      );
+    }
+  }, [submitTarget, currentComponentRegistry, ownedForm]);
 
   useEffect(() => {
     let prevSubmitting = ownedForm.store.getState().submitting;
@@ -389,12 +438,17 @@ export function FormRenderer(props: RendererComponentProps<FormSchema>) {
             }
           };
           requestAnimationFrame(tryFocusFirstInvalid);
+        } else if (submitTarget) {
+          // Successful explicit submit: deliver values to the AMIS-parity target
+          // component (submitOnChange-without-submitAction delivers directly in
+          // the change subscription below, so this only runs post-submit).
+          void deliverToSubmitTarget();
         }
       }
     });
 
     return unsubscribe;
-  }, [ownedForm.store, scrollToFirstError]);
+  }, [ownedForm.store, scrollToFirstError, submitTarget, deliverToSubmitTarget]);
 
   const formLayoutValue = useMemo(() => {
     const value: FormLayoutContextValue = {};
@@ -419,7 +473,7 @@ export function FormRenderer(props: RendererComponentProps<FormSchema>) {
   }, [autoFocus]);
 
   useEffect(() => {
-    if (!submitOnChange || !submitAction) {
+    if (!submitOnChange || (!submitAction && !submitTarget)) {
       return;
     }
 
@@ -440,7 +494,13 @@ export function FormRenderer(props: RendererComponentProps<FormSchema>) {
       }
       debounceTimer = setTimeout(() => {
         debounceTimer = null;
-        void ownedForm.submit();
+        if (submitAction) {
+          void ownedForm.submit();
+        } else {
+          // target-only forms (aside filter → crud) have no submitAction;
+          // deliver the values straight to the target component.
+          void deliverToSubmitTarget();
+        }
       }, 300);
     });
 
@@ -451,7 +511,7 @@ export function FormRenderer(props: RendererComponentProps<FormSchema>) {
         debounceTimer = null;
       }
     };
-  }, [submitOnChange, submitAction, ownedForm.store, ownedForm]);
+  }, [submitOnChange, submitAction, submitTarget, deliverToSubmitTarget, ownedForm.store, ownedForm]);
 
   const handleSectionKeyDown = (event: ReactKeyboardEvent<HTMLElement>) => {
     if (event.key !== 'Enter') {

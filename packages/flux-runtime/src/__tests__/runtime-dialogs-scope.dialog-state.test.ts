@@ -410,4 +410,35 @@ describe('createRendererRuntime - dialog state', () => {
     expect(entries[0]?.scope.id).toContain('table-row:unit:admin');
     expect(entries[1]?.scope.id).toContain('table-row:unit:editor');
   });
+  it('marks action-driven dialog scopes with source=dialog (surface form seeding anchor)', async () => {
+    const registry = createRendererRegistry([pageRenderer, textRenderer]);
+    const runtime = createRendererRuntime({
+      registry,
+      env,
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
+    });
+    const page = runtime.createPageRuntime({ userName: 'alice' });
+    const surfaceRuntime = runtime.createSurfaceRuntime();
+
+    await runtime.dispatch(
+      {
+        action: 'openDialog',
+        args: { title: 'Seed dialog', body: [{ type: 'text', text: 'body' }] },
+      },
+      {
+        runtime,
+        scope: page.scope,
+        page,
+        surfaceRuntime,
+      },
+    );
+
+    const dialogState = surfaceRuntime.store.getState().entries[0];
+    expect(dialogState.scope.source).toBe('dialog');
+    // AMIS parity anchor: forms rendered inside the surface read this marker to
+    // seed initial values from the opener data (materializeVisible view).
+    const seeded = dialogState.scope.materializeVisible();
+    expect(seeded.userName).toBe('alice');
+  });
+
 });

@@ -226,9 +226,16 @@ export const formRendererDefinition: RendererDefinition = {
       shape: { kind: 'boolean' },
       displayName: 'Submit On Change',
       description:
-        'When true and a submitAction is configured, debounced (300ms) submit is triggered automatically whenever form values change. The initial mount snapshot is ignored.',
+        'When true and a submitAction or target is configured, debounced (300ms) submit is triggered automatically whenever form values change. The initial mount snapshot is ignored.',
       editorType: 'boolean',
       defaultValue: false,
+    },
+    target: {
+      shape: { kind: 'string' },
+      displayName: 'Submit Target',
+      description:
+        'AMIS-parity: deliver form values to the named component (resolved via the component registry, typically a crud). The target querySubmit capability receives { values } and merges them into its query.',
+      editorType: 'text',
     },
     preventEnterSubmit: {
       shape: { kind: 'boolean' },
@@ -413,6 +420,7 @@ export const formRendererDefinition: RendererDefinition = {
     { key: 'columnCount', kind: 'prop' },
     { key: 'submitScope', kind: 'prop' },
     { key: 'submitOnChange', kind: 'prop', valueType: 'boolean' },
+    { key: 'target', kind: 'prop' },
     { key: 'preventEnterSubmit', kind: 'prop', valueType: 'boolean' },
     { key: 'autoFocus', kind: 'prop', valueType: 'boolean' },
     { key: 'scrollToFirstError', kind: 'prop', valueType: 'boolean' },

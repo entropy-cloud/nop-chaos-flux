@@ -122,6 +122,14 @@ export interface FormSchema extends BaseSchema {
    * See `docs/architecture/surface-lifecycle-callbacks.md` §Form Submit Scope.
    */
   submitScope?: 'local' | 'surface';
+  /**
+   * AMIS-parity submit target: deliver this form's values to the named
+   * component (typically a crud) instead of (or alongside) `submitAction`.
+   * Resolution goes through the component registry (`id` or `name`); the
+   * target's `querySubmit` capability receives `{ values }` and merges them
+   * into its own query — the aside-filter-form → crud reload pattern.
+   */
+  target?: string;
   hiddenFieldPolicy?: HiddenFieldPolicy;
   bodyClassName?: string;
   actionsClassName?: string;

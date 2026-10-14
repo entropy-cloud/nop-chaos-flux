@@ -436,6 +436,7 @@ export function createScopeRef(input: {
   parent?: ScopeRef;
   store?: ScopeStore<Record<string, any>>;
   isolate?: boolean;
+  source?: ScopeRef['source'];
   update?: (path: string, value: unknown, scope: ScopeRef) => void;
   onDispose?: () => void;
 }): ScopeRef {
@@ -467,6 +468,7 @@ export function createScopeRef(input: {
     path: input.path,
     parent: input.parent,
     isolate: input.isolate,
+    source: input.source,
     store: exposedStore,
     get value() {
       if (disposed) {

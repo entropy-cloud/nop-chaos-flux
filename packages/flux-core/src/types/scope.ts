@@ -37,6 +37,12 @@ export interface ScopeRef {
   isolate?: boolean;
   store?: ScopeStore;
   readonly value: Record<string, unknown>;
+  /**
+   * Kind of scope as created (`CreateScopeOptions.source`). Used by consumers
+   * that need to branch on scope lineage — e.g. forms rendered inside a
+   * dialog/drawer surface seed their initial values from the surface data.
+   */
+  source?: 'root' | 'row' | 'dialog' | 'drawer' | 'form' | 'fragment' | 'custom';
   get(path: string): unknown;
   has(path: string): boolean;
   readOwn(): Record<string, unknown>;
@@ -51,5 +57,5 @@ export interface CreateScopeOptions {
   pathSuffix?: string;
   isolate?: boolean;
   scopeKey?: string;
-  source?: 'root' | 'row' | 'dialog' | 'form' | 'fragment' | 'custom';
+  source?: 'root' | 'row' | 'dialog' | 'drawer' | 'form' | 'fragment' | 'custom';
 }
