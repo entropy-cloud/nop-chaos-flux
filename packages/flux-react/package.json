@@ -17,6 +17,10 @@
       "types": "./dist/unstable.d.ts",
       "default": "./dist/unstable.js"
     },
+    "./test-support": {
+      "types": "./dist/test-support.d.ts",
+      "default": "./dist/test-support.js"
+    },
     "./default-spacing.css": {
       "default": "./dist/default-spacing.css"
     }

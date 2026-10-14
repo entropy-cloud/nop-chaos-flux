@@ -1,15 +1,11 @@
 import React from 'react';
 import type { RendererComponentProps, RendererDefinition, RendererEnv } from '@nop-chaos/flux-core';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
-import { createSchemaRenderer } from '@nop-chaos/flux-react';
+import { createDefaultEnv, createSchemaRenderer } from '@nop-chaos/flux-react';
 import { basicRendererDefinitions } from './index.js';
 
-export const env: RendererEnv = {
-  fetcher: async function <T>() {
-    return { status: 0, data: null as T };
-  },
-  notify: () => undefined,
-};
+// Plan 594 (CX-15): hand-written env stub → shared createDefaultEnv.
+export const env: RendererEnv = createDefaultEnv();
 
 function ScopeProbeRenderer(props: RendererComponentProps) {
   return (

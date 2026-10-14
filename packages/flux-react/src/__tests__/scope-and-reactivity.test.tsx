@@ -5,7 +5,7 @@ import { createRendererRegistry } from '@nop-chaos/flux-core';
 import { createSchemaRenderer } from '../schema-renderer.js';
 import { FormContext, ScopeContext } from '../contexts.js';
 import { useOwnScopeSelector, useScopeSelector } from '../hooks.js';
-import { createRendererRuntime } from '../test-support.js';
+import { createRendererRuntime } from '../test-support-probes.js';
 import {
   createExpressionCompiler,
   createFormulaCompiler,
@@ -18,7 +18,7 @@ import {
   selectorRenderer,
   sharedFormulaCompiler,
   textRenderer,
-} from '../test-support.js';
+} from '../test-support-probes.js';
 import {
   asyncPublisherRenderer,
   asyncPublisherWithRefreshRenderer,

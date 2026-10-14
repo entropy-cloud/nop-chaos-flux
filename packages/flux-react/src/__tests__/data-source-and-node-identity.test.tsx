@@ -20,7 +20,7 @@ import {
   pageRenderer,
   textRenderer,
   wrapProbeRenderer,
-} from '../test-support.js';
+} from '../test-support-probes.js';
 import { NodeFrameWrapper } from '../node-frame-wrapper.js';
 
 const testState: {

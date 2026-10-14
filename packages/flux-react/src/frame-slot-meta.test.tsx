@@ -17,7 +17,7 @@ import {
   probeQueryInputRenderer,
   sharedFormulaCompiler,
   textRenderer,
-} from './test-support.js';
+} from './test-support-probes.js';
 
 describe('resolveFrameWrapMode', () => {
   it('returns none when renderer definition is not wrap-compatible', () => {

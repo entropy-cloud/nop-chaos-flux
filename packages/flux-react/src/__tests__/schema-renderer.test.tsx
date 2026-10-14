@@ -5,7 +5,7 @@ import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createSchemaCompiler } from '@nop-chaos/flux-compiler';
 import { createSchemaRenderer } from '../schema-renderer.js';
 import * as fluxRuntime from '@nop-chaos/flux-runtime';
-import { createExpressionCompiler } from '../test-support.js';
+import { createExpressionCompiler } from '../test-support-probes.js';
 import { env, eventTextRenderer, pageRenderer, textRenderer } from '../test-support-core.js';
 
 afterEach(() => {

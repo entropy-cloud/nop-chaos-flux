@@ -40,6 +40,9 @@ export const workspacePackageAliases = {
   '@nop-chaos/flux-react/unstable': fileURLToPath(
     new URL('./packages/flux-react/src/unstable.ts', import.meta.url),
   ),
+  '@nop-chaos/flux-react/test-support': fileURLToPath(
+    new URL('./packages/flux-react/src/test-support.ts', import.meta.url),
+  ),
   '@nop-chaos/flux-react': fileURLToPath(
     new URL('./packages/flux-react/src/index.tsx', import.meta.url),
   ),

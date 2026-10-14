@@ -9,6 +9,7 @@ import type {
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { formRendererDefinitions } from '@nop-chaos/flux-renderers-form';
 import {
+  createDefaultEnv,
   createSchemaRenderer,
   useCurrentComponentRegistry,
   useRenderScope,
@@ -17,15 +18,13 @@ import {
 import { initFluxI18n, resetFluxI18n } from '@nop-chaos/flux-i18n';
 import { dataRendererDefinitions } from './index.js';
 
-resetFluxI18n();
-initFluxI18n({ lng: 'en-US', fallbackLng: 'en-US' });
-
-export const env: RendererEnv = {
-  fetcher: async function <T>() {
-    return { status: 0, data: null as T };
-  },
-  notify: () => undefined,
-};
+// Plan 594 (CX-15): hand-written env stub → shared createDefaultEnv. The i18n
+// init used to run at module-evaluation time (WA-content-009 pattern, plan
+// 594 G5) — a singleton reset+write on import froze the language for any test
+// file imported later. Explicit reset+init inside the createDataSchemaRenderer
+// factory (form/form-advanced factory precedent) keeps the forced en-US
+// semantics without the import-order side effect.
+export const env: RendererEnv = createDefaultEnv();
 
 export const pageRenderer: RendererDefinition = {
   type: 'page',
@@ -158,6 +157,10 @@ export const buttonRenderer: RendererDefinition = {
 };
 
 export function createDataSchemaRenderer(extra: RendererDefinition[] = []) {
+  // 加载默认 locale（en-US），使 data i18n 键在测试中断言真实文案（plan 594 G5：
+  // 自模块求值期移入工厂，WA-content-009 模式；form 工厂先例）。
+  resetFluxI18n();
+  initFluxI18n({ lng: 'en-US', fallbackLng: 'en-US' });
   return createSchemaRenderer([
     pageRenderer,
     textRenderer,

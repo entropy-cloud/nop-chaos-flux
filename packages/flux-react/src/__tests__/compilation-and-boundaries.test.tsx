@@ -17,7 +17,7 @@ import {
   scopedHostRenderer,
   sharedFormulaCompiler,
   textRenderer,
-} from '../test-support.js';
+} from '../test-support-probes.js';
 
 function renderFragmentStub(): null {
   return null;

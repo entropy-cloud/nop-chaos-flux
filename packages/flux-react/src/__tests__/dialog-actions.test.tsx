@@ -7,7 +7,7 @@ import {
   pageRenderer,
   sharedFormulaCompiler,
   textRenderer,
-} from '../test-support.js';
+} from '../test-support-probes.js';
 
 afterEach(() => {
   cleanup();

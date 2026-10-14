@@ -2,7 +2,7 @@ import React from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, render, screen } from '@testing-library/react';
 import { createSchemaRenderer } from '../schema-renderer.js';
-import { env, pageRenderer, textRenderer, sharedFormulaCompiler } from '../test-support.js';
+import { env, pageRenderer, textRenderer, sharedFormulaCompiler } from '../test-support-probes.js';
 
 afterEach(() => {
   cleanup();

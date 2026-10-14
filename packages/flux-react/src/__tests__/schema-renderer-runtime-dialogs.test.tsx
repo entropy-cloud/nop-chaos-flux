@@ -19,7 +19,7 @@ import {
   scopedHostRenderer,
   sharedFormulaCompiler,
   textRenderer,
-} from '../test-support.js';
+} from '../test-support-probes.js';
 
 function ComponentHandleWithIdProvider(props: RendererComponentProps) {
   const componentRegistry = useCurrentComponentRegistry();

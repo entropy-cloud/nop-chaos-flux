@@ -1,14 +1,10 @@
 import type { RendererDefinition, RendererEnv } from '@nop-chaos/flux-core';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
-import { createSchemaRenderer } from '@nop-chaos/flux-react';
+import { createDefaultEnv, createSchemaRenderer } from '@nop-chaos/flux-react';
 import React from 'react';
 
-const env: RendererEnv = {
-  fetcher: async function <T>() {
-    return { status: 0, data: null as T };
-  },
-  notify: () => undefined,
-};
+// Plan 594 (CX-15): hand-written env stub → shared createDefaultEnv.
+const env: RendererEnv = createDefaultEnv();
 
 export const pageRenderer: RendererDefinition = {
   type: 'page',

@@ -11,7 +11,7 @@ import type {
 } from '@nop-chaos/flux-core';
 import { getIn } from '@nop-chaos/flux-core';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
-import { createSchemaRenderer } from '@nop-chaos/flux-react';
+import { createDefaultEnv, createSchemaRenderer } from '@nop-chaos/flux-react';
 import {
   useAggregateError,
   useCurrentForm,
@@ -256,7 +256,10 @@ export const buttonRenderer = {
   fields: [{ key: 'onClick', kind: 'event' as const }],
 };
 
-export const env: RendererEnv = {
+// Plan 594 (CX-15): hand-written env stub → shared createDefaultEnv with the
+// site-specific fetcher/notify preserved via the input spread (they record
+// submit/notify calls into the form test harness).
+export const env: RendererEnv = createDefaultEnv({
   fetcher: async function <T>(_api: unknown, ctx: ApiRequestContext) {
     currentFormTestHarness.submitCalls.push(ctx.scope.readOwn() as Record<string, any>);
     return { status: 0, data: ctx.scope.readOwn() as T };
@@ -264,7 +267,7 @@ export const env: RendererEnv = {
   notify: (level, message) => {
     currentFormTestHarness.notifyCalls.push({ level, message });
   },
-};
+});
 
 function ContactGroupRenderer(props: RendererComponentProps) {
   const form = useCurrentForm();

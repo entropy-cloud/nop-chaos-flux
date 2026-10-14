@@ -162,7 +162,9 @@ describe('ai-token-usage — schema-driven renderer', () => {
     const ctxRecord = ctx as { event: unknown; evaluationBindings: unknown; scope: unknown };
     expect(ctxRecord.event).toBe(payload);
     expect(ctxRecord.evaluationBindings).toEqual(payload);
-    expect(ctxRecord.scope).toBeUndefined();
+    // plan 594 (CX-15): the mock-props seed now includes the honest node.scope
+    // map — the old `toBeUndefined()` here asserted the pre-594 dishonest shape.
+    expect(ctxRecord.scope).toEqual({ id: 'mock-scope', path: 'mock.path', value: {} });
   });
 
   it('renders an accessible aria-label on the display root (no onClick)', () => {

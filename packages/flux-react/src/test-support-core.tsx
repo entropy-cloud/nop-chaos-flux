@@ -4,6 +4,7 @@ import { cleanup } from '@testing-library/react';
 import { Button, Input, Label } from '@nop-chaos/ui';
 import type { RendererComponentProps, RendererDefinition, RendererEnv } from '@nop-chaos/flux-core';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
+import { createDefaultEnv } from './defaults.js';
 import { FormContext, ScopeContext } from './contexts.js';
 import {
   useCurrentActionScope,
@@ -25,12 +26,7 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-export const env: RendererEnv = {
-  fetcher: async function <T>() {
-    return { status: 0, data: null as T };
-  },
-  notify: () => undefined,
-};
+export const env: RendererEnv = createDefaultEnv();
 
 export const sharedFormulaCompiler = createFormulaCompiler();
 

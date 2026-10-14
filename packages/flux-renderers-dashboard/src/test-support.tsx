@@ -6,7 +6,7 @@ import type {
   RendererEventHandler,
 } from '@nop-chaos/flux-core';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
-import { createSchemaRenderer } from '@nop-chaos/flux-react';
+import { createDefaultEnv, createSchemaRenderer } from '@nop-chaos/flux-react';
 import { initFluxI18n } from '@nop-chaos/flux-i18n';
 import React from 'react';
 import type { DashboardEditorSchema } from './editor/dashboard-editor-renderer.js';
@@ -14,12 +14,8 @@ import type { DashboardLayoutSchema } from './schemas.js';
 import { dashboardRendererDefinition } from './dashboard-definitions.js';
 import { dashboardEditorRendererDefinition } from './editor/dashboard-editor-definitions.js';
 
-const env: RendererEnv = {
-  fetcher: async function <T>() {
-    return { status: 0, data: null as T };
-  },
-  notify: () => undefined,
-};
+// Plan 594 (CX-15): hand-written env stub → shared createDefaultEnv.
+const env: RendererEnv = createDefaultEnv();
 
 export const pageRenderer: RendererDefinition = {
   type: 'page',

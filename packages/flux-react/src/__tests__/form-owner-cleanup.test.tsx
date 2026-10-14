@@ -4,7 +4,7 @@ import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/re
 import type { RendererDefinition } from '@nop-chaos/flux-core';
 import { createSchemaRenderer } from '../schema-renderer.js';
 import { useCurrentForm } from '../hooks.js';
-import { env, formRenderer, pageRenderer, sharedFormulaCompiler } from '../test-support.js';
+import { env, formRenderer, pageRenderer, sharedFormulaCompiler } from '../test-support-probes.js';
 
 afterEach(() => {
   cleanup();

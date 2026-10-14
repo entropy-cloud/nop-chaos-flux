@@ -8,7 +8,6 @@ import type {
   RendererComponentProps,
   RendererDefinition,
   RendererHelpers,
-  ScopeRef,
 } from '@nop-chaos/flux-core';
 import { compileDataSource } from '@nop-chaos/flux-compiler';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
@@ -364,30 +363,10 @@ export function createDispatchCaptureRenderer(
   };
 }
 
-export function createScope(data: Record<string, any>): ScopeRef {
-  return {
-    id: 'root',
-    path: '$',
-    get(path: string) {
-      return path.split('.').reduce<unknown>((current, segment) => {
-        if (current == null || typeof current !== 'object') {
-          return undefined;
-        }
-
-        return (current as Record<string, unknown>)[segment];
-      }, data);
-    },
-    has(path: string) {
-      return this.get(path) !== undefined;
-    },
-    readOwn: () => data,
-    readVisible: () => data,
-    materializeVisible: () => data,
-    value: data,
-    update: () => undefined,
-    merge: () => {},
-  };
-}
+// Plan 594 (CX-15): the canonical TestRuntimeProvider/createTestScope family
+// lives in the shared `./test-support` subpath (src/test-support/runtime.tsx);
+// this file keeps the flux-react-internal alias surface stable.
+export { createTestScope as createScope } from './test-support/runtime.js';
 
 export function renderWithRuntimeProviders(input: {
   runtime: ReturnType<typeof createRendererRuntime>;

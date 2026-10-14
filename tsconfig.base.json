@@ -33,6 +33,7 @@
       ],
       "@nop-chaos/flux-react": ["./packages/flux-react/src/index.tsx"],
       "@nop-chaos/flux-react/unstable": ["./packages/flux-react/src/unstable.ts"],
+      "@nop-chaos/flux-react/test-support": ["./packages/flux-react/src/test-support.ts"],
       "@nop-chaos/flux/style.css": ["./packages/flux-bundle/src/style.css"],
       "@nop-chaos/flux": ["./packages/flux-bundle/src/index.tsx"],
       "@nop-chaos/flux-renderers-basic": ["./packages/flux-renderers-basic/src/index.tsx"],

@@ -3,7 +3,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, render, screen } from '@testing-library/react';
 import { createSchemaRenderer } from '../schema-renderer.js';
 import { useRendererRuntime } from '../hooks.js';
-import { env, pageRenderer, sharedFormulaCompiler, textRenderer } from '../test-support.js';
+import { env, pageRenderer, sharedFormulaCompiler, textRenderer } from '../test-support-probes.js';
 
 afterEach(() => {
   cleanup();
