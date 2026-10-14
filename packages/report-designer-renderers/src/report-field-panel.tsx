@@ -3,49 +3,8 @@ import './report-field-panel.css';
 import { useMemo, useState, type DragEvent } from 'react';
 import type { FieldSourceSnapshot } from '@nop-chaos/report-designer-core';
 import { t } from '@nop-chaos/flux-i18n';
-import { Button, Input, cn } from '@nop-chaos/ui';
+import { Button, Input, cn, setDragGhost } from '@nop-chaos/ui';
 import { ReportFieldListItem } from './report-field-list-item.js';
-
-/** plan 528 Phase 2：字段拖拽 ghost（对齐 page-designer 模式）——setDragImage
- * feature-detect 守卫，离屏 fixed + pointer-events:none，微任务清理。 */
-function setFieldDragGhost(event: DragEvent<HTMLElement>, fieldType: string, label: string): void {
-  const dataTransfer = event.dataTransfer as (DataTransfer & { setDragImage?: unknown }) | null;
-  if (!dataTransfer || typeof dataTransfer.setDragImage !== 'function') {
-    return;
-  }
-  const ghost = document.createElement('div');
-  ghost.setAttribute('data-testid', 'report-field-drag-ghost');
-  ghost.textContent = `${fieldType} · ${label}`;
-  ghost.style.cssText = [
-    'position:fixed',
-    'top:-200px',
-    'left:-200px',
-    'z-index:-1',
-    'pointer-events:none',
-    'display:inline-flex',
-    'align-items:center',
-    'gap:6px',
-    'padding:6px 12px',
-    'border-radius:8px',
-    'border:1px solid hsl(var(--primary))',
-    'background:hsl(var(--secondary))',
-    'box-shadow:0 4px 12px rgba(15,23,42,0.16)',
-    'font-size:13px',
-    'font-weight:500',
-    'white-space:nowrap',
-  ].join(';');
-  document.body.appendChild(ghost);
-  try {
-    // 宿主可能存在 setDragImage 但抛 Not implemented（happy-dom 等）——降级默认截图
-    dataTransfer.setDragImage(ghost, 12, 12);
-  } catch {
-    ghost.remove();
-    return;
-  }
-  window.setTimeout(() => {
-    ghost.remove();
-  }, 0);
-}
 
 /** plan 528 Phase 2：字段过滤纯函数（label/fieldType 子串，大小写不敏感）。 */
 export function matchesReportFieldQuery(
@@ -193,7 +152,10 @@ export function ReportFieldPanel({
                       showInsert
                       onDragStart={(event) => {
                         writeReportFieldDragPayload(event, createReportFieldDragPayload(source, field));
-                        setFieldDragGhost(event, field.fieldType ?? 'field', field.label);
+                        setDragGhost(event, {
+                          testid: 'report-field-drag-ghost',
+                          label: `${field.fieldType ?? 'field'} · ${field.label}`,
+                        });
                         onFieldDragStart(source.id, field.id, field.label);
                       }}
                       onInsert={() => onFieldInsert?.(source.id, field.id, field.label)}

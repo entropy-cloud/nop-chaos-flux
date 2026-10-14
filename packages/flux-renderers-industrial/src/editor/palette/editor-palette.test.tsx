@@ -33,6 +33,9 @@ beforeEach(() => {
 afterEach(() => {
   resetFluxI18n();
   clearScadaSymbolRegistry();
+  document
+    .querySelectorAll('[data-testid="scada-editor-drag-ghost"]')
+    .forEach((el) => el.remove());
   cleanup();
 });
 
@@ -108,5 +111,137 @@ describe('[G5-R4-视角11-01] palette click-add placement cascade', () => {
     fireEvent.click(rectBtn!);
     fireEvent.click(rectBtn!);
     expect(new Set(calls.map((c) => c.id)).size).toBe(2);
+  });
+});
+
+// plan 597 CX-17：palette 拖入 ghost 消费位映射钉（原 palette-drag-ghost.ts 的
+// setScadaPaletteDragGhost 已收敛为 ui setDragGhost 共享原语，C 面参数=testid/
+// 解析名 label/hsl+surface cssText[无 gap]/offsets 14,10）。cssText 经 createElement
+// 拦截捕获赋值原串做逐字节保形核对（happy-dom 解析器丢弃 hsl(var()) 声明，live
+// style 只钉幸存属性）；统一防御（throw 环境=无 uncaught+ghost 同步移除；OLD=
+// 裸调用 .toThrow+ghost 残留，Phase 1 红腿记录在案）。
+describe('EditorPalettePanel drag ghost (plan 597 CX-17 consumer mapping)', () => {
+  const GHOST_INVARIANT_CSS_TEXT =
+    'position:fixed;top:-200px;left:-200px;z-index:-1;pointer-events:none;display:inline-flex;align-items:center;white-space:nowrap';
+  const GHOST_CONSUMER_CSS_TEXT = [
+    'padding:4px 10px',
+    'border-radius:6px',
+    'border:1px solid hsl(var(--primary))',
+    'background:var(--nop-surface)',
+    'color:hsl(var(--primary))',
+    'font-size:12px',
+    'font-weight:500',
+  ].join(';');
+
+  function captureGhostCssText(): string[] {
+    const assigned: string[] = [];
+    const createElement = document.createElement.bind(document);
+    const originalDescriptor = Object.getOwnPropertyDescriptor(
+      window.CSSStyleDeclaration.prototype,
+      'cssText',
+    );
+    vi.spyOn(document, 'createElement').mockImplementation(((tagName: string) => {
+      const el = createElement(tagName) as HTMLElement;
+      if (originalDescriptor?.get && originalDescriptor.set) {
+        Object.defineProperty(el.style, 'cssText', {
+          get() {
+            return originalDescriptor.get!.call(el.style);
+          },
+          set(value: string) {
+            assigned.push(value);
+            originalDescriptor.set!.call(el.style, value);
+          },
+          configurable: true,
+        });
+      }
+      return el;
+    }) as typeof document.createElement);
+    return assigned;
+  }
+
+  // RTL fireEvent 在 window.DataTransfer 可构造时（happy-dom）恒以真实 DataTransfer
+  // 为底拷贝 mock 自有属性——原型 setDragImage 恒在，feature-detect guard 经 fireEvent
+  // 不可达；guard 钉须走原生 Event + dataTransfer defineProperty（A 面既有 degrade 钉同法）。
+  function fireRawRectDragStart(dataTransfer: unknown): void {
+    const { container } = render(<EditorPalettePanel runtime={makeRuntime()} onError={() => undefined} />);
+    const rectBtn = findButtonByText(container, '矩形');
+    expect(rectBtn).toBeDefined();
+    const fired = new Event('dragstart', { bubbles: true, cancelable: true });
+    Object.defineProperty(fired, 'dataTransfer', { value: dataTransfer });
+    rectBtn!.dispatchEvent(fired);
+  }
+
+  function fireRectDragStart(setDragImage?: (...args: unknown[]) => void): void {
+    const { container } = render(<EditorPalettePanel runtime={makeRuntime()} onError={() => undefined} />);
+    const rectBtn = findButtonByText(container, '矩形');
+    expect(rectBtn).toBeDefined();
+    const dt = {
+      setData: vi.fn(),
+      effectAllowed: '',
+      ...(setDragImage ? { setDragImage } : {}),
+    } as unknown as DataTransfer;
+    fireEvent.dragStart(rectBtn!, { dataTransfer: dt });
+  }
+
+  it('appends the offscreen ghost with testid, resolved label, byte-shape hsl+surface cssText (no gap) and hands it to setDragImage at (14,10) with timer cleanup', () => {
+    vi.useFakeTimers();
+    try {
+      const assignedCssTexts = captureGhostCssText();
+      const setDragImage = vi.fn();
+      fireRectDragStart(setDragImage);
+      expect(setDragImage).toHaveBeenCalledTimes(1);
+      const [ghostArg, offsetX, offsetY] = setDragImage.mock.calls[0] as unknown as [
+        Element,
+        number,
+        number,
+      ];
+      expect(offsetX).toBe(14);
+      expect(offsetY).toBe(10);
+      const ghost = document.body.querySelector('[data-testid="scada-editor-drag-ghost"]') as HTMLElement | null;
+      expect(ghost).not.toBeNull();
+      expect(ghost).toBe(ghostArg);
+      expect(ghost?.textContent).toBe('矩形');
+      // 逐字节保形：共享不变式 + 消费方 hsl+surface cssText（无 gap——C 面漂移维度）
+      expect(assignedCssTexts).toContain(`${GHOST_INVARIANT_CSS_TEXT};${GHOST_CONSUMER_CSS_TEXT}`);
+      expect(ghost?.style.position).toBe('fixed');
+      expect(ghost?.style.pointerEvents).toBe('none');
+      expect(ghost?.style.background).toBe('var(--nop-surface)');
+      expect(ghost?.style.padding).toBe('4px 10px');
+      expect(ghost?.style.getPropertyValue('gap')).toBe('');
+      vi.runAllTimers();
+      expect(document.body.querySelector('[data-testid="scada-editor-drag-ghost"]')).toBeNull();
+    } finally {
+      vi.useRealTimers();
+      vi.restoreAllMocks();
+    }
+  });
+
+  it('no-ops without a ghost when dataTransfer lacks setDragImage (feature-detect guard)', () => {
+    expect(() => fireRawRectDragStart({ setData: vi.fn(), effectAllowed: '' })).not.toThrow();
+    expect(document.body.querySelector('[data-testid="scada-editor-drag-ghost"]')).toBeNull();
+  });
+
+  it('degrades without uncaught throw and removes the ghost synchronously when setDragImage rejects (unified defense, B-derived catch semantics)', () => {
+    vi.useFakeTimers();
+    try {
+      const errors: ErrorEvent[] = [];
+      const onError = (event: Event): void => {
+        errors.push(event as ErrorEvent);
+      };
+      window.addEventListener('error', onError);
+      try {
+        const setDragImage = vi.fn(() => {
+          throw new Error('Not implemented');
+        });
+        expect(() => fireRectDragStart(setDragImage)).not.toThrow();
+        expect(setDragImage).toHaveBeenCalledTimes(1);
+        expect(errors).toHaveLength(0);
+        expect(document.body.querySelector('[data-testid="scada-editor-drag-ghost"]')).toBeNull();
+      } finally {
+        window.removeEventListener('error', onError);
+      }
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

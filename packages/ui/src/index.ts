@@ -80,3 +80,4 @@ export {
 } from './lib/icon-utils.js';
 
 export { setI18nGetter, t } from './lib/i18n.js';
+export { setDragGhost } from './lib/drag-ghost.js';

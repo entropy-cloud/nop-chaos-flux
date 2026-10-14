@@ -5,9 +5,11 @@
 
 import { createRendererRegistry } from '@nop-chaos/flux-core';
 import type { RendererDefinition } from '@nop-chaos/flux-core';
+import { t } from '@nop-chaos/flux-i18n';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { PalettePanel } from './palette-panel.js';
+import { PD_ACCENT_BORDER, PD_ACCENT_SOFT_BG } from './page-designer-tokens.js';
 import {
   buildMvpPaletteItems,
   createPageDesignerRegistry,
@@ -176,5 +178,145 @@ describe('PalettePanel', () => {
   it('renders empty-state message when nothing matches', () => {
     render(<PalettePanel items={[]} onItemClick={vi.fn()} />);
     expect(screen.getByText(/没有匹配|No matching/i)).toBeTruthy();
+  });
+});
+
+// plan 597 CX-17：palette 拖拽 ghost 钉（原 setPaletteDragGhost 已收敛为 ui
+// setDragGhost 共享原语，消费位映射=A：testid/label=i18n badge 组合终串（消费侧组参）/
+// PD-token cssText 含 gap:6px/offsets 缺省 12,12）。cssText 经 createElement 拦截捕获
+// 赋值原串做逐字节保形核对（happy-dom 解析器会丢弃 color-mix/hsl(var()) 声明，
+// live style 对象只钉幸存属性）；统一防御（throw 环境=无 uncaught+ghost 同步移除，
+// B 派 catch 语义）。
+describe('PalettePanel drag ghost (plan 597 CX-17)', () => {
+  afterEach(() => {
+    document
+      .querySelectorAll('[data-testid="page-designer-drag-ghost"]')
+      .forEach((el) => el.remove());
+  });
+
+  const GHOST_INVARIANT_CSS_TEXT =
+    'position:fixed;top:-200px;left:-200px;z-index:-1;pointer-events:none;display:inline-flex;align-items:center;white-space:nowrap';
+  const GHOST_CONSUMER_CSS_TEXT = [
+    'gap:6px',
+    'padding:6px 12px',
+    'border-radius:8px',
+    `border:1px solid ${PD_ACCENT_BORDER}`,
+    `background:${PD_ACCENT_SOFT_BG}`,
+    'box-shadow:0 4px 12px rgba(15,23,42,0.16)',
+    'font-size:13px',
+    'font-weight:500',
+  ].join(';');
+
+  function fireDragStart(item: HTMLElement, dataTransfer: unknown): DragEvent {
+    const fired = new Event('dragstart', { bubbles: true, cancelable: true }) as DragEvent;
+    Object.defineProperty(fired, 'dataTransfer', { value: dataTransfer });
+    item.dispatchEvent(fired);
+    return fired;
+  }
+
+  function captureGhostCssText(): string[] {
+    const assigned: string[] = [];
+    const createElement = document.createElement.bind(document);
+    const originalDescriptor = Object.getOwnPropertyDescriptor(
+      window.CSSStyleDeclaration.prototype,
+      'cssText',
+    );
+    vi.spyOn(document, 'createElement').mockImplementation(((tagName: string) => {
+      const el = createElement(tagName) as HTMLElement;
+      if (originalDescriptor?.get && originalDescriptor.set) {
+        Object.defineProperty(el.style, 'cssText', {
+          get() {
+            return originalDescriptor.get!.call(el.style);
+          },
+          set(value: string) {
+            assigned.push(value);
+            originalDescriptor.set!.call(el.style, value);
+          },
+          configurable: true,
+        });
+      }
+      return el;
+    }) as typeof document.createElement);
+    return assigned;
+  }
+
+  function renderPaletteItem(type: string): HTMLElement {
+    const registry = createPageDesignerRegistry();
+    const items = buildMvpPaletteItems(registry);
+    render(<PalettePanel items={items} onItemClick={vi.fn()} />);
+    return document.querySelector(`[data-palette-item="${type}"]`) as HTMLElement;
+  }
+
+  it('appends the offscreen ghost with testid, plain label, byte-shape PD-token cssText (gap:6px) and hands it to setDragImage at (12,12) with setTimeout(0) cleanup', () => {
+    vi.useFakeTimers();
+    try {
+      const registry = createPageDesignerRegistry();
+      const items = buildMvpPaletteItems(registry);
+      const expectedLabel = items.find((item) => item.type === 'button')!.displayName;
+      const item = renderPaletteItem('button');
+      const assignedCssTexts = captureGhostCssText();
+      const setDragImage = vi.fn();
+      fireDragStart(item, { setData: vi.fn(), effectAllowed: '', setDragImage });
+      expect(setDragImage).toHaveBeenCalledTimes(1);
+      const [ghostArg, offsetX, offsetY] = setDragImage.mock.calls[0] as unknown as [
+        Element,
+        number,
+        number,
+      ];
+      expect(offsetX).toBe(12);
+      expect(offsetY).toBe(12);
+      const ghost = document.querySelector('[data-testid="page-designer-drag-ghost"]');
+      expect(ghost).not.toBeNull();
+      expect(ghost).toBe(ghostArg);
+      expect(ghost?.textContent).toBe(expectedLabel);
+      // 逐字节保形：共享不变式 + 消费方 PD-token cssText（含 gap:6px）
+      expect(assignedCssTexts).toContain(`${GHOST_INVARIANT_CSS_TEXT};${GHOST_CONSUMER_CSS_TEXT}`);
+      const style = (ghost as HTMLElement).style;
+      expect(style.position).toBe('fixed');
+      expect(Number.parseInt(style.top, 10)).toBeLessThan(0);
+      expect(style.pointerEvents).toBe('none');
+      expect(style.getPropertyValue('gap')).toBe('6px');
+      expect(style.whiteSpace).toBe('nowrap');
+      vi.runAllTimers();
+      expect(document.querySelector('[data-testid="page-designer-drag-ghost"]')).toBeNull();
+    } finally {
+      vi.useRealTimers();
+      vi.restoreAllMocks();
+    }
+  });
+
+  it('composes the i18n container badge into the ghost label for container items', () => {
+    const registry = createPageDesignerRegistry();
+    const items = buildMvpPaletteItems(registry);
+    const container = items.find((item) => item.type === 'container' && item.isContainer === true)!;
+    const item = renderPaletteItem('container');
+    fireDragStart(item, { setData: vi.fn(), effectAllowed: '', setDragImage: vi.fn() });
+    const ghost = document.querySelector('[data-testid="page-designer-drag-ghost"]');
+    expect(ghost?.textContent).toBe(`${container.displayName} · ${t('flux.pageDesigner.containerBadge')}`);
+  });
+
+  // 防御增强判别绿腿（plan 597 CX-17 统一防御，OLD=裸调用 uncaught[window error
+  // 事件恰 1+ghost 残留，Phase 1 钉承载红腿记录]）：setDragImage 抛错环境（happy-dom
+  // Not implemented 形态）→ 无 uncaught、setDragImage 恰一次、ghost 同步移除。
+  it('degrades without uncaught throw and removes the ghost synchronously when setDragImage throws (defense enhancement, B-derived catch semantics)', () => {
+    const item = renderPaletteItem('button');
+    const errors: ErrorEvent[] = [];
+    const onError = (event: Event): void => {
+      errors.push(event as ErrorEvent);
+    };
+    window.addEventListener('error', onError);
+    try {
+      const setDragImage = vi.fn(() => {
+        throw new Error('Not implemented');
+      });
+      expect(() =>
+        fireDragStart(item, { setData: vi.fn(), effectAllowed: '', setDragImage }),
+      ).not.toThrow();
+      expect(setDragImage).toHaveBeenCalledTimes(1);
+      expect(errors).toHaveLength(0);
+      expect(document.querySelector('[data-testid="page-designer-drag-ghost"]')).toBeNull();
+    } finally {
+      window.removeEventListener('error', onError);
+    }
   });
 });

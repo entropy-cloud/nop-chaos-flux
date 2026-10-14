@@ -1,13 +1,12 @@
 import { useRef, useState } from 'react';
 import { ChevronDown, ChevronLeft, ChevronRight, X } from 'lucide-react';
-import { Button, Input } from '@nop-chaos/ui';
+import { Button, Input, setDragGhost } from '@nop-chaos/ui';
 import { useFluxTranslation } from '@nop-chaos/flux-i18n';
 import { listScadaSymbols } from '../../symbols/symbol-registry.js';
 import type { ScadaSymbolDefinition } from '../../symbols/symbol-types.js';
 import type { EditorEngineRuntime } from '../renderer/hooks/use-editor-engine.js';
 import { SymbolThumbnail } from './symbol-thumbnail.js';
 import { groupScadaPaletteSymbols } from './palette-filter.js';
-import { setScadaPaletteDragGhost } from './palette-drag-ghost.js';
 
 interface EditorPalettePanelProps {
   runtime: EditorEngineRuntime;
@@ -70,7 +69,21 @@ export function EditorPalettePanel(props: EditorPalettePanelProps) {
   const handleDragStart = (event: React.DragEvent<HTMLButtonElement>, type: string, name: string) => {
     event.dataTransfer.setData('application/x-scada-symbol-type', type);
     event.dataTransfer.effectAllowed = 'copy';
-    setScadaPaletteDragGhost(event, name);
+    setDragGhost(event, {
+      testid: 'scada-editor-drag-ghost',
+      label: name,
+      style: [
+        'padding:4px 10px',
+        'border-radius:6px',
+        'border:1px solid hsl(var(--primary))',
+        'background:var(--nop-surface)',
+        'color:hsl(var(--primary))',
+        'font-size:12px',
+        'font-weight:500',
+      ].join(';'),
+      offsetX: 14,
+      offsetY: 10,
+    });
   };
 
   const handleAddDefault = (type: string) => {
