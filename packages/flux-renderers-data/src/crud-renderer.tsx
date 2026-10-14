@@ -472,18 +472,21 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
     scope.update(selectionStatePath, next);
   };
 
-  const handleQuerySubmitForHandle = useCallback(async () => {
-    try {
-      await handleQuerySubmit();
-    } catch (error) {
-      env.notify?.(
-        'warning',
-        error instanceof Error
-          ? t('flux.common.queryFailedDetail', { message: error.message })
-          : t('flux.common.queryFailed'),
-      );
-    }
-  }, [handleQuerySubmit, env]);
+  const handleQuerySubmitForHandle = useCallback(
+    async (payload?: { values?: Record<string, unknown> }) => {
+      try {
+        await handleQuerySubmit(payload?.values);
+      } catch (error) {
+        env.notify?.(
+          'warning',
+          error instanceof Error
+            ? t('flux.common.queryFailedDetail', { message: error.message })
+            : t('flux.common.queryFailed'),
+        );
+      }
+    },
+    [handleQuerySubmit, env],
+  );
 
   useCrudHandle(
     props,

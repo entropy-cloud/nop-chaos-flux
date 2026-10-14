@@ -36,7 +36,7 @@ function StatusProbe(props: { scope?: any; statusPath?: string; summary: any }) 
   return null;
 }
 
-function HandleProbe(props: { inputProps: any; selectedRowKeys: unknown[]; clearSelection: () => void; handleRefresh: () => void; toggleSelection: (key: unknown) => void; handleLoadMore: () => void; querySubmit?: () => Promise<void> }) {
+function HandleProbe(props: { inputProps: any; selectedRowKeys: unknown[]; clearSelection: () => void; handleRefresh: () => void; toggleSelection: (key: unknown) => void; handleLoadMore: () => void; querySubmit?: (payload?: { values?: Record<string, unknown> }) => Promise<void> }) {
   useCrudHandle(props.inputProps, props.selectedRowKeys, props.clearSelection, props.handleRefresh, props.toggleSelection, props.handleLoadMore, props.querySubmit);
   return null;
 }
@@ -411,6 +411,39 @@ describe('useCrudHandle', () => {
     expect(register).toHaveBeenCalledTimes(2);
     unmount();
     expect(dispose).toHaveBeenCalled();
+  });
+
+  it('querySubmit capability forwards the invoke payload (AMIS form.target values)', async () => {
+    const register = vi.fn();
+    mockState.currentRegistry = { register };
+    const received: Array<{ values?: Record<string, unknown> } | undefined> = [];
+    const querySubmit = async (payload?: { values?: Record<string, unknown> }) => {
+      received.push(payload);
+    };
+
+    render(
+      <HandleProbe
+        inputProps={{ meta: { cid: 21 }, id: 'crud-21', props: { name: 'rows' } }}
+        selectedRowKeys={[]}
+        clearSelection={() => {}}
+        handleRefresh={() => {}}
+        toggleSelection={() => {}}
+        handleLoadMore={() => {}}
+        querySubmit={querySubmit}
+      />,
+    );
+
+    const handle = (register.mock.lastCall as unknown[] | undefined)?.[0] as {
+      capabilities: { invoke: (method: string, payload?: unknown, ctx?: unknown) => Promise<{ ok: boolean }> };
+    };
+    const result = await handle.capabilities.invoke(
+      'querySubmit',
+      { values: { filter_deptId: '10' } },
+      {},
+    );
+
+    expect(result).toEqual({ ok: true });
+    expect(received).toEqual([{ values: { filter_deptId: '10' } }]);
   });
 
   it('skips registration when registry or cid is missing', () => {

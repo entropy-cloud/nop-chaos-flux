@@ -402,7 +402,7 @@ export function useCrudHandle(
   handleRefresh: (ctx?: Partial<ActionContext>) => void,
   toggleSelection: (key: unknown) => void,
   handleLoadMore: () => Promise<unknown> | void,
-  querySubmit?: () => Promise<void>,
+  querySubmit?: (payload?: { values?: Record<string, unknown> }) => Promise<void>,
   queryReset?: () => void,
 ) {
   const componentRegistry = useCurrentComponentRegistry();
@@ -465,7 +465,11 @@ export function useCrudHandle(
                 return { ok: true };
               case 'querySubmit':
                 if (latest.querySubmit) {
-                  await latest.querySubmit();
+                  // payload.values carries external target-submission values
+                  // (AMIS form.target, e.g. an aside filter form)
+                  await latest.querySubmit(
+                    (payload as { values?: Record<string, unknown> } | undefined),
+                  );
                   return { ok: true };
                 }
                 return { ok: false, error: new Error('querySubmit not available') };

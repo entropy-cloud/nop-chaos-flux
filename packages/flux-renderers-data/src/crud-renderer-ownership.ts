@@ -230,7 +230,7 @@ export function useCrudQueryBridge(args: {
     shouldFetchOnQueryChange,
   ]);
 
-  const handleQuerySubmit = useCallback(async () => {
+  const handleQuerySubmit = useCallback(async (extraValues?: Record<string, unknown>) => {
     const submitSequence = submitSequenceRef.current + 1;
     submitSequenceRef.current = submitSequence;
     const draftQuery = queryDraftStatePath ? toRecord(scope?.get?.(queryDraftStatePath)) : {};
@@ -253,13 +253,23 @@ export function useCrudQueryBridge(args: {
       }
 
       if (valuesResult.ok && valuesResult.data && typeof valuesResult.data === 'object') {
-        submitQueryValues(toRecord(valuesResult.data), submitSequence);
+        // External target submissions (AMIS form.target, e.g. an aside filter
+        // form) merge their values over the crud's own queryForm values.
+        submitQueryValues(
+          extraValues
+            ? { ...toRecord(valuesResult.data), ...extraValues }
+            : toRecord(valuesResult.data),
+          submitSequence,
+        );
         return;
       }
     }
 
     submitQueryValues(
-      Object.keys(draftQuery).length > 0 ? draftQuery : queryState,
+      {
+        ...(Object.keys(draftQuery).length > 0 ? draftQuery : queryState),
+        ...extraValues,
+      },
       submitSequence,
     );
   }, [componentRegistry, queryDraftStatePath, queryFormId, queryState, scope, submitQueryValues]);
