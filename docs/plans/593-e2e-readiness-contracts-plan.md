@@ -1,6 +1,6 @@
 # 593 E2E 交互就绪态契约：form/crud 加载态、table 投影、弹层关闭冻结、alert-dialog loading 透传
 
-> Plan Status: draft
+> Plan Status: active
 > Last Reviewed: 2026-10-14
 > Source: `docs/discussions/2026-10-14-e2e-interaction-readiness-contracts.md`（W1–W6 碎交互清单 + C1–C5 契约方案 + 根因实证）；前序先例：`docs/discussions/2026-08-01-flux-e2e-selector-standardization.md`（字段定位契约，已落地于 `docs/architecture/renderer-markers-and-selectors.md` Layer 2）
 > Related: `docs/architecture/renderer-markers-and-selectors.md`（Layer 2 契约登记位）、`docs/architecture/action-interaction-state.md`（Semantic Lifecycle Owner 预留位，本 plan 不触发）
@@ -14,7 +14,7 @@
 （2026-10-14 逐条对 live repo 核实，证据详见 discussion §2）
 
 - `form-load-action.ts:42` `loadLoading` 初值 `false`，置 true 在 mount 后 effect——首帧存在"busy 缺席但未加载"窗口；`form.tsx:617-629` load|submit 共用 `[data-slot="form-busy"]` presence-only 标记，语义歧义。全仓无 form 级 loaded 标记。
-- `crud-renderer.tsx:550-556` `.nop-crud` 根无任何 loading/ready 属性；`crud-renderer-load.ts:98` `loading` 初值 `false`（首帧同洞）；`crud-renderer-schema-builders.ts:95` loading 仅 `useLoadAction && paginationMode === 'pages'` 时透传；首载空行 `[data-slot="table-empty-row"]`（`table-body-row-rendering.tsx:220-222`）与真·零结果不可区分；`.nop-table` 根无 `aria-busy`/`data-loading`。
+- `crud-renderer.tsx:550-556` `.nop-crud` 根无任何 loading/ready 属性；`crud-renderer-load.ts:98` `loading` 初值 `false`（首帧同洞）；`crud-renderer-schema-builders.ts:95` loading 仅 `useLoadAction && paginationMode === 'pages'` 时透传；首载空行 `[data-slot="table-empty-row"]`（`table-renderer/table-body-rows.tsx:220-222`，virtual 模式第二位点 `table-renderer/table-virtual-body.tsx:139`）与真·零结果不可区分；`.nop-table` 根（`table-renderer.tsx:511-522`）无 `aria-busy`/`data-loading`。
 - 弹层：Base UI（`@base-ui/react@1.3.0`）Menu 默认 `modal: true` + `outsidePressEvent: 'sloppy'`（pointerdown 即关）；关闭后 exit 动画（~100ms）内 `[data-base-ui-inert]` backdrop 与 popup 残留。popup 上 `data-open`/`data-closed` 已由 Base UI 写入（`dropdown-menu.tsx:68`、`popover.tsx:39`、`alert-dialog.tsx:32/74` 的 Tailwind 变体即读它），**未冻结为契约**。
 - `alert-dialog.tsx:160-177` `AlertDialogAction` 无 loading/pending；`Button`（`button.tsx:83-86`）已支持 `loading` → `data-loading`+`aria-busy`+disabled，未接线。
 - `popover.tsx:37→42` 等三处 `data-slot` 先写后被 `{...props}` 覆盖——覆写是特性（`dirty-close-guard.tsx:63` 依赖），但默认槽位可信性无契约陈述。
@@ -42,7 +42,7 @@
 ### In Scope
 
 - `packages/flux-renderers-form`：`form-load-action.ts` 状态机 + `form.tsx` 根属性 + 契约测试。
-- `packages/flux-renderers-data`：`crud-renderer.tsx` / `crud-renderer-load.ts` / `crud-renderer-schema-builders.ts` / `table-renderer.tsx`（或 table-container 位点）/ `table-body-row-rendering.tsx` + 契约测试。
+- `packages/flux-renderers-data`：`crud-renderer.tsx` / `crud-renderer-load.ts` / `crud-renderer-schema-builders.ts` / `table-renderer.tsx`（`.nop-table` 根，直接位于 `src/`）/ `table-renderer/table-body-rows.tsx` + `table-renderer/table-virtual-body.tsx`（空行双渲染位点）+ 契约测试。
 - `packages/ui`：`alert-dialog.tsx` loading 透传 + 弹层关闭契约测试 + `popover.tsx`/`alert-dialog.tsx`/`dropdown-menu.tsx` data-slot 次序显式化 + 契约测试。
 - owner-doc 四处（见 Goals）。
 
@@ -77,7 +77,7 @@ Targets: `packages/flux-renderers-form/src/renderers/form-load-action.ts`、`pac
 - Item Types: `Proof | Fix`
 
 - [ ] Proof：新增契约测试（挂靠 `field-controls-dom-contract.test.tsx` 同目录，独立文件 `form-load-state-contract.test.tsx`）：autoLoad form 首帧根上 `data-load-state="loading"`；resolve 后 `"loaded"` 且字段值已回填；失败后 `"error"`；无 loadAction 时 `"idle"`。判别机制：旧实现首帧无属性/错值必挂。
-- [ ] Fix：`form-load-action.ts` 增加 load 状态机（`idle|loading|loaded|error`，abort 不置 error，enabled 语义并入），`loadLoading` 改由状态机投影；初值 `Boolean(loadAction && autoLoad)`（lazy init）。
+- [ ] Fix：`form-load-action.ts` 增加 load 状态机（`idle|loading|loaded|error`，abort 不置 error；form 侧门只有 `loadAction && autoLoad`，无 `enabled` 参数），`loadLoading` 改由状态机投影；初值 `Boolean(loadAction && autoLoad)`（lazy init）。
 - [ ] Fix：`form.tsx` `section.nop-form` 根输出 `data-load-state`；`[data-slot="form-busy"]` 视觉行为不变。
 - [ ] Fix：`activationKey` 重载走同一状态机（`loading → loaded/error`）。
 
@@ -89,14 +89,14 @@ Exit Criteria:
 ### Phase 2 - C2/C3 CRUD 查询态与 table 投影
 
 Status: planned
-Targets: `packages/flux-renderers-data/src/crud-renderer.tsx`、`crud-renderer-load.ts`、`crud-renderer-schema-builders.ts`、`table-renderer/table-renderer.tsx`、`table-renderer/table-body-row-rendering.tsx`、`packages/flux-renderers-data/src/__tests__/`
+Targets: `packages/flux-renderers-data/src/crud-renderer.tsx`、`crud-renderer-load.ts`、`crud-renderer-schema-builders.ts`、`table-renderer.tsx`（`.nop-table` 根，`src/` 直下）、`table-renderer/table-body-rows.tsx`、`table-renderer/table-virtual-body.tsx`、`packages/flux-renderers-data/src/__tests__/`
 
 - Item Types: `Proof | Fix`
 
 - [ ] Proof：新增契约测试 `crud-load-state-contract.test.tsx`：loadAction CRUD 首帧 `.nop-crud[data-load-state="loading"]`；settle 后 `"ready"`；失败 `"error"`；enabled=false 时 `"idle"`。首载期间空行带 `data-loading-placeholder`，真·零结果不带。
 - [ ] Fix：`crud-renderer-load.ts` loading 状态机（初值随 `useLoadAction && enabled`；onStart/onSettle 挂点已有，接状态机）；`crud-renderer.tsx` 根输出 `data-load-state`。
 - [ ] Fix：`crud-renderer-schema-builders.ts:95` loading 投影放宽为"已知即投"（pages 叠 overlay 语义不变；source 模式投影 `sourceRefreshInFlight`；不可知不投）。
-- [ ] Fix：table `loading === true` 时容器输出 `data-loading` + `aria-busy="true"`；`table-empty-row` 带 `data-loading-placeholder`。
+- [ ] Fix：table `loading === true` 时容器输出 `data-loading` + `aria-busy="true"`；空行占位标记覆盖**双渲染位点**——`table-body-rows.tsx`（常规模式）与 `table-virtual-body.tsx:139`（virtual 模式）的 `table-empty-row` 均带 `data-loading-placeholder`。
 - [ ] Proof：source 模式投影契约钉（已知 in-flight → `loading`；不可知 → `idle`）。
 
 Exit Criteria:
@@ -107,11 +107,11 @@ Exit Criteria:
 ### Phase 3 - C4 弹层关闭契约冻结 + data-slot 次序
 
 Status: planned
-Targets: `packages/ui/src/components/ui/{popover,alert-dialog,dropdown-menu}.tsx`、`packages/ui/src/components/ui/__tests__/`（或同包契约测试惯例位点）
+Targets: `packages/ui/src/components/ui/{popover,alert-dialog,dropdown-menu}.tsx`、契约测试 colocate 于 `packages/ui/src/components/ui/`（挨 `overlay-family-zindex.test.tsx`，同包惯例）
 
 - Item Types: `Proof | Fix | Decision`
 
-- [ ] Proof：新增契约测试（挨 `overlay-family-zindex.test.tsx`）：open→close 后 `data-closed` 出现；exit 动画结束后 popup detach 且 `[data-base-ui-inert]` backdrop detach；open 期间 popup 带 `data-open`。
+- [ ] Proof：新增契约测试（挨 `overlay-family-zindex.test.tsx`）：open 期间 popup 带 `data-open`；close 后 `data-closed` 出现；popup detach 且 `[data-base-ui-inert]` backdrop detach。**detach 观察机制**（仓库无 exit 动画测试先例，执行时三选一并落字注释）：(a) happy-dom 环境无真实动画 → Base UI 的 `useAnimationsFinished` 在无动画时即时完成，close 后 `await waitFor(detached)` 可直接观察；(b) 若 (a) 不成立，测试内 `popup.getAnimations?.().forEach(a => a.finish())` 强制推进后等待；(c) 若仍不可行，把 detach 断言下沉到 `tests/e2e` 真浏览器 spec，并在本项注明降级路径。
 - [ ] Proof：`data-slot` 默认槽位钉——未覆写时 popover-content / alert-dialog-content / dropdown-menu-content 默认槽位存在（dirty-close-guard 覆写用例保持绿）。
 - [ ] Fix：三处 `data-slot` 改显式 `props['data-slot'] ?? 默认`（行为等价；判别性：覆写用例 + 默认用例双绿）。
 - [ ] Decision：确认 dropdown-menu 外点时序维持 Base UI 默认 `sloppy`（在契约测试注释落字裁决理由，不改行为）。
@@ -155,10 +155,10 @@ Exit Criteria:
 
 > 起草后、执行前的独立审查证据。详见本 guide 的 `Plan Review Rule`。由独立审阅者或独立子 agent 填写。
 
-- Reviewer / Agent: <<待独立子 agent review>>
-- Verdict: `pending`
-- Rounds: 0
-- Findings addressed: （无——尚未 review）
+- Reviewer / Agent: 独立子 agent fresh session `ses_ec76442d4fferw1R88Lnz6yE0Q`（R1）
+- Verdict: `revised`（R1：0B/2M/3m）→ M1/M2 勘误落地后起草者确认，按 R1 审查员"其余检查全过、必改两处后可进"结论达成共识
+- Rounds: 1
+- Findings addressed: M1 空行引用更正为 `table-body-rows.tsx:220-222` + 补 `table-virtual-body.tsx:139` 第二位点（plan Current Baseline/In Scope/Phase 2 Fix + discussion §2.2 同步勘误）；M2 Phase 2 Targets 更正为 `table-renderer.tsx`（`src/` 直下）+ 双空行位点全覆盖；m1 Phase 3 Targets 改为实际 colocate 位点；m2 Phase 1 措辞改为"form 侧门只有 `loadAction && autoLoad`，无 `enabled` 参数"；m3 Phase 3 detach 观察机制三选一落字（happy-dom 即时完成 / getAnimations finish / 下沉 e2e）。
 
 ## Closure Gates
 

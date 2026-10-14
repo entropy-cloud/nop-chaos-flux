@@ -37,7 +37,7 @@ W1–W6 全部是"渲染器没把生命周期状态暴露为 DOM 契约"的症�
 
 - `packages/flux-renderers-data/src/crud-renderer.tsx:550-556`：`.nop-crud` 根只有 `data-testid` / `data-cid` / `data-responsive`，**无任何 loading/ready 属性**。
 - `packages/flux-renderers-data/src/crud-renderer-load.ts:98`：`const [loading, setLoading] = useState(false)`——与表单同款**首帧 false**；查询在 mount 后的 effect（`:334-398`）才 dispatch。
-- 首载期间表格渲染 `[data-slot="table-empty-row"]` 空行（`table-body-row-rendering.tsx:220-222`），与"真·零结果"**不可区分**。
+- 首载期间表格渲染 `[data-slot="table-empty-row"]` 空行（`table-renderer/table-body-rows.tsx:220-222`；virtual 模式第二位点 `table-renderer/table-virtual-body.tsx:139`），与"真·零结果"**不可区分**。
 - `packages/flux-renderers-data/src/crud-renderer-schema-builders.ts:95`：`loading: useLoadAction && paginationMode === 'pages' ? loading : undefined`——整表加载 overlay（`table-loading-overlay.tsx:14-26`，`role="status"`）**仅 pages 模式**投射；`.nop-table` 根（`table-renderer.tsx:511-522`）无 `aria-busy` / `data-loading`。source 模式与 infinite 模式刷新期 DOM 无信号。
 - 状态摘要只走 scope 通道（`crud-renderer.tsx:210-225` → `statusPath`），且 `refreshing` 首载刻意为 false（`docs/components/crud/design.md:352`）——scope 摘要不能替代 DOM 契约（E2E 测的就是生产 DOM）。
 
