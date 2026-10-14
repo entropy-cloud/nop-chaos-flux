@@ -27,6 +27,8 @@
 @import './airtable-replica/airtable-replica.css';
 @import './stripe-replica/stripe-replica.css';
 @import './pih-replica/pih-replica.css';
+@import './landing-replica/landing-replica.css';
+@import './bisheng-replica/bisheng-replica.css';
 @source "../../../packages";
 
 @theme inline {

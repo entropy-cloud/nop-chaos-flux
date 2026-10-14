@@ -1,0 +1,1125 @@
+{
+  "type": "page",
+  "testid": "content-landing-page",
+  "className": "lp-root",
+  "bodyClassName": "h-full",
+  "body": [
+    {
+      "type": "flex",
+      "direction": "column",
+      "className": "lp-shell",
+      "body": [
+        {
+          "type": "flex",
+          "direction": "row",
+          "className": "lp-nav",
+          "testid": "lp-nav",
+          "body": [
+            {
+              "type": "flex",
+              "direction": "row",
+              "gap": 8,
+              "className": "lp-brand items-center",
+              "testid": "lp-brand",
+              "body": [
+                {
+                  "type": "flex",
+                  "direction": "row",
+                  "className": "lp-brand-mark items-center",
+                  "body": [
+                    {
+                      "type": "icon",
+                      "icon": "zap",
+                      "size": 16
+                    }
+                  ]
+                },
+                {
+                  "type": "text",
+                  "text": "Nop Flux",
+                  "tag": "span",
+                  "className": "lp-brand-name"
+                },
+                {
+                  "type": "badge",
+                  "text": "v3.4",
+                  "level": "info",
+                  "className": "lp-brand-version"
+                }
+              ]
+            },
+            {
+              "type": "flex",
+              "direction": "row",
+              "gap": 28,
+              "className": "lp-nav-links",
+              "testid": "lp-nav-links",
+              "body": [
+                {
+                  "type": "link",
+                  "label": "产品",
+                  "href": "#/content-landing",
+                  "className": "lp-nav-link"
+                },
+                {
+                  "type": "link",
+                  "label": "文档",
+                  "href": "#/content-landing",
+                  "className": "lp-nav-link lp-nav-link-active"
+                },
+                {
+                  "type": "link",
+                  "label": "模板",
+                  "href": "#/content-landing",
+                  "className": "lp-nav-link"
+                },
+                {
+                  "type": "link",
+                  "label": "定价",
+                  "href": "#/content-landing",
+                  "className": "lp-nav-link"
+                }
+              ]
+            },
+            {
+              "type": "flex",
+              "direction": "row",
+              "gap": 10,
+              "className": "lp-nav-actions",
+              "body": [
+                {
+                  "type": "button",
+                  "variant": "ghost",
+                  "size": "sm",
+                  "label": "登录",
+                  "testid": "lp-nav-login"
+                },
+                {
+                  "type": "button",
+                  "variant": "primary",
+                  "size": "sm",
+                  "label": "免费开始",
+                  "rightIcon": "arrow-right",
+                  "testid": "lp-nav-cta",
+                  "onClick": {
+                    "action": "showToast",
+                    "args": {
+                      "level": "info",
+                      "message": "Signup flow (simulated)"
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "flex",
+          "direction": "row",
+          "className": "lp-hero",
+          "testid": "lp-hero",
+          "body": [
+            {
+              "type": "flex",
+              "direction": "column",
+              "gap": 22,
+              "className": "lp-hero-copy",
+              "body": [
+                {
+                  "type": "flex",
+                  "direction": "row",
+                  "className": "lp-hero-eyebrow",
+                  "testid": "lp-hero-eyebrow",
+                  "body": [
+                    {
+                      "type": "badge",
+                      "text": "v3.4 已发布",
+                      "level": "success",
+                      "className": "lp-eyebrow-badge"
+                    },
+                    {
+                      "type": "text",
+                      "text": "AI 编排 + 40 复刻页组件库",
+                      "className": "lp-eyebrow-text"
+                    }
+                  ]
+                },
+                {
+                  "type": "text",
+                  "tag": "h1",
+                  "text": "一份 JSON，\n就是整个前端",
+                  "className": "lp-hero-title",
+                  "testid": "lp-hero-title"
+                },
+                {
+                  "type": "text",
+                  "tag": "p",
+                  "text": "Nop Flux 是 schema 驱动的低代码渲染引擎：页面、表单、仪表盘、AI 工作台全部由声明式 JSON 描述，Token 化设计系统一键换肤，营销页与文档站同样胜任。",
+                  "className": "lp-hero-subtitle"
+                },
+                {
+                  "type": "flex",
+                  "direction": "row",
+                  "gap": 12,
+                  "className": "lp-hero-actions",
+                  "body": [
+                    {
+                      "type": "button",
+                      "variant": "primary",
+                      "size": "lg",
+                      "label": "开始构建",
+                      "rightIcon": "arrow-right",
+                      "testid": "lp-hero-cta",
+                      "onClick": {
+                        "action": "showToast",
+                        "args": {
+                          "level": "info",
+                          "message": "Onboarding flow (simulated)"
+                        }
+                      }
+                    },
+                    {
+                      "type": "button",
+                      "variant": "outline",
+                      "size": "lg",
+                      "label": "查看文档",
+                      "rightIcon": "book-open",
+                      "testid": "lp-hero-docs"
+                    }
+                  ]
+                },
+                {
+                  "type": "flex",
+                  "direction": "row",
+                  "gap": 18,
+                  "className": "lp-hero-meta",
+                  "body": [
+                    {
+                      "type": "text",
+                      "text": "Apache-2.0 开源",
+                      "className": "lp-hero-meta-item"
+                    },
+                    {
+                      "type": "text",
+                      "text": "React 19 + TypeScript",
+                      "className": "lp-hero-meta-item"
+                    },
+                    {
+                      "type": "text",
+                      "text": "零运行时依赖注入",
+                      "className": "lp-hero-meta-item"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "flex",
+              "direction": "column",
+              "className": "lp-browser",
+              "testid": "lp-browser-mockup",
+              "body": [
+                {
+                  "type": "flex",
+                  "direction": "row",
+                  "className": "lp-browser-bar",
+                  "body": [
+                    {
+                      "type": "flex",
+                      "direction": "row",
+                      "gap": 6,
+                      "className": "lp-browser-dots",
+                      "body": [
+                        {
+                          "type": "flex",
+                          "direction": "row",
+                          "className": "lp-dot lp-dot-close"
+                        },
+                        {
+                          "type": "flex",
+                          "direction": "row",
+                          "className": "lp-dot lp-dot-min"
+                        },
+                        {
+                          "type": "flex",
+                          "direction": "row",
+                          "className": "lp-dot lp-dot-max"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "flex",
+                      "direction": "row",
+                      "className": "lp-browser-url",
+                      "body": [
+                        {
+                          "type": "text",
+                          "text": "nop-chaos-flux.dev/overview",
+                          "className": "lp-browser-url-text"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "flex",
+                  "direction": "column",
+                  "gap": 12,
+                  "className": "lp-browser-body",
+                  "body": [
+                    {
+                      "type": "flex",
+                      "direction": "row",
+                      "gap": 10,
+                      "className": "lp-mini-stats",
+                      "testid": "lp-mini-stats",
+                      "body": [
+                        {
+                          "type": "flex",
+                          "direction": "column",
+                          "gap": 2,
+                          "className": "lp-mini-stat",
+                          "body": [
+                            {
+                              "type": "text",
+                              "text": "今日活跃",
+                              "className": "lp-mini-stat-label"
+                            },
+                            {
+                              "type": "text",
+                              "text": "12,480",
+                              "className": "lp-mini-stat-value"
+                            },
+                            {
+                              "type": "text",
+                              "text": "+8.2%",
+                              "className": "lp-mini-stat-trend lp-mini-stat-trend-up"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "flex",
+                          "direction": "column",
+                          "gap": 2,
+                          "className": "lp-mini-stat",
+                          "body": [
+                            {
+                              "type": "text",
+                              "text": "页面渲染",
+                              "className": "lp-mini-stat-label"
+                            },
+                            {
+                              "type": "text",
+                              "text": "98.6k",
+                              "className": "lp-mini-stat-value"
+                            },
+                            {
+                              "type": "text",
+                              "text": "+2.1%",
+                              "className": "lp-mini-stat-trend lp-mini-stat-trend-up"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "flex",
+                          "direction": "column",
+                          "gap": 2,
+                          "className": "lp-mini-stat",
+                          "body": [
+                            {
+                              "type": "text",
+                              "text": "错误率",
+                              "className": "lp-mini-stat-label"
+                            },
+                            {
+                              "type": "text",
+                              "text": "0.03%",
+                              "className": "lp-mini-stat-value"
+                            },
+                            {
+                              "type": "text",
+                              "text": "-0.4%",
+                              "className": "lp-mini-stat-trend lp-mini-stat-trend-down"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "flex",
+                      "direction": "row",
+                      "gap": 10,
+                      "className": "lp-mini-main",
+                      "body": [
+                        {
+                          "type": "flex",
+                          "direction": "column",
+                          "gap": 8,
+                          "className": "lp-mini-table",
+                          "testid": "lp-mini-table",
+                          "body": [
+                            {
+                              "type": "flex",
+                              "direction": "row",
+                              "className": "lp-mini-row lp-mini-row-head",
+                              "body": [
+                                {
+                                  "type": "text",
+                                  "text": "服务",
+                                  "className": "lp-mini-cell lp-mini-cell-name"
+                                },
+                                {
+                                  "type": "text",
+                                  "text": "QPS",
+                                  "className": "lp-mini-cell"
+                                },
+                                {
+                                  "type": "badge",
+                                  "text": "健康",
+                                  "level": "success",
+                                  "className": "lp-mini-pill"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "flex",
+                              "direction": "row",
+                              "className": "lp-mini-row",
+                              "body": [
+                                {
+                                  "type": "text",
+                                  "text": "api-gateway",
+                                  "className": "lp-mini-cell lp-mini-cell-name"
+                                },
+                                {
+                                  "type": "text",
+                                  "text": "4,210",
+                                  "className": "lp-mini-cell"
+                                },
+                                {
+                                  "type": "badge",
+                                  "text": "正常",
+                                  "level": "success",
+                                  "className": "lp-mini-pill"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "flex",
+                              "direction": "row",
+                              "className": "lp-mini-row",
+                              "body": [
+                                {
+                                  "type": "text",
+                                  "text": "orm-eql",
+                                  "className": "lp-mini-cell lp-mini-cell-name"
+                                },
+                                {
+                                  "type": "text",
+                                  "text": "1,866",
+                                  "className": "lp-mini-cell"
+                                },
+                                {
+                                  "type": "badge",
+                                  "text": "正常",
+                                  "level": "success",
+                                  "className": "lp-mini-pill"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "flex",
+                              "direction": "row",
+                              "className": "lp-mini-row",
+                              "body": [
+                                {
+                                  "type": "text",
+                                  "text": "stream-runtime",
+                                  "className": "lp-mini-cell lp-mini-cell-name"
+                                },
+                                {
+                                  "type": "text",
+                                  "text": "932",
+                                  "className": "lp-mini-cell"
+                                },
+                                {
+                                  "type": "badge",
+                                  "text": "降级",
+                                  "level": "warning",
+                                  "className": "lp-mini-pill"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "flex",
+                              "direction": "row",
+                              "className": "lp-mini-row",
+                              "body": [
+                                {
+                                  "type": "text",
+                                  "text": "ai-gateway",
+                                  "className": "lp-mini-cell lp-mini-cell-name"
+                                },
+                                {
+                                  "type": "text",
+                                  "text": "618",
+                                  "className": "lp-mini-cell"
+                                },
+                                {
+                                  "type": "badge",
+                                  "text": "正常",
+                                  "level": "success",
+                                  "className": "lp-mini-pill"
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "type": "flex",
+                          "direction": "row",
+                          "gap": 8,
+                          "className": "lp-mini-chart",
+                          "testid": "lp-mini-chart",
+                          "body": [
+                            {
+                              "type": "flex",
+                              "direction": "row",
+                              "className": "lp-bar lp-bar-1"
+                            },
+                            {
+                              "type": "flex",
+                              "direction": "row",
+                              "className": "lp-bar lp-bar-2"
+                            },
+                            {
+                              "type": "flex",
+                              "direction": "row",
+                              "className": "lp-bar lp-bar-3"
+                            },
+                            {
+                              "type": "flex",
+                              "direction": "row",
+                              "className": "lp-bar lp-bar-4"
+                            },
+                            {
+                              "type": "flex",
+                              "direction": "row",
+                              "className": "lp-bar lp-bar-5"
+                            },
+                            {
+                              "type": "flex",
+                              "direction": "row",
+                              "className": "lp-bar lp-bar-6"
+                            },
+                            {
+                              "type": "flex",
+                              "direction": "row",
+                              "className": "lp-bar lp-bar-7"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "flex",
+          "direction": "column",
+          "gap": 16,
+          "className": "lp-band",
+          "testid": "lp-logos",
+          "body": [
+            {
+              "type": "text",
+              "text": "已在 40+ 复刻页与 13,000+ 单元测试中验证",
+              "className": "lp-band-title"
+            },
+            {
+              "type": "flex",
+              "direction": "row",
+              "gap": 40,
+              "className": "lp-logo-row",
+              "body": [
+                {
+                  "type": "text",
+                  "text": "Nop Entropy",
+                  "className": "lp-logo"
+                },
+                {
+                  "type": "text",
+                  "text": "AntD Pro",
+                  "className": "lp-logo"
+                },
+                {
+                  "type": "text",
+                  "text": "Linear",
+                  "className": "lp-logo"
+                },
+                {
+                  "type": "text",
+                  "text": "Notion",
+                  "className": "lp-logo"
+                },
+                {
+                  "type": "text",
+                  "text": "Stripe",
+                  "className": "lp-logo"
+                },
+                {
+                  "type": "text",
+                  "text": "Airtable",
+                  "className": "lp-logo"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "flex",
+          "direction": "column",
+          "gap": 32,
+          "className": "lp-section",
+          "testid": "lp-features",
+          "body": [
+            {
+              "type": "flex",
+              "direction": "column",
+              "gap": 10,
+              "className": "lp-section-head",
+              "body": [
+                {
+                  "type": "badge",
+                  "text": "核心能力",
+                  "level": "info",
+                  "className": "lp-section-badge"
+                },
+                {
+                  "type": "text",
+                  "tag": "h2",
+                  "text": "一套 Schema，覆盖全部页面形态",
+                  "className": "lp-section-title"
+                },
+                {
+                  "type": "text",
+                  "text": "从营销 landing 到企业后台，从文档站到 AI 工作台——渲染器家族按域划分，按需注册。",
+                  "className": "lp-section-subtitle"
+                }
+              ]
+            },
+            {
+              "type": "container",
+              "className": "lp-features-grid",
+              "body": [
+                {
+                  "type": "loop",
+                  "testid": "lp-features-loop",
+                  "items": "${features ?? []}",
+                  "body": [
+                    {
+                      "type": "flex",
+                      "direction": "column",
+                      "gap": 10,
+                      "className": "lp-feature-card",
+                      "testid": "lp-feature-card",
+                      "body": [
+                        {
+                          "type": "flex",
+                          "direction": "row",
+                          "className": "lp-feature-icon",
+                          "body": [
+                            {
+                              "type": "icon",
+                              "icon": "${$slot.item.icon}",
+                              "size": 18
+                            }
+                          ]
+                        },
+                        {
+                          "type": "text",
+                          "tag": "h3",
+                          "text": "${$slot.item.title}",
+                          "className": "lp-feature-title"
+                        },
+                        {
+                          "type": "text",
+                          "text": "${$slot.item.desc}",
+                          "className": "lp-feature-desc"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "flex",
+          "direction": "column",
+          "gap": 28,
+          "className": "lp-section lp-band-alt",
+          "testid": "lp-docs",
+          "body": [
+            {
+              "type": "flex",
+              "direction": "column",
+              "gap": 10,
+              "className": "lp-section-head",
+              "body": [
+                {
+                  "type": "badge",
+                  "text": "文档站形态",
+                  "level": "info",
+                  "className": "lp-section-badge"
+                },
+                {
+                  "type": "text",
+                  "tag": "h2",
+                  "text": "文档也是一等公民：markdown 内容内联渲染",
+                  "className": "lp-section-title"
+                },
+                {
+                  "type": "text",
+                  "text": "营销页内嵌文档预览——左侧目录、右侧正文、底部上下页导航，全部由同一份 JSON 驱动。",
+                  "className": "lp-section-subtitle"
+                }
+              ]
+            },
+            {
+              "type": "flex",
+              "direction": "row",
+              "gap": 0,
+              "className": "lp-docs-shell",
+              "testid": "lp-docs-shell",
+              "body": [
+                {
+                  "type": "flex",
+                  "direction": "column",
+                  "gap": 4,
+                  "className": "lp-docs-side",
+                  "body": [
+                    {
+                      "type": "text",
+                      "text": "快速上手",
+                      "className": "lp-docs-side-title"
+                    },
+                    {
+                      "type": "text",
+                      "text": "01 · 五分钟安装",
+                      "className": "lp-docs-item lp-docs-item-active"
+                    },
+                    {
+                      "type": "text",
+                      "text": "02 · 第一个页面",
+                      "className": "lp-docs-item"
+                    },
+                    {
+                      "type": "text",
+                      "text": "03 · 表达式语法",
+                      "className": "lp-docs-item"
+                    },
+                    {
+                      "type": "text",
+                      "text": "04 · 动作系统",
+                      "className": "lp-docs-item"
+                    },
+                    {
+                      "type": "text",
+                      "text": "主题与令牌",
+                      "className": "lp-docs-item"
+                    },
+                    {
+                      "type": "text",
+                      "text": "测试策略",
+                      "className": "lp-docs-item"
+                    }
+                  ]
+                },
+                {
+                  "type": "flex",
+                  "direction": "column",
+                  "gap": 16,
+                  "className": "lp-docs-main",
+                  "body": [
+                    {
+                      "type": "markdown",
+                      "testid": "lp-docs-markdown",
+                      "className": "lp-docs-markdown",
+                      "content": "## 五分钟安装\n\n```bash\npnpm add @nop-chaos/flux-react @nop-chaos/flux-renderers-basic\n```\n\n注册渲染器后即可渲染第一份 schema：\n\n```ts\nimport { createSchemaRenderer, createDefaultRegistry } from '@nop-chaos/flux-react';\nimport { registerBasicRenderers } from '@nop-chaos/flux-renderers-basic';\n\nconst registry = createDefaultRegistry();\nregisterBasicRenderers(registry);\nexport const SchemaRenderer = createSchemaRenderer();\n```\n\n> **约定**：布局渲染器只输出 marker class，视觉样式全部来自 schema 的 `className` 与设计令牌。"
+                    },
+                    {
+                      "type": "flex",
+                      "direction": "row",
+                      "gap": 12,
+                      "className": "lp-docs-pager",
+                      "body": [
+                        {
+                          "type": "button",
+                          "variant": "ghost",
+                          "size": "sm",
+                          "label": "上一篇：项目结构",
+                          "icon": "arrow-left",
+                          "testid": "lp-docs-prev"
+                        },
+                        {
+                          "type": "button",
+                          "variant": "ghost",
+                          "size": "sm",
+                          "label": "下一篇：表达式语法",
+                          "rightIcon": "arrow-right",
+                          "testid": "lp-docs-next"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "flex",
+          "direction": "column",
+          "gap": 28,
+          "className": "lp-section",
+          "testid": "lp-portal",
+          "body": [
+            {
+              "type": "flex",
+              "direction": "column",
+              "gap": 10,
+              "className": "lp-section-head",
+              "body": [
+                {
+                  "type": "badge",
+                  "text": "门户首页形态",
+                  "level": "info",
+                  "className": "lp-section-badge"
+                },
+                {
+                  "type": "text",
+                  "tag": "h2",
+                  "text": "进入产品：应用磁贴网格",
+                  "className": "lp-section-title"
+                },
+                {
+                  "type": "text",
+                  "text": "门户首页 = 应用入口集合。磁贴由 loop 渲染，点击进入对应工作区。",
+                  "className": "lp-section-subtitle"
+                }
+              ]
+            },
+            {
+              "type": "container",
+              "className": "lp-portal-grid",
+              "body": [
+                {
+                  "type": "loop",
+                  "testid": "lp-portal-loop",
+                  "items": "${portalTiles ?? []}",
+                  "body": [
+                    {
+                      "type": "flex",
+                      "direction": "column",
+                      "gap": 10,
+                      "className": "lp-portal-tile",
+                      "testid": "lp-portal-tile",
+                      "onClick": {
+                        "action": "showToast",
+                        "args": {
+                          "level": "info",
+                          "message": "应用入口 (simulated)"
+                        }
+                      },
+                      "body": [
+                        {
+                          "type": "flex",
+                          "direction": "row",
+                          "className": "lp-portal-tile-head",
+                          "body": [
+                            {
+                              "type": "flex",
+                              "direction": "row",
+                              "className": "lp-portal-tile-icon",
+                              "body": [
+                                {
+                                  "type": "icon",
+                                  "icon": "${$slot.item.icon}",
+                                  "size": 18
+                                }
+                              ]
+                            },
+                            {
+                              "type": "text",
+                              "text": "${$slot.item.title}",
+                              "tag": "h3",
+                              "className": "lp-portal-tile-title"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "text",
+                          "text": "${$slot.item.desc}",
+                          "className": "lp-portal-tile-desc"
+                        },
+                        {
+                          "type": "flex",
+                          "direction": "row",
+                          "gap": 8,
+                          "className": "lp-portal-tile-foot",
+                          "body": [
+                            {
+                              "type": "badge",
+                              "text": "${$slot.item.tag}",
+                              "level": "info",
+                              "className": "lp-portal-tile-badge"
+                            },
+                            {
+                              "type": "icon",
+                              "icon": "arrow-up-right",
+                              "size": 14
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "flex",
+          "direction": "row",
+          "gap": 24,
+          "className": "lp-band lp-stats",
+          "testid": "lp-stats",
+          "body": [
+            {
+              "type": "text",
+              "text": "平台运行数据",
+              "className": "lp-band-title lp-band-title-dark"
+            },
+            {
+              "type": "container",
+              "className": "lp-stats-row",
+              "body": [
+                {
+                  "type": "loop",
+                  "testid": "lp-stats-loop",
+                  "items": "${stats ?? []}",
+                  "body": [
+                    {
+                      "type": "flex",
+                      "direction": "column",
+                      "gap": 4,
+                      "className": "lp-stat",
+                      "testid": "lp-stat",
+                      "body": [
+                        {
+                          "type": "text",
+                          "text": "${$slot.item.value}",
+                          "className": "lp-stat-value"
+                        },
+                        {
+                          "type": "text",
+                          "text": "${$slot.item.label}",
+                          "className": "lp-stat-label"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "flex",
+          "direction": "column",
+          "gap": 18,
+          "className": "lp-cta",
+          "testid": "lp-cta",
+          "body": [
+            {
+              "type": "text",
+              "tag": "h2",
+              "text": "下一份 JSON，就是你的下一个产品",
+              "className": "lp-cta-title"
+            },
+            {
+              "type": "text",
+              "text": "Apache-2.0 协议开源，欢迎 Star。",
+              "className": "lp-cta-subtitle"
+            },
+            {
+              "type": "flex",
+              "direction": "row",
+              "gap": 12,
+              "className": "lp-cta-actions",
+              "body": [
+                {
+                  "type": "button",
+                  "variant": "primary",
+                  "size": "lg",
+                  "label": "免费开始",
+                  "rightIcon": "arrow-right",
+                  "testid": "lp-cta-primary",
+                  "onClick": {
+                    "action": "showToast",
+                    "args": {
+                      "level": "info",
+                      "message": "Signup flow (simulated)"
+                    }
+                  }
+                },
+                {
+                  "type": "button",
+                  "variant": "outline",
+                  "size": "lg",
+                  "label": "GitHub",
+                  "rightIcon": "github",
+                  "testid": "lp-cta-github",
+                  "href": "https://github.com",
+                  "target": "_blank",
+                  "rel": "noopener noreferrer"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "flex",
+          "direction": "row",
+          "gap": 48,
+          "className": "lp-footer",
+          "testid": "lp-footer",
+          "body": [
+            {
+              "type": "flex",
+              "direction": "column",
+              "gap": 8,
+              "className": "lp-footer-col",
+              "body": [
+                {
+                  "type": "text",
+                  "text": "产品",
+                  "className": "lp-footer-title"
+                },
+                {
+                  "type": "link",
+                  "label": "渲染器",
+                  "href": "#/content-landing",
+                  "className": "lp-footer-link"
+                },
+                {
+                  "type": "link",
+                  "label": "设计器",
+                  "href": "#/content-landing",
+                  "className": "lp-footer-link"
+                },
+                {
+                  "type": "link",
+                  "label": "模板市场",
+                  "href": "#/content-landing",
+                  "className": "lp-footer-link"
+                }
+              ]
+            },
+            {
+              "type": "flex",
+              "direction": "column",
+              "gap": 8,
+              "className": "lp-footer-col",
+              "body": [
+                {
+                  "type": "text",
+                  "text": "文档",
+                  "className": "lp-footer-title"
+                },
+                {
+                  "type": "link",
+                  "label": "快速开始",
+                  "href": "#/content-landing",
+                  "className": "lp-footer-link"
+                },
+                {
+                  "type": "link",
+                  "label": "表达式语法",
+                  "href": "#/content-landing",
+                  "className": "lp-footer-link"
+                },
+                {
+                  "type": "link",
+                  "label": "动作系统",
+                  "href": "#/content-landing",
+                  "className": "lp-footer-link"
+                }
+              ]
+            },
+            {
+              "type": "flex",
+              "direction": "column",
+              "gap": 8,
+              "className": "lp-footer-col",
+              "body": [
+                {
+                  "type": "text",
+                  "text": "社区",
+                  "className": "lp-footer-title"
+                },
+                {
+                  "type": "link",
+                  "label": "GitHub",
+                  "href": "#/content-landing",
+                  "className": "lp-footer-link"
+                },
+                {
+                  "type": "link",
+                  "label": "问题反馈",
+                  "href": "#/content-landing",
+                  "className": "lp-footer-link"
+                },
+                {
+                  "type": "link",
+                  "label": "更新日志",
+                  "href": "#/content-landing",
+                  "className": "lp-footer-link"
+                }
+              ]
+            },
+            {
+              "type": "flex",
+              "direction": "column",
+              "gap": 8,
+              "className": "lp-footer-col",
+              "body": [
+                {
+                  "type": "text",
+                  "text": "Nop Flux",
+                  "className": "lp-footer-title"
+                },
+                {
+                  "type": "text",
+                  "text": "© 2026 Nop Entropy",
+                  "className": "lp-footer-note"
+                },
+                {
+                  "type": "text",
+                  "text": "Schema-driven UI engine",
+                  "className": "lp-footer-note"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

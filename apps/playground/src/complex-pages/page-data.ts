@@ -124,3 +124,60 @@ PAGE_DATA['cal-booking'] = {
   calTimezone: 'Asia/Shanghai',
   cal24h: true,
 };
+
+// ── Landing / docs / portal replica: loop data for feature cards,
+// portal tiles and the dark stats band ──
+PAGE_DATA['content-landing'] = {
+  features: [
+    {
+      icon: 'component',
+      title: '100+ 注册渲染器',
+      desc: '结构、表单、数据、内容、布局、调度、AI 八大渲染器族，按域拆分按需注册，schema 即页面。',
+    },
+    {
+      icon: 'palette',
+      title: 'Token 化设计系统',
+      desc: '底座为 shadcn 令牌，深浅色主题零 JS 切换；外部设计系统经复刻 CSS 贴附即可高保真还原。',
+    },
+    {
+      icon: 'zap',
+      title: '编译期表达式',
+      desc: '公式编译进闭包，无字符串求值热点；环安全 deepEqual 与作用域反应式构成确定性渲染管线。',
+    },
+    {
+      icon: 'keyboard',
+      title: '键盘优先交互',
+      desc: 'keyboard 逻辑渲染器 + command palette + 行选修饰键，键盘优先工作台与鼠标用户同时覆盖。',
+    },
+    {
+      icon: 'workflow',
+      title: '设计器家族',
+      desc: 'flow / page / report / spreadsheet / word / SCADA 六大设计器共享 editor-core，撤销重做与协同适配同源。',
+    },
+    {
+      icon: 'message-square-text',
+      title: 'AI 原生组件',
+      desc: 'ai-chat 流式对话、工具调用卡、会话管理与 token 用量统计，mock connector 即可驱动完整工作台。',
+    },
+  ],
+  portalTiles: [
+    { icon: 'table-2', title: '运营总览', desc: 'KPI 卡片 + 趋势图 + 明细表', tag: 'dashboard' },
+    { icon: 'list', title: '订单管理', desc: '标准增删改查 + 批量操作', tag: 'crud' },
+    { icon: 'boxes', title: '库存网格', desc: '高密度网格 + 分组聚合', tag: 'grid' },
+    { icon: 'messages-square', title: '客服工作台', desc: 'AI 对话 + 工具调用', tag: 'ai' },
+    { icon: 'git-branch', title: '流程编排', desc: '工作流设计器 + 审批', tag: 'flow' },
+    { icon: 'file-spreadsheet', title: '报表设计', desc: '单元格报表 + 打印', tag: 'report' },
+    { icon: 'calendar-days', title: '排程中心', desc: '甘特 + 看板 + 日历', tag: 'gantt' },
+    { icon: 'settings', title: '系统设置', desc: '主题、字典与权限', tag: 'system' },
+  ],
+  stats: [
+    { value: '100+', label: '注册渲染器类型' },
+    { value: '26', label: '外部应用复刻页' },
+    { value: '13,000+', label: '单元测试用例' },
+    { value: '1,400+', label: 'E2E 断言' },
+  ],
+};
+
+// ── bisheng build replica: debug panel collapsed by default (resizable
+// panel defaultCollapsed) so the designer canvas gets the vertical budget ──
+PAGE_DATA['bisheng-build'] = {};

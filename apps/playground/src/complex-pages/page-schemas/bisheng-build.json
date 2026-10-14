@@ -1,0 +1,1298 @@
+{
+  "type": "page",
+  "testid": "bisheng-build-page",
+  "className": "bs-root",
+  "bodyClassName": "h-full",
+  "body": [
+    {
+      "type": "flex",
+      "direction": "column",
+      "className": "bs-shell h-full",
+      "testid": "bs-shell",
+      "body": [
+        {
+          "type": "resizable",
+          "direction": "vertical",
+          "className": "bs-split",
+          "testid": "bs-split",
+          "panels": [
+            {
+              "key": "flow",
+              "defaultSize": 84,
+              "min": 45,
+              "body": [
+                {
+                  "type": "designer-page",
+                  "testid": "bs-designer",
+                  "className": "bs-designer",
+                  "document": {
+                    "id": "bisheng-flow-ticket-bot",
+                    "kind": "workflow",
+                    "name": "客服工单助手",
+                    "version": "1.0",
+                    "nodes": [
+                      {
+                        "id": "start-1",
+                        "type": "start",
+                        "position": {
+                          "x": 24,
+                          "y": 96
+                        },
+                        "data": {
+                          "label": "开始",
+                          "subtitle": "用户提问触发",
+                          "config": {
+                            "trigger": "chat"
+                          }
+                        }
+                      },
+                      {
+                        "id": "kb-1",
+                        "type": "knowledge",
+                        "position": {
+                          "x": 216,
+                          "y": 96
+                        },
+                        "data": {
+                          "label": "知识库检索",
+                          "subtitle": "帮助中心 / 3 个集合",
+                          "config": {
+                            "collection": "helpcenter",
+                            "topK": 5
+                          }
+                        }
+                      },
+                      {
+                        "id": "llm-1",
+                        "type": "llm",
+                        "position": {
+                          "x": 408,
+                          "y": 24
+                        },
+                        "data": {
+                          "label": "azure_gpt_4",
+                          "subtitle": "意图识别 · temp 0.2",
+                          "config": {
+                            "model": "azure_gpt_4",
+                            "temperature": 0.2
+                          }
+                        }
+                      },
+                      {
+                        "id": "cond-1",
+                        "type": "condition",
+                        "position": {
+                          "x": 408,
+                          "y": 168
+                        },
+                        "data": {
+                          "label": "条件判断",
+                          "subtitle": "是否需要人工",
+                          "config": {
+                            "expression": "intent === 'escalate'"
+                          }
+                        }
+                      },
+                      {
+                        "id": "llm-2",
+                        "type": "llm",
+                        "position": {
+                          "x": 600,
+                          "y": 24
+                        },
+                        "data": {
+                          "label": "deepseek-chat",
+                          "subtitle": "答复整理 · temp 0.4",
+                          "config": {
+                            "model": "deepseek-chat",
+                            "temperature": 0.4
+                          }
+                        }
+                      },
+                      {
+                        "id": "end-1",
+                        "type": "end",
+                        "position": {
+                          "x": 792,
+                          "y": 96
+                        },
+                        "data": {
+                          "label": "结束",
+                          "subtitle": "输出答复",
+                          "config": {
+                            "result": "answer"
+                          }
+                        }
+                      }
+                    ],
+                    "edges": [
+                      {
+                        "id": "e-start-kb",
+                        "type": "default",
+                        "source": "start-1",
+                        "target": "kb-1",
+                        "data": {
+                          "condition": "",
+                          "lineStyle": "solid"
+                        }
+                      },
+                      {
+                        "id": "e-kb-llm",
+                        "type": "default",
+                        "source": "kb-1",
+                        "target": "llm-1",
+                        "data": {
+                          "condition": "",
+                          "lineStyle": "solid"
+                        }
+                      },
+                      {
+                        "id": "e-llm-cond",
+                        "type": "default",
+                        "source": "llm-1",
+                        "target": "cond-1",
+                        "data": {
+                          "condition": "",
+                          "lineStyle": "solid"
+                        }
+                      },
+                      {
+                        "id": "e-cond-llm2",
+                        "type": "default",
+                        "source": "cond-1",
+                        "sourcePort": "out-true",
+                        "target": "llm-2",
+                        "data": {
+                          "condition": "自动答复",
+                          "lineStyle": "dashed"
+                        }
+                      },
+                      {
+                        "id": "e-llm2-end",
+                        "type": "default",
+                        "source": "llm-2",
+                        "target": "end-1",
+                        "data": {
+                          "condition": "",
+                          "lineStyle": "solid"
+                        }
+                      },
+                      {
+                        "id": "e-cond-end",
+                        "type": "default",
+                        "source": "cond-1",
+                        "sourcePort": "out-false",
+                        "target": "end-1",
+                        "data": {
+                          "condition": "转人工",
+                          "lineStyle": "dashed"
+                        }
+                      }
+                    ]
+                  },
+                  "config": {
+                    "version": "1.0",
+                    "kind": "workflow",
+                    "classAliases": {
+                      "node-card": "bs-node-card",
+                      "node-card--start": "bs-node-start",
+                      "node-card--end": "bs-node-end",
+                      "node-icon": "bs-node-icon",
+                      "node-icon--start": "bs-ic-start",
+                      "node-icon--end": "bs-ic-end",
+                      "node-icon--llm": "bs-ic-llm",
+                      "node-icon--knowledge": "bs-ic-knowledge",
+                      "node-icon--condition": "bs-ic-condition",
+                      "node-icon--io": "bs-ic-io",
+                      "node-title": "bs-node-title",
+                      "node-subtitle": "bs-node-subtitle",
+                      "node-badge": "bs-node-badge"
+                    },
+                    "nodeTypes": [
+                      {
+                        "id": "start",
+                        "label": "开始",
+                        "icon": "play",
+                        "body": {
+                          "type": "flex",
+                          "direction": "column",
+                          "className": "node-card node-card--start",
+                          "items": [
+                            {
+                              "type": "flex",
+                              "align": "center",
+                              "gap": 8,
+                              "className": "bs-node-head",
+                              "items": [
+                                {
+                                  "type": "container",
+                                  "className": "node-icon node-icon--start",
+                                  "body": [
+                                    {
+                                      "type": "icon",
+                                      "icon": "play",
+                                      "size": 14
+                                    }
+                                  ]
+                                },
+                                {
+                                  "type": "text",
+                                  "text": "${label}",
+                                  "className": "node-title bs-node-card-title"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "text",
+                              "text": "${subtitle}",
+                              "className": "node-subtitle"
+                            }
+                          ]
+                        },
+                        "appearance": {
+                          "minWidth": 168,
+                          "minHeight": 64
+                        },
+                        "defaults": {
+                          "label": "开始",
+                          "subtitle": "用户提问触发",
+                          "config": {
+                            "trigger": "chat"
+                          }
+                        },
+                        "ports": [
+                          {
+                            "id": "out",
+                            "direction": "output",
+                            "position": "right"
+                          }
+                        ],
+                        "constraints": {
+                          "maxInstances": 1,
+                          "allowIncoming": false
+                        },
+                        "inspector": {
+                          "body": {
+                            "type": "form",
+                            "body": [
+                              {
+                                "type": "input-text",
+                                "name": "label",
+                                "label": "节点名称"
+                              },
+                              {
+                                "type": "select",
+                                "name": "config.trigger",
+                                "label": "触发方式",
+                                "options": [
+                                  {
+                                    "label": "对话触发",
+                                    "value": "chat"
+                                  },
+                                  {
+                                    "label": "手动触发",
+                                    "value": "manual"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        }
+                      },
+                      {
+                        "id": "input",
+                        "label": "用户输入",
+                        "icon": "message-square",
+                        "body": {
+                          "type": "flex",
+                          "direction": "column",
+                          "className": "node-card",
+                          "items": [
+                            {
+                              "type": "flex",
+                              "align": "center",
+                              "gap": 8,
+                              "items": [
+                                {
+                                  "type": "container",
+                                  "className": "node-icon node-icon--io",
+                                  "body": [
+                                    {
+                                      "type": "icon",
+                                      "icon": "message-square",
+                                      "size": 14
+                                    }
+                                  ]
+                                },
+                                {
+                                  "type": "text",
+                                  "text": "${label}",
+                                  "className": "node-title bs-node-card-title"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "text",
+                              "text": "${subtitle}",
+                              "className": "node-subtitle"
+                            }
+                          ]
+                        },
+                        "appearance": {
+                          "minWidth": 168,
+                          "minHeight": 64
+                        },
+                        "defaults": {
+                          "label": "用户输入",
+                          "subtitle": "text 输入",
+                          "config": {
+                            "type": "text"
+                          }
+                        },
+                        "ports": [
+                          {
+                            "id": "in",
+                            "direction": "input",
+                            "position": "left"
+                          },
+                          {
+                            "id": "out",
+                            "direction": "output",
+                            "position": "right"
+                          }
+                        ],
+                        "inspector": {
+                          "body": {
+                            "type": "form",
+                            "body": [
+                              {
+                                "type": "select",
+                                "name": "config.type",
+                                "label": "输入类型",
+                                "options": [
+                                  {
+                                    "label": "文本",
+                                    "value": "text"
+                                  },
+                                  {
+                                    "label": "文件",
+                                    "value": "file"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        }
+                      },
+                      {
+                        "id": "output",
+                        "label": "输出",
+                        "icon": "send",
+                        "body": {
+                          "type": "flex",
+                          "direction": "column",
+                          "className": "node-card",
+                          "items": [
+                            {
+                              "type": "flex",
+                              "align": "center",
+                              "gap": 8,
+                              "items": [
+                                {
+                                  "type": "container",
+                                  "className": "node-icon node-icon--io",
+                                  "body": [
+                                    {
+                                      "type": "icon",
+                                      "icon": "send",
+                                      "size": 14
+                                    }
+                                  ]
+                                },
+                                {
+                                  "type": "text",
+                                  "text": "${label}",
+                                  "className": "node-title bs-node-card-title"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "text",
+                              "text": "${subtitle}",
+                              "className": "node-subtitle"
+                            }
+                          ]
+                        },
+                        "appearance": {
+                          "minWidth": 168,
+                          "minHeight": 64
+                        },
+                        "defaults": {
+                          "label": "输出",
+                          "subtitle": "答复用户",
+                          "config": {}
+                        },
+                        "ports": [
+                          {
+                            "id": "in",
+                            "direction": "input",
+                            "position": "left"
+                          }
+                        ],
+                        "inspector": {
+                          "body": {
+                            "type": "form",
+                            "body": [
+                              {
+                                "type": "input-text",
+                                "name": "label",
+                                "label": "节点名称"
+                              }
+                            ]
+                          }
+                        }
+                      },
+                      {
+                        "id": "knowledge",
+                        "label": "知识库检索",
+                        "icon": "book-marked",
+                        "body": {
+                          "type": "flex",
+                          "direction": "column",
+                          "className": "node-card",
+                          "items": [
+                            {
+                              "type": "flex",
+                              "align": "center",
+                              "gap": 8,
+                              "items": [
+                                {
+                                  "type": "container",
+                                  "className": "node-icon node-icon--knowledge",
+                                  "body": [
+                                    {
+                                      "type": "icon",
+                                      "icon": "book-marked",
+                                      "size": 14
+                                    }
+                                  ]
+                                },
+                                {
+                                  "type": "text",
+                                  "text": "${label}",
+                                  "className": "node-title bs-node-card-title"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "text",
+                              "text": "${subtitle}",
+                              "className": "node-subtitle"
+                            }
+                          ]
+                        },
+                        "appearance": {
+                          "minWidth": 176,
+                          "minHeight": 64
+                        },
+                        "defaults": {
+                          "label": "知识库检索",
+                          "subtitle": "帮助中心",
+                          "config": {
+                            "collection": "helpcenter",
+                            "topK": 5
+                          }
+                        },
+                        "ports": [
+                          {
+                            "id": "in",
+                            "direction": "input",
+                            "position": "left"
+                          },
+                          {
+                            "id": "out",
+                            "direction": "output",
+                            "position": "right"
+                          }
+                        ],
+                        "inspector": {
+                          "body": {
+                            "type": "form",
+                            "body": [
+                              {
+                                "type": "input-text",
+                                "name": "label",
+                                "label": "节点名称"
+                              },
+                              {
+                                "type": "input-text",
+                                "name": "config.collection",
+                                "label": "知识库集合"
+                              },
+                              {
+                                "type": "input-number",
+                                "name": "config.topK",
+                                "label": "召回数量 topK"
+                              }
+                            ]
+                          }
+                        }
+                      },
+                      {
+                        "id": "llm",
+                        "label": "大模型",
+                        "icon": "brain",
+                        "body": {
+                          "type": "flex",
+                          "direction": "column",
+                          "className": "node-card",
+                          "items": [
+                            {
+                              "type": "flex",
+                              "align": "center",
+                              "gap": 8,
+                              "items": [
+                                {
+                                  "type": "container",
+                                  "className": "node-icon node-icon--llm",
+                                  "body": [
+                                    {
+                                      "type": "icon",
+                                      "icon": "brain",
+                                      "size": 14
+                                    }
+                                  ]
+                                },
+                                {
+                                  "type": "text",
+                                  "text": "${label}",
+                                  "className": "node-title bs-node-card-title"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "text",
+                              "text": "${subtitle}",
+                              "className": "node-subtitle"
+                            }
+                          ]
+                        },
+                        "appearance": {
+                          "minWidth": 184,
+                          "minHeight": 64
+                        },
+                        "defaults": {
+                          "label": "azure_gpt_4",
+                          "subtitle": "模型调用",
+                          "config": {
+                            "model": "azure_gpt_4",
+                            "temperature": 0.2
+                          }
+                        },
+                        "ports": [
+                          {
+                            "id": "in",
+                            "direction": "input",
+                            "position": "left"
+                          },
+                          {
+                            "id": "out",
+                            "direction": "output",
+                            "position": "right"
+                          }
+                        ],
+                        "inspector": {
+                          "body": {
+                            "type": "form",
+                            "body": [
+                              {
+                                "type": "select",
+                                "name": "config.model",
+                                "label": "模型",
+                                "options": [
+                                  {
+                                    "label": "azure_gpt_4",
+                                    "value": "azure_gpt_4"
+                                  },
+                                  {
+                                    "label": "deepseek-chat",
+                                    "value": "deepseek-chat"
+                                  },
+                                  {
+                                    "label": "qwen-max",
+                                    "value": "qwen-max"
+                                  }
+                                ]
+                              },
+                              {
+                                "type": "textarea",
+                                "name": "config.systemPrompt",
+                                "label": "系统提示"
+                              },
+                              {
+                                "type": "input-number",
+                                "name": "config.temperature",
+                                "label": "温度"
+                              }
+                            ]
+                          }
+                        }
+                      },
+                      {
+                        "id": "condition",
+                        "label": "条件判断",
+                        "icon": "git-branch",
+                        "body": {
+                          "type": "flex",
+                          "direction": "column",
+                          "className": "node-card",
+                          "items": [
+                            {
+                              "type": "flex",
+                              "align": "center",
+                              "gap": 8,
+                              "items": [
+                                {
+                                  "type": "container",
+                                  "className": "node-icon node-icon--condition",
+                                  "body": [
+                                    {
+                                      "type": "icon",
+                                      "icon": "git-branch",
+                                      "size": 14
+                                    }
+                                  ]
+                                },
+                                {
+                                  "type": "text",
+                                  "text": "${label}",
+                                  "className": "node-title bs-node-card-title"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "text",
+                              "text": "${subtitle}",
+                              "className": "node-subtitle"
+                            }
+                          ]
+                        },
+                        "appearance": {
+                          "minWidth": 168,
+                          "minHeight": 64
+                        },
+                        "defaults": {
+                          "label": "条件判断",
+                          "subtitle": "布尔分支",
+                          "config": {
+                            "expression": ""
+                          }
+                        },
+                        "ports": [
+                          {
+                            "id": "in",
+                            "direction": "input",
+                            "position": "left"
+                          },
+                          {
+                            "id": "out-true",
+                            "direction": "output",
+                            "position": "right-top",
+                            "label": "是"
+                          },
+                          {
+                            "id": "out-false",
+                            "direction": "output",
+                            "position": "right-bottom",
+                            "label": "否"
+                          }
+                        ],
+                        "inspector": {
+                          "body": {
+                            "type": "form",
+                            "body": [
+                              {
+                                "type": "input-text",
+                                "name": "config.expression",
+                                "label": "判断表达式"
+                              }
+                            ]
+                          }
+                        }
+                      },
+                      {
+                        "id": "end",
+                        "label": "结束",
+                        "icon": "flag",
+                        "body": {
+                          "type": "flex",
+                          "direction": "column",
+                          "className": "node-card node-card--end",
+                          "items": [
+                            {
+                              "type": "flex",
+                              "align": "center",
+                              "gap": 8,
+                              "items": [
+                                {
+                                  "type": "container",
+                                  "className": "node-icon node-icon--end",
+                                  "body": [
+                                    {
+                                      "type": "icon",
+                                      "icon": "flag",
+                                      "size": 14
+                                    }
+                                  ]
+                                },
+                                {
+                                  "type": "text",
+                                  "text": "${label}",
+                                  "className": "node-title bs-node-card-title"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "text",
+                              "text": "${subtitle}",
+                              "className": "node-subtitle"
+                            }
+                          ]
+                        },
+                        "appearance": {
+                          "minWidth": 168,
+                          "minHeight": 64
+                        },
+                        "defaults": {
+                          "label": "结束",
+                          "subtitle": "输出答复",
+                          "config": {
+                            "result": "answer"
+                          }
+                        },
+                        "ports": [
+                          {
+                            "id": "in",
+                            "direction": "input",
+                            "position": "left"
+                          }
+                        ],
+                        "constraints": {
+                          "maxInstances": 1
+                        },
+                        "inspector": {
+                          "body": {
+                            "type": "form",
+                            "body": [
+                              {
+                                "type": "input-text",
+                                "name": "label",
+                                "label": "节点名称"
+                              }
+                            ]
+                          }
+                        }
+                      }
+                    ],
+                    "edgeTypes": [
+                      {
+                        "id": "default",
+                        "label": "默认边",
+                        "body": {
+                          "type": "text",
+                          "text": "${condition}",
+                          "className": "bs-edge-label"
+                        },
+                        "appearance": {
+                          "stroke": "#7ea6d8",
+                          "strokeWidth": 2,
+                          "markerEnd": "arrow-closed"
+                        },
+                        "defaults": {
+                          "condition": "",
+                          "lineStyle": "solid"
+                        }
+                      }
+                    ],
+                    "palette": {
+                      "searchable": true,
+                      "groups": [
+                        {
+                          "id": "io",
+                          "label": "输入输出",
+                          "description": "输入与输出节点",
+                          "nodeTypes": ["start", "input", "output", "end"]
+                        },
+                        {
+                          "id": "model",
+                          "label": "模型",
+                          "description": "大语言模型",
+                          "nodeTypes": ["llm"]
+                        },
+                        {
+                          "id": "skill",
+                          "label": "技能",
+                          "description": "检索与工具",
+                          "nodeTypes": ["knowledge"]
+                        },
+                        {
+                          "id": "logic",
+                          "label": "逻辑",
+                          "description": "分支控制",
+                          "nodeTypes": ["condition"]
+                        }
+                      ]
+                    },
+                    "toolbar": {
+                      "items": []
+                    },
+                    "shortcuts": [],
+                    "features": {
+                      "multiSelect": false
+                    },
+                    "rules": [],
+                    "canvas": {
+                      "fitView": true,
+                      "grid": true,
+                      "minimap": true,
+                      "controls": true
+                    },
+                    "shell": {
+                      "palette": {
+                        "resizable": true,
+                        "minWidth": 196,
+                        "maxWidth": 240
+                      },
+                      "inspector": {
+                        "resizable": true,
+                        "minWidth": 260,
+                        "maxWidth": 330
+                      }
+                    }
+                  },
+                  "toolbar": {
+                    "type": "flex",
+                    "direction": "row",
+                    "className": "bs-topbar",
+                    "testid": "bs-topbar",
+                    "body": [
+                      {
+                        "type": "flex",
+                        "align": "center",
+                        "gap": 8,
+                        "className": "bs-topbar-left",
+                        "body": [
+                          {
+                            "type": "flex",
+                            "align": "center",
+                            "className": "bs-logo",
+                            "testid": "bs-logo",
+                            "body": [
+                              {
+                                "type": "icon",
+                                "icon": "workflow",
+                                "size": 16
+                              }
+                            ]
+                          },
+                          {
+                            "type": "text",
+                            "text": "bisheng",
+                            "tag": "span",
+                            "className": "bs-logo-name",
+                            "testid": "bs-logo-name"
+                          },
+                          {
+                            "type": "flex",
+                            "direction": "row",
+                            "className": "bs-topbar-divider"
+                          },
+                          {
+                            "type": "text",
+                            "text": "客服工单助手",
+                            "tag": "span",
+                            "className": "bs-app-name",
+                            "testid": "bs-app-name"
+                          },
+                          {
+                            "type": "badge",
+                            "text": "工作流",
+                            "level": "info",
+                            "className": "bs-app-badge",
+                            "testid": "bs-app-badge"
+                          }
+                        ]
+                      },
+                      {
+                        "type": "flex",
+                        "align": "center",
+                        "gap": 8,
+                        "className": "bs-topbar-right",
+                        "body": [
+                          {
+                            "type": "button",
+                            "variant": "outline",
+                            "size": "sm",
+                            "label": "版本",
+                            "testid": "bs-btn-version",
+                            "onClick": {
+                              "action": "showToast",
+                              "args": {
+                                "level": "info",
+                                "message": "版本历史 (simulated)"
+                              }
+                            }
+                          },
+                          {
+                            "type": "button",
+                            "variant": "outline",
+                            "size": "sm",
+                            "label": "预览",
+                            "rightIcon": "eye",
+                            "testid": "bs-btn-preview",
+                            "onClick": {
+                              "action": "showToast",
+                              "args": {
+                                "level": "info",
+                                "message": "预览模式 (simulated)"
+                              }
+                            }
+                          },
+                          {
+                            "type": "button",
+                            "variant": "primary",
+                            "size": "sm",
+                            "label": "发布",
+                            "rightIcon": "rocket",
+                            "testid": "bs-btn-publish",
+                            "onClick": {
+                              "action": "showToast",
+                              "args": {
+                                "level": "info",
+                                "message": "发布流程 (simulated)"
+                              }
+                            }
+                          },
+                          {
+                            "type": "flex",
+                            "className": "bs-avatar",
+                            "testid": "bs-avatar",
+                            "body": [
+                              {
+                                "type": "text",
+                                "text": "W",
+                                "className": "bs-avatar-text"
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  "inspector": {
+                    "type": "flex",
+                    "direction": "column",
+                    "gap": 0,
+                    "className": "bs-inspector",
+                    "testid": "bs-inspector",
+                    "body": [
+                      {
+                        "type": "flex",
+                        "direction": "row",
+                        "align": "center",
+                        "gap": 8,
+                        "className": "bs-inspector-head",
+                        "body": [
+                          {
+                            "type": "flex",
+                            "className": "bs-inspector-ic",
+                            "body": [
+                              {
+                                "type": "icon",
+                                "icon": "brain",
+                                "size": 14
+                              }
+                            ]
+                          },
+                          {
+                            "type": "text",
+                            "text": "azure_gpt_4",
+                            "tag": "span",
+                            "className": "bs-inspector-title",
+                            "testid": "bs-inspector-title"
+                          },
+                          {
+                            "type": "text",
+                            "text": "节点 ID: llm-1",
+                            "className": "bs-inspector-id"
+                          }
+                        ]
+                      },
+                      {
+                        "type": "flex",
+                        "className": "bs-inspector-sep"
+                      },
+                      {
+                        "type": "flex",
+                        "direction": "column",
+                        "gap": 14,
+                        "className": "bs-inspector-body",
+                        "body": [
+                          {
+                            "type": "select",
+                            "name": "bsNodeModel",
+                            "label": "模型",
+                            "testid": "bs-field-model",
+                            "value": "azure_gpt_4",
+                            "options": [
+                              {
+                                "label": "azure_gpt_4",
+                                "value": "azure_gpt_4"
+                              },
+                              {
+                                "label": "deepseek-chat",
+                                "value": "deepseek-chat"
+                              },
+                              {
+                                "label": "qwen-max",
+                                "value": "qwen-max"
+                              }
+                            ]
+                          },
+                          {
+                            "type": "textarea",
+                            "name": "bsNodePrompt",
+                            "label": "系统提示",
+                            "testid": "bs-field-prompt",
+                            "value": "你是电商平台客服助手，依据检索到的知识库内容回答用户问题，无法确认时引导转人工。"
+                          },
+                          {
+                            "type": "input-number",
+                            "name": "bsNodeTemp",
+                            "label": "温度",
+                            "testid": "bs-field-temp",
+                            "value": 0.2,
+                            "min": 0,
+                            "max": 2,
+                            "step": 0.1
+                          },
+                          {
+                            "type": "input-text",
+                            "name": "bsNodeOutput",
+                            "label": "输出变量名",
+                            "testid": "bs-field-output",
+                            "value": "answer"
+                          }
+                        ]
+                      },
+                      {
+                        "type": "flex",
+                        "className": "bs-inspector-sep"
+                      },
+                      {
+                        "type": "flex",
+                        "direction": "column",
+                        "gap": 10,
+                        "className": "bs-inspector-foot",
+                        "body": [
+                          {
+                            "type": "button",
+                            "variant": "outline",
+                            "size": "sm",
+                            "label": "运行此节点",
+                            "icon": "play",
+                            "testid": "bs-run-node",
+                            "onClick": {
+                              "action": "showToast",
+                              "args": {
+                                "level": "info",
+                                "message": "单节点运行 (simulated)"
+                              }
+                            }
+                          },
+                          {
+                            "type": "button",
+                            "variant": "outline",
+                            "size": "sm",
+                            "label": "删除节点",
+                            "icon": "trash-2",
+                            "testid": "bs-delete-node",
+                            "onClick": {
+                              "action": "showToast",
+                              "args": {
+                                "level": "warning",
+                                "message": "删除需确认 (simulated)"
+                              }
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "key": "debug",
+              "defaultSize": 16,
+              "min": 10,
+              "max": 60,
+              "collapsible": true,
+              "collapsedSize": 7,
+              "defaultCollapsed": true,
+              "body": [
+                {
+                  "type": "flex",
+                  "direction": "column",
+                  "gap": 12,
+                  "className": "bs-debug",
+                  "testid": "bs-debug",
+                  "body": [
+                    {
+                      "type": "flex",
+                      "direction": "row",
+                      "align": "center",
+                      "gap": 10,
+                      "className": "bs-debug-head",
+                      "body": [
+                        {
+                          "type": "icon",
+                          "icon": "${bsDebugOpen ? 'chevron-down' : 'chevron-up'}",
+                          "size": 14
+                        },
+                        {
+                          "type": "text",
+                          "text": "调试对话",
+                          "tag": "span",
+                          "className": "bs-debug-title"
+                        },
+                        {
+                          "type": "badge",
+                          "text": "3 轮",
+                          "level": "success",
+                          "className": "bs-debug-badge"
+                        },
+                        {
+                          "type": "flex",
+                          "direction": "row",
+                          "gap": 8,
+                          "className": "bs-debug-head-actions",
+                          "body": [
+                            {
+                              "type": "button",
+                              "variant": "ghost",
+                              "size": "xs",
+                              "label": "清空",
+                              "testid": "bs-debug-clear",
+                              "onClick": {
+                                "action": "showToast",
+                                "args": {
+                                  "level": "info",
+                                  "message": "清空调试记录 (simulated)"
+                                }
+                              }
+                            },
+                            {
+                              "type": "button",
+                              "variant": "ghost",
+                              "size": "icon-xs",
+                              "testid": "bs-debug-toggle",
+                              "onClick": {
+                                "action": "component:toggle",
+                                "componentId": "bs-split"
+                              },
+                              "icon": "chevron-down",
+                              "tooltip": "收起/展开调试面板"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "flex",
+                      "direction": "row",
+                      "gap": 12,
+                      "align": "start",
+                      "className": "bs-debug-body bs-debug-flow",
+                      "body": [
+                        {
+                          "type": "flex",
+                          "direction": "column",
+                          "gap": 6,
+                          "className": "bs-msg bs-msg-user",
+                          "testid": "bs-msg-user",
+                          "body": [
+                            {
+                              "type": "text",
+                              "text": "我上周买的订单还没发货，怎么办？",
+                              "className": "bs-msg-text"
+                            },
+                            {
+                              "type": "text",
+                              "text": "今天 14:32",
+                              "className": "bs-msg-time"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "flex",
+                          "direction": "column",
+                          "gap": 6,
+                          "className": "bs-msg bs-msg-assistant",
+                          "testid": "bs-msg-assistant",
+                          "body": [
+                            {
+                              "type": "text",
+                              "text": "已查询订单 #88213：仓库已出库，预计 48 小时内到达；如需加急可转人工处理。",
+                              "className": "bs-msg-text"
+                            },
+                            {
+                              "type": "text",
+                              "text": "azure_gpt_4 · 0.8s · 126 tokens",
+                              "className": "bs-msg-time"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "flex",
+                      "direction": "row",
+                      "gap": 8,
+                      "align": "center",
+                      "className": "bs-debug-body bs-debug-input",
+                      "body": [
+                        {
+                          "type": "input-text",
+                          "name": "bsDebugInput",
+                          "placeholder": "输入测试消息，回车发送…",
+                          "testid": "bs-debug-input",
+                          "className": "bs-debug-input-el"
+                        },
+                        {
+                          "type": "button",
+                          "variant": "primary",
+                          "size": "sm",
+                          "label": "发送",
+                          "testid": "bs-debug-send",
+                          "onClick": {
+                            "action": "showToast",
+                            "args": {
+                              "level": "info",
+                              "message": "调试消息发送 (simulated)"
+                            }
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "id": "bs-split"
+        }
+      ]
+    }
+  ]
+}

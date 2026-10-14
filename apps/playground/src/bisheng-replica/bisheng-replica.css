@@ -1,0 +1,404 @@
+/*
+ * bisheng (毕昇) build-page replica styles (light mode).
+ *
+ * Replicates the bisheng platform workflow-builder chrome
+ * (`~/ai/bisheng/src/frontend/platform`, BuildPage) on top of the flux
+ * flow-designer renderer: blue top bar, flattened node palette, bisheng
+ * node cards (azure #024DE3 = hsl(220 98% 45%) from their
+ * `src/style/index.css`), inspector panel and the bottom debug drawer.
+ * Schema: `complex-pages/page-schemas/bisheng-build.json`. No renderer
+ * internals are touched — styling rides on data-slot + marker classes.
+ */
+
+.bs-root {
+  --bs-primary: #024de3;
+  --bs-primary-hover: #0240c4;
+  --bs-primary-subtle: #ebf5ff;
+  --bs-border: #d7e7fd;
+  --bs-border-soft: #e8f1fd;
+  --bs-surface: #ffffff;
+  --bs-bg: #f5f9ff;
+  --bs-ink: #1c2434;
+  --bs-ink-2: #4a5568;
+  --bs-ink-3: #8a94a6;
+  --bs-radius: 8px;
+
+  background: var(--bs-bg);
+  color: var(--bs-ink);
+  font-size: 14px;
+}
+
+.bs-shell {
+  height: 100%;
+}
+
+/* ── 1. Top bar (bisheng builder chrome) ─────────────────────────────── */
+
+.bs-root [data-slot='designer-page-title'] {
+  display: none;
+}
+
+.bs-topbar {
+  width: 100%;
+  height: 48px;
+  padding: 0 12px 0 16px;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--bs-surface);
+  border-bottom: 1px solid var(--bs-border);
+}
+
+.bs-topbar-left,
+.bs-topbar-right {
+  gap: 8px;
+}
+
+.bs-logo {
+  width: 26px;
+  height: 26px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  background: var(--bs-primary);
+  color: #ffffff;
+  flex: 0 0 auto;
+}
+
+.bs-logo-name {
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.bs-topbar-divider {
+  width: 1px;
+  height: 16px;
+  background: var(--bs-border);
+  margin: 0 4px;
+}
+
+.bs-app-name {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.bs-app-badge {
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 500;
+  background: var(--bs-primary-subtle);
+  color: var(--bs-primary);
+  border: 1px solid var(--bs-border);
+}
+
+.bs-avatar {
+  width: 26px;
+  height: 26px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: var(--bs-primary);
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 600;
+  margin-left: 4px;
+}
+
+.bs-avatar-text {
+  font-size: 11px;
+  font-weight: 600;
+  color: #ffffff;
+}
+
+/* ── 2. Node palette (flattened bisheng style) ────────────────────────── */
+
+.bs-root [data-slot='designer-palette-group-header'] {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  color: var(--bs-ink-2);
+  padding: 4px 4px;
+}
+
+.bs-root [data-slot='designer-palette-item'] {
+  border-radius: var(--bs-radius);
+  border: 1px solid var(--bs-border-soft);
+  background: var(--bs-surface);
+  box-shadow: none;
+  margin-bottom: 6px;
+  padding: 7px 9px;
+  transition:
+    border-color 120ms ease,
+    background 120ms ease;
+}
+
+.bs-root [data-slot='designer-palette-item']:hover {
+  border-color: var(--bs-primary);
+  background: var(--bs-primary-subtle);
+}
+
+.bs-root [data-slot='designer-palette-item'] button {
+  font-size: 12px;
+  color: var(--bs-ink);
+}
+
+.bs-root .fd-panel-card {
+  border: none;
+  background: transparent;
+  padding: 0;
+}
+
+/* ── 3. Node cards (bisheng rounded-card family) ─────────────────────── */
+
+.bs-node-card {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 4px;
+  padding: 8px 10px;
+  border: 1px solid var(--bs-border);
+  border-radius: var(--bs-radius);
+  background: var(--bs-surface);
+  box-shadow: 0 1px 2px rgb(28 36 52 / 6%);
+  min-width: 168px;
+}
+
+.bs-node-card.bs-node-start {
+  border-color: #a7dbb1;
+  background: #f2fbf3;
+}
+
+.bs-node-card.bs-node-end {
+  border-color: #f3b8b8;
+  background: #fef4f4;
+}
+
+.bs-node-head {
+  align-items: center;
+  gap: 8px;
+}
+
+.bs-node-icon {
+  width: 26px;
+  height: 26px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  flex: 0 0 auto;
+  color: #ffffff;
+}
+
+.bs-ic-start {
+  background: #37a05a;
+}
+
+.bs-ic-end {
+  background: #d64b4b;
+}
+
+.bs-ic-llm {
+  background: var(--bs-primary);
+}
+
+.bs-ic-knowledge {
+  background: #7c5cd6;
+}
+
+.bs-ic-condition {
+  background: #e08a2e;
+}
+
+.bs-ic-io {
+  background: #3d9a8d;
+}
+
+.bs-node-card-title,
+.bs-node-title {
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 16px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.bs-node-subtitle {
+  font-size: 11px;
+  line-height: 15px;
+  color: var(--bs-ink-3);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.bs-edge-label {
+  font-size: 11px;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: var(--bs-primary-subtle);
+  border: 1px solid var(--bs-border);
+  color: var(--bs-primary);
+}
+
+/* ── 4. Inspector (bisheng node-params panel) ─────────────────────────── */
+
+.bs-inspector {
+  height: 100%;
+  background: var(--bs-surface);
+  border-left: 1px solid var(--bs-border);
+}
+
+.bs-inspector-head {
+  padding: 12px 14px 10px;
+  gap: 8px;
+}
+
+.bs-inspector-ic {
+  width: 24px;
+  height: 24px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  background: var(--bs-primary);
+  color: #ffffff;
+  flex: 0 0 auto;
+}
+
+.bs-inspector-title {
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.bs-inspector-id {
+  margin-left: auto;
+  font-size: 10px;
+  color: var(--bs-ink-3);
+}
+
+.bs-inspector-sep {
+  height: 1px;
+  background: var(--bs-border-soft);
+}
+
+.bs-inspector-body {
+  padding: 14px;
+  overflow-y: auto;
+}
+
+.bs-inspector-foot {
+  padding: 12px 14px;
+  border-top: 1px solid var(--bs-border-soft);
+}
+
+/* ── 5. Bottom debug drawer (collapsible resizable panel, bisheng 调试 panel) ── */
+
+.bs-split {
+  flex: 1 1 0;
+  min-height: 0;
+}
+
+.bs-debug {
+  flex: 0 0 auto;
+  height: 100%;
+  overflow: hidden;
+  padding: 10px 16px 12px;
+  background: var(--bs-bg);
+  border-top: 1px solid var(--bs-border);
+}
+
+.bs-debug-flow {
+  overflow-y: auto;
+  flex: 1 1 0;
+  min-height: 0;
+  align-items: flex-start;
+}
+
+.bs-debug-head-actions {
+  margin-left: auto;
+  gap: 4px;
+}
+
+.bs-debug-title {
+  font-size: 12px;
+  font-weight: 650;
+  color: var(--bs-ink);
+}
+
+.bs-debug-badge {
+  border-radius: 999px;
+  font-size: 10px;
+}
+
+.bs-debug-flow {
+  overflow-y: auto;
+  flex: 1 1 0;
+  min-height: 0;
+  align-items: flex-start;
+}
+
+.bs-msg {
+  max-width: 62%;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.bs-msg-user {
+  background: var(--bs-primary);
+  color: #ffffff;
+  border-top-right-radius: 2px;
+}
+
+.bs-msg-assistant {
+  background: var(--bs-surface);
+  border: 1px solid var(--bs-border);
+  color: var(--bs-ink);
+  border-top-left-radius: 2px;
+}
+
+.bs-msg-text {
+  font-size: 13px;
+}
+
+.bs-msg-time {
+  font-size: 10px;
+  opacity: 0.75;
+  margin-top: 2px;
+}
+
+.bs-debug-input {
+  flex: 0 0 auto;
+}
+
+.bs-debug-input-el {
+  flex: 1 1 0;
+}
+
+/* ── 6. Designer surfaces: canvas + toolbar strip blend ───────────────── */
+
+.bs-designer {
+  flex: 1 1 0;
+  min-height: 0;
+  background: var(--bs-bg);
+}
+
+.bs-designer .react-flow__background {
+  opacity: 0.6;
+}
+
+.bs-designer .react-flow__edge-path {
+  stroke: #7ea6d8;
+}
+
+.bs-designer .react-flow__controls {
+  border-radius: 6px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgb(28 36 52 / 12%);
+}
+
+@media (max-width: 1100px) {
+  .bs-debug {
+    display: none;
+  }
+}

@@ -3,6 +3,7 @@ export type ComplexPageCategory =
   | 'master-detail'
   | 'complex-forms'
   | 'visualization'
+  | 'content-showcase'
   | 'app-replica';
 
 export interface ComplexPageEntry {
@@ -25,6 +26,7 @@ export const COMPLEX_PAGE_CATEGORY_ORDER: ComplexPageCategory[] = [
   'master-detail',
   'complex-forms',
   'visualization',
+  'content-showcase',
   'app-replica',
 ];
 
@@ -48,6 +50,12 @@ export const COMPLEX_PAGE_CATEGORY_META: Record<ComplexPageCategory, ComplexPage
     id: 'visualization',
     label: '数据可视化',
     blurb: '统计卡片 + 图表 + 明细表格组合的概览仪表盘。',
+  },
+  'content-showcase': {
+    id: 'content-showcase',
+    label: '内容门户',
+    blurb:
+      '营销 landing、文档站与门户首页——41 页型审计未覆盖的内容型页面，验证 content / layout 渲染器族在营销审美下的承载力。',
   },
   'app-replica': {
     id: 'app-replica',
@@ -384,5 +392,21 @@ export const COMPLEX_PAGE_ENTRIES: ComplexPageEntry[] = [
     description:
       '复刻金融数据面板风格支付流水页（密度与排版标杆）：分组导航 shell（总览/资金/交易分组 + 快捷入口/最近/产品分组 + More 收纳 + blurple 选中态样本）+ 筛选 chip 条与日期范围预设档/关键词搜索降级形态（零生效）+ 高密度交易表格（36 行 mock 流动/客户端分页 ≥3 页/状态 pill 四语义色阶对/金额等宽右对齐/部分列排序 chevron 形态）+ 交易明细抽屉（摘要/时间线/元数据分区 + 操作按钮形态零生效）+ 导出模态与添加 widget 勾选列表 dialog + 图表卡区（KPI 卡 ×4 + 净额双曲线），数据经 Stripe__payments/Stripe__payment/Stripe__overview 端点流动。',
     features: ['复刻样式', '高密度表格', '状态色阶对', '明细抽屉'],
+  },
+  {
+    id: 'content-landing',
+    title: '营销官网与文档门户',
+    category: 'content-showcase',
+    description:
+      '41 页型审计未覆盖的内容型页面：营销官网 landing（导航 + 渐变 hero + 浏览器产品 mockup + logo wall + 六卡特性网格 + 深色统计带 + CTA + 四列 footer）+ 内嵌文档站形态（左侧目录 + markdown 正文 + 上下页 pager）+ 门户首页形态（loop 驱动的应用磁贴网格）。全程由 page/flex/text/icon/markdown/link/card 等 content/layout 族渲染器拼装，无服务端端点。',
+    features: ['营销 landing', '文档站内嵌', '门户磁贴', 'loop 驱动网格', 'markdown 正文'],
+  },
+  {
+    id: 'bisheng-build',
+    title: '毕昇构建器 · 工作流编排页',
+    category: 'app-replica',
+    description:
+      '复刻 bisheng（毕昇，~/ai/bisheng）platform 工作流编排页：品牌蓝顶栏（#024DE3，取自其 style/index.css 令牌）+ 左侧节点库（输入输出/模型/技能/逻辑四组）+ 中央 designer canvas（「客服工单助手」六节点工作流：开始→知识库检索→azure_gpt_4→条件判断→deepseek-chat→结束，双分支带标签边）+ 右侧节点参数面板（模型 select/系统提示/温度/输出变量名 + 运行/删除动作）+ 底部调试对话抽屉。canvas 由真实 `designer-page` 渲染器驱动，顶栏与参数面板经 toolbar/inspector region 覆写，bisheng 皮肤由 bisheng-replica.css 贴附。',
+    features: ['复刻样式', 'designer-page 画布', 'region 覆写', '节点参数面板', '调试抽屉'],
   },
 ];
