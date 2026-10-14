@@ -35,7 +35,7 @@ function numberListsEqual(a: readonly number[] | undefined, b: readonly number[]
   return true;
 }
 
-export const handleSetActiveSheet: CommandHandler<SetActiveSheetCommand> = (store, command) => {
+const handleSetActiveSheet: CommandHandler<SetActiveSheetCommand> = (store, command) => {
   const state = store.getState();
   const sheet = state.document.workbook.sheets.find((s) => s.id === command.sheetId);
   if (!sheet) return { ok: false, changed: false, error: `Sheet not found: ${command.sheetId}` };
@@ -47,7 +47,7 @@ export const handleSetActiveSheet: CommandHandler<SetActiveSheetCommand> = (stor
   return { ok: true, changed: true };
 };
 
-export const handleSetSelection: CommandHandler<SetSelectionCommand> = (store, command) => {
+const handleSetSelection: CommandHandler<SetSelectionCommand> = (store, command) => {
   const state = store.getState();
   if (selectionsEqual(state.selection, command.selection)) {
     return { ok: true, changed: false, data: state.selection };
@@ -64,7 +64,7 @@ export const handleSetSelection: CommandHandler<SetSelectionCommand> = (store, c
   return { ok: true, changed: true };
 };
 
-export const handleSetViewport: CommandHandler<SetViewportCommand> = (store, command) => {
+const handleSetViewport: CommandHandler<SetViewportCommand> = (store, command) => {
   const state = store.getState();
   if (
     state.viewport.scrollX === command.viewport.scrollX &&
@@ -78,7 +78,7 @@ export const handleSetViewport: CommandHandler<SetViewportCommand> = (store, com
   return { ok: true, changed: true, data: command.viewport };
 };
 
-export const handleSelectAll: CommandHandler<SelectAllCommand> = (store, command) => {
+const handleSelectAll: CommandHandler<SelectAllCommand> = (store, command) => {
   store.setState({
     selection: {
       kind: 'sheet',
@@ -100,7 +100,7 @@ function fillContiguous(rows: number[]): number[] {
   return filled;
 }
 
-export const handleSelectRow: CommandHandler<SelectRowCommand> = (store, command) => {
+const handleSelectRow: CommandHandler<SelectRowCommand> = (store, command) => {
   const state = store.getState();
   const current = state.selection;
   if (
@@ -117,7 +117,7 @@ export const handleSelectRow: CommandHandler<SelectRowCommand> = (store, command
   return { ok: true, changed: true };
 };
 
-export const handleSelectColumn: CommandHandler<SelectColumnCommand> = (store, command) => {
+const handleSelectColumn: CommandHandler<SelectColumnCommand> = (store, command) => {
   const state = store.getState();
   const current = state.selection;
   if (

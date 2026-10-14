@@ -2,11 +2,7 @@ import { Profiler } from 'react';
 import { act, render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { useSyncExternalStoreWithSelector } from 'use-sync-external-store/shim/with-selector';
-import { createEmptyDocument } from '@nop-chaos/spreadsheet-core';
-import {
-  equalSpreadsheetPageSnapshot,
-  selectSpreadsheetPageSnapshot,
-} from './page-renderer.js';
+import { createEmptyDocument, equalSpreadsheetPageSnapshot, selectSpreadsheetPageSnapshot } from '@nop-chaos/spreadsheet-core';
 
 function createStore<T>(initial: T) {
   let current = initial;

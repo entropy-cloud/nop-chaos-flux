@@ -1,5 +1,5 @@
 import { registerEditorDomain, type EditorDomainAdapter } from '@nop-chaos/editor-core';
-import { cloneDeep } from '@nop-chaos/flux-core';
+import { cloneDeep, deepEqual } from '@nop-chaos/flux-core';
 import type { SpreadsheetDocument } from './types.js';
 import { commandHandlers } from './core-dispatch.js';
 
@@ -23,22 +23,12 @@ export function hasSpreadsheetDocChanges(
   return !deepEqual(prev, next);
 }
 
-/** 结构化深判等（SpreadsheetDocument 为 JSON 形态；键序不敏感）。 */
-function deepEqual(a: unknown, b: unknown): boolean {
-  if (a === b) return true;
-  if (typeof a !== 'object' || typeof b !== 'object' || a === null || b === null) {
-    return Number.isNaN(a) && Number.isNaN(b);
-  }
-  if (Array.isArray(a) !== Array.isArray(b)) return false;
-  const aKeys = Object.keys(a as Record<string, unknown>);
-  const bKeys = Object.keys(b as Record<string, unknown>);
-  if (aKeys.length !== bKeys.length) return false;
-  return aKeys.every(
-    (k) =>
-      Object.prototype.hasOwnProperty.call(b, k) &&
-      deepEqual((a as Record<string, unknown>)[k], (b as Record<string, unknown>)[k]),
-  );
-}
+/**
+ * 结构化深判等单源 @nop-chaos/flux-core deepEqual（plan 598 G2，ex 15 行私有孪生）。
+ * 判别语义 M1 勘误：flux-core（Object.is）严格不弱于原孪生（===）——唯一 delta =
+ * ±0-only 文档增量现在判异（预裁定接受，plan 598 Deferred；spreadsheet 文档为 JSON 形态，
+ * NaN/键序/无环等价性已由 cx18-deepequal-pin 钉面承载）。
+ */
 
 /** 构造 spreadsheet 编辑域 adapter（editor-core `EditorDomainAdapter` 契约实现）。 */
 export function createSpreadsheetDomainAdapter(

@@ -8,6 +8,7 @@ import type {
   InspectorRuntimeState,
 } from './types.js';
 import { t } from '@nop-chaos/flux-i18n';
+import { popAndRebuildOppositeEntry } from '@nop-chaos/editor-core';
 import { getTargetMeta } from './types.js';
 import type { ReportDesignerCommand, ReportDesignerCommandResult } from './commands.js';
 import type { ReportDesignerAdapterRegistry, ReportDesignerProfile } from './adapters.js';
@@ -292,18 +293,14 @@ export async function dispatchReportDesignerCommand(
       case 'report-designer:undo': {
         // P1.3（plan 548）：栈单源 editor-core；操作时点语义与旧数组实现一致——
         // 恢复目标 = entry.inverse（入栈前文档），对侧 redo entry 以 undo 时点文档重建。
+        // plan 598 G3：共享 5 步骨架单源 editor-core popAndRebuildOppositeEntry；
+        // 调用点保留 report 分歧步（i18n error 文本 + 函数式 setState +
+        // spreadsheetSyncSource 清除 + await ctx.refreshDerivedState()）。
         const current = store.getState();
-        const entry = current.undo.peekUndo();
-        if (!entry) {
+        const prevDocument = popAndRebuildOppositeEntry(current.undo, 'undo', current.document);
+        if (prevDocument === undefined) {
           return { ok: false, changed: false, error: t('flux.reportDesigner.nothingToUndo') };
         }
-        const prevDocument = entry.inverse;
-        current.undo.popUndo();
-        current.undo.pushRedo({
-          forward: current.document,
-          inverse: prevDocument,
-          timestamp: Date.now(),
-        });
         store.setState((s) => ({
           ...s,
           document: prevDocument,
@@ -315,17 +312,10 @@ export async function dispatchReportDesignerCommand(
 
       case 'report-designer:redo': {
         const current = store.getState();
-        const entry = current.undo.peekRedo();
-        if (!entry) {
+        const nextDocument = popAndRebuildOppositeEntry(current.undo, 'redo', current.document);
+        if (nextDocument === undefined) {
           return { ok: false, changed: false, error: t('flux.reportDesigner.nothingToRedo') };
         }
-        const nextDocument = entry.forward;
-        current.undo.popRedo();
-        current.undo.pushUndo({
-          forward: nextDocument,
-          inverse: current.document,
-          timestamp: Date.now(),
-        });
         store.setState((s) => ({
           ...s,
           document: nextDocument,

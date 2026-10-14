@@ -6,6 +6,7 @@ import type {
   UndoSpreadsheetCommand,
   RedoSpreadsheetCommand,
 } from '../commands.js';
+import { popAndRebuildOppositeEntry } from '@nop-chaos/editor-core';
 import {
   clearTransientState,
   cloneSpreadsheetDocument,
@@ -20,7 +21,7 @@ import type { SpreadsheetDocument } from '../types.js';
  * recalc 不入栈）后 undo→redo 仍恢复 undo 时点文档。
  */
 
-export const handleBeginTransaction: CommandHandler<BeginSpreadsheetTransactionCommand> = (
+const handleBeginTransaction: CommandHandler<BeginSpreadsheetTransactionCommand> = (
   store,
 ) => {
   const state = store.getState();
@@ -32,7 +33,7 @@ export const handleBeginTransaction: CommandHandler<BeginSpreadsheetTransactionC
   return { ok: true, changed: false };
 };
 
-export const handleCommitTransaction: CommandHandler<CommitSpreadsheetTransactionCommand> = (
+const handleCommitTransaction: CommandHandler<CommitSpreadsheetTransactionCommand> = (
   store,
 ) => {
   const state = store.getState();
@@ -50,7 +51,7 @@ export const handleCommitTransaction: CommandHandler<CommitSpreadsheetTransactio
   return { ok: true, changed: false };
 };
 
-export const handleRollbackTransaction: CommandHandler<RollbackSpreadsheetTransactionCommand> = (
+const handleRollbackTransaction: CommandHandler<RollbackSpreadsheetTransactionCommand> = (
   store,
 ) => {
   const state = store.getState();
@@ -78,17 +79,13 @@ function pushUndoDocumentTransaction(
   return { ...state };
 }
 
-export const handleUndo: CommandHandler<UndoSpreadsheetCommand> = (store) => {
+const handleUndo: CommandHandler<UndoSpreadsheetCommand> = (store) => {
+  // plan 598 G3：共享 5 步骨架单源 editor-core popAndRebuildOppositeEntry
+  //（peek→空栈→pop→操作时点重建对侧 entry→返回 restored）；调用点保留
+  // spreadsheet 分歧步（error 文本 + setState payload + dirty + clearTransientState）。
   const current = store.getState();
-  const entry = current.undo.peekUndo();
-  if (!entry) return { ok: false, changed: false, error: 'Nothing to undo' };
-  const prevDoc = entry.inverse;
-  current.undo.popUndo();
-  current.undo.pushRedo({
-    forward: current.document,
-    inverse: prevDoc,
-    timestamp: Date.now(),
-  });
+  const prevDoc = popAndRebuildOppositeEntry(current.undo, 'undo', current.document);
+  if (prevDoc === undefined) return { ok: false, changed: false, error: 'Nothing to undo' };
   store.setState({
     document: prevDoc,
     dirty: true,
@@ -97,17 +94,10 @@ export const handleUndo: CommandHandler<UndoSpreadsheetCommand> = (store) => {
   return { ok: true, changed: true };
 };
 
-export const handleRedo: CommandHandler<RedoSpreadsheetCommand> = (store) => {
+const handleRedo: CommandHandler<RedoSpreadsheetCommand> = (store) => {
   const current = store.getState();
-  const entry = current.undo.peekRedo();
-  if (!entry) return { ok: false, changed: false, error: 'Nothing to redo' };
-  const nextDoc = entry.forward;
-  current.undo.popRedo();
-  current.undo.pushUndo({
-    forward: nextDoc,
-    inverse: current.document,
-    timestamp: Date.now(),
-  });
+  const nextDoc = popAndRebuildOppositeEntry(current.undo, 'redo', current.document);
+  if (nextDoc === undefined) return { ok: false, changed: false, error: 'Nothing to redo' };
   store.setState({
     document: nextDoc,
     dirty: true,

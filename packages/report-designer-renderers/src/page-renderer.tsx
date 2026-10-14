@@ -49,21 +49,23 @@ import { buildReportDesignerScopeData } from './host-data.js';
 import {
   equalReportPageSnapshot,
   equalReportSpreadsheetRuntimeSnapshot,
-  equalReportSpreadsheetSnapshot,
   selectReportPageSnapshot,
   selectReportSpreadsheetRuntimeSnapshot,
-  selectReportSpreadsheetSnapshot,
   type ReportPageSnapshotSlice,
 } from './page-renderer-snapshots.js';
+// plan 598 G1: the verbatim twin trio is single-sourced in spreadsheet-core;
+// report consumes the shared functions under their core names.
+import {
+  equalSpreadsheetPageSnapshot,
+  selectSpreadsheetPageSnapshot,
+} from '@nop-chaos/spreadsheet-core';
 import type { ReportDesignerPageSchema } from './types.js';
 
 export {
   equalReportPageSnapshot,
   equalReportSpreadsheetRuntimeSnapshot,
-  equalReportSpreadsheetSnapshot,
   selectReportPageSnapshot,
   selectReportSpreadsheetRuntimeSnapshot,
-  selectReportSpreadsheetSnapshot,
 };
 
 // [Plan 444 / 02-N3] Extraction evaluation: this file (~665 lines) contains
@@ -233,8 +235,8 @@ function ReportDesignerHostScopeSync(props: {
     props.spreadsheetCore.subscribe,
     props.spreadsheetCore.getSnapshot,
     props.spreadsheetCore.getSnapshot,
-    selectReportSpreadsheetSnapshot,
-    equalReportSpreadsheetSnapshot,
+    selectSpreadsheetPageSnapshot,
+    equalSpreadsheetPageSnapshot,
   );
   const scopeData = useMemo(
     () =>

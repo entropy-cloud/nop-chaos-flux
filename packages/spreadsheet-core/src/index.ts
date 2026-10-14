@@ -136,6 +136,12 @@ export {
   registerSpreadsheetDomain,
 } from './editor-core-adapter.js';
 
+export type { SpreadsheetPageSnapshotSlice } from './snapshot-selectors.js';
+export {
+  selectSpreadsheetPageSnapshot,
+  equalSpreadsheetPageSnapshot,
+} from './snapshot-selectors.js';
+
 /**
  * Shared designer-page schema preamble (cq-4 Phase 4): the designer-family
  * page-input fields common to spreadsheet/report (and available to future

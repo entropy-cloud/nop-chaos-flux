@@ -12,7 +12,7 @@ import {
 } from '../core/search-operations.js';
 import { applySimpleDocumentMutation } from '../core/internal-state.js';
 
-export const handleFind: CommandHandler<FindCommand> = (store, command) => {
+const handleFind: CommandHandler<FindCommand> = (store, command) => {
   const state = store.getState();
   const result = findInDocument(
     state.document,
@@ -23,7 +23,7 @@ export const handleFind: CommandHandler<FindCommand> = (store, command) => {
   return { ok: result !== null, changed: false, data: result };
 };
 
-export const handleFindNext: CommandHandler<FindNextCommand> = (store, command) => {
+const handleFindNext: CommandHandler<FindNextCommand> = (store, command) => {
   const state = store.getState();
   const fromRow = command.from?.row;
   const fromCol = command.from?.col;
@@ -38,7 +38,7 @@ export const handleFindNext: CommandHandler<FindNextCommand> = (store, command) 
   return { ok: result !== null, changed: false, data: result };
 };
 
-export const handleReplace: CommandHandler<ReplaceCommand> = (store, command) => {
+const handleReplace: CommandHandler<ReplaceCommand> = (store, command) => {
   const state = store.getState();
   const nextDoc = replaceInDocument(
     state.document,
@@ -51,7 +51,7 @@ export const handleReplace: CommandHandler<ReplaceCommand> = (store, command) =>
   return { ok: true, changed: true };
 };
 
-export const handleReplaceAll: CommandHandler<ReplaceAllCommand> = (store, command) => {
+const handleReplaceAll: CommandHandler<ReplaceAllCommand> = (store, command) => {
   const state = store.getState();
   const { doc: nextDoc, count } = replaceAllInDocument(
     state.document,

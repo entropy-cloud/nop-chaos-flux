@@ -12,7 +12,7 @@ import {
 } from '../core/clipboard-operations.js';
 import { applySimpleDocumentMutation, pushUndo } from '../core/internal-state.js';
 
-export const handleCopyCells: CommandHandler<CopyCellsCommand> = (store, command) => {
+const handleCopyCells: CommandHandler<CopyCellsCommand> = (store, command) => {
   const state = store.getState();
   const clipboard = copyRangeToClipboard(
     state.document,
@@ -24,7 +24,7 @@ export const handleCopyCells: CommandHandler<CopyCellsCommand> = (store, command
   return { ok: true, changed: false, data: clipboard };
 };
 
-export const handleCutCells: CommandHandler<CutCellsCommand> = (store, command) => {
+const handleCutCells: CommandHandler<CutCellsCommand> = (store, command) => {
   const state = store.getState();
   const clipboard = copyRangeToClipboard(
     state.document,
@@ -36,7 +36,7 @@ export const handleCutCells: CommandHandler<CutCellsCommand> = (store, command) 
   return { ok: true, changed: false, data: clipboard };
 };
 
-export const handlePasteCells: CommandHandler<PasteCellsCommand> = (store, command) => {
+const handlePasteCells: CommandHandler<PasteCellsCommand> = (store, command) => {
   const state = store.getState();
   if (!state.clipboard) return { ok: false, changed: false, error: 'Clipboard is empty' };
   const nextDoc = applyPasteCells(state.document, state.clipboard, command.target);
@@ -46,7 +46,7 @@ export const handlePasteCells: CommandHandler<PasteCellsCommand> = (store, comma
   return { ok: true, changed: true };
 };
 
-export const handleClearCells: CommandHandler<ClearCellsCommand> = (store, command) => {
+const handleClearCells: CommandHandler<ClearCellsCommand> = (store, command) => {
   const state = store.getState();
   const nextDoc = applyClearCells(
     state.document,

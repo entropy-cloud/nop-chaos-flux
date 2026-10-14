@@ -17,3 +17,4 @@ export {
   listEditorDomains,
   clearEditorDomains,
 } from './domain-registry.js';
+export { popAndRebuildOppositeEntry } from './history-rebuild.js';

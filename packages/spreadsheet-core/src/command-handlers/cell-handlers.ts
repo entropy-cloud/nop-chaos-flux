@@ -46,42 +46,42 @@ import {
 import { applySortRange as applySortRangeOperation } from '../core/sort-operations.js';
 import { applySimpleDocumentMutation } from '../core/internal-state.js';
 
-export const handleSetCellValue: CommandHandler<SetCellValueCommand> = (store, command) => {
+const handleSetCellValue: CommandHandler<SetCellValueCommand> = (store, command) => {
   const state = store.getState();
   const nextDoc = applySetCellValue(state.document, command.cell, command.value);
   store.setState(applySimpleDocumentMutation(store.getState(), nextDoc));
   return { ok: true, changed: true };
 };
 
-export const handleSetCellFormula: CommandHandler<SetCellFormulaCommand> = (store, command) => {
+const handleSetCellFormula: CommandHandler<SetCellFormulaCommand> = (store, command) => {
   const state = store.getState();
   const nextDoc = applySetCellFormula(state.document, command.cell, command.formula);
   store.setState(applySimpleDocumentMutation(store.getState(), nextDoc));
   return { ok: true, changed: true };
 };
 
-export const handleSetCellStyle: CommandHandler<SetCellStyleCommand> = (store, command) => {
+const handleSetCellStyle: CommandHandler<SetCellStyleCommand> = (store, command) => {
   const state = store.getState();
   const nextDoc = applySetCellStyle(state.document, command.target, command.styleId);
   store.setState(applySimpleDocumentMutation(store.getState(), nextDoc));
   return { ok: true, changed: true };
 };
 
-export const handleMergeRange: CommandHandler<MergeRangeCommand> = (store, command) => {
+const handleMergeRange: CommandHandler<MergeRangeCommand> = (store, command) => {
   const state = store.getState();
   const nextDoc = applyMergeRange(state.document, command.range);
   store.setState(applySimpleDocumentMutation(store.getState(), nextDoc));
   return { ok: true, changed: true };
 };
 
-export const handleUnmergeRange: CommandHandler<UnmergeRangeCommand> = (store, command) => {
+const handleUnmergeRange: CommandHandler<UnmergeRangeCommand> = (store, command) => {
   const state = store.getState();
   const nextDoc = applyUnmergeRange(state.document, command.range);
   store.setState(applySimpleDocumentMutation(store.getState(), nextDoc));
   return { ok: true, changed: true };
 };
 
-export const handleMergeCellsCenter: CommandHandler<MergeCellsCenterCommand> = (store, command) => {
+const handleMergeCellsCenter: CommandHandler<MergeCellsCenterCommand> = (store, command) => {
   const state = store.getState();
   const nextDoc = applyMergeCellsCenter(state.document, command.range);
   store.setState(applySimpleDocumentMutation(store.getState(), nextDoc));
@@ -99,50 +99,50 @@ function applyStyleHandler<T extends { target: Parameters<typeof applyCellStyleC
   return { ok: true, changed: true };
 }
 
-export const handleSetCellFontFamily: CommandHandler<SetCellFontFamilyCommand> = (store, command) =>
+const handleSetCellFontFamily: CommandHandler<SetCellFontFamilyCommand> = (store, command) =>
   applyStyleHandler(store, command, { fontFamily: command.fontFamily });
 
-export const handleSetCellFontSize: CommandHandler<SetCellFontSizeCommand> = (store, command) =>
+const handleSetCellFontSize: CommandHandler<SetCellFontSizeCommand> = (store, command) =>
   applyStyleHandler(store, command, { fontSize: command.fontSize });
 
-export const handleSetCellFontWeight: CommandHandler<SetCellFontWeightCommand> = (store, command) =>
+const handleSetCellFontWeight: CommandHandler<SetCellFontWeightCommand> = (store, command) =>
   applyStyleHandler(store, command, { fontWeight: command.fontWeight });
 
-export const handleSetCellFontStyle: CommandHandler<SetCellFontStyleCommand> = (store, command) =>
+const handleSetCellFontStyle: CommandHandler<SetCellFontStyleCommand> = (store, command) =>
   applyStyleHandler(store, command, { fontStyle: command.fontStyle });
 
-export const handleSetCellTextDecoration: CommandHandler<SetCellTextDecorationCommand> = (
+const handleSetCellTextDecoration: CommandHandler<SetCellTextDecorationCommand> = (
   store,
   command,
 ) => applyStyleHandler(store, command, { textDecoration: command.textDecoration });
 
-export const handleSetCellFontColor: CommandHandler<SetCellFontColorCommand> = (store, command) =>
+const handleSetCellFontColor: CommandHandler<SetCellFontColorCommand> = (store, command) =>
   applyStyleHandler(store, command, { fontColor: command.color });
 
-export const handleSetCellBackgroundColor: CommandHandler<SetCellBackgroundColorCommand> = (
+const handleSetCellBackgroundColor: CommandHandler<SetCellBackgroundColorCommand> = (
   store,
   command,
 ) => applyStyleHandler(store, command, { backgroundColor: command.color });
 
-export const handleSetCellBorder: CommandHandler<SetCellBorderCommand> = (store, command) => {
+const handleSetCellBorder: CommandHandler<SetCellBorderCommand> = (store, command) => {
   const borderPatch: Partial<CellStyle> = { borderStyle: command.border };
   if (command.color) borderPatch.borderColor = command.color;
   if (command.width) borderPatch.borderWidth = command.width;
   return applyStyleHandler(store, command, borderPatch);
 };
 
-export const handleSetCellTextAlign: CommandHandler<SetCellTextAlignCommand> = (store, command) =>
+const handleSetCellTextAlign: CommandHandler<SetCellTextAlignCommand> = (store, command) =>
   applyStyleHandler(store, command, { textAlign: command.textAlign });
 
-export const handleSetCellVerticalAlign: CommandHandler<SetCellVerticalAlignCommand> = (
+const handleSetCellVerticalAlign: CommandHandler<SetCellVerticalAlignCommand> = (
   store,
   command,
 ) => applyStyleHandler(store, command, { verticalAlign: command.verticalAlign });
 
-export const handleSetCellWrapText: CommandHandler<SetCellWrapTextCommand> = (store, command) =>
+const handleSetCellWrapText: CommandHandler<SetCellWrapTextCommand> = (store, command) =>
   applyStyleHandler(store, command, { wrapText: command.wrapText });
 
-export const handleSetCellNumberFormat: CommandHandler<SetCellNumberFormatCommand> = (
+const handleSetCellNumberFormat: CommandHandler<SetCellNumberFormatCommand> = (
   store,
   command,
 ) => {
@@ -152,49 +152,49 @@ export const handleSetCellNumberFormat: CommandHandler<SetCellNumberFormatComman
   return { ok: true, changed: true };
 };
 
-export const handleFillDown: CommandHandler<FillDownCommand> = (store, command) => {
+const handleFillDown: CommandHandler<FillDownCommand> = (store, command) => {
   const state = store.getState();
   const nextDoc = applyFillDown(state.document, command.range);
   store.setState(applySimpleDocumentMutation(store.getState(), nextDoc));
   return { ok: true, changed: true };
 };
 
-export const handleFillRight: CommandHandler<FillRightCommand> = (store, command) => {
+const handleFillRight: CommandHandler<FillRightCommand> = (store, command) => {
   const state = store.getState();
   const nextDoc = applyFillRight(state.document, command.range);
   store.setState(applySimpleDocumentMutation(store.getState(), nextDoc));
   return { ok: true, changed: true };
 };
 
-export const handleFillSeries: CommandHandler<FillSeriesCommand> = (store, command) => {
+const handleFillSeries: CommandHandler<FillSeriesCommand> = (store, command) => {
   const state = store.getState();
   const nextDoc = applyFillSeries(state.document, command.range, command.direction);
   store.setState(applySimpleDocumentMutation(store.getState(), nextDoc));
   return { ok: true, changed: true };
 };
 
-export const handleAddComment: CommandHandler<AddCommentCommand> = (store, command) => {
+const handleAddComment: CommandHandler<AddCommentCommand> = (store, command) => {
   const state = store.getState();
   const nextDoc = applyAddComment(state.document, command.cell, command.text, command.author);
   store.setState(applySimpleDocumentMutation(store.getState(), nextDoc));
   return { ok: true, changed: true };
 };
 
-export const handleEditComment: CommandHandler<EditCommentCommand> = (store, command) => {
+const handleEditComment: CommandHandler<EditCommentCommand> = (store, command) => {
   const state = store.getState();
   const nextDoc = applyEditComment(state.document, command.cell, command.text);
   store.setState(applySimpleDocumentMutation(store.getState(), nextDoc));
   return { ok: true, changed: true };
 };
 
-export const handleDeleteComment: CommandHandler<DeleteCommentCommand> = (store, command) => {
+const handleDeleteComment: CommandHandler<DeleteCommentCommand> = (store, command) => {
   const state = store.getState();
   const nextDoc = applyDeleteComment(state.document, command.cell);
   store.setState(applySimpleDocumentMutation(store.getState(), nextDoc));
   return { ok: true, changed: true };
 };
 
-export const handleSortRange: CommandHandler<SortRangeCommand> = (store, command) => {
+const handleSortRange: CommandHandler<SortRangeCommand> = (store, command) => {
   const state = store.getState();
   const nextDoc = applySortRangeOperation(
     state.document,

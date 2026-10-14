@@ -1,6 +1,12 @@
 import type { ReportDesignerCore, ReportTemplateDocument } from '@nop-chaos/report-designer-core';
 import type { SpreadsheetRuntimeSnapshot } from '@nop-chaos/spreadsheet-core';
 
+// Report-spreadsheet snapshot twins deleted (plan 598 G1): the verbatim
+// identical trio (ReportSpreadsheetSnapshotSlice / select /
+// equal, ex :55-95) is single-sourced in @nop-chaos/spreadsheet-core
+// (snapshot-selectors.ts). The report-side RuntimeSlice variant below is
+// deliberately distinct (document/history/dirty projection) and stays local.
+
 export interface ReportPageSnapshotSlice {
   document: ReportTemplateDocument;
   spreadsheetSyncSource?: ReportTemplateDocument['spreadsheet'];
@@ -49,48 +55,6 @@ export function equalReportPageSnapshot(a: ReportPageSnapshotSlice, b: ReportPag
     a.preview === b.preview &&
     a.activeMeta === b.activeMeta &&
     a.fieldSources === b.fieldSources
-  );
-}
-
-export interface ReportSpreadsheetSnapshotSlice {
-  document: SpreadsheetRuntimeSnapshot['document'];
-  activeSheetId: SpreadsheetRuntimeSnapshot['activeSheetId'];
-  selection: SpreadsheetRuntimeSnapshot['selection'];
-  history: SpreadsheetRuntimeSnapshot['history'];
-  dirty: boolean;
-  readonly: boolean;
-  viewport: SpreadsheetRuntimeSnapshot['viewport'];
-  layout: SpreadsheetRuntimeSnapshot['layout'];
-}
-
-export function selectReportSpreadsheetSnapshot(
-  snapshot: SpreadsheetRuntimeSnapshot,
-): ReportSpreadsheetSnapshotSlice {
-  return {
-    document: snapshot.document,
-    activeSheetId: snapshot.activeSheetId,
-    selection: snapshot.selection,
-    history: snapshot.history,
-    dirty: snapshot.dirty,
-    readonly: snapshot.readonly,
-    viewport: snapshot.viewport,
-    layout: snapshot.layout,
-  };
-}
-
-export function equalReportSpreadsheetSnapshot(
-  a: ReportSpreadsheetSnapshotSlice,
-  b: ReportSpreadsheetSnapshotSlice,
-) {
-  return (
-    a.document === b.document &&
-    a.activeSheetId === b.activeSheetId &&
-    a.selection === b.selection &&
-    a.history === b.history &&
-    a.dirty === b.dirty &&
-    a.readonly === b.readonly &&
-    a.viewport === b.viewport &&
-    a.layout === b.layout
   );
 }
 

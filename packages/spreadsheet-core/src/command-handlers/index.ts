@@ -1,4 +1,5 @@
 import type { CommandHandler, CommandHandlerRegistry } from './types.js';
+import type { SpreadsheetCommand } from '../commands.js';
 import { registerCellHandlers } from './cell-handlers.js';
 import { registerClipboardHandlers } from './clipboard-handlers.js';
 import { registerSheetHandlers } from './sheet-handlers.js';
@@ -25,7 +26,9 @@ export function createCommandHandlerRegistry(): CommandHandlerRegistry {
 
 // View-safe commands whitelist — only these commands are allowed in readonly mode.
 // Commands that mutate state (including undo/redo, which modify history) are rejected.
-export const READ_ONLY_COMMANDS = new Set([
+// plan 598 G4：retype Set<SpreadsheetCommand['type']>（镜像 report MUTATION_COMMAND_TYPES
+// 的 WA-report-designer-core-003 修复）——命令联合漂移即编译错，行为零变更。
+export const READ_ONLY_COMMANDS: Set<SpreadsheetCommand['type']> = new Set([
   'spreadsheet:setActiveSheet',
   'spreadsheet:setSelection',
   'spreadsheet:setViewport',

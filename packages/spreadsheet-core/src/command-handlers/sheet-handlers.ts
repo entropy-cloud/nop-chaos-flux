@@ -38,14 +38,14 @@ import {
 import { applyClearRowFilters, applyFilterRowsByCellValue } from '../core/filter-operations.js';
 import { applySimpleDocumentMutation, pushUndo } from '../core/internal-state.js';
 
-export const handleAddSheet: CommandHandler<AddSheetCommand> = (store, command) => {
+const handleAddSheet: CommandHandler<AddSheetCommand> = (store, command) => {
   const state = store.getState();
   const nextDoc = applyAddSheet(state.document, command.name, command.index);
   store.setState(applySimpleDocumentMutation(store.getState(), nextDoc));
   return { ok: true, changed: true };
 };
 
-export const handleRemoveSheet: CommandHandler<RemoveSheetCommand> = (store, command) => {
+const handleRemoveSheet: CommandHandler<RemoveSheetCommand> = (store, command) => {
   const state = store.getState();
   const nextDoc = applyRemoveSheet(state.document, command.sheetId);
   const updated = pushUndo(store.getState());
@@ -63,42 +63,42 @@ export const handleRemoveSheet: CommandHandler<RemoveSheetCommand> = (store, com
   return { ok: true, changed: true };
 };
 
-export const handleRenameSheet: CommandHandler<RenameSheetCommand> = (store, command) => {
+const handleRenameSheet: CommandHandler<RenameSheetCommand> = (store, command) => {
   const state = store.getState();
   const nextDoc = applyRenameSheet(state.document, command.sheetId, command.name);
   store.setState(applySimpleDocumentMutation(store.getState(), nextDoc));
   return { ok: true, changed: true };
 };
 
-export const handleMoveSheet: CommandHandler<MoveSheetCommand> = (store, command) => {
+const handleMoveSheet: CommandHandler<MoveSheetCommand> = (store, command) => {
   const state = store.getState();
   const nextDoc = applyMoveSheet(state.document, command.sheetId, command.targetIndex);
   store.setState(applySimpleDocumentMutation(store.getState(), nextDoc));
   return { ok: true, changed: true };
 };
 
-export const handleCopySheet: CommandHandler<CopySheetCommand> = (store, command) => {
+const handleCopySheet: CommandHandler<CopySheetCommand> = (store, command) => {
   const state = store.getState();
   const nextDoc = applyCopySheet(state.document, command.sheetId, command.name);
   store.setState(applySimpleDocumentMutation(store.getState(), nextDoc));
   return { ok: true, changed: true };
 };
 
-export const handleSetSheetTabColor: CommandHandler<SetSheetTabColorCommand> = (store, command) => {
+const handleSetSheetTabColor: CommandHandler<SetSheetTabColorCommand> = (store, command) => {
   const state = store.getState();
   const nextDoc = applySetSheetTabColor(state.document, command.sheetId, command.color);
   store.setState(applySimpleDocumentMutation(store.getState(), nextDoc));
   return { ok: true, changed: true };
 };
 
-export const handleHideSheet: CommandHandler<HideSheetCommand> = (store, command) => {
+const handleHideSheet: CommandHandler<HideSheetCommand> = (store, command) => {
   const state = store.getState();
   const nextDoc = applyHideSheet(state.document, command.sheetId, command.hidden);
   store.setState(applySimpleDocumentMutation(store.getState(), nextDoc));
   return { ok: true, changed: true };
 };
 
-export const handleProtectSheet: CommandHandler<ProtectSheetCommand> = (store, command) => {
+const handleProtectSheet: CommandHandler<ProtectSheetCommand> = (store, command) => {
   const state = store.getState();
   const nextDoc = applyProtectSheet(
     state.document,
@@ -110,49 +110,49 @@ export const handleProtectSheet: CommandHandler<ProtectSheetCommand> = (store, c
   return { ok: true, changed: true };
 };
 
-export const handleResizeRow: CommandHandler<ResizeRowCommand> = (store, command) => {
+const handleResizeRow: CommandHandler<ResizeRowCommand> = (store, command) => {
   const state = store.getState();
   const nextDoc = applyResizeRow(state.document, command.sheetId, command.row, command.height);
   store.setState(applySimpleDocumentMutation(store.getState(), nextDoc));
   return { ok: true, changed: true };
 };
 
-export const handleResizeColumn: CommandHandler<ResizeColumnCommand> = (store, command) => {
+const handleResizeColumn: CommandHandler<ResizeColumnCommand> = (store, command) => {
   const state = store.getState();
   const nextDoc = applyResizeColumn(state.document, command.sheetId, command.col, command.width);
   store.setState(applySimpleDocumentMutation(store.getState(), nextDoc));
   return { ok: true, changed: true };
 };
 
-export const handleHideRow: CommandHandler<HideRowCommand> = (store, command) => {
+const handleHideRow: CommandHandler<HideRowCommand> = (store, command) => {
   const state = store.getState();
   const nextDoc = applyHideRow(state.document, command.sheetId, command.row, command.hidden);
   store.setState(applySimpleDocumentMutation(store.getState(), nextDoc));
   return { ok: true, changed: true };
 };
 
-export const handleHideColumn: CommandHandler<HideColumnCommand> = (store, command) => {
+const handleHideColumn: CommandHandler<HideColumnCommand> = (store, command) => {
   const state = store.getState();
   const nextDoc = applyHideColumn(state.document, command.sheetId, command.col, command.hidden);
   store.setState(applySimpleDocumentMutation(store.getState(), nextDoc));
   return { ok: true, changed: true };
 };
 
-export const handleFreezePanes: CommandHandler<FreezePanesCommand> = (store, command) => {
+const handleFreezePanes: CommandHandler<FreezePanesCommand> = (store, command) => {
   const state = store.getState();
   const nextDoc = applyFreezePanes(state.document, command.sheetId, command.row, command.col);
   store.setState(applySimpleDocumentMutation(store.getState(), nextDoc));
   return { ok: true, changed: true };
 };
 
-export const handleUnfreezePanes: CommandHandler<UnfreezePanesCommand> = (store, command) => {
+const handleUnfreezePanes: CommandHandler<UnfreezePanesCommand> = (store, command) => {
   const state = store.getState();
   const nextDoc = applyUnfreezePanes(state.document, command.sheetId);
   store.setState(applySimpleDocumentMutation(store.getState(), nextDoc));
   return { ok: true, changed: true };
 };
 
-export const handleFilterRowsByCellValue: CommandHandler<FilterRowsByCellValueCommand> = (
+const handleFilterRowsByCellValue: CommandHandler<FilterRowsByCellValueCommand> = (
   store,
   command,
 ) => {
@@ -168,14 +168,14 @@ export const handleFilterRowsByCellValue: CommandHandler<FilterRowsByCellValueCo
   return { ok: true, changed: true };
 };
 
-export const handleClearRowFilters: CommandHandler<ClearRowFiltersCommand> = (store, command) => {
+const handleClearRowFilters: CommandHandler<ClearRowFiltersCommand> = (store, command) => {
   const state = store.getState();
   const nextDoc = applyClearRowFilters(state.document, command.sheetId);
   store.setState(applySimpleDocumentMutation(store.getState(), nextDoc));
   return { ok: true, changed: true };
 };
 
-export const handleAutoFitRow: CommandHandler<AutoFitRowCommand> = () => {
+const handleAutoFitRow: CommandHandler<AutoFitRowCommand> = () => {
   return {
     ok: false,
     changed: false,
@@ -183,7 +183,7 @@ export const handleAutoFitRow: CommandHandler<AutoFitRowCommand> = () => {
   };
 };
 
-export const handleAutoFitColumn: CommandHandler<AutoFitColumnCommand> = () => {
+const handleAutoFitColumn: CommandHandler<AutoFitColumnCommand> = () => {
   return {
     ok: false,
     changed: false,

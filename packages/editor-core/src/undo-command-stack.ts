@@ -9,13 +9,23 @@ export const DEFAULT_COALESCE_WINDOW_MS = 500;
 /**
  * UndoCommandStack —— undo/redo 栈管理（对齐 `UndoStack`，design-undo-redo.md §4.1 + §4.1.2）。
  *
- * **栈元素不调换字段**：
- * - undo：从 undo 栈 peek entry →（host apply inverse）→ **同一个 entry 原样**移入 redo 栈。
- * - redo：从 redo 栈 peek entry →（host apply forward）→ **同一个 entry 原样**移回 undo 栈。
- * - undo-of-redo / redo-of-undo 自动正确：entry 永远持原始 forward + inverse。
+ * **栈元素 entry-agnostic**（plan 598 G3 doc 修复，ex「同 entry 原样移入」文档）：
+ * 本类只管栈结构（push/pop/peek/深度/canUndo/canRedo）；entry 如何在 undo/redo 两侧
+ * 流转由 host 约定。现行 host 约定（两 dispatcher——spreadsheet-core history-handlers、
+ * report-designer-core core-dispatch——均经共享 helper `popAndRebuildOppositeEntry`
+ * 实施，doc/impl split 顺带修复）：
+ * - undo：从 undo 栈 peek/pop entry → host apply `entry.inverse` → **对侧 redo entry 以
+ *   操作时点 `current.document` 重建** {forward: current, inverse: restored, timestamp}。
+ * - redo：从 redo 栈 peek/pop entry → host apply `entry.forward` → 对侧 undo entry 以
+ *   操作时点 `current.document` 重建 {forward: restored, inverse: current, timestamp}。
+ * - **Drift 论证**：刻意不把原 entry 原样移入对侧——事务开启期间文档可漂移（事务内
+ *   mutation / recalc 不入栈），若原样移入，漂移后 undo→redo 会恢复漂移前的旧 forward；
+ *   操作时点重建使 redo 恢复 undo 时点文档（drift 后 redo 恢复 undo 时点文档）。
+ * - 另一 host 约定并存：editor-core 自带会话 API（editor-core.ts `EditorCore.undo/redo`，
+ *   结构化域 diff）仍按「同 entry 原样移入」流转——那是 types.ts `EditorCore` 契约的既有
+ *   语义，与本类无冲突（本类 entry-agnostic）。
  *
- * 本类只管栈结构（push/pop/peek/深度/canUndo/canRedo）；apply 由 host（EditorCore）经
- * `adapter.applyDiff` 执行。纯逻辑，Vitest 单测先行。
+ * 纯逻辑，Vitest 单测先行。
  */
 export class UndoCommandStack<TDiff = unknown> {
   private undoStack: EditorDiffEntry<TDiff>[] = [];
@@ -35,7 +45,7 @@ export class UndoCommandStack<TDiff = unknown> {
     this.redoStack.length = 0;
   }
 
-  /** 推入 undo 栈（redo 成功后由 host 原样移回——不截断 redo 链）。 */
+  /** 推入 undo 栈（redo 成功后由 host 经 rebuild 语义推回——不截断 redo 链）。 */
   pushUndo(entry: EditorDiffEntry<TDiff>): void {
     this.undoStack.push(entry);
     if (this.undoStack.length > this.maxDepth) {
@@ -48,12 +58,12 @@ export class UndoCommandStack<TDiff = unknown> {
     return this.undoStack[this.undoStack.length - 1];
   }
 
-  /** 弹出 undo 栈顶 entry（undo 成功后由 host 移入 redo 栈）。 */
+  /** 弹出 undo 栈顶 entry（undo 成功后由 host 经 rebuild 语义入 redo 栈）。 */
   popUndo(): EditorDiffEntry<TDiff> | undefined {
     return this.undoStack.pop();
   }
 
-  /** 推入 redo 栈（undo 成功后由 host 原样移入）。 */
+  /** 推入 redo 栈（undo 成功后由 host 以操作时点文档 rebuild 推入）。 */
   pushRedo(entry: EditorDiffEntry<TDiff>): void {
     this.redoStack.push(entry);
   }
@@ -92,7 +102,7 @@ export class UndoCommandStack<TDiff = unknown> {
     this.redoStack.length = 0;
   }
 
-  /** 弹出 redo 栈顶 entry（redo 成功后由 host 移回 undo 栈）。 */
+  /** 弹出 redo 栈顶 entry（redo 成功后由 host 经 rebuild 语义推回 undo 栈）。 */
   popRedo(): EditorDiffEntry<TDiff> | undefined {
     return this.redoStack.pop();
   }

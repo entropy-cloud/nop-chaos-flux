@@ -2,14 +2,16 @@ import { Profiler } from 'react';
 import { act, render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { useSyncExternalStoreWithSelector } from 'use-sync-external-store/shim/with-selector';
-import { createEmptyDocument } from '@nop-chaos/spreadsheet-core';
+import {
+  createEmptyDocument,
+  equalSpreadsheetPageSnapshot,
+  selectSpreadsheetPageSnapshot,
+} from '@nop-chaos/spreadsheet-core';
 import { createReportTemplateDocument } from '@nop-chaos/report-designer-core';
 import {
   equalReportPageSnapshot,
-  equalReportSpreadsheetSnapshot,
   equalReportSpreadsheetRuntimeSnapshot,
   selectReportPageSnapshot,
-  selectReportSpreadsheetSnapshot,
   selectReportSpreadsheetRuntimeSnapshot,
 } from './page-renderer.js';
 
@@ -120,8 +122,8 @@ describe('report-designer page snapshot selectors', () => {
         store.subscribe,
         store.getSnapshot,
         store.getSnapshot,
-        selectReportSpreadsheetSnapshot,
-        equalReportSpreadsheetSnapshot,
+        selectSpreadsheetPageSnapshot,
+        equalSpreadsheetPageSnapshot,
       );
       return <span data-testid="report-sheet-readonly">{String(snapshot.readonly)}</span>;
     }

@@ -13,14 +13,14 @@ import {
 } from '../core/structure-operations.js';
 import { applySimpleDocumentMutation } from '../core/internal-state.js';
 
-export const handleInsertRow: CommandHandler<InsertRowCommand> = (store, command) => {
+const handleInsertRow: CommandHandler<InsertRowCommand> = (store, command) => {
   const state = store.getState();
   const nextDoc = applyInsertRow(state.document, command.sheetId, command.row, command.count ?? 1);
   store.setState(applySimpleDocumentMutation(store.getState(), nextDoc));
   return { ok: true, changed: true };
 };
 
-export const handleInsertColumn: CommandHandler<InsertColumnCommand> = (store, command) => {
+const handleInsertColumn: CommandHandler<InsertColumnCommand> = (store, command) => {
   const state = store.getState();
   const nextDoc = applyInsertColumn(
     state.document,
@@ -32,14 +32,14 @@ export const handleInsertColumn: CommandHandler<InsertColumnCommand> = (store, c
   return { ok: true, changed: true };
 };
 
-export const handleDeleteRow: CommandHandler<DeleteRowCommand> = (store, command) => {
+const handleDeleteRow: CommandHandler<DeleteRowCommand> = (store, command) => {
   const state = store.getState();
   const nextDoc = applyDeleteRow(state.document, command.sheetId, command.row, command.count ?? 1);
   store.setState(applySimpleDocumentMutation(store.getState(), nextDoc));
   return { ok: true, changed: true };
 };
 
-export const handleDeleteColumn: CommandHandler<DeleteColumnCommand> = (store, command) => {
+const handleDeleteColumn: CommandHandler<DeleteColumnCommand> = (store, command) => {
   const state = store.getState();
   const nextDoc = applyDeleteColumn(
     state.document,
