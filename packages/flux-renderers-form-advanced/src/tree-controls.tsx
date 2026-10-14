@@ -1,6 +1,6 @@
 import React, { useRef } from 'react';
 import type { RendererComponentProps, RendererDefinition } from '@nop-chaos/flux-core';
-import { useInputComponentHandle, type SourceTransientState } from '@nop-chaos/flux-react';
+import { useInputComponentHandle } from '@nop-chaos/flux-react';
 import { t } from '@nop-chaos/flux-i18n';
 import {
   Button,
@@ -11,7 +11,6 @@ import {
   SheetContent,
   SheetHeader,
   SheetTitle,
-  Spinner,
   cn,
   useIsMobile,
 } from '@nop-chaos/ui';
@@ -19,75 +18,42 @@ import { ChevronsUpDownIcon, XIcon } from 'lucide-react';
 import {
   createFieldValidation,
   formFieldRules,
-  resolveSourceErrorRefs,
-  useFormFieldFromProps,
   validateInputFieldSchema,
 } from '@nop-chaos/flux-renderers-form';
 import type { InputTreeSchema, TreeSelectSchema } from '@nop-chaos/flux-renderers-form';
 import {
-  buildTreeOptionMetaList,
-  getTreeOptionConfig,
-  type TreeOptionMeta,
-} from './tree-options.js';
-import {
-  getSourceErrorMessage,
-  isMultipleMode,
-  useTreeLazyChildren,
-  useTreeRemoteSearch,
-  useTreeSelectController,
-} from './tree-control-controllers.js';
-import { TreeOptionList } from './tree-option-list.js';
+  useTreeControlPipeline,
+} from './tree-control-pipeline.js';
+import { useTreeSelectController } from './tree-control-controllers.js';
 
 const TREE_METHODS = ['clear', 'focus'] as const;
 
 function InputTreeRenderer(props: RendererComponentProps<InputTreeSchema>) {
   const name = String(props.props.name ?? '');
-  const { value, handlers, presentation } = useFormFieldFromProps(props);
-  const multiple = isMultipleMode(props.props.treeMode);
-  const optionsSourceState = props.props.optionsSourceState as SourceTransientState | undefined;
-  const enableNodePath = props.props.enableNodePath === true;
+  const fieldLabel = String((props.props.label ?? name) || 'tree');
+  const searchLabel = `${t('flux.common.search')} ${fieldLabel}`;
+  const pipeline = useTreeControlPipeline({
+    props,
+    fieldLabel,
+    searchLabel,
+    slotPrefix: 'input-tree',
+  });
+  const {
+    value,
+    handlers,
+    presentation,
+    multiple,
+    baseOptions,
+    lazyEnabled,
+    optionListElement,
+    sourceFeedbackElement,
+  } = pipeline;
   // [G7-R2-视角4-01] schema `clearable` exposure for input-tree — the clear
   // affordance was previously reachable only through the component handle.
   const clearableEnabled = (props.props as InputTreeSchema).clearable === true;
   const hasSelection = multiple
     ? Array.isArray(value) && value.length > 0
     : value !== undefined && value !== null && value !== '';
-  const {
-    childrenKey,
-    labelField,
-    valueField,
-    onlyLeaf,
-    showPathLabel,
-    options: treeOptions,
-  } = props.props as InputTreeSchema;
-  // H8: getTreeOptionConfig returns a new object each call; without memoizing,
-  // the new `config` identity is a dep of useTreeRemoteSearch's 300ms debounce
-  // effect, so every re-render reset the timer and remote search never fired.
-  const treeConfig = React.useMemo(
-    () => getTreeOptionConfig({ childrenKey, labelField, valueField, onlyLeaf, showPathLabel, pathSeparator: props.props.pathSeparator }),
-    [childrenKey, labelField, valueField, onlyLeaf, showPathLabel, props.props.pathSeparator],
-  );
-  const baseOptions = React.useMemo(
-    () => buildTreeOptionMetaList(treeOptions, treeConfig),
-    [treeOptions, treeConfig],
-  );
-  const valuePathMap = React.useMemo(() => {
-    const map = new Map<unknown, string>();
-    function walk(options: TreeOptionMeta[]) {
-      for (const opt of options) {
-        map.set(opt.value, opt.valuePath);
-        if (opt.children.length > 0) {
-          walk(opt.children);
-        }
-      }
-    }
-    walk(baseOptions);
-    return map;
-  }, [baseOptions]);
-  const [query, setQuery] = React.useState('');
-  const remoteSearchActive =
-    props.props.searchable === true && Boolean(props.props.searchSource);
-  const lazyEnabled = Boolean(props.props.childrenSource);
   if (
     !lazyEnabled &&
     baseOptions.some((opt) => opt.deferChildren === true)
@@ -97,41 +63,6 @@ function InputTreeRenderer(props: RendererComponentProps<InputTreeSchema>) {
         'Lazy children will not load; node degrades to no children.',
     );
   }
-  const { remoteOptions, loading: searchLoading, error: searchError } = useTreeRemoteSearch({
-    query,
-    searchSource: props.props.searchSource,
-    searchable: props.props.searchable === true,
-    disabled:
-      presentation.effectiveDisabled ||
-      presentation.readOnly ||
-      optionsSourceState?.loading === true,
-    helpers: props.helpers,
-    config: treeConfig,
-  });
-  const {
-    options: lazyOptions,
-    nodeStates: lazyNodeStates,
-    loadChildren: lazyLoadChildren,
-    retryLoadChildren: lazyRetryChildren,
-  } = useTreeLazyChildren({
-    baseOptions,
-    childrenSource: props.props.childrenSource,
-    helpers: props.helpers,
-    config: treeConfig,
-    enabled: lazyEnabled && !remoteSearchActive,
-  });
-  const options = remoteSearchActive
-    ? remoteOptions ?? baseOptions
-    : lazyEnabled
-      ? lazyOptions
-      : baseOptions;
-  const sourceError = getSourceErrorMessage(optionsSourceState) ?? searchError;
-  const fieldLabel = String((props.props.label ?? name) || 'tree');
-  const searchLabel = `${t('flux.common.search')} ${fieldLabel}`;
-  // plan 589 G1b ruling (a): this site's id strings stay name-only (VERBATIM,
-  // host-visible contract) — no cid qualification here, unlike the choice sites.
-  const sourceErrorRefs = resolveSourceErrorRefs({ instanceKey: name, errorMessage: sourceError });
-  const loadingId = name ? `${name}-source-loading` : undefined;
 
   const rootRef = useRef<HTMLDivElement | null>(null);
 
@@ -169,143 +100,44 @@ function InputTreeRenderer(props: RendererComponentProps<InputTreeSchema>) {
             </Button>
           </div>
         ) : null}
-        <TreeOptionList
-          options={options}
-          value={value}
-          multiple={multiple}
-          cascade={props.props.cascade === true}
-          onlyLeaf={props.props.onlyLeaf === true}
-          showPathLabel={props.props.showPathLabel === true}
-          searchable={props.props.searchable === true}
-          disabled={
-            presentation.effectiveDisabled ||
-            presentation.readOnly ||
-            optionsSourceState?.loading === true
-          }
-          onChange={(nextValue) => {
-            if (enableNodePath) {
-              if (multiple && Array.isArray(nextValue)) {
-                handlers.onChange(nextValue.map((v: unknown) => valuePathMap.get(v) ?? String(v)));
-              } else {
-                handlers.onChange(valuePathMap.get(nextValue) ?? String(nextValue));
-              }
-            } else {
-              handlers.onChange(nextValue);
-            }
-          }}
-          ariaLabel={fieldLabel}
-          searchLabel={searchLabel}
-          describedBy={sourceErrorRefs.describedby}
-          loadingDescriptionId={loadingId}
-          loading={optionsSourceState?.loading === true || searchLoading}
-          errorMessage={sourceErrorRefs.errormessage}
-          invalid={Boolean(sourceError)}
-          virtualThreshold={props.props.virtualThreshold}
-          remoteSearch={remoteSearchActive}
-          onQueryChange={setQuery}
-          lazyNodeStates={lazyNodeStates}
-          onLazyExpand={lazyLoadChildren}
-          onLazyRetry={lazyRetryChildren}
-        />
+        {optionListElement}
       </div>
-      {sourceErrorRefs.spanProps ? (
-        <span {...sourceErrorRefs.spanProps} data-slot="input-tree-source-error">
-          {sourceError}
-        </span>
-      ) : optionsSourceState?.loading === true || searchLoading ? (
-        <span
-          id={loadingId}
-          data-slot="input-tree-source-loading"
-          role="status"
-          aria-live="polite"
-          className="flex items-center gap-1.5"
-        >
-          <Spinner className="size-4" aria-hidden="true" />
-          <span>{t('flux.common.loading')}</span>
-        </span>
-      ) : null}
+      {sourceFeedbackElement}
     </div>
   );
 }
 
 function TreeSelectRenderer(props: RendererComponentProps<TreeSelectSchema>) {
   const name = String(props.props.name ?? '');
-  const { value, handlers, presentation } = useFormFieldFromProps(props);
-  const multiple = isMultipleMode(props.props.treeMode);
-  const optionsSourceState = props.props.optionsSourceState as SourceTransientState | undefined;
-  const enableNodePath = props.props.enableNodePath === true;
-  const {
-    childrenKey: selectChildrenKey,
-    labelField: selectLabelField,
-    valueField: selectValueField,
-    onlyLeaf: selectOnlyLeaf,
-    showPathLabel: selectShowPathLabel,
-    options: selectTreeOptions,
-  } = props.props as TreeSelectSchema;
-  const treeConfig = React.useMemo(
-    () =>
-      getTreeOptionConfig({
-        childrenKey: selectChildrenKey,
-        labelField: selectLabelField,
-        valueField: selectValueField,
-        onlyLeaf: selectOnlyLeaf,
-        showPathLabel: selectShowPathLabel,
-        pathSeparator: props.props.pathSeparator,
-      }),
-    [selectChildrenKey, selectLabelField, selectValueField, selectOnlyLeaf, selectShowPathLabel, props.props.pathSeparator],
-  );
-  const baseOptions = React.useMemo(
-    () => buildTreeOptionMetaList(selectTreeOptions, treeConfig),
-    [selectTreeOptions, treeConfig],
-  );
-  const valuePathMap = React.useMemo(() => {
-    const map = new Map<unknown, string>();
-    function walk(options: TreeOptionMeta[]) {
-      for (const opt of options) {
-        map.set(opt.value, opt.valuePath);
-        if (opt.children.length > 0) {
-          walk(opt.children);
-        }
-      }
-    }
-    walk(baseOptions);
-    return map;
-  }, [baseOptions]);
-  const [query, setQuery] = React.useState('');
+  const fieldLabel = String(props.props.label ?? name);
+  const searchLabel = `${t('flux.common.search')} ${fieldLabel || 'tree'}`;
   const [sheetOpen, setSheetOpen] = React.useState(false);
   const [popoverOpen, setPopoverOpen] = React.useState(false);
   const isMobile = useIsMobile();
-  const remoteSearchActive =
-    props.props.searchable === true && Boolean(props.props.searchSource);
-  const lazyEnabled = Boolean(props.props.childrenSource);
-  const { remoteOptions, loading: searchLoading, error: searchError } = useTreeRemoteSearch({
-    query,
-    searchSource: props.props.searchSource,
-    searchable: props.props.searchable === true,
-    disabled:
-      presentation.effectiveDisabled ||
-      presentation.readOnly ||
-      optionsSourceState?.loading === true,
-    helpers: props.helpers,
-    config: treeConfig,
+  const pipeline = useTreeControlPipeline({
+    props,
+    fieldLabel,
+    searchLabel,
+    slotPrefix: 'tree-select',
+    onSinglePickClose: () => {
+      setPopoverOpen(false);
+      setSheetOpen(false);
+    },
   });
   const {
-    options: lazyOptions,
-    nodeStates: lazyNodeStates,
-    loadChildren: lazyLoadChildren,
-    retryLoadChildren: lazyRetryChildren,
-  } = useTreeLazyChildren({
-    baseOptions,
-    childrenSource: props.props.childrenSource,
-    helpers: props.helpers,
-    config: treeConfig,
-    enabled: lazyEnabled && !remoteSearchActive,
-  });
-  const options = remoteSearchActive
-    ? remoteOptions ?? baseOptions
-    : lazyEnabled
-      ? lazyOptions
-      : baseOptions;
+    value,
+    handlers,
+    presentation,
+    multiple,
+    treeConfig,
+    options,
+    optionListDisabled: triggerDisabled,
+    optionListElement,
+    sourceError,
+    sourceErrorAriaDescribedBy,
+    sourceErrorAriaErrorMessage,
+    sourceFeedbackElement,
+  } = pipeline;
   const { triggerText, triggerLabel, hasSelection } = useTreeSelectController({
     options,
     treeConfig,
@@ -313,13 +145,6 @@ function TreeSelectRenderer(props: RendererComponentProps<TreeSelectSchema>) {
     multiple,
     placeholder: props.props.placeholder,
   });
-  const sourceError = getSourceErrorMessage(optionsSourceState) ?? searchError;
-  const fieldLabel = String(props.props.label ?? name);
-  const searchLabel = `${t('flux.common.search')} ${fieldLabel || 'tree'}`;
-  // plan 589 G1b ruling (a): this site's id strings stay name-only (VERBATIM,
-  // host-visible contract) — no cid qualification here, unlike the choice sites.
-  const sourceErrorRefs = resolveSourceErrorRefs({ instanceKey: name, errorMessage: sourceError });
-  const loadingId = name ? `${name}-source-loading` : undefined;
 
   const rootRef = useRef<HTMLDivElement | null>(null);
 
@@ -334,55 +159,6 @@ function TreeSelectRenderer(props: RendererComponentProps<TreeSelectSchema>) {
     isVisible: () => props.meta.visible !== false,
     clearValue: () => handlers.onChange(multiple ? [] : undefined),
   });
-
-  const triggerDisabled =
-    presentation.effectiveDisabled ||
-    presentation.readOnly ||
-    optionsSourceState?.loading === true;
-
-  const treeOptionListElement = (
-    <TreeOptionList
-      options={options}
-      value={value}
-      multiple={multiple}
-      cascade={props.props.cascade === true}
-      onlyLeaf={props.props.onlyLeaf === true}
-      showPathLabel={props.props.showPathLabel === true}
-      searchable={props.props.searchable === true}
-      disabled={triggerDisabled}
-      onChange={(nextValue) => {
-        if (enableNodePath) {
-          if (multiple && Array.isArray(nextValue)) {
-            handlers.onChange(nextValue.map((v: unknown) => valuePathMap.get(v) ?? String(v)));
-          } else {
-            handlers.onChange(valuePathMap.get(nextValue) ?? String(nextValue));
-          }
-        } else {
-          handlers.onChange(nextValue);
-        }
-        // G2-R2-视角6-01 (plan 486 Phase 2): single-select commits on pick —
-        // close the popover (desktop) / sheet (mobile) right after the change.
-        // multiple mode stays open until the sheet footer confirm button.
-        if (!multiple) {
-          setPopoverOpen(false);
-          setSheetOpen(false);
-        }
-      }}
-      ariaLabel={fieldLabel}
-      searchLabel={searchLabel}
-      describedBy={sourceErrorRefs.describedby}
-      loadingDescriptionId={loadingId}
-      loading={optionsSourceState?.loading === true || searchLoading}
-      errorMessage={sourceErrorRefs.errormessage}
-      invalid={Boolean(sourceError)}
-      virtualThreshold={props.props.virtualThreshold}
-      remoteSearch={remoteSearchActive}
-      onQueryChange={setQuery}
-      lazyNodeStates={lazyNodeStates}
-      onLazyExpand={lazyLoadChildren}
-      onLazyRetry={lazyRetryChildren}
-    />
-  );
 
   const triggerValueSpan = (
     <span
@@ -414,8 +190,8 @@ function TreeSelectRenderer(props: RendererComponentProps<TreeSelectSchema>) {
             aria-label={fieldLabel}
             aria-haspopup="dialog"
             aria-expanded={sheetOpen}
-            aria-describedby={sourceErrorRefs.describedby}
-            aria-errormessage={sourceErrorRefs.errormessage}
+            aria-describedby={sourceErrorAriaDescribedBy}
+            aria-errormessage={sourceErrorAriaErrorMessage}
             aria-invalid={sourceError ? true : undefined}
             disabled={triggerDisabled}
             data-slot="tree-select-mobile-trigger"
@@ -432,8 +208,8 @@ function TreeSelectRenderer(props: RendererComponentProps<TreeSelectSchema>) {
                   type="button"
                   variant="outline"
                   aria-label={fieldLabel}
-                  aria-describedby={sourceErrorRefs.describedby}
-                  aria-errormessage={sourceErrorRefs.errormessage}
+                  aria-describedby={sourceErrorAriaDescribedBy}
+                  aria-errormessage={sourceErrorAriaErrorMessage}
                   aria-invalid={sourceError ? true : undefined}
                   disabled={triggerDisabled}
                 >
@@ -444,7 +220,7 @@ function TreeSelectRenderer(props: RendererComponentProps<TreeSelectSchema>) {
             />
             <PopoverContent align="start">
               <div className="max-h-[60vh] overflow-y-auto" data-slot="tree-select-popover-options">
-                {treeOptionListElement}
+                {optionListElement}
               </div>
             </PopoverContent>
           </Popover>
@@ -481,7 +257,7 @@ function TreeSelectRenderer(props: RendererComponentProps<TreeSelectSchema>) {
               className="flex max-h-[65vh] flex-col overflow-y-auto p-2"
               data-slot="tree-select-mobile-options"
             >
-              {treeOptionListElement}
+              {optionListElement}
             </div>
             <div
               className="nop-hairline nop-hairline-top p-3"
@@ -500,22 +276,7 @@ function TreeSelectRenderer(props: RendererComponentProps<TreeSelectSchema>) {
           </SheetContent>
         </Sheet>
       ) : null}
-      {sourceErrorRefs.spanProps ? (
-        <span {...sourceErrorRefs.spanProps} data-slot="tree-select-source-error">
-          {sourceError}
-        </span>
-      ) : optionsSourceState?.loading === true || searchLoading ? (
-        <span
-          id={loadingId}
-          data-slot="tree-select-source-loading"
-          role="status"
-          aria-live="polite"
-          className="flex items-center gap-1.5"
-        >
-          <Spinner className="size-4" aria-hidden="true" />
-          <span>{t('flux.common.loading')}</span>
-        </span>
-      ) : null}
+      {sourceFeedbackElement}
     </div>
   );
 }

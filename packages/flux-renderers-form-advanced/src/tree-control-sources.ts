@@ -1,5 +1,5 @@
 import React from 'react';
-import type { ActionSchema } from '@nop-chaos/flux-core';
+import type { SourceSchema } from '@nop-chaos/flux-core';
 import type { RendererHelpers } from '@nop-chaos/flux-react';
 import type { TreeSourceConfig } from '@nop-chaos/flux-renderers-form';
 import {
@@ -25,14 +25,19 @@ export interface TreeLazyNodeState {
  * Execute a tree source config (formula or action) against a scope patched
  * with parameter values (e.g. `{ searchQuery }` or `{ expandedNodeValue }`).
  *
- * Uses `helpers.dispatch` / `helpers.evaluate` rather than
- * `helpers.executeSource` because `executeSource` does not currently propagate
- * the caller-provided scope through `mergeActionContext` — the render scope
- * would override the child scope and the patched parameter would be invisible
- * to the fetcher. Both paths create a patched one-shot scope and pair it with
+ * The action path goes through `helpers.executeSource` with
+ * `{ scope, signal }` options — since CX-13 the helpers wiring propagates the
+ * caller scope (and abort signal) through `mergeActionContext`, so the patched
+ * parameter is visible to the fetcher. (Pre-CX-13 this site needed a
+ * `helpers.dispatch` workaround because `executeSource` hardcoded the render
+ * scope into the merged ctx.) The formula path stays on `helpers.evaluate`:
+ * it needs the try/catch error wrapping and the dispose-immediately-after
+ * semantics that the shared source executor does not provide.
+ *
+ * Both paths create a patched one-shot scope and pair it with
  * `disposeScope`: the formula path disposes immediately after the synchronous
- * evaluation, the action path disposes once the async dispatch has settled
- * (the scope must stay alive while the fetcher reads it).
+ * evaluation, the action path disposes once the async fetch has settled (the
+ * scope must stay alive while the fetcher reads it).
  */
 export async function executeTreeSource(
   config: TreeSourceConfig,
@@ -54,10 +59,10 @@ export async function executeTreeSource(
   if (!config.action) {
     return { ok: false, error: new Error('Tree source requires action or formula') };
   }
-  const actionInput = { ...config } as unknown as ActionSchema;
+  const actionInput = { ...config } as unknown as SourceSchema;
   const scope = helpers.createScope(patch);
   try {
-    const result = await helpers.dispatch(actionInput, { scope, signal });
+    const result = await helpers.executeSource(actionInput, { scope, signal });
     return result;
   } catch (err) {
     return { ok: false, error: err instanceof Error ? err : new Error(String(err)) };

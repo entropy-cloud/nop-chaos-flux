@@ -82,7 +82,10 @@ export interface RendererHelpers {
     action: ActionSchema | ActionSchema[] | CompiledActionProgram,
     ctx?: Partial<ActionContext>,
   ) => Promise<ActionResult>;
-  executeSource: (source: SourceSchema, options?: { scope?: ScopeRef }) => Promise<ActionResult>;
+  executeSource: (
+    source: SourceSchema,
+    options?: { scope?: ScopeRef; signal?: AbortSignal },
+  ) => Promise<ActionResult>;
 }
 
 export type RendererRenderOutput = unknown;

@@ -26,10 +26,14 @@ export function createSourceExecutor(input: {
 
     const actionInput: ActionSchema = source as ActionSchema;
 
+    // Scope contract: an explicit `ctx.scope` wins, an absent OR
+    // explicit-undefined `ctx.scope` falls back to the resolved scope.
+    // (Placed after the ctx spread — the pre-CX-13 `{ ...ctx }` ordering let
+    // an explicit-undefined `ctx.scope` clobber the resolved scope.)
     const result = await input.executeAction(actionInput, {
       runtime: input.runtime,
-      scope,
       ...ctx,
+      scope: ctx?.scope ?? scope,
     });
 
     return result;

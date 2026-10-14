@@ -305,7 +305,10 @@ export function createRendererHelpers(
       return input.runtime.executeSource({
         source,
         scope: options?.scope ?? input.scope,
-        ctx: mergeActionContext(input),
+        // mergeActionContext treats absent/undefined partial keys as absent
+        // (`partial?.key ?? base.key`), so an options-less call produces the
+        // exact same ctx as before the options passthrough existed.
+        ctx: mergeActionContext(input, { scope: options?.scope, signal: options?.signal }),
       });
     },
   };

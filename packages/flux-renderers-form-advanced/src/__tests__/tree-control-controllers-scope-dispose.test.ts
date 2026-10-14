@@ -61,16 +61,16 @@ describe('executeTreeSource — one-shot scope handling (09-02)', () => {
     expect(disposed).toEqual(created);
   });
 
-  it('action path: dispatches with a patched scope and disposes it once the action settles', async () => {
+  it('action path: executes the source with a patched scope and disposes it once the fetch settles', async () => {
     const { created, disposed, createScope, disposeScope } = createSpyScopeFactory();
-    let resolveDispatch: (value: unknown) => void;
-    const dispatch = vi.fn(
+    let resolveSource: (value: unknown) => void;
+    const executeSource = vi.fn(
       async () =>
         new Promise((resolve) => {
-          resolveDispatch = resolve;
+          resolveSource = resolve;
         }),
     );
-    const helpers = { createScope, disposeScope, evaluate: vi.fn(), dispatch } as never;
+    const helpers = { createScope, disposeScope, evaluate: vi.fn(), executeSource } as never;
 
     const pending = executeTreeSource(
       { action: 'ajax', args: { url: '/api/tree-children' } } as never,
@@ -79,31 +79,32 @@ describe('executeTreeSource — one-shot scope handling (09-02)', () => {
     );
 
     await vi.waitFor(() => {
-      expect(dispatch).toHaveBeenCalled();
+      expect(executeSource).toHaveBeenCalled();
     });
 
     expect(created.length).toBe(1);
     expect(disposed.length).toBe(0);
-    expect(dispatch).toHaveBeenCalledWith(
+    expect(executeSource).toHaveBeenCalledWith(
       expect.anything(),
       expect.objectContaining({
         scope: expect.objectContaining({ get: expect.any(Function) }),
+        signal: undefined,
       }),
     );
 
-    resolveDispatch!({ ok: true, data: [{ id: 'c1' }] });
+    resolveSource!({ ok: true, data: [{ id: 'c1' }] });
     const result = await pending;
 
     expect(result.ok).toBe(true);
     expect(disposed).toEqual(created);
   });
 
-  it('action path: disposes the scope when the dispatch rejects', async () => {
+  it('action path: disposes the scope when the source execution rejects', async () => {
     const { created, disposed, createScope, disposeScope } = createSpyScopeFactory();
-    const dispatch = vi.fn(async () => {
+    const executeSource = vi.fn(async () => {
       throw new Error('boom');
     });
-    const helpers = { createScope, disposeScope, evaluate: vi.fn(), dispatch } as never;
+    const helpers = { createScope, disposeScope, evaluate: vi.fn(), executeSource } as never;
 
     const result = await executeTreeSource(
       { action: 'ajax', args: { url: '/api/tree-children' } } as never,

@@ -6,6 +6,12 @@ import type {
   SchemaObject,
   SchemaValue,
 } from '@nop-chaos/flux-core';
+import type {
+  TableColumnFilterConfig,
+  TableColumnFilterOption,
+  TableColumnQuickEditConfig,
+  TableResponsiveConfig,
+} from './schemas.js';
 
 export interface CrudQueryFormConfig extends SchemaObject {
   data?: SchemaValue;
@@ -90,24 +96,20 @@ export interface CrudFilterToggleConfig extends SchemaObject {
   expandedLabel?: string;
 }
 
-export interface CrudColumnFilterOption extends SchemaObject {
-  label: string;
-  value: string;
-}
+/**
+ * CX-13 (plan 591) Leg D: the four mechanically-extends Crud column-config
+ * pairs now extend their TableColumn* counterparts (structurally identical
+ * declarations converged; export names unchanged). The two EXCLUDED pairs
+ * keep their own declarations below with recorded reasons:
+ * `CrudColumnSettingsConfig` (Table side carries an extra `align` key —
+ * extends would widen the Crud type) and `CrudColumnSchema` (`label`/
+ * `buttons` type divergence — extends is a TS2430 compile error).
+ */
+export interface CrudColumnFilterOption extends TableColumnFilterOption {}
 
-export interface CrudColumnFilterConfig extends SchemaObject {
-  options?: CrudColumnFilterOption[];
-  source?: SchemaValue;
-  searchable?: boolean;
-  searchConfig?: SchemaValue;
-  multiple?: boolean;
-}
+export interface CrudColumnFilterConfig extends TableColumnFilterConfig {}
 
-export interface CrudQuickEditConfig extends SchemaObject {
-  mode?: 'dialog' | 'inline';
-  body?: SchemaInput;
-  saveImmediately?: boolean | SchemaValue;
-}
+export interface CrudQuickEditConfig extends TableColumnQuickEditConfig {}
 
 export interface CrudColumnSchema extends SchemaObject {
   type?: string;
@@ -155,12 +157,7 @@ export interface CrudColumnSettingsConfig extends SchemaObject {
   orderedColumnsStatePath?: string;
 }
 
-export interface CrudResponsiveConfig extends SchemaObject {
-  mode?: 'table' | 'expand';
-  breakpoint?: 'xs' | 'sm' | 'md' | 'lg' | number;
-  expandTrigger?: 'button' | 'row';
-  defaultExpanded?: boolean;
-}
+export interface CrudResponsiveConfig extends TableResponsiveConfig {}
 
 export interface CrudClientModeConfig extends SchemaObject {
   loadDataOnce?: boolean;
