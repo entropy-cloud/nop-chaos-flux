@@ -1,4 +1,5 @@
-export { createRendererRuntime, createModuleCache } from './runtime-factory.js';
+export { createRendererRuntime } from './runtime-factory.js';
+export { createModuleCache } from './module-cache.js';
 export { isHostProjectionScope, type HostProjectionScopeRef } from './runtime-host-projection-scope.js';
 export { createActionScope } from './action-scope.js';
 export { createXuiRolesPlugin, filterByRoles } from './runtime-plugins.js';

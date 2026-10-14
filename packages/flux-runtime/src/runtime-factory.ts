@@ -16,7 +16,6 @@ import type {
   SurfaceRuntime,
   SourceSchema,
   ModuleCache,
-  ImportedLibraryModule,
   PreparedImportSpec,
   ValidationScopeRuntime,
   FormRuntime,
@@ -51,39 +50,10 @@ import { createApiRequestExecutor } from './async-data/request-runtime.js';
 import { createRuntimeEvalHelpers } from './runtime-eval-helpers.js';
 import { createRuntimeOwnedFactories } from './runtime-owned-factories.js';
 import { sortRendererPlugins } from './runtime-plugins.js';
+import { createModuleCache } from './module-cache.js';
 import { createScopeRef, createScopeStore, toRecord } from './scope.js';
 import { createRuntimeSourceRegistry } from './async-data/source-registry.js';
 import { createBuiltInValidationRegistry } from './validation/index.js';
-
-export function createModuleCache(): ModuleCache {
-  const resolved = new Map<string, ImportedLibraryModule>();
-  const pending = new Map<string, Promise<ImportedLibraryModule>>();
-
-  return {
-    get(absUrl) {
-      return resolved.get(absUrl);
-    },
-    set(absUrl, module) {
-      resolved.set(absUrl, module);
-    },
-    has(absUrl) {
-      return resolved.has(absUrl);
-    },
-    getPending(absUrl) {
-      return pending.get(absUrl);
-    },
-    setPending(absUrl, promise) {
-      pending.set(absUrl, promise);
-    },
-    removePending(absUrl) {
-      pending.delete(absUrl);
-    },
-    clear() {
-      resolved.clear();
-      pending.clear();
-    },
-  };
-}
 
 export function createRendererRuntime(input: {
   registry: RendererRegistry;

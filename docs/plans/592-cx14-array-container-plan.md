@@ -1,6 +1,6 @@
 # 592 CX-14 共性重构：flux-renderers-form-advanced 包内复制沉积收敛批（repeatable-items 容器骨架）
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-10-14
 > Source: `docs/backlog/workaround-code-smell-audit-roadmap.md` CX-14 条目（WA-5 批立案 WA-fadv-001，台账 127 行 successor-required→本批）；先例：cq-3 续波（5ad81bbf2 止步 item-view 层）+plan 588-591
 > Related: `docs/architecture/renderer-runtime.md`
@@ -23,7 +23,7 @@ cq-3 去重波续波：把 repeatable-items **容器骨架层**（双订阅+keys
 ## Goals
 
 - **G1**：新包内共享件 `useArrayContainerController`（roadmap 命名；**参数面=R1 M1 审查员交付**）：identity{keyProp 'itemKey'|'rowKey', compatPrefix 'combo-'|'row-'|'item-'|'pair-', repeatedTemplateIdPrefix[combo/input-table], buildItemInstancePath[combo/input-table=true; array-editor/key-value=false], newEntryFactory}+minItemsDefault 0|1+minItemsGuard 'handler'|'button-only'+validate{uiAddDepth subtree|field, capabilityAddDepth 'field', removeDepth 'subtree', removeValidateGate 'shouldValidateOn'|'always'[key-value=always 无门]}+focusRestore{timing none|rAF|microtask, on: Array<'add'|'remove'>}[array-editor add+remove; key-value 仅 remove]+removeGate 'handler+capability'|'capability-only'|'none'+events{onAdd?,onRemove?,onReorder?}——**只收原始/稳定输入，返回身份稳定处理器**[ComboItem/InputTableRow memo 比较器比较 onRemove/onMoveUp/onMoveDown 身份 combo:160-179；itemsRef/pendingFocusRef 经 effect 同步禁 render 写；knip 导出最小化]；结果索引语义=全部返回 pre-add 长度（陈旧渲染快照）+bounds→minItems→gate 判定序保持。吸收：双订阅/keys+itemEntries/writeValue 同步/add-remove-move 处理器+结果码/能力句柄块 ×4。
-- **G2**：同 tick 双操作判别用例**新拟**（**R1 M2 逐格规范，期望值从代码推导**）：①UI 双 add（combo/input-table handleAdd 陈旧闭包两次写 `[...itemsArray, {}]`→**一次 add 丢失**+compatAppend 触发两次[key 计数漂移]）②能力双 add（appendValue 两次均落 live form state+invoke 恒返回 `{index: <pre-add 陈旧长度>}` 两次）③双 remove 跨门不对称对（combo/input-table handler minItems 门挡第二下|key-value 无 handler 门+读 pairsRef 新值=**同 tick 可破下限**）④混合 add+remove 各 1。
+- **G2**：同 tick 双操作判别用例**新拟**（**R1 M2 逐格规范，期望值从代码推导**）：①UI 双 add（combo/input-table handleAdd 陈旧闭包两次写 `[...itemsArray, {}]`→**一次 add 丢失**+compatAppend 触发两次[key 计数漂移]）②能力双 add（appendValue 两次均落 live form state+invoke 恒返回 `{index: <pre-add 陈旧长度>}` 两次）③双 remove 跨门不对称对（**[R2 后 G2-③ 就地勘误 2026-10-14，closure m2：同 tick 实测推翻本格原速写——四容器第二下 remove 均可达 0**；minItems 门只在新到 at-floor 闭包上咬合，且按钮禁用守卫先行截断 UI 路径；key-value 读 pairsRef 新值同 tick 可破下限仍成立]）④混合 add+remove 各 1。
 - **G3（R1 裁定=排除）**：array-field **不进本批 controller 消费**——追加排除理由=非孪生订阅（无 enabled+root 回退）+handler-only removeWhen 门（:409-411）+add/remove 均 validateSubtree+**完全无 minItems 下限**（可删至 0，不属于 0/1 任一派）+有状态 scalar-key 旁路（:251-333）+object 稳定 keys 双机制并存+collectRules 空——纳入将引入 6+ 单成员旗标组合无孪生对照=行为变更风险无判别力；本批=四份吸收，roadmap/台账按 When-Closing 11 部分收敛标注（五份清单保持、四份 absorbed）。
 - 台账 WA-fadv-001 `found → verified`（closure 后）；roadmap CX-14 `todo → done`。
 
@@ -54,7 +54,7 @@ cq-3 去重波续波：把 repeatable-items **容器骨架层**（双订阅+keys
 
 ### Phase 1 - 特征化钉住
 
-Status: planned
+Status: completed（2026-10-14：漂移钉+结果码钉+同 tick 四格钉全绿落盘；基线 168/1172 实测；closure audit agent_1c89a7e6 后据实回勾）
 Targets: fadv 测试
 
 - Item Types: `Proof`
@@ -70,32 +70,32 @@ Exit Criteria:
 
 ### Phase 2 - 提取与消费改引
 
-Status: planned
+Status: completed（2026-10-14：controller 590L 吸收四容器骨架[R1 M1 参数面全量]；**前后双腿实证=stash 重建 40/40 绿[手写实现]→pop 后 40/40 绿**；判别=removeItem minItems 分支变异恰 2 红外科手术式→sha256 恢复[执行+审计员亲手复现同数]；knip 15 条收私[14 类型 un-export+死常量删]；骨架标记 grep 四容器归零；closure audit 后据实回勾）
 Targets: 四容器+新共享件（array-field 排除[R1 G3]）
 
 - Item Types: `Fix | Decision`
 
 - [x] Decision：array-field 参与面裁定=**排除**（R1 G3，理由六条落 Baseline；部分收敛标注随 Phase 3 回写）。
-- [ ] Fix：controller 提取（R1 M1 交付参数面全量）+四容器消费改引；身份稳定处理器契约（memo 比较器钉）+结果索引陈旧语义保持。
-- [ ] Proof：全部钉同绿；判别变异恰红→sha256 恢复。
+- [x] Fix：controller 提取（R1 M1 交付参数面全量）+四容器消费改引；身份稳定处理器契约（memo 比较器钉）+结果索引陈旧语义保持。（Status 2026-10-14: `composite-field/array-container-controller.ts`（590L）落地 R1 M1 全参数面——identity{mode object-key|entry-id/keyProp/compatPrefix ×4/repeatedTemplateId/buildItemInstancePath（combo/input-table=true）/parentInstancePath/onDuplicateKeys/uiNewEntryFactory/newEntryFactory}+minItemsDefault 0|1（combo/input-table=0 派，array-editor/key-value=1 派）+minItemsGuard handler|button-only+validate 四轴（uiAddDepth subtree|field/removeValidateGate shouldValidateOn|always[kv=always 无门]）+uiAddMechanics snapshot-replace|live-append+handlerReads snapshot|itemsRef（kv）+syncRefOnMutate+uiMoveBounds both-bounds|to-bounds+removeGate handler+capability|capability-only|none（combo=handler+capability/input-table=capability-only/ae+kv=none）+focusRestore{timing none|rAF|microtask, on}（ae=rAF add+remove/kv=microtask remove-only）+events 转发——四容器漂移面逐项与 G1 清单一致（diff 实测）；处理器全 useCallback 身份稳定（memo 比较器原样保持）+结果索引 pre-add 陈旧语义保持（`{ index: items.length }`）；array-field.tsx 零触碰（G3）。执行 session 收口补刀：knip 新增 15 命中修复——controller 14 个未消费导出类型去 export（G1「knip 导出最小化」；实测仅 hook+UseArrayContainerControllerParams 被四容器消费）+key-value-normalizer `EMPTY_RAW_KEY_VALUE_PAIRS` 随双订阅吸收失去末位消费方→删除；knip 复跑 no new hits（29 registered 命中全他包存量））
+- [x] Proof：全部钉同绿；判别变异恰红→sha256 恢复。（Status 2026-10-14: Proof-before-Fix 两腿重建（death-session 未及留证）——`git stash push` 限四容器路径（stash `--stat`=本批 415+/1018- 原样，controller+钉文件为 untracked 不入 stash），三钉文件 40/40 绿（6.83s）=**钉在 PRE-refactor 手写实现下同成立**（无一钉按新行为书写，零重写）；pop 后五文件 sha256 逐字节复核一致；POST-refactor 腿复跑 40/40 绿（6.49s）——前后同绿在案。判别变异：controller 先备份 repo 外（sha256 432148a0…）→ removeItem minItems 分支结果字面量 `{skipped:true}`→`{}` → drift 18+same-tick 14 全绿、result-code 8 用例**恰 2 红**（combo+input-table minItems-skipped face）=外科手术式恰红→备份还原 sha256 一致→全量套件 171/1212 绿证无残留；红日志 `_tmp/cx14-mutation-red.log`）
 
 Exit Criteria:
 
-- [ ] 骨架块归零计数落字（双订阅 ×1/处理器 ×1/句柄块 ×1）；套件同绿。
+- [x] 骨架块归零计数落字（双订阅 ×1/处理器 ×1/句柄块 ×1）；套件同绿。（Status 2026-10-14: grep 实测四容器 `useCurrentFormState`/`useScopeSelector`/`useCompositeFieldHandle`/`useCompatibilityItemKeys`/`isRemoveBlockedByWhen` 全=0，唯一副本落 controller（文件内 import+调用点 ×2 形态）=双订阅/keys/处理器/句柄块各 ×1；套件同绿=fadv **171 files / 1212 tests** 全绿（knip 收口后于提交态 HEAD bbb63ed00 终态复跑）；fadv typecheck/build exit 0，lint 0 error+1 warning=transfer-renderer.tsx 既有（非本批路径）；哨兵 flux-react 65/580+flux-renderers-ai 103/850 精确同数（提交态复跑）；`check:oversized-code-files` exit 0（controller 590L=WARN 带非门禁红，与 upload-field 693L 等同带，提取评估归 successor/审计裁断））
 
 ### Phase 3 - 回写与收口
 
-Status: planned
+Status: done（2026-10-14：台账 WA-fadv-001 verified[220=found 59+verified 161/未处置 0]；roadmap CX-14 done[部分收敛标注+两勘误]；dev log 10-14；HEAD 态五门禁诚实轨迹[首跑 check 红=runtime-factory 701[并行会话 feature 提交顶过阈值]→拆 module-cache.ts 670+31→终态全绿]；closure audit agent_1c89a7e6 R1 approved 后据实回勾）
 Targets: ledger、roadmap、dev log
 
 - Item Types: `Proof | Decision`
 
-- [ ] Proof：台账 WA-fadv-001 verified；roadmap CX-14 回写（含「移植」措辞勘误+removeWhen 勘误注记）；dev log。
-- [ ] Proof：隔离五门禁；独立 closure audit。
+- [x] Proof：台账 WA-fadv-001 verified；roadmap CX-14 回写（含「移植」措辞勘误+removeWhen 勘误注记）；dev log。
+- [x] Proof：隔离五门禁；独立 closure audit。
 
 Exit Criteria:
 
-- [ ] reconcile exit 0；closure audit approved。
+- [x] reconcile exit 0；closure audit approved。（closure audit agent_1c89a7e6 approved 后据实回勾）
 
 ## Draft Review Record
 
@@ -106,15 +106,15 @@ Exit Criteria:
 
 ## Closure Gates
 
-- [ ] controller 落地+骨架块归零（array-field 裁定在案）
-- [ ] 行为保持判别（特征化同绿+同 tick 新钉+变异恰红+filter 门禁+哨兵）
-- [ ] 台账/roadmap/dev log 齐
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
-- [ ] `pnpm typecheck`（隔离 worktree，exit 0）
-- [ ] `pnpm build`（同上）
-- [ ] `pnpm lint`（同上）
-- [ ] `pnpm test`（同上）
-- [ ] `pnpm check`（同上——零新增未登记红；新文件 git add -N）
+- [x] controller 落地+骨架块归零（array-field 裁定在案）
+- [x] 行为保持判别（特征化同绿[stash 前后双腿]+同 tick 新钉+变异恰红+filter 门禁+哨兵）
+- [x] 台账/roadmap/dev log 齐
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项（agent_1c89a7e6 R1 approved，据实回勾）
+- [x] `pnpm typecheck`（HEAD 态 worktree cx14-verify，exit 0）
+- [x] `pnpm build`（同上）
+- [x] `pnpm lint`（同上）
+- [x] `pnpm test`（同上）
+- [x] `pnpm check`（同上——首跑 check 红[runtime-factory 701，并行 feature 提交所顶]→拆 module-cache→终态全链 exit 0）
 
 ## Deferred But Adjudicated
 
@@ -127,10 +127,17 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: （收口时填）
+Status Note: 2026-10-14 收口。controller 590L 吸收四容器骨架（array-field 三裁定排除；四份 absorbed 部分收敛）；前后双腿实证（stash 重建 40/40+pop 后 40/40）；判别 2 红外科手术式双留证；knip 15 收私；**批次代码经并行会话提交 bbb63ed00 落地（标题无 full-green 标记=合规，提交时点验证未完成[审计员裁定]）**，验证与回写由本链完成；连带 MUST-split=runtime-factory 701→module-cache.ts 拆分（并行 feature 提交所顶，共享门禁解锁）；实施=中断恢复两段（实施 agent 配额中断+收尾 agent 接力），本会话编排/门禁/回写。
 
 Closure Audit Evidence:
 
-- Reviewer / Agent: （待独立子 agent fresh session）
-- Rounds: （待填）
-- Findings addressed: （待填）
+- Reviewer / Agent: 独立子 agent（general-purpose fresh session，agent_1c89a7e6-1dc4-4c2e-abba-081784d1a9c8，review-only）
+- Rounds: 1
+- Verdict: `approved`（0B/0M+3 收口义务 m1=Phase 1/2 slice status 回勾[已落]/m2=G2-③ 就地勘误[已落]/m3=收口提交纪律[title 带 full-green verification+body 带 bbb63ed00 出处注记+只扫 4 收口文件]——随本提交履行）
+- Findings addressed: 审计员逐项对账（参数面全量+四容器映射逐格/分歧面零压平[骨架标记 grep 全 0]/G3 array-field 零触碰/module-cache 拆分逐字[vs 4dc34b02e :58-88]+导出 SET 不变+671-vs-670=检查脚本计数口径/门禁日志实跑核验/在途并行 plan-593 文件零触碰）+**亲手判别**（removeItem minItems 分支变异→恰 2 红[combo+input-table minItems-skipped 面]→sha256 086b4f49… 逐字节恢复→40/40 绿）+bbb63ed00 标题归属裁定（无标记=非违规）。
+
+Follow-up:
+
+- 四项漂移统一（minItems 缺省/焦点恢复时序/UI-能力校验深度/removeWhen 处理器门）+key-value 无门 remove-validate+handler minItems 门不对称+结果索引陈旧语义——均申报行为变更归 successor。
+- validateSubtree 门控块吸收（与 CX-11 validateSubtree successor 合流；CX-14 后实测五容器内 12 处）。
+- array-field 排除面（无 minItems 下限等）与 controller 的后续一体化裁定。
