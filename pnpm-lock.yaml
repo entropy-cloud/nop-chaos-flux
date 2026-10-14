@@ -1134,6 +1134,9 @@ importers:
       '@nop-chaos/ui':
         specifier: workspace:*
         version: link:../ui
+      react-resizable-panels:
+        specifier: ^4.9.0
+        version: 4.9.0(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
     devDependencies:
       '@nop-chaos/flux-formula':
         specifier: workspace:*

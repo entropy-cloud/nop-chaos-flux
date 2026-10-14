@@ -1,7 +1,7 @@
 # Resizable 设计文档（flux 原生布局扩展 type）
 
-> Status: active（plan 514 L4.6 落地）
-> Last Reviewed: 2026-09-26
+> Status: active（plan 514 L4.6 落地；G-J m3 可折叠面板扩展）
+> Last Reviewed: 2026-10-14
 > Source: `docs/discussions/2026-09-26-l4-2-l4-6-calendar-grid-and-resizable-adjudication.md` §2；C1:36 G-J → C2 裁决表 :31 → D2-closure :72 登记链
 
 ## 1. 定位
@@ -23,11 +23,21 @@
 ```json
 {
   "type": "resizable",
-  "direction": "horizontal",
+  "id": "split",
+  "direction": "vertical",
   "persistStatePath": "$page.layout",
   "panels": [
     { "key": "nav", "defaultSize": 3, "min": 1, "max": 6, "body": [] },
-    { "key": "main", "body": [] }
+    {
+      "key": "debug",
+      "defaultSize": 16,
+      "min": 10,
+      "max": 60,
+      "collapsible": true,
+      "collapsedSize": 7,
+      "defaultCollapsed": true,
+      "body": []
+    }
   ]
 }
 ```
@@ -35,13 +45,24 @@
 - `direction: 'horizontal' | 'vertical'`，缺省 horizontal。
 - `panels[].key` 必填唯一（持久化槽位 + React key）；`defaultSize/min/max` 为**百分比**（以 `'35%'` 字符串形式传参；settle 时 flexGrow 归一化为百分比数组）；`panels[].body` 为面板 schema（编译为 region，经 `bodyRegionKey` 渲染）。
 - `persistStatePath`：拖拽 settle 后把 flexGrow 归一化的百分比数组回写 scope；挂载读回种子（长度不匹配/全部非法 → 回落 defaultSize）。
+- **可折叠面板（G-J m3）**：`collapsible` 让手柄拖到 `min` 以下时吸附到 `collapsedSize`（百分比，缺省 0）；`defaultCollapsed` 在挂载后命令式折叠（react-resizable-panels v4 无声明式 `defaultCollapsed`，经 `panelRef.collapse()` 一次性落位）。
+
+## 4.1 组件能力句柄（component:\*）
+
+resizable 根节点（携带 schema `id` 时）注册 `type: 'resizable'` 的 component handle，能力方法 `collapse / expand / toggle` 委托给**可折叠面板**的 imperative API（多折叠面板取最后注册者）。按钮可声明：
+
+```json
+{ "type": "button", "onClick": { "action": "component:toggle", "componentId": "split" } }
+```
+
+与 dialog / drawer / palette surface 的 `component:open|close|toggle` 同族契约；`componentCapabilityContracts` 在 renderer 定义声明三个 handle，编译期按 `componentId` → schema 节点（`type` + `id`）解析契约，避免 `unvalidated-component-target` 诊断。
 
 ## 5. 字段分类
 
-| 字段                             | 类别                           | 说明                                                    |
-| -------------------------------- | ------------------------------ | ------------------------------------------------------- |
-| `direction` / `persistStatePath` | prop                           | 布局轴 / 持久化通道                                     |
-| `panels`                         | prop（schema-definition 数组） | `key/defaultSize/min/max` 字面规则 + `body` region 规则 |
+| 字段                                    | 类别                           | 说明                                                                                               |
+| --------------------------------------- | ------------------------------ | -------------------------------------------------------------------------------------------------- |
+| `direction` / `persistStatePath` / `id` | prop                           | 布局轴 / 持久化通道 / component handle 目标 id                                                     |
+| `panels`                                | prop（schema-definition 数组） | `key/defaultSize/min/max/collapsible/collapsedSize/defaultCollapsed` 字面规则 + `body` region 规则 |
 
 ## 6. Region
 
@@ -50,11 +71,12 @@
 ## 7. 状态归属
 
 - 面板尺寸：react-resizable-panels 内部受控（flex 布局）；`persistStatePath` 仅做「settle 回写 + 挂载种子」，不建第二 state 通道。
+- **折叠态**：由 panels 库的 `collapsible/collapsedSize` 内部受控；拖到 `min` 以下吸附、拖回展开，或经 component handle（`component:collapse|expand|toggle`）命令式切换。页面 scope 不落折叠布尔量（无回写通道，避免双源）。
 - 选中/折叠等交互态：不适用（本 type 无选择语义）。
 
 ## 8. 事件句柄
 
-无 schema 事件。手柄交互由库内建（指针 + 键盘方向键），aria-label 走 `flux.layout.resizeHandle`（zh/en）。
+无 schema 事件。手柄交互由库内建（指针 + 键盘方向键），aria-label 走 `flux.layout.resizeHandle`（zh/en）。折叠/展开经 component capability（§4.1，`collapse/expand/toggle`），契约与 surface 句柄同族。
 
 ## 9. 数据源
 

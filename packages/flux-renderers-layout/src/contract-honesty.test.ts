@@ -6,5 +6,5 @@ runContractHonestyGuardSuite({
   packageName: 'flux-renderers-layout',
   definitions: layoutRendererDefinitions,
   srcDir: `${import.meta.dirname}/..`,
-  discoveryBaseline: { renderers: 9, eventKeys: 8, capabilityHandles: 0 },
+  discoveryBaseline: { renderers: 9, eventKeys: 8, capabilityHandles: 3 },
 });

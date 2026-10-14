@@ -361,6 +361,17 @@ export interface ResizablePanelSchema extends SchemaObject {
   max?: number;
   /** Panel content. */
   body?: SchemaInput;
+  /**
+   * Collapsible panel: dragging the split handle below `min` snaps the
+   * panel to `collapsedSize`. Also registers collapse/expand/toggle
+   * component methods addressable by `component:*` actions with
+   * `componentId` equal to this panel's `key`.
+   */
+  collapsible?: boolean;
+  /** Panel size (percentage) when collapsed; defaults to 0%. Requires `collapsible`. */
+  collapsedSize?: number;
+  /** Collapse the panel imperatively on mount; requires `collapsible`. */
+  defaultCollapsed?: boolean;
 }
 
 export interface ResizableSchema extends BaseSchema {
