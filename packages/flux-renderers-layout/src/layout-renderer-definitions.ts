@@ -581,6 +581,40 @@ export const layoutRendererDefinitions: RendererDefinition[] = [
         editorType: 'select',
         defaultValue: 'click',
       },
+      side: {
+        shape: {
+          kind: 'union',
+          anyOf: [
+            { kind: 'literal', value: 'top' },
+            { kind: 'literal', value: 'bottom' },
+            { kind: 'literal', value: 'left' },
+            { kind: 'literal', value: 'right' },
+          ],
+        },
+        displayName: 'Side',
+        description: 'Preferred menu placement side; auto-flips when cramped.',
+        editorType: 'select',
+        defaultValue: 'bottom',
+      },
+      align: {
+        shape: {
+          kind: 'union',
+          anyOf: [
+            { kind: 'literal', value: 'start' },
+            { kind: 'literal', value: 'center' },
+            { kind: 'literal', value: 'end' },
+          ],
+        },
+        displayName: 'Align',
+        editorType: 'select',
+        defaultValue: 'start',
+      },
+      sideOffset: {
+        shape: { kind: 'number' },
+        displayName: 'Side Offset',
+        editorType: 'number',
+        defaultValue: 4,
+      },
       disabled: {
         shape: { kind: 'boolean' },
         displayName: 'Disabled',
@@ -595,6 +629,9 @@ export const layoutRendererDefinitions: RendererDefinition[] = [
       { key: 'size', kind: 'prop' },
       { key: 'items', kind: 'prop' },
       { key: 'trigger', kind: 'prop' },
+      { key: 'side', kind: 'prop' },
+      { key: 'align', kind: 'prop' },
+      { key: 'sideOffset', kind: 'prop', valueType: 'number' },
       { key: 'disabled', kind: 'prop', valueType: 'boolean' },
     ],
   },

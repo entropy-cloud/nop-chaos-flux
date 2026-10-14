@@ -239,6 +239,17 @@ export interface DropdownButtonSchema extends BaseSchema {
   items?: DropdownButtonItemSchema[];
   /** Menu open trigger */
   trigger?: 'click' | 'hover';
+  /**
+   * Preferred menu placement side. Defaults to `'bottom'`. The positioner
+   * auto-flips to the opposite side when the preferred side lacks room
+   * (Base UI `collisionAvoidance.side: 'flip'`); set `'top'` to pin a
+   * bottom-anchored control (e.g. a status-bar menu) opening upward.
+   */
+  side?: 'top' | 'bottom' | 'left' | 'right';
+  /** Menu alignment along the anchor edge. Defaults to `'start'`. */
+  align?: 'start' | 'center' | 'end';
+  /** Gap (px) between the button and the menu. Defaults to 4. */
+  sideOffset?: number;
   /** Disabled flag */
   disabled?: boolean;
 }

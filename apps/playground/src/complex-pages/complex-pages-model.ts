@@ -370,6 +370,14 @@ export const COMPLEX_PAGE_ENTRIES: ComplexPageEntry[] = [
     features: ['复刻样式', '型别分派网格', 'summary bar', '分组样本'],
   },
   {
+    id: 'pih-workspace',
+    title: 'Pi-Harness · 对话工作台',
+    category: 'app-replica',
+    description:
+      '复刻 Pi-Harness（Electron AI 编码 Harness）对话工作区：macOS 风格 titlebar（红绿灯+居中品牌+搜索）+ 50px 图标导航栏（Work/Git/Model/Caps/Prefs）+ 260px 工作区侧栏（Workspace/Harness/Agents 分区 tab + SESSIONS 会话列表 + PROJECTS 空态）+ 主区（tabbar + 消息流 + composer + 底部状态 HUD）。消息流与 composer 由真实 `@nop-chaos/flux-renderers-ai` 组件驱动：`ai-chat`（mock 流式对话，含 `ai-bubble` 的 Thinking 折叠与工具调用卡）+ `ai-conversations`（会话新建/切换/重命名/删除，`useConversation` 管理）+ `ai-token-usage`（token/上下文统计）。',
+    features: ['复刻样式', 'ai-chat 流式对话', 'ai-conversations 会话管理', 'ai-token-usage 状态 HUD'],
+  },
+  {
     id: 'stripe-payments',
     title: '金融数据面板 · 支付流水',
     category: 'app-replica',

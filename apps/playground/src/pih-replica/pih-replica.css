@@ -1,0 +1,1676 @@
+/*
+ * Pi-Harness replica styles (light theme — matches docs/经典主题/工作区.jpg).
+ *
+ * Replicates the "Timeless Graphite" light palette + macOS-style shell of
+ * pi-harness (github.com/wangmiaozero/pi-harness) purely via CSS tokens and
+ * marker classes. No renderer internals are modified; the page schema under
+ * complex-pages/page-schemas/pih-workspace.json references these classes.
+ */
+
+/* ── 1. Design tokens ──────────────────────────────────────────────────── */
+
+/* Declared on .pih-root AND .pih-dialog (portals render outside the root). */
+.pih-root,
+.pih-dialog {
+  --pih-bg-window: #f2f2f3;
+  --pih-bg-titlebar: #ecedef;
+  --pih-bg-sidebar: #ecedef;
+  --pih-bg-workspace: #f5f5f6;
+  --pih-bg-surface: #ffffff;
+  --pih-bg-surface-raised: #ffffff;
+  --pih-bg-hover: #eceef1;
+  --pih-bg-selected: #dce6f4;
+  --pih-border-subtle: rgba(0, 0, 0, 0.06);
+  --pih-border-default: rgba(0, 0, 0, 0.09);
+  --pih-border-strong: rgba(0, 0, 0, 0.15);
+  --pih-text-primary: rgba(0, 0, 0, 0.86);
+  --pih-text-secondary: rgba(0, 0, 0, 0.64);
+  --pih-text-tertiary: rgba(0, 0, 0, 0.48);
+  --pih-accent: #2a6fe0;
+  --pih-accent-hover: #2564cc;
+  --pih-accent-tint: rgba(42, 111, 224, 0.12);
+  --pih-accent-tint-strong: #d9e7fb;
+  --pih-accent-border: rgba(42, 111, 224, 0.32);
+  --pih-success: #1f9d63;
+  --pih-warning: #b07a1f;
+  --pih-error: #c84a4a;
+  --pih-shadow-popover: 0 4px 16px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.06);
+  --pih-font-sans:
+    -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', system-ui, sans-serif;
+  --pih-font-mono: ui-monospace, 'SF Mono', 'Cascadia Mono', 'JetBrains Mono', Consolas, monospace;
+}
+
+.pih-root {
+  font-family: var(--pih-font-sans);
+  color: var(--pih-text-primary);
+  background: var(--pih-bg-window);
+  font-size: 13px;
+  line-height: 1.45;
+
+  /* shadcn/theme-token baseline mapped from the Pi-Harness palette, so flux
+   * built-in controls (Button / Input / Select / Switch / Tabs / Dialog …)
+   * inherit the pih look purely through theme variables — no per-instance
+   * restyling (theme-compatibility.md: CSS variables + stable class names).
+   * Values are HSL triplets because shadcn consumes `hsl(var(--token))`. */
+  --background: 240 4% 95%;
+  --foreground: 0 0% 15%;
+  --card: 0 0% 100%;
+  --card-foreground: 0 0% 15%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 0 0% 15%;
+  --muted: 240 4% 96%;
+  --muted-foreground: 0 0% 45%;
+  --accent: 220 14% 94%;
+  --accent-foreground: 217 75% 40%;
+  --secondary: 215 52% 91%;
+  --secondary-foreground: 0 0% 30%;
+  --secondary-surface: 215 52% 91%;
+  --secondary-surface-hover: 215 52% 88%;
+  --border: 0 0% 91%;
+  --input: 0 0% 91%;
+  --ring: 217 75% 52%;
+  --primary: 217 75% 52%;
+  --primary-foreground: 0 0% 100%;
+  --destructive: 0 53% 54%;
+  --destructive-foreground: 0 0% 100%;
+  --success: 152 67% 37%;
+  --warning: 38 70% 41%;
+  --info: 217 75% 52%;
+  --radius: 8px;
+}
+
+.pih-root,
+.pih-root * {
+  box-sizing: border-box;
+}
+
+.pih-mono {
+  font-family: var(--pih-font-mono);
+}
+
+/* ── 2. Titlebar ───────────────────────────────────────────────────────── */
+
+.pih-titlebar {
+  height: 52px;
+  background: var(--pih-bg-titlebar);
+  border-bottom: 1px solid var(--pih-border-subtle);
+  display: flex;
+  align-items: center;
+  padding: 0 14px;
+  flex-shrink: 0;
+  position: relative;
+  user-select: none;
+}
+
+.pih-traffic {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  z-index: 1;
+}
+
+.pih-traffic-dot {
+  width: 13px;
+  height: 13px;
+  border-radius: 999px;
+  display: inline-block;
+}
+
+.pih-traffic-close {
+  background: #ff5f57;
+}
+
+.pih-traffic-min {
+  background: #febc2e;
+}
+
+.pih-traffic-max {
+  background: #28c840;
+}
+
+.pih-brand {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+}
+
+.pih-brand-mark {
+  width: 18px;
+  height: 18px;
+  border-radius: 5px;
+  background: #1f2937;
+  color: #ffffff;
+  font-size: 9px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  letter-spacing: -0.3px;
+}
+
+.pih-brand-name {
+  font-size: 11px;
+  color: var(--pih-text-primary);
+  font-weight: 500;
+}
+
+.pih-search {
+  margin-left: auto;
+  width: 200px;
+  height: 28px;
+  border-radius: 6px;
+  border: 1px solid var(--pih-border-default);
+  background: var(--pih-bg-surface);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 8px;
+  color: var(--pih-text-tertiary);
+  font-size: 12px;
+  z-index: 1;
+}
+
+.pih-kbd {
+  margin-left: auto;
+  font-size: 10px;
+  color: var(--pih-text-tertiary);
+  border: 1px solid var(--pih-border-default);
+  border-radius: 4px;
+  padding: 1px 5px;
+  background: var(--pih-bg-workspace);
+  font-family: var(--pih-font-sans);
+}
+
+/* ── 3. Icon navigation rail ───────────────────────────────────────────── */
+
+.pih-rail {
+  width: 50px;
+  background: var(--pih-bg-sidebar);
+  border-right: 1px solid var(--pih-border-subtle);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 8px 0;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.pih-rail-item {
+  width: 40px;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 6px 0 4px;
+  color: var(--pih-text-secondary);
+  cursor: pointer;
+}
+
+.pih-rail-item:hover {
+  background: var(--pih-bg-hover);
+}
+
+.pih-rail-item-active,
+.pih-rail-item-active:hover {
+  background: var(--pih-accent-tint);
+  color: var(--pih-accent);
+}
+
+.pih-rail-label {
+  font-size: 10px;
+  line-height: 1.2;
+}
+
+.pih-rail-item-active .pih-rail-label {
+  color: var(--pih-accent);
+}
+
+/* ── 4. Workspace sidebar ──────────────────────────────────────────────── */
+
+.pih-sidebar {
+  width: 260px;
+  background: var(--pih-bg-sidebar);
+  border-right: 1px solid var(--pih-border-subtle);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  min-height: 0;
+}
+
+.pih-sidebar-header {
+  height: 44px;
+  display: flex;
+  align-items: center;
+  padding: 0 10px 0 14px;
+  border-bottom: 1px solid var(--pih-border-subtle);
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.pih-sidebar-title {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--pih-text-tertiary);
+}
+
+.pih-icon-btn {
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--pih-text-secondary);
+  cursor: pointer;
+  background: transparent;
+  border: none;
+}
+
+.pih-icon-btn:hover {
+  background: var(--pih-bg-hover);
+}
+
+.pih-icon-btn-accent {
+  background: var(--pih-accent-tint);
+  color: var(--pih-accent);
+}
+
+.pih-icon-btn-accent:hover {
+  background: rgba(42, 111, 224, 0.18);
+}
+
+.pih-section-tabs {
+  display: grid;
+  grid-template-columns: 1.3fr 1fr 1fr;
+  gap: 4px;
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--pih-border-subtle);
+  flex-shrink: 0;
+}
+
+.pih-section-tab {
+  min-height: 46px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  color: var(--pih-text-secondary);
+  font-size: 11px;
+  cursor: pointer;
+  background: transparent;
+}
+
+.pih-section-tab:hover {
+  background: var(--pih-bg-hover);
+}
+
+.pih-section-tab-active,
+.pih-section-tab-active:hover {
+  border-color: var(--pih-accent-border);
+  background: var(--pih-accent-tint);
+  color: var(--pih-accent);
+}
+
+.pih-sidebar-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 8px;
+}
+
+.pih-group-heading {
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--pih-text-tertiary);
+  padding: 6px 6px 4px;
+}
+
+.pih-divider {
+  border-top: 1px solid var(--pih-border-subtle);
+  margin: 8px 6px;
+}
+
+.pih-empty-projects {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 28px 16px 12px;
+  color: var(--pih-text-secondary);
+  gap: 6px;
+}
+
+.pih-empty-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--pih-text-primary);
+}
+
+.pih-empty-desc {
+  font-size: 12px;
+  color: var(--pih-text-tertiary);
+  line-height: 1.5;
+  max-width: 200px;
+}
+
+/* ── 5. Sidebar divider / resizer ──────────────────────────────────────── */
+
+.pih-sidebar-divider {
+  width: 7px;
+  background: var(--pih-bg-sidebar);
+  position: relative;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-right: 1px solid var(--pih-border-subtle);
+}
+
+.pih-sidebar-toggle {
+  width: 22px;
+  height: 30px;
+  border-radius: 6px;
+  background: var(--pih-bg-surface);
+  border: 1px solid var(--pih-border-default);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--pih-text-secondary);
+  cursor: pointer;
+}
+
+/* ── 6. Main column ────────────────────────────────────────────────────── */
+
+.pih-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--pih-bg-workspace);
+}
+
+.pih-tabbar {
+  height: 44px;
+  border-bottom: none;
+  display: flex;
+  align-items: center;
+  padding: 0 10px;
+  flex-shrink: 0;
+}
+
+.pih-files-btn {
+  margin-left: auto;
+  height: 28px;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 10px;
+  color: var(--pih-text-secondary);
+  font-size: 12px;
+  cursor: pointer;
+  background: transparent;
+  border: none;
+}
+
+.pih-files-btn:hover {
+  background: var(--pih-bg-hover);
+}
+
+/* ── 7. Chat window ──────────────────────────────────────────────────────
+ * The message stream / composer / sessions list are the real AI renderers
+ * (ai-chat, ai-sender, ai-bubble, ai-conversations); their pih re-skin lives
+ * in section 10 below. */
+
+/* ── 8. Composer ───────────────────────────────────────────────────────── */
+
+.pih-composer-controls {
+  margin-top: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.pih-composer-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--pih-text-secondary);
+  cursor: pointer;
+  background: transparent;
+  border: none;
+}
+
+.pih-composer-btn:hover {
+  background: var(--pih-bg-hover);
+}
+
+.pih-model-pill {
+  min-width: 190px;
+  max-width: 300px;
+  height: 28px;
+  border-radius: 6px;
+  border: 1px solid var(--pih-border-default);
+  background: var(--pih-bg-surface);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 10px;
+  font-size: 12px;
+  color: var(--pih-text-primary);
+  cursor: pointer;
+}
+
+.pih-model-pill:hover {
+  background: var(--pih-bg-hover);
+}
+
+.pih-tool-strip {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.pih-ghost-btn {
+  height: 28px;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 10px;
+  color: var(--pih-text-secondary);
+  font-size: 12px;
+  cursor: pointer;
+  background: transparent;
+  border: none;
+}
+
+.pih-ghost-btn:hover {
+  background: var(--pih-bg-hover);
+}
+
+.pih-composer-hint {
+  margin-top: 5px;
+  font-size: 10.5px;
+  color: var(--pih-text-tertiary);
+}
+
+/* ── 9. Status HUD ─────────────────────────────────────────────────────── */
+
+.pih-status-hud {
+  height: 36px;
+  border-top: 1px solid var(--pih-border-subtle);
+  background: var(--pih-bg-surface);
+  display: flex;
+  align-items: stretch;
+  font-size: 11px;
+  color: var(--pih-text-secondary);
+  flex-shrink: 0;
+}
+
+.pih-status-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 12px;
+  color: var(--pih-text-secondary);
+  cursor: pointer;
+  background: transparent;
+  border: none;
+  border-right: 1px solid var(--pih-border-subtle);
+  font-size: 11px;
+}
+
+.pih-status-btn:hover {
+  background: var(--pih-bg-hover);
+}
+
+.pih-status-mid {
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  color: var(--pih-text-tertiary);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ── 10. AI renderer slots ───────────────────────────────────────────────
+ * The chat area / sidebar sessions are the real `@nop-chaos/flux-renderers-ai`
+ * widgets (ai-chat, ai-sender, ai-bubble, ai-conversations, ai-token-usage).
+ * These rules only re-skin their public `data-slot` markers to the Pi-Harness
+ * palette — no renderer internals are touched (Renderer Styling Contract). */
+
+.pih-ai-chat {
+  gap: 0;
+  background: var(--pih-bg-workspace);
+}
+
+.pih-ai-chat [data-slot='ai-message-list'] {
+  padding: 20px 26px 10px;
+  gap: 16px;
+}
+
+/* Role badges are injected onto the real bubble via its `data-role` marker. */
+.pih-ai-chat [data-slot='ai-bubble'] {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+  max-width: 100%;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  padding: 0;
+}
+
+.pih-ai-chat [data-slot='ai-bubble'][data-role='user'] {
+  align-items: flex-end;
+}
+
+.pih-ai-chat [data-slot='ai-bubble']::before {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--pih-text-tertiary);
+}
+
+.pih-ai-chat [data-slot='ai-bubble'][data-role='user']::before {
+  content: '我';
+  background: var(--pih-accent-tint-strong);
+  color: var(--pih-accent);
+  border-radius: 999px;
+  padding: 1px 9px;
+}
+
+.pih-ai-chat [data-slot='ai-bubble'][data-role='assistant']::before {
+  content: '助手';
+}
+
+.pih-ai-chat [data-slot='ai-bubble'][data-role='user'] [data-slot='ai-bubble-content'] {
+  width: 100%;
+  background: var(--pih-accent-tint-strong);
+  border: 1px solid var(--pih-accent-border);
+  color: var(--pih-text-primary);
+  border-radius: 10px;
+  padding: 8px 12px;
+  font-size: 12.5px;
+}
+
+.pih-ai-chat [data-slot='ai-bubble'][data-role='user'] [data-slot='ai-bubble-markdown'],
+.pih-ai-chat [data-slot='ai-bubble'][data-role='user'] [data-slot='ai-bubble-markdown'] p {
+  margin: 0;
+}
+
+.pih-ai-chat [data-slot='ai-bubble'][data-role='assistant'] [data-slot='ai-bubble-content'] {
+  width: 100%;
+  background: var(--pih-bg-surface);
+  border: 1px solid var(--pih-border-default);
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 13px;
+  color: var(--pih-text-primary);
+}
+
+/* Reasoning ("Thinking") collapse panel */
+.pih-ai-chat [data-slot='ai-bubble-reasoning'] {
+  width: 100%;
+  background: var(--pih-bg-workspace);
+  border: 1px solid var(--pih-border-subtle);
+  border-radius: 8px;
+  color: var(--pih-text-secondary);
+  overflow: hidden;
+}
+
+.pih-ai-chat [data-slot='ai-bubble-reasoning'] > button {
+  height: auto;
+  justify-content: flex-start;
+  padding: 7px 10px;
+  font-size: 11.5px;
+  font-weight: 500;
+  color: var(--pih-text-secondary);
+}
+
+.pih-ai-chat [data-slot='ai-bubble-reasoning'] > div {
+  padding: 8px 10px;
+  border-top: 1px solid var(--pih-border-subtle);
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--pih-text-secondary);
+}
+
+/* Tool-call card */
+.pih-ai-chat [data-slot='ai-bubble-tools'] {
+  gap: 8px;
+}
+
+.pih-ai-chat [data-slot='ai-tool-call'] {
+  border: 1px solid var(--pih-border-default);
+  border-radius: 8px;
+  background: var(--pih-bg-surface);
+  padding: 8px 10px;
+  font-size: 12px;
+}
+
+.pih-ai-chat [data-slot='ai-tool-call'] > div:first-child {
+  gap: 8px;
+  align-items: center;
+}
+
+.pih-ai-chat [data-slot='ai-tool-call'] .font-mono {
+  font-family: var(--pih-font-mono);
+  font-size: 12px;
+  color: var(--pih-text-primary);
+}
+
+.pih-ai-chat [data-slot='ai-tool-call-result-summary'],
+.pih-ai-chat [data-slot='ai-tool-call-args'],
+.pih-ai-chat [data-slot='ai-tool-call-result'] {
+  margin-top: 6px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  background: var(--pih-bg-workspace);
+  border: 1px solid var(--pih-border-subtle);
+  font-family: var(--pih-font-mono);
+  font-size: 11.5px;
+  line-height: 1.65;
+  color: var(--pih-text-secondary);
+  white-space: pre-wrap;
+  overflow: visible;
+  text-overflow: clip;
+}
+
+/* Composer = ai-sender input box (top) + borderless footer controls (bottom). */
+.pih-ai-chat [data-slot='ai-sender'] {
+  margin: 0 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  background: var(--pih-bg-surface);
+  border: 1px solid var(--pih-border-default);
+  border-radius: 10px;
+  padding: 10px 12px 6px;
+}
+
+.pih-ai-chat [data-slot='ai-sender-input'] textarea {
+  border: none;
+  box-shadow: none;
+  background: transparent;
+  padding: 0;
+  min-height: 52px;
+  font-family: var(--pih-font-sans);
+  font-size: 12.5px;
+  line-height: 20px;
+  color: var(--pih-text-primary);
+  resize: none;
+}
+
+.pih-ai-chat [data-slot='ai-sender-input'] textarea:focus {
+  outline: none;
+  box-shadow: none;
+}
+
+.pih-ai-chat [data-slot='ai-sender-input'] textarea::placeholder {
+  color: var(--pih-text-tertiary);
+}
+
+.pih-ai-chat [data-slot='ai-sender-submit'] {
+  height: 30px;
+  border-radius: 6px;
+  padding: 0 14px;
+  background: var(--pih-accent);
+  border-color: var(--pih-accent);
+  color: #ffffff;
+  font-size: 12.5px;
+  font-weight: 500;
+}
+
+.pih-ai-chat [data-slot='ai-sender-submit']:hover {
+  background: var(--pih-accent-hover);
+  border-color: var(--pih-accent-hover);
+}
+
+.pih-ai-chat .pih-composer-footer {
+  margin: 8px 16px 12px;
+  background: transparent;
+  border: none;
+  padding: 0;
+}
+
+.pih-ai-chat .pih-composer-controls {
+  margin-top: 0;
+}
+
+/* Conversations sidebar = ai-conversations re-skinned to pih session rows. */
+.pih-ai-conversations {
+  gap: 4px;
+}
+
+.pih-ai-conversations [data-slot='ai-conversations-create'] {
+  width: 100%;
+  height: 34px;
+  justify-content: flex-start;
+  gap: 8px;
+  padding: 0 10px;
+  border: 1px solid var(--pih-border-default);
+  border-radius: 8px;
+  box-shadow: none;
+  background: var(--pih-bg-surface);
+  color: var(--pih-text-primary);
+  font-size: 12.5px;
+  font-weight: 400;
+}
+
+.pih-ai-conversations [data-slot='ai-conversations-create']:hover {
+  background: var(--pih-bg-hover);
+}
+
+.pih-ai-conversations [data-slot='ai-conversations-search'] {
+  padding: 0;
+}
+
+.pih-ai-conversations [data-slot='ai-conversations-search'] input {
+  height: 28px;
+  font-size: 12px;
+  background: var(--pih-bg-surface);
+  border-color: var(--pih-border-subtle);
+}
+
+.pih-ai-conversations [data-slot='ai-conversations-list'] {
+  gap: 2px;
+}
+
+.pih-ai-conversations [data-slot='ai-conversations-item'] {
+  height: 32px;
+  border: none;
+  border-radius: 6px;
+  padding: 0 4px 0 8px;
+  font-size: 12.5px;
+}
+
+.pih-ai-conversations [data-slot='ai-conversations-item'][data-active] {
+  background: var(--pih-bg-selected);
+  border: none;
+}
+
+.pih-ai-conversations [data-slot='ai-conversations-item-button'] {
+  font-size: 12.5px;
+}
+
+.pih-ai-conversations [data-slot='ai-conversations-rename'],
+.pih-ai-conversations [data-slot='ai-conversations-delete'] {
+  opacity: 0;
+  color: var(--pih-text-tertiary);
+}
+
+.pih-ai-conversations
+  [data-slot='ai-conversations-item']:hover
+  [data-slot='ai-conversations-rename'],
+.pih-ai-conversations
+  [data-slot='ai-conversations-item']:hover
+  [data-slot='ai-conversations-delete'],
+.pih-ai-conversations
+  [data-slot='ai-conversations-item'][data-active]
+  [data-slot='ai-conversations-rename'],
+.pih-ai-conversations
+  [data-slot='ai-conversations-item'][data-active]
+  [data-slot='ai-conversations-delete'] {
+  opacity: 1;
+}
+
+/* Token usage = ai-token-usage; pih shows text stats (no ring). */
+.pih-token-usage {
+  margin-left: auto;
+  gap: 10px;
+  padding: 0 12px;
+  border-left: 1px solid var(--pih-border-subtle);
+  color: var(--pih-text-secondary);
+  font-family: var(--pih-font-mono);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+
+.pih-token-usage [data-slot='ai-token-usage-ring'] {
+  display: none;
+}
+
+.pih-token-usage [data-slot='ai-token-usage-text'] {
+  font-size: 11px;
+}
+
+/* ── 11. Interaction surfaces ────────────────────────────────────────────
+ * Front-end behaviour (rail/tab selection, sidebar collapse, files drawer,
+ * model / tool dropdowns, history popover, search) is simulated in the page
+ * schema via page-scope values + `onClick` actions; these rules own only the
+ * hover / active / overlay presentation. */
+
+.pih-shell {
+  position: relative;
+}
+
+.pih-main {
+  position: relative;
+}
+
+.pih-traffic-dot {
+  cursor: pointer;
+}
+
+.pih-traffic-dot:hover {
+  filter: brightness(0.92);
+}
+
+.pih-search {
+  cursor: pointer;
+}
+
+.pih-search:hover {
+  background: var(--pih-bg-hover);
+}
+
+.pih-search-active,
+.pih-search-active:hover {
+  background: var(--pih-bg-selected);
+  border-color: var(--pih-accent-border);
+}
+
+.pih-sidebar-toggle:hover {
+  background: var(--pih-bg-hover);
+}
+
+/* Search overlay (titlebar dropdown) */
+.pih-search-panel {
+  position: absolute;
+  top: 52px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(560px, 82%);
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background: var(--pih-bg-surface);
+  border: 1px solid var(--pih-border-default);
+  border-radius: 10px;
+  box-shadow: var(--pih-shadow-popover);
+  padding: 10px 12px;
+}
+
+.pih-search-input-row {
+  gap: 8px;
+  padding: 0 4px 8px;
+  border-bottom: 1px solid var(--pih-border-subtle);
+  color: var(--pih-text-tertiary);
+}
+
+.pih-search-input {
+  flex: 1;
+  height: 26px;
+  border: none;
+  box-shadow: none;
+  background: transparent;
+  font-size: 13px;
+  color: var(--pih-text-primary);
+}
+
+.pih-search-input:focus {
+  outline: none;
+  box-shadow: none;
+}
+
+.pih-search-results {
+  gap: 2px;
+}
+
+.pih-search-result {
+  height: 32px;
+  border-radius: 6px;
+  padding: 0 8px;
+  font-size: 12.5px;
+  color: var(--pih-text-primary);
+  cursor: pointer;
+}
+
+.pih-search-result:hover {
+  background: var(--pih-bg-hover);
+}
+
+/* Sidebar secondary panels (harness / agents) */
+.pih-side-row {
+  height: 32px;
+  border-radius: 6px;
+  padding: 0 8px;
+  font-size: 12.5px;
+  color: var(--pih-text-primary);
+  cursor: pointer;
+}
+
+.pih-side-row:hover {
+  background: var(--pih-bg-hover);
+}
+
+/* Dropdown anchor + menu (opens upward from the composer / status bar) */
+.pih-dropdown-wrap {
+  position: relative;
+}
+
+.pih-dropdown-menu {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 0;
+  min-width: 260px;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  background: var(--pih-bg-surface);
+  border: 1px solid var(--pih-border-default);
+  border-radius: 10px;
+  box-shadow: var(--pih-shadow-popover);
+  padding: 5px;
+}
+
+.pih-dropdown-item {
+  min-height: 30px;
+  border-radius: 6px;
+  padding: 0 8px;
+  font-size: 12.5px;
+  color: var(--pih-text-primary);
+  cursor: pointer;
+  gap: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.pih-dropdown-item:hover {
+  background: var(--pih-bg-hover);
+}
+
+.pih-dropdown-item-active {
+  background: var(--pih-bg-selected);
+  color: var(--pih-accent);
+}
+
+.pih-popover-menu {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 0;
+  min-width: 220px;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  background: var(--pih-bg-surface);
+  border: 1px solid var(--pih-border-default);
+  border-radius: 10px;
+  box-shadow: var(--pih-shadow-popover);
+  padding: 6px;
+}
+
+.pih-popover-item {
+  height: 30px;
+  border-radius: 6px;
+  padding: 0 8px;
+  font-size: 12.5px;
+  color: var(--pih-text-primary);
+  cursor: pointer;
+  gap: 8px;
+}
+
+.pih-popover-item:hover {
+  background: var(--pih-bg-hover);
+}
+
+/* Active control states */
+.pih-files-btn-active,
+.pih-files-btn-active:hover {
+  background: var(--pih-bg-selected);
+  color: var(--pih-accent);
+}
+
+.pih-model-pill-active,
+.pih-model-pill-active:hover {
+  border-color: var(--pih-accent-border);
+  background: var(--pih-bg-selected);
+}
+
+.pih-ghost-btn-active,
+.pih-ghost-btn-active:hover {
+  background: var(--pih-bg-selected);
+}
+
+.pih-status-btn-active,
+.pih-status-btn-active:hover {
+  background: var(--pih-bg-selected);
+  color: var(--pih-accent);
+}
+
+/* Files drawer (overlay inside the main column) */
+.pih-files-drawer {
+  position: absolute;
+  top: 44px;
+  right: 0;
+  bottom: 0;
+  width: 300px;
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  background: var(--pih-bg-surface);
+  border-left: 1px solid var(--pih-border-default);
+  box-shadow: var(--pih-shadow-popover);
+  padding: 8px;
+}
+
+.pih-files-drawer-header {
+  height: 32px;
+  padding: 0 6px;
+}
+
+.pih-file-row {
+  height: 30px;
+  border-radius: 6px;
+  padding: 0 8px;
+  font-size: 12.5px;
+  color: var(--pih-text-secondary);
+  cursor: pointer;
+}
+
+.pih-file-row:hover {
+  background: var(--pih-bg-hover);
+}
+
+.pih-file-row-active {
+  background: var(--pih-bg-selected);
+  color: var(--pih-accent);
+}
+
+/* ── 12. Destination views (Git / Model / Caps / Prefs) + project picker ── */
+
+.pih-view {
+  background: var(--pih-bg-workspace);
+}
+
+.pih-view-padded {
+  padding: 20px 24px;
+  gap: 16px;
+  overflow-y: auto;
+}
+
+.pih-view-title {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--pih-text-secondary);
+}
+
+.pih-view-header {
+  height: 44px;
+  flex-shrink: 0;
+  padding: 0 14px;
+  gap: 10px;
+  border-bottom: 1px solid var(--pih-border-subtle);
+  background: var(--pih-bg-surface);
+  color: var(--pih-text-secondary);
+}
+
+.pih-view-actions {
+  gap: 10px;
+}
+
+.pih-view-hint {
+  font-size: 12px;
+  color: var(--pih-text-tertiary);
+}
+
+.pih-branch-pill {
+  height: 22px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 9px;
+  border-radius: 999px;
+  background: var(--pih-accent-tint-strong);
+  color: var(--pih-accent);
+  font-size: 11.5px;
+  font-weight: 500;
+}
+
+.pih-git-compare {
+  height: 40px;
+  flex-shrink: 0;
+  padding: 0 14px;
+  gap: 8px;
+  border-bottom: 1px solid var(--pih-border-subtle);
+  background: var(--pih-bg-surface);
+  color: var(--pih-text-secondary);
+}
+
+/* Segmented control */
+.pih-seg {
+  display: inline-flex;
+  border: 1px solid var(--pih-border-default);
+  border-radius: 6px;
+  overflow: hidden;
+  background: var(--pih-bg-surface);
+}
+
+.pih-seg-item {
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 10px;
+  font-size: 11.5px;
+  color: var(--pih-text-secondary);
+  cursor: pointer;
+}
+
+.pih-seg-item + .pih-seg-item {
+  border-left: 1px solid var(--pih-border-subtle);
+}
+
+.pih-seg-item:hover {
+  background: var(--pih-bg-hover);
+}
+
+.pih-seg-item-active,
+.pih-seg-item-active:hover {
+  background: var(--pih-bg-selected);
+  color: var(--pih-accent);
+  font-weight: 500;
+}
+
+/* Git compare body */
+.pih-git-body {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+.pih-git-changes {
+  width: 280px;
+  flex-shrink: 0;
+  gap: 2px;
+  padding: 8px;
+  overflow-y: auto;
+  border-right: 1px solid var(--pih-border-subtle);
+  background: var(--pih-bg-surface);
+}
+
+.pih-git-diff {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--pih-bg-surface);
+}
+
+.pih-diff-header {
+  height: 36px;
+  flex-shrink: 0;
+  padding: 0 12px;
+  gap: 8px;
+  border-bottom: 1px solid var(--pih-border-subtle);
+}
+
+.pih-diff-file {
+  font-family: var(--pih-font-mono);
+  font-size: 12px;
+  color: var(--pih-text-primary);
+}
+
+.pih-diff-pre {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: 10px 12px;
+  font-family: var(--pih-font-mono);
+  font-size: 12px;
+  line-height: 1.7;
+}
+
+.pih-diff-hunk {
+  display: block;
+  color: var(--pih-accent);
+}
+
+.pih-diff-add {
+  display: block;
+  color: var(--pih-success);
+  background: rgba(31, 157, 99, 0.08);
+}
+
+.pih-diff-del {
+  display: block;
+  color: var(--pih-error);
+  background: rgba(200, 74, 74, 0.08);
+}
+
+.pih-diff-ctx {
+  display: block;
+  color: var(--pih-text-secondary);
+}
+
+.pih-file-status {
+  width: 16px;
+  text-align: center;
+  font-family: var(--pih-font-mono);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.pih-file-status-m {
+  color: var(--pih-warning);
+}
+
+.pih-file-status-a {
+  color: var(--pih-success);
+}
+
+.pih-file-status-d {
+  color: var(--pih-error);
+}
+
+.pih-git-commit {
+  height: 52px;
+  flex-shrink: 0;
+  padding: 0 14px;
+  gap: 8px;
+  border-top: 1px solid var(--pih-border-subtle);
+  background: var(--pih-bg-surface);
+}
+
+.pih-git-commit-input {
+  flex: 1;
+  height: 30px;
+  border: 1px solid var(--pih-border-default);
+  border-radius: 6px;
+  padding: 0 10px;
+  font-size: 12.5px;
+  background: var(--pih-bg-surface);
+  color: var(--pih-text-primary);
+}
+
+.pih-git-commit-input:focus {
+  outline: none;
+  border-color: var(--pih-accent-border);
+}
+
+.pih-send-btn-small {
+  height: 30px;
+  border-radius: 6px;
+  padding: 0 14px;
+  gap: 6px;
+  background: var(--pih-accent);
+  color: #ffffff;
+  font-size: 12.5px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.pih-send-btn-small:hover {
+  background: var(--pih-accent-hover);
+}
+
+/* Model manager */
+.pih-model-list {
+  gap: 8px;
+}
+
+.pih-model-row {
+  height: 56px;
+  gap: 10px;
+  padding: 0 14px;
+  border: 1px solid var(--pih-border-default);
+  border-radius: 10px;
+  background: var(--pih-bg-surface);
+  color: var(--pih-text-secondary);
+  cursor: pointer;
+}
+
+.pih-model-row:hover {
+  background: var(--pih-bg-hover);
+}
+
+.pih-model-row-active,
+.pih-model-row-active:hover {
+  border-color: var(--pih-accent-border);
+  background: var(--pih-accent-tint);
+}
+
+.pih-model-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--pih-text-primary);
+}
+
+.pih-model-meta {
+  font-size: 11.5px;
+  color: var(--pih-text-tertiary);
+}
+
+.pih-badge {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--pih-accent);
+}
+
+/* Capabilities */
+.pih-caps-list {
+  gap: 8px;
+}
+
+.pih-caps-row {
+  height: 46px;
+  gap: 10px;
+  padding: 0 14px;
+  border: 1px solid var(--pih-border-default);
+  border-radius: 10px;
+  background: var(--pih-bg-surface);
+  color: var(--pih-text-secondary);
+  cursor: pointer;
+}
+
+.pih-caps-row:hover {
+  background: var(--pih-bg-hover);
+}
+
+.pih-caps-name {
+  font-family: var(--pih-font-mono);
+  font-size: 12.5px;
+  color: var(--pih-text-primary);
+}
+
+.pih-toggle {
+  min-width: 40px;
+  text-align: center;
+  border-radius: 999px;
+  padding: 2px 10px;
+  font-size: 11px;
+  font-weight: 700;
+  background: var(--pih-bg-hover);
+  color: var(--pih-text-tertiary);
+}
+
+.pih-toggle-on {
+  background: var(--pih-accent);
+  color: #ffffff;
+}
+
+/* Preferences */
+.pih-prefs-list {
+  gap: 14px;
+}
+
+.pih-prefs-row {
+  height: 40px;
+}
+
+.pih-prefs-label {
+  font-size: 13px;
+  color: var(--pih-text-primary);
+}
+
+/* Sidebar projects */
+.pih-project-list {
+  gap: 2px;
+}
+
+.pih-project-row {
+  height: 30px;
+  gap: 8px;
+  padding: 0 8px;
+  border-radius: 6px;
+  font-size: 12.5px;
+  color: var(--pih-text-primary);
+  cursor: pointer;
+}
+
+.pih-project-row:hover {
+  background: var(--pih-bg-hover);
+}
+
+.pih-project-row-active,
+.pih-project-row-active:hover {
+  background: var(--pih-bg-selected);
+  color: var(--pih-accent);
+}
+
+.pih-project-child {
+  height: 26px;
+  gap: 8px;
+  padding: 0 8px 0 22px;
+  border-radius: 6px;
+  font-size: 12px;
+  color: var(--pih-text-secondary);
+  cursor: pointer;
+}
+
+.pih-project-child:hover {
+  background: var(--pih-bg-hover);
+}
+
+/* Project picker dialog */
+.pih-project-dialog-body {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.pih-project-options {
+  gap: 4px;
+}
+
+.pih-project-option {
+  height: 52px;
+  gap: 10px;
+  padding: 0 12px;
+  border: 1px solid var(--pih-border-default);
+  border-radius: 10px;
+  color: var(--pih-text-secondary);
+  cursor: pointer;
+}
+
+.pih-project-option:hover {
+  background: var(--pih-bg-hover);
+}
+
+.pih-project-option-active {
+  border-color: var(--pih-accent-border);
+  background: var(--pih-accent-tint);
+}
+
+.pih-project-option-active > svg:last-child {
+  color: var(--pih-accent);
+}
+
+/* In-page modal (project picker) — page-scope so setValue reaches the page. */
+.pih-modal-mask {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  align-items: center;
+  justify-content: center;
+  background: rgba(15, 23, 42, 0.28);
+}
+
+.pih-modal {
+  width: 460px;
+  max-width: 88%;
+  gap: 6px;
+  background: var(--pih-bg-surface);
+  border: 1px solid var(--pih-border-default);
+  border-radius: 12px;
+  box-shadow: var(--pih-shadow-popover);
+  padding: 14px 16px 16px;
+}
+
+.pih-modal-header {
+  height: 32px;
+  gap: 8px;
+}
+
+.pih-modal-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--pih-text-primary);
+}
+
+/* Outside-click backdrop for popovers / dropdowns / search overlay. */
+.pih-popover-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 45;
+}
+
+/* Keep dropdown / popover rows single-line so long labels never wrap. */
+.pih-dropdown-menu {
+  min-width: 300px;
+}
+
+.pih-dropdown-item,
+.pih-popover-item {
+  min-height: 30px;
+  height: auto;
+}
+
+.pih-dropdown-item > span:first-child {
+  flex: 1;
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Built-in `tabs` used for the sidebar section switcher — compact to fit. */
+.pih-section-tabs {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.pih-section-tabs [data-slot='tabs-root'] {
+  flex: 1;
+  min-height: 0;
+  gap: 0;
+}
+
+.pih-section-tabs [data-slot='tabs-list'] {
+  width: 100%;
+  height: auto;
+  padding: 0 0 6px;
+  gap: 4px;
+  justify-content: flex-start;
+  overflow: visible;
+  background: transparent;
+  border-radius: 0;
+}
+
+.pih-section-tabs [data-slot='tabs-trigger'] {
+  flex: 1;
+  min-width: 0;
+  height: 28px;
+  padding: 0 6px;
+  gap: 4px;
+  border-radius: 6px;
+  font-size: 11px;
+  white-space: nowrap;
+  color: var(--pih-text-secondary);
+  justify-content: center;
+}
+
+.pih-section-tabs [data-slot='tabs-trigger']:hover {
+  background: var(--pih-bg-hover);
+}
+
+.pih-section-tabs [data-slot='tabs-trigger'][data-active] {
+  background: var(--pih-accent-tint);
+  color: var(--pih-accent);
+}
+
+.pih-section-tabs [data-slot='tabs-content'] {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Built-in `select` used for the model / tool pickers.
+ * The field wrapper (`label.nop-field`) is the flex item and sizes to content,
+ * so pin it to a fixed width — the trigger (100%) and the popup
+ * (--anchor-width) then stay constant regardless of the selected label. */
+.pih-composer-controls label.nop-field[data-testid='pih-model-select'] {
+  width: 300px;
+  flex: 0 0 auto;
+}
+
+.pih-composer-controls label.nop-field[data-testid='pih-tool-select'] {
+  width: 132px;
+  flex: 0 0 auto;
+}
+
+.pih-model-select {
+  width: 100%;
+}
+
+.pih-model-select [role='combobox'] {
+  width: 100%;
+  height: 28px;
+  border-radius: 6px;
+  padding: 0 8px;
+  font-size: 12px;
+  background: var(--pih-bg-surface);
+  border-color: var(--pih-border-default);
+  color: var(--pih-text-primary);
+}
+
+.pih-tool-select {
+  width: 100%;
+}
+
+.pih-tool-select [role='combobox'] {
+  width: 100%;
+  height: 28px;
+  border-radius: 6px;
+  padding: 0 8px;
+  font-size: 12px;
+  background: transparent;
+  border-color: var(--pih-border-default);
+  color: var(--pih-text-primary);
+}
+
+.pih-option-label {
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--pih-text-primary);
+}
+
+/* The pih model/tool pickers are not clearable. */
+.pih-model-select [data-slot='combobox-clear'],
+.pih-tool-select [data-slot='combobox-clear'] {
+  display: none;
+}

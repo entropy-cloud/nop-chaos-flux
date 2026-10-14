@@ -39,6 +39,9 @@ export function DropdownButtonRenderer(props: RendererComponentProps<DropdownBut
   const size = (schemaProps.size as string) ?? 'default';
   const trigger = schemaProps.trigger === 'hover' ? 'hover' : 'click';
   const disabled = schemaProps.disabled === true;
+  const side = (schemaProps.side as 'top' | 'bottom' | 'left' | 'right' | undefined) ?? 'bottom';
+  const align = (schemaProps.align as 'start' | 'center' | 'end' | undefined) ?? 'start';
+  const sideOffset = typeof schemaProps.sideOffset === 'number' ? schemaProps.sideOffset : 4;
 
   const label = resolveRendererSlotContent(props, 'label');
 
@@ -176,7 +179,7 @@ export function DropdownButtonRenderer(props: RendererComponentProps<DropdownBut
             </Button>
           }
         />
-        <DropdownMenuContent {...hoverContentHandlers}>
+        <DropdownMenuContent side={side} align={align} sideOffset={sideOffset} {...hoverContentHandlers}>
           {visibleItems.map((item, index) => {
             const key =
               item.key !== undefined && item.key !== null && item.key !== ''

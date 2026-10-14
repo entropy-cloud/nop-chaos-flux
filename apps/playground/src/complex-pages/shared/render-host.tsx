@@ -9,6 +9,7 @@ import { registerDataRenderers } from '@nop-chaos/flux-renderers-data';
 import { registerContentRenderers } from '@nop-chaos/flux-renderers-content';
 import { registerLayoutRenderers } from '@nop-chaos/flux-renderers-layout';
 import { registerSchedulingRenderers } from '@nop-chaos/flux-renderers-scheduling';
+import { registerAiRenderers } from '@nop-chaos/flux-renderers-ai';
 import type { RendererEnv } from '@nop-chaos/flux-core';
 import { ConfirmHost } from './confirm-bridge';
 
@@ -20,6 +21,7 @@ registerDataRenderers(registry);
 registerContentRenderers(registry);
 registerLayoutRenderers(registry);
 registerSchedulingRenderers(registry);
+registerAiRenderers(registry);
 
 function toNumber(value: unknown): number {
   const n = Number(value);

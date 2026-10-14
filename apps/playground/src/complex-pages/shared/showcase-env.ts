@@ -14,6 +14,8 @@ import { createSundialFetcherBranch } from './mock-backend-sundial-branch';
 import { createAirtableDatabase, createAirtableFetcherBranch } from './mock-backend-airtable';
 import { createStripeDatabase, createStripeFetcherBranch } from './mock-backend-stripe';
 import { confirmBridge } from './confirm-bridge';
+import { createMockAiStream, createMockAiConnector, createAiImportLoader } from '../../ai/mock-ai-env';
+import { mockToolSchemas, mockToolExecutor } from '../../ai/tool-mock';
 
 type ReplicaFetcherBranch = <T>(input: LinearFetcherBranchInput) => { status: number; data: T } | null;
 
@@ -570,7 +572,20 @@ export function createShowcaseEnv(): { env: RendererEnv; db: MockDatabase } {
     loadDict: async (name: string) => {
       return { name, options: MOCK_DICTS[name] ?? [] };
     },
+    // AI renderer host channels (additive; only consulted by ai-* schemas):
+    // a mock token stream + an `ai` import namespace exposing the mock
+    // connector and the agentic tool set, so complex pages can run
+    // `ai-chat` / `ai-conversations` without a backend.
+    stream: createMockAiStream(15, true),
   };
+
+  const aiConnector = createMockAiConnector(env);
+  const { importLoader, resolveImportUrl } = createAiImportLoader(aiConnector, {
+    tools: mockToolSchemas,
+    toolExecutor: mockToolExecutor,
+  });
+  env.importLoader = importLoader;
+  env.resolveImportUrl = resolveImportUrl;
 
   return { env, db };
 }

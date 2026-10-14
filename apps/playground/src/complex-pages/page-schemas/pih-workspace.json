@@ -1,0 +1,1606 @@
+{
+  "type": "page",
+  "testid": "pih-workspace-page",
+  "className": "pih-root",
+  "bodyClassName": "h-full",
+  "body": [
+    {
+      "type": "flex",
+      "direction": "column",
+      "className": "pih-shell h-full",
+      "testid": "pih-shell",
+      "body": [
+        {
+          "type": "flex",
+          "direction": "row",
+          "className": "pih-titlebar",
+          "testid": "pih-titlebar",
+          "body": [
+            {
+              "type": "flex",
+              "direction": "row",
+              "gap": 8,
+              "className": "pih-traffic items-center",
+              "body": [
+                {
+                  "type": "flex",
+                  "direction": "row",
+                  "className": "pih-traffic-dot pih-traffic-close",
+                  "testid": "pih-traffic-close",
+                  "onClick": {
+                    "action": "showToast",
+                    "args": { "level": "info", "message": "Close window (simulated)" }
+                  }
+                },
+                {
+                  "type": "flex",
+                  "direction": "row",
+                  "className": "pih-traffic-dot pih-traffic-min",
+                  "testid": "pih-traffic-min",
+                  "onClick": {
+                    "action": "showToast",
+                    "args": { "level": "info", "message": "Minimize window (simulated)" }
+                  }
+                },
+                {
+                  "type": "flex",
+                  "direction": "row",
+                  "className": "pih-traffic-dot pih-traffic-max",
+                  "testid": "pih-traffic-max",
+                  "onClick": {
+                    "action": "showToast",
+                    "args": { "level": "info", "message": "Maximize window (simulated)" }
+                  }
+                }
+              ]
+            },
+            {
+              "type": "flex",
+              "direction": "column",
+              "gap": 1,
+              "className": "pih-brand",
+              "testid": "pih-brand",
+              "body": [
+                { "type": "text", "text": "T:", "className": "pih-brand-mark" },
+                { "type": "text", "text": "Pi-Harness", "className": "pih-brand-name" }
+              ]
+            },
+            {
+              "type": "flex",
+              "direction": "row",
+              "gap": 6,
+              "className": "${pihSearchOpen ? 'pih-search pih-search-active items-center' : 'pih-search items-center'}",
+              "testid": "pih-search",
+              "onClick": {
+                "action": "setValue",
+                "args": { "path": "pihSearchOpen", "value": "${!pihSearchOpen}" }
+              },
+              "body": [
+                { "type": "icon", "icon": "search", "size": 12 },
+                { "type": "text", "text": "Search", "className": "" },
+                { "type": "text", "text": "⌘K", "className": "pih-kbd" }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "flex",
+          "direction": "row",
+          "className": "flex-1 min-h-0",
+          "body": [
+            {
+              "type": "flex",
+              "direction": "column",
+              "gap": 4,
+              "className": "pih-rail",
+              "testid": "pih-rail",
+              "body": [
+                {
+                  "type": "flex",
+                  "direction": "column",
+                  "gap": 2,
+                  "className": "${pihRail === 'work' ? 'pih-rail-item pih-rail-item-active' : 'pih-rail-item'}",
+                  "testid": "pih-rail-work",
+                  "onClick": {
+                    "action": "setValue",
+                    "args": { "path": "pihRail", "value": "work" }
+                  },
+                  "body": [
+                    { "type": "icon", "icon": "square-terminal", "size": 16 },
+                    { "type": "text", "text": "Work", "className": "pih-rail-label" }
+                  ]
+                },
+                {
+                  "type": "flex",
+                  "direction": "column",
+                  "gap": 2,
+                  "className": "${pihRail === 'git' ? 'pih-rail-item pih-rail-item-active' : 'pih-rail-item'}",
+                  "testid": "pih-rail-git",
+                  "onClick": {
+                    "action": "setValue",
+                    "args": { "path": "pihRail", "value": "git" }
+                  },
+                  "body": [
+                    { "type": "icon", "icon": "git-branch", "size": 16 },
+                    { "type": "text", "text": "Git", "className": "pih-rail-label" }
+                  ]
+                },
+                {
+                  "type": "flex",
+                  "direction": "column",
+                  "gap": 2,
+                  "className": "${pihRail === 'model' ? 'pih-rail-item pih-rail-item-active' : 'pih-rail-item'}",
+                  "testid": "pih-rail-model",
+                  "onClick": {
+                    "action": "setValue",
+                    "args": { "path": "pihRail", "value": "model" }
+                  },
+                  "body": [
+                    { "type": "icon", "icon": "cpu", "size": 16 },
+                    { "type": "text", "text": "Model", "className": "pih-rail-label" }
+                  ]
+                },
+                {
+                  "type": "flex",
+                  "direction": "column",
+                  "gap": 2,
+                  "className": "${pihRail === 'caps' ? 'pih-rail-item pih-rail-item-active' : 'pih-rail-item'}",
+                  "testid": "pih-rail-caps",
+                  "onClick": {
+                    "action": "setValue",
+                    "args": { "path": "pihRail", "value": "caps" }
+                  },
+                  "body": [
+                    { "type": "icon", "icon": "sparkles", "size": 16 },
+                    { "type": "text", "text": "Caps", "className": "pih-rail-label" }
+                  ]
+                },
+                {
+                  "type": "flex",
+                  "direction": "column",
+                  "gap": 2,
+                  "className": "${pihRail === 'prefs' ? 'pih-rail-item pih-rail-item-active' : 'pih-rail-item'}",
+                  "testid": "pih-rail-prefs",
+                  "onClick": {
+                    "action": "setValue",
+                    "args": { "path": "pihRail", "value": "prefs" }
+                  },
+                  "body": [
+                    { "type": "icon", "icon": "settings", "size": 16 },
+                    { "type": "text", "text": "Prefs", "className": "pih-rail-label" }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "flex",
+              "direction": "column",
+              "className": "pih-sidebar",
+              "testid": "pih-sidebar",
+              "visible": "${!pihSidebarCollapsed}",
+              "body": [
+                {
+                  "type": "flex",
+                  "direction": "row",
+                  "className": "pih-sidebar-header items-center",
+                  "testid": "pih-sidebar-header",
+                  "body": [
+                    { "type": "text", "text": "WORKSPACE", "className": "pih-sidebar-title" },
+                    { "type": "text", "text": "", "className": "flex-1" },
+                    {
+                      "type": "button",
+                      "icon": "plus",
+                      "variant": "ghost",
+                      "size": "icon-sm",
+                      "className": "pih-icon-btn pih-icon-btn-accent",
+                      "testid": "pih-header-new",
+                      "onClick": {
+                        "action": "setValue",
+                        "args": { "path": "pihProjectDialogOpen", "value": true }
+                      }
+                    },
+                    {
+                      "type": "button",
+                      "icon": "refresh-cw",
+                      "variant": "ghost",
+                      "size": "icon-sm",
+                      "className": "pih-icon-btn",
+                      "testid": "pih-header-refresh",
+                      "onClick": {
+                        "action": "showToast",
+                        "args": { "level": "success", "message": "Workspace refreshed" }
+                      }
+                    },
+                    {
+                      "type": "button",
+                      "icon": "folder-open",
+                      "variant": "ghost",
+                      "size": "icon-sm",
+                      "className": "pih-icon-btn",
+                      "testid": "pih-header-open",
+                      "onClick": {
+                        "action": "setValue",
+                        "args": { "path": "pihProjectDialogOpen", "value": true }
+                      }
+                    },
+                    {
+                      "type": "button",
+                      "icon": "panels-top-left",
+                      "variant": "ghost",
+                      "size": "icon-sm",
+                      "className": "pih-icon-btn",
+                      "testid": "pih-header-panel",
+                      "onClick": {
+                        "action": "setValue",
+                        "args": { "path": "pihFilesOpen", "value": "${!pihFilesOpen}" }
+                      }
+                    }
+                  ]
+                },
+                {
+                  "type": "tabs",
+                  "testid": "pih-section-tabs",
+                  "className": "pih-section-tabs",
+                  "variant": "line",
+                  "orientation": "horizontal",
+                  "valueOwnership": "scope",
+                  "valueStatePath": "pihSection",
+                  "defaultValue": "workspace",
+                  "items": [
+                    {
+                      "key": "workspace",
+                      "title": "Workspace",
+                      "icon": "folder",
+                      "body": [
+                        {
+                          "type": "container",
+                          "className": "pih-sidebar-scroll",
+                          "body": [
+                            {
+                              "type": "text",
+                              "text": "SESSIONS",
+                              "className": "pih-group-heading"
+                            },
+                            {
+                              "type": "ai-conversations",
+                              "testid": "pih-ai-conversations",
+                              "className": "pih-ai-conversations",
+                              "conversations": "${conversations}",
+                              "activeId": "${activeConversationId}",
+                              "onCreate": {
+                                "action": "ai:createConversation",
+                                "args": { "title": "New session" }
+                              },
+                              "onItemClick": {
+                                "action": "ai:switchConversation",
+                                "args": { "id": "${id}" }
+                              },
+                              "onItemDelete": {
+                                "action": "ai:deleteConversation",
+                                "args": { "id": "${id}" }
+                              },
+                              "onItemRename": {
+                                "action": "ai:renameConversation",
+                                "args": { "id": "${id}", "title": "${title}" }
+                              }
+                            },
+                            { "type": "text", "text": "", "className": "pih-divider" },
+                            {
+                              "type": "text",
+                              "text": "PROJECTS",
+                              "className": "pih-group-heading"
+                            },
+                            {
+                              "type": "flex",
+                              "direction": "column",
+                              "gap": 6,
+                              "className": "pih-empty-projects items-center",
+                              "testid": "pih-empty-projects",
+                              "visible": "${pihProject === ''}",
+                              "onClick": {
+                                "action": "setValue",
+                                "args": { "path": "pihProjectDialogOpen", "value": true }
+                              },
+                              "body": [
+                                { "type": "icon", "icon": "folder", "size": 28 },
+                                {
+                                  "type": "text",
+                                  "text": "No projects",
+                                  "className": "pih-empty-title"
+                                },
+                                {
+                                  "type": "text",
+                                  "text": "Drag a project folder here, or use Open project.",
+                                  "className": "pih-empty-desc"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "flex",
+                              "direction": "column",
+                              "className": "pih-project-list",
+                              "testid": "pih-project-list",
+                              "visible": "${pihProject !== ''}",
+                              "body": [
+                                {
+                                  "type": "flex",
+                                  "direction": "row",
+                                  "gap": 8,
+                                  "className": "pih-project-row pih-project-row-active items-center",
+                                  "testid": "pih-project-active",
+                                  "onClick": {
+                                    "action": "setValue",
+                                    "args": { "path": "pihProjectDialogOpen", "value": true }
+                                  },
+                                  "body": [
+                                    { "type": "icon", "icon": "folder-open", "size": 14 },
+                                    {
+                                      "type": "text",
+                                      "text": "${pihProject}",
+                                      "className": "truncate"
+                                    }
+                                  ]
+                                },
+                                {
+                                  "type": "flex",
+                                  "direction": "row",
+                                  "gap": 8,
+                                  "className": "pih-project-child items-center",
+                                  "testid": "pih-project-src",
+                                  "onClick": [
+                                    {
+                                      "action": "setValue",
+                                      "args": { "path": "pihFilesOpen", "value": true }
+                                    },
+                                    {
+                                      "action": "setValue",
+                                      "args": { "path": "pihRail", "value": "work" }
+                                    }
+                                  ],
+                                  "body": [
+                                    { "type": "icon", "icon": "folder", "size": 13 },
+                                    { "type": "text", "text": "src", "className": "truncate" }
+                                  ]
+                                },
+                                {
+                                  "type": "flex",
+                                  "direction": "row",
+                                  "gap": 8,
+                                  "className": "pih-project-child items-center",
+                                  "testid": "pih-project-tests",
+                                  "onClick": [
+                                    {
+                                      "action": "setValue",
+                                      "args": { "path": "pihFilesOpen", "value": true }
+                                    },
+                                    {
+                                      "action": "setValue",
+                                      "args": { "path": "pihRail", "value": "work" }
+                                    }
+                                  ],
+                                  "body": [
+                                    { "type": "icon", "icon": "folder", "size": 13 },
+                                    { "type": "text", "text": "tests", "className": "truncate" }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "key": "harness",
+                      "title": "Harness",
+                      "icon": "gauge",
+                      "body": [
+                        {
+                          "type": "container",
+                          "className": "pih-sidebar-scroll",
+                          "testid": "pih-harness-panel",
+                          "body": [
+                            {
+                              "type": "text",
+                              "text": "PIPELINES",
+                              "className": "pih-group-heading"
+                            },
+                            {
+                              "type": "flex",
+                              "direction": "row",
+                              "gap": 8,
+                              "className": "pih-side-row items-center",
+                              "testid": "pih-harness-run",
+                              "onClick": {
+                                "action": "showToast",
+                                "args": { "level": "success", "message": "Harness run started" }
+                              },
+                              "body": [
+                                { "type": "icon", "icon": "play", "size": 14 },
+                                { "type": "text", "text": "Run workspace", "className": "" }
+                              ]
+                            },
+                            {
+                              "type": "flex",
+                              "direction": "row",
+                              "gap": 8,
+                              "className": "pih-side-row items-center",
+                              "testid": "pih-harness-tests",
+                              "onClick": {
+                                "action": "showToast",
+                                "args": { "level": "info", "message": "Test suite queued" }
+                              },
+                              "body": [
+                                { "type": "icon", "icon": "flask-conical", "size": 14 },
+                                { "type": "text", "text": "Run tests", "className": "" }
+                              ]
+                            },
+                            {
+                              "type": "flex",
+                              "direction": "row",
+                              "gap": 8,
+                              "className": "pih-side-row items-center",
+                              "testid": "pih-harness-build",
+                              "onClick": {
+                                "action": "showToast",
+                                "args": { "level": "info", "message": "Build started" }
+                              },
+                              "body": [
+                                { "type": "icon", "icon": "hammer", "size": 14 },
+                                { "type": "text", "text": "Build", "className": "" }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "key": "agents",
+                      "title": "Agents",
+                      "icon": "users",
+                      "body": [
+                        {
+                          "type": "container",
+                          "className": "pih-sidebar-scroll",
+                          "testid": "pih-agents-panel",
+                          "body": [
+                            {
+                              "type": "text",
+                              "text": "AVAILABLE AGENTS",
+                              "className": "pih-group-heading"
+                            },
+                            {
+                              "type": "flex",
+                              "direction": "row",
+                              "gap": 8,
+                              "className": "pih-side-row items-center",
+                              "testid": "pih-agent-coder",
+                              "onClick": {
+                                "action": "showToast",
+                                "args": { "level": "info", "message": "Agent Coder (simulated)" }
+                              },
+                              "body": [
+                                { "type": "icon", "icon": "bot", "size": 14 },
+                                { "type": "text", "text": "Coder", "className": "" }
+                              ]
+                            },
+                            {
+                              "type": "flex",
+                              "direction": "row",
+                              "gap": 8,
+                              "className": "pih-side-row items-center",
+                              "testid": "pih-agent-reviewer",
+                              "onClick": {
+                                "action": "showToast",
+                                "args": { "level": "info", "message": "Agent Reviewer (simulated)" }
+                              },
+                              "body": [
+                                { "type": "icon", "icon": "eye", "size": 14 },
+                                { "type": "text", "text": "Reviewer", "className": "" }
+                              ]
+                            },
+                            {
+                              "type": "flex",
+                              "direction": "row",
+                              "gap": 8,
+                              "className": "pih-side-row items-center",
+                              "testid": "pih-agent-planner",
+                              "onClick": {
+                                "action": "showToast",
+                                "args": { "level": "info", "message": "Agent Planner (simulated)" }
+                              },
+                              "body": [
+                                { "type": "icon", "icon": "list-checks", "size": 14 },
+                                { "type": "text", "text": "Planner", "className": "" }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "container",
+              "className": "pih-sidebar-divider",
+              "testid": "pih-sidebar-divider",
+              "body": [
+                {
+                  "type": "flex",
+                  "direction": "row",
+                  "gap": 3,
+                  "className": "pih-sidebar-toggle items-center",
+                  "testid": "pih-sidebar-toggle",
+                  "onClick": {
+                    "action": "setValue",
+                    "args": { "path": "pihSidebarCollapsed", "value": "${!pihSidebarCollapsed}" }
+                  },
+                  "body": [
+                    {
+                      "type": "icon",
+                      "icon": "panel-left-open",
+                      "size": 12,
+                      "visible": "${!pihSidebarCollapsed}"
+                    },
+                    {
+                      "type": "icon",
+                      "icon": "panel-left-close",
+                      "size": 12,
+                      "visible": "${pihSidebarCollapsed}"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "flex",
+              "direction": "column",
+              "className": "pih-main",
+              "testid": "pih-main",
+              "body": [
+                {
+                  "type": "flex",
+                  "direction": "column",
+                  "className": "pih-view flex-1 min-h-0",
+                  "testid": "pih-view-work",
+                  "visible": "${pihRail === 'work'}",
+                  "body": [
+                    {
+                      "type": "flex",
+                      "direction": "row",
+                      "className": "pih-tabbar items-center",
+                      "testid": "pih-tabbar",
+                      "body": [
+                        {
+                          "type": "button",
+                          "icon": "folder-open",
+                          "label": "Files",
+                          "variant": "ghost",
+                          "size": "sm",
+                          "className": "pih-files-btn",
+                          "active": "${pihFilesOpen}",
+                          "testid": "pih-files-btn",
+                          "onClick": {
+                            "action": "setValue",
+                            "args": { "path": "pihFilesOpen", "value": "${!pihFilesOpen}" }
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "type": "ai-chat",
+                      "testid": "pih-ai-chat",
+                      "className": "pih-ai-chat flex flex-col flex-1 min-h-0",
+                      "connector": "${connector}",
+                      "engine": "${activeEngine}",
+                      "conversationController": "${controller}",
+                      "activeConversationId": "${activeConversationId}",
+                      "tools": "${tools}",
+                      "toolExecutor": "${toolExecutor}",
+                      "maxToolRounds": 5,
+                      "placeholder": "Message Pi…",
+                      "submitType": "enter",
+                      "footer": {
+                        "type": "flex",
+                        "direction": "column",
+                        "gap": 6,
+                        "className": "pih-composer-footer",
+                        "body": [
+                          {
+                            "type": "flex",
+                            "direction": "row",
+                            "gap": 6,
+                            "className": "pih-composer-controls items-center",
+                            "testid": "pih-composer-controls",
+                            "body": [
+                              {
+                                "type": "button",
+                                "icon": "image-plus",
+                                "variant": "ghost",
+                                "size": "icon-sm",
+                                "className": "pih-composer-btn",
+                                "testid": "pih-attach",
+                                "onClick": {
+                                  "action": "showToast",
+                                  "args": {
+                                    "level": "info",
+                                    "message": "Add attachment (simulated)"
+                                  }
+                                }
+                              },
+                              {
+                                "type": "select",
+                                "name": "pihModel",
+                                "testid": "pih-model-select",
+                                "className": "pih-model-select",
+                                "searchable": false,
+                                "options": [
+                                  {
+                                    "value": "DeepSeek / DeepSeek-V4-Pro · ultra",
+                                    "label": "DeepSeek / DeepSeek-V4-Pro · ultra",
+                                    "desc": "128k context · reasoning · tools"
+                                  },
+                                  {
+                                    "value": "Claude / Opus-4.6 · high",
+                                    "label": "Claude / Opus-4.6 · high",
+                                    "desc": "200k context · extended thinking"
+                                  },
+                                  {
+                                    "value": "GPT / o5 · medium",
+                                    "label": "GPT / o5 · medium",
+                                    "desc": "128k context · fast"
+                                  }
+                                ],
+                                "optionTemplate": [
+                                  {
+                                    "type": "flex",
+                                    "direction": "column",
+                                    "gap": 1,
+                                    "body": [
+                                      {
+                                        "type": "text",
+                                        "text": "${$slot.option.label}",
+                                        "className": "pih-option-label"
+                                      },
+                                      {
+                                        "type": "text",
+                                        "text": "${$slot.option.desc}",
+                                        "className": "pih-model-meta"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "type": "flex",
+                                "direction": "row",
+                                "gap": 6,
+                                "className": "pih-tool-strip items-center",
+                                "body": [
+                                  {
+                                    "type": "select",
+                                    "name": "pihToolPreset",
+                                    "testid": "pih-tool-select",
+                                    "className": "pih-tool-select",
+                                    "searchable": false,
+                                    "options": [
+                                      { "value": "default", "label": "default" },
+                                      { "value": "read-only", "label": "read-only" },
+                                      { "value": "full-auto", "label": "full-auto" }
+                                    ]
+                                  },
+                                  {
+                                    "type": "button",
+                                    "icon": "minimize-2",
+                                    "label": "Compact",
+                                    "variant": "ghost",
+                                    "size": "sm",
+                                    "className": "pih-ghost-btn",
+                                    "testid": "pih-compact",
+                                    "onClick": {
+                                      "action": "showToast",
+                                      "args": { "level": "success", "message": "Context compacted" }
+                                    }
+                                  },
+                                  {
+                                    "type": "flex",
+                                    "direction": "row",
+                                    "className": "pih-composer-btn items-center",
+                                    "testid": "pih-sound",
+                                    "onClick": {
+                                      "action": "setValue",
+                                      "args": { "path": "pihSound", "value": "${!pihSound}" }
+                                    },
+                                    "body": [
+                                      {
+                                        "type": "icon",
+                                        "icon": "volume-2",
+                                        "size": 15,
+                                        "visible": "${pihSound}"
+                                      },
+                                      {
+                                        "type": "icon",
+                                        "icon": "volume-x",
+                                        "size": 15,
+                                        "visible": "${!pihSound}"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              }
+                            ]
+                          },
+                          {
+                            "type": "text",
+                            "text": "Enter to send · Shift+Enter for newline · Esc to abort",
+                            "className": "pih-composer-hint"
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
+                {
+                  "type": "flex",
+                  "direction": "column",
+                  "className": "pih-view flex-1 min-h-0",
+                  "testid": "pih-view-git",
+                  "visible": "${pihRail === 'git'}",
+                  "body": [
+                    {
+                      "type": "flex",
+                      "direction": "row",
+                      "className": "pih-view-header items-center",
+                      "body": [
+                        { "type": "icon", "icon": "git-branch", "size": 14 },
+                        {
+                          "type": "text",
+                          "text": "main",
+                          "className": "pih-branch-pill",
+                          "testid": "pih-git-branch"
+                        },
+                        { "type": "text", "text": "", "className": "flex-1" },
+                        {
+                          "type": "button",
+                          "icon": "download",
+                          "label": "Fetch",
+                          "variant": "ghost",
+                          "size": "sm",
+                          "className": "pih-ghost-btn",
+                          "testid": "pih-git-fetch",
+                          "onClick": {
+                            "action": "showToast",
+                            "args": { "level": "info", "message": "Fetching origin…" }
+                          }
+                        },
+                        {
+                          "type": "button",
+                          "icon": "arrow-down-to-line",
+                          "label": "Pull",
+                          "variant": "ghost",
+                          "size": "sm",
+                          "className": "pih-ghost-btn",
+                          "testid": "pih-git-pull",
+                          "onClick": {
+                            "action": "showToast",
+                            "args": { "level": "info", "message": "Pulling main…" }
+                          }
+                        },
+                        {
+                          "type": "button",
+                          "icon": "arrow-up-from-line",
+                          "label": "Push",
+                          "variant": "ghost",
+                          "size": "sm",
+                          "className": "pih-ghost-btn",
+                          "testid": "pih-git-push",
+                          "onClick": {
+                            "action": "showToast",
+                            "args": { "level": "info", "message": "Pushing main…" }
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "type": "flex",
+                      "direction": "row",
+                      "gap": 8,
+                      "className": "pih-git-compare items-center",
+                      "testid": "pih-git-compare",
+                      "body": [
+                        { "type": "text", "text": "COMPARE", "className": "pih-group-heading" },
+                        {
+                          "type": "button-group-select",
+                          "name": "pihGitBase",
+                          "testid": "pih-seg-pihGitBase",
+                          "className": "pih-seg-select",
+                          "options": [
+                            { "value": "main", "label": "main" },
+                            { "value": "develop", "label": "develop" },
+                            { "value": "release", "label": "release" }
+                          ]
+                        },
+                        { "type": "icon", "icon": "arrow-left-right", "size": 13 },
+                        {
+                          "type": "button-group-select",
+                          "name": "pihGitHead",
+                          "testid": "pih-seg-pihGitHead",
+                          "className": "pih-seg-select",
+                          "options": [
+                            { "value": "feature/ui", "label": "feature/ui" },
+                            { "value": "develop", "label": "develop" },
+                            { "value": "hotfix", "label": "hotfix" }
+                          ]
+                        },
+                        { "type": "text", "text": "", "className": "flex-1" },
+                        {
+                          "type": "button",
+                          "icon": "git-compare",
+                          "label": "Compare",
+                          "variant": "ghost",
+                          "size": "sm",
+                          "className": "pih-ghost-btn",
+                          "testid": "pih-git-compare-btn",
+                          "onClick": {
+                            "action": "showToast",
+                            "args": {
+                              "level": "success",
+                              "message": "Compared ${pihGitBase} ↔ ${pihGitHead}"
+                            }
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "type": "diff-view",
+                      "testid": "pih-git-diffview",
+                      "className": "pih-git-diffview flex-1 min-h-0",
+                      "viewType": "${pihGitDiffMode}",
+                      "activeFileIndex": "${pihGitFileIndex ?? 0}",
+                      "showLineNumbers": true,
+                      "files": [
+                        {
+                          "fileName": "src/index.ts",
+                          "status": "modified",
+                          "language": "typescript",
+                          "oldContent": "import { boot } from './boot';\nexport const answer = 41;\nexport function main() {\n  return boot(answer);\n}\n",
+                          "newContent": "import { boot } from './boot';\nexport const answer = 42;\nexport const version = '1.2.0';\nexport function main() {\n  return boot(answer);\n}\n"
+                        },
+                        {
+                          "fileName": "src/utils.ts",
+                          "status": "added",
+                          "language": "typescript",
+                          "oldContent": "",
+                          "newContent": "export const noop = () => {};\nexport const identity = <T>(x: T) => x;\n"
+                        },
+                        {
+                          "fileName": "README.md",
+                          "status": "deleted",
+                          "language": "markdown",
+                          "oldContent": "# Pi-Harness\nOld docs removed.\n",
+                          "newContent": ""
+                        }
+                      ]
+                    },
+                    {
+                      "type": "flex",
+                      "direction": "row",
+                      "gap": 8,
+                      "className": "pih-git-commit items-center",
+                      "body": [
+                        {
+                          "type": "input-text",
+                          "name": "pihGitCommitMsg",
+                          "placeholder": "Commit message…",
+                          "className": "pih-git-commit-input",
+                          "testid": "pih-git-commit-input"
+                        },
+                        {
+                          "type": "button",
+                          "icon": "check",
+                          "label": "Commit",
+                          "variant": "primary",
+                          "size": "sm",
+                          "className": "pih-send-btn-small",
+                          "testid": "pih-git-commit-btn",
+                          "onClick": {
+                            "action": "showToast",
+                            "args": { "level": "success", "message": "Committed to ${pihGitBase}" }
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "flex",
+                  "direction": "column",
+                  "className": "pih-view flex-1 min-h-0 pih-view-padded",
+                  "testid": "pih-view-model",
+                  "visible": "${pihRail === 'model'}",
+                  "body": [
+                    { "type": "text", "text": "MODELS", "className": "pih-view-title" },
+                    {
+                      "type": "flex",
+                      "direction": "column",
+                      "gap": 8,
+                      "className": "pih-model-list",
+                      "body": [
+                        {
+                          "type": "flex",
+                          "direction": "row",
+                          "gap": 10,
+                          "className": "${pihModel === 'DeepSeek / DeepSeek-V4-Pro · ultra' ? 'pih-model-row pih-model-row-active items-center' : 'pih-model-row items-center'}",
+                          "testid": "pih-model-row-deepseek",
+                          "onClick": {
+                            "action": "setValue",
+                            "args": {
+                              "path": "pihModel",
+                              "value": "DeepSeek / DeepSeek-V4-Pro · ultra"
+                            }
+                          },
+                          "body": [
+                            { "type": "icon", "icon": "brain-circuit", "size": 16 },
+                            {
+                              "type": "flex",
+                              "direction": "column",
+                              "gap": 2,
+                              "className": "flex-1",
+                              "body": [
+                                {
+                                  "type": "text",
+                                  "text": "DeepSeek / DeepSeek-V4-Pro",
+                                  "className": "pih-model-name"
+                                },
+                                {
+                                  "type": "text",
+                                  "text": "128k context · reasoning · tools",
+                                  "className": "pih-model-meta"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "text",
+                              "text": "${pihModelDefault === 'DeepSeek / DeepSeek-V4-Pro · ultra' ? 'default' : ''}",
+                              "className": "pih-badge"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "flex",
+                          "direction": "row",
+                          "gap": 10,
+                          "className": "${pihModel === 'Claude / Opus-4.6 · high' ? 'pih-model-row pih-model-row-active items-center' : 'pih-model-row items-center'}",
+                          "testid": "pih-model-row-claude",
+                          "onClick": {
+                            "action": "setValue",
+                            "args": { "path": "pihModel", "value": "Claude / Opus-4.6 · high" }
+                          },
+                          "body": [
+                            { "type": "icon", "icon": "sparkle", "size": 16 },
+                            {
+                              "type": "flex",
+                              "direction": "column",
+                              "gap": 2,
+                              "className": "flex-1",
+                              "body": [
+                                {
+                                  "type": "text",
+                                  "text": "Claude / Opus-4.6",
+                                  "className": "pih-model-name"
+                                },
+                                {
+                                  "type": "text",
+                                  "text": "200k context · extended thinking",
+                                  "className": "pih-model-meta"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "text",
+                              "text": "${pihModelDefault === 'Claude / Opus-4.6 · high' ? 'default' : ''}",
+                              "className": "pih-badge"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "flex",
+                          "direction": "row",
+                          "gap": 10,
+                          "className": "${pihModel === 'GPT / o5 · medium' ? 'pih-model-row pih-model-row-active items-center' : 'pih-model-row items-center'}",
+                          "testid": "pih-model-row-gpt",
+                          "onClick": {
+                            "action": "setValue",
+                            "args": { "path": "pihModel", "value": "GPT / o5 · medium" }
+                          },
+                          "body": [
+                            { "type": "icon", "icon": "orbit", "size": 16 },
+                            {
+                              "type": "flex",
+                              "direction": "column",
+                              "gap": 2,
+                              "className": "flex-1",
+                              "body": [
+                                {
+                                  "type": "text",
+                                  "text": "GPT / o5",
+                                  "className": "pih-model-name"
+                                },
+                                {
+                                  "type": "text",
+                                  "text": "128k context · fast",
+                                  "className": "pih-model-meta"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "text",
+                              "text": "${pihModelDefault === 'GPT / o5 · medium' ? 'default' : ''}",
+                              "className": "pih-badge"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "flex",
+                      "direction": "row",
+                      "gap": 8,
+                      "className": "pih-view-actions items-center",
+                      "body": [
+                        {
+                          "type": "button",
+                          "icon": "star",
+                          "label": "Set as default",
+                          "variant": "primary",
+                          "size": "sm",
+                          "className": "pih-send-btn-small",
+                          "testid": "pih-model-set-default",
+                          "onClick": [
+                            {
+                              "action": "setValue",
+                              "args": { "path": "pihModelDefault", "value": "${pihModel}" }
+                            },
+                            {
+                              "action": "showToast",
+                              "args": {
+                                "level": "success",
+                                "message": "Default model set to ${pihModel}"
+                              }
+                            }
+                          ]
+                        },
+                        {
+                          "type": "text",
+                          "text": "Active: ${pihModel}",
+                          "className": "pih-view-hint",
+                          "testid": "pih-model-active-label"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "flex",
+                  "direction": "column",
+                  "className": "pih-view flex-1 min-h-0 pih-view-padded",
+                  "testid": "pih-view-caps",
+                  "visible": "${pihRail === 'caps'}",
+                  "body": [
+                    { "type": "text", "text": "CAPABILITIES", "className": "pih-view-title" },
+                    {
+                      "type": "flex",
+                      "direction": "column",
+                      "gap": 8,
+                      "className": "pih-caps-list",
+                      "body": [
+                        {
+                          "type": "flex",
+                          "direction": "row",
+                          "gap": 10,
+                          "className": "pih-caps-row items-center",
+                          "testid": "pih-cap-read",
+                          "body": [
+                            { "type": "icon", "icon": "file-text", "size": 15 },
+                            {
+                              "type": "text",
+                              "text": "read_file",
+                              "className": "flex-1 pih-caps-name"
+                            },
+                            {
+                              "type": "switch",
+                              "name": "pihCapRead",
+                              "testid": "pih-cap-switch-read"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "flex",
+                          "direction": "row",
+                          "gap": 10,
+                          "className": "pih-caps-row items-center",
+                          "testid": "pih-cap-weather",
+                          "body": [
+                            { "type": "icon", "icon": "cloud-sun", "size": 15 },
+                            {
+                              "type": "text",
+                              "text": "get_weather",
+                              "className": "flex-1 pih-caps-name"
+                            },
+                            {
+                              "type": "switch",
+                              "name": "pihCapWeather",
+                              "testid": "pih-cap-switch-weather"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "flex",
+                          "direction": "row",
+                          "gap": 10,
+                          "className": "pih-caps-row items-center",
+                          "testid": "pih-cap-search",
+                          "body": [
+                            { "type": "icon", "icon": "globe", "size": 15 },
+                            {
+                              "type": "text",
+                              "text": "web_search",
+                              "className": "flex-1 pih-caps-name"
+                            },
+                            {
+                              "type": "switch",
+                              "name": "pihCapSearch",
+                              "testid": "pih-cap-switch-search"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "flex",
+                          "direction": "row",
+                          "gap": 10,
+                          "className": "pih-caps-row items-center",
+                          "testid": "pih-cap-git",
+                          "body": [
+                            { "type": "icon", "icon": "git-commit", "size": 15 },
+                            {
+                              "type": "text",
+                              "text": "git_commit",
+                              "className": "flex-1 pih-caps-name"
+                            },
+                            {
+                              "type": "switch",
+                              "name": "pihCapGit",
+                              "testid": "pih-cap-switch-git"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "flex",
+                  "direction": "column",
+                  "className": "pih-view flex-1 min-h-0 pih-view-padded",
+                  "testid": "pih-view-prefs",
+                  "visible": "${pihRail === 'prefs'}",
+                  "body": [
+                    { "type": "text", "text": "PREFERENCES", "className": "pih-view-title" },
+                    {
+                      "type": "flex",
+                      "direction": "column",
+                      "gap": 14,
+                      "className": "pih-prefs-list",
+                      "body": [
+                        {
+                          "type": "flex",
+                          "direction": "row",
+                          "className": "pih-prefs-row items-center",
+                          "body": [
+                            {
+                              "type": "text",
+                              "text": "Theme",
+                              "className": "pih-prefs-label flex-1"
+                            },
+                            {
+                              "type": "button-group-select",
+                              "name": "pihTheme",
+                              "testid": "pih-seg-pihTheme",
+                              "className": "pih-seg-select",
+                              "options": [
+                                { "value": "light", "label": "Light" },
+                                { "value": "dark", "label": "Dark" },
+                                { "value": "system", "label": "System" }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "type": "flex",
+                          "direction": "row",
+                          "className": "pih-prefs-row items-center",
+                          "body": [
+                            {
+                              "type": "text",
+                              "text": "Font size",
+                              "className": "pih-prefs-label flex-1"
+                            },
+                            {
+                              "type": "button-group-select",
+                              "name": "pihFont",
+                              "testid": "pih-seg-pihFont",
+                              "className": "pih-seg-select",
+                              "options": [
+                                { "value": "s", "label": "S" },
+                                { "value": "m", "label": "M" },
+                                { "value": "l", "label": "L" }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "type": "flex",
+                          "direction": "row",
+                          "className": "pih-prefs-row items-center",
+                          "testid": "pih-prefs-telemetry",
+                          "body": [
+                            {
+                              "type": "text",
+                              "text": "Share anonymous telemetry",
+                              "className": "pih-prefs-label flex-1"
+                            },
+                            {
+                              "type": "switch",
+                              "name": "pihTelemetry",
+                              "testid": "pih-prefs-telemetry-switch"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "flex",
+                  "direction": "column",
+                  "className": "pih-files-drawer",
+                  "testid": "pih-files-drawer",
+                  "visible": "${pihFilesOpen}",
+                  "body": [
+                    {
+                      "type": "flex",
+                      "direction": "row",
+                      "className": "pih-files-drawer-header items-center",
+                      "body": [
+                        { "type": "text", "text": "FILES", "className": "pih-sidebar-title" },
+                        { "type": "text", "text": "", "className": "flex-1" },
+                        {
+                          "type": "button",
+                          "icon": "x",
+                          "variant": "ghost",
+                          "size": "icon-sm",
+                          "className": "pih-icon-btn",
+                          "testid": "pih-files-close",
+                          "onClick": {
+                            "action": "setValue",
+                            "args": { "path": "pihFilesOpen", "value": false }
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "type": "flex",
+                      "direction": "row",
+                      "gap": 8,
+                      "className": "pih-file-row pih-file-row-active items-center",
+                      "testid": "pih-file-src",
+                      "onClick": {
+                        "action": "showToast",
+                        "args": { "level": "info", "message": "Open src/index.ts" }
+                      },
+                      "body": [
+                        { "type": "icon", "icon": "file-code", "size": 14 },
+                        { "type": "text", "text": "src/index.ts", "className": "truncate" }
+                      ]
+                    },
+                    {
+                      "type": "flex",
+                      "direction": "row",
+                      "gap": 8,
+                      "className": "pih-file-row items-center",
+                      "testid": "pih-file-utils",
+                      "onClick": {
+                        "action": "showToast",
+                        "args": { "level": "info", "message": "Open src/utils.ts" }
+                      },
+                      "body": [
+                        { "type": "icon", "icon": "file-code", "size": 14 },
+                        { "type": "text", "text": "src/utils.ts", "className": "truncate" }
+                      ]
+                    },
+                    {
+                      "type": "flex",
+                      "direction": "row",
+                      "gap": 8,
+                      "className": "pih-file-row items-center",
+                      "testid": "pih-file-readme",
+                      "onClick": {
+                        "action": "showToast",
+                        "args": { "level": "info", "message": "Open README.md" }
+                      },
+                      "body": [
+                        { "type": "icon", "icon": "file-text", "size": 14 },
+                        { "type": "text", "text": "README.md", "className": "truncate" }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "flex",
+                  "direction": "row",
+                  "className": "pih-status-hud items-center",
+                  "testid": "pih-status-hud",
+                  "visible": "${pihRail === 'work'}",
+                  "body": [
+                    {
+                      "type": "dropdown-button",
+                      "label": "Full history",
+                      "icon": "history",
+                      "variant": "ghost",
+                      "size": "sm",
+                      "side": "top",
+                      "className": "pih-status-history-dd",
+                      "testid": "pih-status-history",
+                      "items": [
+                        {
+                          "key": "hi",
+                          "label": "hi",
+                          "action": {
+                            "action": "showToast",
+                            "args": { "level": "info", "message": "Restore turn 1 (simulated)" }
+                          }
+                        },
+                        {
+                          "key": "q",
+                          "label": "What can you do?",
+                          "action": {
+                            "action": "showToast",
+                            "args": { "level": "info", "message": "Restore turn 2 (simulated)" }
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "type": "text",
+                      "text": "deepseek/deepseek-v4-pro · ultra",
+                      "className": "pih-status-mid",
+                      "testid": "pih-status-model"
+                    },
+                    {
+                      "type": "ai-token-usage",
+                      "testid": "pih-token-usage",
+                      "className": "pih-token-usage",
+                      "usage": "${usage}",
+                      "contextLimit": 128000,
+                      "showCost": false
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "command-palette",
+      "testid": "pih-command-palette",
+      "className": "pih-command-palette",
+      "open": "${pihSearchOpen}",
+      "placeholder": "Search sessions, files, commands…",
+      "hotkey": "mod+k",
+      "items": [
+        {
+          "id": "new-session",
+          "label": "New session",
+          "description": "Start a fresh conversation",
+          "icon": "plus",
+          "shortcut": "⌘N",
+          "action": {
+            "action": "showToast",
+            "args": { "level": "info", "message": "New session (simulated)" }
+          }
+        },
+        {
+          "id": "open-files",
+          "label": "Open files",
+          "description": "Browse workspace files",
+          "icon": "folder-open",
+          "shortcut": "⌘P",
+          "action": { "action": "setValue", "args": { "path": "pihFilesOpen", "value": true } }
+        },
+        {
+          "id": "go-git",
+          "label": "Go to Git",
+          "description": "Compare branches and review changes",
+          "icon": "git-branch",
+          "action": { "action": "setValue", "args": { "path": "pihRail", "value": "git" } }
+        },
+        {
+          "id": "switch-model",
+          "label": "Switch model",
+          "description": "Open the model manager",
+          "icon": "cpu",
+          "action": { "action": "setValue", "args": { "path": "pihRail", "value": "model" } }
+        },
+        {
+          "id": "prefs",
+          "label": "Preferences",
+          "description": "Theme, font, telemetry",
+          "icon": "settings",
+          "shortcut": "⌘,",
+          "action": { "action": "setValue", "args": { "path": "pihRail", "value": "prefs" } }
+        }
+      ]
+    },
+    {
+      "type": "flex",
+      "direction": "column",
+      "className": "pih-modal-mask",
+      "testid": "pih-project-dialog",
+      "visible": "${pihProjectDialogOpen}",
+      "body": [
+        {
+          "type": "flex",
+          "direction": "column",
+          "className": "pih-modal",
+          "body": [
+            {
+              "type": "flex",
+              "direction": "row",
+              "className": "pih-modal-header items-center",
+              "body": [
+                { "type": "text", "text": "Open project", "className": "pih-modal-title" },
+                { "type": "text", "text": "", "className": "flex-1" },
+                {
+                  "type": "button",
+                  "icon": "x",
+                  "variant": "ghost",
+                  "size": "icon-sm",
+                  "className": "pih-icon-btn",
+                  "testid": "pih-project-dialog-close",
+                  "onClick": {
+                    "action": "setValue",
+                    "args": { "path": "pihProjectDialogOpen", "value": false }
+                  }
+                }
+              ]
+            },
+            { "type": "text", "text": "RECENT", "className": "pih-group-heading" },
+            {
+              "type": "flex",
+              "direction": "column",
+              "className": "pih-project-options",
+              "body": [
+                {
+                  "type": "flex",
+                  "direction": "row",
+                  "gap": 10,
+                  "className": "${pihProject === 'pi-harness' ? 'pih-project-option pih-project-option-active items-center' : 'pih-project-option items-center'}",
+                  "testid": "pih-project-option-harness",
+                  "onClick": [
+                    {
+                      "action": "setValue",
+                      "args": { "path": "pihProject", "value": "pi-harness" }
+                    },
+                    {
+                      "action": "setValue",
+                      "args": { "path": "pihProjectDialogOpen", "value": false }
+                    }
+                  ],
+                  "body": [
+                    { "type": "icon", "icon": "folder-git-2", "size": 15 },
+                    {
+                      "type": "flex",
+                      "direction": "column",
+                      "gap": 2,
+                      "className": "flex-1",
+                      "body": [
+                        { "type": "text", "text": "pi-harness", "className": "pih-model-name" },
+                        { "type": "text", "text": "~/ai/pi-harness", "className": "pih-model-meta" }
+                      ]
+                    },
+                    { "type": "icon", "icon": "check", "size": 14 }
+                  ]
+                },
+                {
+                  "type": "flex",
+                  "direction": "row",
+                  "gap": 10,
+                  "className": "${pihProject === 'nop-chaos-flux' ? 'pih-project-option pih-project-option-active items-center' : 'pih-project-option items-center'}",
+                  "testid": "pih-project-option-flux",
+                  "onClick": [
+                    {
+                      "action": "setValue",
+                      "args": { "path": "pihProject", "value": "nop-chaos-flux" }
+                    },
+                    {
+                      "action": "setValue",
+                      "args": { "path": "pihProjectDialogOpen", "value": false }
+                    }
+                  ],
+                  "body": [
+                    { "type": "icon", "icon": "folder-git-2", "size": 15 },
+                    {
+                      "type": "flex",
+                      "direction": "column",
+                      "gap": 2,
+                      "className": "flex-1",
+                      "body": [
+                        { "type": "text", "text": "nop-chaos-flux", "className": "pih-model-name" },
+                        {
+                          "type": "text",
+                          "text": "~/app/nop-chaos-flux",
+                          "className": "pih-model-meta"
+                        }
+                      ]
+                    },
+                    { "type": "icon", "icon": "check", "size": 14 }
+                  ]
+                },
+                {
+                  "type": "flex",
+                  "direction": "row",
+                  "gap": 10,
+                  "className": "${pihProject === 'scratch-notes' ? 'pih-project-option pih-project-option-active items-center' : 'pih-project-option items-center'}",
+                  "testid": "pih-project-option-scratch",
+                  "onClick": [
+                    {
+                      "action": "setValue",
+                      "args": { "path": "pihProject", "value": "scratch-notes" }
+                    },
+                    {
+                      "action": "setValue",
+                      "args": { "path": "pihProjectDialogOpen", "value": false }
+                    }
+                  ],
+                  "body": [
+                    { "type": "icon", "icon": "folder", "size": 15 },
+                    {
+                      "type": "flex",
+                      "direction": "column",
+                      "gap": 2,
+                      "className": "flex-1",
+                      "body": [
+                        { "type": "text", "text": "scratch-notes", "className": "pih-model-name" },
+                        { "type": "text", "text": "~/notes/scratch", "className": "pih-model-meta" }
+                      ]
+                    },
+                    { "type": "icon", "icon": "check", "size": 14 }
+                  ]
+                }
+              ]
+            },
+            { "type": "text", "text": "", "className": "pih-divider" },
+            {
+              "type": "flex",
+              "direction": "row",
+              "gap": 10,
+              "className": "pih-project-option items-center",
+              "testid": "pih-project-browse",
+              "onClick": {
+                "action": "showToast",
+                "args": { "level": "info", "message": "Open folder picker (simulated)" }
+              },
+              "body": [
+                { "type": "icon", "icon": "folder-search", "size": 15 },
+                { "type": "text", "text": "Open folder…", "className": "flex-1" }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

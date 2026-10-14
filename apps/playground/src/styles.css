@@ -26,6 +26,7 @@
 @import './notion-replica/notion-replica.css';
 @import './airtable-replica/airtable-replica.css';
 @import './stripe-replica/stripe-replica.css';
+@import './pih-replica/pih-replica.css';
 @source "../../../packages";
 
 @theme inline {
