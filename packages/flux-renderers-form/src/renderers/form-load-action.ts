@@ -5,9 +5,24 @@ import { reportFormInitActionError } from './form-lifecycle-helpers.js';
 
 type FormLoadAction = NonNullable<RendererComponentProps<FormSchema>['events']['loadAction']>;
 
+/**
+ * C1 contract (plan 593): first-frame-honest load lifecycle state projected to
+ * the form root as `data-load-state`. Vocabulary is frozen — downstream e2e
+ * waits on `loaded`/`error` instead of networkidle blinding.
+ *
+ * - `idle`    — no loadAction, autoLoad disabled, or the load was cancelled
+ * - `loading` — a load request is in flight (true from the first frame when
+ *               autoLoad will fire — closes the old busy-absent window)
+ * - `loaded`  — load settled successfully (same commit boundary as value hydration)
+ * - `error`   — load settled with a non-abort failure
+ */
+export type FormLoadState = 'idle' | 'loading' | 'loaded' | 'error';
+
 export interface FormLoadActionState {
   /** True while an autoLoad/refresh loadAction request is in flight. */
   loadLoading: boolean;
+  /** C1 contract projection for `data-load-state` on the form root. */
+  loadState: FormLoadState;
 }
 
 /**
@@ -36,10 +51,14 @@ export function useFormLoadAction(input: {
   const loadActionKeyRef = useRef<string | undefined>(undefined);
   const loadAbortRef = useRef<AbortController | null>(null);
   const loadRequestIdRef = useRef(0);
-  // G2-视角5-03: React state mirror of "a load request is in flight" — only the
-  // start/finish transitions re-render (the request bookkeeping below stays in
-  // refs so a mid-flight re-render cannot abort the request).
-  const [loadLoading, setLoadLoading] = useState(false);
+  // C1 (plan 593): first-frame-honest load state. Lazy init makes autoLoad
+  // forms report `loading` on the very first commit — before the effect that
+  // dispatches the request even runs — so there is never a frame where the
+  // request is (about to be) in flight but the DOM claims otherwise.
+  const [loadState, setLoadState] = useState<FormLoadState>(() =>
+    loadAction && autoLoad ? 'loading' : 'idle',
+  );
+  const loadLoading = loadState === 'loading';
   // latest instances via refs so the load action effect does not re-run (and
   // abort the in-flight request) on every render — only on activation/action
   // change. `lifecycleScope`/`ownedForm` identities are volatile across renders.
@@ -64,7 +83,12 @@ export function useFormLoadAction(input: {
     loadAbortRef.current = controller;
     loadActionKeyRef.current = activationKey;
     const requestId = ++loadRequestIdRef.current;
-    setLoadLoading(true);
+    // C1 contract: the state machine must enter `loading` synchronously when
+    // the activation key changes — deferring to a microtask would create a
+    // frame where the request is about to dispatch but the DOM still claims
+    // idle. This is the one deliberate sync setState in the effect body.
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- C1 contract: activation-key change must set loading in the same commit boundary as the dispatch effect
+    setLoadState('loading');
 
     void loadAction(undefined, {
       scope: loadLifecycleScopeRef.current,
@@ -75,8 +99,18 @@ export function useFormLoadAction(input: {
         if (loadRequestIdRef.current !== requestId) {
           return;
         }
-        if (result.ok && !result.cancelled && result.data != null) {
-          loadOwnedFormRef.current.setValues(result.data as Record<string, unknown>);
+        if (result.ok && !result.cancelled) {
+          if (result.data != null) {
+            loadOwnedFormRef.current.setValues(result.data as Record<string, unknown>);
+          }
+          // C1: `loaded` lands on the same commit boundary as value hydration —
+          // a downstream wait on data-load-state="loaded" implies fields are filled.
+          setLoadState('loaded');
+        } else if (!result.ok) {
+          setLoadState('error');
+        } else {
+          // Cancelled result: the load was intentionally cancelled, not failed.
+          setLoadState('idle');
         }
       })
       .catch((error) => {
@@ -95,13 +129,11 @@ export function useFormLoadAction(input: {
         if (loadActionKeyRef.current === activationKey && loadAbortRef.current === controller) {
           loadActionKeyRef.current = undefined;
         }
+        if (loadRequestIdRef.current === requestId) {
+          setLoadState('error');
+        }
       })
       .finally(() => {
-        // Only the latest request clears the busy flag; a superseded request's
-        // finally must not turn it off while a newer one is still in flight.
-        if (loadRequestIdRef.current === requestId) {
-          setLoadLoading(false);
-        }
         if (loadAbortRef.current === controller) {
           loadAbortRef.current = null;
         }
@@ -119,8 +151,10 @@ export function useFormLoadAction(input: {
         if (loadActionKeyRef.current === activationKey) {
           loadActionKeyRef.current = undefined;
         }
+        // C1: an abort is not an error — return to idle. A superseding request
+        // immediately re-enters `loading`; an unmount discards the state anyway.
         if (loadRequestIdRef.current === requestId) {
-          setLoadLoading(false);
+          setLoadState('idle');
         }
       }
     };
@@ -138,19 +172,30 @@ export function useFormLoadAction(input: {
       // requestId`) drops the stale result instead of overwriting fresh data.
       loadRequestIdRef.current = loadRequestIdRef.current + 1;
       const requestId = loadRequestIdRef.current;
-      setLoadLoading(true);
+      setLoadState('loading');
       try {
         const result = await loadAction(undefined, {
           scope: loadLifecycleScopeRef.current,
           form: loadOwnedFormRef.current,
         });
-        if (result.ok && !result.cancelled && result.data != null) {
-          loadOwnedFormRef.current.setValues(result.data as Record<string, unknown>);
+        if (loadRequestIdRef.current !== requestId) {
+          return;
         }
-      } finally {
+        if (result.ok && !result.cancelled) {
+          if (result.data != null) {
+            loadOwnedFormRef.current.setValues(result.data as Record<string, unknown>);
+          }
+          setLoadState('loaded');
+        } else if (!result.ok) {
+          setLoadState('error');
+        } else {
+          setLoadState('idle');
+        }
+      } catch (error) {
         if (loadRequestIdRef.current === requestId) {
-          setLoadLoading(false);
+          setLoadState('error');
         }
+        throw error;
       }
     });
 
@@ -159,5 +204,5 @@ export function useFormLoadAction(input: {
     };
   }, [loadAction, ownedForm]);
 
-  return { loadLoading };
+  return { loadLoading, loadState };
 }

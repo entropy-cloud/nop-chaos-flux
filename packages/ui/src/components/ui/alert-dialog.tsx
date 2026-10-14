@@ -62,13 +62,16 @@ function AlertDialogContent({
   const popupRef = React.useRef<HTMLDivElement | null>(null);
   const { handleSurfaceKeyDown } = useSurfaceFocusWrap(popupRef);
   const tier = ALERT_DIALOG_TIER[size];
+  // C4 (plan 593): explicit data-slot override — Base UI types don't declare
+  // data-* keys so we read it off props at runtime.
+  const dataSlot = (props as Record<string, unknown>)['data-slot'] as string | undefined;
   return (
     <AlertDialogPortal>
       <AlertDialogZIndexContext.Provider value={zIndex}>
         <AlertDialogOverlay />
         <AlertDialogPrimitive.Popup
           ref={popupRef}
-          data-slot="alert-dialog-content"
+          data-slot={dataSlot ?? 'alert-dialog-content'}
           data-size={tier}
           className={cn(
             'group/alert-dialog-content fixed top-1/2 left-1/2 grid w-full -translate-x-1/2 -translate-y-1/2 gap-4 rounded-[var(--overlay-anatomy-content-border-radius)] bg-popover py-4 px-[var(--overlay-anatomy-body-padding-x)] text-popover-foreground ring-1 ring-foreground/10 duration-100 outline-none data-[size=sm]:max-w-[var(--overlay-size-sm)] data-[size=xs]:max-w-[var(--overlay-size-xs)] data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95',
@@ -161,16 +164,20 @@ function AlertDialogAction({
   className,
   variant = 'default',
   size = 'default',
+  loading,
   ...props
 }: AlertDialogPrimitive.Close.Props &
-  Pick<React.ComponentProps<typeof Button>, 'variant' | 'size'>) {
+  Pick<React.ComponentProps<typeof Button>, 'variant' | 'size' | 'loading'>) {
   // [G6-视角6-01] the action closes the dialog via the Close primitive —
   // symmetric with AlertDialogCancel; consumer onClick still runs.
+  // C5 (plan 593): `loading` forwards to the inner Button so async confirms
+  // can disable the action and expose data-loading/aria-busy — the Button
+  // disabled state also blocks the Close primitive from firing on click.
   return (
     <AlertDialogPrimitive.Close
       data-slot="alert-dialog-action"
       className={cn(className)}
-      render={<Button variant={variant} size={size} />}
+      render={<Button variant={variant} size={size} loading={loading} />}
       {...props}
     />
   );

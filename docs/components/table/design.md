@@ -212,6 +212,7 @@
 
 - 根节点保留 `nop-table` marker。
 - 表格视觉壳应复用 `@nop-chaos/ui` Table 体系；排序、选择和空态等状态通过稳定 marker 与 `data-*` 表达。
+- **异步加载就绪 marker（plan 593 C3，已落地）**：table 根在 loading 期间发布 `data-loading`（presence-only）+ `aria-busy="true"`；loading 期间空表单行（非 virtual 与 virtual 双路径）带 `data-loading-placeholder`。overlay 投影按分页模式门控：非 infinite 显示 overlay，infinite（无 overlay 契约）依赖 `data-loading` + 空行占位。契约测试：`packages/flux-renderers-data/src/__tests__/crud-load-state-contract.test.tsx`。
 - E1c DOM marker（已落地）：
   - 行拖拽 handle：`data-slot="table-row-drag-handle"`（仅 `draggable: true` 时渲染于行首）。
   - copyable 单元格复制按钮：`data-slot="table-cell-copy-button"`（仅列级 `copyable: true` 时渲染于 cell 旁）。

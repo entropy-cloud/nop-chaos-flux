@@ -22,10 +22,30 @@ import {
   type CrudSortState,
 } from './crud-renderer-state.js';
 
+/**
+ * C2 contract (plan 593): first-frame-honest CRUD load lifecycle state
+ * projected to the `.nop-crud` root as `data-load-state`. Vocabulary is
+ * deliberately `ready` (not `loaded`) to distinguish CRUD list readiness from
+ * form value hydration. Downstream e2e waits on `ready`/`error` instead of
+ * networkidle blinding.
+ *
+ * - `idle`    — no loadAction armed (nothing to load)
+ * - `loading` — a load request is in flight (true from the first frame when
+ *               loadAction will fire — closes the old busy-absent window)
+ * - `ready`   — load settled successfully with rows captured
+ * - `error`   — load settled with a non-cancel failure
+ *
+ * A cancelled settle is NOT projected to `idle`: a newer dispatch owns the
+ * loading state (see onSettle), so the cancelled result leaves the state as-is.
+ */
+export type CrudLoadState = 'idle' | 'loading' | 'ready' | 'error';
+
 export interface CrudLoadActionResult {
   rows: unknown[];
   total: number | undefined;
   loading: boolean;
+  /** C2 contract projection for `data-load-state` on the `.nop-crud` root. */
+  loadState: CrudLoadState;
   error: Error | undefined;
   reload: () => void;
   /**
@@ -95,7 +115,15 @@ export function useCrudLoadAction(args: {
 
   const [rows, setRows] = useState<unknown[]>(EMPTY_ROWS);
   const [total, setTotal] = useState<number | undefined>(undefined);
-  const [loading, setLoading] = useState(false);
+  // C2 (plan 593): first-frame-honest load state. Lazy init makes loadAction
+  // CRUDs report `loading` on the very first commit — before the effect that
+  // dispatches the request even runs — so there is never a frame where the
+  // request is (about to be) in flight but the DOM claims otherwise.
+  // `loadLoading` is projected from it so the boolean stays a pure derived view.
+  const [loadState, setLoadState] = useState<CrudLoadState>(() =>
+    enabled ? 'loading' : 'idle',
+  );
+  const loading = loadState === 'loading';
   const [error, setError] = useState<Error | undefined>(undefined);
 
   const loadedAllRef = useRef(false);
@@ -253,7 +281,7 @@ export function useCrudLoadAction(args: {
     loadReaction.configure({
       loadCallbacks: {
         onStart: () => {
-          setLoading(true);
+          setLoadState('loading');
           setError(undefined);
         },
         onSettle: (result) => {
@@ -270,7 +298,7 @@ export function useCrudLoadAction(args: {
                   ? new Error(result.error)
                   : new Error('loadAction failed');
             reportError(err, lastBindingsRef.current);
-            setLoading(false);
+            setLoadState('error');
             settleLoadMore(result);
             return;
           }
@@ -313,7 +341,9 @@ export function useCrudLoadAction(args: {
             loadedAllRef.current = true;
           }
 
-          setLoading(false);
+          // C2: `ready` lands on the same commit boundary as rows capture —
+          // a downstream wait on data-load-state="ready" implies rows are in.
+          setLoadState('ready');
           settleLoadMore(result);
         },
       },
@@ -407,7 +437,7 @@ export function useCrudLoadAction(args: {
   }, [helpers]);
 
   return useMemo(
-    () => ({ rows, total, loading, error, reload, loadMore }),
-    [rows, total, loading, error, reload, loadMore],
+    () => ({ rows, total, loading, loadState, error, reload, loadMore }),
+    [rows, total, loading, loadState, error, reload, loadMore],
   );
 }

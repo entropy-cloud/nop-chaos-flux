@@ -136,7 +136,10 @@ export function VirtualBody({
   const bodyContent = (
     <>
       {flattenedItems.length === 0 ? (
-        <TableRow data-slot="table-empty-row">
+        <TableRow
+          data-slot="table-empty-row"
+          data-loading-placeholder={schemaProps.loading === true ? '' : undefined}
+        >
           <TableCell colSpan={columnCount} data-slot="table-empty-cell">
             <div
               style={{

@@ -114,6 +114,36 @@ Companion option/column hooks (not on FieldFrame):
 
 Contract rules: these attributes are production-resident (never debug-gated), additive (existing `data-slot`/`controlId` are unchanged), and frozen by `packages/flux-renderers-form/src/__tests__/field-controls-dom-contract.test.tsx` and `packages/flux-renderers-form/src/__tests__/select-combobox-dom-contract.test.tsx`.
 
+### Async-load readiness markers (registered 2026-10-14, plan 593 C1–C3)
+
+Form, CRUD, and table renderers expose machine-readable async-load state so downstream E2E can wait for real data readiness instead of `networkidle` or `force-click`:
+
+- **Form root**: `data-load-state="idle|loading|loaded|error"` — state machine owned by the form's `loadAction` (see `form-load-action.ts`). `loading` is set while the load is in-flight; `loaded` on success; `error` on failure (refresh catch, not abort); `idle` before first load or when `autoLoad: false`. Frozen by `packages/flux-renderers-form/src/__tests__/form-load-state-contract.test.tsx`.
+- **CRUD root**: `data-load-state="idle|loading|ready|error"` — same vocabulary as form, but the success settle value is `ready` (not `loaded`). Source-refresh mode projects `sourceRefreshInFlight` into the same attribute. Frozen by `packages/flux-renderers-data/src/__tests__/crud-load-state-contract.test.tsx`.
+- **Table root**: `data-loading` (presence-only) and `aria-busy="true"` while the table is loading. The overlay projection is gated: non-infinite pagination shows the overlay; infinite pagination (no overlay by contract) relies on `data-loading` + empty-row placeholder only. Same CRUD contract test.
+- **Table empty-row placeholder**: a loading table with no rows emits a single row carrying `data-loading-placeholder` (both regular and virtual-body paths). E2E and host code can distinguish "truly empty" from "still loading" without reverse-engineering row counts.
+
+The form/crude success vocabulary intentionally differs (`loaded` vs `ready`) — do not unify; each is frozen by its own contract test.
+
+### Overlay open/close lifecycle markers (registered 2026-10-14, plan 593 C4)
+
+The Base UI overlay family (popover / dropdown-menu / alert-dialog) freezes the following close-timing contract:
+
+- **Open state**: a visible popup carries `data-open`. A **modal** surface (alert-dialog) additionally marks the background `[data-base-ui-inert]` while open; the marker clears once the surface is gone.
+- **Completion signal = detach**: the popup element is removed from the DOM when closed. Consumers must use detach (`waitFor(() => expect(locator).toHaveCount(0))`) as the completion signal — not `data-closed`.
+- **`data-closed` window is real-browser-only**: in a real browser the exit-animation layer briefly retains the popup with `data-closed` before detaching. In happy-dom (no real animation timeline) Base UI's `useAnimationsFinished` fires immediately and the popup detaches on the same tick — `data-closed` is never observable there. The happy-dom unit contract therefore freezes `data-open` + detach + modal-inert-clear only; the `data-closed` window is documented as a real-browser fact and reserved for the e2e layer. (Verified by probe during plan 593 closure audit F1.)
+- **Default `data-slot`**: `popover-content`, `dropdown-menu-content`, `alert-dialog-content` are emitted by default when not overridden. **Override is a feature**: consumers (e.g. `dirty-close-guard`) may pass `data-slot` to replace the default; the override path is explicit (`props['data-slot'] ?? 默认`) and frozen by contract tests.
+- **DropdownMenu outside-press**: the dropdown-menu popup closes on `pointerdown` outside the popup (Base UI default `outsidePressEvent: 'sloppy'`). This is production UX; E2E must not force-click through it — wait for the popup to detach instead.
+- Frozen by `packages/ui/src/components/ui/overlay-close-lifecycle-contract.test.tsx`.
+
+### AlertDialogAction loading passthrough (registered 2026-10-14, plan 593 C5)
+
+`AlertDialogAction` accepts a `loading` prop and forwards it to the inner `Button`:
+
+- `loading={true}` → action button carries `data-loading`, `aria-busy="true"`, and `disabled`; the disabled state also blocks the Close primitive from firing on click (no dialog close on double-submit).
+- `loading` omitted or `false` → no busy attributes; click closes the dialog as before.
+- Frozen by `packages/ui/src/components/ui/alert-dialog-action-loading-contract.test.tsx`.
+
 ### Layer 3: Visual classes
 
 Visual styling belongs to:

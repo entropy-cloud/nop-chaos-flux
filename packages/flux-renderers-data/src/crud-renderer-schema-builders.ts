@@ -89,10 +89,14 @@ export function buildCrudTableSchema(input: {
       mode: paginationMode,
       hideBar: hideBar || undefined,
     },
-    // loadAction 模式下把 fetch 中状态透传给内部 table，四态-加载态有真实 UI
-    // （TableLoadingOverlay）。infinite 模式由 infinite-status 区表达加载，
-    // 不再叠加整表 overlay。
-    loading: useLoadAction && paginationMode === 'pages' ? loading : undefined,
+    // C3 (plan 593): the caller resolves the knowable loading signal
+    // (loadAction machine's loading, or source-refresh in-flight; unknowable
+    // is false). Project it whenever true — the DOM contract attributes
+    // (data-loading / aria-busy / empty-row data-loading-placeholder) light
+    // for every mode. The full-table TableLoadingOverlay stays pages-only
+    // (infinite expresses loading via the infinite-status area) — the overlay
+    // gate lives in TableRenderer, not here.
+    loading: loading || undefined,
     empty,
     quickSaveAction: schema.quickSaveAction,
     quickSaveItemAction: schema.quickSaveItemAction,

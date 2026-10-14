@@ -186,3 +186,12 @@ Current live implementation note:
 - **判别锚**：`tests/e2e/component-lab/c1-1-host-surfaces.spec.ts`（实浏览器 Tab 环游 / 焦点入面）。
   happy-dom 无法观测真浏览器焦点时序（B 形 `checkVisibility` 路径与 fixed 元素入环游增量均属
   happy-dom 不可判别面，unit 层以 mock 注入缝判别）。
+
+### AlertDialogAction loading 透传（plan 593 C5，已落地）
+
+`AlertDialogAction` 接受 `loading` prop 并透传到内层 `Button`：
+
+- `loading={true}` → action 按钮带 `data-loading`、`aria-busy="true"`、`disabled`；disabled 状态同时阻断 Close primitive 在 click 时触发（async confirm 期间防 double-submit，不误关弹层）。
+- `loading` 缺省或 `false` → 无 busy 属性；click 照常关闭弹层。
+- 契约测试：`packages/ui/src/components/ui/alert-dialog-action-loading-contract.test.tsx`。
+- 弹层关闭生命周期契约（`data-open` + close 后 detach + modal `[data-base-ui-inert]` 清空、`data-slot` 默认槽位覆写）：`packages/ui/src/components/ui/overlay-close-lifecycle-contract.test.tsx`，登记于 `docs/architecture/renderer-markers-and-selectors.md`（plan 593 C4）。注：`data-closed` 退出窗口是真实浏览器事实，happy-dom 下不可观测，留给 e2e 层。

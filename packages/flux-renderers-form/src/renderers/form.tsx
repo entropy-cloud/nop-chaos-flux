@@ -348,7 +348,7 @@ export function FormRenderer(props: RendererComponentProps<FormSchema>) {
   const loadAction = props.events['loadAction'];
   const autoLoad = (props.props as FormSchema).autoLoad !== false;
 
-  const { loadLoading } = useFormLoadAction({
+  const { loadLoading, loadState } = useFormLoadAction({
     loadAction,
     autoLoad,
     activationKey,
@@ -594,6 +594,7 @@ export function FormRenderer(props: RendererComponentProps<FormSchema>) {
             data-form-mode={formMode ?? undefined}
             data-form-static={formStatic ? '' : undefined}
             data-form-columns={resolvedColumnCount ?? undefined}
+            data-load-state={loadState}
             onKeyDown={handleSectionKeyDown}
           >
             {hasRendererSlotContent(bodyContent) ? (

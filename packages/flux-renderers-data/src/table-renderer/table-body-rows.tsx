@@ -164,6 +164,7 @@ function NonVirtualBody({
 }: TableBodyRowsProps) {
   const schemaProps = props.props as TableSchema;
   const helpers = props.helpers;
+  const isLoading = schemaProps.loading === true;
   const radioSelectionValue =
     schemaProps.rowSelection?.type === 'radio' ? Array.from(selectedRowKeys)[0] : undefined;
 
@@ -217,7 +218,10 @@ function NonVirtualBody({
 
   const rows =
     processedData.length === 0 && (groupedPageItems?.length ?? 0) === 0 ? (
-      <TableRow data-slot="table-empty-row">
+      <TableRow
+        data-slot="table-empty-row"
+        data-loading-placeholder={isLoading ? '' : undefined}
+      >
         <TableCell colSpan={columnCount} data-slot="table-empty-cell">
           {emptyContent}
         </TableCell>

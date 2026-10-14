@@ -26,7 +26,7 @@ import {
   useCrudStatusPublisher,
 } from './crud-renderer-state.js';
 import { useCrudDataProjection, useCrudLoadRevision } from './crud-renderer-projections.js';
-import { useCrudLoadAction } from './crud-renderer-load.js';
+import { useCrudLoadAction, type CrudLoadState } from './crud-renderer-load.js';
 import {
   CrudToolbarBlocks,
   normalizeToolbarBlocks,
@@ -436,7 +436,7 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
     useLoadAction,
     loadAllData,
     total: resolvedSource.total,
-    loading: loadResult.loading,
+    loading: useLoadAction ? loadResult.loading : sourceRefreshInFlight,
     selectedRowKeys,
     empty: tableEmptyContent,
     hideBar: hasExternalPaginationControl,
@@ -547,12 +547,23 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
         })
       : null;
 
+  // C2 (plan 593): project the CRUD load lifecycle onto the root as
+  // `data-load-state`. loadAction mode uses the load-state machine (first-frame
+  // honest); source mode projects the known refresh in-flight window and stays
+  // `idle` when loading is unknowable (honest absence, never guessed).
+  const loadState: CrudLoadState = useLoadAction
+    ? loadResult.loadState
+    : sourceRefreshInFlight
+      ? 'loading'
+      : 'idle';
+
   return (
     <div
       className={cn('nop-crud flex flex-col gap-4', props.meta.className)}
       data-testid={props.meta.testid || undefined}
       data-cid={props.meta.cid || undefined}
       data-responsive={isMobile ? 'narrow' : undefined}
+      data-load-state={loadState}
     >
       {hasQueryForm ? (
         <div

@@ -1,6 +1,6 @@
 # 593 E2E 交互就绪态契约：form/crud 加载态、table 投影、弹层关闭冻结、alert-dialog loading 透传
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-10-14
 > Source: `docs/discussions/2026-10-14-e2e-interaction-readiness-contracts.md`（W1–W6 碎交互清单 + C1–C5 契约方案 + 根因实证）；前序先例：`docs/discussions/2026-08-01-flux-e2e-selector-standardization.md`（字段定位契约，已落地于 `docs/architecture/renderer-markers-and-selectors.md` Layer 2）
 > Related: `docs/architecture/renderer-markers-and-selectors.md`（Layer 2 契约登记位）、`docs/architecture/action-interaction-state.md`（Semantic Lifecycle Owner 预留位，本 plan 不触发）
@@ -71,85 +71,85 @@
 
 ### Phase 1 - C1 表单 `data-load-state`
 
-Status: planned
+Status: complete
 Targets: `packages/flux-renderers-form/src/renderers/form-load-action.ts`、`packages/flux-renderers-form/src/renderers/form.tsx`、`packages/flux-renderers-form/src/__tests__/`
 
 - Item Types: `Proof | Fix`
 
-- [ ] Proof：新增契约测试（挂靠 `field-controls-dom-contract.test.tsx` 同目录，独立文件 `form-load-state-contract.test.tsx`）：autoLoad form 首帧根上 `data-load-state="loading"`；resolve 后 `"loaded"` 且字段值已回填；失败后 `"error"`；无 loadAction 时 `"idle"`。判别机制：旧实现首帧无属性/错值必挂。
-- [ ] Fix：`form-load-action.ts` 增加 load 状态机（`idle|loading|loaded|error`，abort 不置 error；form 侧门只有 `loadAction && autoLoad`，无 `enabled` 参数），`loadLoading` 改由状态机投影；初值 `Boolean(loadAction && autoLoad)`（lazy init）。
-- [ ] Fix：`form.tsx` `section.nop-form` 根输出 `data-load-state`；`[data-slot="form-busy"]` 视觉行为不变。
-- [ ] Fix：`activationKey` 重载走同一状态机（`loading → loaded/error`）。
+- [x] Proof：新增契约测试（挂靠 `field-controls-dom-contract.test.tsx` 同目录，独立文件 `form-load-state-contract.test.tsx`）：autoLoad form 首帧根上 `data-load-state="loading"`；resolve 后 `"loaded"` 且字段值已回填；失败后 `"error"`；无 loadAction 时 `"idle"`。判别机制：旧实现首帧无属性/错值必挂。
+- [x] Fix：`form-load-action.ts` 增加 load 状态机（`idle|loading|loaded|error`，abort 不置 error；form 侧门只有 `loadAction && autoLoad`，无 `enabled` 参数），`loadLoading` 改由状态机投影；初值 `Boolean(loadAction && autoLoad)`（lazy init）。
+- [x] Fix：`form.tsx` `section.nop-form` 根输出 `data-load-state`；`[data-slot="form-busy"]` 视觉行为不变。
+- [x] Fix：`activationKey` 重载走同一状态机（`loading → loaded/error`）。
 
 Exit Criteria:
 
-- [ ] 契约测试 4 场景（首帧 loading / loaded+回填 / error / idle）全绿，且对"无 `data-load-state` 属性"的旧实现必红（判别性验证：临时移除属性跑一次确认红）。
-- [ ] `pnpm --filter @nop-chaos/flux-renderers-form test` 全绿（含既有 form 套件零回归）。
+- [x] 契约测试 4 场景（首帧 loading / loaded+回填 / error / idle）全绿，且对"无 `data-load-state` 属性"的旧实现必红（判别性验证：临时移除属性跑一次确认红）。
+- [x] `pnpm --filter @nop-chaos/flux-renderers-form test` 全绿（含既有 form 套件零回归）。
 
 ### Phase 2 - C2/C3 CRUD 查询态与 table 投影
 
-Status: planned
+Status: complete
 Targets: `packages/flux-renderers-data/src/crud-renderer.tsx`、`crud-renderer-load.ts`、`crud-renderer-schema-builders.ts`、`table-renderer.tsx`（`.nop-table` 根，`src/` 直下）、`table-renderer/table-body-rows.tsx`、`table-renderer/table-virtual-body.tsx`、`packages/flux-renderers-data/src/__tests__/`
 
 - Item Types: `Proof | Fix`
 
-- [ ] Proof：新增契约测试 `crud-load-state-contract.test.tsx`：loadAction CRUD 首帧 `.nop-crud[data-load-state="loading"]`；settle 后 `"ready"`；失败 `"error"`；enabled=false 时 `"idle"`。首载期间空行带 `data-loading-placeholder`，真·零结果不带。
-- [ ] Fix：`crud-renderer-load.ts` loading 状态机（初值随 `useLoadAction && enabled`；onStart/onSettle 挂点已有，接状态机）；`crud-renderer.tsx` 根输出 `data-load-state`。
-- [ ] Fix：`crud-renderer-schema-builders.ts:95` loading 投影放宽为"已知即投"（pages 叠 overlay 语义不变；source 模式投影 `sourceRefreshInFlight`；不可知不投）。
-- [ ] Fix：table `loading === true` 时容器输出 `data-loading` + `aria-busy="true"`；空行占位标记覆盖**双渲染位点**——`table-body-rows.tsx`（常规模式）与 `table-virtual-body.tsx:139`（virtual 模式）的 `table-empty-row` 均带 `data-loading-placeholder`。
-- [ ] Proof：source 模式投影契约钉（已知 in-flight → `loading`；不可知 → `idle`）。
+- [x] Proof：新增契约测试 `crud-load-state-contract.test.tsx`：loadAction CRUD 首帧 `.nop-crud[data-load-state="loading"]`；settle 后 `"ready"`；失败 `"error"`；enabled=false 时 `"idle"`。首载期间空行带 `data-loading-placeholder`，真·零结果不带。
+- [x] Fix：`crud-renderer-load.ts` loading 状态机（初值随 `useLoadAction && enabled`；onStart/onSettle 挂点已有，接状态机）；`crud-renderer.tsx` 根输出 `data-load-state`。
+- [x] Fix：`crud-renderer-schema-builders.ts:95` loading 投影放宽为"已知即投"（pages 叠 overlay 语义不变；source 模式投影 `sourceRefreshInFlight`；不可知不投）。
+- [x] Fix：table `loading === true` 时容器输出 `data-loading` + `aria-busy="true"`；空行占位标记覆盖**双渲染位点**——`table-body-rows.tsx`（常规模式）与 `table-virtual-body.tsx:139`（virtual 模式）的 `table-empty-row` 均带 `data-loading-placeholder`。
+- [x] Proof：source 模式投影契约钉（已知 in-flight → `loading`；不可知 → `idle`）。
 
 Exit Criteria:
 
-- [ ] 契约测试覆盖 C2 全状态转移 + C3 三属性，判别性验证同 Phase 1。
-- [ ] `pnpm --filter @nop-chaos/flux-renderers-data test` 全绿。
+- [x] 契约测试覆盖 C2 全状态转移 + C3 三属性，判别性验证同 Phase 1。
+- [x] `pnpm --filter @nop-chaos/flux-renderers-data test` 全绿。
 
 ### Phase 3 - C4 弹层关闭契约冻结 + data-slot 次序
 
-Status: planned
+Status: complete
 Targets: `packages/ui/src/components/ui/{popover,alert-dialog,dropdown-menu}.tsx`、契约测试 colocate 于 `packages/ui/src/components/ui/`（挨 `overlay-family-zindex.test.tsx`，同包惯例）
 
 - Item Types: `Proof | Fix | Decision`
 
-- [ ] Proof：新增契约测试（挨 `overlay-family-zindex.test.tsx`）：open 期间 popup 带 `data-open`；close 后 `data-closed` 出现；popup detach 且 `[data-base-ui-inert]` backdrop detach。**detach 观察机制**（仓库无 exit 动画测试先例，执行时三选一并落字注释）：(a) happy-dom 环境无真实动画 → Base UI 的 `useAnimationsFinished` 在无动画时即时完成，close 后 `await waitFor(detached)` 可直接观察；(b) 若 (a) 不成立，测试内 `popup.getAnimations?.().forEach(a => a.finish())` 强制推进后等待；(c) 若仍不可行，把 detach 断言下沉到 `tests/e2e` 真浏览器 spec，并在本项注明降级路径。
-- [ ] Proof：`data-slot` 默认槽位钉——未覆写时 popover-content / alert-dialog-content / dropdown-menu-content 默认槽位存在（dirty-close-guard 覆写用例保持绿）。
-- [ ] Fix：三处 `data-slot` 改显式 `props['data-slot'] ?? 默认`（行为等价；判别性：覆写用例 + 默认用例双绿）。
-- [ ] Decision：确认 dropdown-menu 外点时序维持 Base UI 默认 `sloppy`（在契约测试注释落字裁决理由，不改行为）。
+- [x] Proof：新增契约测试（挨 `overlay-family-zindex.test.tsx`）：open 期间 popup 带 `data-open`；close 后 popup detach；modal 弹层（alert-dialog）open 期间 `[data-base-ui-inert]` 背景标记存在、close 后清空。**detach 观察机制**（仓库无 exit 动画测试先例）：(a) happy-dom 环境无真实动画 → Base UI 的 `useAnimationsFinished` 在无动画时即时完成，close 后 `await waitFor(detached)` 可直接观察——**实测成立**（popover 受控 close / dropdown sloppy 外点 / alert-dialog action click 三路均即时 detach）。**happy-dom 可观测边界（closure audit F1 实测修正）**：`data-closed` 退出动画窗口在 happy-dom 下**不可观测**（无真实动画时间线，同 tick detach，`data-closed` 计数恒 0）——因此本契约测试冻结的是 happy-dom 可观测面（`data-open` + detach + modal inert 清空）；`data-closed` 窗口是真实浏览器事实（退出动画层），登记于 owner-doc 并留给 e2e 真浏览器层，不写成 happy-dom 单测断言（选项 (c) 降级路径的精确化）。
+- [x] Proof：`data-slot` 默认槽位钉——未覆写时 popover-content / alert-dialog-content / dropdown-menu-content 默认槽位存在（dirty-close-guard 覆写用例保持绿）。
+- [x] Fix：三处 `data-slot` 改显式 `props['data-slot'] ?? 默认`（行为等价；判别性：覆写用例 + 默认用例双绿）。
+- [x] Decision：确认 dropdown-menu 外点时序维持 Base UI 默认 `sloppy`（在契约测试注释落字裁决理由，不改行为）。
 
 Exit Criteria:
 
-- [ ] 关闭时序契约测试 + 默认槽位契约测试全绿；`dirty-close-guard` 既有行为零回归。
-- [ ] `pnpm --filter @nop-chaos/ui test` 全绿。
+- [x] 关闭时序契约测试 + 默认槽位契约测试全绿；`dirty-close-guard` 既有行为零回归。
+- [x] `pnpm --filter @nop-chaos/ui test` 全绿。
 
 ### Phase 4 - C5 AlertDialogAction loading 透传
 
-Status: planned
+Status: complete
 Targets: `packages/ui/src/components/ui/alert-dialog.tsx` + 契约测试
 
 - Item Types: `Proof | Fix`
 
-- [ ] Proof：契约测试——`loading={true}` 时 action 按钮带 `data-loading`、`aria-busy`、disabled；`loading` 缺省时行为与现网一致。
-- [ ] Fix：`AlertDialogAction` props 增加 `Pick<React.ComponentProps<typeof Button>, 'loading'>` 并透传内层 `Button`。
+- [x] Proof：契约测试——`loading={true}` 时 action 按钮带 `data-loading`、`aria-busy`、disabled；`loading` 缺省时行为与现网一致。（判别性：loading=true 场景旧实现必红）
+- [x] Fix：`AlertDialogAction` props 增加 `Pick<React.ComponentProps<typeof Button>, 'loading'>` 并透传内层 `Button`。
 
 Exit Criteria:
 
-- [ ] 契约测试绿；不传 `loading` 的全部既有 alert-dialog 用例零回归。
+- [x] 契约测试绿；不传 `loading` 的全部既有 alert-dialog 用例零回归。
 
 ### Phase 5 - owner-doc 同步
 
-Status: planned
-Targets: `docs/architecture/renderer-markers-and-selectors.md`、`flux-guide/13-testing.md`、`docs/components/form/design.md`、`docs/components/crud/design.md`、`docs/components/table/design.md`、alert-dialog 所在组件 design 文档
+Status: complete
+Targets: `docs/architecture/renderer-markers-and-selectors.md`、`flux-guide/13-testing.md`、`docs/components/{form,crud,table}/design.md`、`docs/components/dialog/design.md`（alert-dialog 归属 dialog 域）
 
 - Item Types: `Follow-up`（文档回写，随 Phase 1–4 已改行为登记）
 
-- [ ] `renderer-markers-and-selectors.md` Layer 2 登记：`data-load-state`（form/crud 两根、词汇表差异 form=loaded vs crud=ready）、`data-loading`、`data-loading-placeholder`、弹层 `data-open`/`data-closed` 契约冻结声明、`data-slot` 默认槽位规则（覆写=特性，显式化）。
-- [ ] `flux-guide/13-testing.md` 增"等待契约速查"小节：就绪等 `data-load-state`、关闭等 `data-closed`+detach、禁用 networkidle/force-click 的新默认。
-- [ ] `docs/components/{form,crud,table}/design.md` 及 alert-dialog design 文档各自登记新增属性与状态机。
-- [ ] 确认 discussion 文档 §5 落地步骤与实况一致（无漂移）。
+- [x] `renderer-markers-and-selectors.md` Layer 2 登记：`data-load-state`（form/crud 两根、词汇表差异 form=loaded vs crud=ready）、`data-loading`、`data-loading-placeholder`、弹层 `data-open`/`data-closed` 契约冻结声明、`data-slot` 默认槽位规则（覆写=特性，显式化）、AlertDialogAction loading 透传。
+- [x] `flux-guide/13-testing.md` 增"等待契约速查"小节：就绪等 `data-load-state`、关闭等 detach、禁用 networkidle/force-click 的新默认。
+- [x] `docs/components/{form,crud,table}/design.md` 各自登记新增属性；alert-dialog loading 登记于 `docs/components/dialog/design.md`（alert-dialog 归属 dialog 域，无独立目录）。
+- [x] 确认 discussion 文档 §5 落地步骤与实况一致（无漂移）。
 
 Exit Criteria:
 
-- [ ] 四处文档与 live 代码逐属性对齐（抽查每个属性在文档与契约测试中均可见）。
+- [x] 四处文档与 live 代码逐属性对齐（抽查每个属性在文档与契约测试中均可见）。
 
 ## Draft Review Record
 
@@ -162,17 +162,17 @@ Exit Criteria:
 
 ## Closure Gates
 
-- [ ] 所有 in-scope confirmed live defects 已修复（首帧 loading 洞、投影缺口、slot 次序）
-- [ ] 所有 in-scope confirmed contract drifts 已收敛（弹层关闭时序从"未冻结"到契约测试冻结）
-- [ ] 行为/契约结果已达成（C1–C5 全部生产常驻 + 契约测试冻结）
-- [ ] 必要 focused verification 已完成（各 Phase 契约测试判别性验证）
-- [ ] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect 或 contract drift
-- [ ] 受影响的 owner docs 已同步到 live baseline（Phase 5）
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] 所有 in-scope confirmed live defects 已修复（首帧 loading 洞、投影缺口、slot 次序）
+- [x] 所有 in-scope confirmed contract drifts 已收敛（弹层关闭时序从"未冻结"到契约测试冻结）
+- [x] 行为/契约结果已达成（C1–C5 全部生产常驻 + 契约测试冻结）
+- [x] 必要 focused verification 已完成（各 Phase 契约测试判别性验证）
+- [x] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect 或 contract drift
+- [x] 受影响的 owner docs 已同步到 live baseline（Phase 5）
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项（R1 revised → 修复 → R2 approved）
+- [x] `pnpm typecheck`（42/42）
+- [x] `pnpm build`（42/42）
+- [x] `pnpm lint`（42/42，1 既存 warning=use-list-windowing）
+- [x] `pnpm test`（78/78 tasks）
 
 ## Deferred But Adjudicated
 
@@ -202,13 +202,17 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: （执行收口时填写）
+Status Note: 执行完成，Closure Gates（typecheck 42/42 / build 42/42 / lint 42/42 / test 78/78）全绿；独立 closure audit R1 `revised` → 修复 → R2 `approved`。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: （待独立 closure audit）
-- Evidence: （待填）
+- Auditor / Agent: 独立 fresh 子 agent session `ses_ec6e7cb7effetnJSyOTgnEi1b5`（R1 + R2）
+- Evidence:
+  - **R1 `revised`**（0B/1M/3m）：Major F1=C4 契约测试未断言 plan Proof 声称的 `data-closed`/`[data-base-ui-inert]` backdrop detach；Minor F2=popover detach 用 `cleanup()` 非真实 close、F3=首帧 loading 断言不具判别性、F4=C2 `idle` 注释与 cancelled 行为不符。
+  - **修复**：F1=probe 实证 happy-dom 下 `data-closed` 不可观测（同 tick detach）但 modal `[data-base-ui-inert]` 可观测（5→0）→ 测试改断言 `data-open`+detach+modal inert 清空，plan Proof bullet + owner-doc（`renderer-markers-and-selectors.md`）+ `dialog/design.md` 改述"完成信号=detach，`data-closed` 真实浏览器专属"；F2=popover 改受控 `open` 真实 close；F3=修正失实注释（RTL `act` 刷新 effect，断言不判别 lazy-init vs 同步 effect setState，如实标注）；F4=C2 注释改为"cancelled 不投影 idle"。
+  - **R2 `approved`**：F1/F2/F4 verified-resolved；F3 残留为 Minor（注释已修正为如实描述，first-frame-honest 属性由源码阅读核验）；审计员逐项判别（F3 变异 0 红=非判别性，如实记录）+ shasum 逐字节恢复（`48a95205…`/`73e6a2a6…`/`20bfb435…`/`30f65160…`）+ plan-593 文件集未变（19 modified + 4 untracked）+ 三包测试独立复跑全绿（form 125/1121、data 178/1231、ui 69/337）。
 
 Follow-up:
 
-- （待填或明确无剩余 plan-owned work）
+- F3（Minor，非阻塞）：first-frame-honest 目前仅由源码 lazy init 保证、无判别性 DOM 测试；如需判别，可把初始 `loading` 转移移出 effect body（成功判别的重构）——归后续契约硬化，不阻塞本 plan 收口。
+- 宿主 `e2e-shared` 消费重写（见 Deferred But Adjudicated）→ nop-chaos-next 侧 successor。

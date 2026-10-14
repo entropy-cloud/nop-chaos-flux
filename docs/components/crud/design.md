@@ -504,6 +504,7 @@ interface CrudStatusSummary {
 
 - `.nop-crud` 根在小屏增 `data-responsive="narrow"`（桌面缺省不输出该属性）。
 - `[data-slot="<slot>-toolbar-layout"]`（header/footer）在小屏同样增 `data-responsive="narrow"`，class 由 `flex-wrap items-center justify-between` 切到 `flex-col items-stretch`。
+- **异步加载就绪 marker（plan 593 C2/C3，已落地）**：CRUD 根在 `loadAction` 生命周期中发布 `data-load-state="idle|loading|ready|error"`（成功 settle 值为 `ready`，与 form 的 `loaded` 有意区分——不要统一）；source 模式把 `sourceRefreshInFlight` 投影到同一属性。底层 table 根同时发布 `data-loading`（presence）+ `aria-busy="true"`；loading 期间空表单行带 `data-loading-placeholder`。契约测试：`packages/flux-renderers-data/src/__tests__/crud-load-state-contract.test.tsx`。下游 E2E 等 `data-load-state="ready"` 或 `"error"`，不等 `networkidle`。
 
 ### 触摸适配
 

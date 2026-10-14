@@ -233,6 +233,26 @@ const cell = row.locator('td[data-field="email"]');
 - 纯新增：现有 `data-slot`/`${name}-control` 仍保留，E2E 可渐进迁移。
 - 生产常驻、**不走调试开关**——E2E 测的就是生产行为，gate 在调试态会脱离真实 DOM。
 
+### 等待契约速查（async 加载/关闭就绪）
+
+**禁用 `networkidle` 和 `force-click`**。Flux 渲染器暴露生产常驻的机器可读 DOM 状态，E2E 直接等契约属性：
+
+| 场景                   | 等待目标                                                            | 契约属性    | 契约测试                                        |
+| ---------------------- | ------------------------------------------------------------------- | ----------- | ----------------------------------------------- |
+| 表单加载完成           | `[data-load-state="loaded"]`（或 `"error"`）                        | Form 根     | `form-load-state-contract.test.tsx`             |
+| CRUD 加载完成          | `[data-load-state="ready"]`（或 `"error"`）                         | CRUD 根     | `crud-load-state-contract.test.tsx`             |
+| 表格加载中             | `[data-loading]` / `aria-busy="true"`（presence）                   | Table 根    | 同上                                            |
+| 表格空行占位           | `[data-loading-placeholder]`（loading 期间空表单行）                | Table 行    | 同上                                            |
+| 弹层关闭完成           | popup **detach**（`waitFor(() => expect(locator).toHaveCount(0))`） | —           | `overlay-close-lifecycle-contract.test.tsx`     |
+| 弹层打开中             | popup 带 `data-open`                                                | popup 根    | 同上                                            |
+| AlertDialogAction busy | `[data-loading]` + `aria-busy="true"` + `disabled`                  | action 按钮 | `alert-dialog-action-loading-contract.test.tsx` |
+
+**词汇表差异**：Form 的成功 settle 值是 `loaded`；CRUD 的是 `ready`。不要统一，各自有独立契约测试。
+
+**DropdownMenu 外点关闭**：Base UI 默认 `outsidePressEvent: 'sloppy'`（pointerdown 即关）。E2E 不要 force-click 穿透——等 popup detach 即可。
+
+契约登记与规约见 `docs/architecture/renderer-markers-and-selectors.md`（plan 593 C1–C5）。
+
 ---
 
 ## 推荐参考的 3 个测试范例

@@ -140,6 +140,7 @@ X2 工作项落地后，`ActionShapeFields.preventDefault` / `stopPropagation` �
 
 - 根节点保留 `nop-form` marker。
 - 字段布局、actions 对齐和分组视觉应遵循 field frame 与 styling system，而不是让 `form` 固定一种页面布局。
+- **异步加载就绪 marker（plan 593 C1，已落地）**：form 根节点在 `loadAction` 生命周期中发布 `data-load-state="idle|loading|loaded|error"`——`loading` 在请求 in-flight 期间；`loaded` 成功 settle；`error` 失败 settle（refresh catch）；`idle` 首次加载前或 `autoLoad: false`。契约测试：`packages/flux-renderers-form/src/__tests__/form-load-state-contract.test.tsx`。下游 E2E 等 `data-load-state="loaded"` 或 `"error"`，不等 `networkidle`。
 
 ## 11. 与其他容器的边界
 

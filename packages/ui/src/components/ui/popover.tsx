@@ -23,6 +23,10 @@ function PopoverContent({
 }: PopoverPrimitive.Popup.Props &
   Pick<PopoverPrimitive.Positioner.Props, 'align' | 'alignOffset' | 'side' | 'sideOffset'>) {
   const zIndex = useGlobalZIndex();
+  // C4 (plan 593): explicit data-slot override — consumer may replace the
+  // default slot (e.g. dirty-close-guard pattern); Base UI types don't
+  // declare data-* keys so we read it off props at runtime.
+  const dataSlot = (props as Record<string, unknown>)['data-slot'] as string | undefined;
   return (
     <PopoverPrimitive.Portal>
       <PopoverPrimitive.Positioner
@@ -34,7 +38,7 @@ function PopoverContent({
         style={{ zIndex, ...style }}
       >
         <PopoverPrimitive.Popup
-          data-slot="popover-content"
+          data-slot={dataSlot ?? 'popover-content'}
           className={cn(
             'flex w-72 origin-(--transform-origin) flex-col gap-2.5 rounded-lg bg-popover p-2.5 text-sm text-popover-foreground shadow-md ring-1 ring-foreground/10 outline-hidden duration-100 data-[side=bottom]:slide-in-from-top-2 data-[side=inline-end]:slide-in-from-left-2 data-[side=inline-start]:slide-in-from-right-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95',
             className,

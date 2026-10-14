@@ -476,6 +476,12 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
   );
 
   const isLoading = schemaProps.loading === true;
+  // C3 (plan 593): the full-table loading overlay stays pages-only — infinite
+  // mode expresses loading via the infinite-status area, so stacking the
+  // overlay would double-signal. The DOM contract attributes (data-loading /
+  // aria-busy / empty-row placeholder) below light for every mode whenever
+  // loading is true.
+  const showLoadingOverlay = isLoading && schemaProps.pagination?.mode !== 'infinite';
   const isStriped = schemaProps.stripe === true;
   const isBordered = schemaProps.bordered === true;
   const densityTier =
@@ -518,6 +524,8 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
       data-selection-capped={selectionCapped ? 'true' : undefined}
       data-selection-count={selectionMax !== undefined ? selectedRowKeys.size : undefined}
       data-selection-max={selectionMax}
+      data-loading={isLoading ? '' : undefined}
+      aria-busy={isLoading ? 'true' : undefined}
       {...containerInteractions}
     >
       {hasRendererSlotContent(headerContent) ? (
@@ -674,7 +682,7 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
           ) : null}
         </Table>
 
-        {isLoading ? <TableLoadingOverlay loadingContent={loadingContent} /> : null}
+        {showLoadingOverlay ? <TableLoadingOverlay loadingContent={loadingContent} /> : null}
       </div>
 
       {paginationEnabled && !schemaProps.pagination?.hideBar && treeFlattenedData.length > 0 ? (
