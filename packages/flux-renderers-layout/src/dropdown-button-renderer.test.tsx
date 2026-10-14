@@ -347,3 +347,73 @@ describe('DropdownButtonRenderer (W3b — menu-style action trigger)', () => {
     await waitFor(() => expect(screen.getByText('clicked:yes')).toBeTruthy());
   });
 });
+
+describe('DropdownButtonRenderer — item.visible row-scope condition (AMIS parity)', () => {
+  afterEach(() => {
+    cleanup();
+  });
+
+  it('drops items whose visible formula evaluates falsy against the page scope', async () => {
+    const SchemaRenderer = createLayoutSchemaRenderer();
+    render(
+      <SchemaRenderer
+        schemaUrl="test://layout/dropdown-button-visible"
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'dropdown-button',
+              label: 'More',
+              items: [
+                { label: 'Edit' },
+                { label: 'Disable', visible: '${status == 1}' },
+                { label: 'Enable', visible: '${status == 0}' },
+              ],
+            },
+          ],
+        }}
+        data={{ status: 1 }}
+        env={env}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+
+    fireEvent.click(dropdownTrigger());
+    await waitFor(() => {
+      expect(screen.getByText('Edit')).toBeTruthy();
+    });
+
+    expect(screen.getByText('Disable')).toBeTruthy();
+    expect(screen.queryByText('Enable')).toBeNull();
+  });
+
+  it('keeps items without a visible condition', async () => {
+    const SchemaRenderer = createLayoutSchemaRenderer();
+    render(
+      <SchemaRenderer
+        schemaUrl="test://layout/dropdown-button-visible-default"
+        schema={{
+          type: 'page',
+          data: {},
+          body: [
+            {
+              type: 'dropdown-button',
+              label: 'More',
+              items: [{ label: 'Plain' }, { label: 'Hidden', visible: false }],
+            },
+          ],
+        }}
+        data={{}}
+        env={env}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+
+    fireEvent.click(dropdownTrigger());
+    await waitFor(() => {
+      expect(screen.getByText('Plain')).toBeTruthy();
+    });
+
+    expect(screen.queryByText('Hidden')).toBeNull();
+  });
+});

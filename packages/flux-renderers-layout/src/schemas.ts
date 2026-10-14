@@ -217,6 +217,12 @@ export interface DropdownButtonItemSchema extends SchemaObject {
   disabled?: boolean;
   /** Destructive styling */
   destructive?: boolean;
+  /**
+   * AMIS-parity visibility condition, evaluated against the enclosing scope
+   * (e.g. the table row) at render time. Static boolean or `${...}` formula.
+   * Items whose condition evaluates falsy are not rendered at all.
+   */
+  visible?: boolean | string;
 }
 
 export interface DropdownButtonSchema extends BaseSchema {

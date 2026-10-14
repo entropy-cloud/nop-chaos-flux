@@ -120,6 +120,28 @@ export function DropdownButtonRenderer(props: RendererComponentProps<DropdownBut
     setOpen(false);
   };
 
+  // AMIS parity: item.visible is a row-scoped condition (static boolean or a
+  // `${...}` formula, e.g. `${status == 1}`). Items whose condition evaluates
+  // falsy are dropped entirely — not merely disabled. Evaluation failures fall
+  // open (render the item) so a malformed expression can't hide menu entries.
+  const visibleItems = rawItems.filter((item) => {
+    const visible = (item as { visible?: unknown }).visible;
+    if (visible === undefined || visible === null || visible === '') {
+      return true;
+    }
+    if (typeof visible === 'boolean') {
+      return visible;
+    }
+    if (typeof visible !== 'string') {
+      return true;
+    }
+    try {
+      return Boolean(props.helpers.evaluate(visible, props.node.scope));
+    } catch {
+      return true;
+    }
+  });
+
   return (
     <div
       className={cn('nop-dropdown-button', props.meta.className)}
@@ -155,7 +177,7 @@ export function DropdownButtonRenderer(props: RendererComponentProps<DropdownBut
           }
         />
         <DropdownMenuContent {...hoverContentHandlers}>
-          {rawItems.map((item, index) => {
+          {visibleItems.map((item, index) => {
             const key =
               item.key !== undefined && item.key !== null && item.key !== ''
                 ? String(item.key)
