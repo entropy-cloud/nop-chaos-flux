@@ -41,6 +41,7 @@ form. The search form keeps the default `'local'` scope.
       "name": "users-page-list",
       "loadAction": {
         "action": "ajax",
+        "dependsOn": ["__init_load__"],
         "args": { "url": "/api/users", "method": "get" },
       },
       "columns": [
@@ -66,6 +67,7 @@ form. The search form keeps the default `'local'` scope.
                       "name": "user-activity-list",
                       "loadAction": {
                         "action": "ajax",
+                        "dependsOn": ["id"],
                         "args": { "url": "/api/users/${id}/activity", "method": "get" },
                       },
                       "queryForm": {

@@ -59,7 +59,7 @@
     "clean:src-artifacts": "node scripts/clean-src-artifacts.mjs",
     "dev": "turbo run dev --filter=@nop-chaos/flux-playground",
     "flux-guide:generate-types": "node flux-guide/scripts/generate-types.mjs",
-    "flux-guide:validate": "pnpm build && node --experimental-loader ./flux-guide/scripts/css-stub.mjs flux-guide/scripts/validate.mjs",
+    "flux-guide:validate": "pnpm build && node --experimental-loader ./flux-guide/scripts/css-stub.mjs --import ./flux-guide/scripts/env-stub.mjs flux-guide/scripts/validate.mjs",
     "flux:validate-pages": "node --experimental-loader ./flux-guide/scripts/css-stub.mjs --import ./flux-guide/scripts/env-stub.mjs flux-guide/scripts/validate-pages.mjs",
     "format": "prettier --write .",
     "format:check": "prettier --check .",

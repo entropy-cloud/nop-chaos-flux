@@ -257,6 +257,17 @@ locale?: string;
 | 2026-07-23 | `env.stream?: StreamFetcher`                                                                | `docs/discussions/2026-07-21-env-stream-and-websocket-extension.md`               | 已实施                              |
 | 2026-07-23 | `env.openSocket?: WebSocketOpener`                                                          | 同上                                                                              | 已实施                              |
 | 2026-09-26 | `env.print?: () => void` + `env.clipboard?: ClipboardWriter` + `env.location?: EnvLocation` | `docs/discussions/2026-09-26-host-channels-print-clipboard-download-toast-url.md` | 已实施（plan 512，2026-09-26 收口） |
+| 2026-10-14 | `env.reportSchemaDiagnostics?: (diagnostic: SchemaDiagnostic) => void`                      | plan `docs/plans/595-schema-validation-enforcement-plan.md`（§4.1 五条走查见下）  | 已实施（2026-10-14）                |
+
+#### `env.reportSchemaDiagnostics` §4.1 五条标准走查（2026-10-14）
+
+1. **通用性**：≥3 个不相关消费面需要——playground 调试面板、CI/测试基线上报、宿主遥测/编辑器诊断面板；任何开启 `strictValidation` 的宿主都需要同一诊断出口。
+2. **host transport boundary**：诊断外发是宿主可观测性边界（系统调用类），不是某个业务组件能力。
+3. **不能被 importLoader 覆盖**：`importLoader` 注入的是 schema 依赖库连接器；诊断通道是渲染器→宿主方向的可观测性回传，方向与机制均不同。A 档组合（`notify`）语义不符——`notify` 是用户面 toast 语义，诊断是工具面事件流（逐条、含 severity/path/sourceLocation），混用会污染用户通知。
+4. **跨 host 统一抽象**：web（dev 面板/console）、测试（内存收集断言）、SSR/Node（日志/上报）均可实现同一 `(diagnostic) => void` 签名。
+5. **与现有 env 能力强耦合**：与 `strictValidation` 开关构成同一渲染期校验机制的两半（开关决定是否收集，通道决定外发到哪）；与 `notify`/`onActionError` 同属渲染器→宿主的错误面回传家族。
+
+补充语义：optional + 使用前 capability check（`if (env.reportSchemaDiagnostics)`），缺省回退 `console.error` fallback reporter（编译器核心不直接拥有 console）。
 
 ## 5. Host 实现责任
 

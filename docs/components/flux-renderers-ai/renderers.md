@@ -716,6 +716,7 @@ export interface AiMcpManagerSchema extends BaseSchema {
 ```json
 {
   "type": "page",
+  "xui:imports": [{ "from": "ai", "as": "ai" }],
   "body": [
     {
       "type": "ai-chat",
@@ -737,18 +738,18 @@ export interface AiMcpManagerSchema extends BaseSchema {
 
 `$ai.connectors.openai` 假设 host 在 `xui:imports` 注册了名为 `ai` 的 import，提供 `connectors` 表达式 helper（返回 host 用 `createStreamBasedAiConnector(env, config)` 构造的 `AiConnector` 实例）。
 
-### 14.2 多会话 + 自定义气泡渲染
+### 14.2 多会话 + 气泡头像
 
 ```json
 {
   "type": "ai-chat",
+  "xui:imports": [
+    { "from": "ai", "as": "ai" },
+    { "from": "page", "as": "page" }
+  ],
   "activeConversationId": "${$page.activeConversationId}",
   "connector": "${$ai.connectors.deepseek}",
-  "itemRegion": {
-    "type": "ai-bubble",
-    "placement": "auto",
-    "showAvatar": true
-  },
+  "showAvatar": true,
   "onConversationChange": {
     "action": "setValue",
     "args": { "path": "activeConversationId", "value": "${conversationId}" }
@@ -766,12 +767,17 @@ export interface AiMcpManagerSchema extends BaseSchema {
 ```json
 {
   "type": "ai-chat",
+  "xui:imports": [
+    { "from": "ai", "as": "ai" },
+    { "from": "page", "as": "page" }
+  ],
   "connector": "${$ai.connectors.openai}",
   "systemPrompt": "You can call tools to help the user.",
   "header": {
-    "type": "hstack",
+    "type": "flex",
+    "direction": "row",
     "className": "p-3 border-b",
-    "items": [
+    "body": [
       { "type": "text", "text": "AI Agent" },
       { "type": "button", "label": "Clear", "onClick": { "action": "ai:clear" } }
     ]

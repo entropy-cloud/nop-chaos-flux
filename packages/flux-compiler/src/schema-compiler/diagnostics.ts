@@ -201,6 +201,20 @@ function createBuiltinNamespaceValidators(): readonly SchemaNamespaceValidator[]
           return;
         }
 
+        // `xui:sid` — page-designer 会话节点标识（page-designer-core
+        // `SESSION_ID_KEY`，S1 §6）。编辑态画布经 beforeCompile 投影为
+        // `testid`，文档态编译必须容忍该键；仅校验字符串形态。
+        if (context.key === 'xui:sid') {
+          if (typeof context.value !== 'string' || context.value.length === 0) {
+            context.add({
+              code: 'invalid-namespace-property',
+              message: 'xui:sid must be a non-empty session id string.',
+              source: 'namespace',
+            });
+          }
+          return;
+        }
+
         context.add({
           code: 'invalid-namespace-property',
           message: `Unknown built-in namespace property "${context.key}".`,

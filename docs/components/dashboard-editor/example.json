@@ -3,7 +3,7 @@
   "body": [
     {
       "type": "flex",
-      "direction": "col",
+      "direction": "column",
       "className": "gap-3",
       "body": [
         {
@@ -22,12 +22,12 @@
           ]
         },
         {
-          "type": "panel",
+          "type": "card",
           "title": "Saved Layout",
           "body": [
             {
               "type": "json-view",
-              "data": "${dashboardLayout}"
+              "value": "${dashboardLayout}"
             }
           ]
         }

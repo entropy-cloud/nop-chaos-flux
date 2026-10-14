@@ -21,6 +21,34 @@ export const schedulingRendererDefinitions: RendererDefinition[] = [
       editable: { displayName: 'Editable', shape: { kind: 'boolean' } },
       linkable: { displayName: 'Linkable', shape: { kind: 'boolean' } },
     },
+    componentCapabilityContracts: [
+      {
+        handle: 'zoomIn',
+        displayName: 'Zoom In',
+        description: 'Zoom the timeline in one level.',
+      },
+      {
+        handle: 'zoomOut',
+        displayName: 'Zoom Out',
+        description: 'Zoom the timeline out one level.',
+      },
+      {
+        handle: 'scrollToToday',
+        displayName: 'Scroll To Today',
+        description: 'Scroll the timeline to today.',
+      },
+      {
+        handle: 'scrollToTask',
+        displayName: 'Scroll To Task',
+        description: 'Scroll the timeline to the target task.',
+        args: {
+          kind: 'object',
+          fields: {
+            taskId: { kind: 'union', anyOf: [{ kind: 'string' }, { kind: 'number' }] },
+          },
+        },
+      },
+    ],
     fields: [
       { key: 'tasks', kind: 'prop' },
       { key: 'links', kind: 'prop' },

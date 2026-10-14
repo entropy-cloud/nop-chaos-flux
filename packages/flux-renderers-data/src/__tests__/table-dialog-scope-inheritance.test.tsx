@@ -27,6 +27,10 @@ describe('table row → dialog scope inheritance', () => {
     render(
       <SchemaRenderer
         schemaUrl="test://table-dialog-scope"
+        // plan 595 opt-out: the dialog body reads `$slot.record`, which is bound
+        // only at dialog-open time from the dispatching row scope — statically
+        // the fragment compiles without a slot root, so the validator cannot see it.
+        strictValidation={false}
         schema={{
           type: 'page',
           body: [

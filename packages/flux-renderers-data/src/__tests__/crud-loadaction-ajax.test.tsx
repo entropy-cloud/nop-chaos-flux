@@ -1,6 +1,6 @@
 import { cleanup, render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
-import { createDataSchemaRenderer, formulaCompiler } from '../test-support.js';
+import { buttonRenderer, createDataSchemaRenderer, formulaCompiler } from '../test-support.js';
 
 /**
  * 复现 nop-chaos-next 集成场景：crud 的 loadAction 是 ajax action，
@@ -32,7 +32,7 @@ describe('CRUD loadAction via ajax + env.fetcher', () => {
             {
               type: 'crud',
               id: 'load-crud',
-              loadAction: { action: 'ajax', args: { url: '/r/Test__findPage' } },
+              loadAction: { action: 'ajax', args: { url: '/r/Test__findPage' }, dependsOn: ['__init_load__'] },
               columns: [{ name: 'name', label: 'Name' }],
               rowKey: 'id',
             },
@@ -84,7 +84,7 @@ describe('CRUD loadAction via ajax + env.fetcher', () => {
             {
               type: 'crud',
               id: 'load-crud',
-              loadAction: { action: 'ajax', args: { url: '/r/NopAuthUser__findPage' } },
+              loadAction: { action: 'ajax', args: { url: '/r/NopAuthUser__findPage' }, dependsOn: ['__init_load__'] },
               columns: [{ name: 'userName', label: 'User Name' }],
               // 故意不配 rowKey，复现 nop-entropy grid_crud.xpl 的输出
             },
@@ -112,6 +112,9 @@ describe('CRUD loadAction via ajax + env.fetcher', () => {
     render(
       <SchemaRenderer
         schemaUrl="test://data/crud-loadaction-no-dependsson"
+        // plan 595 opt-out: fixture deliberately omits loadAction.dependsOn to
+        // pin the fail-closed mount-fire behavior for dependency-less loadActions.
+        strictValidation={false}
         schema={{
           type: 'page',
           body: [
@@ -162,7 +165,7 @@ describe('CRUD loadAction via ajax + env.fetcher', () => {
               type: 'crud',
               id: 'crud-grid',
               name: 'crud-grid',
-              loadAction: { action: 'ajax', args: { url: '@query:NopAuthUser__findPage' } },
+              loadAction: { action: 'ajax', args: { url: '@query:NopAuthUser__findPage' }, dependsOn: ['__init_load__'] },
               footerToolbar: [{ type: 'statistics' }, { type: 'pagination' }],
               columns: [
                 { name: 'userName', label: '用户名' },
@@ -205,7 +208,7 @@ describe('CRUD loadAction via ajax + env.fetcher', () => {
       },
     })) as never;
 
-    const SchemaRenderer = createDataSchemaRenderer();
+    const SchemaRenderer = createDataSchemaRenderer([buttonRenderer]);
 
     render(
       <SchemaRenderer
@@ -216,21 +219,21 @@ describe('CRUD loadAction via ajax + env.fetcher', () => {
             {
               type: 'crud',
               id: 'crud-grid',
-              loadAction: { action: 'ajax', args: { url: '/r/Test__findPage' } },
+              loadAction: { action: 'ajax', args: { url: '/r/Test__findPage' }, dependsOn: ['__init_load__'] },
               columns: [
                 { name: 'name', label: 'Name', type: 'text' },
                 {
                   type: 'column',
                   label: '操作',
                   buttons: [
-                    { type: 'button', id: 'edit', label: '编辑', onClick: { action: 'noop' } },
+                    { type: 'button', id: 'edit', label: '编辑' },
                     {
                       type: 'button',
                       id: 'disable',
                       label: '禁用',
-                      onClick: { action: 'noop' },
-                      // AMIS 残留：flux 应使用 visible，但 NormalizeAction 未转换
-                      visibleOn: '${status == 1}',
+                      // AMIS 残留迁移：flux 的 canonical prop 是 visible
+                      //（原 visibleOn 从未被 NormalizeAction 转换，零行为变化）。
+                      visible: '${status == 1}',
                     },
                   ],
                 },
@@ -280,7 +283,7 @@ describe('CRUD loadAction via ajax + env.fetcher', () => {
               type: 'crud',
               id: 'crud-grid',
               name: 'crud-grid',
-              loadAction: { action: 'ajax', args: { url: '@query:NopAuthUser__findPage' } },
+              loadAction: { action: 'ajax', args: { url: '@query:NopAuthUser__findPage' }, dependsOn: ['__init_load__'] },
               footerToolbar: [{ type: 'statistics' }, { type: 'pagination' }],
               columns: [{ name: 'userName', label: '用户名' }],
             },

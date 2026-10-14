@@ -8,6 +8,7 @@
       "testid": "user-crud",
       "rowKey": "id",
       "loadAction": {
+        "dependsOn": ["__init_load__"],
         "action": "ajax",
         "args": {
           "url": "/r/User__findPage",
@@ -117,6 +118,7 @@
                         "type": "crud",
                         "testid": "picker-dept-crud-add",
                         "loadAction": {
+                          "dependsOn": ["__init_load__"],
                           "action": "ajax",
                           "args": {
                             "url": "/r/Department__findPage",
@@ -148,6 +150,7 @@
                         "type": "crud",
                         "testid": "picker-tag-crud-add",
                         "loadAction": {
+                          "dependsOn": ["__init_load__"],
                           "action": "ajax",
                           "args": {
                             "url": "/r/Tag__findPage",
@@ -296,6 +299,7 @@
                             "type": "crud",
                             "testid": "picker-dept-crud-edit",
                             "loadAction": {
+                              "dependsOn": ["__init_load__"],
                               "action": "ajax",
                               "args": {
                                 "url": "/r/Department__findPage",
@@ -327,6 +331,7 @@
                             "type": "crud",
                             "testid": "picker-tag-crud-edit",
                             "loadAction": {
+                              "dependsOn": ["__init_load__"],
                               "action": "ajax",
                               "args": {
                                 "url": "/r/Tag__findPage",

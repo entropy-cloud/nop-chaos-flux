@@ -1,5 +1,5 @@
 // serialize：canonical 输出（数字、`*`、7 段保年、`?`→`*`），parse∘serialize∘parse 幂等。
-import type { FieldItem, ParsedCron } from './types';
+import type { FieldItem, ParsedCron } from './types.js';
 
 function serializeField(items: FieldItem[]): string {
   if (items.length === 0) return '*';

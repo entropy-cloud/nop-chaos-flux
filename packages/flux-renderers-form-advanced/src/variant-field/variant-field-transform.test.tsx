@@ -26,6 +26,8 @@ describe('variant-field renderer transform behavior', () => {
             };
           },
         }),
+        // plan 595: publish the method list so compile-time import validation can verify variantLib:detect.
+        getStaticMeta: async () => ({ namespaceMethods: ['detect'] }),
       })),
     };
     const SchemaRenderer = createFormSchemaRenderer();
@@ -96,6 +98,8 @@ describe('variant-field renderer transform behavior', () => {
             };
           },
         }),
+        // plan 595: publish the method list so compile-time import validation can verify variantLib:detect.
+        getStaticMeta: async () => ({ namespaceMethods: ['detect'] }),
       })),
     };
     const SchemaRenderer = createFormSchemaRenderer();
@@ -259,6 +263,8 @@ describe('variant-field renderer transform behavior', () => {
               pendingMigrations.push(resolve);
             }),
         }),
+        // plan 595: publish the method list so compile-time import validation can verify variantLib:detect.
+        getStaticMeta: async () => ({ namespaceMethods: ['detect'] }),
       })),
     };
     const SchemaRenderer = createFormSchemaRenderer();

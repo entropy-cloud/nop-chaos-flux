@@ -26,14 +26,24 @@
 除了 `ajax` / `showToast` / `navigate` 等内置动作，三个宿主通道以内置 action 词汇暴露（契约：`docs/discussions/2026-09-26-host-channels-print-clipboard-download-toast-url.md`）：
 
 ```json
-[
-  { "action": "print" },
-  {
+{
+  "type": "button",
+  "label": "打印页面",
+  "onClick": { "action": "print" }
+}
+{
+  "type": "button",
+  "label": "复制链接",
+  "onClick": {
     "action": "copy",
     "args": { "content": "https://demo.example/x/${id}", "successMessage": "链接已复制" }
-  },
-  { "action": "download", "args": { "url": "/api/export" } }
-]
+  }
+}
+{
+  "type": "button",
+  "label": "导出数据",
+  "onClick": { "action": "download", "args": { "url": "/api/export" } }
+}
 ```
 
 - `print`：派发 `env.print`（宿主 `window.print` 型页面打印）；宿主未提供时警告 toast + 动作失败。

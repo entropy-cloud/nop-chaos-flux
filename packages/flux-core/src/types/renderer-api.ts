@@ -3,6 +3,7 @@ import type { ImportedLibraryLoader } from './actions.js';
 import type { ScopeRef } from './scope.js';
 import type { ExecutableApiRequest, SchemaPath } from './schema-base-types.js';
 import type { SchemaInput } from './schema.js';
+import type { SchemaDiagnostic } from './schema-diagnostics-types.js';
 
 export interface ApiRequestContext {
   scope: ScopeRef;
@@ -236,6 +237,15 @@ export interface RendererEnv extends ExpressionExecutionEnv {
   loadDict?: (name: string, signal?: AbortSignal) => Promise<DictBean>;
   /** Permission check for `xui:roles` filtering. Returns true (allow-all) when absent. */
   hasRole?(role: string): boolean;
+  /**
+   * Host sink for schema-compile diagnostics collected while rendering with the
+   * strict-validation switch on (plan 595). The render path reports every
+   * diagnostic (any severity) through this channel; hosts can surface them in
+   * a debug panel or forward to telemetry. Optional; when absent the renderer
+   * falls back to `console.error`. INV-2 C 档扩充（optional + capability
+   * check），评审来源 plan 595（五条标准走查见 renderer-env.md §4.3）。
+   */
+  reportSchemaDiagnostics?: (diagnostic: SchemaDiagnostic) => void;
   /** Current locale, used as a cache key segment for page/dict caches. */
   locale?: string;
 }

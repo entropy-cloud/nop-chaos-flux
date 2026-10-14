@@ -2,8 +2,7 @@
   "type": "combo",
   "name": "contacts",
   "label": "联系人",
-  "multiple": true,
-  "itemSchema": [
+  "items": [
     {
       "type": "input-text",
       "name": "name",

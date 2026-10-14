@@ -81,7 +81,7 @@ describe('submitAction lazy execution contract', () => {
                           type: 'button',
                           id: 'submit',
                           label: 'OK',
-                          level: 'primary',
+                          variant: 'primary',
                           onClick: { action: 'submitForm', then: { action: 'closeSurface' } },
                         },
                       ],

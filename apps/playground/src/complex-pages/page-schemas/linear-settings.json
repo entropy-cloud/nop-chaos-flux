@@ -223,8 +223,7 @@
                                     {
                                       "type": "switch",
                                       "name": "prefKbdHints",
-                                      "testid": "linear-settings-switch-kbd",
-                                      "onValue": true
+                                      "testid": "linear-settings-switch-kbd"
                                     }
                                   ]
                                 },

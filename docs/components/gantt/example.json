@@ -1,7 +1,7 @@
 {
   "type": "gantt",
+  "id": "aps-gantt",
   "defaultZoom": "week",
-  "initiallyExpanded": true,
   "draggable": true,
   "editable": true,
   "linkable": true,
@@ -24,17 +24,6 @@
       "label": "进度",
       "width": 80,
       "align": "center"
-    }
-  ],
-  "scales": [
-    {
-      "unit": "day",
-      "step": 1,
-      "format": "%d"
-    },
-    {
-      "unit": "month",
-      "format": "%Y/%m"
     }
   ],
   "zoomLevels": [
@@ -224,13 +213,28 @@
     }
   },
   "zoomIn": {
-    "action": "zoomIn"
+    "dependsOn": ["__init_load__"],
+    "action": "showToast",
+    "args": {
+      "level": "info",
+      "message": "时间线已放大一档"
+    }
   },
   "zoomOut": {
-    "action": "zoomOut"
+    "dependsOn": ["__init_load__"],
+    "action": "showToast",
+    "args": {
+      "level": "info",
+      "message": "时间线已缩小一档"
+    }
   },
   "scrollToToday": {
-    "action": "scrollToToday"
+    "dependsOn": ["__init_load__"],
+    "action": "showToast",
+    "args": {
+      "level": "info",
+      "message": "已滚动到今日"
+    }
   },
   "taskBar": [
     {
@@ -238,5 +242,10 @@
       "text": "${task.text}"
     }
   ],
-  "empty": "暂无排程数据"
+  "empty": [
+    {
+      "type": "text",
+      "text": "暂无排程数据"
+    }
+  ]
 }

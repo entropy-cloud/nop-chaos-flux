@@ -1,7 +1,7 @@
 // repeat 锚点过滤（C3 语义对齐 AnchorRepeatTrigger）：fire 引擎时区日历日 >= anchor 且
 // day 单位整日差 mod every == 0；week 单位周奇偶锚定 floor(整日差/7) mod every == 0（RP-04 判别）。
-import { civilFromMs } from './calendar';
-import type { Civil } from './calendar';
+import { civilFromMs } from './calendar.js';
+import type { Civil } from './calendar.js';
 
 export interface RepeatSpec {
   every: number;

@@ -398,6 +398,9 @@ describe('designer-page rendering contracts', () => {
     const view = render(
       <SchemaRenderer
         schemaUrl="test://flow/index-fallback"
+        // plan 595 opt-out: fixture deliberately omits the required config/document
+        // props to pin the designer-page fallback surface.
+        strictValidation={false}
         schema={{ type: 'designer-page' }}
         env={createRendererEnv() as RendererEnv}
         formulaCompiler={formulaCompiler}
@@ -416,6 +419,9 @@ describe('designer-page rendering contracts', () => {
     const view = render(
       <SchemaRenderer
         schemaUrl="test://flow/index-fallback-meta"
+        // plan 595 opt-out: fixture deliberately omits the required config/document
+        // props to pin the fallback branch while keeping root meta.
+        strictValidation={false}
         schema={{ type: 'designer-page', className: 'designer-fallback-root', testid: 'designer-fallback' }}
         env={createRendererEnv() as RendererEnv}
         formulaCompiler={formulaCompiler}

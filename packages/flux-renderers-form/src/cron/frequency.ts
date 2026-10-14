@@ -1,6 +1,6 @@
 // 频率档位派生（C6 向导输入面）：由 parse 结果判定 daily/weekly/monthly/yearly/custom。
 // 判定不可解析 → custom；L/W/# 等动态日与复杂步进/区间均落 custom（向导重编译属于预期交互，design §7）。
-import type { CronFrequency, ParsedCron } from './types';
+import type { CronFrequency, ParsedCron } from './types.js';
 
 function isAll(field: { items: { kind: string }[] }): boolean {
   if (field.items.length !== 1) return false;

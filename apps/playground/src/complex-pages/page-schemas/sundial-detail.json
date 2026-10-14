@@ -296,7 +296,6 @@
                             {
                               "type": "radio-group",
                               "name": "recur",
-                              "horizontal": false,
                               "className": "sd-choice-list",
                               "options": [
                                 {
@@ -480,7 +479,6 @@
                             {
                               "type": "radio-group",
                               "name": "list",
-                              "horizontal": false,
                               "className": "sd-choice-list",
                               "options": [
                                 {
@@ -929,7 +927,6 @@
                             {
                               "type": "radio-group",
                               "name": "list",
-                              "horizontal": false,
                               "className": "sd-choice-list",
                               "options": [
                                 {
@@ -1131,7 +1128,6 @@
                         {
                           "type": "radio-group",
                           "name": "recur",
-                          "horizontal": false,
                           "className": "sd-choice-list",
                           "options": [
                             {
@@ -1212,7 +1208,6 @@
                         {
                           "type": "radio-group",
                           "name": "list",
-                          "horizontal": false,
                           "className": "sd-choice-list",
                           "options": [
                             {

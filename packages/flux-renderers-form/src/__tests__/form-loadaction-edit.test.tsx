@@ -63,7 +63,7 @@ describe('form loadAction then edit', () => {
                 {
                   type: 'button',
                   label: 'Save',
-                  level: 'primary',
+                  variant: 'primary',
                   onClick: { action: 'submitForm' },
                 },
               ],
@@ -142,7 +142,7 @@ describe('form loadAction then edit', () => {
                 {
                   type: 'button',
                   label: 'Save',
-                  level: 'primary',
+                  variant: 'primary',
                   onClick: { action: 'submitForm' },
                 },
               ],
@@ -219,7 +219,7 @@ describe('form loadAction then edit', () => {
                 {
                   type: 'button',
                   label: 'Save',
-                  level: 'primary',
+                  variant: 'primary',
                   onClick: { action: 'submitForm' },
                 },
               ],

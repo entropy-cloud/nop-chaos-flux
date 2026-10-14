@@ -1,7 +1,7 @@
 // next-run：nop-entropy CronExpression doNext/findNext/findNextDay 的 TS 忠实移植（C2 扩展后语义）。
 // 终止约定：运行期永不匹配（366 日扫描耗尽 / 4 年 runaway / 年段耗尽）一律返回 null，不抛异常（plan 539）。
-import { addDays, civilFromMs, civilToMs, daysInMonth, nearestWeekdayOf, type Civil } from './calendar';
-import type { ParsedCron } from './types';
+import { addDays, civilFromMs, civilToMs, daysInMonth, nearestWeekdayOf, type Civil } from './calendar.js';
+import type { ParsedCron } from './types.js';
 
 // Java Calendar 常量位序（resets 语义）
 const F_S = 0;

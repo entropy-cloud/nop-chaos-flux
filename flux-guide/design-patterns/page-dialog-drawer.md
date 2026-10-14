@@ -289,12 +289,12 @@ runtime 自动 closeSurface（closeOnSubmit，关闭 dialog）
       /* ... */
     ],
   },
-  "actions": [
-    { "label": "取消", "actionType": "close" },
+  "footer": [
+    { "type": "button", "label": "取消", "onClick": { "action": "closeSurface" } },
     {
+      "type": "button",
       "label": "提交",
-      "level": "primary",
-      "actionType": "submit",
+      "variant": "primary",
       "onClick": {
         "action": "submitForm",
         "then": { "action": "closeSurface" },
@@ -372,13 +372,16 @@ dialog 内可能有多个 form（搜索 form + 编辑 form / 主 form + 子 form
 ```
 
 > **注意**：主编辑 form 的提交按钮配合 `closeOnSubmit: true`（推荐）或 `submitForm.then` 关闭 dialog：
->
-> ```jsonc
-> "onClick": {
->   "action": "submitForm"
-> }
-> ```
->
+
+```jsonc
+{
+  "type": "button",
+  "label": "保存",
+  "variant": "primary",
+  "onClick": { "action": "submitForm" },
+}
+```
+
 > `closeOnSubmit: true` 时提交成功（按钮或 Enter）自动关闭，推荐；手写 `submitForm.then: closeSurface` 亦可（Enter 提交不生效），详见 §6.2。
 
 > **注意**：当前 flux 没有 schema-level 校验"同一 surface 内最多一个 `submitScope: 'surface'` form"。如果多个 form 都标了 `'surface'`，它们的 submit 都会触发同一个 callback。建议业务侧自行保证只有一个主 form。

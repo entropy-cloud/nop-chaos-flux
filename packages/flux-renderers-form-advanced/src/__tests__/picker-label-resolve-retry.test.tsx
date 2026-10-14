@@ -4,6 +4,7 @@ import type { RendererEnv } from '@nop-chaos/flux-core';
 import { formAdvancedRendererDefinitions } from '../index.js';
 import { basicRendererDefinitions } from '@nop-chaos/flux-renderers-basic';
 import { formRendererDefinitions } from '@nop-chaos/flux-renderers-form';
+import { dataRendererDefinitions } from '@nop-chaos/flux-renderers-data';
 import { createSchemaRenderer } from '@nop-chaos/flux-react';
 import { formStateProbeRenderer, formulaCompiler } from '../test-support.js';
 import { installFormAdvancedTestHooks } from '../test-support.js';
@@ -24,6 +25,11 @@ function renderSchema(schema: object, env: RendererEnv) {
   const SchemaRenderer = createSchemaRenderer([
     ...basicRendererDefinitions,
     ...allFormDefs,
+    // plan 595: pickerSchema fixtures render `type: 'list'` (a
+    // flux-renderers-data renderer); under render-path fail-fast an
+    // unregistered renderer type is a compile error, so the data package
+    // definitions must be part of the fixture registry.
+    ...dataRendererDefinitions,
     formStateProbeRenderer,
   ]);
   return render(

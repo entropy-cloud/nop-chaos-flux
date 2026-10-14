@@ -28,7 +28,7 @@ describe('CRUD schema contract (c4-2)', () => {
               type: 'crud',
               id: 'total-crud',
               totalField: 'rowCount',
-              loadAction: { action: 'probe:load' },
+              loadAction: { action: 'probe:load', dependsOn: ['__init_load__'] },
               columns: [{ name: 'name', label: 'Name' }],
               rowKey: 'id',
               footerToolbar: [{ type: 'text', text: 'Total: ${$crud.total}' }],
@@ -172,7 +172,7 @@ describe('CRUD schema contract (c4-2)', () => {
             {
               type: 'crud',
               id: 'loading-crud',
-              loadAction: { action: 'probe:load' },
+              loadAction: { action: 'probe:load', dependsOn: ['__init_load__'] },
               columns: [{ name: 'name', label: 'Name' }],
               rowKey: 'id',
             },

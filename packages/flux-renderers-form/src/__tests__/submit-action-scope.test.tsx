@@ -152,7 +152,7 @@ describe('submitAction resolution scope (row-context dialog form)', () => {
                           type: 'button',
                           id: 'submit',
                           label: 'OK',
-                          level: 'primary',
+                          variant: 'primary',
                           onClick: { action: 'submitForm', then: { action: 'closeSurface' } },
                         },
                       ],

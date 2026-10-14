@@ -423,6 +423,7 @@ createExpressionHelpers: () => ({ tiptapSender, ... });
 ```json
 {
   "type": "ai-chat",
+  "xui:imports": [{ "from": "ai", "as": "ai" }],
   "senderExtensions": "${$ai.tiptapSender}",
   "connector": "${$ai.connectors.mock}"
 }
@@ -606,6 +607,7 @@ createExpressionHelpers: () => ({ tiptapSender, ... });
 ```json
 {
   "type": "ai-chat",
+  "xui:imports": [{ "from": "ai", "as": "ai" }],
   "connector": "${$ai.connectors.openai}",
   "placeholder": "Ask anything...",
   "systemPrompt": "You are a helpful assistant.",
@@ -794,6 +796,6 @@ v1→v2 变更摘要（§4）、第 1 轮 fresh-session 复审记录（§5）、
 
 气泡内 markdown 渲染管线（slice → sanitize → parse → highlight）在流式窗口内按 ~80ms 时间片门控执行（`useThrottledMarkdownSource`，state/scheduler 驱动）：新内容进入解析的频率为每时间片一次而非每 chunk 一次；非流式渲染直接消费原始内容；消息切换（非前缀源）渲染期立即吸附。最终渲染输出与逐 chunk 直渲染等价。EOF
 git add -A && git commit -q --no-verify -m "docs(plan): 2026-09-29-2 completed after approved-with-minors closure audit — minors folded (non-vacuous /70 assertion, formal deferred entry, follow-up rewording, design.md 10.4a note)" && git log --oneline -1
-__zcode_status=$?
-if [ "$__zcode_status" -eq 0 ]; then pwd -P > '/var/folders/lv/yfm8thx903d6bnjjz9c4m_mm0000gn/T/zcode-796c7cfb-2f94-4740-b5f0-e73c30c40d81-cwd'; fi
-exit "$__zcode_status"
+**zcode_status=$?
+if [ "$**zcode_status" -eq 0 ]; then pwd -P > '/var/folders/lv/yfm8thx903d6bnjjz9c4m_mm0000gn/T/zcode-796c7cfb-2f94-4740-b5f0-e73c30c40d81-cwd'; fi
+exit "$\_\_zcode_status"

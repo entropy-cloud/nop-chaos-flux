@@ -156,6 +156,9 @@ describe('DesignerPageRenderer tree mode', () => {
     const view = render(
       <SchemaRenderer
         schemaUrl="test://flow/tree-fallback"
+        // plan 595 opt-out: fixture deliberately omits the required treeDocument
+        // prop to pin the tree-mode fallback surface.
+        strictValidation={false}
         schema={{
           type: 'designer-page',
           config: createTreeTestConfig(),

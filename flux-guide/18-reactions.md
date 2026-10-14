@@ -25,12 +25,12 @@ Schema 中任何 `${expr}` 表达式都是响应式的。当表达式引用的 s
   "type": "input-text",
   "name": "price",
   "label": "单价"
-},
+}
 {
   "type": "input-number",
   "name": "quantity",
   "label": "数量"
-},
+}
 {
   "type": "text",
   "label": "总价",
@@ -48,7 +48,7 @@ Schema 中任何 `${expr}` 表达式都是响应式的。当表达式引用的 s
   "name": "adminCode",
   "label": "管理员代码",
   "visible": "${role === 'admin'}"
-},
+}
 {
   "type": "fragment",
   "when": "${showAdvanced}",

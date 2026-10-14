@@ -247,6 +247,7 @@ describe('spreadsheet-page schema integration', () => {
         env={env}
         registry={registry}
         formulaCompiler={createFormulaCompiler()}
+        strictValidation={false}
       />,
     );
 

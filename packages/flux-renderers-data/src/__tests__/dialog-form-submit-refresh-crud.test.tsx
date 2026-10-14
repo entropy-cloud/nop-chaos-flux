@@ -72,13 +72,14 @@ describe('dialog form submit → refreshNearest → CRUD reload', () => {
               loadAction: {
                 action: 'ajax',
                 args: { url: '/r/TestEntity__findList', method: 'post' },
+                dependsOn: ['__init_load__'],
               },
               toolbar: [
                 {
                   type: 'button',
                   id: 'add',
                   label: 'Add',
-                  level: 'primary',
+                  variant: 'primary',
                   onClick: {
                     action: 'openDialog',
                     args: {
@@ -103,7 +104,7 @@ describe('dialog form submit → refreshNearest → CRUD reload', () => {
                           type: 'button',
                           id: 'submit',
                           label: 'OK',
-                          level: 'primary',
+                          variant: 'primary',
                           onClick: { action: 'submitForm', then: { action: 'closeSurface' } },
                         },
                       ],

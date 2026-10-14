@@ -80,7 +80,7 @@ describe('dialog form with loadAction then edit', () => {
                         type: 'button',
                         id: 'submit',
                         label: 'OK',
-                        level: 'primary',
+                        variant: 'primary',
                         onClick: { action: 'submitForm', then: { action: 'closeSurface' } },
                       },
                     ],

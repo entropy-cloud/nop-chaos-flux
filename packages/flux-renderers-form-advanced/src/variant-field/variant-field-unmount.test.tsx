@@ -21,6 +21,8 @@ describe('variant-field unmount protection', () => {
             return { ok: true, data: { variant: 'second' } };
           }),
         }),
+        // plan 595: publish the method list so compile-time import validation can verify variantLib:detect.
+        getStaticMeta: async () => ({ namespaceMethods: ['detect'] }),
       })),
     };
 

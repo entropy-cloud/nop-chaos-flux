@@ -10,6 +10,8 @@ describe('data renderer static contracts', () => {
     expect(crud?.scopeExportContracts?.$crud?.kind).toBe('object');
     expect(crud?.componentCapabilityContracts?.map((item) => item.handle)).toEqual([
       'refresh',
+      'querySubmit',
+      'queryReset',
       'getSelection',
       'clearSelection',
       'toggleSelection',

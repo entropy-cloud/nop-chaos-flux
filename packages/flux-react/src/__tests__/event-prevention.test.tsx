@@ -395,6 +395,7 @@ describe('X2 schema-driven preventDefault', () => {
         }
         env={{ ...env, importLoader }}
         formulaCompiler={formulaCompiler}
+        strictValidation={false}
       />,
     );
 

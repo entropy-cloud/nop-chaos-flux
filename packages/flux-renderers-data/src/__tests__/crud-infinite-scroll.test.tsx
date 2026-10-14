@@ -62,7 +62,6 @@ describe('CRUD infinite scroll (E1d)', () => {
                 { id: '12', name: 'Linda' },
               ],
               pagination: { mode: 'infinite' },
-              pageSizeStatePath: 'infinite.pageSize',
               paginationOwnership: 'scope',
               paginationStatePath: 'infinite.pagination',
               onRefresh: { action: 'probe:onNextPage' },

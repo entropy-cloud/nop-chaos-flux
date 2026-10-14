@@ -97,7 +97,7 @@ describe('CRUD data-load-state DOM contract (plan 593 C2)', () => {
             {
               type: 'crud',
               id: 'crud-load-state-ff',
-              loadAction: { action: 'probe:load' },
+              loadAction: { action: 'probe:load', dependsOn: ['__init_load__'] },
               columns: [{ name: 'name', label: 'Name' }],
               rowKey: 'id',
             },
@@ -138,7 +138,7 @@ describe('CRUD data-load-state DOM contract (plan 593 C2)', () => {
             {
               type: 'crud',
               id: 'crud-load-state-ready',
-              loadAction: { action: 'probe:load' },
+              loadAction: { action: 'probe:load', dependsOn: ['__init_load__'] },
               columns: [{ name: 'name', label: 'Name' }],
               rowKey: 'id',
             },
@@ -176,7 +176,7 @@ describe('CRUD data-load-state DOM contract (plan 593 C2)', () => {
             {
               type: 'crud',
               id: 'crud-load-state-error',
-              loadAction: { action: 'probe:load' },
+              loadAction: { action: 'probe:load', dependsOn: ['__init_load__'] },
               columns: [{ name: 'name', label: 'Name' }],
               rowKey: 'id',
             },
@@ -244,7 +244,7 @@ describe('table loading DOM contract (plan 593 C3)', () => {
             {
               type: 'crud',
               id: 'crud-table-placeholder',
-              loadAction: { action: 'probe:load' },
+              loadAction: { action: 'probe:load', dependsOn: ['__init_load__'] },
               columns: [{ name: 'name', label: 'Name' }],
               rowKey: 'id',
             },
@@ -292,7 +292,7 @@ describe('table loading DOM contract (plan 593 C3)', () => {
             {
               type: 'crud',
               id: 'crud-table-true-empty',
-              loadAction: { action: 'probe:load' },
+              loadAction: { action: 'probe:load', dependsOn: ['__init_load__'] },
               columns: [{ name: 'name', label: 'Name' }],
               rowKey: 'id',
             },
@@ -325,7 +325,7 @@ describe('table loading DOM contract (plan 593 C3)', () => {
             {
               type: 'crud',
               id: 'crud-table-window',
-              loadAction: { action: 'probe:load' },
+              loadAction: { action: 'probe:load', dependsOn: ['__init_load__'] },
               columns: [{ name: 'name', label: 'Name' }],
               rowKey: 'id',
             },

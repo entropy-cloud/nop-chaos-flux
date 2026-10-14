@@ -184,6 +184,7 @@
           "testid": "antdpro-list-crud",
           "rowKey": "id",
           "loadAction": {
+            "dependsOn": ["__init_load__"],
             "action": "ajax",
             "args": {
               "url": "/r/AntdPro__orders",

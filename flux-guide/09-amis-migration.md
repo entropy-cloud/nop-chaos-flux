@@ -281,13 +281,25 @@ Flux 表单支持 `rules` 属性定义跨字段校验规则：
 {
   "type": "form",
   "rules": [
-    { "kind": "requiredWhen", "path": "endDate", "equals": true },
-    { "kind": "atLeastOneOf", "paths": ["phone", "email"] },
+    {
+      "rule": "equalsField",
+      "field": "password",
+      "target": "passwordConfirm",
+      "message": "两次密码不一致",
+    },
+    {
+      "rule": "notEqualsField",
+      "field": "newPassword",
+      "target": "oldPassword",
+      "message": "新密码不能与旧密码相同",
+    },
   ],
 }
 ```
 
 ### 可用的 ValidationRule 类型
+
+下表是内部 `ValidationRule.kind` 全集（由字段级/数组级校验声明引入）；**表单级 `rules` 仅支持 `equalsField` / `notEqualsField`** 两种（见 `06-form-validation.md`），`requiredWhen`/`uniqueBy` 等其余 kind 不经表单 `rules`：
 
 | kind               | 说明         |
 | ------------------ | ------------ |

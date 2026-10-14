@@ -48,8 +48,7 @@ Flux 校验分两层：**字段级**用字段自身的属性声明；**跨字段
   "type": "input-text",
   "name": "username",
   "validate": {
-    "action": "ajax",
-    "args": { "url": "/api/check-username" },
+    "action": { "action": "ajax", "args": { "url": "/api/check-username" } },
     "debounce": 500,
     "message": "用户名已存在"
   }

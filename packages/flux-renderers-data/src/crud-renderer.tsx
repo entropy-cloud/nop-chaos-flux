@@ -27,11 +27,8 @@ import {
 } from './crud-renderer-state.js';
 import { useCrudDataProjection, useCrudLoadRevision } from './crud-renderer-projections.js';
 import { useCrudLoadAction, type CrudLoadState } from './crud-renderer-load.js';
-import {
-  CrudToolbarBlocks,
-  normalizeToolbarBlocks,
-  resolveToolbarBlocks,
-} from './crud-renderer-toolbar.js';
+import { CrudToolbarBlocks } from './crud-renderer-toolbar.js';
+import { resolveCrudToolbarBlockState } from './crud-renderer-toolbar-blocks.js';
 import { buildCrudCarrierSchema, buildCrudTableSchema } from './crud-renderer-schema-builders.js';
 import { createCrudQueryFormId } from './crud-query-form-id.js';
 import {
@@ -40,7 +37,7 @@ import {
   useCrudVisibleColumnNames,
 } from './crud-renderer-ownership.js';
 import { useCrudPolling } from './use-crud-polling.js';
-import { resolvePaginationMode, isAtLastPage, regionHasRendererType } from './crud-query-region.js';
+import { resolvePaginationMode, isAtLastPage } from './crud-query-region.js';
 import { useInfiniteScroll } from './use-infinite-scroll.js';
 import { asReactNode, delegateTableRendererProps, resolveCrudSlotContent } from './crud-renderer-delegate.js';
 import { useCrudFilterToggle } from './use-crud-filter-toggle.js';
@@ -393,35 +390,15 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
   const hasListActions = hasRendererSlotContent(asReactNode(listActionsContent));
   const hasFooterToolbar = hasRendererSlotContent(asReactNode(footerToolbarContent));
 
-  const headerBlocksRaw = normalizeToolbarBlocks(normalizedSchema.toolbarLayout, 'header');
-  const footerBlocksRaw = normalizeToolbarBlocks(normalizedSchema.toolbarLayout, 'footer');
-
-  const headerBlocks = resolveToolbarBlocks(headerBlocksRaw, paginationMode, isMobile, hasListActions);
-  const footerBlocks = resolveToolbarBlocks(footerBlocksRaw, paginationMode, isMobile, hasListActions);
-
-  // footerToolbar/toolbar 区域可能直接放独立 pagination/switch-per-page renderer 节点
-  // （如 nop-entropy grid_crud.xpl 生成的 <statistics/>+<pagination/>），
-  // 此时同样视为外部分页控件，隐藏表格内置分页栏，避免双分页器。
-  const hasRegionPaginationControl =
-    [props.regions.footerToolbar, props.regions.toolbar].some((region) =>
-      regionHasRendererType(region, 'pagination') || regionHasRendererType(region, 'switch-per-page'),
-    );
-
-  const hasExternalPaginationControl =
-    headerBlocksRaw.some((b) => b.type === 'pagination' || b.type === 'switch-per-page') ||
-    footerBlocksRaw.some((b) => b.type === 'pagination' || b.type === 'switch-per-page') ||
-    hasRegionPaginationControl;
-
-  const pollingToggleBlockVisible =
-    headerBlocks.some((block) => block.type === 'polling-toggle') ||
-    footerBlocks.some((block) => block.type === 'polling-toggle');
-  const pollingToggleProps = pollingToggleBlockVisible
-    ? {
-        visible: true,
-        active: pollingState.effectiveEnabled && pollingState.userToggle,
-        onToggle: pollingState.toggle,
-      }
-    : undefined;
+  const { headerBlocks, footerBlocks, hasExternalPaginationControl, pollingToggleProps } =
+    resolveCrudToolbarBlockState({
+      normalizedSchema,
+      props,
+      paginationMode,
+      isMobile,
+      hasListActions,
+      pollingState,
+    });
 
   const tableSchema = buildCrudTableSchema({
     id: props.id,

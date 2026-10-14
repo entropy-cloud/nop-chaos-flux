@@ -1,7 +1,7 @@
 // 值对象级诊断（design §4 的 repeatAnchorMissing / rangeConflict + repeat/range 形状校验）。
 // 表达式级诊断由 parseCron 承载；本函数先表达式后值对象。
-import { parseCron } from './parse';
-import type { CronDiagnosticCode, CronScheduleValue } from './types';
+import { parseCron } from './parse.js';
+import type { CronDiagnosticCode, CronScheduleValue } from './types.js';
 
 export type ValueDiagnosticCode = CronDiagnosticCode | 'repeatAnchorMissing' | 'rangeConflict';
 

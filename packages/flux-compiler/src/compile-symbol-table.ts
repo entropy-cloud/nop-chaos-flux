@@ -1,4 +1,4 @@
-import type { CompileSymbolTable, SymbolFrame, SymbolInfo } from '@nop-chaos/flux-core';
+import type { CompileSymbolTable, ExpressionCompiler, SymbolFrame, SymbolInfo } from '@nop-chaos/flux-core';
 
 function createFrames(frames: readonly SymbolFrame[]): readonly SymbolFrame[] {
   return frames;
@@ -76,4 +76,41 @@ export function createBaseCompileSymbolTable(): CompileSymbolTable {
       },
     },
   });
+}
+
+/**
+ * Base table extended with the expression compiler's host-registered formula
+ * namespaces (plan 595): schemas referencing a host namespace like `$Arr`
+ * resolve at runtime through the formula registry, so compile-time symbol
+ * analysis must see the same names or every host extension emits
+ * `unknown-import-alias` false positives. Names already covered by the base
+ * builtins keep their curated member lists.
+ */
+export function createFormulaAwareCompileSymbolTable(
+  expressionCompiler: ExpressionCompiler | undefined,
+): CompileSymbolTable {
+  const base = createBaseCompileSymbolTable();
+  const namespaces = expressionCompiler?.formulaCompiler.getFormulaNamespaces?.();
+  if (!namespaces) {
+    return base;
+  }
+
+  const symbols: Record<string, SymbolInfo> = {};
+  for (const [name, value] of Object.entries(namespaces)) {
+    if (!name.startsWith('$') || base.resolve(name)) {
+      continue;
+    }
+    symbols[name] = {
+      name,
+      kind: 'builtin-namespace',
+      members:
+        value && typeof value === 'object' ? Object.keys(value as Record<string, unknown>) : [],
+    };
+  }
+
+  if (Object.keys(symbols).length === 0) {
+    return base;
+  }
+
+  return base.push({ id: 'formula-registry-namespaces', kind: 'root', symbols });
 }

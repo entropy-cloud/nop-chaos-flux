@@ -164,6 +164,9 @@ describe('SparklineRenderer — Failure Paths 降级', () => {
     render(
       <SchemaRenderer
         schemaUrl="test://data/sparkline-empty"
+        // plan 595 opt-out: fixtures deliberately feed non-array/all-invalid data
+        // to pin the renderer's own empty-placeholder degradation path.
+        strictValidation={false}
         schema={{
           type: 'page',
           body: [

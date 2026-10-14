@@ -50,7 +50,7 @@ describe('form input onChange', () => {
                 {
                   type: 'button',
                   label: 'Save',
-                  level: 'primary',
+                  variant: 'primary',
                   onClick: { action: 'submitForm' },
                 },
               ],

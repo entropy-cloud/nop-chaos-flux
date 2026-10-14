@@ -170,6 +170,13 @@ export const crudRendererDefinition: RendererDefinition = {
       description: 'Scope path used when selection ownership is scope-based.',
       editorType: 'path',
     },
+    selectionField: {
+      shape: { kind: 'string' },
+      displayName: 'Selection Field',
+      description:
+        'Batch-action payload field carrying the selected row keys (AMIS-parity `${ids}` template). Default: ids.',
+      editorType: 'text',
+    },
     selectionOwnership: {
       shape: {
         kind: 'union',
@@ -284,6 +291,7 @@ export const crudRendererDefinition: RendererDefinition = {
             ],
           },
         },
+        optional: ['mode'],
       },
       displayName: 'Pagination',
       description:
@@ -347,6 +355,25 @@ export const crudRendererDefinition: RendererDefinition = {
       description: 'Refresh the CRUD table source.',
     },
     {
+      handle: 'querySubmit',
+      displayName: 'Query Submit',
+      description:
+        'Apply the embedded query form values and reload (the query-form default Search button target).',
+      args: {
+        kind: 'object',
+        fields: {
+          values: { kind: 'object', fields: {} },
+        },
+        optional: ['values'],
+      },
+    },
+    {
+      handle: 'queryReset',
+      displayName: 'Query Reset',
+      description:
+        'Reset the embedded query form values and reload (the query-form default Reset button target).',
+    },
+    {
       handle: 'getSelection',
       displayName: 'Get Selection',
       description: 'Return selected row keys.',
@@ -407,6 +434,7 @@ export const crudRendererDefinition: RendererDefinition = {
     { key: 'item', kind: 'region', params: ['item', 'index'], isolate: false },
     { key: 'rowKey', kind: 'prop' },
     { key: 'selection', kind: 'prop' },
+    { key: 'selectionField', kind: 'prop' },
     { key: 'selectionOwnership', kind: 'prop' },
     { key: 'selectionStatePath', kind: 'prop' },
     { key: 'paginationOwnership', kind: 'prop' },

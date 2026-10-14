@@ -72,6 +72,9 @@ function renderList(items: unknown[], scrollerStyle?: React.CSSProperties) {
     return (
       <Inner
         schemaUrl="test://list-windowing"
+        // plan 595 opt-out: `onLoadMore` injects a function handler directly,
+        // which the action-shape validator cannot model statically.
+        strictValidation={false}
         schema={
           {
             type: 'page',

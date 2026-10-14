@@ -12,7 +12,7 @@ import type {
   ScopeRef,
   TemplateNode,
 } from '@nop-chaos/flux-core';
-import { isSchema, isSchemaArray, isTemplateNode } from '@nop-chaos/flux-core';
+import { isSchema, isSchemaArray, isTemplateNode, shouldFailOnSchemaDiagnostics } from '@nop-chaos/flux-core';
 import {
   useCurrentActionScope,
   useCurrentComponentRegistry,
@@ -24,6 +24,7 @@ import {
 } from './runtime-context-hooks.js';
 import { NodeMetaContext, RenderInstancePathContext } from './contexts.js';
 import { createFragmentScopeChange } from './fragment-scope.js';
+import { createDefaultSchemaDiagnosticReporter } from './schema-diagnostics-reporter.js';
 import { NodeRenderer } from './node-renderer.js';
 
 /**
@@ -141,6 +142,8 @@ function normalizeInputCacheKey(
   return `${runtime.strictMode ? 'strict' : 'lenient'}:${JSON.stringify(compileOptions ?? null)}`;
 }
 
+const fallbackSchemaDiagnosticReporter = createDefaultSchemaDiagnosticReporter();
+
 export function normalizeNodeInput(
   runtime: RendererRuntime,
   input: RenderNodeInput,
@@ -150,6 +153,15 @@ export function normalizeNodeInput(
     return null;
   }
 
+  // Plan 595: when the strict-validation switch is on, the render path runs the
+  // compiler's diagnostics pass for real — every diagnostic goes out through
+  // `env.reportSchemaDiagnostics` (fallback `console.error`). Lowering stays
+  // tolerant (`continueOnError: true` — honest degradation for unknown types is
+  // a feature, e.g. the condition-builder's broken-editor drop); fail-fast is a
+  // post-compile check on the collected error diagnostics instead, so it never
+  // changes lowering semantics.
+  const failOnDiagnostics = runtime.strictMode && shouldFailOnSchemaDiagnostics();
+  const collectedErrors: import('@nop-chaos/flux-core').SchemaDiagnostic[] = [];
   const strictOptions: CompileSchemaOptions | undefined = runtime.strictMode
     ? {
         ...compileOptions,
@@ -157,10 +169,28 @@ export function normalizeNodeInput(
         diagnostics: {
           enabled: true,
           continueOnError: true,
+          collector: failOnDiagnostics
+            ? { add: (issue) => collectedErrors.push(issue) }
+            : undefined,
+          reporter:
+            runtime.env.reportSchemaDiagnostics ?? fallbackSchemaDiagnosticReporter,
           ...compileOptions?.diagnostics,
         },
       }
     : compileOptions;
+
+  function finishCompile(compiled: { root: TemplateNode | readonly TemplateNode[] }): TemplateNode | readonly TemplateNode[] {
+    const errors = collectedErrors.filter((issue) => issue.severity === 'error');
+    if (failOnDiagnostics && errors.length > 0) {
+      const first = errors[0];
+      const location = first.sourceLocation?.file ? `${first.sourceLocation.file} ` : '';
+      throw new Error(
+        `Schema compile diagnostics failed: ${location}${first.path} ${first.code} ${first.message}`.trim(),
+        { cause: errors },
+      );
+    }
+    return extractTemplateNodes(compiled);
+  }
 
   if (Array.isArray(input)) {
     if (input.length === 0) {
@@ -177,8 +207,7 @@ export function normalizeNodeInput(
       if (cached && cached.key === cacheKey) {
         return cached.result;
       }
-      const compiled = runtime.schemaCompiler.compile(input, strictOptions);
-      const result = extractTemplateNodes(compiled);
+      const result = finishCompile(runtime.schemaCompiler.compile(input, strictOptions));
       normalizedInputCompileCache.set(input, { key: cacheKey, result });
       return result;
     }
@@ -204,8 +233,7 @@ export function normalizeNodeInput(
     if (cached && cached.key === cacheKey) {
       return cached.result;
     }
-    const compiled = runtime.schemaCompiler.compile(input, strictOptions);
-    const result = extractTemplateNodes(compiled);
+    const result = finishCompile(runtime.schemaCompiler.compile(input, strictOptions));
     normalizedInputCompileCache.set(input, { key: cacheKey, result });
     return result;
   }

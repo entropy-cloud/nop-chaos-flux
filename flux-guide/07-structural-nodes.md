@@ -158,7 +158,7 @@
 ]
 ```
 
-## Resizable (可调分栏，plan 514 L4.6)
+## Resizable (可调分栏，plan 514 L4.6；可折叠扩展 G-J m3)
 
 `resizable` 是 flux 原生布局扩展 type（flux-renderers-layout），把 ui 的 react-resizable-panels 包装暴露为 schema 面板分栏：
 
@@ -184,6 +184,56 @@
 - `panels[].key` 必填唯一；`defaultSize/min/max` 为**百分比**（以 `'35%'` 字符串传参）；`panels[].body` 为各面板 schema。
 - `persistStatePath`：拖拽结束后把面板尺寸百分比数组写回 scope；挂载时读回种子（损坏值回落 defaultSize）。缺省不持久化。
 - 相邻面板间自动渲染拖拽手柄（aria-label `flux.layout.resizeHandle`）；键盘焦点下手柄支持方向键调整。
+
+### 可折叠面板（collapsible，G-J m3）
+
+面板新增三项折叠字段：
+
+| 字段               | 类型      | 说明                                                                    |
+| ------------------ | --------- | ----------------------------------------------------------------------- |
+| `collapsible`      | `boolean` | 手柄拖到 `min` 以下时吸附到 `collapsedSize`                             |
+| `collapsedSize`    | `number`  | 折叠态尺寸（百分比）；缺省 0                                            |
+| `defaultCollapsed` | `boolean` | 挂载后命令式折叠（react-resizable-panels v4 无声明式 defaultCollapsed） |
+
+resizable 节点声明 `id` 时，renderer 注册 `type: "resizable"` 的组件能力句柄：`collapse` / `expand` / `toggle` 委托给可折叠面板的 imperative API（多折叠面板取最后注册者），按钮可经 `component:*` 动作命令式切换（与 dialog / drawer / palette surface 同族契约）：
+
+```json
+{
+  "type": "page",
+  "body": [
+    {
+      "type": "resizable",
+      "id": "split",
+      "direction": "vertical",
+      "panels": [
+        {
+          "key": "main",
+          "defaultSize": 84,
+          "min": 45,
+          "body": [{ "type": "text", "text": "主区" }]
+        },
+        {
+          "key": "debug",
+          "defaultSize": 16,
+          "min": 10,
+          "max": 60,
+          "collapsible": true,
+          "collapsedSize": 7,
+          "defaultCollapsed": true,
+          "body": [{ "type": "text", "text": "调试面板" }]
+        }
+      ]
+    },
+    {
+      "type": "button",
+      "label": "切换调试面板",
+      "onClick": { "action": "component:toggle", "componentId": "split" }
+    }
+  ]
+}
+```
+
+> 注意：`component:toggle` 的目标解析要求 `componentId` 对应 schema 中一个声明了 `type` 与 `id` 的节点（此处为 resizable 根节点）；缺少显式目标绑定时编译期会给出 `unvalidated-component-target` 诊断。
 
 ## Calendar monthShape (日历月视图形态，plan 514 L4.2)
 

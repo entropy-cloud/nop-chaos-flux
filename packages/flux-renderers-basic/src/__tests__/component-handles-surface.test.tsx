@@ -4,7 +4,7 @@ import { createBasicSchemaRenderer, env, formulaCompiler } from '../test-support
 
 afterEach(() => cleanup());
 
-function renderSchema(schema: unknown) {
+function renderSchema(schema: unknown, opts?: { strictValidation?: boolean }) {
   const SchemaRenderer = createBasicSchemaRenderer();
   return render(
     <SchemaRenderer
@@ -12,6 +12,7 @@ function renderSchema(schema: unknown) {
       schema={schema as any}
       env={env}
       formulaCompiler={formulaCompiler}
+      strictValidation={opts?.strictValidation}
     />,
   );
 }
@@ -218,23 +219,28 @@ describe('surface component handles: open / close / toggle (X1 Phase 3)', () => 
   });
 
   it('component:open on an unknown componentId is a no-op (x1-open-no-target)', async () => {
-    renderSchema({
-      type: 'page',
-      body: [
-        {
-          type: 'dialog',
-          id: 'real-dialog',
-          title: 'Real',
-          defaultOpen: false,
-          body: [{ type: 'text', text: 'Dialog body' }],
-        },
-        {
-          type: 'button',
-          label: 'OpenMissingBtn',
-          onClick: { action: 'component:open', componentId: 'missing-dialog' },
-        },
-      ],
-    });
+    // plan 595 opt-out: the fixture deliberately targets `missing-dialog` (no
+    // such component id) to pin that component:open is a runtime no-op.
+    renderSchema(
+      {
+        type: 'page',
+        body: [
+          {
+            type: 'dialog',
+            id: 'real-dialog',
+            title: 'Real',
+            defaultOpen: false,
+            body: [{ type: 'text', text: 'Dialog body' }],
+          },
+          {
+            type: 'button',
+            label: 'OpenMissingBtn',
+            onClick: { action: 'component:open', componentId: 'missing-dialog' },
+          },
+        ],
+      },
+      { strictValidation: false },
+    );
 
     fireEvent.click(screen.getByRole('button', { name: 'OpenMissingBtn' }));
     // Allow any pending effects to flush; the real dialog must remain closed.

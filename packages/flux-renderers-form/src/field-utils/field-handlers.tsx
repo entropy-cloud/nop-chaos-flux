@@ -538,6 +538,15 @@ export function useFormFieldFromProps<P extends BaseSchema = BaseSchema>(
   },
 ) {
   const schemaProps = props.props;
+  // Initial-value channel precedence (plan 595): documented `value` wins; an
+  // authored `defaultValue` (amis-ism, declared on the closed field
+  // definitions) feeds the same initial-value slot when `value` is absent —
+  // both apply once through the controller's default-push (never overrides
+  // existing form data or later user edits).
+  const authoredInitialValue =
+    schemaProps.value !== undefined
+      ? schemaProps.value
+      : (schemaProps as { defaultValue?: unknown }).defaultValue;
   return useFormFieldController(String(schemaProps.name ?? ''), {
     adapter: options?.adapter,
     toFormValue: options?.toFormValue,
@@ -545,7 +554,7 @@ export function useFormFieldFromProps<P extends BaseSchema = BaseSchema>(
     disabled: schemaProps.disabled as boolean | undefined,
     required: schemaProps.required as boolean | undefined,
     readOnly: schemaProps.readOnly as boolean | undefined,
-    defaultValue: options?.pushDefaultValue === false ? undefined : schemaProps.value,
+    defaultValue: options?.pushDefaultValue === false ? undefined : authoredInitialValue,
     events: props.events,
   });
 }

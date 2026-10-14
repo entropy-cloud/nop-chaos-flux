@@ -1357,6 +1357,20 @@ Current root fallback baseline:
 - root render failures inside the compiled schema tree or host-only siblings are isolated by a top-level root error boundary instead of white-screening the entire host tree
 - these root fallback surfaces are host-level diagnostics/status UI, distinct from per-node `NodeErrorBoundary` fallbacks
 
+### Strict Validation Semantics (`strictValidation`)
+
+`strictValidation?: boolean` (root prop) drives `isStrictValidationEnabled(...)`, which resolves an explicit prop override first, then the `__FLUX_STRICT_VALIDATION__` global/env/localStorage/URL chain, then dev mode. The resolved value becomes `RendererRuntime.strictMode`.
+
+When strict mode is on, the render path runs the compiler's structural diagnostics pass for real (plan 595 final design; full contract in `docs/architecture/schema-file-validator.md`):
+
+- both the root schema compile and every region/fragment `normalizeNodeInput` compile run with `validation.strictMode: true` and `diagnostics: { enabled: true, continueOnError: true, reporter, collector }`
+- every collected diagnostic (any severity) is reported through `env.reportSchemaDiagnostics` when the host provides it, otherwise through a `console.error` fallback reporter
+- under the fail-fast environments (`__FLUX_FAIL_ON_SCHEMA_DIAGNOSTICS__` global/env — which overrides the ambient `VITEST`/`PLAYWRIGHT` detection, including an explicit `false` opt-out — or those env vars themselves), the render path attaches a collector and throws `Schema compile diagnostics failed: file path code message` after the compile when any error-severity diagnostic was emitted. Lowering itself stays tolerant (`continueOnError: true`), so honest-degradation features (e.g. the condition-builder dropping a broken editor) behave identically; the throw is a post-compile check. A root-compile throw is caught and surfaced through the existing `reportImportFailure` → `env.notify('error', ...)` channel; region/fragment throws propagate into React's render stack
+- with the strict switch off, no diagnostics pass runs and rendering behaves exactly as before plan 595
+- hosts that must render known-illegal schema in automated environments opt out per mount with `strictValidation={false}`
+
+The playground's `page-schemas-validation.test.ts` is the render-equivalent gate: it validates every complex-page schema with the same canonical registry (`showcaseRegistry`) and strict options, asserting zero diagnostics of any severity.
+
 ## Surface Ownership In React Runtime
 
 Dialog and drawer should be treated as one surface family in the React runtime.

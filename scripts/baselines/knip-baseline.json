@@ -2,16 +2,17 @@
   "_header": {
     "description": "knip baseline: registered dead-code inventory. New hits fail check:knip-baseline; shrink via --update-baselines.",
     "knipVersion": "6.9.0",
-    "lastUpdated": "2026-10-10",
+    "lastUpdated": "2026-10-15",
     "counts": {
-      "files": 19,
-      "exports": 429,
-      "types": 583,
+      "files": 20,
+      "exports": 430,
+      "types": 585,
       "dependencies": 2,
       "devDependencies": 16,
       "unlisted": 35
     },
-    "unlistedReconciliation": "CQ-S17 reconciled 2026-09-30: check-workspace-manifest-deps forward check scans packages/*/src only (apps/ and scripts/ are out of scope), so the two tools are complementary, not contradictory. unlisted=30: apps/playground 11 (graph/pivot/industrial imports incl. tests+demo pages), scripts/visual-quality 18 (root-manifest renderer imports + playwright), flux-renderers-data test jsdom 1 (workspace-scoping quirk; package devDeps declares jsdom). All resolve via pnpm workspace hoisting today. Cleanup transferred to cq-6 Phase 5 (declare playground graph/pivot/industrial deps)."
+    "unlistedReconciliation": "CQ-S17 reconciled 2026-09-30: check-workspace-manifest-deps forward check scans packages/*/src only (apps/ and scripts/ are out of scope), so the two tools are complementary, not contradictory. unlisted=30: apps/playground 11 (graph/pivot/industrial imports incl. tests+demo pages), scripts/visual-quality 18 (root-manifest renderer imports + playwright), flux-renderers-data test jsdom 1 (workspace-scoping quirk; package devDeps declares jsdom). All resolve via pnpm workspace hoisting today. Cleanup transferred to cq-6 Phase 5 (declare playground graph/pivot/industrial deps).",
+    "plan595Note": "2026-10-15 plan 595 closure: +1 file (flux-guide docs-components setup module — CLI --setup loaded, invisible to knip), +1 export (mergeAriaSpace — internal-only after input.tsx MUST-split), +1 type (SchemaDiagnosticReporter — factory used, type over-export), +1 inherited type (FormLoadState — landed by plan 593, disclosed by CX-17/598 isolated gates before registration)."
   },
   "files": [
     "flux-guide/flux-types/common.d.ts",
@@ -32,7 +33,8 @@
     "scripts/visual-quality/leafer-stub.ts",
     "stryker.runtime.conf.mjs",
     "tests/e2e/_debug-lab.mjs",
-    "tests/e2e/flux-bundle-built-dist/main.tsx"
+    "tests/e2e/flux-bundle-built-dist/main.tsx",
+    "flux-guide/scripts/validate-pages-setup-docs-components.mjs"
   ],
   "exports": [
     "flux-guide/scripts/shared.mjs#REGISTER_PACKAGES",
@@ -463,7 +465,8 @@
     "tests/e2e/helpers/form-actions-alignment.ts#assertDialogFooterAlignment",
     "tests/e2e/helpers/measure-perf.ts#measureTiming",
     "tests/e2e/helpers/visual-contrast.ts#samplePageRegionContrast",
-    "tests/e2e/helpers/visual-contrast.ts#srgbChannelToLinear"
+    "tests/e2e/helpers/visual-contrast.ts#srgbChannelToLinear",
+    "packages/flux-renderers-form/src/renderers/input-group-field-control.tsx#mergeAriaSpace"
   ],
   "types": [
     "packages/flow-designer-core/src/core.ts#TreeChangeReason",
@@ -1048,7 +1051,9 @@
     "tests/e2e/helpers/visual-contrast.ts#DecodedPng",
     "tests/e2e/helpers/visual-contrast.ts#Rect",
     "tests/e2e/helpers/visual-contrast.ts#RegionContrast",
-    "tests/e2e/helpers/visual-theme.ts#ThemeMode"
+    "tests/e2e/helpers/visual-theme.ts#ThemeMode",
+    "packages/flux-react/src/schema-diagnostics-reporter.ts#SchemaDiagnosticReporter",
+    "packages/flux-renderers-form/src/renderers/form-load-action.ts#FormLoadState"
   ],
   "dependencies": [
     "apps/playground/package.json#@nop-chaos/page-designer-core",

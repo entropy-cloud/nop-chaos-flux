@@ -150,6 +150,7 @@ export function createLayoutSchemaRenderer(extra: RendererDefinition[] = []) {
         { key: 'valueOwnership', kind: 'prop' },
         { key: 'valueStatePath', kind: 'prop' },
         { key: 'statusPath', kind: 'prop' },
+        { key: 'mode', kind: 'prop' },
         { key: 'linear', kind: 'prop', valueType: 'boolean' },
         { key: 'allowStepJump', kind: 'prop', valueType: 'boolean' },
         { key: 'mountOnEnter', kind: 'prop', valueType: 'boolean' },

@@ -82,15 +82,26 @@ export function shouldFailOnSchemaDiagnostics(): boolean {
   const processEnv = (globalThis as { process?: { env?: Record<string, string | undefined> } }).process
     ?.env;
 
-  if (processEnv?.[FAIL_ON_SCHEMA_DIAGNOSTICS_KEY] === 'true') {
-    return true;
-  }
-
+  // Explicit opt-in/opt-out wins over the ambient VITEST/PLAYWRIGHT detection,
+  // mirroring the `__FLUX_STRICT_VALIDATION__` override semantics. The
+  // in-memory global outranks process.env: vitest wires the env var to 'true'
+  // repo-wide, so a fixture must be able to flip the global off for one case.
   if (typeof globalThis !== 'undefined') {
     const globalRecord = globalThis as Record<string, unknown>;
+    if (globalRecord[FAIL_ON_SCHEMA_DIAGNOSTICS_KEY] === false) {
+      return false;
+    }
     if (globalRecord[FAIL_ON_SCHEMA_DIAGNOSTICS_KEY] === true) {
       return true;
     }
+  }
+
+  if (processEnv?.[FAIL_ON_SCHEMA_DIAGNOSTICS_KEY] === 'false') {
+    return false;
+  }
+
+  if (processEnv?.[FAIL_ON_SCHEMA_DIAGNOSTICS_KEY] === 'true') {
+    return true;
   }
 
   return processEnv?.VITEST === 'true' || processEnv?.PLAYWRIGHT === 'true';

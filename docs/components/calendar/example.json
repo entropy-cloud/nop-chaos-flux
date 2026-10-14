@@ -1,7 +1,6 @@
 {
   "type": "page",
   "body": [
-    { "//": "v1 示例避免冲突数据（冲突检测推迟至 v3）。" },
     {
       "type": "calendar",
       "id": "shift-calendar",
@@ -10,7 +9,7 @@
       "firstDayOfWeek": 1,
       "showWeekends": true,
       "maxConcurrent": 2,
-      "data": [
+      "events": [
         {
           "id": "evt-1",
           "title": "早班",

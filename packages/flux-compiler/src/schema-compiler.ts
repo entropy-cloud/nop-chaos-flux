@@ -1,4 +1,5 @@
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
+import { shouldFailOnSchemaDiagnostics } from '@nop-chaos/flux-core';
 import type {
   BaseSchema,
   CompileSchemaOptions,
@@ -25,7 +26,10 @@ import { enrichTemplateNodeIds } from './schema-compiler/target-enrichment.js';
 import {
   createSchemaCompilerDiagnosticsContext,
 } from './schema-compiler/diagnostics.js';
-import { createBaseCompileSymbolTable } from './compile-symbol-table.js';
+import { createDefaultValidationTraversalState } from './schema-compiler/shape-validation-traversal.js';
+import {
+  createFormulaAwareCompileSymbolTable,
+} from './compile-symbol-table.js';
 import { createCompileSingleNode } from './schema-compiler/node-compiler.js';
 import { createValidateSchemaInput } from './schema-compiler/validation-compiler.js';
 
@@ -40,19 +44,6 @@ export function createSchemaCompiler(input: {
   const { applyBeforeCompilePlugins, applyAfterCompilePlugins } = createCompilerPluginAppliers(
     input.plugins,
   );
-
-  function shouldFailOnSchemaDiagnostics(): boolean {
-    const processEnv = (globalThis as { process?: { env?: Record<string, string | undefined> } }).process
-      ?.env;
-    const globalRecord = globalThis as Record<string, unknown>;
-
-    return (
-      processEnv?.__FLUX_FAIL_ON_SCHEMA_DIAGNOSTICS__ === 'true' ||
-      processEnv?.VITEST === 'true' ||
-      processEnv?.PLAYWRIGHT === 'true' ||
-      globalRecord.__FLUX_FAIL_ON_SCHEMA_DIAGNOSTICS__ === true
-    );
-  }
 
   function throwIfSchemaDiagnosticsFailed(options: CompileSchemaOptions | undefined, diagnostics: ReturnType<typeof createSchemaCompilerDiagnosticsContext>) {
     if (!diagnostics.enabled || diagnostics.continueOnError || !shouldFailOnSchemaDiagnostics()) {
@@ -86,7 +77,8 @@ export function createSchemaCompiler(input: {
     }
 
     const prepared = applyBeforeCompilePlugins(schema);
-    const symbolTable = options.symbolTable ?? createBaseCompileSymbolTable();
+    const symbolTable =
+      options.symbolTable ?? createFormulaAwareCompileSymbolTable(expressionCompiler);
     const { diagnostics, cidState, canonicalPrepared } = prepareSchemaRoot({
       schema: prepared,
       options: {
@@ -101,12 +93,19 @@ export function createSchemaCompiler(input: {
     // across the full tree. Child region compilations skip analyzeSchemaInput
     // since the root pass already validated all descendants.
     if (diagnostics.enabled && depth === 0) {
+      const traversalState = createDefaultValidationTraversalState(
+        diagnostics,
+        canonicalPrepared,
+        input.registry,
+      );
+      traversalState.symbolTable = symbolTable;
       analyzeSchemaInput(
         canonicalPrepared,
         options.basePath ?? '$',
         input.registry,
         input.plugins,
         diagnostics,
+        traversalState,
       );
     }
 

@@ -71,6 +71,13 @@ function validateNumberArray(value: unknown) {
   );
 }
 
+// Template/expression sources (`'${...}'`) resolve at runtime — the raw-schema
+// shape checks must not reject them (T29 dynamic columns, controlled selection
+// binding). Runtime handles invalid resolved shapes with its own degradation.
+function isTemplateSource(value: unknown): boolean {
+  return typeof value === 'string' && value.includes('${');
+}
+
 export function validateTableSchema(context: RendererSchemaValidationContext<BaseSchema>) {
   if (context.schema.type !== 'table') {
     return;
@@ -79,7 +86,7 @@ export function validateTableSchema(context: RendererSchemaValidationContext<Bas
   const schema = context.schema as TableSchema;
   const { path, emit } = context;
 
-  if (schema.columns !== undefined && !Array.isArray(schema.columns)) {
+  if (schema.columns !== undefined && !Array.isArray(schema.columns) && !isTemplateSource(schema.columns)) {
     emit({
       code: 'invalid-property-shape',
       path: toJsonPointer(path, 'columns'),
@@ -153,7 +160,8 @@ export function validateTableSchema(context: RendererSchemaValidationContext<Bas
 
   if (
     schema.rowSelection?.selectedRowKeys !== undefined &&
-    !validateStringArray(schema.rowSelection.selectedRowKeys)
+    !validateStringArray(schema.rowSelection.selectedRowKeys) &&
+    !isTemplateSource(schema.rowSelection.selectedRowKeys)
   ) {
     emit({
       code: 'invalid-property-shape',

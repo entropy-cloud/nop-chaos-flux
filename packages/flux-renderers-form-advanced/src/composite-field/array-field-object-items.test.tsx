@@ -407,7 +407,7 @@ describe('array-field renderer (object itemKind)', () => {
                     ],
                   },
                 ],
-                actions: [{ type: 'button', label: 'Save Team', onClick: { action: 'submit' } }],
+                actions: [{ type: 'button', label: 'Save Team', onClick: { action: 'submitForm' } }],
               },
             ],
           } as any,

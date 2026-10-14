@@ -35,6 +35,9 @@ export const pageRenderer: RendererDefinition = {
 export const textRenderer: RendererDefinition = {
   type: 'text',
   component: (props) => <span>{String(props.props.text ?? '')}</span>,
+  // Mirrors the real `text` definition's declared fields (basic-renderer-definitions);
+  // without the declaration the fixtures' `text` prop is an unknown-property diagnostic.
+  fields: [{ key: 'text', kind: 'prop', allowSource: true }],
 };
 
 export const iconRenderer: RendererDefinition = {
@@ -42,6 +45,7 @@ export const iconRenderer: RendererDefinition = {
   component: (props) => (
     <span data-testid={props.meta.testid ?? undefined}>{String(props.props.icon ?? '')}</span>
   ),
+  fields: [{ key: 'icon', kind: 'prop' }],
 };
 
 export const nodeInstanceProbeRenderer: RendererDefinition = {

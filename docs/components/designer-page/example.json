@@ -110,7 +110,7 @@
     {
       "type": "button",
       "label": "保存",
-      "intent": "primary",
+      "variant": "primary",
       "onClick": {
         "action": "designer:save"
       }

@@ -15,6 +15,9 @@ export const BASE_SCHEMA_FIELDS = new Set([
   'name',
   'label',
   'title',
+  // 编译器级通用字段：node-compiler 对任意节点构建 classAliasesPlan，
+  // node-renderer-resolved 对任意节点应用别名展开 —— 非单个 renderer 的 prop。
+  'classAliases',
 ]);
 
 /** 通用事件词表：值控件（表单字段）统一可用的事件。renderer 特有事件在 renderer.fields 声明。 */

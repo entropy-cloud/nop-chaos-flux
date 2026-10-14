@@ -56,6 +56,7 @@ describe('createSchemaRenderer import basics', () => {
         schemaUrl="https://app.local/schema/button.json"
         env={{ ...env, importLoader }}
         formulaCompiler={sharedFormulaCompiler}
+        strictValidation={false}
       />,
     );
 

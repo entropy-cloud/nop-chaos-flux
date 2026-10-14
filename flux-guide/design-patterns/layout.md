@@ -111,7 +111,7 @@
   "gap": "md",
   "align": "center",
   "body": [
-    { "type": "input", "placeholder": "搜索..." },
+    { "type": "input-text", "placeholder": "搜索..." },
     { "type": "button", "label": "查询" }
   ]
 }
@@ -125,9 +125,9 @@
   "columns": 3,
   "gap": "md",
   "items": [
-    { "body": { "type": "card", "title": "待审批", "body": "12 项" } },
-    { "body": { "type": "card", "title": "进行中", "body": "8 项" } },
-    { "body": { "type": "card", "title": "已完成", "body": "156 项" } }
+    { "body": { "type": "card", "title": "待审批", "body": { "type": "text", "text": "12 项" } } },
+    { "body": { "type": "card", "title": "进行中", "body": { "type": "text", "text": "8 项" } } },
+    { "body": { "type": "card", "title": "已完成", "body": { "type": "text", "text": "156 项" } } }
   ]
 }
 ```
@@ -143,8 +143,8 @@
   "responsiveDirection": { "md": "row" },
   "gap": "md",
   "body": [
-    { "type": "container", "className": "flex-1", "body": "主内容" },
-    { "type": "container", "className": "flex-1", "body": "侧边信息" }
+    { "type": "container", "className": "flex-1", "body": { "type": "text", "text": "主内容" } },
+    { "type": "container", "className": "flex-1", "body": { "type": "text", "text": "侧边信息" } }
   ]
 }
 ```
@@ -158,11 +158,17 @@
     {
       "key": "mobile",
       "max": "lg",
-      "body": [{ "type": "container", "body": "移动端树（无侧边栏）" }]
+      "body": [{ "type": "container", "body": { "type": "text", "text": "移动端树（无侧边栏）" } }]
     },
     {
       "key": "desktop",
-      "body": [{ "type": "flex", "direction": "row", "body": "桌面树（侧边栏 + 主区）" }]
+      "body": [
+        {
+          "type": "flex",
+          "direction": "row",
+          "body": [{ "type": "text", "text": "桌面树（侧边栏 + 主区）" }]
+        }
+      ]
     }
   ]
 }

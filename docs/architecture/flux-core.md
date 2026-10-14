@@ -137,6 +137,7 @@ Current implementation detail:
 - The evaluator's null/undefined member-access failure on a non-optional chain is a machine-readable cross-package contract: `@nop-chaos/flux-formula` throws the exported `UnpopulatedScopeAccessError` (message kept verbatim as `Cannot access member of null or undefined`), the formula compiler wraps it once, and the runtime layer discriminates it through the single-layer `error.cause instanceof UnpopulatedScopeAccessError` predicate to tolerate not-yet-published scope variables (2026-10-13, plan 582 CX-4).
 - When expression or template compilation falls back to a static value through compiler diagnostics, the diagnostic surface keeps the original failure detail in `cause` instead of flattening the error object into an opaque string.
 - Schema validation diagnostics for union-shaped value contracts keep per-branch failure detail in the emitted message so authoring surfaces can explain why each allowed option failed instead of only repeating the top-level union summary.
+- `FormulaCompiler` may expose `getFormulaNamespaces(): Record<string, unknown>` (optional contract). The schema compiler seeds its compile symbol table and the depth-0 validation traversal from it, so host-registered formula namespaces (e.g. a playground `$Arr`) resolve during schema diagnostics instead of emitting `unknown-import-alias` false positives (plan 595; see `docs/architecture/schema-file-validator.md` "Render-Path Enforcement").
 
 The production direction is:
 

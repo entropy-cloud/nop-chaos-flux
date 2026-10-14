@@ -301,3 +301,89 @@ describe('field defaultValue binding', () => {
     expect(derivedInput.value).toBe('99');
   });
 });
+
+// plan 595: the closed field definitions declare `defaultValue` (amis-ism
+// authoring channel). The shared field hook feeds it into the same
+// initial-value slot as `value` (value wins) — these pins make the declared
+// prop honest per the schema-prop-coverage gate.
+describe('declared defaultValue prop (plan 595 coverage)', () => {
+  it('checkbox defaultValue true renders checked and seeds the form value', async () => {
+    cleanup();
+    renderSchema({
+      type: 'page',
+      body: [
+        {
+          type: 'form',
+          id: 'f',
+          body: [
+            { type: 'checkbox', name: 'agreed', label: 'Agreed', defaultValue: true },
+          ],
+        },
+      ],
+    });
+    await flushAsyncDefaultValues();
+    const control = screen.getByRole('checkbox', { name: /agreed/ });
+    expect(control.getAttribute('aria-checked')).toBe('true');
+  });
+
+  it('switch defaultValue true renders on', async () => {
+    cleanup();
+    renderSchema({
+      type: 'page',
+      body: [
+        {
+          type: 'form',
+          id: 'f',
+          body: [{ type: 'switch', name: 'pref', label: 'Pref', defaultValue: true }],
+        },
+      ],
+    });
+    await flushAsyncDefaultValues();
+    const control = screen.getByRole('switch', { name: /Pref/ });
+    expect(control.getAttribute('aria-checked')).toBe('true');
+  });
+
+  it('select defaultValue preselects the matching option', async () => {
+    cleanup();
+    renderSchema({
+      type: 'page',
+      body: [
+        {
+          type: 'form',
+          id: 'f',
+          body: [
+            {
+              type: 'select',
+              name: 'color',
+              label: 'Color',
+              defaultValue: 'b',
+              options: [
+                { label: 'Alpha', value: 'a' },
+                { label: 'Beta', value: 'b' },
+              ],
+            },
+          ],
+        },
+      ],
+    });
+    await flushAsyncDefaultValues();
+    expect(document.body.textContent).toContain('Beta');
+  });
+
+  it('input-number defaultValue renders the numeric initial value', async () => {
+    cleanup();
+    renderSchema({
+      type: 'page',
+      body: [
+        {
+          type: 'form',
+          id: 'f',
+          body: [{ type: 'input-number', name: 'qty', label: 'Qty', defaultValue: 5 }],
+        },
+      ],
+    });
+    await flushAsyncDefaultValues();
+    const input = document.querySelector('input[name="qty"]') as HTMLInputElement;
+    expect(input.value).toBe('5');
+  });
+});

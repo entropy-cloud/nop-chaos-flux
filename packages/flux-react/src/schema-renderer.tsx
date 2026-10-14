@@ -1,11 +1,16 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import type { BaseSchema, SchemaRendererProps } from '@nop-chaos/flux-core';
-import { createRendererRegistry, isStrictValidationEnabled } from '@nop-chaos/flux-core';
-import { reportImportFailure } from '@nop-chaos/flux-core';
+import {
+  createRendererRegistry,
+  isStrictValidationEnabled,
+  reportImportFailure,
+  shouldFailOnSchemaDiagnostics,
+} from '@nop-chaos/flux-core';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createRendererRuntime } from '@nop-chaos/flux-runtime';
 import { ensureRendererComponent } from './auto-renderer.js';
 import type { RendererDefinition } from './react-contracts.js';
+import { createDefaultSchemaDiagnosticReporter } from './schema-diagnostics-reporter.js';
 import {
   ActionScopeContext,
   ComponentRegistryContext,
@@ -57,26 +62,56 @@ function CompiledSchemaTree(props: {
   // inline `env={{ notify, ... }}` object from the host must not re-trigger a
   // full schema recompile on every host render. Compilation failure is reported
   // from an effect (where reading props.env is legal) so the memo stays pure.
+  // Plan 595: strict renders run the compiler diagnostics pass — diagnostics go
+  // out through `env.reportSchemaDiagnostics` (fallback console.error); in
+  // fail-fast environments (VITEST/PLAYWRIGHT/fail flag) collected error
+  // diagnostics turn the compile into an error result after the fact, which the
+  // catch below surfaces through reportImportFailure/env.notify. Lowering stays
+  // tolerant (continueOnError: true) so honest degradation semantics are
+  // unchanged; with the strict switch off the legacy diagnostics envelope runs.
+  const fallbackReporter = useMemo(createDefaultSchemaDiagnosticReporter, []);
   const compileResult = useMemo<
     { template: import('@nop-chaos/flux-core').CompiledTemplate | null; error: Error | null }
   >(() => {
-    try {
-      return {
-        template: props.runtime.schemaCompiler.compile(props.schema, {
-          schemaUrl: props.schemaUrl,
-          importLoader: props.env.importLoader,
-          resolveImportUrl: props.env.resolveImportUrl,
-          preparedImports: props.preparedImports,
-          validation: {
-            strictMode: props.strictMode,
-          },
-          diagnostics: {
+    const failOnDiagnostics = props.strictMode && shouldFailOnSchemaDiagnostics();
+    const collected: import('@nop-chaos/flux-core').SchemaDiagnostic[] = [];
+    const diagnostics: import('@nop-chaos/flux-core').CompileSchemaOptions['diagnostics'] =
+      props.strictMode
+        ? {
             enabled: true,
             continueOnError: true,
-          },
-        }),
-        error: null,
-      };
+            collector: failOnDiagnostics
+              ? { add: (issue) => collected.push(issue) }
+              : undefined,
+            reporter: props.env.reportSchemaDiagnostics ?? fallbackReporter,
+          }
+        : {
+            enabled: true,
+            continueOnError: true,
+          };
+    try {
+      const template = props.runtime.schemaCompiler.compile(props.schema, {
+        schemaUrl: props.schemaUrl,
+        importLoader: props.env.importLoader,
+        resolveImportUrl: props.env.resolveImportUrl,
+        preparedImports: props.preparedImports,
+        validation: {
+          strictMode: props.strictMode,
+        },
+        diagnostics,
+      });
+      if (failOnDiagnostics) {
+        const errors = collected.filter((issue) => issue.severity === 'error');
+        const first = errors[0];
+        if (first) {
+          const location = first.sourceLocation?.file ? `${first.sourceLocation.file} ` : '';
+          throw new Error(
+            `Schema compile diagnostics failed: ${location}${first.path} ${first.code} ${first.message}`.trim(),
+            { cause: errors },
+          );
+        }
+      }
+      return { template, error: null };
     } catch (compilationError) {
       return {
         template: null,
@@ -92,8 +127,10 @@ function CompiledSchemaTree(props: {
     props.schemaUrl,
     props.env.importLoader,
     props.env.resolveImportUrl,
+    props.env.reportSchemaDiagnostics,
     props.preparedImports,
     props.strictMode,
+    fallbackReporter,
   ]);
   const compiledRoot = compileResult.template;
 

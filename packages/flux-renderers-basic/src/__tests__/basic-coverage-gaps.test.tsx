@@ -54,7 +54,6 @@ describe('basic renderer coverage gaps', () => {
               text: 'Danger',
               level: 'danger',
               testid: 'danger-badge',
-              cid: 'danger-cid',
             },
             { type: 'badge', text: undefined, testid: 'empty-badge' },
           ],
@@ -78,6 +77,9 @@ describe('basic renderer coverage gaps', () => {
     render(
       <SchemaRenderer
         schemaUrl="test://basic/badge-props"
+        // plan 595 opt-out: fixture deliberately renders amis-ism `variant` to pin
+        // that the badge renderer ignores unknown props.
+        strictValidation={false}
         schema={{
           type: 'page',
           body: [
@@ -118,9 +120,13 @@ describe('basic renderer coverage gaps', () => {
 
   it('renders flex branches for supported alignment, justification, and gap modes', () => {
     const SchemaRenderer = createBasicSchemaRenderer();
+    // plan 595 opt-out: the final rerender deliberately authors invalid enum
+    // values ('diagonal'/'baseline'/'evenly') to pin the renderer fallback;
+    // the opt-out must be on every JSX because props flip per rerender.
     const { rerender } = render(
       <SchemaRenderer
         schemaUrl="test://basic/coverage-gaps"
+        strictValidation={false}
         schema={{
           type: 'flex',
           direction: 'column',
@@ -130,7 +136,6 @@ describe('basic renderer coverage gaps', () => {
           gap: 'sm',
           className: 'custom-flex',
           testid: 'flex-root',
-          cid: 'flex-cid',
           body: [{ type: 'text', text: 'Body content' }],
         }}
         env={env}
@@ -149,6 +154,7 @@ describe('basic renderer coverage gaps', () => {
     rerender(
       <SchemaRenderer
         schemaUrl="test://basic/coverage-gaps"
+        strictValidation={false}
         schema={{
           type: 'flex',
           align: 'start',
@@ -171,6 +177,7 @@ describe('basic renderer coverage gaps', () => {
     rerender(
       <SchemaRenderer
         schemaUrl="test://basic/coverage-gaps"
+        strictValidation={false}
         schema={{
           type: 'flex',
           align: 'end',
@@ -192,6 +199,7 @@ describe('basic renderer coverage gaps', () => {
     rerender(
       <SchemaRenderer
         schemaUrl="test://basic/coverage-gaps"
+        strictValidation={false}
         schema={{
           type: 'flex',
           align: 'stretch',
@@ -213,6 +221,7 @@ describe('basic renderer coverage gaps', () => {
     rerender(
       <SchemaRenderer
         schemaUrl="test://basic/coverage-gaps"
+        strictValidation={false}
         schema={{
           type: 'flex',
           direction: 'diagonal' as 'row',

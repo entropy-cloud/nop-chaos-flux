@@ -19,6 +19,7 @@ const orgFieldRules: SchemaFieldRule[] = [
   { key: 'sourceResolve', kind: 'prop' },
   { key: 'multiple', kind: 'prop', valueType: 'boolean' },
   { key: 'searchable', kind: 'prop', valueType: 'boolean' },
+  { key: 'clearable', kind: 'prop', valueType: 'boolean' },
   { key: 'searchMergeMode', kind: 'prop' },
   { key: 'selectableTypes', kind: 'prop' },
   { key: 'pageSize', kind: 'prop', valueType: 'number' },

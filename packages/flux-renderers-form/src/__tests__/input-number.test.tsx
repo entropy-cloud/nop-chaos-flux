@@ -236,7 +236,7 @@ describe('input-number renderer', () => {
         {
           type: 'button',
           label: 'Submit',
-          onClick: { action: 'submit' },
+          onClick: { action: 'submitForm' },
         },
       ],
     });
@@ -256,7 +256,7 @@ describe('input-number renderer', () => {
         {
           type: 'button',
           label: 'Submit',
-          onClick: { action: 'submit' },
+          onClick: { action: 'submitForm' },
         },
       ],
     });

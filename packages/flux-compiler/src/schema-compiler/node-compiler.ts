@@ -75,6 +75,34 @@ import { normalizeHiddenFieldPolicy } from '@nop-chaos/flux-core';
 // rawEventPlans) across sections. Splitting would reduce clarity without
 // improving maintainability.
 
+const SLOT_RENAME_PROP_NAMES = ['itemName', 'indexName', 'keyName'] as const;
+
+/**
+ * Loop/recurse-style nodes expose dynamic `$slot` members to their body
+ * regions: literal `itemName`/`indexName`/`keyName` props rename the default
+ * `item`/`index`/`key` params, and a literal `itemData` object publishes its
+ * keys into the loop scratch scope. Compile-time symbol analysis needs those
+ * statically-knowable members so `$slot.<name>` expressions resolve (plan 595).
+ */
+function collectRenamedSlotParams(schema: BaseSchema): string[] {
+  const members: string[] = [];
+  for (const prop of SLOT_RENAME_PROP_NAMES) {
+    const value = (schema as Record<string, unknown>)[prop];
+    if (typeof value === 'string' && value.length > 0) {
+      members.push(value);
+    }
+  }
+  const itemData = (schema as Record<string, unknown>).itemData;
+  if (itemData && typeof itemData === 'object' && !Array.isArray(itemData)) {
+    for (const key of Object.keys(itemData as Record<string, unknown>)) {
+      if (key.length > 0) {
+        members.push(key);
+      }
+    }
+  }
+  return members;
+}
+
 export function createCompileSingleNode(
   expressionCompiler: ExpressionCompiler,
   compileSchemaToTemplateNodes: CompileSchemaToTemplateNodesFn,
@@ -190,6 +218,15 @@ export function createCompileSingleNode(
           rule.kind === 'region' || isSchemaInput(value)
             ? { params: rule.params, isolate: rule.isolate }
             : undefined;
+        // Loop/recurse rename channel: literal `itemName`/`indexName`/`keyName`
+        // props rename the default `item`/`index`/`key` slot params at runtime,
+        // so compile-time symbol analysis must accept the renamed members too
+        // (plan 595: otherwise every renamed loop body fails fail-fast with a
+        // false `unknown-slot-param`).
+        const regionSlotParams = [
+          ...(rule.params ?? []),
+          ...collectRenamedSlotParams(schema),
+        ];
         const compileAtNextDepth = (s: SchemaInput, o?: CompileSchemaOptions) =>
           compileSchemaToTemplateNodes(s, o ?? {}, depth + 1);
         regions[rule.regionKey ?? key] = createTemplateRegion(
@@ -211,7 +248,7 @@ export function createCompileSingleNode(
                 : regionOptions?.diagnostics,
               symbolTable: pushRegionParamSymbols(
                 symbolTable,
-                rule.params,
+                regionSlotParams,
                 `${path}.${rule.regionKey ?? key}:slot`,
               ),
             }),
@@ -335,7 +372,7 @@ export function createCompileSingleNode(
                   symbolTable: regionMeta?.params?.length
                     ? pushRegionParamSymbols(
                         o?.symbolTable ?? symbolTable,
-                        regionMeta.params,
+                        [...regionMeta.params, ...collectRenamedSlotParams(schema)],
                         `${path}.${key}:slot`,
                       )
                     : (o?.symbolTable ?? symbolTable),

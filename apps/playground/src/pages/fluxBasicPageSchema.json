@@ -210,10 +210,6 @@
               "onClick": {
                 "action": "component:submit",
                 "componentId": "user-form",
-                "args": {
-                  "method": "post",
-                  "url": "/api/users"
-                },
                 "then": {
                   "action": "component:refresh",
                   "componentId": "user-form"

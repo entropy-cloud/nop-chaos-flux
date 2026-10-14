@@ -26,7 +26,7 @@
 
 import { readFileSync, readdirSync, writeFileSync, statSync, mkdirSync } from 'node:fs';
 import { resolve, dirname, relative, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
 import { buildFullRegistry } from './shared.mjs';
 
@@ -37,7 +37,7 @@ const REPO_ROOT = resolve(__dirname, '../..');
 
 function parseArgs(argv) {
   const inputs = [];
-  const opts = { pattern: '**/*.page.json', level: 'compile', report: null, maxErrors: 0 };
+  const opts = { pattern: '**/*.page.json', level: 'compile', report: null, maxErrors: 0, strict: false, setup: null };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
     if (a === '--pattern') opts.pattern = argv[++i];
@@ -49,6 +49,10 @@ function parseArgs(argv) {
     else if (a === '--max-errors') opts.maxErrors = Number(argv[++i]);
     else if (a.startsWith('--max-errors='))
       opts.maxErrors = Number(a.slice('--max-errors='.length));
+    else if (a === '--strict' || a.startsWith('--strict='))
+      opts.strict = a === '--strict' || a.slice('--strict='.length) === 'true';
+    else if (a === '--setup') opts.setup = argv[++i];
+    else if (a.startsWith('--setup=')) opts.setup = a.slice('--setup='.length);
     else if (a === '--') continue;
     else if (a === '--help' || a === '-h') opts.help = true;
     else if (a.startsWith('-') && a !== '-') {
@@ -169,17 +173,26 @@ async function main() {
   const { inputs, opts } = parseArgs(process.argv.slice(2));
   if (opts.help || inputs.length === 0) {
     console.log(
-      'Usage: validate-pages.mjs <dir-or-file>... [--pattern=<glob>] [--level=compile|validate] [--report=<file>] [--max-errors=<n>]',
+      'Usage: validate-pages.mjs <dir-or-file>... [--pattern=<glob>] [--level=compile|validate] [--report=<file>] [--max-errors=<n>] [--strict]',
     );
     process.exit(inputs.length === 0 && !opts.help ? 2 : 0);
   }
 
-  let registry, validateSchema, createSchemaCompiler;
+  let registry, validateSchema, createSchemaCompiler, expressionCompiler;
   try {
     registry = await buildFullRegistry();
     ({ validateSchema, createSchemaCompiler } = await import(
       resolve(REPO_ROOT, 'packages/flux-compiler/dist/index.js')
     ));
+    if (opts.setup) {
+      const formula = await import(resolve(REPO_ROOT, 'packages/flux-formula/dist/index.js'));
+      const formulaRegistry = formula.createFormulaRegistry();
+      const setupModule = await import(pathToFileURL(resolve(opts.setup)).href);
+      await setupModule.default?.({ registry, formulaRegistry });
+      expressionCompiler = formula.createExpressionCompiler(
+        formula.createFormulaCompiler(formulaRegistry),
+      );
+    }
   } catch (e) {
     console.error(`Registry assembly failed: ${e.message}`);
     process.exit(2);
@@ -192,7 +205,8 @@ async function main() {
     process.exit(2);
   }
 
-  const compiler = opts.level === 'compile' ? createSchemaCompiler({ registry }) : null;
+  const compiler =
+    opts.level === 'compile' ? createSchemaCompiler({ registry, expressionCompiler }) : null;
   const totals = {
     files: files.length,
     validated: 0,
@@ -235,7 +249,13 @@ async function main() {
     }
 
     try {
-      const diags = validateSchema({ schema: root.schema, registry }) || [];
+      const diags =
+        validateSchema({
+          schema: root.schema,
+          registry,
+          expressionCompiler,
+          options: opts.strict ? { validation: { strictMode: true } } : undefined,
+        }) || [];
       for (const d of diags) {
         const tag = severityTag(d.severity);
         if (d.severity === 'error') {

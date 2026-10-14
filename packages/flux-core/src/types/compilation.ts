@@ -220,6 +220,14 @@ export interface FormulaCompiler {
     source: string,
     options?: ExpressionCompileOptions,
   ): CompiledStringTemplate<T>;
+  /**
+   * Host-registered formula namespaces (name → namespace value), when the
+   * concrete compiler owns a formula registry. Compile-time symbol analysis
+   * seeds its namespace symbols from this so host namespaces (e.g. `$Arr`)
+   * resolve instead of emitting `unknown-import-alias` / false
+   * `ambient-dollar-reference` diagnostics. Optional; legacy shapes omit it.
+   */
+  getFormulaNamespaces?(): Record<string, unknown>;
 }
 
 export interface ExpressionCompiler extends CompiledValueEvaluator {

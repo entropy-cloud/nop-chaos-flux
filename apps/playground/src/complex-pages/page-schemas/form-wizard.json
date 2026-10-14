@@ -70,6 +70,7 @@
                   "pickerSchema": {
                     "type": "crud",
                     "loadAction": {
+                      "dependsOn": ["__init_load__"],
                       "action": "ajax",
                       "args": {
                         "url": "/r/Department__findPage",

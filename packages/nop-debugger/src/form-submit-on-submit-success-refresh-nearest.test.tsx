@@ -73,7 +73,7 @@ describe('form submit → onSubmitSuccess → refreshNearest', () => {
                       {
                         type: 'button',
                         label: '确定',
-                        level: 'primary',
+                        variant: 'primary',
                         onClick: {
                           action: 'submitForm',
                           then: { action: 'closeSurface' },

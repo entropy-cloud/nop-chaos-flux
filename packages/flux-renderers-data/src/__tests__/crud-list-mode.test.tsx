@@ -103,7 +103,11 @@ const stubCardsRenderer: RendererDefinition = {
   fields: [{ key: 'card', kind: 'region', params: ['item', 'index'], isolate: false }],
 };
 
-function renderCrud(schema: BaseSchema, extra: RendererDefinition[] = []) {
+function renderCrud(
+  schema: BaseSchema,
+  extra: RendererDefinition[] = [],
+  options: { strictValidation?: boolean } = {},
+) {
   const SchemaRenderer = createDataSchemaRenderer([buttonRenderer, ...extra]);
   return render(
     <SchemaRenderer
@@ -112,6 +116,7 @@ function renderCrud(schema: BaseSchema, extra: RendererDefinition[] = []) {
       data={{ records }}
       env={env}
       formulaCompiler={formulaCompiler}
+      strictValidation={options.strictValidation}
     />,
   );
 }
@@ -211,28 +216,35 @@ describe('CRUD listMode carrier selection', () => {
   });
 
   it('selection reads/writes the same selectionStatePath in list mode (CRUD self-held via toggleSelection)', async () => {
-    renderCrud({
-      type: 'crud',
-      id: 'sel-list-crud',
-      listMode: 'list',
-      source: '${records}',
-      rowKey: 'id',
-      selection: {},
-      selectionStatePath: '$sel',
-      item: [
-        {
-          type: 'button',
-          label: '${ARRAYINCLUDES($sel, $slot.item.id) ? "Selected" : "Select"}',
-          onClick: {
-            action: 'component:toggleSelection',
-            componentId: 'sel-list-crud',
-            args: { key: '${$slot.item.id}' },
+    // plan 595 opt-out: `componentId` targets the CRUD node, but the derived
+    // list carrier subtree is compiled separately, so the crud id + its
+    // capability contracts are not statically visible to the action validator.
+    renderCrud(
+      {
+        type: 'crud',
+        id: 'sel-list-crud',
+        listMode: 'list',
+        source: '${records}',
+        rowKey: 'id',
+        selection: {},
+        selectionStatePath: '$sel',
+        item: [
+          {
+            type: 'button',
+            label: '${ARRAYINCLUDES($sel, $slot.item.id) ? "Selected" : "Select"}',
+            onClick: {
+              action: 'component:toggleSelection',
+              componentId: 'sel-list-crud',
+              args: { key: '${$slot.item.id}' },
+            },
           },
-        },
-      ],
-      footerToolbar: [{ type: 'text', text: 'Count: ${$crud.selectionCount}' }],
-      columns: [{ name: 'name', label: 'Name' }],
-    });
+        ],
+        footerToolbar: [{ type: 'text', text: 'Count: ${$crud.selectionCount}' }],
+        columns: [{ name: 'name', label: 'Name' }],
+      },
+      [],
+      { strictValidation: false },
+    );
 
     await waitFor(() => {
       expect(screen.getByText('Count: 0')).toBeTruthy();
@@ -255,6 +267,8 @@ describe('CRUD listMode carrier selection', () => {
   });
 
   it('selection reads/writes the same selectionStatePath in cards mode (CRUD self-held via toggleSelection)', async () => {
+    // plan 595 opt-out: see the list-mode selection test — self-referential
+    // componentId is invisible to the validator inside the derived carrier compile.
     renderCrud(
       {
         type: 'crud',
@@ -279,6 +293,7 @@ describe('CRUD listMode carrier selection', () => {
         columns: [{ name: 'name', label: 'Name' }],
       },
       [stubCardsRenderer],
+      { strictValidation: false },
     );
 
     await waitFor(() => {
@@ -347,6 +362,8 @@ describe('CRUD listMode carrier selection', () => {
   });
 
   it('AUDIT-02: cards carrier does not remount on selection change (compile-once, no keyed remount)', async () => {
+    // plan 595 opt-out: see the list-mode selection test — self-referential
+    // componentId is invisible to the validator inside the derived carrier compile.
     renderCrud(
       {
         type: 'crud',
@@ -371,6 +388,7 @@ describe('CRUD listMode carrier selection', () => {
         columns: [{ name: 'name', label: 'Name' }],
       },
       [stubCardsRenderer],
+      { strictValidation: false },
     );
 
     const cardsRootBefore = await waitFor(() => screen.getByTestId('stub-cards'));

@@ -208,6 +208,7 @@ export const reportDesignerRendererDefinitions: RendererDefinition[] = [
     fields: [
       { key: 'title', kind: 'value-or-region', regionKey: 'title' },
       { key: 'noSelectionLabel', kind: 'prop' },
+      { key: 'emptyLabel', kind: 'prop' },
       { key: 'errorLabel', kind: 'prop' },
     ],
   },

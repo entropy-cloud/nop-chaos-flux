@@ -139,18 +139,18 @@
 > ⚠️ **`footerToolbar` 里的 `{ "type": "pagination" }` 是自包含组件，不与 CRUD 分页状态联动**（点击页码不触发数据刷新）。loadAction/source 路径下分页请用缺省内建 `TablePaginationBar`（不写分页配置即可）或 `toolbarLayout` 拆分方案，详见下方 **§2a**。`statistics` 独立 renderer 是纯展示（读 `$crud.total`），放在 footerToolbar 正常。
 
 > **弹窗提交后刷新外部 CRUD**：上例的 `onSubmitSuccess: { closeSurface, then: refreshSource }` 写法依赖 `then` 链共享 ctx，仅适用于** declarative dialog 或 source/CRUD 共享 page scope** 的场景。action-style `openDialog` 推荐改用 lifecycle callback + `refreshNearest`，详见 `design-patterns/page-dialog-drawer.md` §6 与 `docs/architecture/surface-lifecycle-callbacks.md`：
->
-> ```jsonc
-> {
->   "action": "openDialog",
->   "args": {
->     "body": {
->       /* form */
->     },
->     "onSubmitSuccess": [{ "action": "closeSurface" }, { "action": "refreshNearest" }],
->   },
-> }
-> ```
+
+```jsonc
+{
+  "action": "openDialog",
+  "args": {
+    "body": {
+      /* form */
+    },
+    "onSubmitSuccess": [{ "action": "closeSurface" }, { "action": "refreshNearest" }],
+  },
+}
+```
 
 ---
 

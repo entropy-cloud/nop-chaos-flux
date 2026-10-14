@@ -2,16 +2,10 @@
   "type": "report-inspector",
   "emptyLabel": "暂无属性面板",
   "noSelectionLabel": "请选择对象",
-  "inspectorPanels": [
+  "body": [
     {
-      "id": "cell-style",
-      "title": "单元格样式",
-      "body": [
-        {
-          "type": "text",
-          "text": "在这里配置单元格样式。"
-        }
-      ]
+      "type": "text",
+      "text": "在这里配置单元格样式。"
     }
   ]
 }

@@ -2,7 +2,7 @@
   "type": "picker",
   "name": "ownerId",
   "label": "负责人",
-  "valueKey": "id",
-  "labelKey": "name",
+  "valueField": "id",
+  "labelField": "name",
   "multiple": false
 }

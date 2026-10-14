@@ -2,10 +2,13 @@
 import { runContractHonestyGuardSuite } from '@nop-chaos/flux-react/test-support';
 import { formAdvancedRendererDefinitions } from '../index.js';
 
+// capabilityHandles 22 -> 24: plan 595 declared picker componentCapabilityContracts
+// open/clear (runtime registers both via useInputComponentHandle methods list;
+// fixtures bind them with componentId + `component:open` / `component:clear`).
 runContractHonestyGuardSuite({
   packageName: 'flux-renderers-form-advanced',
   definitions: formAdvancedRendererDefinitions,
   srcDir: `${import.meta.dirname}/..`,
   h7Mode: 'sibling-wired',
-  discoveryBaseline: { renderers: 19, eventKeys: 0, capabilityHandles: 22 },
+  discoveryBaseline: { renderers: 19, eventKeys: 0, capabilityHandles: 24 },
 });

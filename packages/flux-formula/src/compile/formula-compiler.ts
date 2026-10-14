@@ -167,6 +167,9 @@ function createFormulaCompiler(formulaRegistry?: FormulaRegistry): FormulaCompil
     hasExpression(input: string) {
       return typeof input === 'string' && input.includes('${');
     },
+    getFormulaNamespaces() {
+      return registry.getSnapshot().namespaces;
+    },
     compileExpression<T = unknown>(
       source: string,
       options?: ExpressionCompileOptions,

@@ -33,7 +33,7 @@ describe('createFluxSchemaRenderer + loadAction crud', () => {
             {
               type: 'crud',
               id: 'load-crud',
-              loadAction: { action: 'ajax', args: { url: '/r/Test__findPage' } },
+              loadAction: { action: 'ajax', args: { url: '/r/Test__findPage' }, dependsOn: ['__init_load__'] },
               columns: [{ name: 'name', label: 'Name' }],
               rowKey: 'id',
             },

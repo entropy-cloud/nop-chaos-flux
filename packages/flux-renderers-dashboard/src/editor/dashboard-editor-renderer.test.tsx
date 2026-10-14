@@ -166,6 +166,9 @@ describe('DashboardEditorRenderer selection & editing flows', () => {
     render(
       <SchemaRenderer
         schemaUrl="test://dashboard/editor-save"
+        // plan 595 opt-out: the placeholder `noop` action selector is deliberately
+        // unresolved — it only carries the event dispatch channel under test.
+        strictValidation={false}
         schema={{
           type: 'page',
           body: [
@@ -240,6 +243,9 @@ describe('DashboardEditorRenderer selection & editing flows', () => {
     render(
       <SchemaRenderer
         schemaUrl="test://dashboard/editor-auto"
+        // plan 595 opt-out: the placeholder `noop` action selector is deliberately
+        // unresolved — it only carries the event dispatch channel under test.
+        strictValidation={false}
         schema={{
           type: 'page',
           body: [
@@ -398,6 +404,9 @@ describe('DashboardEditorRenderer session/mode events (P3.2)', () => {
     render(
       <SchemaRenderer
         schemaUrl="test://dashboard/editor-session-change"
+        // plan 595 opt-out: the placeholder `noop` action selector is deliberately
+        // unresolved — it only carries the event dispatch channel under test.
+        strictValidation={false}
         schema={{
           type: 'page',
           body: [
@@ -444,6 +453,9 @@ describe('DashboardEditorRenderer session/mode events (P3.2)', () => {
     render(
       <SchemaRenderer
         schemaUrl="test://dashboard/editor-mode-change"
+        // plan 595 opt-out: the placeholder `noop` action selector is deliberately
+        // unresolved — it only carries the event dispatch channel under test.
+        strictValidation={false}
         schema={{
           type: 'page',
           body: [
@@ -505,6 +517,10 @@ describe('DashboardEditorRenderer sessionChange dispatch discipline (WA-dashboar
     const view = render(
       <SchemaRenderer
         schemaUrl="test://dashboard/editor-session-discipline"
+        // plan 595 opt-out (rerender must match the mount): the placeholder `noop`
+        // action selector is deliberately unresolved — it only carries the event
+        // dispatch channel under test.
+        strictValidation={false}
         schema={editorNode('dashboardHostStatus')}
         data={{}}
         env={env}
@@ -522,6 +538,10 @@ describe('DashboardEditorRenderer sessionChange dispatch discipline (WA-dashboar
     view.rerender(
       <SchemaRenderer
         schemaUrl="test://dashboard/editor-session-discipline"
+        // plan 595 opt-out (rerender must match the mount): the placeholder `noop`
+        // action selector is deliberately unresolved — it only carries the event
+        // dispatch channel under test.
+        strictValidation={false}
         schema={editorNode('dashboardHostStatusV2')}
         data={{}}
         env={env}

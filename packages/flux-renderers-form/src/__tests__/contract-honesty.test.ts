@@ -7,5 +7,5 @@ runContractHonestyGuardSuite({
   definitions: formRendererDefinitions,
   srcDir: `${import.meta.dirname}/..`,
   capabilityProbe: false,
-  discoveryBaseline: { renderers: 31, eventKeys: 6, capabilityHandles: 73 },
+  discoveryBaseline: { renderers: 31, eventKeys: 6, capabilityHandles: 74 },
 });

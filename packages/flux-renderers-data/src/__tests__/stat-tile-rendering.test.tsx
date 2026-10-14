@@ -347,6 +347,9 @@ describe('StatTileRenderer — sparkline rendering and degradation', () => {
     render(
       <SchemaRenderer
         schemaUrl="test://data/stat-tile-spark-empty"
+        // plan 595 opt-out: fixtures deliberately feed empty/invalid sparkline
+        // data to pin the renderer's own degradation path (KPI stays visible).
+        strictValidation={false}
         schema={{
           type: 'page',
           body: [

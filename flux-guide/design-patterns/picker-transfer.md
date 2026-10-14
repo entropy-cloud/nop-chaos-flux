@@ -56,13 +56,17 @@ picker 与内容控件之间的绑定通道有且仅有两条（通用机制、�
 ```jsonc
 {
   "type": "crud",
-  "loadAction": { "...": "..." },
-  "columns": [ "...": "..." ],
+  "loadAction": {
+    "action": "ajax",
+    "args": { "url": "...", "selection": "..." },
+    "dependsOn": ["__init_load__"],
+  },
+  "columns": [{ "name": "...", "label": "..." }],
   "selection": { "type": "checkbox", "keepOnPageChange": true, "toggleOnRowClick": true },
   "selectionOwnership": "scope",
   "selectionStatePath": "$_picker.selection",
   "dataStatePath": "$_picker.rows",
-  "autoClearSelectionOnRefresh": false
+  "autoClearSelectionOnRefresh": false,
 }
 ```
 
@@ -328,6 +332,7 @@ ERP 编辑表单核心需求：已选 value（`customerId: 'cust-123'`）必须�
     "type": "crud",
     "loadAction": {
       "action": "ajax",
+      "dependsOn": ["__init_load__"],
       "args": {
         "url": "@query:NopAuthUser__findPage",
         "selection": "total,page,items{id,userName,displayName}",
@@ -372,6 +377,7 @@ ERP 编辑表单核心需求：已选 value（`customerId: 'cust-123'`）必须�
     "type": "crud",
     "loadAction": {
       "action": "ajax",
+      "dependsOn": ["__init_load__"],
       "args": { "url": "@query:ErpSalOrder__findPage", "selection": "..." },
     },
     "queryForm": {
@@ -404,25 +410,25 @@ ERP 编辑表单核心需求：已选 value（`customerId: 'cust-123'`）必须�
   "label": "客户",
   "valueField": "id",
   "labelField": "name",
-  "labelTpl": "<div class='flex items-center gap-2'>"
-           +   "<img src='${logo}' class='w-5 h-5 rounded' />"
-           +   "<span>${name}</span>"
-           +   "<span class='badge badge-${creditLevel}'>${creditLevelName}</span>"
-           + "</div>",
+  "labelTpl": "<div class='flex items-center gap-2'><img src='${logo}' class='w-5 h-5 rounded' /><span>${name}</span><span class='badge badge-${creditLevel}'>${creditLevelName}</span></div>",
   "pickerPopup": {
     "type": "dialog",
     "title": "选择客户",
-    "size": "lg"
+    "size": "lg",
   },
   "pickerSchema": {
     "type": "crud",
-    "loadAction": { "action": "ajax", "args": { "url": "@query:ErpMdPartner__findPage", "selection": "..." } },
+    "loadAction": {
+      "action": "ajax",
+      "dependsOn": ["__init_load__"],
+      "args": { "url": "@query:ErpMdPartner__findPage", "selection": "..." },
+    },
     "columns": [
       { "name": "name", "label": "名称" },
-      { "name": "creditLevelName", "label": "信用等级" }
+      { "name": "creditLevelName", "label": "信用等级" },
     ],
-    "selection": { "type": "radio", "toggleOnRowClick": true }
-  }
+    "selection": { "type": "radio", "toggleOnRowClick": true },
+  },
 }
 ```
 
@@ -445,6 +451,7 @@ ERP 编辑表单核心需求：已选 value（`customerId: 'cust-123'`）必须�
     "type": "crud",
     "loadAction": {
       "action": "ajax",
+      "dependsOn": ["__init_load__"],
       "args": { "url": "@query:ErpMdPartner__findPage", "selection": "..." },
     },
     "columns": [

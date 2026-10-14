@@ -65,6 +65,9 @@ describe('schema-authored data attribute passthrough (flex/text/icon)', () => {
     const { container } = render(
       <SchemaRenderer
         schemaUrl="test://data-attrs"
+        // plan 595 opt-out: fixture deliberately authors an unknown `x-unknown`
+        // key to pin that non-data-* keys are not forwarded to the DOM.
+        strictValidation={false}
         schema={{ type: 'flex', 'x-unknown': 'nope', items: [{ type: 'text', text: 'Hello' }] }}
         env={env}
         formulaCompiler={formulaCompiler}

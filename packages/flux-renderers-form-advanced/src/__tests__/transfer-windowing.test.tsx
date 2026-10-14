@@ -50,7 +50,6 @@ function makeOptions(n: number) {
 }
 
 function renderTransfer(options: unknown[], value: string[] = []) {
-  const onChange = vi.fn();
   const SchemaRenderer = createSchemaRenderer([
     ...basicRendererDefinitions,
     ...formRendererDefinitions,
@@ -71,7 +70,9 @@ function renderTransfer(options: unknown[], value: string[] = []) {
               label: 'Pick',
               multiple: true,
               options,
-              onChange,
+              // plan 595: dropped the raw `onChange: vi.fn()` — a function is
+              // not valid event authoring (events are ActionSchema objects)
+              // and the mock was never asserted nor wired.
             },
           ],
         } as never
@@ -81,7 +82,6 @@ function renderTransfer(options: unknown[], value: string[] = []) {
       formulaCompiler={formulaCompiler}
     />,
   );
-  return { onChange };
 }
 
 function mountedCount(kind: 'candidate' | 'selected'): number {

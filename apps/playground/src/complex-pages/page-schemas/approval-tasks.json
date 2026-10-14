@@ -9,6 +9,7 @@
       "rowKey": "id",
       "loadAllData": true,
       "loadAction": {
+        "dependsOn": ["__init_load__"],
         "action": "ajax",
         "args": {
           "url": "/r/ApprovalTask__findPage",
@@ -48,18 +49,7 @@
                 "label": "已驳回",
                 "value": "rejected"
               }
-            ],
-            "cell": {
-              "type": "container",
-              "className": "flex items-center",
-              "body": [
-                {
-                  "type": "text",
-                  "text": "${status}",
-                  "className": "${status === \"待审批\" ? \"text-xs text-amber-700 bg-amber-50 rounded px-1.5 py-0.5\" : status === \"已通过\" ? \"text-xs text-emerald-700 bg-emerald-50 rounded px-1.5 py-0.5\" : \"text-xs text-rose-700 bg-rose-50 rounded px-1.5 py-0.5\"}"
-                }
-              ]
-            }
+            ]
           }
         ]
       },

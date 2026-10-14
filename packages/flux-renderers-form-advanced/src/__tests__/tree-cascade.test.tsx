@@ -500,6 +500,11 @@ describe('showIcon / showOutline deletion (E0b Phase 1裁定: 删字段)', () =>
     render(
       <SchemaRenderer
         schemaUrl="test://flux-renderers-form-advanced/__tests__/tree-cascade.test.tsx#show-icon-deleted"
+        // plan 595 opt-out: the fixture intentionally authors the DELETED
+        // `showIcon`/`showOutline` props (via `as any`) to pin that the E0b
+        // field deletion left no rendering effect — the unknown-property
+        // compile error is the expected verdict for these dead keys.
+        strictValidation={false}
         schema={
           {
             type: 'form',

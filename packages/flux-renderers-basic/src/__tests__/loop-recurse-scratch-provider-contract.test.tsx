@@ -89,6 +89,8 @@ function renderWithProbe(schema: unknown, data: Record<string, unknown>) {
         data={data}
         env={env}
         formulaCompiler={formulaCompiler}
+        // plan 595 opt-out: recurse itemData scratch scope keys surface to sibling regions — statically opaque.
+        strictValidation={false}
       />,
     ),
   };
@@ -444,6 +446,8 @@ describe('structural loop context — provider re-memo rhythm (plan 588 characte
         data={{ nodes: [{ id: 'root', name: 'Root', children: [{ id: 'c1', name: 'Kid1-renamed' }] }] }}
         env={env}
         formulaCompiler={formulaCompiler}
+        // plan 595 opt-out: keep rerender semantics identical to the mount.
+        strictValidation={false}
       />,
     );
 

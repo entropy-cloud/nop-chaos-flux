@@ -605,6 +605,18 @@ export const pickerRendererDefinition: RendererDefinition = {
   sourcePackage: '@nop-chaos/flux-renderers-form-advanced',
   component: PickerRenderer,
   wrap: true,
+  componentCapabilityContracts: [
+    {
+      handle: 'open',
+      displayName: 'Open',
+      description: 'Open the picker popup (registered via useInputComponentHandle).',
+    },
+    {
+      handle: 'clear',
+      displayName: 'Clear',
+      description: 'Clear the committed picker value (registered via useInputComponentHandle).',
+    },
+  ],
   propContracts: {
     labelResolveAction: {
       shape: { kind: 'schema-definition', fieldRules: {}, actionValue: true },
@@ -634,6 +646,7 @@ export const pickerRendererDefinition: RendererDefinition = {
     { key: 'autoFill', kind: 'prop', lazyEval: true, params: ['row'] },
     { key: 'readOnly', kind: 'prop' },
     { key: 'onPick', kind: 'event' },
+    { key: 'onItemClick', kind: 'event' },
   ],
   validation: {
     kind: 'field',

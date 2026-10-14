@@ -33,6 +33,7 @@ describe('CRUD loadAction includeScope contract', () => {
               loadAction: {
                 action: 'ajax',
                 args: { url: '/r/Test__findPage', includeScope } as never,
+                dependsOn: ['__init_load__'],
               },
               columns: [{ name: 'name', label: 'Name' }],
               rowKey: 'id',

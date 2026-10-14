@@ -74,7 +74,6 @@
     {
       "type": "tabs",
       "testid": "view-tabs",
-      "mountOnEnter": true,
       "items": [
         {
           "key": "table",
@@ -87,6 +86,7 @@
               "rowKey": "id",
               "loadAllData": true,
               "loadAction": {
+                "dependsOn": ["__init_load__"],
                 "action": "ajax",
                 "args": {
                   "url": "/r/User__findPage",
@@ -146,6 +146,7 @@
               "listMode": "cards",
               "loadAllData": true,
               "loadAction": {
+                "dependsOn": ["__init_load__"],
                 "action": "ajax",
                 "args": {
                   "url": "/r/User__findPage",

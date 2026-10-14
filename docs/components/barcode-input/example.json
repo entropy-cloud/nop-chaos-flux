@@ -23,39 +23,37 @@
           "continuousScan": true,
           "clearable": true,
           "trimContents": true,
-          "events": {
-            "onScan": {
-              "action": "showToast",
+          "onScan": {
+            "action": "showToast",
+            "args": {
+              "level": "success",
+              "message": "扫码成功"
+            },
+            "then": {
+              "action": "ajax",
               "args": {
-                "level": "success",
-                "message": "扫码成功"
+                "url": "/api/material/query",
+                "method": "post",
+                "data": {
+                  "barcode": "${event.barcode}"
+                }
               },
               "then": {
-                "action": "ajax",
+                "action": "setValues",
                 "args": {
-                  "url": "/api/material/query",
-                  "method": "post",
-                  "data": {
-                    "barcode": "${event.barcode}"
-                  }
-                },
-                "then": {
-                  "action": "setValues",
-                  "args": {
-                    "values": {
-                      "batchNo": "${response.batchNo}",
-                      "warehouseBin": "${response.defaultBin}"
-                    }
+                  "values": {
+                    "batchNo": "${response.batchNo}",
+                    "warehouseBin": "${response.defaultBin}"
                   }
                 }
               }
-            },
-            "onScanError": {
-              "action": "showToast",
-              "args": {
-                "level": "warning",
-                "message": "扫码失败，请重试"
-              }
+            }
+          },
+          "onScanError": {
+            "action": "showToast",
+            "args": {
+              "level": "warning",
+              "message": "扫码失败，请重试"
             }
           }
         },
@@ -66,13 +64,11 @@
           "placeholder": "扫码或手动输入库位",
           "continuousScan": false,
           "formats": ["code_39", "code_128"],
-          "events": {
-            "onScan": {
-              "action": "showToast",
-              "args": {
-                "level": "info",
-                "message": "库位: ${event.barcode}"
-              }
+          "onScan": {
+            "action": "showToast",
+            "args": {
+              "level": "info",
+              "message": "库位: ${event.barcode}"
             }
           }
         },
@@ -98,6 +94,7 @@
           "variant": "outline",
           "onClick": {
             "action": "component:setValues",
+            "componentId": "barcode-form",
             "args": {
               "values": {
                 "materialCode": "",

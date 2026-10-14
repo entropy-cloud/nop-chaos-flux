@@ -4454,7 +4454,6 @@
                                       "body": [
                                         {
                                           "type": "container",
-                                          "text": "+",
                                           "className": "nt-cal-add",
                                           "testid": "notion-cal-add",
                                           "onClick": {

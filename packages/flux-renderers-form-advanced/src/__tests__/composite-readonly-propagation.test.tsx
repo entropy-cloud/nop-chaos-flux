@@ -5,7 +5,7 @@ import { basicRendererDefinitions } from '@nop-chaos/flux-renderers-basic';
 import { formRendererDefinitions } from '@nop-chaos/flux-renderers-form';
 import { createSchemaRenderer } from '@nop-chaos/flux-react';
 import { env, formulaCompiler } from '../test-support.js';
-import { installFormAdvancedTestHooks } from '../test-support.js';
+import { formStateProbeRenderer, installFormAdvancedTestHooks } from '../test-support.js';
 
 installFormAdvancedTestHooks();
 
@@ -23,6 +23,10 @@ function renderSchema(schema: object) {
   const SchemaRenderer = createSchemaRenderer([
     ...basicRendererDefinitions,
     ...allFormDefs,
+    // plan 595: fixtures render `form-state-probe`; under render-path
+    // fail-fast an unregistered renderer type is a compile error, so the
+    // probe definition must be part of the fixture registry.
+    formStateProbeRenderer,
   ]);
   return render(
     <SchemaRenderer

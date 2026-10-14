@@ -712,6 +712,34 @@ Acceptance baseline:
 - the compiler core remains deterministic and side-effect-light because reporting stays outside direct `console` ownership
 - compile return compatibility remains intact for existing call sites during the first migration slice
 
+## Render-Path Enforcement (Strict Validation Switch)
+
+When the strict-validation switch is on, the React render path no longer drops compile diagnostics: it runs the same compiler-owned analysis pass that `validate()` uses, on every root and region compile.
+
+### Contract
+
+- Both `SchemaRenderer`'s root compile and every `normalizeNodeInput` region/fragment compile run with `validation.strictMode: true` and `diagnostics: { enabled: true, continueOnError: true, reporter, collector }`.
+- Lowering stays tolerant (`continueOnError: true`): honest degradation for unknown renderer types is a feature (e.g. the condition-builder drops a broken value editor while the rest renders) and never changes under enforcement.
+- `reporter` is `env.reportSchemaDiagnostics` when the host provides it (see `docs/architecture/renderer-env.md` §4.3), otherwise a `console.error` fallback owned by `flux-react` — the compiler core still never touches `console` directly.
+- `shouldFailOnSchemaDiagnostics()` resolves, in order: the `__FLUX_FAIL_ON_SCHEMA_DIAGNOSTICS__` in-memory global (true or false — the false override wins over everything, including the ambient test-environment detection), then the same key in `process.env`, then the ambient `VITEST`/`PLAYWRIGHT` detection.
+- Fail-fast is a render-path post-compile check, not a lowering switch: in fail mode the render path attaches a diagnostics collector and, after the compile returns, throws `Schema compile diagnostics failed: file path code message` (collected error diagnostics as `cause`) when any error-severity diagnostic was emitted. A root-compile throw is caught by `SchemaRenderer` and surfaced through `reportImportFailure` → `env.notify('error', ...)`; region/fragment throws propagate into React's render stack.
+- In report mode (no fail flag) every diagnostic goes out through the reporter only and rendering is unchanged.
+- With the strict switch off, the render path compiles with the legacy diagnostics envelope (enabled + continueOnError, no reporter/collector) — rendering is unchanged.
+
+### Symbol Analysis Scope
+
+Compile-time symbol analysis resolves host formula namespaces: `FormulaCompiler` exposes an optional `getFormulaNamespaces(): Record<string, unknown>`, and `createSchemaCompiler` seeds its compile symbol table (and the depth-0 validation traversal) from it. Schema references to host namespaces such as `$Arr.sum(...)` therefore resolve instead of emitting false `unknown-import-alias` / `ambient-dollar-reference` diagnostics. The base builtins (`$Math`/`$JSON`/`$Date`) keep their curated member lists; names already resolvable are never overridden.
+
+### Corpus Gates
+
+- `apps/playground/src/complex-pages/__tests__/page-schemas-validation.test.ts` validates every complex-page schema with the render-canonical registry (`showcaseRegistry`) and the same strict options, asserting zero diagnostics of any severity — it is the render-equivalent gate for the playground corpus.
+- `pnpm flux:validate-pages <paths> --pattern '*.json' --strict [--setup <module>] --level validate` is the offline CLI: `--strict` passes `validation.strictMode: true` (severity parity with the render path), `--setup` loads a module that may register host formula namespaces and extra renderer packages before validation.
+- `pnpm flux-guide:validate` applies the same validation to the flux-guide markdown json blocks.
+
+### Fixture Escape Hatch
+
+Hosts and tests that must render known-illegal schema (for example to assert diagnostic behavior or exercise legacy shapes) opt out per mount with `strictValidation={false}`; the schema then compiles without the diagnostics pass, exactly as before this enforcement existed.
+
 ## Source Location Backtracking
 
 ### Purpose

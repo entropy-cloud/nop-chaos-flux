@@ -6,6 +6,7 @@ import { createSchemaRenderer } from '@nop-chaos/flux-react';
 import { formStateProbeRenderer, formulaCompiler } from '../test-support.js';
 import { formAdvancedRendererDefinitions } from '../index.js';
 import { formRendererDefinitions } from '@nop-chaos/flux-renderers-form';
+import { dataRendererDefinitions } from '@nop-chaos/flux-renderers-data';
 import { basicRendererDefinitions } from '@nop-chaos/flux-renderers-basic';
 import { installFormAdvancedTestHooks } from '../test-support.js';
 
@@ -15,6 +16,11 @@ const allDefinitions = [
   ...basicRendererDefinitions,
   ...formRendererDefinitions,
   ...formAdvancedRendererDefinitions,
+  // plan 595: pickerSchema fixtures render `type: 'list'` (a
+  // flux-renderers-data renderer); under render-path fail-fast an
+  // unregistered renderer type is a compile error, so the data package
+  // definitions must be part of the fixture registry.
+  ...dataRendererDefinitions,
   formStateProbeRenderer,
 ];
 
@@ -104,10 +110,9 @@ describe('G1: picker single-select keeps the current value on empty confirm', ()
             name: 'owner',
             label: 'Owner',
             pickerPopup: { title: 'Pick owner' },
-            options: [
-              { label: 'Alice', value: 'alice' },
-              { label: 'Bob', value: 'bob' },
-            ],
+            // plan 595: dropped the dead amis-ism `options` prop — the picker
+            // renderer never consumes static options (popup content comes from
+            // pickerSchema only); the silent drop is now a compile error.
           },
         ],
       },

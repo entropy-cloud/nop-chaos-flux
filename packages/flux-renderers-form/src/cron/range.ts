@@ -1,8 +1,8 @@
 // range 截断与全链路序列（count 纪元 = range.start ?? 1970-01-01，绝对语义不随 after 重置——向量 RG-04 判别）。
-import { parseCron } from './parse';
-import { nextRunAfter } from './next-run';
-import { matchesRepeatAnchor, type RepeatSpec } from './repeat';
-import type { CronScheduleValue } from './types';
+import { parseCron } from './parse.js';
+import { nextRunAfter } from './next-run.js';
+import { matchesRepeatAnchor, type RepeatSpec } from './repeat.js';
+import type { CronScheduleValue } from './types.js';
 
 // 枚举守卫：仅防病态输入死循环。已知边界：end-only range（countEpoch 回退 1970）配逐秒级 cron 时
 // 枚举会被守卫截断且与正常终止不可区分——向量未覆盖、C5 预览窗口（limit ≤20 + 有 start 用法）不触发；

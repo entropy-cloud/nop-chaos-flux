@@ -8,6 +8,9 @@ function renderInPage(body: BaseSchema) {
   return render(
     <SchemaRenderer
       schemaUrl="test://flex-disabled-gate"
+      // plan 595 opt-out: the fixture deliberately targets the unregistered
+      // `component:noop` action to pin that gated handlers never dispatch.
+      strictValidation={false}
       schema={{ type: 'page', body: [body] }}
       env={env}
       formulaCompiler={formulaCompiler}

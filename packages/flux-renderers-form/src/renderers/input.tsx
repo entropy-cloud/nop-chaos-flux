@@ -1,4 +1,4 @@
-import type { ChangeEvent, ComponentProps, ReactNode } from 'react';
+import type { ChangeEvent, ComponentProps } from 'react';
 import { useRef, useState } from 'react';
 import {
   type BaseSchema,
@@ -11,18 +11,15 @@ import {
 } from '@nop-chaos/flux-core';
 import {
   Input,
-  InputGroup,
-  InputGroupAddon,
   InputGroupButton,
   InputGroupInput,
-  InputGroupText,
   cn,
   useIsMobile,
 } from '@nop-chaos/ui';
-import { resolveFieldFrameErrorRefs, type FieldFrameInjectedAria } from '@nop-chaos/flux-react';
+import { resolveFieldFrameErrorRefs } from '@nop-chaos/flux-react';
 import { useStandardFieldHandle } from '../use-standard-field-handle.js';
 import { t } from '@nop-chaos/flux-i18n';
-import { Eye, EyeOff, XIcon } from 'lucide-react';
+import { Eye, EyeOff } from 'lucide-react';
 import { formFieldRules, formFieldContracts, useFormFieldFromProps } from '../field-utils.js';
 import {
   buttonGroupSelectSpecificContracts,
@@ -32,6 +29,7 @@ import {
   radioGroupSpecificContracts,
   selectSpecificContracts,
 } from './input-contracts.js';
+import { InputGroupFieldControl } from './input-group-field-control.js';
 import type {
   InputSchema,
 } from '../schemas.js';
@@ -100,102 +98,6 @@ export const textareaEnhancementFieldRules: SchemaFieldRule[] = [
   { key: 'hiddenFieldPolicy', kind: 'prop' },
 ];
 
-function mergeAriaSpace(...values: Array<string | undefined | false>): string | undefined {
-  const tokens = values.filter((v): v is string => Boolean(v && v.trim()));
-  return tokens.length > 0 ? tokens.join(' ') : undefined;
-}
-
-// FieldFrame's cloneElement injection face (shared flux-react contract type).
-// `aria-required` is part of the injected face but stays intentionally
-// unconsumed here: InputGroupFieldControl destructures explicitly (no rest
-// spread), so the key is dropped exactly as before this type adoption.
-type InputGroupFieldControlProps = FieldFrameInjectedAria & {
-  className?: string;
-  inputProps: ComponentProps<typeof InputGroupInput>;
-  prefix?: string;
-  suffix?: string;
-  counterText?: string;
-  showClearButton?: boolean;
-  onClear?: () => void;
-  revealSlot?: ReactNode;
-};
-
-function InputGroupFieldControl(props: InputGroupFieldControlProps) {
-  const {
-    className,
-    id: injectedId,
-    'aria-labelledby': injectedLabelledBy,
-    'aria-describedby': injectedDescribedBy,
-    'aria-errormessage': injectedErrorMessage,
-    'aria-invalid': injectedInvalid,
-    onFocus: injectedFocus,
-    onBlur: injectedBlur,
-    inputProps,
-    prefix,
-    suffix,
-    counterText,
-    showClearButton,
-    onClear,
-    revealSlot,
-  } = props;
-
-  const ownId = inputProps.id;
-  const ownLabelledBy = inputProps['aria-labelledby'];
-  const ownDescribedBy = inputProps['aria-describedby'];
-  const ownErrorMessage = inputProps['aria-errormessage'];
-  const ownInvalid = inputProps['aria-invalid'];
-  const ownFocus = inputProps.onFocus as ((event: unknown) => void) | undefined;
-  const ownBlur = inputProps.onBlur as ((event: unknown) => void) | undefined;
-
-  const mergedInputProps = {
-    ...inputProps,
-    id: ownId ?? injectedId,
-    'aria-labelledby': mergeAriaSpace(ownLabelledBy, injectedLabelledBy),
-    'aria-describedby': mergeAriaSpace(ownDescribedBy, injectedDescribedBy),
-    'aria-errormessage': ownErrorMessage ?? injectedErrorMessage,
-    'aria-invalid': ownInvalid ?? injectedInvalid,
-    onFocus: (event: unknown) => {
-      injectedFocus?.(event);
-      ownFocus?.(event);
-    },
-    onBlur: (event: unknown) => {
-      ownBlur?.(event);
-      injectedBlur?.(event);
-    },
-  };
-
-  return (
-    <InputGroup className={className}>
-      {prefix ? (
-        <InputGroupAddon align="inline-start">
-          <InputGroupText>{prefix}</InputGroupText>
-        </InputGroupAddon>
-      ) : null}
-      <InputGroupInput {...mergedInputProps} />
-      {suffix || counterText !== undefined || showClearButton || revealSlot ? (
-        <InputGroupAddon align="inline-end">
-          {suffix ? <InputGroupText>{suffix}</InputGroupText> : null}
-          {counterText !== undefined ? (
-            <span data-slot="input-counter" className="text-xs text-muted-foreground tabular-nums">
-              {counterText}
-            </span>
-          ) : null}
-          {showClearButton ? (
-            <InputGroupButton
-              size="icon-xs"
-              variant="ghost"
-              aria-label={t('flux.common.clear')}
-              onClick={onClear}
-            >
-              <XIcon className="pointer-events-none" />
-            </InputGroupButton>
-          ) : null}
-          {revealSlot}
-        </InputGroupAddon>
-      ) : null}
-    </InputGroup>
-  );
-}
 
 export function createInputRenderer(inputType: string) {
   return function InputRenderer(props: RendererComponentProps<InputSchema>) {
@@ -509,6 +411,9 @@ export const inputRendererDefinitions: RendererDefinition[] = [
     fields: [
       ...formFieldRules,
       { key: 'options', kind: 'prop', allowSource: true, sourceStateKey: 'optionsSourceState' },
+      // Runtime-injected source transient state (node-source-prop-controller
+      // publishes loading/error under this prop when `options` uses a source).
+      { key: 'optionsSourceState', kind: 'prop' },
       { key: 'dict', kind: 'prop' },
       { key: 'groups', kind: 'prop' },
       { key: 'multiple', kind: 'prop', valueType: 'boolean' },
@@ -522,6 +427,8 @@ export const inputRendererDefinitions: RendererDefinition[] = [
       { key: 'optionTemplate', kind: 'region', params: ['option', 'index'] },
       { key: 'searchSource', kind: 'prop' },
       { key: 'searchMergeMode', kind: 'prop' },
+      { key: 'placeholder', kind: 'prop' },
+      { key: 'defaultValue', kind: 'prop' },
     ],
     validation: createFieldValidation(),
     schemaValidator: validateInputFieldSchema,
@@ -556,6 +463,7 @@ export const inputRendererDefinitions: RendererDefinition[] = [
       { key: 'trueValue', kind: 'prop' },
       { key: 'falseValue', kind: 'prop' },
       { key: 'shape', kind: 'prop' },
+      { key: 'defaultValue', kind: 'prop' },
     ],
     validation: createFieldValidation(),
     schemaValidator: validateInputFieldSchema,
@@ -573,6 +481,7 @@ export const inputRendererDefinitions: RendererDefinition[] = [
       { key: 'option', kind: 'prop' },
       { key: 'trueValue', kind: 'prop' },
       { key: 'falseValue', kind: 'prop' },
+      { key: 'defaultValue', kind: 'prop' },
     ],
     validation: createFieldValidation(),
     schemaValidator: validateInputFieldSchema,
@@ -590,6 +499,9 @@ export const inputRendererDefinitions: RendererDefinition[] = [
     fields: [
       ...formFieldRules,
       { key: 'options', kind: 'prop', allowSource: true, sourceStateKey: 'optionsSourceState' },
+      // Runtime-injected source transient state (node-source-prop-controller
+      // publishes loading/error under this prop when `options` uses a source).
+      { key: 'optionsSourceState', kind: 'prop' },
       { key: 'direction', kind: 'prop' },
     ],
     validation: createFieldValidation(),
@@ -610,6 +522,7 @@ export const inputRendererDefinitions: RendererDefinition[] = [
     fields: [
       ...formFieldRules,
       { key: 'options', kind: 'prop', allowSource: true, sourceStateKey: 'optionsSourceState' },
+      { key: 'optionsSourceState', kind: 'prop' },
       { key: 'checkAll', kind: 'prop', valueType: 'boolean' },
       { key: 'maxSelected', kind: 'prop' },
       { key: 'minSelected', kind: 'prop' },
@@ -632,6 +545,7 @@ export const inputRendererDefinitions: RendererDefinition[] = [
     fields: [
       ...formFieldRules,
       { key: 'options', kind: 'prop', allowSource: true, sourceStateKey: 'optionsSourceState' },
+      { key: 'optionsSourceState', kind: 'prop' },
       { key: 'multiple', kind: 'prop', valueType: 'boolean' },
       { key: 'direction', kind: 'prop' },
       { key: 'dict', kind: 'prop' },
@@ -653,6 +567,15 @@ export const inputRendererDefinitions: RendererDefinition[] = [
       ...formFieldRules,
       { key: 'precision', kind: 'prop' },
       { key: 'precisionMode', kind: 'prop' },
+      { key: 'placeholder', kind: 'prop' },
+      { key: 'prefix', kind: 'prop' },
+      { key: 'suffix', kind: 'prop' },
+      { key: 'showStepper', kind: 'prop', valueType: 'boolean' },
+      { key: 'inputMode', kind: 'prop' },
+      { key: 'min', kind: 'prop' },
+      { key: 'max', kind: 'prop' },
+      { key: 'step', kind: 'prop' },
+      { key: 'defaultValue', kind: 'prop' },
     ],
     validation: createFieldValidation(),
     schemaValidator: validateInputFieldSchema,

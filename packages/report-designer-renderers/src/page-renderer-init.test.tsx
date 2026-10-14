@@ -122,6 +122,9 @@ describe('ReportDesignerPageRenderer initialization and failure paths', { timeou
     render(
       <SchemaRenderer
         schemaUrl="test://report/page-renderer-invalid-inputs"
+        // plan 595 opt-out: the fixture deliberately authors invalid required props
+        // to pin the renderer's runtime input-validation warning path.
+        strictValidation={false}
         schema={schema}
         env={monitoredEnv}
         registry={registry}

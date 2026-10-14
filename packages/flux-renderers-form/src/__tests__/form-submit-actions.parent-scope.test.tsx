@@ -177,7 +177,7 @@ describe('formRendererDefinitions - parent scope publication', () => {
                     {
                       type: 'button',
                       label: 'Submit via built-in submit',
-                      onClick: { action: 'submit' },
+                      onClick: { action: 'submitForm' },
                     },
                   ],
                 },

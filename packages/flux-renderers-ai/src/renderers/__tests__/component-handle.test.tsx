@@ -157,6 +157,10 @@ describe('ai-chat Layer C ComponentHandle (registration lifecycle + dispatch)', 
     render(
       <SchemaRenderer
         schemaUrl="test://ai/component-dispatch"
+        // plan 595 opt-out: the `component:sendMessage` target is registered by the
+        // ai-chat handle effect at runtime — compile-time target typing is
+        // statically unavailable for this fixture.
+        strictValidation={false}
         schema={{
           type: 'page',
           body: [

@@ -47,7 +47,7 @@ const calendarSchema = {
 const ganttSchema = {
   type: 'gantt',
   disabled: true,
-  data: [
+  tasks: [
     { id: 't1', text: 'Task 1', start: '2026-07-01', end: '2026-07-05', duration: 4, progress: 10 },
   ],
   columns: ['text', 'start', 'end', 'duration'],

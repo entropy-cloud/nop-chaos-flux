@@ -37,6 +37,34 @@ export const formFieldChromeRules: SchemaFieldRule[] = [
  * validator shapes). New fields added to `formFieldRules` MUST also be
  * added here.
  */
+const validationTriggerLiterals = ['change', 'blur', 'submit'].map((v) => ({
+  kind: 'literal' as const,
+  value: v,
+}));
+
+const validationVisibilityLiterals = ['touched', 'dirty', 'visited', 'submit'].map((v) => ({
+  kind: 'literal' as const,
+  value: v,
+}));
+
+const requiredDependentContract = (
+  displayName: string,
+  description: string,
+): RendererPropContract => ({
+  displayName,
+  description,
+  shape: {
+    kind: 'object',
+    fields: {
+      path: { kind: 'string' },
+      equals: { kind: 'unknown' },
+      message: { kind: 'string' },
+    },
+    optional: ['equals', 'message'],
+  },
+  editorType: 'object',
+});
+
 export const formFieldContracts: Record<string, RendererPropContract> = {
   readOnly: {
     displayName: 'Read Only',
@@ -50,6 +78,48 @@ export const formFieldContracts: Record<string, RendererPropContract> = {
     shape: { kind: 'boolean' },
     editorType: 'switch',
   },
+  validateOn: {
+    displayName: 'Validate On',
+    description: 'Validation triggers for this field (single trigger or array); defaults to the form policy.',
+    shape: {
+      kind: 'union',
+      anyOf: [
+        ...validationTriggerLiterals,
+        { kind: 'array', item: { kind: 'union', anyOf: validationTriggerLiterals } },
+      ],
+    },
+    editorType: 'select',
+  },
+  showErrorOn: {
+    displayName: 'Show Error On',
+    description: 'When this field\'s error becomes visible (single trigger or array); defaults to the form policy.',
+    shape: {
+      kind: 'union',
+      anyOf: [
+        ...validationVisibilityLiterals,
+        { kind: 'array', item: { kind: 'union', anyOf: validationVisibilityLiterals } },
+      ],
+    },
+    editorType: 'select',
+  },
+  equalsField: {
+    displayName: 'Equals Field',
+    description: 'Value must equal the current value of the named sibling field.',
+    shape: { kind: 'string' },
+  },
+  notEqualsField: {
+    displayName: 'Not Equals Field',
+    description: 'Value must differ from the current value of the named sibling field.',
+    shape: { kind: 'string' },
+  },
+  requiredWhen: requiredDependentContract(
+    'Required When',
+    'Field becomes mandatory when the referenced scope path equals the given value.',
+  ),
+  requiredUnless: requiredDependentContract(
+    'Required Unless',
+    'Field is mandatory unless the referenced scope path equals the given value.',
+  ),
   labelAlign: {
     displayName: 'Label Align',
     description: 'Position of the label relative to the input. top stacks; left/right are inline.',
@@ -80,6 +150,15 @@ export const formFieldRules: SchemaFieldRule[] = [
   { key: 'name', kind: 'prop' },
   { key: 'value', kind: 'prop' },
   ...formBooleanFieldRules,
+  // Compiler-consumed validation behavior/rules (flux-compiler
+  // validation-collection + validation-lowering read these from any
+  // field-contributing schema node).
+  { key: 'validateOn', kind: 'prop' },
+  { key: 'showErrorOn', kind: 'prop' },
+  { key: 'equalsField', kind: 'prop' },
+  { key: 'notEqualsField', kind: 'prop' },
+  { key: 'requiredWhen', kind: 'prop' },
+  { key: 'requiredUnless', kind: 'prop' },
   ...formFieldChromeRules,
 ];
 

@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import type { ApiRequestContext, RendererEnv } from '@nop-chaos/flux-core';
 import { resetFluxI18n, initFluxI18n } from '@nop-chaos/flux-i18n';
@@ -235,11 +235,13 @@ describe('input-file — upload success state machine', () => {
 
 describe('input-file — upload failure & error handling', () => {
   it('enters error state and does NOT pollute the field value on failure', async () => {
-    const onUploadError = vi.fn();
     renderSchema(
       buildForm('input-file', 'file', {
         uploadAction: { action: 'ajax', args: { url: '/api/upload-fail' } },
-        onUploadError: { action: 'component:method', componentId: 'noop', method: 'noop' },
+        // plan 595: dropped the dead `component:method`-to-`noop` placeholder —
+        // componentId "noop" matches no node, so compile-time target validation
+        // rightly rejects it; the assertions below only observe the DOM error
+        // state and the form value.
       }),
     );
     // Override: attach a spy by registering a tiny event capture via scope is heavy;
@@ -257,7 +259,6 @@ describe('input-file — upload failure & error handling', () => {
     await submit();
     // Value stays undefined (no pollution).
     expect(submitCalls[0].file).toBeUndefined();
-    void onUploadError;
   });
 
   it('U2: surfaces the server error message (propagates to both DOM and onUploadError payload)', async () => {

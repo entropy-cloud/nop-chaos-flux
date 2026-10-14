@@ -1898,7 +1898,6 @@
                             {
                               "type": "radio-group",
                               "name": "taskDetailDate",
-                              "horizontal": false,
                               "className": "sd-choice-list",
                               "options": [
                                 {
@@ -1998,7 +1997,6 @@
                             {
                               "type": "radio-group",
                               "name": "taskDetailRecur",
-                              "horizontal": false,
                               "className": "sd-choice-list",
                               "options": [
                                 {
@@ -2139,7 +2137,6 @@
                             {
                               "type": "radio-group",
                               "name": "taskDetailListLabel",
-                              "horizontal": false,
                               "className": "sd-choice-list",
                               "options": [
                                 {
@@ -2252,7 +2249,6 @@
                             {
                               "type": "radio-group",
                               "name": "list",
-                              "horizontal": false,
                               "className": "sd-choice-list",
                               "options": [
                                 {

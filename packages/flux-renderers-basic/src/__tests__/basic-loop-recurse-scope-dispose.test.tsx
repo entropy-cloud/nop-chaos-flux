@@ -156,6 +156,8 @@ describe('loop/recurse itemData — one-shot bindings scope pairing (09-01)', ()
         data={{ nodes: [{ id: 'root', name: 'Root', children: [] }] }}
         env={env}
         formulaCompiler={formulaCompiler}
+        // plan 595 opt-out: the recurse itemData scratch scope surfaces keys to sibling regions — statically opaque.
+        strictValidation={false}
         onRuntimeChange={(runtime) => {
           holder.runtime = runtime as RendererRuntime;
         }}
@@ -182,6 +184,9 @@ describe('loop/recurse itemData — one-shot bindings scope pairing (09-01)', ()
         }}
         env={env}
         formulaCompiler={formulaCompiler}
+        // plan 595 opt-out (rerender must match the mount): the recurse itemData
+        // scratch scope surfaces keys to sibling regions — statically opaque.
+        strictValidation={false}
         onRuntimeChange={(runtime) => {
           holder.runtime = runtime as RendererRuntime;
         }}
@@ -220,6 +225,8 @@ describe('loop/recurse itemData — one-shot bindings scope pairing (09-01)', ()
         }}
         env={env}
         formulaCompiler={formulaCompiler}
+        // plan 595 opt-out (rerender must match the mount): statically opaque recurse scratch keys.
+        strictValidation={false}
         onRuntimeChange={(runtime) => {
           holder.runtime = runtime as RendererRuntime;
         }}

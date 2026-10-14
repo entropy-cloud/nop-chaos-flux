@@ -15,11 +15,13 @@ function renderEditTable(options: {
   columns?: Array<Record<string, unknown>>;
   rowSelection?: Record<string, unknown>;
   selectionStatePath?: string;
+  strictValidation?: boolean;
 }) {
   const SchemaRenderer = createDataSchemaRenderer([]);
   render(
     <SchemaRenderer
       schemaUrl="test://data/table-cell-edit-render"
+      strictValidation={options.strictValidation}
       schema={{
         type: 'page',
         body: [
@@ -109,8 +111,11 @@ describe('table cell edit — quickEdit coexistence (gd-cell-edit-quickedit-coex
 describe('table cell edit — read-only fallbacks', () => {
   it('unknown editor kind falls back to a read-only cell with a dev warn (gd-cell-edit-no-editor)', () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    // plan 595 opt-out: the unknown editor kind is deliberate — the test pins the
+    // renderer's own read-only fallback + dev warn for unsupported editor values.
     renderEditTable({
       columns: [{ name: 'name', label: 'Name', editable: { editor: 'color-picker' } }],
+      strictValidation: false,
     });
 
     expect(editableCells()).toHaveLength(0);

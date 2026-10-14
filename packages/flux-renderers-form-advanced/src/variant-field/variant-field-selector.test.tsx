@@ -469,6 +469,8 @@ describe('variant-field renderer selector behavior', () => {
                 : { variant: 'text' },
           }),
         }),
+        // plan 595: publish the method list so compile-time import validation can verify variantLib:detect.
+        getStaticMeta: async () => ({ namespaceMethods: ['detect'] }),
       }),
     };
     const SchemaRenderer = createSchemaRenderer([

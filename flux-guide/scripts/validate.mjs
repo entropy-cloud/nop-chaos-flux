@@ -17,9 +17,11 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = resolve(__dirname, '../..');
 
 // ─── Real Flux registry (from dist) ─────────────────────────────────────────
-// Historical 9-package set, preserved so this script's validation results stay
-// comparable over time. Newer renderer families (scheduling, ai) are validated
-// by validate-pages.mjs via buildFullRegistry().
+// Canonical renderer registry, aligned with shared.mjs REGISTER_PACKAGES (the
+// same set validate-pages.mjs and the playground gate use), plus
+// flux-renderers-dashboard. The historical 9-package subset produced
+// `unknown-renderer-type` false positives for real renderers (ai, scheduling,
+// dashboard) — same class of gap plan 595 Phase 1 fixed for validate-pages.mjs.
 
 const VALIDATE_PACKAGES = [
   { pkg: 'flux-renderers-basic', fn: 'registerBasicRenderers' },
@@ -30,7 +32,11 @@ const VALIDATE_PACKAGES = [
   { pkg: 'flux-renderers-content', fn: 'registerContentRenderers' },
   { pkg: 'flux-renderers-mobile', fn: 'registerMobileRenderers' },
   { pkg: 'flux-code-editor', fn: 'registerCodeEditorRenderers' },
+  { pkg: 'flux-renderers-scheduling', fn: 'registerSchedulingRenderers' },
+  { pkg: 'flow-designer-renderers', fn: 'registerFlowDesignerRenderers' },
+  { pkg: 'flux-renderers-ai', fn: 'registerAiRenderers' },
   { pkg: 'flux-renderers-industrial', fn: 'registerScadaRenderers' },
+  { pkg: 'flux-renderers-dashboard', fn: 'registerDashboardRenderers' },
 ];
 
 const registry = await buildRegistry(VALIDATE_PACKAGES);

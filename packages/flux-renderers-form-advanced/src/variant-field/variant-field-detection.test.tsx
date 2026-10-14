@@ -152,6 +152,8 @@ describe('variant-field renderer detection behavior', () => {
             data: { variant: 'second' },
           }),
         }),
+        // plan 595: publish the method list so compile-time import validation can verify variantLib:detect.
+        getStaticMeta: async () => ({ namespaceMethods: ['detect'] }),
       })),
     };
     const SchemaRenderer = createFormSchemaRenderer();
@@ -210,6 +212,8 @@ describe('variant-field renderer detection behavior', () => {
           kind: 'import' as const,
           invoke,
         }),
+        // plan 595: publish the method list so compile-time import validation can verify variantLib:detect.
+        getStaticMeta: async () => ({ namespaceMethods: ['detect'] }),
       })),
     };
     const SchemaRenderer = createFormSchemaRenderer();
@@ -269,6 +273,8 @@ describe('variant-field renderer detection behavior', () => {
           kind: 'import' as const,
           invoke,
         }),
+        // plan 595: publish the method list so compile-time import validation can verify variantLib:detect.
+        getStaticMeta: async () => ({ namespaceMethods: ['detect'] }),
       })),
     };
     const SchemaRenderer = createFormSchemaRenderer();
@@ -327,6 +333,8 @@ describe('variant-field renderer detection behavior', () => {
             data: { variant: 'missing' },
           }),
         }),
+        // plan 595: publish the method list so compile-time import validation can verify variantLib:detect.
+        getStaticMeta: async () => ({ namespaceMethods: ['detect'] }),
       })),
     };
     const SchemaRenderer = createFormSchemaRenderer();
@@ -387,6 +395,8 @@ describe('variant-field renderer detection behavior', () => {
             };
           },
         }),
+        // plan 595: publish the method list so compile-time import validation can verify variantLib:detect.
+        getStaticMeta: async () => ({ namespaceMethods: ['detect'] }),
       })),
     };
     const SchemaRenderer = createFormSchemaRenderer();
@@ -464,6 +474,8 @@ describe('variant-field renderer detection behavior', () => {
               pendingDetects.push(resolve);
             }),
         }),
+        // plan 595: publish the method list so compile-time import validation can verify variantLib:detect.
+        getStaticMeta: async () => ({ namespaceMethods: ['detect'] }),
       })),
     };
     const SchemaRenderer = createFormSchemaRenderer();
@@ -536,6 +548,8 @@ describe('variant-field renderer detection behavior', () => {
             throw new Error('variant detect failed');
           },
         }),
+        // plan 595: publish the method list so compile-time import validation can verify variantLib:detect.
+        getStaticMeta: async () => ({ namespaceMethods: ['detect'] }),
       })),
     };
     const SchemaRenderer = createFormSchemaRenderer();
@@ -600,6 +614,8 @@ describe('variant-field renderer detection behavior', () => {
             });
           },
         }),
+        // plan 595: publish the method list so compile-time import validation can verify variantLib:detect.
+        getStaticMeta: async () => ({ namespaceMethods: ['detect'] }),
       })),
     };
     const SchemaRenderer = createFormSchemaRenderer();

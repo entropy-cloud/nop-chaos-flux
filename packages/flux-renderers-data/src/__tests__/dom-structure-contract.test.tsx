@@ -2,12 +2,12 @@ import React from 'react';
 import { afterEach, describe, expect, it } from 'vitest';
 import { cleanup, render } from '@testing-library/react';
 import { assertRendererRootAnchors } from '@nop-chaos/flux-react';
-import { createDataSchemaRenderer, env, formulaCompiler } from '../test-support.js';
+import { buttonRenderer, createDataSchemaRenderer, env, formulaCompiler } from '../test-support.js';
 
 afterEach(cleanup);
 
 function renderPage(body: Record<string, unknown>[]) {
-  const SchemaRenderer = createDataSchemaRenderer();
+  const SchemaRenderer = createDataSchemaRenderer([buttonRenderer]);
   return render(
     <SchemaRenderer
       schemaUrl="test://dom-structure-contract-data"

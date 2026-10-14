@@ -36,9 +36,9 @@
 
 ## 2.1 money format 显示协议（DESIGN-ACK-NOT-IMPL——协议已裁决，实现待 host demand；missing-components L2.5）
 
-**schema 字段（命名经 naming pass，沿用 AMIS 源 `format: 'currency'`）**：
+**schema 字段（命名经 naming pass，沿用 AMIS 源 `format: 'currency'`）**——注意这是**已裁决未实现**的目标协议（DESIGN-ACK-NOT-IMPL），非当前可运行 schema：当前 `input-number.format` 仅接受 `'email' | 'url' | 'integer'`：
 
-```json
+```text
 {
   "type": "input-number",
   "name": "amount",

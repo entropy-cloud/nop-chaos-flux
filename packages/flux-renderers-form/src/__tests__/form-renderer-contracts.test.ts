@@ -7,7 +7,7 @@ describe('form renderer static contracts', () => {
     expect(formRendererDefinition.rendererTraits).toContain('semantic-owner');
     expect(formRendererDefinition.scopeExportContracts?.$form?.kind).toBe('object');
     expect(formRendererDefinition.componentCapabilityContracts?.map((item) => item.handle)).toEqual(
-      ['submit', 'validate', 'reset', 'setValue', 'setValues', 'getValues'],
+      ['submit', 'refresh', 'validate', 'reset', 'setValue', 'setValues', 'getValues'],
     );
     expect(formRendererDefinition.eventContracts?.submitAction?.displayName).toBe('Submit');
   });

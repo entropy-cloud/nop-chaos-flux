@@ -304,6 +304,7 @@ export const treeControlRendererDefinitions: RendererDefinition[] = [
     fields: [
       ...formFieldRules,
       { key: 'options', kind: 'prop', allowSource: true, sourceStateKey: 'optionsSourceState' },
+      { key: 'optionsSourceState', kind: 'prop' },
       { key: 'treeMode', kind: 'prop' },
       { key: 'childrenKey', kind: 'prop' },
       { key: 'labelField', kind: 'prop' },
@@ -318,6 +319,7 @@ export const treeControlRendererDefinitions: RendererDefinition[] = [
       { key: 'searchSource', kind: 'prop' },
       { key: 'enableNodePath', kind: 'prop', valueType: 'boolean' },
       { key: 'pathSeparator', kind: 'prop' },
+      { key: 'placeholder', kind: 'prop' },
     ],
     validation: createFieldValidation(),
     schemaValidator: validateInputFieldSchema,
@@ -359,6 +361,7 @@ export const treeControlRendererDefinitions: RendererDefinition[] = [
     fields: [
       ...formFieldRules,
       { key: 'options', kind: 'prop', allowSource: true, sourceStateKey: 'optionsSourceState' },
+      { key: 'optionsSourceState', kind: 'prop' },
       { key: 'treeMode', kind: 'prop' },
       { key: 'childrenKey', kind: 'prop' },
       { key: 'labelField', kind: 'prop' },

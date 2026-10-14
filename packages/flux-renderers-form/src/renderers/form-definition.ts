@@ -103,6 +103,58 @@ export const formRendererDefinition: RendererDefinition = {
   rendererClass: 'flux-owner-renderer',
   rendererTraits: ['semantic-owner', 'interaction-owner'],
   propContracts: {
+    validateOn: {
+      displayName: 'Validate On',
+      description:
+        'Default validation triggers for fields in this form (single trigger or array). Default: blur.',
+      shape: {
+        kind: 'union',
+        anyOf: [
+          { kind: 'literal', value: 'change' },
+          { kind: 'literal', value: 'blur' },
+          { kind: 'literal', value: 'submit' },
+          {
+            kind: 'array',
+            item: {
+              kind: 'union',
+              anyOf: [
+                { kind: 'literal', value: 'change' },
+                { kind: 'literal', value: 'blur' },
+                { kind: 'literal', value: 'submit' },
+              ],
+            },
+          },
+        ],
+      },
+      editorType: 'select',
+    },
+    showErrorOn: {
+      displayName: 'Show Error On',
+      description:
+        'Default error-visibility policy for fields in this form (single trigger or array). Default: touched + submit.',
+      shape: {
+        kind: 'union',
+        anyOf: [
+          { kind: 'literal', value: 'touched' },
+          { kind: 'literal', value: 'dirty' },
+          { kind: 'literal', value: 'visited' },
+          { kind: 'literal', value: 'submit' },
+          {
+            kind: 'array',
+            item: {
+              kind: 'union',
+              anyOf: [
+                { kind: 'literal', value: 'touched' },
+                { kind: 'literal', value: 'dirty' },
+                { kind: 'literal', value: 'visited' },
+                { kind: 'literal', value: 'submit' },
+              ],
+            },
+          },
+        ],
+      },
+      editorType: 'select',
+    },
     data: {
       shape: { kind: 'object', fields: {} },
       displayName: 'Initial Data',
@@ -314,6 +366,12 @@ export const formRendererDefinition: RendererDefinition = {
       description: 'Submit the current form instance.',
     },
     {
+      handle: 'refresh',
+      displayName: 'Refresh',
+      description:
+        'Re-runs the form loadAction (same channel the loadAction event contract backs). Takes no args.',
+    },
+    {
       handle: 'validate',
       displayName: 'Validate',
       description: 'Validate the current form and return a validation result.',
@@ -400,6 +458,8 @@ export const formRendererDefinition: RendererDefinition = {
     { key: 'body', kind: 'region', regionKey: 'body' },
     { key: 'actions', kind: 'region', regionKey: 'actions' },
     { key: 'data', kind: 'prop' },
+    { key: 'validateOn', kind: 'prop' },
+    { key: 'showErrorOn', kind: 'prop' },
     { key: 'autoInit', kind: 'prop', valueType: 'boolean' },
     { key: 'initAction', kind: 'event' },
     { key: 'loadAction', kind: 'event' },

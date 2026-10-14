@@ -342,6 +342,12 @@ describe('condition-builder renderer integration', () => {
 
   it('fails honestly when custom editor schema targets an unsupported renderer', async () => {
     cleanup();
+    // plan 595: the fixture authors an error-level diagnostic (unknown editor
+    // renderer) and pins the builder's honest degradation. Report-only mode
+    // keeps the strict diagnostics envelope (the unknown editor node is
+    // dropped) while suppressing the fail-fast throw.
+    const previousFailFlag = (globalThis as Record<string, unknown>).__FLUX_FAIL_ON_SCHEMA_DIAGNOSTICS__;
+    (globalThis as Record<string, unknown>).__FLUX_FAIL_ON_SCHEMA_DIAGNOSTICS__ = false;
     const SchemaRenderer = createSchemaRenderer(allDefs);
 
     const view = render(
@@ -396,6 +402,7 @@ describe('condition-builder renderer integration', () => {
     });
     expect(screen.queryByDisplayValue('admin')).toBeNull();
     expect(screen.queryByLabelText('Condition value')).toBeNull();
+    (globalThis as Record<string, unknown>).__FLUX_FAIL_ON_SCHEMA_DIAGNOSTICS__ = previousFailFlag;
   });
 
   it('updates page scope when used without a form owner', async () => {

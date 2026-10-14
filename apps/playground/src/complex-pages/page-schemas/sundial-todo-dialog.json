@@ -95,7 +95,6 @@
                         {
                           "type": "radio-group",
                           "name": "todoDate",
-                          "horizontal": false,
                           "options": [
                             {
                               "label": "今天",
@@ -230,7 +229,6 @@
                         {
                           "type": "radio-group",
                           "name": "todoList",
-                          "horizontal": false,
                           "options": [
                             {
                               "label": "收件箱",

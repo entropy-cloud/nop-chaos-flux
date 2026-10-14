@@ -87,7 +87,7 @@ describe('dialog form edit with explicit ${field} api.data templates', () => {
                         type: 'button',
                         id: 'submit',
                         label: 'OK',
-                        level: 'primary',
+                        variant: 'primary',
                         onClick: { action: 'submitForm', then: { action: 'closeSurface' } },
                       },
                     ],

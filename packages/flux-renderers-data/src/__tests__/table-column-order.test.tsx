@@ -1,6 +1,6 @@
 import { cleanup, render, waitFor } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
-import { createDataSchemaRenderer, env, formulaCompiler } from '../test-support.js';
+import { buttonRenderer, createDataSchemaRenderer, env, formulaCompiler } from '../test-support.js';
 
 /**
  * 验证 flux CRUD 表格的列渲染顺序，包括：
@@ -11,7 +11,7 @@ import { createDataSchemaRenderer, env, formulaCompiler } from '../test-support.
 describe('CRUD table column order', () => {
   it('renders columns in schema order with correct headers', async () => {
     cleanup();
-    const SchemaRenderer = createDataSchemaRenderer();
+    const SchemaRenderer = createDataSchemaRenderer([buttonRenderer]);
     render(
       <SchemaRenderer
         schemaUrl="test://column-order"
@@ -55,7 +55,7 @@ describe('CRUD table column order', () => {
 
   it('renders selection checkbox column when selection is enabled', async () => {
     cleanup();
-    const SchemaRenderer = createDataSchemaRenderer();
+    const SchemaRenderer = createDataSchemaRenderer([buttonRenderer]);
     render(
       <SchemaRenderer
         schemaUrl="test://column-order-selection"
@@ -97,7 +97,7 @@ describe('CRUD table column order', () => {
 
   it('matches cell values to correct columns when selection is enabled', async () => {
     cleanup();
-    const SchemaRenderer = createDataSchemaRenderer();
+    const SchemaRenderer = createDataSchemaRenderer([buttonRenderer]);
     render(
       <SchemaRenderer
         schemaUrl="test://column-order-cell"

@@ -1,7 +1,10 @@
 {
   "type": "dynamic-renderer",
-  "schemaApi": {
-    "url": "/api/widgets/profile-card"
+  "loadAction": {
+    "action": "ajax",
+    "args": {
+      "url": "/api/widgets/profile-card"
+    }
   },
   "body": [
     {
