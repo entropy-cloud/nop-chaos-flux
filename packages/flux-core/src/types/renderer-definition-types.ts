@@ -36,6 +36,28 @@ export interface RendererPropContract {
   required?: boolean;
 }
 
+/**
+ * Field-entry contract carrier (RM-3, plan 605): a `fields` entry may carry
+ * its value shape + tooling metadata inline via `contract`, so a prop no
+ * longer needs a second declaration in `propContracts`. `shape` is required,
+ * matching `RendererPropContract`. `required` carries the same dual
+ * semantics as `propContracts.required`: a compile-time missing-property
+ * diagnostic plus the tooling surface (distinct from `SchemaFieldRule.required`,
+ * which is nested-validation semantics). `payload` is reserved for the RM-5
+ * event-contract convergence and is not consumed yet. The contract never
+ * materializes into `TemplateNode` — it is read through
+ * `resolveRendererPropContracts` at authoring/validation time.
+ */
+export interface RendererFieldContract {
+  shape: FluxValueShape;
+  displayName?: string;
+  description?: string;
+  editorType?: string;
+  defaultValue?: unknown;
+  required?: boolean;
+  payload?: FluxValueShape;
+}
+
 export interface RendererEventContract {
   displayName: string;
   description?: string;

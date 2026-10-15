@@ -7,6 +7,7 @@ import type {
 import type {
   RendererDefinition,
 } from './renderer-core.js';
+import { resolveRendererPropContracts } from '../renderer-prop-contracts.js';
 import type {
   RendererEventContract,
   RendererPropContract,
@@ -78,7 +79,7 @@ export function resolveRendererAuthoringContract(
     rendererType: definition.type,
     rendererClass: definition.rendererClass ?? 'instance-renderer',
     rendererTraits: definition.rendererTraits ?? [],
-    editableProps: definition.propContracts ?? {},
+    editableProps: resolveRendererPropContracts(definition),
     events: definition.eventContracts ?? {},
     componentCapabilityContracts: definition.componentCapabilityContracts ?? [],
     scopeExports: definition.scopeExportContracts ?? {},

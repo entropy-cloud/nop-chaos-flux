@@ -599,6 +599,8 @@ interface PageRuntime {
 
 Every renderer that has a finite enum / literal / boolean / number / string prop should register a `propContracts[key]` entry. Without it, the schema compiler's `validateFluxValueShape` early-returns and the typo silently reaches runtime. See `docs/architecture/renderer-runtime.md §propContracts Coverage Discipline` for the full checklist; canonical patterns below.
 
+RM-3 inline alternative: a `fields` entry with `kind: 'prop'` may carry `contract: { shape, displayName?, editorType?, required? }` directly (`shape` required) instead of a second `propContracts` declaration — both channels feed the same validation and tooling surface via `resolveRendererPropContracts`.
+
 ```ts
 import type { RendererDefinition, FluxValueShape } from '@nop-chaos/flux-core';
 

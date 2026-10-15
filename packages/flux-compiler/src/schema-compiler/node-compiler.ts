@@ -1,5 +1,6 @@
 import {
   toCompiledRendererContract,
+  resolveRendererPropContracts,
 } from '@nop-chaos/flux-core';
 import type {
   ActionSchema,
@@ -115,6 +116,7 @@ export function createCompileSingleNode(
     depth: number,
   ): TemplateNode {
     const renderer = options.renderer;
+    const contracts = resolveRendererPropContracts(renderer);
     const path = options.path;
     const fieldInspection = inspectSchemaNodeFields(schema, renderer, path, diagnostics, false);
     const metaProgram = buildMetaProgram(schema, renderer, expressionCompiler);
@@ -339,7 +341,7 @@ export function createCompileSingleNode(
       // event/action/literal fields as preserve-literal envelopes and
       // region/schema fields as extracted regions, so the props program never
       // expression-evaluates nested action/schema templates.
-      const schemaDefinitionMatch = findSchemaDefinitionShape(renderer.propContracts?.[key]);
+      const schemaDefinitionMatch = findSchemaDefinitionShape(contracts[key]);
       const classifiedValue = schemaDefinitionMatch
         ? classifySchemaDefinitionValue({
             value,

@@ -1,5 +1,5 @@
 import type { RendererDefinition, RendererPlugin } from '@nop-chaos/flux-core';
-import { BASE_SCHEMA_FIELDS, COMMON_EVENT_FIELDS, META_FIELDS } from '@nop-chaos/flux-core';
+import { BASE_SCHEMA_FIELDS, COMMON_EVENT_FIELDS, META_FIELDS, resolveRendererPropContracts } from '@nop-chaos/flux-core';
 
 export function applyWrapComponentPlugins(
   renderer: RendererDefinition,
@@ -25,7 +25,7 @@ export function getSchemaNamespace(key: string): string | undefined {
 }
 
 export function hasClosedPropModel(renderer: RendererDefinition): boolean {
-  return Object.keys(renderer.propContracts ?? {}).length > 0;
+  return Object.keys(resolveRendererPropContracts(renderer)).length > 0;
 }
 
 export function getAcceptedSchemaKeys(renderer: RendererDefinition): Set<string> {

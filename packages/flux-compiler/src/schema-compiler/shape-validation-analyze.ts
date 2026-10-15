@@ -3,7 +3,12 @@ import type {
   RendererPlugin,
   RendererRegistry,
 } from '@nop-chaos/flux-core';
-import { isPlainObject, isSchemaInput, validateRegionParams } from '@nop-chaos/flux-core';
+import {
+  isPlainObject,
+  isSchemaInput,
+  validateRegionParams,
+  resolveRendererPropContracts,
+} from '@nop-chaos/flux-core';
 import {
   appendJsonPointer,
   schemaPathToJsonPointer,
@@ -234,12 +239,13 @@ function analyzeTypedSchemaDefinitionItem(input: {
   startsHostBoundary: boolean;
   analyzeSchemaInput: AnalyzeSchemaInputFn;
 }): void {
+  const inputPropContracts = resolveRendererPropContracts(input.renderer);
   for (const [fieldKey, fieldValue] of Object.entries(input.item)) {
     if (fieldValue === undefined) {
       continue;
     }
 
-    const nestedMatch = findSchemaDefinitionShape(input.renderer.propContracts?.[fieldKey]);
+    const nestedMatch = findSchemaDefinitionShape(inputPropContracts[fieldKey]);
     if (nestedMatch) {
       analyzeSchemaDefinitionField({
         value: fieldValue,
@@ -343,6 +349,8 @@ export function analyzeSchemaInput(
     renderer,
     plugins as RendererPlugin[] | undefined,
   );
+  const wrappedPropContracts = resolveRendererPropContracts(wrappedRenderer);
+
   const schema = inputValue as BaseSchema;
   const nodeImports = Array.isArray(schema['xui:imports'])
     ? schema['xui:imports'].filter(isImportSpecCandidate)
@@ -425,7 +433,7 @@ export function analyzeSchemaInput(
     const value = schema[key];
     const rule = classifyField(wrappedRenderer, key);
 
-    const schemaDefinitionMatch = findSchemaDefinitionShape(wrappedRenderer.propContracts?.[key]);
+    const schemaDefinitionMatch = findSchemaDefinitionShape(wrappedPropContracts[key]);
 
     if (schemaDefinitionMatch) {
       if (

@@ -34,7 +34,7 @@
 - RM-0. 政策与基线（schema-retention policy owner 文档 + 元模型权威声明 + 两处死代码清理）: `done`（plan `docs/plans/602-rm0-retention-policy-plan.md`，closure audit agent_5203f11c approved 2026-10-15；裁决表 12 行生效，RM-8 范围钉定=保留通道钉文档+scanner 门禁）
 - RM-1. 类型层收口（propSchema 死字段删除、CompiledRendererContract 派生化、registry 入参类型化）: `done`（plan `docs/plans/603-rm1-type-layer-plan.md`，closure audit agent_0714ce30 approved 2026-10-15；执行发现：CompiledRendererContract 派生形态受型变约束收敛为"S 仅协变槽+非泛型 ValidationContributor 引用+非泛型键 Pick"，涟漪约 185 文件声明级清扫，`pnpm -r typecheck` 42/42 口径入 plan）
 - RM-2. 帧族收敛（wrap/frameRootTag/frameWrap 单权威路径 + FrameWrapMode 词表归一）: `done`（plan `docs/plans/604-rm2-frame-family-plan.md`，closure audit agent_c198acc9 approved 2026-10-15；definition 级 frameWrap 经 resolver 三参单路径生效，B3 fieldset 语义自此真实生效[此前死声明，分析报告 A5/roadmap 基线两处已就地勘误]）
-- RM-3. fields+propContracts 合并·阶段一（新形态落地 + 编译器/门禁双读）: `todo`
+- RM-3. fields+propContracts 合并·阶段一（新形态落地 + 编译器/门禁双读）: `done`（plan `docs/plans/605-rm3-field-contract-dual-read-plan.md`，closure audit agent_e5ad2fd8 approved 2026-10-15；新形态=fields 条目 contract 成员[shape 必填]，集中双读 helper resolveRendererPropContracts，七消费位切换含编译侧 schema-definition 分类；RM-4 承接全量迁移+旧形态删除）
 - RM-4. fields+propContracts 合并·阶段二（全量迁移 + 旧形态删除）: `todo`
 - RM-5. 事件契约单源化（eventContracts 收敛至字段条目）: `todo`
 - RM-6. scope 符号单源化（scopeExportContracts+injectedLocals 合并）: `todo`
@@ -60,17 +60,17 @@
 
 ## Phases 表
 
-| 工作项                     | 状态   | Owner 事实源                          | 依赖       | 复用                                       | Plan                                             |
-| -------------------------- | ------ | ------------------------------------- | ---------- | ------------------------------------------ | ------------------------------------------------ |
-| RM-0 政策与基线            | `done` | 分析报告 §5.4 + `renderer-runtime.md` | 无         | 既有文档骨架                               | [602](../plans/602-rm0-retention-policy-plan.md) |
-| RM-1 类型层收口            | `done` | 分析报告 A1/B6/B7/C                   | RM-0       | contract 门禁                              | [603](../plans/603-rm1-type-layer-plan.md)       |
-| RM-2 帧族收敛              | `done` | 分析报告 A5；plan 460 B3 语义         | RM-1       | strict validation 语料、判别变异           | [604](../plans/604-rm2-frame-family-plan.md)     |
-| RM-3 双声明合并·一         | `todo` | 分析报告 A2/A3                        | RM-1       | schema-prop-coverage、defineRendererFamily | —                                                |
-| RM-4 双声明合并·二         | `todo` | 同上                                  | RM-3       | contract-honesty、validate-pages --strict  | —                                                |
-| RM-5 事件契约单源化        | `todo` | 分析报告 A3                           | RM-4       | contract-honesty                           | —                                                |
-| RM-6 scope 符号单源化      | `todo` | 分析报告 A4                           | RM-3       | symbol-helpers 测试                        | —                                                |
-| RM-7 只读硬化+raw 读迁移   | `todo` | 分析报告 §5.2/5.4 #2#3                | RM-0       | node-runtime 解析缓存管线                  | —                                                |
-| RM-8 公开 API raw 通道收口 | `todo` | RM-0 裁决表 §5.4 #7~#12               | RM-0、RM-7 | plan 132 先例                              | —                                                |
+| 工作项                     | 状态   | Owner 事实源                          | 依赖       | 复用                                       | Plan                                                     |
+| -------------------------- | ------ | ------------------------------------- | ---------- | ------------------------------------------ | -------------------------------------------------------- |
+| RM-0 政策与基线            | `done` | 分析报告 §5.4 + `renderer-runtime.md` | 无         | 既有文档骨架                               | [602](../plans/602-rm0-retention-policy-plan.md)         |
+| RM-1 类型层收口            | `done` | 分析报告 A1/B6/B7/C                   | RM-0       | contract 门禁                              | [603](../plans/603-rm1-type-layer-plan.md)               |
+| RM-2 帧族收敛              | `done` | 分析报告 A5；plan 460 B3 语义         | RM-1       | strict validation 语料、判别变异           | [604](../plans/604-rm2-frame-family-plan.md)             |
+| RM-3 双声明合并·一         | `done` | 分析报告 A2/A3                        | RM-1       | schema-prop-coverage、defineRendererFamily | [605](../plans/605-rm3-field-contract-dual-read-plan.md) |
+| RM-4 双声明合并·二         | `todo` | 同上                                  | RM-3       | contract-honesty、validate-pages --strict  | —                                                        |
+| RM-5 事件契约单源化        | `todo` | 分析报告 A3                           | RM-4       | contract-honesty                           | —                                                        |
+| RM-6 scope 符号单源化      | `todo` | 分析报告 A4                           | RM-3       | symbol-helpers 测试                        | —                                                        |
+| RM-7 只读硬化+raw 读迁移   | `todo` | 分析报告 §5.2/5.4 #2#3                | RM-0       | node-runtime 解析缓存管线                  | —                                                        |
+| RM-8 公开 API raw 通道收口 | `todo` | RM-0 裁决表 §5.4 #7~#12               | RM-0、RM-7 | plan 132 先例                              | —                                                        |
 
 ## Phase Details（交付范围，无实现步骤）
 

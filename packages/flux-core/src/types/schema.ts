@@ -257,6 +257,13 @@ export interface SchemaFieldRule {
    * compilation semantics, such as props that contain nested template schemas.
    */
   compile?: FieldCompileFn;
+  /**
+   * Inline value-shape + tooling contract (RM-3, plan 605): the single-entry
+   * alternative to declaring the same prop a second time in the renderer's
+   * `propContracts`. Only meaningful for `kind: 'prop'` entries. Read through
+   * `resolveRendererPropContracts`; never materialized into `TemplateNode`.
+   */
+  contract?: import('./renderer-definition-types.js').RendererFieldContract;
 }
 
 export interface FieldCompileContext {

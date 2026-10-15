@@ -92,6 +92,7 @@ export { composeAbortSignals } from './utils/abort-signals.js';
 export type { AbortSignalLike } from './utils/abort-signals.js';
 export { matchesFluxValueShape, validateHostMethodPayload } from './schema-diagnostics/value-shape-runtime.js';
 export { defineRendererFamily } from './renderer-definition-builder.js';
+export { resolveRendererPropContracts } from './renderer-prop-contracts.js';
 export {
   createHostActionProvider,
   createHostMethodValidator,

@@ -20,6 +20,7 @@ import {
   createTemplateRegion,
   isPlainObject,
   isSchemaInput,
+  resolveRendererPropContracts,
 } from '@nop-chaos/flux-core';
 import { compileRuntimeValueTree } from './runtime-value-compilation.js';
 import { buildWrapProvidersClosure } from './static-analysis.js';
@@ -432,6 +433,7 @@ function classifyTypedSchemaDefinitionItem(input: {
   }) => void;
 }): unknown {
   const { item, renderer } = input;
+  const contracts = resolveRendererPropContracts(renderer);
   const record = { ...item };
   let changed = false;
 
@@ -442,7 +444,7 @@ function classifyTypedSchemaDefinitionItem(input: {
 
     // Nested schema-definition inside the child contract takes precedence
     // over the top-level field rule (same ordering as compileSingleNode).
-    const nestedMatch = findSchemaDefinitionShape(renderer.propContracts?.[fieldKey]);
+    const nestedMatch = findSchemaDefinitionShape(contracts[fieldKey]);
     if (nestedMatch) {
       const classified = classifySchemaDefinitionValue({
         value: fieldValue,

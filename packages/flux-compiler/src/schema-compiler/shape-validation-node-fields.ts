@@ -1,5 +1,9 @@
-import type { BaseSchema, RendererDefinition } from '@nop-chaos/flux-core';
-import { isPlainObject } from '@nop-chaos/flux-core';
+import type {
+  BaseSchema,
+  RendererDefinition,
+  RendererPropContract,
+} from '@nop-chaos/flux-core';
+import { isPlainObject, resolveRendererPropContracts } from '@nop-chaos/flux-core';
 import {
   appendJsonPointer,
   schemaPathToJsonPointer,
@@ -39,12 +43,13 @@ function findNamespaceValidator(diagnostics: SchemaCompilerDiagnosticsContext, n
 function validateKnownPropValue(
   schema: BaseSchema,
   renderer: RendererDefinition,
+  propContracts: Readonly<Record<string, RendererPropContract>>,
   key: string,
   keyPath: string,
   diagnostics: SchemaCompilerDiagnosticsContext,
   skippedPropKeys: Set<string>,
 ) {
-  const contract = renderer.propContracts?.[key];
+  const contract = propContracts[key];
   if (!contract) {
     return;
   }
@@ -72,12 +77,7 @@ function validateRequiredPropContracts(
   diagnostics: SchemaCompilerDiagnosticsContext,
   enabled: boolean,
 ) {
-  const propContracts = renderer.propContracts;
-  if (!propContracts) {
-    return;
-  }
-
-  for (const [key, contract] of Object.entries(propContracts)) {
+  for (const [key, contract] of Object.entries(resolveRendererPropContracts(renderer))) {
     if (!contract.required || schema[key] !== undefined) {
       continue;
     }
@@ -136,6 +136,7 @@ export function inspectSchemaNodeFields(
 } {
   const pointer = schemaPathToJsonPointer(path);
   const acceptedKeys = getAcceptedSchemaKeys(renderer);
+  const propContracts = resolveRendererPropContracts(renderer);
   const skippedPropKeys = new Set<string>();
   const extensions: Record<string, unknown> = {};
 
@@ -228,7 +229,7 @@ export function inspectSchemaNodeFields(
       continue;
     }
 
-    validateKnownPropValue(schema, renderer, key, keyPath, diagnostics, skippedPropKeys);
+    validateKnownPropValue(schema, renderer, propContracts, key, keyPath, diagnostics, skippedPropKeys);
 
     const sourceCandidate = value as Record<string, unknown> | undefined;
 
