@@ -6,8 +6,7 @@ import { getAcceptedSchemaKeys } from './schema-compiler/shape-validation-utils.
 const closedInputRenderer: RegisteredRendererDefinition = {
   type: 'closed-input',
   component: () => null,
-  propContracts: { name: { shape: { kind: 'unknown' }, displayName: 'name' } },
-  fields: [{ key: 'name', kind: 'prop' }],
+  fields: [{ key: 'name', kind: 'prop', contract: { shape: { kind: 'unknown' }, displayName: 'name' } }],
 };
 
 const openRenderer: RegisteredRendererDefinition = {
@@ -260,9 +259,8 @@ describe('getAcceptedSchemaKeys vocabulary coverage', () => {
     const renderer: RendererDefinition = {
       type: 'declared',
       component: () => null,
-      propContracts: { label: { shape: { kind: 'unknown' }, displayName: 'label' } },
       fields: [
-        { key: 'label', kind: 'prop' },
+        { key: 'label', kind: 'prop', contract: { shape: { kind: 'unknown' }, displayName: 'label' } },
         { key: 'onRowClick', kind: 'event' },
       ],
     };

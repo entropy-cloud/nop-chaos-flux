@@ -3,6 +3,7 @@ import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/re
 import React from 'react';
 import { initFluxI18n, resetFluxI18n } from '@nop-chaos/flux-i18n';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
+import { resolveRendererPropContracts } from '@nop-chaos/flux-core';
 import type { RendererDefinition } from '@nop-chaos/flux-core';
 import { createDefaultRegistry, createSchemaRenderer } from '@nop-chaos/flux-react';
 import './word-editor-page-host-scope.test-support.js';
@@ -144,9 +145,9 @@ describe('WordEditorPage host scope', () => {
     expect(definition?.rendererTraits).toEqual(
       expect.arrayContaining(['workbench-shell', 'builder-facing']),
     );
-    expect(definition?.propContracts?.statusPath?.shape.kind).toBe('string');
+    expect(resolveRendererPropContracts(definition!).statusPath?.shape.kind).toBe('string');
     expect(definition?.eventContracts?.onBack?.displayName).toBe('Back');
-    expect(definition?.propContracts?.config?.shape).toEqual({
+    expect(resolveRendererPropContracts(definition!).config?.shape).toEqual({
       kind: 'object',
       fields: {
         leftPanel: {

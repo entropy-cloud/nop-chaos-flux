@@ -241,47 +241,60 @@ export const reportDesignerRendererDefinitions: RegisteredRendererDefinition[] =
     sourcePackage: '@nop-chaos/report-designer-renderers',
     rendererClass: 'domain-host-renderer',
     rendererTraits: ['workbench-shell', 'builder-facing'],
-    propContracts: {
-      statusPath: {
-        shape: { kind: 'string' },
-        displayName: 'Status Path',
-        description: 'Publishes report designer host summary outside the host boundary.',
-        editorType: 'path',
-      },
-      document: {
-        shape: { kind: 'object', fields: {} },
-        displayName: 'Document',
-        description: 'Initial report template document.',
-        editorType: 'object',
-        required: true,
-      },
-      config: {
-        shape: reportDesignerConfigShape,
-        displayName: 'Config',
-        description: 'Report designer runtime config.',
-        editorType: 'object',
-        required: true,
-      },
-      profile: {
-        shape: { kind: 'object', fields: {} },
-        displayName: 'Profile',
-        description: 'Optional report profile adapter.',
-        editorType: 'object',
-      },
-      adapters: {
-        shape: { kind: 'object', fields: {} },
-        displayName: 'Adapters',
-        description: 'Optional host adapter bag.',
-        editorType: 'object',
-      },
-    },
     fields: [
       { key: 'title', kind: 'value-or-region', regionKey: 'title' },
-      { key: 'statusPath', kind: 'prop' },
-      { key: 'document', kind: 'prop' },
-      { key: 'config', kind: 'prop' },
-      { key: 'profile', kind: 'prop' },
-      { key: 'adapters', kind: 'prop' },
+      {
+        key: 'statusPath',
+        kind: 'prop',
+        contract: {
+          shape: { kind: 'string' },
+          displayName: 'Status Path',
+          description: 'Publishes report designer host summary outside the host boundary.',
+          editorType: 'path',
+        },
+      },
+      {
+        key: 'document',
+        kind: 'prop',
+        contract: {
+          shape: { kind: 'object', fields: {} },
+          displayName: 'Document',
+          description: 'Initial report template document.',
+          editorType: 'object',
+          required: true,
+        },
+      },
+      {
+        key: 'config',
+        kind: 'prop',
+        contract: {
+          shape: reportDesignerConfigShape,
+          displayName: 'Config',
+          description: 'Report designer runtime config.',
+          editorType: 'object',
+          required: true,
+        },
+      },
+      {
+        key: 'profile',
+        kind: 'prop',
+        contract: {
+          shape: { kind: 'object', fields: {} },
+          displayName: 'Profile',
+          description: 'Optional report profile adapter.',
+          editorType: 'object',
+        },
+      },
+      {
+        key: 'adapters',
+        kind: 'prop',
+        contract: {
+          shape: { kind: 'object', fields: {} },
+          displayName: 'Adapters',
+          description: 'Optional host adapter bag.',
+          editorType: 'object',
+        },
+      },
       { key: 'toolbar', kind: 'region', regionKey: 'toolbar' },
       { key: 'fieldPanel', kind: 'region', regionKey: 'fieldPanel' },
       { key: 'inspector', kind: 'region', regionKey: 'inspector' },
@@ -294,26 +307,28 @@ export const reportDesignerRendererDefinitions: RegisteredRendererDefinition[] =
   {
     type: 'report-toolbar',
     component: LazyReportToolbarRenderer,
-    propContracts: {
-      itemsOverride: {
-        shape: {
-          kind: 'array',
-          item: {
-            kind: 'object',
-            fields: {
-              type: { kind: 'string' },
-              intent: actionIntentShape,
-            },
-            optional: ['type', 'intent'],
-          },
+    schemaValidator: validateReportToolbarItems,
+    fields: [{
+  key: 'itemsOverride',
+  kind: 'prop',
+  compile: compileToolbarItemsOverride,
+  contract: {
+    shape: {
+      kind: 'array',
+      item: {
+        kind: 'object',
+        fields: {
+          type: { kind: 'string' },
+          intent: actionIntentShape,
         },
-        displayName: 'Items Override',
-        description: 'Toolbar item overrides merged with report toolbar defaults.',
-        editorType: 'object-array',
+        optional: ['type', 'intent'],
       },
     },
-    schemaValidator: validateReportToolbarItems,
-    fields: [{ key: 'itemsOverride', kind: 'prop', compile: compileToolbarItemsOverride }],
+    displayName: 'Items Override',
+    description: 'Toolbar item overrides merged with report toolbar defaults.',
+    editorType: 'object-array',
+  },
+}],
   },
 ];
 

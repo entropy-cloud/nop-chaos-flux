@@ -6,7 +6,7 @@
  * specific contracts) compose with `formFieldContracts` (shared base)
  * in the parent.
  */
-import type { RendererPropContract } from '@nop-chaos/flux-core';
+import type { RendererFieldContract } from '@nop-chaos/flux-core';
 
 export const SCALAR_INPUT_CAPABILITY_CONTRACTS = [
   {
@@ -56,7 +56,7 @@ export const SELECT_CAPABILITY_CONTRACTS = [
  * Async validation configuration contract: `validate.action` is an action
  * value (whole-value template preservation via schema-definition actionValue).
  */
-export const validatePropContract: RendererPropContract = {
+export const validatePropContract: RendererFieldContract = {
   shape: {
     kind: 'object',
     fields: {
@@ -75,7 +75,7 @@ export const validatePropContract: RendererPropContract = {
  * Remote search action contract: the whole `searchSource` value is an
  * ActionSchema preserved as a template (actionValue).
  */
-export const searchSourcePropContract: RendererPropContract = {
+export const searchSourcePropContract: RendererFieldContract = {
   shape: { kind: 'schema-definition', fieldRules: {}, actionValue: true },
   displayName: 'Search Source',
   description:

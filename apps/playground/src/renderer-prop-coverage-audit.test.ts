@@ -5,8 +5,9 @@
  * (which aggregates basic + form + content + layout + ... via
  * `createDefaultRegistry()`) and reports:
  *
- *   1. Per-renderer `propContracts` coverage of literal/union/boolean
- *      fields declared in `fields: [{ key, kind: 'prop' }]`.
+ *   1. Per-renderer prop-contract coverage (the `resolveRendererPropContracts`
+ *      view over `fields: [{ key, kind: 'prop', contract }]`) of
+ *      literal/union/boolean fields.
  *   2. Per-package summary.
  *   3. Reproduction of the plan 461 demo bug: feeding the live `flex`
  *      renderer the typo `direction: "col"` and confirming the
@@ -21,7 +22,7 @@
  */
 import { describe, it, expect } from 'vitest';
 import type { RendererDefinition, RendererRegistry, SchemaFieldRule } from '@nop-chaos/flux-core';
-import { createRendererRegistry } from '@nop-chaos/flux-core';
+import { createRendererRegistry, resolveRendererPropContracts } from '@nop-chaos/flux-core';
 import { createDefaultRegistry } from '@nop-chaos/flux-react';
 import { createFormulaCompiler, createExpressionCompiler } from '@nop-chaos/flux-formula';
 import { createSchemaCompiler } from '@nop-chaos/flux-compiler';
@@ -66,7 +67,7 @@ function isPropField(rule: SchemaFieldRule | string | undefined): rule is { key:
   return Boolean(rule) && typeof rule === 'object' && (rule as { kind?: string }).kind === 'prop';
 }
 
-describe('plan 462 — propContracts coverage audit (Phase 1 baseline)', () => {
+describe('plan 462 — prop-contract coverage audit (RM-4 fields-only view)', () => {
   const definitions = collectDefinitions();
   const allRenderers = Array.from(definitions.values());
 
@@ -82,11 +83,11 @@ describe('plan 462 — propContracts coverage audit (Phase 1 baseline)', () => {
     expect(allRenderers.length).toBeGreaterThanOrEqual(100);
   });
 
-  it('emits a per-renderer propContracts coverage report', () => {
+  it('emits a per-renderer prop-contract coverage report', () => {
     const rows: Array<{ type: string; propFields: number; contracts: number; missing: string[] }> = [];
     for (const def of allRenderers) {
       const propFields = (def.fields ?? []).filter(isPropField);
-      const contracts = Object.keys(def.propContracts ?? {});
+      const contracts = Object.keys(resolveRendererPropContracts(def));
       const missing = propFields
         .filter((f) => f.kind === 'prop' && !contracts.includes(f.key))
         .map((f) => f.key);
@@ -111,13 +112,13 @@ describe('plan 462 — propContracts coverage audit (Phase 1 baseline)', () => {
     );
     const coverage = totals.propFields > 0 ? totals.contracts / totals.propFields : 0;
 
-    console.log('=== plan 462 — propContracts coverage (Phase 1 baseline) ===');
+    console.log('=== plan 462 — prop-contract coverage (RM-4 fields-only view) ===');
     console.log(`Total renderers scanned: ${totals.rendererCount}`);
     console.log(`Total prop field declarations: ${totals.propFields}`);
-    console.log(`Total propContracts entries:  ${totals.contracts}`);
+    console.log(`Total resolved contract entries: ${totals.contracts}`);
     console.log(`Coverage: ${(coverage * 100).toFixed(1)}%`);
     console.log(`Missing field entries:       ${totals.missingCount}`);
-    console.log('Top 10 renderers with most missing propContracts:');
+    console.log('Top 10 renderers with most missing prop contracts:');
     for (const r of rows.slice(0, 10)) {
       console.log(`  ${r.type.padEnd(28)} fields=${r.propFields} contracts=${r.contracts} missing=[${r.missing.join(', ')}]`);
     }

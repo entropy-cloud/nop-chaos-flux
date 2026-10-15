@@ -8,6 +8,7 @@ import {
   createDefaultRegistry,
   useScopeSelector,
 } from '@nop-chaos/flux-react';
+import { resolveRendererPropContracts } from '@nop-chaos/flux-core';
 import type { RendererDefinition, RendererEnv } from '@nop-chaos/flux-core';
 import { createEmptyDocument } from '@nop-chaos/spreadsheet-core';
 import {
@@ -153,7 +154,7 @@ describe('report-designer namespaced actions integration', { timeout: 15000 }, (
       (candidate) => candidate.type === 'report-designer-page',
     );
 
-    expect(definition?.propContracts?.config?.shape).toEqual({
+    expect(resolveRendererPropContracts(definition!).config?.shape).toEqual({
       kind: 'object',
       fields: {
         kind: { kind: 'string' },

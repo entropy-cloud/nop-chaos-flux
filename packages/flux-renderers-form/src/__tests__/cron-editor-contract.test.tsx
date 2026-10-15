@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { resolveRendererPropContracts } from '@nop-chaos/flux-core';
 import { formRendererDefinitions } from '../definitions.js';
 import { parseCron, validateCronScheduleValue, fireSequence } from '../cron/index.js';
 import { validateCronEditorSchema } from '../renderers/cron-editor-schema-validator.js';
@@ -13,7 +14,7 @@ describe('cron-editor definition 契约（五点）', () => {
     expect(definition).toBeDefined();
     expect(definition!.sourcePackage).toBe('@nop-chaos/flux-renderers-form');
     expect(definition!.wrap).toBe(true);
-    expect(Object.keys(definition!.propContracts ?? {})).toEqual(
+    expect(Object.keys(resolveRendererPropContracts(definition!))).toEqual(
       expect.arrayContaining(['mode', 'showPreview', 'previewCount', 'clearable'])
     );
     const handles = (definition!.componentCapabilityContracts ?? []).map((c) => c.handle);

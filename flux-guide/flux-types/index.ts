@@ -40,9 +40,17 @@ import type {
   ConditionBuilderSchema,
   ContainerSchema,
   CountdownSchema,
+  CronEditorSchema,
   CrudSchema,
   DataSourceSchema,
   DateRangeSchema,
+  DepartmentSelectSchema,
+  DesignerCanvasSchema,
+  DesignerEdgeRowSchema,
+  DesignerFieldSchema,
+  DesignerNodeCardSchema,
+  DesignerPageSchema,
+  DesignerPaletteSchema,
   DetailFieldSchema,
   DetailViewSchema,
   DialogSchema,
@@ -50,6 +58,7 @@ import type {
   DrawerSchema,
   DropdownButtonSchema,
   DynamicRendererSchema,
+  EchartsSchema,
   EditorSchema,
   EmptySchema,
   FieldsetSchema,
@@ -64,6 +73,8 @@ import type {
   IconSchema,
   ImageSchema,
   InfiniteScrollSchema,
+  InputCitySchema,
+  InputColorSchema,
   InputDateSchema,
   InputDatetimeSchema,
   InputEmailSchema,
@@ -73,6 +84,7 @@ import type {
   InputNumberSchema,
   InputPasswordSchema,
   InputQuarterSchema,
+  InputSignatureSchema,
   InputTableSchema,
   InputTextSchema,
   InputTimeSchema,
@@ -98,14 +110,17 @@ import type {
   QrCodeSchema,
   QueryFilterSchema,
   RadioGroupSchema,
+  RatingSchema,
   ReactionSchema,
   RecurseSchema,
+  ResizableSchema,
   ResponsiveSchema,
   ResultSchema,
   ScadaCanvasSchema,
   ScopeDebugSchema,
   SelectSchema,
   SeparatorSchema,
+  SliderSchema,
   SparklineSchema,
   SpinnerSchema,
   StatTileSchema,
@@ -123,7 +138,9 @@ import type {
   TransferSchema,
   TreeSchema,
   TreeSelectSchema,
+  UserSelectSchema,
   VariantFieldSchema,
+  VerificationCodeSchema,
   VideoSchema,
   WizardSchema,
 } from './schema';
@@ -155,6 +172,7 @@ export type FluxSchema =
   | StepsSchema
   | TimelineSchema
   | ResponsiveSchema
+  | ResizableSchema
   | FormSchema
   | FieldsetSchema
   | HiddenSchema
@@ -177,6 +195,15 @@ export type FluxSchema =
   | InputQuarterSchema
   | InputYearSchema
   | MarkdownEditorSchema
+  | SliderSchema
+  | RatingSchema
+  | InputColorSchema
+  | UserSelectSchema
+  | DepartmentSelectSchema
+  | InputCitySchema
+  | InputSignatureSchema
+  | VerificationCodeSchema
+  | CronEditorSchema
   | InputTreeSchema
   | TreeSelectSchema
   | TagListSchema
@@ -205,6 +232,7 @@ export type FluxSchema =
   | StatisticsSchema
   | StatTileSchema
   | SparklineSchema
+  | EchartsSchema
   | QueryFilterSchema
   | BatchBarSchema
   | CrudSchema
@@ -238,6 +266,12 @@ export type FluxSchema =
   | KanbanSchema
   | CalendarSchema
   | BarcodeInputSchema
+  | DesignerPageSchema
+  | DesignerFieldSchema
+  | DesignerCanvasSchema
+  | DesignerPaletteSchema
+  | DesignerNodeCardSchema
+  | DesignerEdgeRowSchema
   | AiChatSchema
   | AiMessageListSchema
   | AiBubbleSchema
@@ -281,6 +315,7 @@ export interface FluxSchemaByType {
   'steps': StepsSchema;
   'timeline': TimelineSchema;
   'responsive': ResponsiveSchema;
+  'resizable': ResizableSchema;
   'form': FormSchema;
   'fieldset': FieldsetSchema;
   'hidden': HiddenSchema;
@@ -303,6 +338,15 @@ export interface FluxSchemaByType {
   'input-quarter': InputQuarterSchema;
   'input-year': InputYearSchema;
   'markdown-editor': MarkdownEditorSchema;
+  'slider': SliderSchema;
+  'rating': RatingSchema;
+  'input-color': InputColorSchema;
+  'user-select': UserSelectSchema;
+  'department-select': DepartmentSelectSchema;
+  'input-city': InputCitySchema;
+  'input-signature': InputSignatureSchema;
+  'verification-code': VerificationCodeSchema;
+  'cron-editor': CronEditorSchema;
   'input-tree': InputTreeSchema;
   'tree-select': TreeSelectSchema;
   'tag-list': TagListSchema;
@@ -331,6 +375,7 @@ export interface FluxSchemaByType {
   'statistics': StatisticsSchema;
   'stat-tile': StatTileSchema;
   'sparkline': SparklineSchema;
+  'echarts': EchartsSchema;
   'query-filter': QueryFilterSchema;
   'batch-bar': BatchBarSchema;
   'crud': CrudSchema;
@@ -364,6 +409,12 @@ export interface FluxSchemaByType {
   'kanban': KanbanSchema;
   'calendar': CalendarSchema;
   'barcode-input': BarcodeInputSchema;
+  'designer-page': DesignerPageSchema;
+  'designer-field': DesignerFieldSchema;
+  'designer-canvas': DesignerCanvasSchema;
+  'designer-palette': DesignerPaletteSchema;
+  'designer-node-card': DesignerNodeCardSchema;
+  'designer-edge-row': DesignerEdgeRowSchema;
   'ai-chat': AiChatSchema;
   'ai-message-list': AiMessageListSchema;
   'ai-bubble': AiBubbleSchema;
@@ -420,9 +471,17 @@ export type {
   ConditionBuilderSchema,
   ContainerSchema,
   CountdownSchema,
+  CronEditorSchema,
   CrudSchema,
   DataSourceSchema,
   DateRangeSchema,
+  DepartmentSelectSchema,
+  DesignerCanvasSchema,
+  DesignerEdgeRowSchema,
+  DesignerFieldSchema,
+  DesignerNodeCardSchema,
+  DesignerPageSchema,
+  DesignerPaletteSchema,
   DetailFieldSchema,
   DetailViewSchema,
   DialogSchema,
@@ -430,6 +489,7 @@ export type {
   DrawerSchema,
   DropdownButtonSchema,
   DynamicRendererSchema,
+  EchartsSchema,
   EditorSchema,
   EmptySchema,
   FieldsetSchema,
@@ -444,6 +504,8 @@ export type {
   IconSchema,
   ImageSchema,
   InfiniteScrollSchema,
+  InputCitySchema,
+  InputColorSchema,
   InputDateSchema,
   InputDatetimeSchema,
   InputEmailSchema,
@@ -453,6 +515,7 @@ export type {
   InputNumberSchema,
   InputPasswordSchema,
   InputQuarterSchema,
+  InputSignatureSchema,
   InputTableSchema,
   InputTextSchema,
   InputTimeSchema,
@@ -478,14 +541,17 @@ export type {
   QrCodeSchema,
   QueryFilterSchema,
   RadioGroupSchema,
+  RatingSchema,
   ReactionSchema,
   RecurseSchema,
+  ResizableSchema,
   ResponsiveSchema,
   ResultSchema,
   ScadaCanvasSchema,
   ScopeDebugSchema,
   SelectSchema,
   SeparatorSchema,
+  SliderSchema,
   SparklineSchema,
   SpinnerSchema,
   StatTileSchema,
@@ -503,7 +569,9 @@ export type {
   TransferSchema,
   TreeSchema,
   TreeSelectSchema,
+  UserSelectSchema,
   VariantFieldSchema,
+  VerificationCodeSchema,
   VideoSchema,
   WizardSchema,
 } from './schema';

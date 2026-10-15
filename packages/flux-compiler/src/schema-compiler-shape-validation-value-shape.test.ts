@@ -9,8 +9,8 @@ describe('shape validation finite prop and value-shape diagnostics', () => {
     const renderer: RegisteredRendererDefinition = {
       type: 'button',
       component: () => null,
-      propContracts: {
-        variant: {
+      fields: [
+        { key: 'variant', kind: 'prop', contract: {
           shape: {
             kind: 'union',
             anyOf: [
@@ -19,8 +19,8 @@ describe('shape validation finite prop and value-shape diagnostics', () => {
             ],
           },
           displayName: 'Variant',
-        },
-      },
+        } },
+      ],
     };
     const compiler = makeCompiler([renderer]);
 
@@ -72,8 +72,8 @@ describe('shape validation finite prop and value-shape diagnostics', () => {
     const renderer: RegisteredRendererDefinition = {
       type: 'button',
       component: () => null,
-      propContracts: {
-        variant: {
+      fields: [
+        { key: 'variant', kind: 'prop', contract: {
           shape: {
             kind: 'union',
             anyOf: [
@@ -82,8 +82,8 @@ describe('shape validation finite prop and value-shape diagnostics', () => {
             ],
           },
           displayName: 'Variant',
-        },
-      },
+        } },
+      ],
     };
     const compiler = makeCompiler([renderer]);
 
@@ -94,15 +94,15 @@ describe('shape validation finite prop and value-shape diagnostics', () => {
     const renderer: RegisteredRendererDefinition = {
       type: 'button',
       component: () => null,
-      propContracts: {
-        variant: {
+      fields: [
+        { key: 'variant', kind: 'prop', contract: {
           shape: {
             kind: 'union',
             anyOf: [{ kind: 'literal', value: 'default' }],
           },
           displayName: 'Variant',
-        },
-      },
+        } },
+      ],
     };
     const compiler = makeCompiler([renderer]);
 

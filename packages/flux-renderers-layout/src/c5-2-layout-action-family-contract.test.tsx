@@ -1,5 +1,6 @@
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
+import { resolveRendererPropContracts } from '@nop-chaos/flux-core';
 import { createLayoutSchemaRenderer, env, formulaCompiler } from './test-support.js';
 import { layoutRendererDefinitions } from './layout-renderer-definitions.js';
 
@@ -195,7 +196,7 @@ describe('C5.2 contract: items fieldRules classification honesty', () => {
   it('dropdown-button does NOT advertise an item icon classification (dead field)', () => {
     const def = layoutRendererDefinitions.find((d) => d.type === 'dropdown-button');
     expect(def).toBeTruthy();
-    const itemsShape = def!.propContracts?.items?.shape as
+    const itemsShape = resolveRendererPropContracts(def!).items?.shape as
       | { kind: 'array'; item: { fieldRules?: Record<string, unknown> } }
       | undefined;
     const fieldRules = itemsShape?.item.fieldRules ?? {};
@@ -207,7 +208,7 @@ describe('C5.2 contract: items fieldRules classification honesty', () => {
   it('button-group classifies item key as a value field', () => {
     const def = layoutRendererDefinitions.find((d) => d.type === 'button-group');
     expect(def).toBeTruthy();
-    const itemsShape = def!.propContracts?.items?.shape as
+    const itemsShape = resolveRendererPropContracts(def!).items?.shape as
       | { kind: 'array'; item: { fieldRules?: Record<string, string> } }
       | undefined;
     const fieldRules = itemsShape?.item.fieldRules ?? {};

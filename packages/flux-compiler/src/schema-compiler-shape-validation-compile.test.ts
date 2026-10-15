@@ -337,10 +337,9 @@ describe('compile and validate integration', () => {
       compilation: {
         artifacts: ['data-source'],
       },
-      propContracts: { action: { shape: { kind: 'unknown' }, displayName: 'action' }, args: { shape: { kind: 'unknown' }, displayName: 'args' } },
       fields: [
-        { key: 'action', kind: 'prop' },
-        { key: 'args', kind: 'prop' },
+        { key: 'action', kind: 'prop', contract: { shape: { kind: 'unknown' }, displayName: 'action' } },
+        { key: 'args', kind: 'prop', contract: { shape: { kind: 'unknown' }, displayName: 'args' } },
       ],
     };
     const compiler = makeCompiler([renderer]);

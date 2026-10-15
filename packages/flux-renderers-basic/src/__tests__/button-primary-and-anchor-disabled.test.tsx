@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { resolveRendererPropContracts } from '@nop-chaos/flux-core';
 import type { BaseSchema } from '@nop-chaos/flux-core';
 import { buttonVariants } from '@nop-chaos/ui';
 import { basicRendererDefinitions } from '../index.js';
@@ -35,7 +36,7 @@ describe('[G1-视角2-01][G7-视角2-01] variant:"primary" renders with primary 
   it('primary is a legal button variant in the renderer prop contract', () => {
     const def = basicRendererDefinitions.find((d) => d.type === 'button');
     expect(def).toBeTruthy();
-    const shape = def!.propContracts?.variant?.shape as unknown as {
+    const shape = resolveRendererPropContracts(def!).variant?.shape as unknown as {
       anyOf: Array<{ kind: string; value: string }>;
     };
     expect(shape.anyOf).toContainEqual({ kind: 'literal', value: 'primary' });

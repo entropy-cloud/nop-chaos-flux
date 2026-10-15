@@ -105,28 +105,29 @@ export const variantFieldRendererDefinition: RegisteredRendererDefinition<Varian
   category: 'Form Advanced',
   sourcePackage: '@nop-chaos/flux-renderers-form-advanced',
   component: VariantFieldRenderer,
-  propContracts: {
-    variants: {
-      shape: {
-        kind: 'array',
-        item: {
-          kind: 'schema-definition',
-          fieldRules: {
-            content: { kind: 'region', regionKey: 'contentRegionKey' },
-            viewer: { kind: 'region', regionKey: 'viewerRegionKey' },
-            match: { kind: 'literal', sourceKey: 'when' },
-          },
-        },
-      },
-      displayName: 'Variants',
-      description:
-        'Variant option collection. Each option carries content/viewer regions; expression match.when is literal-preserved.',
-      editorType: 'object-array',
-    },
-  },
   fields: [
     ...formFieldRules,
-    { key: 'variants', kind: 'prop' },
+    {
+      key: 'variants',
+      kind: 'prop',
+      contract: {
+        shape: {
+          kind: 'array',
+          item: {
+            kind: 'schema-definition',
+            fieldRules: {
+              content: { kind: 'region', regionKey: 'contentRegionKey' },
+              viewer: { kind: 'region', regionKey: 'viewerRegionKey' },
+              match: { kind: 'literal', sourceKey: 'when' },
+            },
+          },
+        },
+        displayName: 'Variants',
+        description:
+          'Variant option collection. Each option carries content/viewer regions; expression match.when is literal-preserved.',
+        editorType: 'object-array',
+      },
+    },
     { key: 'selector', kind: 'prop' },
     { key: 'selectorMode', kind: 'prop' },
     { key: 'defaultVariant', kind: 'prop' },

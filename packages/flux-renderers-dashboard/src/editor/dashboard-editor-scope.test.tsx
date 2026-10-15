@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, render, waitFor } from '@testing-library/react';
 import React from 'react';
+import { resolveRendererPropContracts } from '@nop-chaos/flux-core';
 import type { RegisteredRendererDefinition } from '@nop-chaos/flux-core';
 import { useScopeSelector } from '@nop-chaos/flux-react';
 import { DASHBOARD_EDITOR_MANIFEST_V1 } from './dashboard-editor-manifest.js';
@@ -45,7 +46,7 @@ const statusProbeRenderer: RegisteredRendererDefinition = {
  */
 describe('dashboard-editor scope projection (P3.3)', () => {
   it('declares statusPath in the definition propContracts (spreadsheet precedent)', () => {
-    expect(dashboardEditorRendererDefinition.propContracts?.statusPath?.shape).toEqual({
+    expect(resolveRendererPropContracts(dashboardEditorRendererDefinition).statusPath?.shape).toEqual({
       kind: 'string',
     });
   });

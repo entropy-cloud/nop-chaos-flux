@@ -162,12 +162,12 @@ describe('createSchemaCompiler', () => {
         }
         return next as any;
       },
-      propContracts: {
-        label: {
+      fields: [
+        { key: 'label', kind: 'prop', contract: {
           shape: { kind: 'string' },
           displayName: 'Label',
-        },
-      },
+        } },
+      ],
     };
 
     const compiler = createTestCompiler([transformedRenderer]);

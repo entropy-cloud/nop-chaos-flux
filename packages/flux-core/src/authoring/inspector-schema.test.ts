@@ -34,29 +34,25 @@ const LAYOUT_DEF = def({
   type: 'flex',
   category: 'layout',
   defaultSchema: { type: 'flex', body: [] },
-  propContracts: {
-    direction: {
-      shape: { kind: 'union', anyOf: [{ kind: 'literal', value: 'row' }, { kind: 'literal', value: 'col' }] },
-      displayName: 'Direction',
-      editorType: 'select',
-      defaultValue: 'col',
-    },
-    gap: { shape: { kind: 'string' }, displayName: 'Gap', editorType: 'expression' },
-    collapsible: { shape: { kind: 'boolean' }, displayName: 'Collapsible', editorType: 'switch', defaultValue: false },
-    stickyAt: { shape: { kind: 'number' }, displayName: 'Sticky At', editorType: 'input-number' },
-    note: { shape: { kind: 'string' }, displayName: 'Note', editorType: 'textarea' },
-    schema: { shape: { kind: 'object', fields: {} }, displayName: 'Schema', editorType: 'json' },
-  },
   eventContracts: {
     onToggle: { displayName: 'Toggle' },
   },
   fields: [
-    { key: 'direction', kind: 'prop' },
-    { key: 'gap', kind: 'prop' },
-    { key: 'collapsible', kind: 'prop', valueType: 'boolean' },
-    { key: 'stickyAt', kind: 'prop' },
-    { key: 'note', kind: 'prop' },
-    { key: 'schema', kind: 'prop' },
+    {
+      key: 'direction',
+      kind: 'prop',
+      contract: {
+        shape: { kind: 'union', anyOf: [{ kind: 'literal', value: 'row' }, { kind: 'literal', value: 'col' }] },
+        displayName: 'Direction',
+        editorType: 'select',
+        defaultValue: 'col',
+      },
+    },
+    { key: 'gap', kind: 'prop', contract: { shape: { kind: 'string' }, displayName: 'Gap', editorType: 'expression' } },
+    { key: 'collapsible', kind: 'prop', valueType: 'boolean', contract: { shape: { kind: 'boolean' }, displayName: 'Collapsible', editorType: 'switch', defaultValue: false } },
+    { key: 'stickyAt', kind: 'prop', contract: { shape: { kind: 'number' }, displayName: 'Sticky At', editorType: 'input-number' } },
+    { key: 'note', kind: 'prop', contract: { shape: { kind: 'string' }, displayName: 'Note', editorType: 'textarea' } },
+    { key: 'schema', kind: 'prop', contract: { shape: { kind: 'object', fields: {} }, displayName: 'Schema', editorType: 'json' } },
     { key: 'body', kind: 'region', regionKey: 'body' },
     { key: 'onToggle', kind: 'event' },
     { key: 'onRefresh', kind: 'reaction' },
@@ -74,18 +70,22 @@ describe('editableProps 全覆盖断言（QA.6 载体）', () => {
     const fixtures = [
       LAYOUT_DEF,
       def({
-        propContracts: {
-          size: {
-            shape: { kind: 'union', anyOf: [{ kind: 'literal', value: 'sm' }, { kind: 'literal', value: 'md' }, { kind: 'literal', value: 'lg' }] },
-            displayName: 'Size',
+        fields: [
+          {
+            key: 'size',
+            kind: 'prop',
+            contract: {
+              shape: { kind: 'union', anyOf: [{ kind: 'literal', value: 'sm' }, { kind: 'literal', value: 'md' }, { kind: 'literal', value: 'lg' }] },
+              displayName: 'Size',
+            },
           },
-          count: { shape: { kind: 'number' }, displayName: 'Count' },
-        },
+          { key: 'count', kind: 'prop', contract: { shape: { kind: 'number' }, displayName: 'Count' } },
+        ],
       }),
       def({
-        propContracts: {
-          autoHeight: { shape: { kind: 'boolean' }, displayName: 'Auto Height' },
-        },
+        fields: [
+          { key: 'autoHeight', kind: 'prop', contract: { shape: { kind: 'boolean' }, displayName: 'Auto Height' } },
+        ],
       }),
     ];
     for (const fixture of fixtures) {
@@ -119,15 +119,10 @@ describe('region/event 零泄漏（QA.6 载体）', () => {
     expect(events.map((event) => event.name).sort()).toEqual(['onRefresh', 'onToggle']);
   });
 
-  it('propContracts discipline violation is contained: region/event keys registered as props are dropped', () => {
+  it('contract discipline violation is contained: region/event keys registered as props are dropped', () => {
     const violation = def({
-      propContracts: {
-        label: { shape: { kind: 'string' }, displayName: 'Label' },
-        body: { shape: { kind: 'unknown' }, displayName: 'Body' },
-        onClick: { shape: { kind: 'unknown' }, displayName: 'Click' },
-      },
       fields: [
-        { key: 'label', kind: 'prop' },
+        { key: 'label', kind: 'prop', contract: { shape: { kind: 'string' }, displayName: 'Label' } },
         { key: 'body', kind: 'region', regionKey: 'body' },
         { key: 'onClick', kind: 'event' },
       ],
@@ -165,7 +160,15 @@ describe('editorType→控件直映（S1 §8.1 内置缺省表）', () => {
 
   it('required flag and description flow into the form schema', () => {
     const required = resolveRendererAuthoringContract(
-      def({ propContracts: { name: { shape: { kind: 'string' }, displayName: 'Name', required: true, description: 'The name' } } }),
+      def({
+        fields: [
+          {
+            key: 'name',
+            kind: 'prop',
+            contract: { shape: { kind: 'string' }, displayName: 'Name', required: true, description: 'The name' },
+          },
+        ],
+      }),
     );
     expect(propFields(required)[0]).toMatchObject({ required: true, description: 'The name' });
   });
@@ -207,9 +210,13 @@ describe('shape 推导兜底（editorType 缺失）', () => {
     expect(choice.shapeHint).toBe('"sm" | "md" | number');
     const contract = resolveRendererAuthoringContract(
       def({
-        propContracts: {
-          width: { shape: { kind: 'union', anyOf: [{ kind: 'literal', value: 'sm' }, { kind: 'number' }] }, displayName: 'Width' },
-        },
+        fields: [
+          {
+            key: 'width',
+            kind: 'prop',
+            contract: { shape: { kind: 'union', anyOf: [{ kind: 'literal', value: 'sm' }, { kind: 'number' }] }, displayName: 'Width' },
+          },
+        ],
       }),
     );
     const field = propFields(contract)[0];
@@ -230,7 +237,11 @@ describe('shape 推导兜底（editorType 缺失）', () => {
     expect(fieldsOfShape({ kind: 'literal', value: 'fixed' })).toMatchObject({ control: 'json', readOnly: true });
     expect(fieldsOfShape({ kind: 'unknown' }).readOnly).toBe(true);
     const contract = resolveRendererAuthoringContract(
-      def({ propContracts: { frozen: { shape: { kind: 'unknown' }, displayName: 'Frozen' } } }),
+      def({
+        fields: [
+          { key: 'frozen', kind: 'prop', contract: { shape: { kind: 'unknown' }, displayName: 'Frozen' } },
+        ],
+      }),
     );
     expect(propFields(contract)[0][INSPECTOR_READONLY_KEY]).toBe(true);
   });
@@ -261,7 +272,11 @@ describe('shape 推导兜底（editorType 缺失）', () => {
 
   it('unknown non-builtin editorType falls back to shape derivation', () => {
     const contract = resolveRendererAuthoringContract(
-      def({ propContracts: { weird: { shape: { kind: 'boolean' }, displayName: 'Weird', editorType: 'future-control' } } }),
+      def({
+        fields: [
+          { key: 'weird', kind: 'prop', contract: { shape: { kind: 'boolean' }, displayName: 'Weird', editorType: 'future-control' } },
+        ],
+      }),
     );
     const field = propFields(contract)[0];
     expect(field.type).toBe('switch');
@@ -269,7 +284,7 @@ describe('shape 推导兜底（editorType 缺失）', () => {
   });
 });
 
-describe('无 propContracts 降级', () => {
+describe('无 contract 降级', () => {
   it('degrades to raw JSON editing, not a blank panel', () => {
     const contract = resolveRendererAuthoringContract(def({}));
     expect(Object.keys(contract.editableProps)).toEqual([]);

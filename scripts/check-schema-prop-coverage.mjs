@@ -7,7 +7,7 @@
  *     These only need to be tested once across any renderer type.
  *     Includes: META_FIELDS, lifecycle keys, namespaced keys, and other BaseSchema keys.
  *   - LAYER 2 (renderer-specific): Properties declared in a specific renderer's
- *     fields[], propContracts, propSchema, regions, defaultSchema.
+ *     fields[] (incl. inline `contract` entries), regions, defaultSchema.
  *     Each must be tested for the owning renderer.
  *
  * Usage:
@@ -100,70 +100,6 @@ function findArrayContent(text, fieldName) {
   return text.slice(start + 1, end);
 }
 
-function extractTopLevelObjectKeys(text) {
-  const keys = new Set();
-  let depth = 0;
-  let inString = false;
-  let stringChar = '';
-  let buffer = '';
-  let readingKey = true;
-
-  for (let i = 0; i < text.length; i++) {
-    const ch = text[i];
-    const prev = i > 0 ? text[i - 1] : '';
-
-    if ((ch === '"' || ch === "'" || ch === '`') && prev !== '\\') {
-      if (!inString) {
-        inString = true;
-        stringChar = ch;
-      } else if (ch === stringChar) {
-        inString = false;
-      }
-      continue;
-    }
-
-    if (inString) {
-      continue;
-    }
-
-    if (ch === '{' || ch === '[') {
-      depth++;
-      readingKey = false;
-      continue;
-    }
-
-    if (ch === '}' || ch === ']') {
-      depth--;
-      continue;
-    }
-
-    if (depth !== 0) {
-      continue;
-    }
-
-    if (ch === ':') {
-      const key = buffer.trim().replace(/^['"]|['"]$/g, '');
-      if (key) {
-        keys.add(key);
-      }
-      buffer = '';
-      readingKey = false;
-      continue;
-    }
-
-    if (ch === ',') {
-      buffer = '';
-      readingKey = true;
-      continue;
-    }
-
-    if (readingKey) {
-      buffer += ch;
-    }
-  }
-
-  return keys;
-}
 
 // ─── Phase 1: Extract declared keys ──────────────────────────────────────────
 
@@ -195,27 +131,6 @@ function extractKeysFromRendererObject(objText) {
     for (const m of fieldsArr.matchAll(/key\s*:\s*['"]([^'"]+)['"]/g)) keys.add(m[1]);
   }
 
-  // propContracts: { key: { ... }, ... }
-  const pcMatch = objText.match(/propContracts\s*:\s*\{/);
-  if (pcMatch) {
-    const si = objText.indexOf('{', pcMatch.index + pcMatch[0].length - 1);
-    const ei = findMatchingBrace(objText, si);
-    if (ei !== -1) {
-      const inner = objText.slice(si + 1, ei);
-      for (const key of extractTopLevelObjectKeys(inner)) keys.add(key);
-    }
-  }
-
-  // propSchema: { key: { ... }, ... }
-  const psMatch = objText.match(/propSchema\s*:\s*\{/);
-  if (psMatch) {
-    const si = objText.indexOf('{', psMatch.index + psMatch[0].length - 1);
-    const ei = findMatchingBrace(objText, si);
-    if (ei !== -1) {
-      const inner = objText.slice(si + 1, ei);
-      for (const key of extractTopLevelObjectKeys(inner)) keys.add(key);
-    }
-  }
 
   return keys;
 }

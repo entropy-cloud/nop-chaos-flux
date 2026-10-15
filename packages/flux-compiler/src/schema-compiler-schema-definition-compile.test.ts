@@ -18,8 +18,7 @@ const dropdownFixtureDefinition: RegisteredRendererDefinition = {
   type: 'dropdown-fixture',
   displayName: 'Dropdown Fixture',
   component: () => null,
-  propContracts: {
-    items: {
+  fields: [{ key: 'items', kind: 'prop', contract: {
       shape: {
         kind: 'array',
         item: {
@@ -35,9 +34,7 @@ const dropdownFixtureDefinition: RegisteredRendererDefinition = {
       },
       displayName: 'Items',
       description: 'Menu item collection with action/onClick event fields.',
-    },
-  },
-  fields: [{ key: 'items', kind: 'prop' }],
+    } }],
 };
 
 function compileDropdownNode(items: unknown[]) {
@@ -139,8 +136,7 @@ describe('schema-definition compile region extraction branch', () => {
     type: 'region-fixture',
     displayName: 'Region Fixture',
     component: () => null,
-    propContracts: {
-      items: {
+    fields: [{ key: 'items', kind: 'prop', contract: {
         shape: {
           kind: 'array',
           item: {
@@ -153,9 +149,7 @@ describe('schema-definition compile region extraction branch', () => {
           },
         },
         displayName: 'Items',
-      },
-    },
-    fields: [{ key: 'items', kind: 'prop' }],
+      } }],
   };
 
   it('extracts region/schema-array fields into node regions (replaces field with region key)', () => {
@@ -247,16 +241,16 @@ describe('schema-definition actionValue compile branch', () => {
     type: 'action-value-fixture',
     displayName: 'Action Value Fixture',
     component: () => null,
-    propContracts: {
-      searchSource: {
+    fields: [
+      { key: 'searchSource', kind: 'prop', contract: {
         shape: {
           kind: 'schema-definition',
           fieldRules: {},
           actionValue: true,
         },
         displayName: 'Search Source',
-      },
-      validate: {
+      } },
+      { key: 'validate', kind: 'prop', contract: {
         shape: {
           kind: 'object',
           fields: {
@@ -271,11 +265,7 @@ describe('schema-definition actionValue compile branch', () => {
           optional: ['debounce', 'message'],
         },
         displayName: 'Validate',
-      },
-    },
-    fields: [
-      { key: 'searchSource', kind: 'prop' },
-      { key: 'validate', kind: 'prop' },
+      } },
     ],
   };
 
@@ -331,13 +321,16 @@ describe('P0 action-value props are never props-expression polluted', () => {
       type,
       displayName: type,
       component: () => null,
-      propContracts: {
-        [propKey]: {
-          shape: { kind: 'schema-definition', fieldRules: {}, actionValue: true },
-          displayName: propKey,
+      fields: [
+        {
+          key: propKey,
+          kind: 'prop',
+          contract: {
+            shape: { kind: 'schema-definition', fieldRules: {}, actionValue: true },
+            displayName: propKey,
+          },
         },
-      },
-      fields: [{ key: propKey, kind: 'prop' }],
+      ],
     };
   }
 

@@ -51,19 +51,27 @@ export const drawerRenderer: RegisteredRendererDefinition = {
 export const buttonRenderer: RendererDefinition = {
   type: 'button',
   component: noop,
-  propContracts: {
-    label: { shape: { kind: 'string' }, displayName: 'Label' },
-    variant: {
-      shape: { kind: 'union', anyOf: [{ kind: 'literal', value: 'default' }] },
-      displayName: 'Variant',
+  fields: [
+    { key: 'onClick', kind: 'event' },
+    { key: 'label', kind: 'prop', contract: { shape: { kind: 'string' }, displayName: 'Label' } },
+    {
+      key: 'variant',
+      kind: 'prop',
+      contract: {
+        shape: { kind: 'union', anyOf: [{ kind: 'literal', value: 'default' }] },
+        displayName: 'Variant',
+      },
     },
-    size: {
-      shape: { kind: 'union', anyOf: [{ kind: 'literal', value: 'default' }] },
-      displayName: 'Size',
+    {
+      key: 'size',
+      kind: 'prop',
+      contract: {
+        shape: { kind: 'union', anyOf: [{ kind: 'literal', value: 'default' }] },
+        displayName: 'Size',
+      },
     },
-    disabled: { shape: { kind: 'boolean' }, displayName: 'Disabled' },
-  },
-  fields: [{ key: 'onClick', kind: 'event' }],
+    { key: 'disabled', kind: 'prop', contract: { shape: { kind: 'boolean' }, displayName: 'Disabled' } },
+  ],
 };
 
 export const loopRenderer: RegisteredRendererDefinition = {
@@ -99,8 +107,10 @@ export const recurseRenderer: RegisteredRendererDefinition = {
 export const tabsRenderer: RegisteredRendererDefinition = {
   type: 'tabs',
   component: noop,
-  propContracts: {
-    items: {
+  fields: [
+    { key: 'toolbar', kind: 'region', regionKey: 'toolbar' },
+    { key: 'onChange', kind: 'event' },
+    { key: 'items', kind: 'prop', contract: {
       shape: {
         kind: 'array',
         item: {
@@ -129,12 +139,7 @@ export const tabsRenderer: RegisteredRendererDefinition = {
         },
       },
       displayName: 'Items',
-    },
-  },
-  fields: [
-    { key: 'toolbar', kind: 'region', regionKey: 'toolbar' },
-    { key: 'onChange', kind: 'event' },
-    { key: 'items', kind: 'prop' },
+    } },
   ],
 };
 
@@ -142,11 +147,22 @@ export const formRenderer: RegisteredRendererDefinition = {
   type: 'form',
   component: noop,
   defaultSchema: { type: 'form', body: [], actions: [] },
-  propContracts: {
-    data: { shape: { kind: 'object', fields: {} }, displayName: 'Data' },
-    statusPath: { shape: { kind: 'string' }, displayName: 'Status Path' },
-    valuesPath: { shape: { kind: 'string' }, displayName: 'Values Path' },
-    hiddenFieldPolicy: {
+  fields: [
+    { key: 'body', kind: 'region', regionKey: 'body' },
+    { key: 'actions', kind: 'region', regionKey: 'actions' },
+    { key: 'initAction', kind: 'event' },
+    { key: 'submitAction', kind: 'event' },
+    { key: 'onSubmitSuccess', kind: 'event' },
+    { key: 'onSubmitError', kind: 'event' },
+    { key: 'onValidateError', kind: 'event' },
+    { key: 'statusPath', kind: 'prop', contract: { shape: { kind: 'string' }, displayName: 'Status Path' } },
+    { key: 'valuesPath', kind: 'prop', contract: { shape: { kind: 'string' }, displayName: 'Values Path' } },
+    { key: 'mode', kind: 'prop' },
+    { key: 'labelAlign', kind: 'prop' },
+    { key: 'labelWidth', kind: 'prop' },
+  
+    { key: 'data', kind: 'prop', contract: { shape: { kind: 'object', fields: {} }, displayName: 'Data' } },
+    { key: 'hiddenFieldPolicy', kind: 'prop', contract: {
       shape: {
         kind: 'union',
         anyOf: [
@@ -163,22 +179,7 @@ export const formRenderer: RegisteredRendererDefinition = {
         ],
       },
       displayName: 'Hidden Field Policy',
-    },
-  },
-  fields: [
-    { key: 'body', kind: 'region', regionKey: 'body' },
-    { key: 'actions', kind: 'region', regionKey: 'actions' },
-    { key: 'initAction', kind: 'event' },
-    { key: 'submitAction', kind: 'event' },
-    { key: 'onSubmitSuccess', kind: 'event' },
-    { key: 'onSubmitError', kind: 'event' },
-    { key: 'onValidateError', kind: 'event' },
-    { key: 'statusPath', kind: 'prop' },
-    { key: 'valuesPath', kind: 'prop' },
-    { key: 'mode', kind: 'prop' },
-    { key: 'labelAlign', kind: 'prop' },
-    { key: 'labelWidth', kind: 'prop' },
-  ],
+    } },],
   scopePolicy: 'form',
   validationDefaults: {
     defaultChildContractMode: 'ignore',
@@ -188,8 +189,17 @@ export const formRenderer: RegisteredRendererDefinition = {
 export const tableRenderer: RegisteredRendererDefinition = {
   type: 'table',
   component: noop,
-  propContracts: {
-    columns: {
+  fields: [
+    { key: 'onRowClick', kind: 'event' },
+    { key: 'onSortChange', kind: 'event' },
+    { key: 'onFilterChange', kind: 'event' },
+    { key: 'onPageChange', kind: 'event' },
+    { key: 'onSelectionChange', kind: 'event' },
+    { key: 'onRefresh', kind: 'event' },
+    { key: 'empty', kind: 'value-or-region', regionKey: 'empty' },
+    { key: 'loadingContent', kind: 'value-or-region', regionKey: 'loading' },
+  
+    { key: 'columns', kind: 'prop', contract: {
       shape: {
         kind: 'array',
         item: {
@@ -217,18 +227,7 @@ export const tableRenderer: RegisteredRendererDefinition = {
         },
       },
       displayName: 'Columns',
-    },
-  },
-  fields: [
-    { key: 'onRowClick', kind: 'event' },
-    { key: 'onSortChange', kind: 'event' },
-    { key: 'onFilterChange', kind: 'event' },
-    { key: 'onPageChange', kind: 'event' },
-    { key: 'onSelectionChange', kind: 'event' },
-    { key: 'onRefresh', kind: 'event' },
-    { key: 'empty', kind: 'value-or-region', regionKey: 'empty' },
-    { key: 'loadingContent', kind: 'value-or-region', regionKey: 'loading' },
-  ],
+    } },],
 };
 
 export const treeRenderer: RegisteredRendererDefinition = {
@@ -266,11 +265,22 @@ export const chartRenderer: RegisteredRendererDefinition = {
 export const crudRenderer: RegisteredRendererDefinition = {
   type: 'crud',
   component: noop,
-  propContracts: {
-    statusPath: { shape: { kind: 'string' }, displayName: 'Status Path' },
-    source: { shape: { kind: 'union', anyOf: [] }, displayName: 'Source' },
-    queryForm: { shape: { kind: 'object', fields: {} }, displayName: 'Query Form' },
-    columns: {
+  fields: [
+    { key: 'name', kind: 'prop' },
+    { key: 'queryForm', kind: 'prop', contract: { shape: { kind: 'object', fields: {} }, displayName: 'Query Form' } },
+    { key: 'toolbar', kind: 'region' },
+    { key: 'listActions', kind: 'region' },
+    { key: 'footerToolbar', kind: 'region' },
+    { key: 'empty', kind: 'value-or-region', regionKey: 'empty' },
+    { key: 'onQuerySubmit', kind: 'event' },
+    { key: 'onQueryReset', kind: 'event' },
+    { key: 'onRowClick', kind: 'event' },
+    { key: 'onSelectionChange', kind: 'event' },
+    { key: 'onRefresh', kind: 'event' },
+  
+    { key: 'statusPath', kind: 'prop', contract: { shape: { kind: 'string' }, displayName: 'Status Path' } },
+    { key: 'source', kind: 'prop', contract: { shape: { kind: 'union', anyOf: [] }, displayName: 'Source' } },
+    { key: 'columns', kind: 'prop', contract: {
       shape: {
         kind: 'array',
         item: {
@@ -298,39 +308,25 @@ export const crudRenderer: RegisteredRendererDefinition = {
         },
       },
       displayName: 'Columns',
-    },
-    rowKey: { shape: { kind: 'string' }, displayName: 'Row Key' },
-    pageField: { shape: { kind: 'string' }, displayName: 'Page Field' },
-    pageSizeField: { shape: { kind: 'string' }, displayName: 'Page Size Field' },
-    defaultParams: { shape: { kind: 'object', fields: {} }, displayName: 'Default Params' },
-    toolbar: { shape: { kind: 'unknown' }, displayName: 'Toolbar' },
-    listActions: { shape: { kind: 'unknown' }, displayName: 'List Actions' },
-    footerToolbar: { shape: { kind: 'unknown' }, displayName: 'Footer Toolbar' },
-    toolbarLayout: { shape: { kind: 'object', fields: {} }, displayName: 'Toolbar Layout' },
-    selection: { shape: { kind: 'object', fields: {} }, displayName: 'Selection' },
-    selectionStatePath: { shape: { kind: 'string' }, displayName: 'Selection Path' },
-    selectionOwnership: { shape: { kind: 'string' }, displayName: 'Selection Ownership' },
-    paginationOwnership: { shape: { kind: 'string' }, displayName: 'Pagination Ownership' },
-    paginationStatePath: { shape: { kind: 'string' }, displayName: 'Pagination Path' },
-    sortOwnership: { shape: { kind: 'string' }, displayName: 'Sort Ownership' },
-    sortStatePath: { shape: { kind: 'string' }, displayName: 'Sort Path' },
-    filterOwnership: { shape: { kind: 'string' }, displayName: 'Filter Ownership' },
-    filterStatePath: { shape: { kind: 'string' }, displayName: 'Filter Path' },
-    columnSettings: { shape: { kind: 'object', fields: {} }, displayName: 'Column Settings' },
-  },
-  fields: [
-    { key: 'name', kind: 'prop' },
-    { key: 'queryForm', kind: 'prop' },
-    { key: 'toolbar', kind: 'region' },
-    { key: 'listActions', kind: 'region' },
-    { key: 'footerToolbar', kind: 'region' },
-    { key: 'empty', kind: 'value-or-region', regionKey: 'empty' },
-    { key: 'onQuerySubmit', kind: 'event' },
-    { key: 'onQueryReset', kind: 'event' },
-    { key: 'onRowClick', kind: 'event' },
-    { key: 'onSelectionChange', kind: 'event' },
-    { key: 'onRefresh', kind: 'event' },
-  ],
+    } },
+    { key: 'rowKey', kind: 'prop', contract: { shape: { kind: 'string' }, displayName: 'Row Key' } },
+    { key: 'pageField', kind: 'prop', contract: { shape: { kind: 'string' }, displayName: 'Page Field' } },
+    { key: 'pageSizeField', kind: 'prop', contract: { shape: { kind: 'string' }, displayName: 'Page Size Field' } },
+    { key: 'defaultParams', kind: 'prop', contract: { shape: { kind: 'object', fields: {} }, displayName: 'Default Params' } },
+    { key: 'toolbar', kind: 'prop', contract: { shape: { kind: 'unknown' }, displayName: 'Toolbar' } },
+    { key: 'listActions', kind: 'prop', contract: { shape: { kind: 'unknown' }, displayName: 'List Actions' } },
+    { key: 'footerToolbar', kind: 'prop', contract: { shape: { kind: 'unknown' }, displayName: 'Footer Toolbar' } },
+    { key: 'toolbarLayout', kind: 'prop', contract: { shape: { kind: 'object', fields: {} }, displayName: 'Toolbar Layout' } },
+    { key: 'selection', kind: 'prop', contract: { shape: { kind: 'object', fields: {} }, displayName: 'Selection' } },
+    { key: 'selectionStatePath', kind: 'prop', contract: { shape: { kind: 'string' }, displayName: 'Selection Path' } },
+    { key: 'selectionOwnership', kind: 'prop', contract: { shape: { kind: 'string' }, displayName: 'Selection Ownership' } },
+    { key: 'paginationOwnership', kind: 'prop', contract: { shape: { kind: 'string' }, displayName: 'Pagination Ownership' } },
+    { key: 'paginationStatePath', kind: 'prop', contract: { shape: { kind: 'string' }, displayName: 'Pagination Path' } },
+    { key: 'sortOwnership', kind: 'prop', contract: { shape: { kind: 'string' }, displayName: 'Sort Ownership' } },
+    { key: 'sortStatePath', kind: 'prop', contract: { shape: { kind: 'string' }, displayName: 'Sort Path' } },
+    { key: 'filterOwnership', kind: 'prop', contract: { shape: { kind: 'string' }, displayName: 'Filter Ownership' } },
+    { key: 'filterStatePath', kind: 'prop', contract: { shape: { kind: 'string' }, displayName: 'Filter Path' } },
+    { key: 'columnSettings', kind: 'prop', contract: { shape: { kind: 'object', fields: {} }, displayName: 'Column Settings' } },],
 };
 
 export const variantFieldRenderer: RegisteredRendererDefinition = {

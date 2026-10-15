@@ -8,17 +8,17 @@ describe('resolveRendererAuthoringContract', () => {
       type: 'button',
       component: () => null,
       rendererClass: 'instance-renderer',
-      propContracts: {
-        label: {
-          shape: { kind: 'string' },
-          displayName: 'Label',
-        },
-      },
       eventContracts: {
         onClick: {
           displayName: 'Click',
         },
       },
+      fields: [
+        { key: 'label', kind: 'prop', contract: {
+          shape: { kind: 'string' },
+          displayName: 'Label',
+        } },
+      ],
     };
 
     const contract = resolveRendererAuthoringContract(buttonRenderer);

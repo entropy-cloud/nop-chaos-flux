@@ -1,7 +1,7 @@
 import type { RegisteredRendererDefinition, SchemaFieldRule } from '@nop-chaos/flux-core';
-import { formFieldContracts, formFieldRules } from '../../field-utils.js';
+import { formFieldContractRules } from '../../field-utils.js';
 import { createFieldValidation, validateInputFieldSchema } from '../input.js';
-import { inputCitySpecificContracts, orgSelectSpecificContracts } from '../input-contracts.js';
+import { orgSelectSpecificContracts } from '../input-contracts.js';
 import { UserSelectRenderer } from './user-select-renderer.js';
 import { DepartmentSelectRenderer } from './department-select-renderer.js';
 import { InputCityRenderer } from './region-renderer.js';
@@ -14,16 +14,16 @@ import { InputCityRenderer } from './region-renderer.js';
  */
 const orgFieldRules: SchemaFieldRule[] = [
   { key: 'options', kind: 'prop' },
-  { key: 'sourceChildren', kind: 'prop' },
-  { key: 'sourceSearch', kind: 'prop' },
-  { key: 'sourceResolve', kind: 'prop' },
-  { key: 'multiple', kind: 'prop', valueType: 'boolean' },
-  { key: 'searchable', kind: 'prop', valueType: 'boolean' },
+  { key: 'sourceChildren', kind: 'prop', contract: orgSelectSpecificContracts.sourceChildren },
+  { key: 'sourceSearch', kind: 'prop', contract: orgSelectSpecificContracts.sourceSearch },
+  { key: 'sourceResolve', kind: 'prop', contract: orgSelectSpecificContracts.sourceResolve },
+  { key: 'multiple', kind: 'prop', valueType: 'boolean', contract: orgSelectSpecificContracts.multiple },
+  { key: 'searchable', kind: 'prop', valueType: 'boolean', contract: orgSelectSpecificContracts.searchable },
   { key: 'clearable', kind: 'prop', valueType: 'boolean' },
-  { key: 'searchMergeMode', kind: 'prop' },
-  { key: 'selectableTypes', kind: 'prop' },
-  { key: 'pageSize', kind: 'prop', valueType: 'number' },
-  { key: 'extraParams', kind: 'prop' },
+  { key: 'searchMergeMode', kind: 'prop', contract: orgSelectSpecificContracts.searchMergeMode },
+  { key: 'selectableTypes', kind: 'prop', contract: orgSelectSpecificContracts.selectableTypes },
+  { key: 'pageSize', kind: 'prop', valueType: 'number', contract: orgSelectSpecificContracts.pageSize },
+  { key: 'extraParams', kind: 'prop', contract: orgSelectSpecificContracts.extraParams },
 ];
 
 // input-city (plan 506 closure r2 Major-2): the accepted-schema-keys face
@@ -61,11 +61,7 @@ export const orgSelectRendererDefinitions: RegisteredRendererDefinition[] = [
   {
     type: 'user-select',
     sourcePackage: '@nop-chaos/flux-renderers-form',
-    propContracts: {
-      ...formFieldContracts,
-      ...orgSelectSpecificContracts,
-    },
-    fields: [...formFieldRules, ...orgFieldRules],
+    fields: [...formFieldContractRules, ...orgFieldRules],
     validation: createFieldValidation(),
     schemaValidator: validateInputFieldSchema,
     componentCapabilityContracts: orgSelectCapabilityContracts,
@@ -75,11 +71,7 @@ export const orgSelectRendererDefinitions: RegisteredRendererDefinition[] = [
   {
     type: 'department-select',
     sourcePackage: '@nop-chaos/flux-renderers-form',
-    propContracts: {
-      ...formFieldContracts,
-      ...orgSelectSpecificContracts,
-    },
-    fields: [...formFieldRules, ...orgFieldRules],
+    fields: [...formFieldContractRules, ...orgFieldRules],
     validation: createFieldValidation(),
     schemaValidator: validateInputFieldSchema,
     componentCapabilityContracts: orgSelectCapabilityContracts,
@@ -96,14 +88,10 @@ export const orgSelectRendererDefinitions: RegisteredRendererDefinition[] = [
 export const inputCityRendererDefinition: RegisteredRendererDefinition = {
   type: 'input-city',
   sourcePackage: '@nop-chaos/flux-renderers-form',
-  propContracts: {
-    ...formFieldContracts,
-    ...inputCitySpecificContracts,
-  },
   validation: createFieldValidation(),
   schemaValidator: validateInputFieldSchema,
   componentCapabilityContracts: orgSelectCapabilityContracts,
-  fields: [...formFieldRules, ...inputCityFieldRules],
+  fields: [...formFieldContractRules, ...inputCityFieldRules],
   wrap: true,
   component: InputCityRenderer,
 };

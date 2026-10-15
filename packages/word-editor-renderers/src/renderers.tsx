@@ -47,51 +47,6 @@ export const wordEditorRendererDefinitions: RegisteredRendererDefinition[] = [
     sourcePackage: '@nop-chaos/word-editor-renderers',
     rendererClass: 'domain-host-renderer',
     rendererTraits: ['workbench-shell', 'builder-facing'],
-    propContracts: {
-      config: {
-        shape: {
-          kind: 'object',
-          fields: {
-            leftPanel: wordEditorPanelConfigShape,
-            rightPanel: wordEditorPanelConfigShape,
-          },
-          optional: ['leftPanel', 'rightPanel'],
-        },
-        displayName: 'Config',
-        description: 'Config-driven side-panel contract for the word editor workbench shell.',
-        editorType: 'object',
-      },
-      statusPath: {
-        shape: { kind: 'string' },
-        displayName: 'Status Path',
-        description: 'Publishes word editor host summary outside the host boundary.',
-        editorType: 'path',
-      },
-      initialDocument: {
-        shape: { kind: 'object', fields: {} },
-        displayName: 'Initial Document',
-        description: 'Initial word document data.',
-        editorType: 'object',
-      },
-      datasets: {
-        shape: { kind: 'array', item: { kind: 'object', fields: {} } },
-        displayName: 'Datasets',
-        description: 'Initial dataset definitions available to the editor.',
-        editorType: 'array',
-      },
-      initialCharts: {
-        shape: { kind: 'array', item: { kind: 'object', fields: {} } },
-        displayName: 'Initial Charts',
-        description: 'Initial chart placeholders.',
-        editorType: 'array',
-      },
-      initialCodes: {
-        shape: { kind: 'array', item: { kind: 'object', fields: {} } },
-        displayName: 'Initial Codes',
-        description: 'Initial code placeholders.',
-        editorType: 'array',
-      },
-    },
     eventContracts: {
       onBack: {
         displayName: 'Back',
@@ -115,14 +70,75 @@ export const wordEditorRendererDefinitions: RegisteredRendererDefinition[] = [
     },
     fields: [
       { key: 'title', kind: 'value-or-region', regionKey: 'title' },
-      { key: 'config', kind: 'prop' },
-      { key: 'statusPath', kind: 'prop' },
+      {
+        key: 'config',
+        kind: 'prop',
+        contract: {
+          shape: {
+            kind: 'object',
+            fields: {
+              leftPanel: wordEditorPanelConfigShape,
+              rightPanel: wordEditorPanelConfigShape,
+            },
+            optional: ['leftPanel', 'rightPanel'],
+          },
+          displayName: 'Config',
+          description: 'Config-driven side-panel contract for the word editor workbench shell.',
+          editorType: 'object',
+        },
+      },
+      {
+        key: 'statusPath',
+        kind: 'prop',
+        contract: {
+          shape: { kind: 'string' },
+          displayName: 'Status Path',
+          description: 'Publishes word editor host summary outside the host boundary.',
+          editorType: 'path',
+        },
+      },
       { key: 'onBack', kind: 'event' },
       { key: 'onSave', kind: 'event' },
-      { key: 'initialDocument', kind: 'prop' },
-      { key: 'datasets', kind: 'prop' },
-      { key: 'initialCharts', kind: 'prop' },
-      { key: 'initialCodes', kind: 'prop' },
+      {
+        key: 'initialDocument',
+        kind: 'prop',
+        contract: {
+          shape: { kind: 'object', fields: {} },
+          displayName: 'Initial Document',
+          description: 'Initial word document data.',
+          editorType: 'object',
+        },
+      },
+      {
+        key: 'datasets',
+        kind: 'prop',
+        contract: {
+          shape: { kind: 'array', item: { kind: 'object', fields: {} } },
+          displayName: 'Datasets',
+          description: 'Initial dataset definitions available to the editor.',
+          editorType: 'array',
+        },
+      },
+      {
+        key: 'initialCharts',
+        kind: 'prop',
+        contract: {
+          shape: { kind: 'array', item: { kind: 'object', fields: {} } },
+          displayName: 'Initial Charts',
+          description: 'Initial chart placeholders.',
+          editorType: 'array',
+        },
+      },
+      {
+        key: 'initialCodes',
+        kind: 'prop',
+        contract: {
+          shape: { kind: 'array', item: { kind: 'object', fields: {} } },
+          displayName: 'Initial Codes',
+          description: 'Initial code placeholders.',
+          editorType: 'array',
+        },
+      },
       { key: 'toolbar', kind: 'region', regionKey: 'toolbar' },
       { key: 'leftPanel', kind: 'region', regionKey: 'leftPanel' },
       { key: 'rightPanel', kind: 'region', regionKey: 'rightPanel' },

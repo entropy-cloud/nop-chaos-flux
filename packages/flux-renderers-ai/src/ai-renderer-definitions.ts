@@ -78,21 +78,15 @@ export const aiRendererDefinitions: RegisteredRendererDefinition[] = [
     sourcePackage: '@nop-chaos/flux-renderers-ai',
     defaultSchema: { type: 'ai-chat' },
     component: AiChatRenderer,
-    propContracts: {
-      submitType: submitTypeContract,
-      showWordLimit: booleanContract('Show Word Limit'),
-      showTimestamp: booleanContract('Show Timestamp'),
-      showAvatar: booleanContract('Show Avatar'),
-    },
     fields: [
       { key: 'connector', kind: 'prop' },
       { key: 'placeholder', kind: 'prop' },
       { key: 'systemPrompt', kind: 'prop' },
-      { key: 'submitType', kind: 'prop' },
+      { key: 'submitType', kind: 'prop', contract: submitTypeContract },
       { key: 'maxLength', kind: 'prop' },
-      { key: 'showWordLimit', kind: 'prop', valueType: 'boolean' },
-      { key: 'showTimestamp', kind: 'prop', valueType: 'boolean' },
-      { key: 'showAvatar', kind: 'prop', valueType: 'boolean' },
+      { key: 'showWordLimit', kind: 'prop', valueType: 'boolean', contract: booleanContract('Show Word Limit') },
+      { key: 'showTimestamp', kind: 'prop', valueType: 'boolean', contract: booleanContract('Show Timestamp') },
+      { key: 'showAvatar', kind: 'prop', valueType: 'boolean', contract: booleanContract('Show Avatar') },
       { key: 'initialMessages', kind: 'prop' },
       { key: 'senderExtensions', kind: 'prop' },
       { key: 'conversationController', kind: 'prop' },
@@ -125,15 +119,10 @@ export const aiRendererDefinitions: RegisteredRendererDefinition[] = [
     sourcePackage: '@nop-chaos/flux-renderers-ai',
     defaultSchema: { type: 'ai-message-list' },
     component: AiMessageListRenderer,
-    propContracts: {
-      autoScroll: booleanContract('Auto Scroll'),
-      showTimestamp: booleanContract('Show Timestamp'),
-      showAvatar: booleanContract('Show Avatar'),
-    },
     fields: [
-      { key: 'autoScroll', kind: 'prop', valueType: 'boolean' },
-      { key: 'showTimestamp', kind: 'prop', valueType: 'boolean' },
-      { key: 'showAvatar', kind: 'prop', valueType: 'boolean' },
+      { key: 'autoScroll', kind: 'prop', valueType: 'boolean', contract: booleanContract('Auto Scroll') },
+      { key: 'showTimestamp', kind: 'prop', valueType: 'boolean', contract: booleanContract('Show Timestamp') },
+      { key: 'showAvatar', kind: 'prop', valueType: 'boolean', contract: booleanContract('Show Avatar') },
       { key: 'emptyRegion', kind: 'value-or-region', regionKey: 'emptyRegion' },
     ],
   },
@@ -144,34 +133,36 @@ export const aiRendererDefinitions: RegisteredRendererDefinition[] = [
     sourcePackage: '@nop-chaos/flux-renderers-ai',
     defaultSchema: { type: 'ai-bubble' },
     component: AiBubbleRenderer,
-    propContracts: {
-      placement: {
-        displayName: 'Placement',
-        shape: {
-          kind: 'union',
-          anyOf: BUBBLE_PLACEMENT_LITERALS.map((v) => ({ kind: 'literal', value: v })),
-        },
-        editorType: 'select',
-        defaultValue: 'auto',
-      },
-      shape: {
-        displayName: 'Shape',
-        shape: {
-          kind: 'union',
-          anyOf: BUBBLE_SHAPE_LITERALS.map((v) => ({ kind: 'literal', value: v })),
-        },
-        editorType: 'select',
-        defaultValue: 'corner',
-      },
-      showAvatar: booleanContract('Show Avatar'),
-      showTimestamp: booleanContract('Show Timestamp'),
-    },
     fields: [
       { key: 'message', kind: 'prop' },
-      { key: 'placement', kind: 'prop' },
-      { key: 'shape', kind: 'prop' },
-      { key: 'showAvatar', kind: 'prop', valueType: 'boolean' },
-      { key: 'showTimestamp', kind: 'prop', valueType: 'boolean' },
+      {
+        key: 'placement',
+        kind: 'prop',
+        contract: {
+          displayName: 'Placement',
+          shape: {
+            kind: 'union',
+            anyOf: BUBBLE_PLACEMENT_LITERALS.map((v) => ({ kind: 'literal', value: v })),
+          },
+          editorType: 'select',
+          defaultValue: 'auto',
+        },
+      },
+      {
+        key: 'shape',
+        kind: 'prop',
+        contract: {
+          displayName: 'Shape',
+          shape: {
+            kind: 'union',
+            anyOf: BUBBLE_SHAPE_LITERALS.map((v) => ({ kind: 'literal', value: v })),
+          },
+          editorType: 'select',
+          defaultValue: 'corner',
+        },
+      },
+      { key: 'showAvatar', kind: 'prop', valueType: 'boolean', contract: booleanContract('Show Avatar') },
+      { key: 'showTimestamp', kind: 'prop', valueType: 'boolean', contract: booleanContract('Show Timestamp') },
       { key: 'avatar', kind: 'prop' },
       { key: 'branches', kind: 'prop' },
       { key: 'activeBranchId', kind: 'prop' },
@@ -186,18 +177,13 @@ export const aiRendererDefinitions: RegisteredRendererDefinition[] = [
     sourcePackage: '@nop-chaos/flux-renderers-ai',
     defaultSchema: { type: 'ai-sender' },
     component: AiSenderRenderer,
-    propContracts: {
-      submitType: submitTypeContract,
-      showWordLimit: booleanContract('Show Word Limit'),
-      clearOnSubmit: booleanContract('Clear On Submit'),
-    },
     fields: [
       { key: 'placeholder', kind: 'prop' },
       { key: 'loading', kind: 'prop' },
       { key: 'maxLength', kind: 'prop' },
-      { key: 'showWordLimit', kind: 'prop', valueType: 'boolean' },
-      { key: 'submitType', kind: 'prop' },
-      { key: 'clearOnSubmit', kind: 'prop', valueType: 'boolean' },
+      { key: 'showWordLimit', kind: 'prop', valueType: 'boolean', contract: booleanContract('Show Word Limit') },
+      { key: 'submitType', kind: 'prop', contract: submitTypeContract },
+      { key: 'clearOnSubmit', kind: 'prop', valueType: 'boolean', contract: booleanContract('Clear On Submit') },
       { key: 'senderExtensions', kind: 'prop' },
       { key: 'onSubmit', kind: 'event' },
       { key: 'onCancel', kind: 'event' },
@@ -211,13 +197,15 @@ export const aiRendererDefinitions: RegisteredRendererDefinition[] = [
     sourcePackage: '@nop-chaos/flux-renderers-ai',
     defaultSchema: { type: 'ai-conversations' },
     component: AiConversationsRenderer,
-    propContracts: {
-      showRenameControls: booleanContract('Show Rename Controls'),
-    },
     fields: [
       { key: 'conversations', kind: 'prop' },
       { key: 'activeId', kind: 'prop' },
-      { key: 'showRenameControls', kind: 'prop', valueType: 'boolean' },
+      {
+        key: 'showRenameControls',
+        kind: 'prop',
+        valueType: 'boolean',
+        contract: booleanContract('Show Rename Controls')
+      },
       { key: 'onItemClick', kind: 'event' },
       { key: 'onItemRename', kind: 'event' },
       { key: 'onItemDelete', kind: 'event' },
@@ -231,23 +219,24 @@ export const aiRendererDefinitions: RegisteredRendererDefinition[] = [
     sourcePackage: '@nop-chaos/flux-renderers-ai',
     defaultSchema: { type: 'ai-welcome' },
     component: AiWelcomeRenderer,
-    propContracts: {
-      align: {
-        displayName: 'Align',
-        shape: {
-          kind: 'union',
-          anyOf: WELCOME_ALIGN_LITERALS.map((v) => ({ kind: 'literal', value: v })),
-        },
-        editorType: 'select',
-        defaultValue: 'center',
-      },
-    },
     fields: [
       { key: 'title', kind: 'prop' },
       { key: 'description', kind: 'prop' },
       { key: 'icon', kind: 'prop' },
       { key: 'iconLucide', kind: 'prop' },
-      { key: 'align', kind: 'prop' },
+      {
+        key: 'align',
+        kind: 'prop',
+        contract: {
+          displayName: 'Align',
+          shape: {
+            kind: 'union',
+            anyOf: WELCOME_ALIGN_LITERALS.map((v) => ({ kind: 'literal', value: v })),
+          },
+          editorType: 'select',
+          defaultValue: 'center',
+        },
+      },
       { key: 'footer', kind: 'value-or-region', regionKey: 'footer' },
     ],
   },
@@ -258,30 +247,34 @@ export const aiRendererDefinitions: RegisteredRendererDefinition[] = [
     sourcePackage: '@nop-chaos/flux-renderers-ai',
     defaultSchema: { type: 'ai-prompts' },
     component: AiPromptsRenderer,
-    propContracts: {
-      layout: {
-        displayName: 'Layout',
-        shape: {
-          kind: 'union',
-          anyOf: PROMPTS_LAYOUT_LITERALS.map((v) => ({ kind: 'literal', value: v })),
-        },
-        editorType: 'select',
-        defaultValue: 'vertical',
-      },
-      size: {
-        displayName: 'Size',
-        shape: {
-          kind: 'union',
-          anyOf: PROMPTS_SIZE_LITERALS.map((v) => ({ kind: 'literal', value: v })),
-        },
-        editorType: 'select',
-        defaultValue: 'md',
-      },
-    },
     fields: [
       { key: 'items', kind: 'prop' },
-      { key: 'layout', kind: 'prop' },
-      { key: 'size', kind: 'prop' },
+      {
+        key: 'layout',
+        kind: 'prop',
+        contract: {
+          displayName: 'Layout',
+          shape: {
+            kind: 'union',
+            anyOf: PROMPTS_LAYOUT_LITERALS.map((v) => ({ kind: 'literal', value: v })),
+          },
+          editorType: 'select',
+          defaultValue: 'vertical',
+        },
+      },
+      {
+        key: 'size',
+        kind: 'prop',
+        contract: {
+          displayName: 'Size',
+          shape: {
+            kind: 'union',
+            anyOf: PROMPTS_SIZE_LITERALS.map((v) => ({ kind: 'literal', value: v })),
+          },
+          editorType: 'select',
+          defaultValue: 'md',
+        },
+      },
       { key: 'onSelect', kind: 'event' },
     ],
   },
@@ -292,23 +285,24 @@ export const aiRendererDefinitions: RegisteredRendererDefinition[] = [
     sourcePackage: '@nop-chaos/flux-renderers-ai',
     defaultSchema: { type: 'ai-feedback' },
     component: AiFeedbackRenderer,
-    propContracts: {
-      actions: {
-        displayName: 'Actions',
-        shape: {
-          kind: 'array',
-          item: {
-            kind: 'union',
-            anyOf: FEEDBACK_ACTION_LITERALS.map((v) => ({ kind: 'literal', value: v })),
-          },
-        },
-        editorType: 'multi-select',
-        defaultValue: ['copy', 'refresh', 'like', 'dislike', 'sources'],
-      },
-    },
     fields: [
       { key: 'message', kind: 'prop' },
-      { key: 'actions', kind: 'prop' },
+      {
+        key: 'actions',
+        kind: 'prop',
+        contract: {
+          displayName: 'Actions',
+          shape: {
+            kind: 'array',
+            item: {
+              kind: 'union',
+              anyOf: FEEDBACK_ACTION_LITERALS.map((v) => ({ kind: 'literal', value: v })),
+            },
+          },
+          editorType: 'multi-select',
+          defaultValue: ['copy', 'refresh', 'like', 'dislike', 'sources'],
+        },
+      },
       { key: 'onAction', kind: 'event' },
     ],
   },
@@ -319,13 +313,10 @@ export const aiRendererDefinitions: RegisteredRendererDefinition[] = [
     sourcePackage: '@nop-chaos/flux-renderers-ai',
     defaultSchema: { type: 'ai-tool-call' },
     component: AiToolCallRenderer,
-    propContracts: {
-      defaultOpen: booleanContract('Default Open'),
-    },
     fields: [
       { key: 'toolCall', kind: 'prop' },
       { key: 'state', kind: 'prop' },
-      { key: 'defaultOpen', kind: 'prop', valueType: 'boolean' },
+      { key: 'defaultOpen', kind: 'prop', valueType: 'boolean', contract: booleanContract('Default Open') },
       { key: 'onApproval', kind: 'event' },
     ],
   },
@@ -336,27 +327,26 @@ export const aiRendererDefinitions: RegisteredRendererDefinition[] = [
     sourcePackage: '@nop-chaos/flux-renderers-ai',
     defaultSchema: { type: 'ai-attachments' },
     component: AiAttachmentsRenderer,
-    propContracts: {
-      mode: {
-        displayName: 'Mode',
-        shape: {
-          kind: 'union',
-          anyOf: ATTACHMENTS_MODE_LITERALS.map((v) => ({ kind: 'literal', value: v })),
-        },
-        editorType: 'select',
-        defaultValue: 'auto',
-      },
-      multiple: booleanContract('Multiple'),
-      enableDrop: booleanContract('Enable Drop'),
-    },
     fields: [
       { key: 'value', kind: 'prop' },
-      { key: 'mode', kind: 'prop' },
+      {
+        key: 'mode',
+        kind: 'prop',
+        contract: {
+          displayName: 'Mode',
+          shape: {
+            kind: 'union',
+            anyOf: ATTACHMENTS_MODE_LITERALS.map((v) => ({ kind: 'literal', value: v })),
+          },
+          editorType: 'select',
+          defaultValue: 'auto',
+        },
+      },
       { key: 'accept', kind: 'prop' },
-      { key: 'multiple', kind: 'prop', valueType: 'boolean' },
+      { key: 'multiple', kind: 'prop', valueType: 'boolean', contract: booleanContract('Multiple') },
       { key: 'maxSize', kind: 'prop' },
       { key: 'maxFiles', kind: 'prop' },
-      { key: 'enableDrop', kind: 'prop', valueType: 'boolean' },
+      { key: 'enableDrop', kind: 'prop', valueType: 'boolean', contract: booleanContract('Enable Drop') },
       { key: 'onChange', kind: 'event' },
       { key: 'onError', kind: 'event' },
       { key: 'onUpload', kind: 'event' },
@@ -369,21 +359,22 @@ export const aiRendererDefinitions: RegisteredRendererDefinition[] = [
     sourcePackage: '@nop-chaos/flux-renderers-ai',
     defaultSchema: { type: 'ai-citations' },
     component: AiCitationsRenderer,
-    propContracts: {
-      mode: {
-        displayName: 'Mode',
-        shape: {
-          kind: 'union',
-          anyOf: CITATIONS_MODE_LITERALS.map((v) => ({ kind: 'literal', value: v })),
-        },
-        editorType: 'select',
-        defaultValue: 'inline',
-      },
-    },
     fields: [
       { key: 'message', kind: 'prop' },
       { key: 'sources', kind: 'prop' },
-      { key: 'mode', kind: 'prop' },
+      {
+        key: 'mode',
+        kind: 'prop',
+        contract: {
+          displayName: 'Mode',
+          shape: {
+            kind: 'union',
+            anyOf: CITATIONS_MODE_LITERALS.map((v) => ({ kind: 'literal', value: v })),
+          },
+          editorType: 'select',
+          defaultValue: 'inline',
+        },
+      },
       { key: 'onSourceClick', kind: 'event' },
     ],
   },
@@ -394,14 +385,10 @@ export const aiRendererDefinitions: RegisteredRendererDefinition[] = [
     sourcePackage: '@nop-chaos/flux-renderers-ai',
     defaultSchema: { type: 'ai-voice-input' },
     component: AiVoiceInputRenderer,
-    propContracts: {
-      continuous: booleanContract('Continuous'),
-      interimResults: booleanContract('Interim Results'),
-    },
     fields: [
       { key: 'lang', kind: 'prop' },
-      { key: 'continuous', kind: 'prop', valueType: 'boolean' },
-      { key: 'interimResults', kind: 'prop', valueType: 'boolean' },
+      { key: 'continuous', kind: 'prop', valueType: 'boolean', contract: booleanContract('Continuous') },
+      { key: 'interimResults', kind: 'prop', valueType: 'boolean', contract: booleanContract('Interim Results') },
       { key: 'onResult', kind: 'event' },
       { key: 'onError', kind: 'event' },
     ],
@@ -413,14 +400,11 @@ export const aiRendererDefinitions: RegisteredRendererDefinition[] = [
     sourcePackage: '@nop-chaos/flux-renderers-ai',
     defaultSchema: { type: 'ai-token-usage' },
     component: AiTokenUsageRenderer,
-    propContracts: {
-      showCost: booleanContract('Show Cost'),
-    },
     fields: [
       { key: 'message', kind: 'prop' },
       { key: 'usage', kind: 'prop' },
       { key: 'contextLimit', kind: 'prop' },
-      { key: 'showCost', kind: 'prop', valueType: 'boolean' },
+      { key: 'showCost', kind: 'prop', valueType: 'boolean', contract: booleanContract('Show Cost') },
       { key: 'onClick', kind: 'event' },
     ],
   },
@@ -431,20 +415,21 @@ export const aiRendererDefinitions: RegisteredRendererDefinition[] = [
     sourcePackage: '@nop-chaos/flux-renderers-ai',
     defaultSchema: { type: 'ai-suggestions' },
     component: AiSuggestionsRenderer,
-    propContracts: {
-      overflowMode: {
-        displayName: 'Overflow Mode',
-        shape: {
-          kind: 'union',
-          anyOf: SUGGESTIONS_OVERFLOW_LITERALS.map((v) => ({ kind: 'literal', value: v })),
-        },
-        editorType: 'select',
-        defaultValue: 'expand',
-      },
-    },
     fields: [
       { key: 'items', kind: 'prop' },
-      { key: 'overflowMode', kind: 'prop' },
+      {
+        key: 'overflowMode',
+        kind: 'prop',
+        contract: {
+          displayName: 'Overflow Mode',
+          shape: {
+            kind: 'union',
+            anyOf: SUGGESTIONS_OVERFLOW_LITERALS.map((v) => ({ kind: 'literal', value: v })),
+          },
+          editorType: 'select',
+          defaultValue: 'expand',
+        },
+      },
       { key: 'maxVisible', kind: 'prop' },
       { key: 'onSelect', kind: 'event' },
     ],

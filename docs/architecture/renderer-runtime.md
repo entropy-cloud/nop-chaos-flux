@@ -337,15 +337,15 @@ Violations of this principle include:
 
 Instead, all renderer-specific behavior must be declared on `RendererDefinition` so that each renderer self-describes its needs:
 
-| Current hardcoded location                                   | What it controls                                                                      | Declarative home                                                                    |
-| ------------------------------------------------------------ | ------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
-| `node-frame-wrapper.tsx` type list                           | Whether `FieldFrame` root uses `<div>` vs default tag                                 | `RendererDefinition.frameRootTag?: string`                                          |
-| `shape-validation-node-fields.ts` type checks                | Per-item boolean field validation inside deep item containers                         | `propContracts[key].shape` schema-definition `literal` kind                         |
-| `node-compiler.ts` `schema.type === 'form'`                  | Default child validation contract mode                                                | `RendererDefinition.validationDefaults?.defaultChildContractMode`                   |
-| `node-compiler.ts` `schema.type === 'page'`                  | Descendant validation-model collection without a form owner                           | `RendererDefinition.validationDefaults?.collectDescendantValidation`                |
-| `node-compiler.ts` `data-source` / `reaction`                | Compile-time attachment of runtime artifacts                                          | `RendererDefinition.compilation` metadata                                           |
-| `shape-validation-node-fields.ts` `data-source` / `reaction` | Renderer-specific node shape validation                                               | `RendererDefinition.schemaValidator(...)`                                           |
-| `node-compiler-helpers.ts` classification pipeline           | Deep field normalization (region extraction / literal envelope / action preservation) | `propContracts[key].shape` schema-definition fieldRules (unified `SchemaFieldKind`) |
+| Current hardcoded location                                   | What it controls                                                                      | Declarative home                                                                   |
+| ------------------------------------------------------------ | ------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| `node-frame-wrapper.tsx` type list                           | Whether `FieldFrame` root uses `<div>` vs default tag                                 | `RendererDefinition.frameRootTag?: string`                                         |
+| `shape-validation-node-fields.ts` type checks                | Per-item boolean field validation inside deep item containers                         | `fields[].contract.shape` schema-definition `literal` kind                         |
+| `node-compiler.ts` `schema.type === 'form'`                  | Default child validation contract mode                                                | `RendererDefinition.validationDefaults?.defaultChildContractMode`                  |
+| `node-compiler.ts` `schema.type === 'page'`                  | Descendant validation-model collection without a form owner                           | `RendererDefinition.validationDefaults?.collectDescendantValidation`               |
+| `node-compiler.ts` `data-source` / `reaction`                | Compile-time attachment of runtime artifacts                                          | `RendererDefinition.compilation` metadata                                          |
+| `shape-validation-node-fields.ts` `data-source` / `reaction` | Renderer-specific node shape validation                                               | `RendererDefinition.schemaValidator(...)`                                          |
+| `node-compiler-helpers.ts` classification pipeline           | Deep field normalization (region extraction / literal envelope / action preservation) | `fields[].contract.shape` schema-definition fieldRules (unified `SchemaFieldKind`) |
 
 Existing mechanisms that already follow this principle:
 
@@ -366,7 +366,7 @@ The current baseline uses three distinct renderer-owned metadata surfaces for fo
 2. `validationDefaults`
 3. `compilation`
 
-(plus `fields`/`propContracts` — see the schema-definition section below). They have different responsibilities and must not be collapsed into one generic catch-all field.
+(plus the `fields` channel with inline `contract` shapes — see the schema-definition section below). They have different responsibilities and must not be collapsed into one generic catch-all field.
 
 #### `frameRootTag`
 
@@ -382,10 +382,10 @@ The current baseline uses three distinct renderer-owned metadata surfaces for fo
 - Current baseline use case: `radio-group` and `checkbox-group` declare `'group'` (plan 460 B3) so their multi-option control area is framed as `<fieldset>/<legend>` — a `<label>` wrapper forwards gap-area clicks to the first option control and silently selects it. Effective since RM-2 (plan 604); before that the declarations were inert.
 - Boundary: the definition default only applies when the schema instance does not author `frameWrap` and the renderer is wrap-compatible (`wrap: true`); authored values always win.
 
-#### `propContracts[key].shape` schema-definition (nested schema transport)
+#### `fields[].contract.shape` schema-definition (nested schema transport)
 
 - Purpose: declare renderer props that contain nested schema-bearing structures rather than ordinary scalar/object props. The compiler classifies each nested field by its `fieldRules` kind (unified `SchemaFieldKind`): `region`/`schema`/`schema-array`/`value-or-region` → compiler-extracted region, `event`/`action`/`literal` → preserve-literal envelope, `prop`/`value` → expression evaluation. Items carrying an explicit `type` are classified per the child renderer's registry definition (typed item semantics).
-- Owner: the renderer definition (`propContracts`).
+- Owner: the renderer definition (inline `contract` on the `fields` entry).
 - Current baseline use cases:
   - `table.columns` / `table.expandable`
   - `crud.columns`
@@ -398,7 +398,7 @@ The current baseline uses three distinct renderer-owned metadata surfaces for fo
 
 Custom field compilation note:
 
-- Some renderer-owned schema-bearing props are not modeled via `propContracts[key].shape` schema-definition, but still need compile-time-owned nested schema transport. The live baseline allows `SchemaFieldRule.compile` to precompile renderer-specific nested artifacts such as `CompiledActionProgram` or `TemplateNode` fragments, as long as those values are preserved as atomic compiled leaves instead of being recursively rewritten back into ordinary runtime value trees.
+- Some renderer-owned schema-bearing props are not modeled via a `schema-definition` contract shape, but still need compile-time-owned nested schema transport. The live baseline allows `SchemaFieldRule.compile` to precompile renderer-specific nested artifacts such as `CompiledActionProgram` or `TemplateNode` fragments, as long as those values are preserved as atomic compiled leaves instead of being recursively rewritten back into ordinary runtime value trees.
 - This is the current closure path for `designer-page.config` nested schema leaves and detail owner value-adaptation action slots.
 
 #### `validationDefaults`
@@ -495,13 +495,13 @@ The key rule is that renderer-level contracts may reuse `FluxValueShape` as the 
 
 Current implementation baseline:
 
-- `packages/flux-core/src/types/renderer-core.ts` now defines `rendererClass`, `rendererTraits`, `propContracts`, `eventContracts`, `componentCapabilityContracts`, and `scopeExportContracts` directly on `RendererDefinition`
+- `packages/flux-core/src/types/renderer-core.ts` now defines `rendererClass`, `rendererTraits`, `eventContracts`, `componentCapabilityContracts`, and `scopeExportContracts` directly on `RendererDefinition` (prop value-shape contracts live inline on `fields` entries since RM-4)
 - `packages/flux-core/src/types/renderer-authoring-contract.ts` provides the tooling-facing `ResolvedAuthoringContract` adapter over those fields
 - initial pilot metadata started with `button`, `form`, `crud`, and `designer-page`; current live coverage also includes renderers such as `tabs`, `table`, `chart`, and `code-editor`, so the renderer definitions remain the source of truth for exact coverage
 
 Authoring/runtime split reminder:
 
-- `propContracts` and tooling `editableProps` describe authored schema fields
+- The `fields` inline contracts and tooling `editableProps` describe authored schema fields
 - runtime `RendererComponentProps['props']` remains the resolved render-time value bag
 - `shape` / `required` / `defaultValue` belong to authored schema semantics and parse/validate boundaries
 - property editing UI itself is better owned by `inspector`/schema for designer-like scenarios; `editorType` should not be treated as the primary architecture path for attribute editing
@@ -509,76 +509,92 @@ Authoring/runtime split reminder:
 - `hostContract` remains host-only and should appear only on `domain-host-renderer`
 - `domain-host-renderer` families should not publish parallel `$designer` / `$report` / `$spreadsheet` aliases through `scopeExportContracts` unless the live runtime actually exports those keys and all host families follow the same rule
 
-### `propContracts` Coverage Discipline (plan 462)
+### Prop Contract Coverage Discipline (plan 462; single source since RM-4/plan 606)
 
-Every renderer that has a finite enumeration / literal / boolean / number / string prop MUST register it under `propContracts` so the schema compiler (`packages/flux-compiler/src/schema-compiler/shape-validation-node-fields.ts:39-66` → `validateFluxValueShape`) catches typos at compile time. Without a `propContracts[key]` entry, the validator early-returns and the typo silently reaches the runtime, which (per the design principle) degrades gracefully but never tells anyone.
+Every renderer that has a finite enumeration / literal / boolean / number / string prop MUST declare a contract on its `fields` entry (`contract: RendererFieldContract`) so the schema compiler (`packages/flux-compiler/src/schema-compiler/shape-validation-node-fields.ts` → `validateFluxValueShape`) catches typos at compile time. Without a contract entry, the validator early-returns and the typo silently reaches the runtime, which (per the design principle) degrades gracefully but never tells anyone.
 
-**Inline field contracts (RM-3, plan 605)**: a `fields` entry with `kind: 'prop'` may carry its contract inline via `contract: RendererFieldContract` (`shape` required; `displayName`/`editorType`/`required` ride along) — the single-entry alternative to a second `propContracts` declaration for the same key. Every contract consumer reads both channels through the central view `resolveRendererPropContracts(renderer)` (propContracts authoritative on conflicts, inline entries fill uncovered keys). The old two-channel form stays valid during the RM-3→RM-4 transition; RM-4 removes `propContracts` and the inline form becomes the single source. The contract never materializes into `TemplateNode`.
+**Inline field contracts (RM-3 plan 605; single source since RM-4 plan 606)**: a `fields` entry with `kind: 'prop'` carries its contract inline via `contract: RendererFieldContract` (`shape` required; `displayName`/`editorType`/`required` ride along). Every contract consumer reads the entries through the central view `resolveRendererPropContracts(renderer)`. The former two-channel `propContracts` record was removed in RM-4 — declaring a value-shape contract a second time no longer exists as a mechanism. The contract never materializes into `TemplateNode`.
 
 **Mandatory coverage checklist for a new renderer / new prop** (audit gate):
 
-1. **Any `kind: 'literal' | 'union' | 'boolean' | 'number' | 'string'` field in `fields`** → register a `propContracts[key]` entry. The audit test `apps/playground/src/renderer-prop-coverage-audit.test.ts` reports the per-renderer gap; CI must stay green on this test (default `expect(coverage).toBeGreaterThanOrEqual(0)` plus the per-package floor in §`Deferred But Adjudicated`). (Test relocated from `packages/flux-compiler/src/` to the playground on 2026-08-24: it imports the live renderer registries, which are downstream of the compiler — keeping it in `flux-compiler` required undeclared workspace deps that formed a build dependency cycle.)
-2. **Structural props (array / object / schema-definition)** → register `propContracts[key].shape` with the matching `kind: 'array' | 'object' | 'schema-definition'`. These never produce a closed-model `unknown-property` warning, so they are not part of the same gap, but still benefit from a `shape` for tooling introspection.
+1. **Any `kind: 'literal' | 'union' | 'boolean' | 'number' | 'string'` field in `fields`** → give the entry an inline `contract`. The audit test `apps/playground/src/renderer-prop-coverage-audit.test.ts` reports the per-renderer gap; CI must stay green on this test (default `expect(coverage).toBeGreaterThanOrEqual(0)` plus the per-package floor in §`Deferred But Adjudicated`). (Test relocated from `packages/flux-compiler/src/` to the playground on 2026-08-24: it imports the live renderer registries, which are downstream of the compiler — keeping it in `flux-compiler` required undeclared workspace deps that formed a build dependency cycle.)
+2. **Structural props (array / object / schema-definition)** → declare `contract.shape` with the matching `kind: 'array' | 'object' | 'schema-definition'`. These never produce a closed-model `unknown-property` warning, so they are not part of the same gap, but still benefit from a `shape` for tooling introspection.
 3. **`data-*` attributes** are HTML5 passthrough; the closed-model `unknown-property` check at `shape-validation-node-fields.ts:242-269` exempts them via `!key.startsWith('data-')`. Authoring a `data-slot` on a renderer does not need a contract entry — the renderer reads it via `collectDataAttrs(props.props)`.
-4. **Shared fields across multiple renderers** (e.g. `flux-renderers-form`'s `formFieldRules` is spread into every input renderer) → use a sibling `formFieldContracts: Record<string, RendererPropContract>` array in the shared module and spread it into each renderer's `propContracts`. Single source of truth: when a field is added to `formFieldRules`, the matching entry MUST also be added to `formFieldContracts`. The compiler does not enforce this — see `docs/logs/2026/08-23.md` for the ad-hoc convention.
-5. **Don't add a `propContracts` entry for `regions` / `events`** — those are classified via `fields: { key, kind: 'region' | 'event' | 'reaction' | 'value-or-region' }`, and the schema compiler's `validateActionShape` / `findSchemaDefinitionShape` paths handle them. Adding a literal-shape contract to a region field would conflict with the action-shape validator and produce `invalid-property-value` errors for valid action schemas.
+4. **Shared fields across multiple renderers** (e.g. `flux-renderers-form`'s `formFieldRules` is spread into every input renderer) → declare the contracts once in a sibling module and attach them per key in the shared rules array (`contract: formFieldContracts.K`; see `field-reading.tsx` `formFieldContractRules`). Single source of truth: when a field is added to the shared rules, the matching contract MUST exist. The compiler does not enforce this — see `docs/logs/2026/08-23.md` for the ad-hoc convention.
+5. **Don't give `regions` / `events` entries a value-shape `contract`** — those are classified via `fields: { key, kind: 'region' | 'event' | 'reaction' | 'value-or-region' }`, and the schema compiler's `validateActionShape` / `findSchemaDefinitionShape` paths handle them. Adding a literal-shape contract to a region field would conflict with the action-shape validator and produce `invalid-property-value` errors for valid action schemas.
 
 **Canonical shape templates**:
 
 ```ts
 // Union of string literals
-propContracts: {
-  variant: {
-    displayName: 'Variant',
-    shape: {
-      kind: 'union',
-      anyOf: [
-        { kind: 'literal', value: 'default' },
-        { kind: 'literal', value: 'destructive' },
-        { kind: 'literal', value: 'outline' },
-        { kind: 'literal', value: 'secondary' },
-        { kind: 'literal', value: 'ghost' },
-        { kind: 'literal', value: 'link' },
-      ],
+fields: [
+  {
+    key: 'variant',
+    kind: 'prop',
+    contract: {
+      displayName: 'Variant',
+      shape: {
+        kind: 'union',
+        anyOf: [
+          { kind: 'literal', value: 'default' },
+          { kind: 'literal', value: 'destructive' },
+          { kind: 'literal', value: 'outline' },
+          { kind: 'literal', value: 'secondary' },
+          { kind: 'literal', value: 'ghost' },
+          { kind: 'literal', value: 'link' },
+        ],
+      },
+      editorType: 'select',
+      defaultValue: 'default',
     },
-    editorType: 'select',
-    defaultValue: 'default',
   },
-}
+];
 
 // Boolean (with default editor type 'switch')
-propContracts: {
-  disabled: { displayName: 'Disabled', shape: { kind: 'boolean' } },
-}
+fields: [
+  {
+    key: 'disabled',
+    kind: 'prop',
+    contract: { displayName: 'Disabled', shape: { kind: 'boolean' } },
+  },
+];
 
 // Single literal (lock-down pattern, e.g. ai-tool-call `approval: 'pending'`)
-propContracts: {
-  direction: {
-    displayName: 'Direction',
-    description: 'OA-14: locked to "down" (pull-up loading belongs to infinite-scroll).',
-    shape: { kind: 'literal', value: 'down' },
-    editorType: 'select',
-    defaultValue: 'down',
+fields: [
+  {
+    key: 'direction',
+    kind: 'prop',
+    contract: {
+      displayName: 'Direction',
+      description: 'OA-14: locked to "down" (pull-up loading belongs to infinite-scroll).',
+      shape: { kind: 'literal', value: 'down' },
+      editorType: 'select',
+      defaultValue: 'down',
+    },
   },
-}
+];
 
 // Mixed (number OR string token, e.g. icon.size = number | 'sm' | 'md' | 'lg')
-propContracts: {
-  size: {
-    displayName: 'Size',
-    shape: {
-      kind: 'union',
-      anyOf: [
-        { kind: 'number' },
-        { kind: 'literal', value: 'sm' },
-        { kind: 'literal', value: 'md' },
-        { kind: 'literal', value: 'lg' },
-      ],
+fields: [
+  {
+    key: 'size',
+    kind: 'prop',
+    contract: {
+      displayName: 'Size',
+      shape: {
+        kind: 'union',
+        anyOf: [
+          { kind: 'number' },
+          { kind: 'literal', value: 'sm' },
+          { kind: 'literal', value: 'md' },
+          { kind: 'literal', value: 'lg' },
+        ],
+      },
+      editorType: 'text',
+      defaultValue: 'md',
     },
-    editorType: 'text',
-    defaultValue: 'md',
   },
-}
+];
 ```
 
 **Live coverage baseline (2026-08-23, plan 462)**:

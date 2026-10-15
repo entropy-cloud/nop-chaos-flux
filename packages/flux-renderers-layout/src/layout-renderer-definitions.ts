@@ -3,263 +3,118 @@ import { GridRenderer } from './grid-renderer.js';
 import { CollapseRenderer } from './collapse-renderer.js';
 import { ButtonGroupRenderer } from './button-group-renderer.js';
 import { DropdownButtonRenderer } from './dropdown-button-renderer.js';
-import { WizardRenderer } from './wizard-renderer.js';
 import { ResponsiveRenderer } from './responsive-renderer.js';
 import { stepsRendererDefinition, timelineRendererDefinition } from './process-display-definitions.js';
+import { wizardRendererDefinition } from './wizard-renderer-definition.js';
 import { resizableRendererDefinition } from './resizable-renderer-definition.js';
 
 export const layoutRendererDefinitions: RegisteredRendererDefinition[] = [
-  {
-    type: 'wizard',
-    displayName: 'Wizard',
-    category: 'layout',
-    sourcePackage: '@nop-chaos/flux-renderers-layout',
-    component: WizardRenderer,
-    propContracts: {
-      steps: {
-        shape: {
-          kind: 'array',
-          item: {
-            kind: 'schema-definition',
-            fieldRules: {
-              title: {
-                kind: 'value-or-region',
-                regionKey: 'titleRegionKey',
-                params: ['step', 'index', 'key'],
-                isolate: false,
-              },
-              body: {
-                kind: 'region',
-                regionKey: 'bodyRegionKey',
-                params: ['step', 'index', 'key'],
-                isolate: false,
-              },
-              actions: {
-                kind: 'region',
-                regionKey: 'actionsRegionKey',
-                params: ['step', 'index', 'key'],
-                isolate: false,
-              },
-              disabled: 'literal',
-              beforeEnter: 'event',
-              beforeLeave: 'event',
-            },
-          },
-        },
-        displayName: 'Steps',
-        description:
-          'Renderer-owned structured step list. Declaration order = navigation order. Each step carries title/body/actions regions + visible/disabled flags.',
-        editorType: 'object-array',
-      },
-      value: {
-        shape: { kind: 'union', anyOf: [{ kind: 'string' }, { kind: 'number' }] },
-        displayName: 'Value',
-        description:
-          'Initial step key or index (0-based index when numeric and no matching key). Seed only — step navigation is local controlled state (non-reactive to runtime value changes).',
-        editorType: 'expression',
-      },
-      defaultValue: {
-        shape: { kind: 'union', anyOf: [{ kind: 'string' }, { kind: 'number' }] },
-        displayName: 'Default Value',
-        description: 'Initial current step when value is not provided. Seed only (non-reactive).',
-        editorType: 'expression',
-      },
-      statusPath: {
-        shape: { kind: 'string' },
-        displayName: 'Status Path',
-        description:
-          'Publishes a read-only wizard summary: { currentStepKey, currentStepIndex, stepCount, canGoNext, canGoPrev, committing, validating, lastCommitStatus, stepError? }. Interaction state and lifecycle state are kept separate per design §6.',
-        editorType: 'expression',
-      },
-      linear: {
-        shape: { kind: 'boolean' },
-        displayName: 'Linear',
-        description:
-          'Default true. When true, uncommitted steps cannot be jumped to unless allowStepJump is set.',
-        editorType: 'switch',
-        defaultValue: true,
-      },
-      allowStepJump: {
-        shape: { kind: 'boolean' },
-        displayName: 'Allow Step Jump',
-        description: 'Allow non-linear step jumping even when linear=true.',
-        editorType: 'switch',
-        defaultValue: false,
-      },
-      mountOnEnter: {
-        shape: { kind: 'boolean' },
-        displayName: 'Mount On Enter',
-        description: 'Mount step body on first enter (keep mounted after). Defaults to true: visited steps stay mounted (back preserves values) unless unmountOnExit opts out.',
-        editorType: 'switch',
-        defaultValue: true,
-      },
-      unmountOnExit: {
-        shape: { kind: 'boolean' },
-        displayName: 'Unmount On Exit',
-        description: 'Unmount step body when it exits.',
-        editorType: 'switch',
-        defaultValue: false,
-      },
-    },
-    eventContracts: {
-      onChange: {
-        displayName: 'On Change',
-        description:
-          'Navigation event (interaction layer). Dispatched when currentStepIndex changes via Next/Prev/step-click. Payload: { currentStepKey, currentStepIndex }.',
-        payload: {
-          kind: 'object',
-          fields: {
-            currentStepKey: { kind: 'unknown' },
-            currentStepIndex: { kind: 'number' },
-          },
-        },
-      },
-      onStepCommit: {
-        displayName: 'On Step Commit',
-        description:
-          'Semantic step-commit event (lifecycle layer). Dispatched when Next is clicked, BEFORE advancing. May validate or submit; failures surface as lastCommitStatus=error and prevent advancement.',
-        payload: {
-          kind: 'object',
-          fields: {
-            currentStepKey: { kind: 'unknown' },
-            currentStepIndex: { kind: 'number' },
-          },
-        },
-      },
-      onComplete: {
-        displayName: 'On Complete',
-        description:
-          'Lifecycle event dispatched when the final step is committed successfully. Payload: { currentStepKey, currentStepIndex }.',
-        payload: {
-          kind: 'object',
-          fields: {
-            currentStepKey: { kind: 'unknown' },
-            currentStepIndex: { kind: 'number' },
-          },
-        },
-      },
-      onStepError: {
-        displayName: 'On Step Error',
-        description:
-          'Lifecycle event dispatched when step commit fails or throws. Payload: { currentStepKey, currentStepIndex, reason, error? }.',
-        payload: {
-          kind: 'object',
-          fields: {
-            currentStepKey: { kind: 'unknown' },
-            currentStepIndex: { kind: 'number' },
-            reason: { kind: 'string' },
-          },
-        },
-      },
-    },
-    fields: [
-      { key: 'steps', kind: 'prop' },
-      { key: 'value', kind: 'prop' },
-      { key: 'defaultValue', kind: 'prop' },
-      { key: 'statusPath', kind: 'prop' },
-      { key: 'mode', kind: 'prop' },
-      { key: 'linear', kind: 'prop', valueType: 'boolean' },
-      { key: 'allowStepJump', kind: 'prop', valueType: 'boolean' },
-      { key: 'mountOnEnter', kind: 'prop', valueType: 'boolean' },
-      { key: 'unmountOnExit', kind: 'prop', valueType: 'boolean' },
-      { key: 'actionFinishLabel', kind: 'prop' },
-      { key: 'actionNextLabel', kind: 'prop' },
-      { key: 'actionPrevLabel', kind: 'prop' },
-      { key: 'onChange', kind: 'event' },
-      { key: 'onStepCommit', kind: 'event' },
-      { key: 'onComplete', kind: 'event' },
-      { key: 'onStepError', kind: 'event' },
-    ],
-  },
+  wizardRendererDefinition,
   {
     type: 'grid',
     displayName: 'Grid',
     category: 'layout',
     sourcePackage: '@nop-chaos/flux-renderers-layout',
     component: GridRenderer,
-    propContracts: {
-      columns: {
-        shape: { kind: 'union', anyOf: [{ kind: 'number' }, { kind: 'string' }] },
-        displayName: 'Columns',
-        description:
-          'Number of columns (→ repeat(N, minmax(0,1fr))) or raw CSS grid-template-columns string.',
-        editorType: 'expression',
-      },
-      gap: {
-        shape: { kind: 'union', anyOf: [{ kind: 'number' }, { kind: 'string' }] },
-        displayName: 'Gap',
-        description: 'Gap between grid items (number → px, string → raw CSS).',
-        editorType: 'expression',
-      },
-      autoFlow: {
-        shape: {
-          kind: 'union',
-          anyOf: [
-            { kind: 'literal', value: 'row' },
-            { kind: 'literal', value: 'column' },
-            { kind: 'literal', value: 'dense' },
-            { kind: 'literal', value: 'row dense' },
-            { kind: 'literal', value: 'column dense' },
-          ],
-        },
-        displayName: 'Auto Flow',
-        editorType: 'select',
-      },
-      alignItems: {
-        shape: {
-          kind: 'union',
-          anyOf: [
-            { kind: 'literal', value: 'start' },
-            { kind: 'literal', value: 'end' },
-            { kind: 'literal', value: 'center' },
-            { kind: 'literal', value: 'stretch' },
-          ],
-        },
-        displayName: 'Align Items',
-        editorType: 'select',
-      },
-      justifyItems: {
-        shape: {
-          kind: 'union',
-          anyOf: [
-            { kind: 'literal', value: 'start' },
-            { kind: 'literal', value: 'end' },
-            { kind: 'literal', value: 'center' },
-            { kind: 'literal', value: 'stretch' },
-          ],
-        },
-        displayName: 'Justify Items',
-        editorType: 'select',
-      },
-      items: {
-        shape: {
-          kind: 'array',
-          item: {
-            kind: 'schema-definition',
-            fieldRules: {
-              body: {
-                kind: 'region',
-                regionKey: 'bodyRegionKey',
-                params: ['item', 'index', 'key'],
-                isolate: false,
+    fields: [
+      {
+        key: 'items',
+        kind: 'prop',
+        contract: {
+          shape: {
+            kind: 'array',
+            item: {
+              kind: 'schema-definition',
+              fieldRules: {
+                body: {
+                  kind: 'region',
+                  regionKey: 'bodyRegionKey',
+                  params: ['item', 'index', 'key'],
+                  isolate: false,
+                },
               },
             },
           },
+          displayName: 'Items',
+          description:
+            'Grid item collection. Each item carries a body region plus optional colSpan/rowSpan.',
+          editorType: 'object-array',
         },
-        displayName: 'Items',
-        description:
-          'Grid item collection. Each item carries a body region plus optional colSpan/rowSpan.',
-        editorType: 'object-array',
       },
-    },
-    fields: [
-      { key: 'items', kind: 'prop' },
-      { key: 'columns', kind: 'prop' },
+      {
+        key: 'columns',
+        kind: 'prop',
+        contract: {
+          shape: { kind: 'union', anyOf: [{ kind: 'number' }, { kind: 'string' }] },
+          displayName: 'Columns',
+          description:
+            'Number of columns (→ repeat(N, minmax(0,1fr))) or raw CSS grid-template-columns string.',
+          editorType: 'expression',
+        },
+      },
       { key: 'responsiveColumns', kind: 'prop' },
-      { key: 'gap', kind: 'prop' },
-      { key: 'autoFlow', kind: 'prop' },
-      { key: 'alignItems', kind: 'prop' },
-      { key: 'justifyItems', kind: 'prop' },
+      {
+        key: 'gap',
+        kind: 'prop',
+        contract: {
+          shape: { kind: 'union', anyOf: [{ kind: 'number' }, { kind: 'string' }] },
+          displayName: 'Gap',
+          description: 'Gap between grid items (number → px, string → raw CSS).',
+          editorType: 'expression',
+        },
+      },
+      {
+        key: 'autoFlow',
+        kind: 'prop',
+        contract: {
+          shape: {
+            kind: 'union',
+            anyOf: [
+              { kind: 'literal', value: 'row' },
+              { kind: 'literal', value: 'column' },
+              { kind: 'literal', value: 'dense' },
+              { kind: 'literal', value: 'row dense' },
+              { kind: 'literal', value: 'column dense' },
+            ],
+          },
+          displayName: 'Auto Flow',
+          editorType: 'select',
+        },
+      },
+      {
+        key: 'alignItems',
+        kind: 'prop',
+        contract: {
+          shape: {
+            kind: 'union',
+            anyOf: [
+              { kind: 'literal', value: 'start' },
+              { kind: 'literal', value: 'end' },
+              { kind: 'literal', value: 'center' },
+              { kind: 'literal', value: 'stretch' },
+            ],
+          },
+          displayName: 'Align Items',
+          editorType: 'select',
+        },
+      },
+      {
+        key: 'justifyItems',
+        kind: 'prop',
+        contract: {
+          shape: {
+            kind: 'union',
+            anyOf: [
+              { kind: 'literal', value: 'start' },
+              { kind: 'literal', value: 'end' },
+              { kind: 'literal', value: 'center' },
+              { kind: 'literal', value: 'stretch' },
+            ],
+          },
+          displayName: 'Justify Items',
+          editorType: 'select',
+        },
+      },
     ],
   },
   {
@@ -268,89 +123,6 @@ export const layoutRendererDefinitions: RegisteredRendererDefinition[] = [
     category: 'layout',
     sourcePackage: '@nop-chaos/flux-renderers-layout',
     component: CollapseRenderer,
-    propContracts: {
-      items: {
-        shape: {
-          kind: 'array',
-          item: {
-            kind: 'schema-definition',
-            fieldRules: {
-              title: {
-                kind: 'value-or-region',
-                regionKey: 'titleRegionKey',
-                params: ['item', 'index', 'key'],
-                isolate: false,
-              },
-              body: {
-                kind: 'region',
-                regionKey: 'bodyRegionKey',
-                params: ['item', 'index', 'key'],
-                isolate: false,
-              },
-              leading: {
-                kind: 'region',
-                regionKey: 'leadingRegionKey',
-                params: ['item', 'index', 'key'],
-                isolate: false,
-              },
-              count: 'value',
-              tone: 'literal',
-              disabled: 'literal',
-            },
-          },
-        },
-        displayName: 'Items',
-        description:
-          'Collapse panel collection. Each item carries title + body + leading regions plus key/tone/count/disabled flags.',
-        editorType: 'object-array',
-      },
-      value: {
-        shape: { kind: 'unknown' },
-        displayName: 'Value',
-        description:
-          'Currently expanded key(s): single key when multiple=false, array of keys when multiple=true.',
-        editorType: 'expression',
-      },
-      defaultValue: {
-        shape: { kind: 'unknown' },
-        displayName: 'Default Value',
-        description: 'Initial expanded value when value is not provided.',
-        editorType: 'expression',
-      },
-      valueOwnership: {
-        shape: {
-          kind: 'union',
-          anyOf: [
-            { kind: 'literal', value: 'local' },
-            { kind: 'literal', value: 'controlled' },
-            { kind: 'literal', value: 'scope' },
-          ],
-        },
-        displayName: 'Value Ownership',
-        editorType: 'select',
-        defaultValue: 'local',
-      },
-      valueStatePath: {
-        shape: { kind: 'string' },
-        displayName: 'Value State Path',
-        description: 'Scope path publishing the writable expand-state value (scope ownership).',
-        editorType: 'expression',
-      },
-      multiple: {
-        shape: { kind: 'boolean' },
-        displayName: 'Multiple',
-        description: 'Allow multiple panels open simultaneously (default true).',
-        editorType: 'switch',
-        defaultValue: true,
-      },
-      collapsible: {
-        shape: { kind: 'boolean' },
-        displayName: 'Collapsible',
-        description: 'Whether each panel can re-collapse itself (default true).',
-        editorType: 'switch',
-        defaultValue: true,
-      },
-    },
     eventContracts: {
       onChange: {
         displayName: 'On Change',
@@ -367,13 +139,117 @@ export const layoutRendererDefinitions: RegisteredRendererDefinition[] = [
       },
     },
     fields: [
-      { key: 'items', kind: 'prop' },
-      { key: 'value', kind: 'prop' },
-      { key: 'defaultValue', kind: 'prop' },
-      { key: 'valueOwnership', kind: 'prop' },
-      { key: 'valueStatePath', kind: 'prop' },
-      { key: 'multiple', kind: 'prop', valueType: 'boolean' },
-      { key: 'collapsible', kind: 'prop', valueType: 'boolean' },
+      {
+        key: 'items',
+        kind: 'prop',
+        contract: {
+          shape: {
+            kind: 'array',
+            item: {
+              kind: 'schema-definition',
+              fieldRules: {
+                title: {
+                  kind: 'value-or-region',
+                  regionKey: 'titleRegionKey',
+                  params: ['item', 'index', 'key'],
+                  isolate: false,
+                },
+                body: {
+                  kind: 'region',
+                  regionKey: 'bodyRegionKey',
+                  params: ['item', 'index', 'key'],
+                  isolate: false,
+                },
+                leading: {
+                  kind: 'region',
+                  regionKey: 'leadingRegionKey',
+                  params: ['item', 'index', 'key'],
+                  isolate: false,
+                },
+                count: 'value',
+                tone: 'literal',
+                disabled: 'literal',
+              },
+            },
+          },
+          displayName: 'Items',
+          description:
+            'Collapse panel collection. Each item carries title + body + leading regions plus key/tone/count/disabled flags.',
+          editorType: 'object-array',
+        },
+      },
+      {
+        key: 'value',
+        kind: 'prop',
+        contract: {
+          shape: { kind: 'unknown' },
+          displayName: 'Value',
+          description:
+            'Currently expanded key(s): single key when multiple=false, array of keys when multiple=true.',
+          editorType: 'expression',
+        },
+      },
+      {
+        key: 'defaultValue',
+        kind: 'prop',
+        contract: {
+          shape: { kind: 'unknown' },
+          displayName: 'Default Value',
+          description: 'Initial expanded value when value is not provided.',
+          editorType: 'expression',
+        },
+      },
+      {
+        key: 'valueOwnership',
+        kind: 'prop',
+        contract: {
+          shape: {
+            kind: 'union',
+            anyOf: [
+              { kind: 'literal', value: 'local' },
+              { kind: 'literal', value: 'controlled' },
+              { kind: 'literal', value: 'scope' },
+            ],
+          },
+          displayName: 'Value Ownership',
+          editorType: 'select',
+          defaultValue: 'local',
+        },
+      },
+      {
+        key: 'valueStatePath',
+        kind: 'prop',
+        contract: {
+          shape: { kind: 'string' },
+          displayName: 'Value State Path',
+          description: 'Scope path publishing the writable expand-state value (scope ownership).',
+          editorType: 'expression',
+        },
+      },
+      {
+        key: 'multiple',
+        kind: 'prop',
+        valueType: 'boolean',
+        contract: {
+          shape: { kind: 'boolean' },
+          displayName: 'Multiple',
+          description: 'Allow multiple panels open simultaneously (default true).',
+          editorType: 'switch',
+          defaultValue: true,
+        },
+      },
+      {
+        key: 'collapsible',
+        kind: 'prop',
+        valueType: 'boolean',
+        contract: {
+          shape: { kind: 'boolean' },
+          displayName: 'Collapsible',
+          description: 'Whether each panel can re-collapse itself (default true).',
+          editorType: 'switch',
+          defaultValue: true,
+        },
+      },
       { key: 'onChange', kind: 'event' },
     ],
   },
@@ -383,97 +259,6 @@ export const layoutRendererDefinitions: RegisteredRendererDefinition[] = [
     category: 'layout',
     sourcePackage: '@nop-chaos/flux-renderers-layout',
     component: ButtonGroupRenderer,
-    propContracts: {
-      items: {
-        shape: {
-          kind: 'array',
-          item: {
-            kind: 'schema-definition',
-            fieldRules: {
-              key: 'value',
-              label: 'value',
-              action: 'event',
-              variant: 'value',
-              disabled: 'value',
-            },
-          },
-        },
-        displayName: 'Items',
-        description:
-          'Button item collection. Each item: { label, action, variant, disabled }. action is an event field (template-preserved at compile time).',
-        editorType: 'object-array',
-      },
-      orientation: {
-        shape: {
-          kind: 'union',
-          anyOf: [
-            { kind: 'literal', value: 'horizontal' },
-            { kind: 'literal', value: 'vertical' },
-          ],
-        },
-        displayName: 'Orientation',
-        editorType: 'select',
-        defaultValue: 'horizontal',
-      },
-      variant: {
-        shape: {
-          kind: 'union',
-          anyOf: [
-            { kind: 'literal', value: 'default' },
-            { kind: 'literal', value: 'outline' },
-            { kind: 'literal', value: 'secondary' },
-            { kind: 'literal', value: 'ghost' },
-            { kind: 'literal', value: 'destructive' },
-            { kind: 'literal', value: 'link' },
-          ],
-        },
-        displayName: 'Variant',
-        editorType: 'select',
-        defaultValue: 'outline',
-      },
-      size: {
-        shape: {
-          kind: 'union',
-          anyOf: [
-            { kind: 'literal', value: 'default' },
-            { kind: 'literal', value: 'xs' },
-            { kind: 'literal', value: 'sm' },
-            { kind: 'literal', value: 'lg' },
-          ],
-        },
-        displayName: 'Size',
-        editorType: 'select',
-        defaultValue: 'default',
-      },
-      selectionMode: {
-        shape: {
-          kind: 'union',
-          anyOf: [
-            { kind: 'literal', value: 'none' },
-            { kind: 'literal', value: 'single' },
-            { kind: 'literal', value: 'multiple' },
-          ],
-        },
-        displayName: 'Selection Mode',
-        description:
-          'none = pure action buttons; single/multiple = toggle-like local controlled selection with onChange.',
-        editorType: 'select',
-        defaultValue: 'none',
-      },
-      value: {
-        shape: { kind: 'unknown' },
-        displayName: 'Value',
-        description:
-          'Initial selected key(s) — seed only. Selection is local controlled state and is NOT reactive to runtime value changes.',
-        editorType: 'expression',
-      },
-      defaultValue: {
-        shape: { kind: 'unknown' },
-        displayName: 'Default Value',
-        description: 'Initial selected value when value is not provided. Seed only (non-reactive).',
-        editorType: 'expression',
-      },
-    },
     eventContracts: {
       onChange: {
         displayName: 'On Change',
@@ -490,13 +275,123 @@ export const layoutRendererDefinitions: RegisteredRendererDefinition[] = [
       },
     },
     fields: [
-      { key: 'items', kind: 'prop' },
-      { key: 'orientation', kind: 'prop' },
-      { key: 'variant', kind: 'prop' },
-      { key: 'size', kind: 'prop' },
-      { key: 'selectionMode', kind: 'prop' },
-      { key: 'value', kind: 'prop' },
-      { key: 'defaultValue', kind: 'prop' },
+      {
+        key: 'items',
+        kind: 'prop',
+        contract: {
+          shape: {
+            kind: 'array',
+            item: {
+              kind: 'schema-definition',
+              fieldRules: {
+                key: 'value',
+                label: 'value',
+                action: 'event',
+                variant: 'value',
+                disabled: 'value',
+              },
+            },
+          },
+          displayName: 'Items',
+          description:
+            'Button item collection. Each item: { label, action, variant, disabled }. action is an event field (template-preserved at compile time).',
+          editorType: 'object-array',
+        },
+      },
+      {
+        key: 'orientation',
+        kind: 'prop',
+        contract: {
+          shape: {
+            kind: 'union',
+            anyOf: [
+              { kind: 'literal', value: 'horizontal' },
+              { kind: 'literal', value: 'vertical' },
+            ],
+          },
+          displayName: 'Orientation',
+          editorType: 'select',
+          defaultValue: 'horizontal',
+        },
+      },
+      {
+        key: 'variant',
+        kind: 'prop',
+        contract: {
+          shape: {
+            kind: 'union',
+            anyOf: [
+              { kind: 'literal', value: 'default' },
+              { kind: 'literal', value: 'outline' },
+              { kind: 'literal', value: 'secondary' },
+              { kind: 'literal', value: 'ghost' },
+              { kind: 'literal', value: 'destructive' },
+              { kind: 'literal', value: 'link' },
+            ],
+          },
+          displayName: 'Variant',
+          editorType: 'select',
+          defaultValue: 'outline',
+        },
+      },
+      {
+        key: 'size',
+        kind: 'prop',
+        contract: {
+          shape: {
+            kind: 'union',
+            anyOf: [
+              { kind: 'literal', value: 'default' },
+              { kind: 'literal', value: 'xs' },
+              { kind: 'literal', value: 'sm' },
+              { kind: 'literal', value: 'lg' },
+            ],
+          },
+          displayName: 'Size',
+          editorType: 'select',
+          defaultValue: 'default',
+        },
+      },
+      {
+        key: 'selectionMode',
+        kind: 'prop',
+        contract: {
+          shape: {
+            kind: 'union',
+            anyOf: [
+              { kind: 'literal', value: 'none' },
+              { kind: 'literal', value: 'single' },
+              { kind: 'literal', value: 'multiple' },
+            ],
+          },
+          displayName: 'Selection Mode',
+          description:
+            'none = pure action buttons; single/multiple = toggle-like local controlled selection with onChange.',
+          editorType: 'select',
+          defaultValue: 'none',
+        },
+      },
+      {
+        key: 'value',
+        kind: 'prop',
+        contract: {
+          shape: { kind: 'unknown' },
+          displayName: 'Value',
+          description:
+            'Initial selected key(s) — seed only. Selection is local controlled state and is NOT reactive to runtime value changes.',
+          editorType: 'expression',
+        },
+      },
+      {
+        key: 'defaultValue',
+        kind: 'prop',
+        contract: {
+          shape: { kind: 'unknown' },
+          displayName: 'Default Value',
+          description: 'Initial selected value when value is not provided. Seed only (non-reactive).',
+          editorType: 'expression',
+        },
+      },
       { key: 'onChange', kind: 'event' },
     ],
   },
@@ -506,133 +401,164 @@ export const layoutRendererDefinitions: RegisteredRendererDefinition[] = [
     category: 'layout',
     sourcePackage: '@nop-chaos/flux-renderers-layout',
     component: DropdownButtonRenderer,
-    propContracts: {
-      label: {
-        shape: { kind: 'unknown' },
-        displayName: 'Label',
-        description: 'Main button label (value-or-region).',
-        editorType: 'expression',
-      },
-      icon: {
-        shape: { kind: 'string' },
-        displayName: 'Icon',
-        description: 'Lucide icon name for the main button.',
-        editorType: 'expression',
-      },
-      variant: {
-        shape: {
-          kind: 'union',
-          anyOf: [
-            { kind: 'literal', value: 'default' },
-            { kind: 'literal', value: 'outline' },
-            { kind: 'literal', value: 'secondary' },
-            { kind: 'literal', value: 'ghost' },
-            { kind: 'literal', value: 'destructive' },
-            { kind: 'literal', value: 'link' },
-          ],
-        },
-        displayName: 'Variant',
-        editorType: 'select',
-        defaultValue: 'default',
-      },
-      size: {
-        shape: {
-          kind: 'union',
-          anyOf: [
-            { kind: 'literal', value: 'default' },
-            { kind: 'literal', value: 'xs' },
-            { kind: 'literal', value: 'sm' },
-            { kind: 'literal', value: 'lg' },
-          ],
-        },
-        displayName: 'Size',
-        editorType: 'select',
-        defaultValue: 'default',
-      },
-      items: {
-        shape: {
-          kind: 'array',
-          item: {
-            kind: 'schema-definition',
-            fieldRules: {
-              label: 'value',
-              action: 'event',
-              onClick: 'event',
-              disabled: 'value',
-              destructive: 'value',
-              key: 'value',
-            },
-          },
-        },
-        displayName: 'Items',
-        description:
-          'Menu item collection. Each item: { label, action/onClick, disabled, destructive }. action/onClick are event fields (template-preserved at compile time).',
-        editorType: 'object-array',
-      },
-      trigger: {
-        shape: {
-          kind: 'union',
-          anyOf: [
-            { kind: 'literal', value: 'click' },
-            { kind: 'literal', value: 'hover' },
-          ],
-        },
-        displayName: 'Trigger',
-        editorType: 'select',
-        defaultValue: 'click',
-      },
-      side: {
-        shape: {
-          kind: 'union',
-          anyOf: [
-            { kind: 'literal', value: 'top' },
-            { kind: 'literal', value: 'bottom' },
-            { kind: 'literal', value: 'left' },
-            { kind: 'literal', value: 'right' },
-          ],
-        },
-        displayName: 'Side',
-        description: 'Preferred menu placement side; auto-flips when cramped.',
-        editorType: 'select',
-        defaultValue: 'bottom',
-      },
-      align: {
-        shape: {
-          kind: 'union',
-          anyOf: [
-            { kind: 'literal', value: 'start' },
-            { kind: 'literal', value: 'center' },
-            { kind: 'literal', value: 'end' },
-          ],
-        },
-        displayName: 'Align',
-        editorType: 'select',
-        defaultValue: 'start',
-      },
-      sideOffset: {
-        shape: { kind: 'number' },
-        displayName: 'Side Offset',
-        editorType: 'number',
-        defaultValue: 4,
-      },
-      disabled: {
-        shape: { kind: 'boolean' },
-        displayName: 'Disabled',
-        editorType: 'switch',
-        defaultValue: false,
-      },
-    },
     fields: [
       { key: 'label', kind: 'value-or-region', regionKey: 'label' },
-      { key: 'icon', kind: 'prop' },
-      { key: 'variant', kind: 'prop' },
-      { key: 'size', kind: 'prop' },
-      { key: 'items', kind: 'prop' },
-      { key: 'trigger', kind: 'prop' },
-      { key: 'side', kind: 'prop' },
-      { key: 'align', kind: 'prop' },
-      { key: 'sideOffset', kind: 'prop', valueType: 'number' },
-      { key: 'disabled', kind: 'prop', valueType: 'boolean' },
+      {
+        key: 'icon',
+        kind: 'prop',
+        contract: {
+          shape: { kind: 'string' },
+          displayName: 'Icon',
+          description: 'Lucide icon name for the main button.',
+          editorType: 'expression',
+        },
+      },
+      {
+        key: 'variant',
+        kind: 'prop',
+        contract: {
+          shape: {
+            kind: 'union',
+            anyOf: [
+              { kind: 'literal', value: 'default' },
+              { kind: 'literal', value: 'outline' },
+              { kind: 'literal', value: 'secondary' },
+              { kind: 'literal', value: 'ghost' },
+              { kind: 'literal', value: 'destructive' },
+              { kind: 'literal', value: 'link' },
+            ],
+          },
+          displayName: 'Variant',
+          editorType: 'select',
+          defaultValue: 'default',
+        },
+      },
+      {
+        key: 'size',
+        kind: 'prop',
+        contract: {
+          shape: {
+            kind: 'union',
+            anyOf: [
+              { kind: 'literal', value: 'default' },
+              { kind: 'literal', value: 'xs' },
+              { kind: 'literal', value: 'sm' },
+              { kind: 'literal', value: 'lg' },
+            ],
+          },
+          displayName: 'Size',
+          editorType: 'select',
+          defaultValue: 'default',
+        },
+      },
+      {
+        key: 'items',
+        kind: 'prop',
+        contract: {
+          shape: {
+            kind: 'array',
+            item: {
+              kind: 'schema-definition',
+              fieldRules: {
+                label: 'value',
+                action: 'event',
+                onClick: 'event',
+                disabled: 'value',
+                destructive: 'value',
+                key: 'value',
+              },
+            },
+          },
+          displayName: 'Items',
+          description:
+            'Menu item collection. Each item: { label, action/onClick, disabled, destructive }. action/onClick are event fields (template-preserved at compile time).',
+          editorType: 'object-array',
+        },
+      },
+      {
+        key: 'trigger',
+        kind: 'prop',
+        contract: {
+          shape: {
+            kind: 'union',
+            anyOf: [
+              { kind: 'literal', value: 'click' },
+              { kind: 'literal', value: 'hover' },
+            ],
+          },
+          displayName: 'Trigger',
+          editorType: 'select',
+          defaultValue: 'click',
+        },
+      },
+      {
+        key: 'side',
+        kind: 'prop',
+        contract: {
+          shape: {
+            kind: 'union',
+            anyOf: [
+              { kind: 'literal', value: 'top' },
+              { kind: 'literal', value: 'bottom' },
+              { kind: 'literal', value: 'left' },
+              { kind: 'literal', value: 'right' },
+            ],
+          },
+          displayName: 'Side',
+          description: 'Preferred menu placement side; auto-flips when cramped.',
+          editorType: 'select',
+          defaultValue: 'bottom',
+        },
+      },
+      {
+        key: 'align',
+        kind: 'prop',
+        contract: {
+          shape: {
+            kind: 'union',
+            anyOf: [
+              { kind: 'literal', value: 'start' },
+              { kind: 'literal', value: 'center' },
+              { kind: 'literal', value: 'end' },
+            ],
+          },
+          displayName: 'Align',
+          editorType: 'select',
+          defaultValue: 'start',
+        },
+      },
+      {
+        key: 'sideOffset',
+        kind: 'prop',
+        valueType: 'number',
+        contract: {
+          shape: { kind: 'number' },
+          displayName: 'Side Offset',
+          editorType: 'number',
+          defaultValue: 4,
+        },
+      },
+      {
+        key: 'disabled',
+        kind: 'prop',
+        valueType: 'boolean',
+        contract: {
+          shape: { kind: 'boolean' },
+          displayName: 'Disabled',
+          editorType: 'switch',
+          defaultValue: false,
+        },
+      },
+      {
+        key: 'label',
+        kind: 'prop',
+        contract: {
+          shape: { kind: 'unknown' },
+          displayName: 'Label',
+          description: 'Main button label (value-or-region).',
+          editorType: 'expression',
+        },
+      },
     ],
   },
   stepsRendererDefinition,
@@ -643,33 +569,34 @@ export const layoutRendererDefinitions: RegisteredRendererDefinition[] = [
     category: 'layout',
     sourcePackage: '@nop-chaos/flux-renderers-layout',
     component: ResponsiveRenderer,
-    propContracts: {
-      variants: {
-        shape: {
-          kind: 'array',
-          item: {
-            kind: 'schema-definition',
-            fieldRules: {
-              key: 'literal',
-              min: 'literal',
-              max: 'literal',
-              body: {
-                kind: 'region',
-                regionKey: 'bodyRegionKey',
-                params: ['variant', 'index', 'key'],
-                isolate: false,
+    fields: [
+      {
+        key: 'variants',
+        kind: 'prop',
+        contract: {
+          shape: {
+            kind: 'array',
+            item: {
+              kind: 'schema-definition',
+              fieldRules: {
+                key: 'literal',
+                min: 'literal',
+                max: 'literal',
+                body: {
+                  kind: 'region',
+                  regionKey: 'bodyRegionKey',
+                  params: ['variant', 'index', 'key'],
+                  isolate: false,
+                },
               },
             },
           },
+          displayName: 'Variants',
+          description:
+            'Structural responsive variants. First variant whose min/max bounds match wins; otherwise the first variant without bounds (default tree) renders.',
+          editorType: 'object-array',
         },
-        displayName: 'Variants',
-        description:
-          'Structural responsive variants. First variant whose min/max bounds match wins; otherwise the first variant without bounds (default tree) renders.',
-        editorType: 'object-array',
       },
-    },
-    fields: [
-      { key: 'variants', kind: 'prop' },
     ],
   },
   resizableRendererDefinition,

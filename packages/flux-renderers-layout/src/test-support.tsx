@@ -137,14 +137,15 @@ export function createLayoutSchemaRenderer(extra: RegisteredRendererDefinition[]
       category: 'layout',
       sourcePackage: '@nop-chaos/flux-renderers-layout',
       component: WizardRendererForTest,
-      propContracts: {
-        steps: {
-          shape: wizardStepsShape,
-          displayName: 'Steps',
-        },
-      },
       fields: [
-        { key: 'steps', kind: 'prop' },
+        {
+          key: 'steps',
+          kind: 'prop',
+          contract: {
+            shape: wizardStepsShape,
+            displayName: 'Steps',
+          },
+        },
         { key: 'value', kind: 'prop' },
         { key: 'defaultValue', kind: 'prop' },
         { key: 'valueOwnership', kind: 'prop' },
@@ -167,14 +168,15 @@ export function createLayoutSchemaRenderer(extra: RegisteredRendererDefinition[]
       category: 'layout',
       sourcePackage: '@nop-chaos/flux-renderers-layout',
       component: GridRendererForTest,
-      propContracts: {
-        items: {
-          shape: gridItemsShape,
-          displayName: 'Items',
-        },
-      },
       fields: [
-        { key: 'items', kind: 'prop' },
+        {
+          key: 'items',
+          kind: 'prop',
+          contract: {
+            shape: gridItemsShape,
+            displayName: 'Items',
+          },
+        },
         { key: 'columns', kind: 'prop' },
         { key: 'responsiveColumns', kind: 'prop' },
         { key: 'gap', kind: 'prop' },
@@ -189,14 +191,15 @@ export function createLayoutSchemaRenderer(extra: RegisteredRendererDefinition[]
       category: 'layout',
       sourcePackage: '@nop-chaos/flux-renderers-layout',
       component: CollapseRendererForTest,
-      propContracts: {
-        items: {
-          shape: collapseItemsShape,
-          displayName: 'Items',
-        },
-      },
       fields: [
-        { key: 'items', kind: 'prop' },
+        {
+          key: 'items',
+          kind: 'prop',
+          contract: {
+            shape: collapseItemsShape,
+            displayName: 'Items',
+          },
+        },
         { key: 'value', kind: 'prop' },
         { key: 'defaultValue', kind: 'prop' },
         { key: 'valueOwnership', kind: 'prop' },
@@ -212,14 +215,15 @@ export function createLayoutSchemaRenderer(extra: RegisteredRendererDefinition[]
       category: 'layout',
       sourcePackage: '@nop-chaos/flux-renderers-layout',
       component: ResponsiveRendererForTest,
-      propContracts: {
-        variants: {
-          shape: responsiveVariantsShape,
-          displayName: 'Variants',
-        },
-      },
       fields: [
-        { key: 'variants', kind: 'prop' },
+        {
+          key: 'variants',
+          kind: 'prop',
+          contract: {
+            shape: responsiveVariantsShape,
+            displayName: 'Variants',
+          },
+        },
       ],
     },
     {

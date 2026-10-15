@@ -11,8 +11,7 @@ describe('unified fieldRules region extraction (compiledKey semantics)', () => {
     type: 'tabs-fixture',
     displayName: 'Tabs Fixture',
     component: () => null,
-    propContracts: {
-      items: {
+    fields: [{ key: 'items', kind: 'prop', contract: {
         shape: {
           kind: 'array',
           item: {
@@ -38,9 +37,7 @@ describe('unified fieldRules region extraction (compiledKey semantics)', () => {
           },
         },
         displayName: 'Items',
-      },
-    },
-    fields: [{ key: 'items', kind: 'prop' }],
+      } }],
   };
 
   it('extracts schema fields into regions and writes compiled keys (old normalize shape)', () => {
@@ -101,8 +98,8 @@ describe('unified fieldRules nested source region extraction', () => {
     type: 'table-fixture',
     displayName: 'Table Fixture',
     component: () => null,
-    propContracts: {
-      columns: {
+    fields: [
+      { key: 'columns', kind: 'prop', contract: {
         shape: {
           kind: 'array',
           item: {
@@ -135,8 +132,8 @@ describe('unified fieldRules nested source region extraction', () => {
           },
         },
         displayName: 'Columns',
-      },
-      expandable: {
+      } },
+      { key: 'expandable', kind: 'prop', contract: {
         shape: {
           kind: 'schema-definition',
           fieldRules: {
@@ -149,11 +146,7 @@ describe('unified fieldRules nested source region extraction', () => {
           },
         },
         displayName: 'Expandable',
-      },
-    },
-    fields: [
-      { key: 'columns', kind: 'prop' },
-      { key: 'expandable', kind: 'prop' },
+      } },
     ],
   };
 
@@ -248,8 +241,7 @@ describe('unified fieldRules literal sourceKey (variant match.when)', () => {
     type: 'variant-fixture',
     displayName: 'Variant Fixture',
     component: () => null,
-    propContracts: {
-      variants: {
+    fields: [{ key: 'variants', kind: 'prop', contract: {
         shape: {
           kind: 'array',
           item: {
@@ -260,9 +252,7 @@ describe('unified fieldRules literal sourceKey (variant match.when)', () => {
           },
         },
         displayName: 'Variants',
-      },
-    },
-    fields: [{ key: 'variants', kind: 'prop' }],
+      } }],
   };
 
   it('preserves expression match.when via envelope without coercing the raw source', () => {
@@ -293,8 +283,7 @@ describe('unified fieldRules value-or-region (crud columns[].searchable)', () =>
     type: 'searchable-fixture',
     displayName: 'Searchable Fixture',
     component: () => null,
-    propContracts: {
-      columns: {
+    fields: [{ key: 'columns', kind: 'prop', contract: {
         shape: {
           kind: 'array',
           item: {
@@ -308,9 +297,7 @@ describe('unified fieldRules value-or-region (crud columns[].searchable)', () =>
           },
         },
         displayName: 'Columns',
-      },
-    },
-    fields: [{ key: 'columns', kind: 'prop' }],
+      } }],
   };
 
   it('keeps boolean searchable inline (value form)', () => {

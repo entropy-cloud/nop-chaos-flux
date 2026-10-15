@@ -32,179 +32,6 @@ export const dataRendererDefinitions: RegisteredRendererDefinition[] = [
     sourcePackage: '@nop-chaos/flux-renderers-data',
     component: TableRenderer,
     schemaValidator: validateTableSchema,
-    propContracts: {
-      source: {
-        shape: { kind: 'unknown' },
-        displayName: 'Source',
-        description: 'Rows rendered by the table after upstream scope/data-source evaluation.',
-        editorType: 'expression',
-      },
-      quickSaveAction: {
-        shape: { kind: 'schema-definition', fieldRules: {}, actionValue: true },
-        displayName: 'Quick Save Action',
-        description:
-          'Action dispatched for batch quick-save (ActionSchema). Template-preserved; row scope evaluated at dispatch.',
-      },
-      quickSaveItemAction: {
-        shape: { kind: 'schema-definition', fieldRules: {}, actionValue: true },
-        displayName: 'Quick Save Item Action',
-        description:
-          'Action dispatched per row on quick save (ActionSchema). Template-preserved; row scope evaluated at dispatch.',
-      },
-      childrenSource: {
-        shape: { kind: 'schema-definition', fieldRules: {}, actionValue: true },
-        displayName: 'Children Source',
-        description:
-          'Action dispatched on tree-node expand to lazy-load children (ActionSchema). Template-preserved; row scope evaluated at dispatch.',
-      },
-      columns: {
-        shape: {
-          kind: 'array',
-          item: {
-            kind: 'schema-definition',
-            fieldRules: {
-              label: {
-                kind: 'value-or-region',
-                regionKey: 'labelRegionKey',
-              },
-              buttons: {
-                kind: 'region',
-                regionKey: 'buttonsRegionKey',
-                params: ['record', 'index'],
-                isolate: true,
-              },
-              cell: {
-                kind: 'region',
-                regionKey: 'cellRegionKey',
-                params: ['record', 'index'],
-                isolate: true,
-              },
-              body: {
-                kind: 'region',
-                regionKey: 'quickEditBodyRegionKey',
-                regionKeySuffix: 'quickEditBody',
-              },
-              quickEdit: {
-                kind: 'region',
-                sourceKey: 'body',
-                regionKey: 'quickEditBodyRegionKey',
-                regionKeySuffix: 'quickEditBody',
-              },
-              popOver: {
-                kind: 'region',
-                sourceKey: 'content',
-                regionKey: 'popOver.contentRegionKey',
-                regionKeySuffix: 'popOver.content',
-                params: ['record', 'index'],
-                isolate: true,
-              },
-              searchable: {
-                kind: 'value-or-region',
-                regionKey: 'searchableRegionKey',
-              },
-            },
-          },
-        },
-        displayName: 'Columns',
-        description: 'Table column definitions.',
-        editorType: 'object-array',
-      },
-      pagination: {
-        shape: { kind: 'object', fields: {} },
-        displayName: 'Pagination',
-        description: 'Pagination configuration for the table shell.',
-        editorType: 'object',
-      },
-      rowSelection: {
-        shape: { kind: 'object', fields: {} },
-        displayName: 'Row Selection',
-        description:
-          'Selection configuration for checkbox/radio row selection. `modifierSelect` (checkbox mode only, default false) enables modifier gestures: shift-click additive range from the last acted row (anchor), meta/ctrl-click independent toggle, ⌘/ctrl+A select-all inside the table. `selectAllMode` ("all" default | "page") scopes the header select-all and its checkbox state to the current display page (server-paged tables keep the flowed-in row set).',
-        editorType: 'object',
-      },
-      optionRow: {
-        shape: { kind: 'object', fields: {} },
-        displayName: 'Option Row',
-        description:
-          'Interaction-state channel for rows: `value` selected-value binding (owner scope, array = any-match), `valueField` compared item field (default rowKey), `selectedClass` schema class for the selected state. Emits data-option-row / data-state / data-selected / aria-selected markers on the row; absent optionRow keeps legacy output.',
-        editorType: 'object',
-      },
-      group: {
-        shape: { kind: 'object', fields: {} },
-        displayName: 'Group',
-        description:
-          'Client-side grouping over the sorted/filtered row set (D1 G-D). `field` groups rows by first-appearance order (declaring it enables grouping); `aggregates` renders per-group `fn` (sum/avg/min/max/count) values in the header; `missingLabel` names the fallback group for missing/null/empty values. Group headers are rows with data-slot="table-group-header" and collapse via the chevron toggle; collapsed state survives data refreshes keyed by group. Inert under tree mode (tree precedence); suppresses drag-sort ordering while active.',
-        editorType: 'object',
-      },
-      expandable: {
-        shape: {
-          kind: 'schema-definition',
-          fieldRules: {
-            expandedRow: {
-              kind: 'region',
-              regionKey: 'expandedRowRegionKey',
-              params: ['record', 'index'],
-              isolate: true,
-            },
-          },
-        },
-        displayName: 'Expandable',
-        description: 'Expanded-row configuration for the table.',
-        editorType: 'object',
-      },
-      paginationOwnership: {
-        shape: {
-          kind: 'union',
-          anyOf: [
-            { kind: 'literal', value: 'local' },
-            { kind: 'literal', value: 'controlled' },
-            { kind: 'literal', value: 'scope' },
-          ],
-        },
-        displayName: 'Pagination Ownership',
-        editorType: 'select',
-        defaultValue: 'local',
-      },
-      selectionOwnership: {
-        shape: {
-          kind: 'union',
-          anyOf: [
-            { kind: 'literal', value: 'local' },
-            { kind: 'literal', value: 'controlled' },
-            { kind: 'literal', value: 'scope' },
-          ],
-        },
-        displayName: 'Selection Ownership',
-        editorType: 'select',
-        defaultValue: 'local',
-      },
-      sortOwnership: {
-        shape: {
-          kind: 'union',
-          anyOf: [
-            { kind: 'literal', value: 'local' },
-            { kind: 'literal', value: 'controlled' },
-            { kind: 'literal', value: 'scope' },
-          ],
-        },
-        displayName: 'Sort Ownership',
-        editorType: 'select',
-        defaultValue: 'local',
-      },
-      filterOwnership: {
-        shape: {
-          kind: 'union',
-          anyOf: [
-            { kind: 'literal', value: 'local' },
-            { kind: 'literal', value: 'controlled' },
-            { kind: 'literal', value: 'scope' },
-          ],
-        },
-        displayName: 'Filter Ownership',
-        editorType: 'select',
-        defaultValue: 'local',
-      },
-    },
     componentCapabilityContracts: [
       {
         handle: 'refresh',
@@ -235,13 +62,125 @@ export const dataRendererDefinitions: RegisteredRendererDefinition[] = [
       },
     ],
     fields: [
-      { key: 'source', kind: 'prop' },
+      {
+        key: 'source',
+        kind: 'prop',
+        contract: {
+          shape: { kind: 'unknown' },
+          displayName: 'Source',
+          description: 'Rows rendered by the table after upstream scope/data-source evaluation.',
+          editorType: 'expression',
+        },
+      },
       { key: 'rowKey', kind: 'prop' },
-      { key: 'columns', kind: 'prop' },
-      { key: 'paginationOwnership', kind: 'prop' },
-      { key: 'selectionOwnership', kind: 'prop' },
-      { key: 'sortOwnership', kind: 'prop' },
-      { key: 'filterOwnership', kind: 'prop' },
+      {
+        key: 'columns',
+        kind: 'prop',
+        contract: {
+          shape: {
+            kind: 'array',
+            item: {
+              kind: 'schema-definition',
+              fieldRules: {
+                label: {
+                  kind: 'value-or-region',
+                  regionKey: 'labelRegionKey',
+                },
+                buttons: {
+                  kind: 'region',
+                  regionKey: 'buttonsRegionKey',
+                  params: ['record', 'index'],
+                  isolate: true,
+                },
+                cell: {
+                  kind: 'region',
+                  regionKey: 'cellRegionKey',
+                  params: ['record', 'index'],
+                  isolate: true,
+                },
+                body: {
+                  kind: 'region',
+                  regionKey: 'quickEditBodyRegionKey',
+                  regionKeySuffix: 'quickEditBody',
+                },
+                quickEdit: {
+                  kind: 'region',
+                  sourceKey: 'body',
+                  regionKey: 'quickEditBodyRegionKey',
+                  regionKeySuffix: 'quickEditBody',
+                },
+                popOver: {
+                  kind: 'region',
+                  sourceKey: 'content',
+                  regionKey: 'popOver.contentRegionKey',
+                  regionKeySuffix: 'popOver.content',
+                  params: ['record', 'index'],
+                  isolate: true,
+                },
+                searchable: {
+                  kind: 'value-or-region',
+                  regionKey: 'searchableRegionKey',
+                },
+              },
+            },
+          },
+          displayName: 'Columns',
+          description: 'Table column definitions.',
+          editorType: 'object-array',
+        },
+      },
+      {
+        key: 'paginationOwnership',
+        kind: 'prop',
+        contract: {
+          shape: {
+            kind: 'union',
+            anyOf: [{ kind: 'literal', value: 'local' }, { kind: 'literal', value: 'controlled' }, { kind: 'literal', value: 'scope' }],
+          },
+          displayName: 'Pagination Ownership',
+          editorType: 'select',
+          defaultValue: 'local',
+        },
+      },
+      {
+        key: 'selectionOwnership',
+        kind: 'prop',
+        contract: {
+          shape: {
+            kind: 'union',
+            anyOf: [{ kind: 'literal', value: 'local' }, { kind: 'literal', value: 'controlled' }, { kind: 'literal', value: 'scope' }],
+          },
+          displayName: 'Selection Ownership',
+          editorType: 'select',
+          defaultValue: 'local',
+        },
+      },
+      {
+        key: 'sortOwnership',
+        kind: 'prop',
+        contract: {
+          shape: {
+            kind: 'union',
+            anyOf: [{ kind: 'literal', value: 'local' }, { kind: 'literal', value: 'controlled' }, { kind: 'literal', value: 'scope' }],
+          },
+          displayName: 'Sort Ownership',
+          editorType: 'select',
+          defaultValue: 'local',
+        },
+      },
+      {
+        key: 'filterOwnership',
+        kind: 'prop',
+        contract: {
+          shape: {
+            kind: 'union',
+            anyOf: [{ kind: 'literal', value: 'local' }, { kind: 'literal', value: 'controlled' }, { kind: 'literal', value: 'scope' }],
+          },
+          displayName: 'Filter Ownership',
+          editorType: 'select',
+          defaultValue: 'local',
+        },
+      },
       { key: 'paginationStatePath', kind: 'prop' },
       { key: 'selectionStatePath', kind: 'prop' },
       { key: 'sortStatePath', kind: 'prop' },
@@ -274,17 +213,102 @@ export const dataRendererDefinitions: RegisteredRendererDefinition[] = [
       { key: 'orderOwnership', kind: 'prop' },
       { key: 'orderStatePath', kind: 'prop' },
       { key: 'rowChildrenField', kind: 'prop' },
-      { key: 'childrenSource', kind: 'prop' },
+      {
+        key: 'childrenSource',
+        kind: 'prop',
+        contract: {
+          shape: { kind: 'schema-definition', fieldRules: {}, actionValue: true },
+          displayName: 'Children Source',
+          description:
+            'Action dispatched on tree-node expand to lazy-load children (ActionSchema). Template-preserved; row scope evaluated at dispatch.',
+        },
+      },
       { key: 'columnWidthsOwnership', kind: 'prop' },
       { key: 'columnWidthsStatePath', kind: 'prop' },
       { key: 'multiSort', kind: 'prop', valueType: 'boolean' },
-      { key: 'pagination', kind: 'prop' },
-      { key: 'rowSelection', kind: 'prop' },
-      { key: 'optionRow', kind: 'prop' },
-      { key: 'group', kind: 'prop' },
-      { key: 'expandable', kind: 'prop' },
-      { key: 'quickSaveAction', kind: 'prop' },
-      { key: 'quickSaveItemAction', kind: 'prop' },
+      {
+        key: 'pagination',
+        kind: 'prop',
+        contract: {
+          shape: { kind: 'object', fields: {} },
+          displayName: 'Pagination',
+          description: 'Pagination configuration for the table shell.',
+          editorType: 'object',
+        },
+      },
+      {
+        key: 'rowSelection',
+        kind: 'prop',
+        contract: {
+          shape: { kind: 'object', fields: {} },
+          displayName: 'Row Selection',
+          description:
+            'Selection configuration for checkbox/radio row selection. `modifierSelect` (checkbox mode only, default false) enables modifier gestures: shift-click additive range from the last acted row (anchor), meta/ctrl-click independent toggle, ⌘/ctrl+A select-all inside the table. `selectAllMode` ("all" default | "page") scopes the header select-all and its checkbox state to the current display page (server-paged tables keep the flowed-in row set).',
+          editorType: 'object',
+        },
+      },
+      {
+        key: 'optionRow',
+        kind: 'prop',
+        contract: {
+          shape: { kind: 'object', fields: {} },
+          displayName: 'Option Row',
+          description:
+            'Interaction-state channel for rows: `value` selected-value binding (owner scope, array = any-match), `valueField` compared item field (default rowKey), `selectedClass` schema class for the selected state. Emits data-option-row / data-state / data-selected / aria-selected markers on the row; absent optionRow keeps legacy output.',
+          editorType: 'object',
+        },
+      },
+      {
+        key: 'group',
+        kind: 'prop',
+        contract: {
+          shape: { kind: 'object', fields: {} },
+          displayName: 'Group',
+          description:
+            'Client-side grouping over the sorted/filtered row set (D1 G-D). `field` groups rows by first-appearance order (declaring it enables grouping); `aggregates` renders per-group `fn` (sum/avg/min/max/count) values in the header; `missingLabel` names the fallback group for missing/null/empty values. Group headers are rows with data-slot="table-group-header" and collapse via the chevron toggle; collapsed state survives data refreshes keyed by group. Inert under tree mode (tree precedence); suppresses drag-sort ordering while active.',
+          editorType: 'object',
+        },
+      },
+      {
+        key: 'expandable',
+        kind: 'prop',
+        contract: {
+          shape: {
+            kind: 'schema-definition',
+            fieldRules: {
+              expandedRow: {
+                kind: 'region',
+                regionKey: 'expandedRowRegionKey',
+                params: ['record', 'index'],
+                isolate: true,
+              },
+            },
+          },
+          displayName: 'Expandable',
+          description: 'Expanded-row configuration for the table.',
+          editorType: 'object',
+        },
+      },
+      {
+        key: 'quickSaveAction',
+        kind: 'prop',
+        contract: {
+          shape: { kind: 'schema-definition', fieldRules: {}, actionValue: true },
+          displayName: 'Quick Save Action',
+          description:
+            'Action dispatched for batch quick-save (ActionSchema). Template-preserved; row scope evaluated at dispatch.',
+        },
+      },
+      {
+        key: 'quickSaveItemAction',
+        kind: 'prop',
+        contract: {
+          shape: { kind: 'schema-definition', fieldRules: {}, actionValue: true },
+          displayName: 'Quick Save Item Action',
+          description:
+            'Action dispatched per row on quick save (ActionSchema). Template-preserved; row scope evaluated at dispatch.',
+        },
+      },
       { key: 'onRowClick', kind: 'event' },
       { key: 'onSortChange', kind: 'event' },
       { key: 'onFilterChange', kind: 'event' },
@@ -303,23 +327,6 @@ export const dataRendererDefinitions: RegisteredRendererDefinition[] = [
     component: DataSourceRenderer,
     compilation: {
       artifacts: ['data-source'],
-    },
-    propContracts: {
-      sendOn: {
-        shape: { kind: 'string' },
-        displayName: 'Send On',
-        description:
-          'Raw boolean expression (no `${}`). When falsy or evaluation throws, the request is skipped.',
-        editorType: 'expression',
-      },
-      initFetch: {
-        shape: { kind: 'boolean' },
-        displayName: 'Init Fetch',
-        description:
-          'Whether to automatically fetch on mount. Defaults to true; set to false to require an explicit refresh.',
-        editorType: 'switch',
-        defaultValue: true,
-      },
     },
     // NOTE: `onSuccess` / `onError` are intentionally NOT declared here as
     // renderer `eventContracts` (kind:'event'). They are data-source *lifecycle
@@ -354,8 +361,30 @@ export const dataRendererDefinitions: RegisteredRendererDefinition[] = [
       { key: 'action', kind: 'prop' },
       { key: 'args', kind: 'prop' },
       { key: 'formula', kind: 'prop' },
-      { key: 'sendOn', kind: 'prop' },
-      { key: 'initFetch', kind: 'prop', valueType: 'boolean' },
+      {
+        key: 'sendOn',
+        kind: 'prop',
+        contract: {
+          shape: { kind: 'string' },
+          displayName: 'Send On',
+          description:
+            'Raw boolean expression (no `${}`). When falsy or evaluation throws, the request is skipped.',
+          editorType: 'expression',
+        },
+      },
+      {
+        key: 'initFetch',
+        kind: 'prop',
+        valueType: 'boolean',
+        contract: {
+          shape: { kind: 'boolean' },
+          displayName: 'Init Fetch',
+          description:
+            'Whether to automatically fetch on mount. Defaults to true; set to false to require an explicit refresh.',
+          editorType: 'switch',
+          defaultValue: true,
+        },
+      },
       { key: 'interval', kind: 'prop' },
       { key: 'stopWhen', kind: 'prop' },
       { key: 'silent', kind: 'prop', valueType: 'boolean' },
@@ -455,80 +484,6 @@ export const dataRendererDefinitions: RegisteredRendererDefinition[] = [
     category: 'data',
     sourcePackage: '@nop-chaos/flux-renderers-data',
     component: ListRenderer,
-    propContracts: {
-      items: {
-        shape: { kind: 'array', item: { kind: 'unknown' } },
-        displayName: 'Items',
-        description:
-          'The single collection field: the array of records rendered through the item region.',
-        editorType: 'expression',
-      },
-      selectionMode: {
-        shape: {
-          kind: 'union',
-          anyOf: [
-            { kind: 'literal', value: 'none' },
-            { kind: 'literal', value: 'single' },
-            { kind: 'literal', value: 'multiple' },
-          ],
-        },
-        displayName: 'Selection Mode',
-        description:
-          'Selection ownership is local controlled state. "none" disables selection, "single" is mutually exclusive, "multiple" accumulates.',
-        editorType: 'select',
-        defaultValue: 'none',
-      },
-      keyField: {
-        shape: { kind: 'string' },
-        displayName: 'Key Field',
-        description:
-          'Field used to derive a stable per-item key for selection and React reconciliation. Falls back to the item index when absent.',
-        editorType: 'expression',
-        defaultValue: 'id',
-      },
-      pagination: {
-        shape: { kind: 'object', fields: {} },
-        displayName: 'Pagination',
-        description:
-          'Pagination / infinite-scroll configuration. Opt-in via enabled. List never owns a request: data flows via onPageChange/onLoadMore → action graph → data-source → scope items (request-sink).',
-        editorType: 'object',
-      },
-      paginationOwnership: {
-        shape: {
-          kind: 'union',
-          anyOf: [
-            { kind: 'literal', value: 'local' },
-            { kind: 'literal', value: 'controlled' },
-            { kind: 'literal', value: 'scope' },
-          ],
-        },
-        displayName: 'Pagination Ownership',
-        description:
-          'Where pagination interaction state lives. local = list holds currentPage; controlled = pure view driven by pagination.currentPage; scope = read/write paginationStatePath.',
-        editorType: 'select',
-        defaultValue: 'local',
-      },
-      paginationStatePath: {
-        shape: { kind: 'string' },
-        displayName: 'Pagination State Path',
-        description:
-          'Scope path holding { currentPage, pageSize } for scope ownership. Missing path degrades with a dev warning (no crash).',
-        editorType: 'expression',
-      },
-      pageSizeStatePath: {
-        shape: { kind: 'string' },
-        displayName: 'Page Size State Path',
-        description: 'Optional separate scope path for pageSize (scope ownership).',
-        editorType: 'expression',
-      },
-      optionRow: {
-        shape: { kind: 'object', fields: {} },
-        displayName: 'Option Row',
-        description:
-          'Interaction-state channel for rows: `value` selected-value binding (owner scope, array = any-match), `valueField` compared item field (default keyField), `selectedClass` schema class for the selected state. Emits data-option-row / data-state / data-selected / aria-selected markers; absent optionRow keeps legacy output.',
-        editorType: 'object',
-      },
-    },
     eventContracts: {
       onItemClick: {
         displayName: 'On Item Click',
@@ -616,14 +571,106 @@ export const dataRendererDefinitions: RegisteredRendererDefinition[] = [
       },
     ],
     fields: [
-      { key: 'items', kind: 'prop' },
-      { key: 'selectionMode', kind: 'prop' },
-      { key: 'keyField', kind: 'prop' },
-      { key: 'optionRow', kind: 'prop' },
-      { key: 'pagination', kind: 'prop' },
-      { key: 'paginationOwnership', kind: 'prop' },
-      { key: 'paginationStatePath', kind: 'prop' },
-      { key: 'pageSizeStatePath', kind: 'prop' },
+      {
+        key: 'items',
+        kind: 'prop',
+        contract: {
+          shape: { kind: 'array', item: { kind: 'unknown' } },
+          displayName: 'Items',
+          description:
+            'The single collection field: the array of records rendered through the item region.',
+          editorType: 'expression',
+        },
+      },
+      {
+        key: 'selectionMode',
+        kind: 'prop',
+        contract: {
+          shape: {
+            kind: 'union',
+            anyOf: [
+              { kind: 'literal', value: 'none' },
+              { kind: 'literal', value: 'single' },
+              { kind: 'literal', value: 'multiple' },
+            ],
+          },
+          displayName: 'Selection Mode',
+          description:
+            'Selection ownership is local controlled state. "none" disables selection, "single" is mutually exclusive, "multiple" accumulates.',
+          editorType: 'select',
+          defaultValue: 'none',
+        },
+      },
+      {
+        key: 'keyField',
+        kind: 'prop',
+        contract: {
+          shape: { kind: 'string' },
+          displayName: 'Key Field',
+          description:
+            'Field used to derive a stable per-item key for selection and React reconciliation. Falls back to the item index when absent.',
+          editorType: 'expression',
+          defaultValue: 'id',
+        },
+      },
+      {
+        key: 'optionRow',
+        kind: 'prop',
+        contract: {
+          shape: { kind: 'object', fields: {} },
+          displayName: 'Option Row',
+          description:
+            'Interaction-state channel for rows: `value` selected-value binding (owner scope, array = any-match), `valueField` compared item field (default keyField), `selectedClass` schema class for the selected state. Emits data-option-row / data-state / data-selected / aria-selected markers; absent optionRow keeps legacy output.',
+          editorType: 'object',
+        },
+      },
+      {
+        key: 'pagination',
+        kind: 'prop',
+        contract: {
+          shape: { kind: 'object', fields: {} },
+          displayName: 'Pagination',
+          description:
+            'Pagination / infinite-scroll configuration. Opt-in via enabled. List never owns a request: data flows via onPageChange/onLoadMore → action graph → data-source → scope items (request-sink).',
+          editorType: 'object',
+        },
+      },
+      {
+        key: 'paginationOwnership',
+        kind: 'prop',
+        contract: {
+          shape: {
+            kind: 'union',
+            anyOf: [{ kind: 'literal', value: 'local' }, { kind: 'literal', value: 'controlled' }, { kind: 'literal', value: 'scope' }],
+          },
+          displayName: 'Pagination Ownership',
+          description:
+            'Where pagination interaction state lives. local = list holds currentPage; controlled = pure view driven by pagination.currentPage; scope = read/write paginationStatePath.',
+          editorType: 'select',
+          defaultValue: 'local',
+        },
+      },
+      {
+        key: 'paginationStatePath',
+        kind: 'prop',
+        contract: {
+          shape: { kind: 'string' },
+          displayName: 'Pagination State Path',
+          description:
+            'Scope path holding { currentPage, pageSize } for scope ownership. Missing path degrades with a dev warning (no crash).',
+          editorType: 'expression',
+        },
+      },
+      {
+        key: 'pageSizeStatePath',
+        kind: 'prop',
+        contract: {
+          shape: { kind: 'string' },
+          displayName: 'Page Size State Path',
+          description: 'Optional separate scope path for pageSize (scope ownership).',
+          editorType: 'expression',
+        },
+      },
       { key: 'onItemClick', kind: 'event' },
       { key: 'onSelectionChange', kind: 'event' },
       { key: 'onPageChange', kind: 'event' },

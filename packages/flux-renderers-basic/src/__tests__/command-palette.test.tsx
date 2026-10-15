@@ -1,5 +1,6 @@
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { resolveRendererPropContracts } from '@nop-chaos/flux-core';
 import type { RendererEnv } from '@nop-chaos/flux-core';
 import { createBasicSchemaRenderer, env, formulaCompiler } from '../test-support.js';
 
@@ -74,7 +75,7 @@ describe('command-palette definition contracts', () => {
     expect(sourceRule && 'allowSource' in sourceRule ? sourceRule.allowSource : undefined).toBe(
       true,
     );
-    expect(Object.keys(definition?.propContracts ?? {}).sort()).toEqual(
+    expect(Object.keys(resolveRendererPropContracts(definition!)).sort()).toEqual(
       [
         'closeOnEsc',
         'closeOnOutsideClick',

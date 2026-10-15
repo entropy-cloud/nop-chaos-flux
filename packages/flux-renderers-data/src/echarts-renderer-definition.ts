@@ -75,36 +75,6 @@ export const echartsRendererDefinition: RegisteredRendererDefinition = {
   sourcePackage: '@nop-chaos/flux-renderers-data',
   component: LazyEChartsRenderer,
   schemaValidator: validateEChartsSchema,
-  propContracts: {
-    renderer: {
-      displayName: 'Renderer',
-      shape: ECHARTS_RENDERER_SHAPE,
-      editorType: 'select',
-      defaultValue: 'canvas',
-    },
-    notMerge: {
-      displayName: 'Not Merge',
-      shape: { kind: 'boolean' },
-      editorType: 'switch',
-    },
-    lazyUpdate: {
-      displayName: 'Lazy Update',
-      shape: { kind: 'boolean' },
-      editorType: 'switch',
-    },
-    height: {
-      displayName: 'Height',
-      shape: ECHARTS_HEIGHT_SHAPE,
-      editorType: 'expression',
-    },
-    events: {
-      displayName: 'Events',
-      shape: { kind: 'object', fields: {} },
-      description:
-        'ECharts event bindings keyed by flux on* names (onClick, onDataZoom, onLegendSelectChanged, ...); values are action schemas dispatched with the normalized echarts event params.',
-      editorType: 'object',
-    },
-  },
   eventContracts: ECHARTS_EVENT_CONTRACTS,
   componentCapabilityContracts: [
     {
@@ -116,12 +86,47 @@ export const echartsRendererDefinition: RegisteredRendererDefinition = {
   fields: [
     { key: 'option', kind: 'prop' },
     { key: 'dataset', kind: 'prop' },
-    { key: 'renderer', kind: 'prop' },
+    {
+      key: 'renderer',
+      kind: 'prop',
+      contract: {
+        displayName: 'Renderer',
+        shape: ECHARTS_RENDERER_SHAPE,
+        editorType: 'select',
+        defaultValue: 'canvas',
+      },
+    },
     { key: 'initOptions', kind: 'prop' },
     { key: 'theme', kind: 'prop' },
-    { key: 'notMerge', kind: 'prop', valueType: 'boolean' },
-    { key: 'lazyUpdate', kind: 'prop', valueType: 'boolean' },
-    { key: 'height', kind: 'prop' },
+    {
+      key: 'notMerge',
+      kind: 'prop',
+      valueType: 'boolean',
+      contract: {
+        displayName: 'Not Merge',
+        shape: { kind: 'boolean' },
+        editorType: 'switch',
+      },
+    },
+    {
+      key: 'lazyUpdate',
+      kind: 'prop',
+      valueType: 'boolean',
+      contract: {
+        displayName: 'Lazy Update',
+        shape: { kind: 'boolean' },
+        editorType: 'switch',
+      },
+    },
+    {
+      key: 'height',
+      kind: 'prop',
+      contract: {
+        displayName: 'Height',
+        shape: ECHARTS_HEIGHT_SHAPE,
+        editorType: 'expression',
+      },
+    },
     { key: 'componentId', kind: 'prop' },
     // events 保持 raw schema（ignored = 跳过编译期深求值）：args 里的 `${event.*}`
     // 模板必须在 dispatch 期结合 normalized event 求值（对齐 button onClick 语义），
@@ -129,5 +134,16 @@ export const echartsRendererDefinition: RegisteredRendererDefinition = {
     { key: 'events', kind: 'ignored' },
     { key: 'map', kind: 'prop' },
     { key: 'empty', kind: 'value-or-region', regionKey: 'empty' },
+    {
+      key: 'events',
+      kind: 'prop',
+      contract: {
+        displayName: 'Events',
+        shape: { kind: 'object', fields: {} },
+        description:
+          'ECharts event bindings keyed by flux on* names (onClick, onDataZoom, onLegendSelectChanged, ...); values are action schemas dispatched with the normalized echarts event params.',
+        editorType: 'object',
+      },
+    },
   ],
 };

@@ -4,8 +4,7 @@ import {
 } from './input-shared.js';
 import { validateInputFieldSchema, createFieldValidation } from './input.js';
 import {
-  formFieldContracts,
-  formFieldRules,
+  formFieldContractRules,
 } from '../field-utils.js';
 import {
   inputColorSpecificContracts,
@@ -25,15 +24,11 @@ export const formAtomsRendererDefinitions: RegisteredRendererDefinition[] = [
   {
     type: 'slider',
     sourcePackage: '@nop-chaos/flux-renderers-form',
-    propContracts: {
-      ...formFieldContracts,
-      ...sliderSpecificContracts,
-    },
     fields: [
-      ...formFieldRules,
-      { key: 'min', kind: 'prop' },
-      { key: 'max', kind: 'prop' },
-      { key: 'step', kind: 'prop' },
+      ...formFieldContractRules,
+      { key: 'min', kind: 'prop', contract: sliderSpecificContracts.min },
+      { key: 'max', kind: 'prop', contract: sliderSpecificContracts.max },
+      { key: 'step', kind: 'prop', contract: sliderSpecificContracts.step },
     ],
     validation: createFieldValidation(),
     schemaValidator: validateInputFieldSchema,
@@ -60,15 +55,11 @@ export const formAtomsRendererDefinitions: RegisteredRendererDefinition[] = [
   {
     type: 'rating',
     sourcePackage: '@nop-chaos/flux-renderers-form',
-    propContracts: {
-      ...formFieldContracts,
-      ...ratingSpecificContracts,
-    },
     fields: [
-      ...formFieldRules,
-      { key: 'count', kind: 'prop' },
-      { key: 'allowHalf', kind: 'prop', valueType: 'boolean' },
-      { key: 'allowClear', kind: 'prop', valueType: 'boolean' },
+      ...formFieldContractRules,
+      { key: 'count', kind: 'prop', contract: ratingSpecificContracts.count },
+      { key: 'allowHalf', kind: 'prop', valueType: 'boolean', contract: ratingSpecificContracts.allowHalf },
+      { key: 'allowClear', kind: 'prop', valueType: 'boolean', contract: ratingSpecificContracts.allowClear },
     ],
     validation: createFieldValidation(),
     schemaValidator: validateInputFieldSchema,
@@ -79,14 +70,10 @@ export const formAtomsRendererDefinitions: RegisteredRendererDefinition[] = [
   {
     type: 'input-color',
     sourcePackage: '@nop-chaos/flux-renderers-form',
-    propContracts: {
-      ...formFieldContracts,
-      ...inputColorSpecificContracts,
-    },
     fields: [
-      ...formFieldRules,
-      { key: 'valueFormat', kind: 'prop' },
-      { key: 'presetColors', kind: 'prop' },
+      ...formFieldContractRules,
+      { key: 'valueFormat', kind: 'prop', contract: inputColorSpecificContracts.valueFormat },
+      { key: 'presetColors', kind: 'prop', contract: inputColorSpecificContracts.presetColors },
     ],
     validation: createFieldValidation(),
     schemaValidator: validateInputFieldSchema,

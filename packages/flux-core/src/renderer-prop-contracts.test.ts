@@ -7,41 +7,35 @@ function makeRenderer(definition: Record<string, unknown>): RegisteredRendererDe
   return definition as unknown as RegisteredRendererDefinition;
 }
 
-describe('resolveRendererPropContracts (RM-3 dual-read)', () => {
-  it('is key-for-key identical to propContracts when no inline contracts exist', () => {
+describe('resolveRendererPropContracts (RM-4 fields-only)', () => {
+  it('maps exactly the prop fields that carry an inline contract', () => {
     const renderer = makeRenderer({
       type: 'legacy',
       component: () => null,
-      propContracts: {
-        level: { shape: { kind: 'number' }, displayName: 'Level' },
-        title: { shape: { kind: 'string' }, displayName: 'Title', editorType: 'text' },
-      },
       fields: [
-        { key: 'level', kind: 'prop' },
-        { key: 'title', kind: 'prop' },
+        { key: 'level', kind: 'prop', contract: { shape: { kind: 'number' }, displayName: 'Level' } },
+        {
+          key: 'title',
+          kind: 'prop',
+          contract: { shape: { kind: 'string' }, displayName: 'Title', editorType: 'text' },
+        },
         { key: 'body', kind: 'region' },
       ],
     });
 
-    expect(resolveRendererPropContracts(renderer)).toEqual(renderer.propContracts);
+    expect(resolveRendererPropContracts(renderer)).toEqual({
+      level: { shape: { kind: 'number' }, displayName: 'Level' },
+      title: { shape: { kind: 'string' }, displayName: 'Title', editorType: 'text' },
+    });
   });
 
-  it('treats propContracts as authoritative when the same key is declared in both channels', () => {
+  it('keeps the first fields occurrence when the same key is declared twice', () => {
     const renderer = makeRenderer({
       type: 'both',
       component: () => null,
-      propContracts: {
-        level: { shape: { kind: 'number' }, displayName: 'Record Level' },
-      },
       fields: [
-        {
-          key: 'level',
-          kind: 'prop',
-          contract: {
-            shape: { kind: 'string' },
-            displayName: 'Field Level',
-          },
-        },
+        { key: 'level', kind: 'prop', contract: { shape: { kind: 'number' }, displayName: 'Record Level' } },
+        { key: 'level', kind: 'prop', contract: { shape: { kind: 'string' }, displayName: 'Field Level' } },
       ],
     });
 

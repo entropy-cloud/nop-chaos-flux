@@ -210,7 +210,6 @@ interface RendererDefinition<S extends BaseSchema = BaseSchema, P = RendererReso
   validation?: ValidationContributor<S>;
   validationDefaults?: RendererValidationDefaults;
   compilation?: RendererCompilationDefinition;
-  propContracts?: Record<string, RendererPropContract>;
   fields?: readonly SchemaFieldRule[];
 }
 ```
@@ -595,11 +594,11 @@ interface PageRuntime {
 
 ---
 
-## `propContracts` enum/literal pattern (plan 462)
+## Prop contract enum/literal pattern (plan 462; single source since RM-4/plan 606)
 
-Every renderer that has a finite enum / literal / boolean / number / string prop should register a `propContracts[key]` entry. Without it, the schema compiler's `validateFluxValueShape` early-returns and the typo silently reaches runtime. See `docs/architecture/renderer-runtime.md §propContracts Coverage Discipline` for the full checklist; canonical patterns below.
+Every renderer that has a finite enum / literal / boolean / number / string prop must declare a contract on its `fields` entry (`contract: { shape, ... }`). Without it, the schema compiler's `validateFluxValueShape` early-returns and the typo silently reaches runtime. See `docs/architecture/renderer-runtime.md §propContracts Coverage Discipline` for the full checklist; canonical patterns below.
 
-RM-3 inline alternative: a `fields` entry with `kind: 'prop'` may carry `contract: { shape, displayName?, editorType?, required? }` directly (`shape` required) instead of a second `propContracts` declaration — both channels feed the same validation and tooling surface via `resolveRendererPropContracts`.
+Since RM-4 (plan 606) the inline form is the only form: a `fields` entry with `kind: 'prop'` carries `contract: { shape, displayName?, editorType?, required? }` directly (`shape` required) — `propContracts` no longer exists, and all validation/tooling surfaces read the entries via `resolveRendererPropContracts`.
 
 ```ts
 import type { RendererDefinition, FluxValueShape } from '@nop-chaos/flux-core';
@@ -620,31 +619,39 @@ const VARIANT_SHAPE: FluxValueShape = {
 const definition: RendererDefinition = {
   type: 'my-renderer',
   component: MyRenderer,
-  propContracts: {
-    variant: {
-      displayName: 'Variant',
-      shape: VARIANT_SHAPE,
-      editorType: 'select',
-      defaultValue: 'default',
-    },
-    disabled: { displayName: 'Disabled', shape: { kind: 'boolean' }, editorType: 'switch' },
-    size: {
-      displayName: 'Size',
-      shape: {
-        kind: 'union',
-        anyOf: [
-          { kind: 'literal', value: 'sm' },
-          { kind: 'literal', value: 'md' },
-          { kind: 'literal', value: 'lg' },
-        ],
-      },
-      editorType: 'select',
-    },
-  },
   fields: [
-    { key: 'variant', kind: 'prop' },
-    { key: 'disabled', kind: 'prop', valueType: 'boolean' },
-    { key: 'size', kind: 'prop' },
+    {
+      key: 'variant',
+      kind: 'prop',
+      contract: {
+        displayName: 'Variant',
+        shape: VARIANT_SHAPE,
+        editorType: 'select',
+        defaultValue: 'default',
+      },
+    },
+    {
+      key: 'disabled',
+      kind: 'prop',
+      valueType: 'boolean',
+      contract: { displayName: 'Disabled', shape: { kind: 'boolean' }, editorType: 'switch' },
+    },
+    {
+      key: 'size',
+      kind: 'prop',
+      contract: {
+        displayName: 'Size',
+        shape: {
+          kind: 'union',
+          anyOf: [
+            { kind: 'literal', value: 'sm' },
+            { kind: 'literal', value: 'md' },
+            { kind: 'literal', value: 'lg' },
+          ],
+        },
+        editorType: 'select',
+      },
+    },
   ],
 };
 ```
@@ -666,9 +673,9 @@ The `kind: 'literal'` value can also be a number (`{ kind: 'literal', value: 0 }
 shape: { kind: 'union', anyOf: [{ kind: 'number' }, { kind: 'literal', value: 'sm' }, { kind: 'literal', value: 'md' }, { kind: 'literal', value: 'lg' }] }
 ```
 
-**Do NOT** register `regions` / `events` as `propContracts` — those are classified via `fields: { key, kind: 'region' | 'event' | 'reaction' | 'value-or-region' }` and validated through `validateActionShape` / `findSchemaDefinitionShape`. Adding a literal-shape contract to a region field would conflict with the action-shape validator and emit false `invalid-property-value` diagnostics on every action-bearing schema.
+**Do NOT** give `regions` / `events` entries a value-shape `contract` — those are classified via `fields: { key, kind: 'region' | 'event' | 'reaction' | 'value-or-region' }` and validated through `validateActionShape` / `findSchemaDefinitionShape`. Adding a literal-shape contract to a region field would conflict with the action-shape validator and emit false `invalid-property-value` diagnostics on every action-bearing schema.
 
-**Shared fields across multiple renderers** (e.g. form inputs that all share `readOnly` / `required` / `labelAlign`): use a sibling array of `RendererPropContract` and spread it into each renderer's `propContracts` (see `packages/flux-renderers-form/src/field-utils/field-reading.tsx` for the `formFieldContracts` pattern).
+**Shared fields across multiple renderers** (e.g. form inputs that all share `readOnly` / `required` / `labelAlign`): declare the contracts once in a sibling module and attach them per key in the shared rules array (`contract: sharedContracts.K`, see `packages/flux-renderers-form/src/field-utils/field-reading.tsx` for the `formFieldContracts` pattern).
 
 ---
 
@@ -1041,10 +1048,10 @@ Field classification（design-renderer.md §5，I15.2 D-1 同步）: `config`（
 
 ### Page Designer（L6 S2 MVP，plan 523）
 
-| 包                                   | 职责                                                                                                                                                                                                                                                                                          |
-| ------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `@nop-chaos/page-designer-core`      | 纯逻辑：DesignerSession（六命令 + editor-core undo 栈）、xui:sid inject/strip round-trip（INV-A~F）、classifyNode（opaque-leaf 边界）、buildInspectorSchema（propContracts→form schema，editableProps 全覆盖；P4.2 迁 `@nop-chaos/flux-core` authoring 域，本包兼容再导出）、palette 三条过滤 |
-| `@nop-chaos/page-designer-renderers` | React：palette-panel / canvas 真渲染+覆盖层（data-psid 锚点投影）/ inspector-panel（transient+commit 两段）/ structure-tree / json-source-view / page-designer-page                                                                                                                           |
+| 包                                   | 职责                                                                                                                                                                                                                                                                                            |
+| ------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `@nop-chaos/page-designer-core`      | 纯逻辑：DesignerSession（六命令 + editor-core undo 栈）、xui:sid inject/strip round-trip（INV-A~F）、classifyNode（opaque-leaf 边界）、buildInspectorSchema（fields contract→form schema，editableProps 全覆盖；P4.2 迁 `@nop-chaos/flux-core` authoring 域，本包兼容再导出）、palette 三条过滤 |
+| `@nop-chaos/page-designer-renderers` | React：palette-panel / canvas 真渲染+覆盖层（data-psid 锚点投影）/ inspector-panel（transient+commit 两段）/ structure-tree / json-source-view / page-designer-page                                                                                                                             |
 
 入口：`#/page-designer`（designer 分组，lazy import，自持 registry 仅 basic/form/layout 三家族——六域 opaque-leaf 不可展开）。契约权威：`docs/components/page-designer/design-architecture.md`（S1）。
 

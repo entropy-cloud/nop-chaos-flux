@@ -24,17 +24,18 @@ function def(partial: Partial<RendererDefinition> & { type: string }): RendererD
 const MATRIX_DEF: RendererDefinition = def({
   type: 'matrix-widget',
   defaultSchema: { type: 'matrix-widget' },
-  propContracts: {
-    count: { shape: { kind: 'number' }, displayName: 'Count' },
-    summary: { shape: { kind: 'string' }, displayName: 'Summary', editorType: 'textarea' },
-    payload: { shape: { kind: 'object' }, displayName: 'Payload' },
-    kind: {
+
+  fields: [
+    { key: 'count', kind: 'prop', contract: { shape: { kind: 'number' }, displayName: 'Count' } },
+    { key: 'summary', kind: 'prop', contract: { shape: { kind: 'string' }, displayName: 'Summary', editorType: 'textarea' } },
+    { key: 'payload', kind: 'prop', contract: { shape: { kind: 'object' }, displayName: 'Payload' } },
+    { key: 'kind', kind: 'prop', contract: {
       shape: { kind: 'union', anyOf: [{ kind: 'literal', value: 'a' }, { kind: 'literal', value: 'b' }] },
       displayName: 'Kind',
-    },
-    fixed: { shape: { kind: 'literal', value: 'locked' }, displayName: 'Fixed' },
-    named: { shape: { kind: 'string' }, displayName: 'Named', editorType: 'input' },
-  },
+    } },
+    { key: 'fixed', kind: 'prop', contract: { shape: { kind: 'literal', value: 'locked' }, displayName: 'Fixed' } },
+    { key: 'named', kind: 'prop', contract: { shape: { kind: 'string' }, displayName: 'Named', editorType: 'input' } },
+    ],
 });
 
 function renderMatrix(nodeOverrides: Record<string, unknown>, onUpdateProps = vi.fn()) {
@@ -92,13 +93,13 @@ describe('InspectorField control matrix', () => {
     const MATRIX_DESC = def({
       type: 'desc-widget',
       defaultSchema: { type: 'desc-widget' },
-      propContracts: {
-        named: {
+      fields: [
+        { key: 'named', kind: 'prop', contract: {
           shape: { kind: 'string' },
           displayName: 'Named',
           description: 'A named thing.',
-        },
-      },
+        } },
+        ],
     });
     const node = injectSessionIds({ type: 'desc-widget' }, createSeededRandom(22)) as never;
     const schema = buildInspectorSchema(resolveRendererAuthoringContract(MATRIX_DESC), { fieldRules: undefined });

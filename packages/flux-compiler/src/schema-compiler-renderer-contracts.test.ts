@@ -8,18 +8,22 @@ describe('schema compiler renderer contract integration', () => {
     const renderer: RegisteredRendererDefinition = {
       type: 'contract-button',
       component: () => null,
-      propContracts: {
-        label: {
-          shape: { kind: 'string' },
-          displayName: 'Label',
-        },
-      },
       eventContracts: {
         onClick: {
           displayName: 'Click',
         },
       },
-      fields: [{ key: 'onClick', kind: 'event' }],
+      fields: [
+        { key: 'onClick', kind: 'event' },
+        {
+          key: 'label',
+          kind: 'prop',
+          contract: {
+            shape: { kind: 'string' },
+            displayName: 'Label',
+          },
+        },
+      ],
     };
 
     const diagnostics = validateSchema({
@@ -57,12 +61,12 @@ describe('schema compiler renderer contract integration', () => {
         }
         return next as any;
       },
-      propContracts: {
-        label: {
+      fields: [
+        { key: 'label', kind: 'prop', contract: {
           shape: { kind: 'string' },
           displayName: 'Label',
-        },
-      },
+        } },
+      ],
     };
 
     const diagnostics = validateSchema({
@@ -86,15 +90,15 @@ describe('schema compiler renderer contract integration', () => {
     const renderer: RegisteredRendererDefinition = {
       type: 'contract-button',
       component: () => null,
-      propContracts: {
-        variant: {
+      fields: [
+        { key: 'variant', kind: 'prop', contract: {
           shape: {
             kind: 'union',
             anyOf: [{ kind: 'literal', value: 'default' }],
           },
           displayName: 'Variant',
-        },
-      },
+        } },
+      ],
     };
 
     const compiler = createSchemaCompiler({

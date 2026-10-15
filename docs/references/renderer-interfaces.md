@@ -129,8 +129,8 @@ Stable field groups:
 - Runtime registration: `type`, `component`, `fields`, `scopePolicy`, `actionScopePolicy`, `componentRegistryPolicy`, `wrap`, `schemaValidator`, `validation`, `compilation`, `validationDefaults`, `frameRootTag`, `staticCapable`
 - Discovery metadata: `displayName`, `icon`, `category`, `sourcePackage`, `defaultSchema`
 - Renderer classification: `rendererClass`, `rendererTraits`, `injectedLocals`
-- Ordinary renderer authoring contracts: `propContracts`, `eventContracts`, `componentCapabilityContracts`, `scopeExportContracts`
-- Authoring adaptation: `propContracts` (or inline `fields[].contract` — RM-3 single-entry form; both read through `resolveRendererPropContracts`), `authoringTransform`
+- Ordinary renderer authoring contracts: inline `fields[].contract`, `eventContracts`, `componentCapabilityContracts`, `scopeExportContracts`
+- Authoring adaptation: inline `fields[].contract` (single source since RM-4; read through `resolveRendererPropContracts`), `authoringTransform`
 - Host-only contract: `hostContract`
 
 Classification baseline:
@@ -148,7 +148,7 @@ Representative mapping:
 
 ### Static Contract Responsibilities
 
-`propContracts`
+Inline `fields[].contract` (single source since RM-4/plan 606; read through `resolveRendererPropContracts`)
 
 - Responsibility: author-editable schema field metadata for one renderer type
 - Consumers: inspector/editor tooling, autocomplete, authoring adapters, diagnostics closed-prop checks
@@ -186,14 +186,14 @@ Representative mapping:
 
 Important distinction:
 
-- `editableProps` in `ResolvedAuthoringContract` is the tooling-facing adapter over `RendererDefinition.propContracts`
+- `editableProps` in `ResolvedAuthoringContract` is the tooling-facing adapter over the renderer's `fields` contracts (via `resolveRendererPropContracts`)
 - runtime `props` in `RendererComponentProps` is the resolved render-time value object after expression evaluation, defaults, and runtime resolution
 - the two surfaces are related but not identical, and tooling must not treat runtime `props` as the authored schema contract
 
 Current adapter baseline:
 
 - `ResolvedAuthoringContract.rendererClass` comes from `RendererDefinition.rendererClass`
-- `ResolvedAuthoringContract.editableProps` comes from `RendererDefinition.propContracts`
+- `ResolvedAuthoringContract.editableProps` comes from the renderer's `fields` contracts (via `resolveRendererPropContracts`)
 - `ResolvedAuthoringContract.events` comes from `RendererDefinition.eventContracts`
 - `ResolvedAuthoringContract.componentCapabilityContracts` comes from `RendererDefinition.componentCapabilityContracts`
 - `ResolvedAuthoringContract.scopeExports` comes from `RendererDefinition.scopeExportContracts`

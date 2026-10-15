@@ -160,8 +160,7 @@ describe('对照: unified pipeline vs legacy manual normalize (语义一致)', (
       type: 'unified-fixture',
       displayName: 'Unified Fixture',
       component: () => null,
-      propContracts: {
-        items: {
+      fields: [{ key: 'items', kind: 'prop', contract: {
           shape: {
             kind: 'array',
             item: {
@@ -182,9 +181,7 @@ describe('对照: unified pipeline vs legacy manual normalize (语义一致)', (
             },
           },
           displayName: 'Items',
-        },
-      },
-      fields: [{ key: 'items', kind: 'prop' }],
+        } }],
     };
   }
 
@@ -226,8 +223,7 @@ describe('typed item semantics (explicit type → registry definition)', () => {
     type: 'typed-container',
     displayName: 'Typed Container',
     component: () => null,
-    propContracts: {
-      items: {
+    fields: [{ key: 'items', kind: 'prop', contract: {
         shape: {
           kind: 'array',
           item: {
@@ -241,9 +237,7 @@ describe('typed item semantics (explicit type → registry definition)', () => {
           },
         },
         displayName: 'Items',
-      },
-    },
-    fields: [{ key: 'items', kind: 'prop' }],
+      } }],
   };
 
   function compileTypedFixture(
@@ -343,8 +337,7 @@ describe('typed item semantics (explicit type → registry definition)', () => {
       type: 'text',
       displayName: 'Text',
       component: () => null,
-      propContracts: { text: { shape: { kind: 'unknown' }, displayName: 'text' } },
-      fields: [{ key: 'text', kind: 'prop' }],
+      fields: [{ key: 'text', kind: 'prop', contract: { shape: { kind: 'unknown' }, displayName: 'text' } }],
     };
     const registry = createRendererRegistry([
       typedContainerDefinition,

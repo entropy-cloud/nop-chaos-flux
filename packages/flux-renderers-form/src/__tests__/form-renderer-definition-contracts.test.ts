@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { resolveRendererPropContracts } from '@nop-chaos/flux-core';
 import { formRendererDefinitions } from '../index.js';
 
 describe('form renderer definition contracts', () => {
@@ -46,15 +47,16 @@ describe('form renderer definition contracts', () => {
     expect(def?.sourcePackage).toBe('@nop-chaos/flux-renderers-form');
     expect(def?.validation).toBeDefined();
     expect(def?.schemaValidator).toBeDefined();
+    const cronResolved = resolveRendererPropContracts(def!);
     for (const key of ['mode', 'showPreview', 'previewCount', 'clearable']) {
-      expect(def?.propContracts?.[key], `propContracts.${key}`).toBeDefined();
+      expect(cronResolved[key], `propContracts.${key}`).toBeDefined();
     }
     for (const key of ['mode', 'showPreview', 'previewCount']) {
       expect(def?.fields?.some((f) => f.key === key), `fields.${key}`).toBe(true);
     }
     // C6（plan 541）：v2 props 挂契约（翻转 v1 锚点）
     for (const key of ['showRepeat', 'showRange', 'presets']) {
-      expect(def?.propContracts?.[key], `propContracts.${key}`).toBeDefined();
+      expect(cronResolved[key], `propContracts.${key}`).toBeDefined();
       expect(def?.fields?.some((f) => f.key === key), `fields.${key}`).toBe(true);
     }
   });

@@ -5,8 +5,10 @@ import { validateSchema } from './index.js';
 const buttonRenderer: RegisteredRendererDefinition = {
   type: 'button',
   component: () => null,
-  propContracts: { label: { shape: { kind: 'unknown' }, displayName: 'label' } },
-  fields: [{ key: 'onClick', kind: 'event' }],
+  fields: [
+    { key: 'onClick', kind: 'event' },
+    { key: 'label', kind: 'prop', contract: { shape: { kind: 'unknown' }, displayName: 'label' } },
+  ],
 };
 
 describe('validateSchema host contract adapter', () => {

@@ -6,9 +6,8 @@ export { createCompiler, designerManifest };
 export const eventRenderer: RegisteredRendererDefinition = {
   type: 'event-text',
   component: () => null,
-  propContracts: { text: { shape: { kind: 'unknown' }, displayName: 'text' } },
   fields: [
-    { key: 'text', kind: 'prop' },
+    { key: 'text', kind: 'prop', contract: { shape: { kind: 'unknown' }, displayName: 'text' } },
     { key: 'onClick', kind: 'event' },
   ],
 };

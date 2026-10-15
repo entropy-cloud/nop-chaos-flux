@@ -15,55 +15,6 @@ export const w2aDataCompositionDefinitions: RegisteredRendererDefinition[] = [
     category: 'data',
     sourcePackage: '@nop-chaos/flux-renderers-data',
     component: PaginationRenderer,
-    propContracts: {
-      currentPage: {
-        shape: { kind: 'number' },
-        displayName: 'Current Page',
-        description:
-          'Current page number (1-based). Out-of-range values are normalized to [1, totalPages].',
-        editorType: 'expression',
-        defaultValue: 1,
-      },
-      pageSize: {
-        shape: { kind: 'number' },
-        displayName: 'Page Size',
-        description: 'Items per page. Defaults to 10.',
-        editorType: 'expression',
-        defaultValue: 10,
-      },
-      total: {
-        shape: { kind: 'number' },
-        displayName: 'Total',
-        description: 'Total item count used to derive totalPages = ceil(total / pageSize).',
-        editorType: 'expression',
-      },
-      pageSizeOptions: {
-        shape: { kind: 'array', item: { kind: 'number' } },
-        displayName: 'Page Size Options',
-        description:
-          'Selectable page sizes when mode is "with-page-size". Defaults to [10, 20, 50, 100].',
-        editorType: 'expression',
-      },
-      mode: {
-        shape: {
-          kind: 'union',
-          anyOf: [
-            { kind: 'literal', value: 'simple' },
-            { kind: 'literal', value: 'with-page-size' },
-          ],
-        },
-        displayName: 'Mode',
-        description: 'simple = page numbers only; with-page-size = includes a page-size selector.',
-        editorType: 'select',
-        defaultValue: 'simple',
-      },
-      statusPath: {
-        shape: { kind: 'string' },
-        displayName: 'Status Path',
-        description: 'Scope path publishing a read-only pagination summary.',
-        editorType: 'expression',
-      },
-    },
     eventContracts: {
       onChange: {
         displayName: 'On Change',
@@ -94,12 +45,77 @@ export const w2aDataCompositionDefinitions: RegisteredRendererDefinition[] = [
       },
     },
     fields: [
-      { key: 'currentPage', kind: 'prop' },
-      { key: 'pageSize', kind: 'prop' },
-      { key: 'total', kind: 'prop' },
-      { key: 'pageSizeOptions', kind: 'prop' },
-      { key: 'mode', kind: 'prop' },
-      { key: 'statusPath', kind: 'prop' },
+      {
+        key: 'currentPage',
+        kind: 'prop',
+        contract: {
+          shape: { kind: 'number' },
+          displayName: 'Current Page',
+          description:
+            'Current page number (1-based). Out-of-range values are normalized to [1, totalPages].',
+          editorType: 'expression',
+          defaultValue: 1,
+        },
+      },
+      {
+        key: 'pageSize',
+        kind: 'prop',
+        contract: {
+          shape: { kind: 'number' },
+          displayName: 'Page Size',
+          description: 'Items per page. Defaults to 10.',
+          editorType: 'expression',
+          defaultValue: 10,
+        },
+      },
+      {
+        key: 'total',
+        kind: 'prop',
+        contract: {
+          shape: { kind: 'number' },
+          displayName: 'Total',
+          description: 'Total item count used to derive totalPages = ceil(total / pageSize).',
+          editorType: 'expression',
+        },
+      },
+      {
+        key: 'pageSizeOptions',
+        kind: 'prop',
+        contract: {
+          shape: { kind: 'array', item: { kind: 'number' } },
+          displayName: 'Page Size Options',
+          description:
+            'Selectable page sizes when mode is "with-page-size". Defaults to [10, 20, 50, 100].',
+          editorType: 'expression',
+        },
+      },
+      {
+        key: 'mode',
+        kind: 'prop',
+        contract: {
+          shape: {
+            kind: 'union',
+            anyOf: [
+              { kind: 'literal', value: 'simple' },
+              { kind: 'literal', value: 'with-page-size' },
+            ],
+          },
+          displayName: 'Mode',
+          description: 'simple = page numbers only; with-page-size = includes a page-size selector.',
+          editorType: 'select',
+          defaultValue: 'simple',
+        },
+      },
+      {
+        key: 'statusPath',
+        kind: 'prop',
+        contract: {
+          shape: { kind: 'string' },
+          displayName: 'Status Path',
+          description: 'Scope path publishing a read-only pagination summary.',
+          editorType: 'expression',
+        },
+      },
       { key: 'onChange', kind: 'event' },
       { key: 'onPageSizeChange', kind: 'event' },
     ],
@@ -110,16 +126,17 @@ export const w2aDataCompositionDefinitions: RegisteredRendererDefinition[] = [
     category: 'data',
     sourcePackage: '@nop-chaos/flux-renderers-data',
     component: StatisticsRenderer,
-    propContracts: {
-      total: {
-        shape: { kind: 'number' },
-        displayName: 'Total',
-        description: 'Total item count to display.',
-        editorType: 'expression',
-      },
-    },
     fields: [
-      { key: 'total', kind: 'prop' },
+      {
+        key: 'total',
+        kind: 'prop',
+        contract: {
+          shape: { kind: 'number' },
+          displayName: 'Total',
+          description: 'Total item count to display.',
+          editorType: 'expression',
+        },
+      },
     ],
   },
 ];

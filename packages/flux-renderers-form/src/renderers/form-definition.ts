@@ -102,236 +102,6 @@ export const formRendererDefinition: RegisteredRendererDefinition = {
   defaultSchema: { type: 'form', body: [], actions: [] },
   rendererClass: 'flux-owner-renderer',
   rendererTraits: ['semantic-owner', 'interaction-owner'],
-  propContracts: {
-    validateOn: {
-      displayName: 'Validate On',
-      description:
-        'Default validation triggers for fields in this form (single trigger or array). Default: blur.',
-      shape: {
-        kind: 'union',
-        anyOf: [
-          { kind: 'literal', value: 'change' },
-          { kind: 'literal', value: 'blur' },
-          { kind: 'literal', value: 'submit' },
-          {
-            kind: 'array',
-            item: {
-              kind: 'union',
-              anyOf: [
-                { kind: 'literal', value: 'change' },
-                { kind: 'literal', value: 'blur' },
-                { kind: 'literal', value: 'submit' },
-              ],
-            },
-          },
-        ],
-      },
-      editorType: 'select',
-    },
-    showErrorOn: {
-      displayName: 'Show Error On',
-      description:
-        'Default error-visibility policy for fields in this form (single trigger or array). Default: touched + submit.',
-      shape: {
-        kind: 'union',
-        anyOf: [
-          { kind: 'literal', value: 'touched' },
-          { kind: 'literal', value: 'dirty' },
-          { kind: 'literal', value: 'visited' },
-          { kind: 'literal', value: 'submit' },
-          {
-            kind: 'array',
-            item: {
-              kind: 'union',
-              anyOf: [
-                { kind: 'literal', value: 'touched' },
-                { kind: 'literal', value: 'dirty' },
-                { kind: 'literal', value: 'visited' },
-                { kind: 'literal', value: 'submit' },
-              ],
-            },
-          },
-        ],
-      },
-      editorType: 'select',
-    },
-    data: {
-      shape: { kind: 'object', fields: {} },
-      displayName: 'Initial Data',
-      description: 'Initial form values at mount time.',
-      editorType: 'object',
-    },
-    statusPath: {
-      shape: { kind: 'string' },
-      displayName: 'Status Path',
-      description:
-        'Scope path that publishes the form status summary (validation and touch state) to the parent scope.',
-      editorType: 'path',
-    },
-    valuesPath: {
-      shape: { kind: 'string' },
-      displayName: 'Values Path',
-      description:
-        'Scope path that publishes a snapshot of the current form values to the parent scope.',
-      editorType: 'path',
-    },
-    mode: {
-      shape: {
-        kind: 'union',
-        anyOf: [
-          { kind: 'literal', value: 'normal' },
-          { kind: 'literal', value: 'horizontal' },
-          { kind: 'literal', value: 'inline' },
-        ],
-      },
-      displayName: 'Mode',
-      description: 'Controls form layout mode.',
-      editorType: 'select',
-      defaultValue: 'normal',
-    },
-    labelAlign: {
-      shape: {
-        kind: 'union',
-        anyOf: [
-          { kind: 'literal', value: 'top' },
-          { kind: 'literal', value: 'left' },
-          { kind: 'literal', value: 'right' },
-        ],
-      },
-      displayName: 'Label Align',
-      description: 'Controls label alignment in horizontal layout.',
-      editorType: 'select',
-    },
-    hiddenFieldPolicy: {
-      shape: {
-        kind: 'object',
-        fields: {
-          validateWhenHidden: { kind: 'boolean' },
-          clearValueWhenHidden: { kind: 'boolean' },
-        },
-        optional: ['validateWhenHidden', 'clearValueWhenHidden'],
-      },
-      displayName: 'Hidden Field Policy',
-      description: 'Controls how hidden fields participate in validation and clearing.',
-      editorType: 'hidden-field-policy',
-    },
-    columnCount: {
-      shape: { kind: 'number' },
-      displayName: 'Column Count',
-      description:
-        'Renders the form body as a CSS grid with the given number of columns. Values < 1 are clamped to 1 (single column).',
-      editorType: 'number',
-    },
-    gap: {
-      shape: { kind: 'unknown' },
-      displayName: 'Gap',
-      description: 'Spacing between body fields (stack-*/hstack-* aliases or a raw length).',
-      editorType: 'gap',
-    },
-    labelWidth: {
-      shape: { kind: 'unknown' },
-      displayName: 'Label Width',
-      description: 'Label column width (e.g. "120px" or a grid ratio number); horizontal mode only.',
-      editorType: 'text',
-    },
-    bodyClassName: {
-      shape: { kind: 'string' },
-      displayName: 'Body Class Name',
-      description: 'Additional className applied to the form body region.',
-      editorType: 'text',
-    },
-    actionsClassName: {
-      shape: { kind: 'string' },
-      displayName: 'Actions Class Name',
-      description: 'Additional className applied to the form actions region.',
-      editorType: 'text',
-    },
-    autoInit: {
-      shape: { kind: 'boolean' },
-      displayName: 'Auto Init',
-      description: 'When true (default), initAction runs automatically after mount.',
-      editorType: 'boolean',
-      defaultValue: true,
-    },
-    autoLoad: {
-      shape: { kind: 'boolean' },
-      displayName: 'Auto Load',
-      description: 'When true (default), loadAction runs automatically after mount and its result becomes the form values.',
-      editorType: 'boolean',
-      defaultValue: true,
-    },
-    submitScope: {
-      shape: {
-        kind: 'union',
-        anyOf: [
-          { kind: 'literal', value: 'local' },
-          { kind: 'literal', value: 'surface' },
-        ],
-      },
-      displayName: 'Submit Scope',
-      description:
-        "local (default): only this form's own lifecycle handlers fire. surface: submit also triggers the enclosing surface's onSubmitSuccess/onSubmitError callback.",
-      editorType: 'select',
-      defaultValue: 'local',
-    },
-    submitOnChange: {
-      shape: { kind: 'boolean' },
-      displayName: 'Submit On Change',
-      description:
-        'When true and a submitAction or target is configured, debounced (300ms) submit is triggered automatically whenever form values change. The initial mount snapshot is ignored.',
-      editorType: 'boolean',
-      defaultValue: false,
-    },
-    target: {
-      shape: { kind: 'string' },
-      displayName: 'Submit Target',
-      description:
-        'AMIS-parity: deliver form values to the named component (resolved via the component registry, typically a crud). The target querySubmit capability receives { values } and merges them into its query.',
-      editorType: 'text',
-    },
-    preventEnterSubmit: {
-      shape: { kind: 'boolean' },
-      displayName: 'Prevent Enter Submit',
-      description:
-        'When true, pressing Enter inside the form does NOT trigger submit. Default behavior (when false or unset): Enter triggers submit if a submitAction is configured.',
-      editorType: 'boolean',
-      defaultValue: false,
-    },
-    autoFocus: {
-      shape: { kind: 'boolean' },
-      displayName: 'Auto Focus',
-      description:
-        'When true, focuses the first focusable control in the form body after mount.',
-      editorType: 'boolean',
-      defaultValue: false,
-    },
-    scrollToFirstError: {
-      shape: { kind: 'boolean' },
-      displayName: 'Scroll To First Error',
-      description:
-        'When true, the existing focus-on-first-invalid behavior additionally calls scrollIntoView({ behavior: "smooth", block: "center" }).',
-      editorType: 'boolean',
-      defaultValue: false,
-    },
-    static: {
-      shape: {
-        kind: 'union',
-        anyOf: [{ kind: 'boolean' }, { kind: 'string' }],
-      },
-      displayName: 'Static (read-only preview)',
-      description:
-        'When truthy, propagates a read-only presentation snapshot to all child fields via FormLayoutContext. Actions region is not hidden.',
-      editorType: 'static',
-      defaultValue: false,
-    },
-    rules: {
-      shape: { kind: 'array', item: { kind: 'unknown' } },
-      displayName: 'Cross-field Rules',
-      description:
-        'Form-level cross-field validation rules. Each entry translates to a field-level rule on the referenced field. Supported rule kinds: equalsField, notEqualsField.',
-      editorType: 'cross-field-rules',
-    },
-  },
   eventContracts: {
     initAction: {
       displayName: 'Init',
@@ -457,35 +227,339 @@ export const formRendererDefinition: RegisteredRendererDefinition = {
   fields: [
     { key: 'body', kind: 'region', regionKey: 'body' },
     { key: 'actions', kind: 'region', regionKey: 'actions' },
-    { key: 'data', kind: 'prop' },
-    { key: 'validateOn', kind: 'prop' },
-    { key: 'showErrorOn', kind: 'prop' },
-    { key: 'autoInit', kind: 'prop', valueType: 'boolean' },
+    {
+      key: 'data',
+      kind: 'prop',
+      contract: {
+        shape: { kind: 'object', fields: {} },
+        displayName: 'Initial Data',
+        description: 'Initial form values at mount time.',
+        editorType: 'object',
+      },
+    },
+    {
+      key: 'validateOn',
+      kind: 'prop',
+      contract: {
+        displayName: 'Validate On',
+        description:
+          'Default validation triggers for fields in this form (single trigger or array). Default: blur.',
+        shape: {
+          kind: 'union',
+          anyOf: [
+            { kind: 'literal', value: 'change' },
+            { kind: 'literal', value: 'blur' },
+            { kind: 'literal', value: 'submit' },
+            {
+              kind: 'array',
+              item: {
+                kind: 'union',
+                anyOf: [
+                  { kind: 'literal', value: 'change' },
+                  { kind: 'literal', value: 'blur' },
+                  { kind: 'literal', value: 'submit' },
+                ],
+              },
+            },
+          ],
+        },
+        editorType: 'select',
+      },
+    },
+    {
+      key: 'showErrorOn',
+      kind: 'prop',
+      contract: {
+        displayName: 'Show Error On',
+        description:
+          'Default error-visibility policy for fields in this form (single trigger or array). Default: touched + submit.',
+        shape: {
+          kind: 'union',
+          anyOf: [
+            { kind: 'literal', value: 'touched' },
+            { kind: 'literal', value: 'dirty' },
+            { kind: 'literal', value: 'visited' },
+            { kind: 'literal', value: 'submit' },
+            {
+              kind: 'array',
+              item: {
+                kind: 'union',
+                anyOf: [
+                  { kind: 'literal', value: 'touched' },
+                  { kind: 'literal', value: 'dirty' },
+                  { kind: 'literal', value: 'visited' },
+                  { kind: 'literal', value: 'submit' },
+                ],
+              },
+            },
+          ],
+        },
+        editorType: 'select',
+      },
+    },
+    {
+      key: 'autoInit',
+      kind: 'prop',
+      valueType: 'boolean',
+      contract: {
+        shape: { kind: 'boolean' },
+        displayName: 'Auto Init',
+        description: 'When true (default), initAction runs automatically after mount.',
+        editorType: 'boolean',
+        defaultValue: true,
+      },
+    },
     { key: 'initAction', kind: 'event' },
     { key: 'loadAction', kind: 'event' },
-    { key: 'autoLoad', kind: 'prop', valueType: 'boolean' },
+    {
+      key: 'autoLoad',
+      kind: 'prop',
+      valueType: 'boolean',
+      contract: {
+        shape: { kind: 'boolean' },
+        displayName: 'Auto Load',
+        description: 'When true (default), loadAction runs automatically after mount and its result becomes the form values.',
+        editorType: 'boolean',
+        defaultValue: true,
+      },
+    },
     { key: 'submitAction', kind: 'event' },
     { key: 'onSubmitSuccess', kind: 'event' },
     { key: 'onSubmitError', kind: 'event' },
     { key: 'onValidateError', kind: 'event' },
-    { key: 'statusPath', kind: 'prop' },
-    { key: 'valuesPath', kind: 'prop' },
-    { key: 'hiddenFieldPolicy', kind: 'prop' },
-    { key: 'mode', kind: 'prop' },
-    { key: 'labelAlign', kind: 'prop' },
-    { key: 'labelWidth', kind: 'prop' },
-    { key: 'gap', kind: 'prop' },
-    { key: 'bodyClassName', kind: 'prop' },
-    { key: 'actionsClassName', kind: 'prop' },
-    { key: 'columnCount', kind: 'prop' },
-    { key: 'submitScope', kind: 'prop' },
-    { key: 'submitOnChange', kind: 'prop', valueType: 'boolean' },
-    { key: 'target', kind: 'prop' },
-    { key: 'preventEnterSubmit', kind: 'prop', valueType: 'boolean' },
-    { key: 'autoFocus', kind: 'prop', valueType: 'boolean' },
-    { key: 'scrollToFirstError', kind: 'prop', valueType: 'boolean' },
-    { key: 'static', kind: 'prop', valueType: 'boolean' },
-    { key: 'rules', kind: 'prop' },
+    {
+      key: 'statusPath',
+      kind: 'prop',
+      contract: {
+        shape: { kind: 'string' },
+        displayName: 'Status Path',
+        description:
+          'Scope path that publishes the form status summary (validation and touch state) to the parent scope.',
+        editorType: 'path',
+      },
+    },
+    {
+      key: 'valuesPath',
+      kind: 'prop',
+      contract: {
+        shape: { kind: 'string' },
+        displayName: 'Values Path',
+        description:
+          'Scope path that publishes a snapshot of the current form values to the parent scope.',
+        editorType: 'path',
+      },
+    },
+    {
+      key: 'hiddenFieldPolicy',
+      kind: 'prop',
+      contract: {
+        shape: {
+          kind: 'object',
+          fields: {
+            validateWhenHidden: { kind: 'boolean' },
+            clearValueWhenHidden: { kind: 'boolean' },
+          },
+          optional: ['validateWhenHidden', 'clearValueWhenHidden'],
+        },
+        displayName: 'Hidden Field Policy',
+        description: 'Controls how hidden fields participate in validation and clearing.',
+        editorType: 'hidden-field-policy',
+      },
+    },
+    {
+      key: 'mode',
+      kind: 'prop',
+      contract: {
+        shape: {
+          kind: 'union',
+          anyOf: [
+            { kind: 'literal', value: 'normal' },
+            { kind: 'literal', value: 'horizontal' },
+            { kind: 'literal', value: 'inline' },
+          ],
+        },
+        displayName: 'Mode',
+        description: 'Controls form layout mode.',
+        editorType: 'select',
+        defaultValue: 'normal',
+      },
+    },
+    {
+      key: 'labelAlign',
+      kind: 'prop',
+      contract: {
+        shape: {
+          kind: 'union',
+          anyOf: [
+            { kind: 'literal', value: 'top' },
+            { kind: 'literal', value: 'left' },
+            { kind: 'literal', value: 'right' },
+          ],
+        },
+        displayName: 'Label Align',
+        description: 'Controls label alignment in horizontal layout.',
+        editorType: 'select',
+      },
+    },
+    {
+      key: 'labelWidth',
+      kind: 'prop',
+      contract: {
+        shape: { kind: 'unknown' },
+        displayName: 'Label Width',
+        description: 'Label column width (e.g. "120px" or a grid ratio number); horizontal mode only.',
+        editorType: 'text',
+      },
+    },
+    {
+      key: 'gap',
+      kind: 'prop',
+      contract: {
+        shape: { kind: 'unknown' },
+        displayName: 'Gap',
+        description: 'Spacing between body fields (stack-*/hstack-* aliases or a raw length).',
+        editorType: 'gap',
+      },
+    },
+    {
+      key: 'bodyClassName',
+      kind: 'prop',
+      contract: {
+        shape: { kind: 'string' },
+        displayName: 'Body Class Name',
+        description: 'Additional className applied to the form body region.',
+        editorType: 'text',
+      },
+    },
+    {
+      key: 'actionsClassName',
+      kind: 'prop',
+      contract: {
+        shape: { kind: 'string' },
+        displayName: 'Actions Class Name',
+        description: 'Additional className applied to the form actions region.',
+        editorType: 'text',
+      },
+    },
+    {
+      key: 'columnCount',
+      kind: 'prop',
+      contract: {
+        shape: { kind: 'number' },
+        displayName: 'Column Count',
+        description:
+          'Renders the form body as a CSS grid with the given number of columns. Values < 1 are clamped to 1 (single column).',
+        editorType: 'number',
+      },
+    },
+    {
+      key: 'submitScope',
+      kind: 'prop',
+      contract: {
+        shape: {
+          kind: 'union',
+          anyOf: [
+            { kind: 'literal', value: 'local' },
+            { kind: 'literal', value: 'surface' },
+          ],
+        },
+        displayName: 'Submit Scope',
+        description:
+          "local (default): only this form's own lifecycle handlers fire. surface: submit also triggers the enclosing surface's onSubmitSuccess/onSubmitError callback.",
+        editorType: 'select',
+        defaultValue: 'local',
+      },
+    },
+    {
+      key: 'submitOnChange',
+      kind: 'prop',
+      valueType: 'boolean',
+      contract: {
+        shape: { kind: 'boolean' },
+        displayName: 'Submit On Change',
+        description:
+          'When true and a submitAction or target is configured, debounced (300ms) submit is triggered automatically whenever form values change. The initial mount snapshot is ignored.',
+        editorType: 'boolean',
+        defaultValue: false,
+      },
+    },
+    {
+      key: 'target',
+      kind: 'prop',
+      contract: {
+        shape: { kind: 'string' },
+        displayName: 'Submit Target',
+        description:
+          'AMIS-parity: deliver form values to the named component (resolved via the component registry, typically a crud). The target querySubmit capability receives { values } and merges them into its query.',
+        editorType: 'text',
+      },
+    },
+    {
+      key: 'preventEnterSubmit',
+      kind: 'prop',
+      valueType: 'boolean',
+      contract: {
+        shape: { kind: 'boolean' },
+        displayName: 'Prevent Enter Submit',
+        description:
+          'When true, pressing Enter inside the form does NOT trigger submit. Default behavior (when false or unset): Enter triggers submit if a submitAction is configured.',
+        editorType: 'boolean',
+        defaultValue: false,
+      },
+    },
+    {
+      key: 'autoFocus',
+      kind: 'prop',
+      valueType: 'boolean',
+      contract: {
+        shape: { kind: 'boolean' },
+        displayName: 'Auto Focus',
+        description:
+          'When true, focuses the first focusable control in the form body after mount.',
+        editorType: 'boolean',
+        defaultValue: false,
+      },
+    },
+    {
+      key: 'scrollToFirstError',
+      kind: 'prop',
+      valueType: 'boolean',
+      contract: {
+        shape: { kind: 'boolean' },
+        displayName: 'Scroll To First Error',
+        description:
+          'When true, the existing focus-on-first-invalid behavior additionally calls scrollIntoView({ behavior: "smooth", block: "center" }).',
+        editorType: 'boolean',
+        defaultValue: false,
+      },
+    },
+    {
+      key: 'static',
+      kind: 'prop',
+      valueType: 'boolean',
+      contract: {
+        shape: {
+          kind: 'union',
+          anyOf: [{ kind: 'boolean' }, { kind: 'string' }],
+        },
+        displayName: 'Static (read-only preview)',
+        description:
+          'When truthy, propagates a read-only presentation snapshot to all child fields via FormLayoutContext. Actions region is not hidden.',
+        editorType: 'static',
+        defaultValue: false,
+      },
+    },
+    {
+      key: 'rules',
+      kind: 'prop',
+      contract: {
+        shape: { kind: 'array', item: { kind: 'unknown' } },
+        displayName: 'Cross-field Rules',
+        description:
+          'Form-level cross-field validation rules. Each entry translates to a field-level rule on the referenced field. Supported rule kinds: equalsField, notEqualsField.',
+        editorType: 'cross-field-rules',
+      },
+    },
   ],
   scopePolicy: 'form',
   validationDefaults: {

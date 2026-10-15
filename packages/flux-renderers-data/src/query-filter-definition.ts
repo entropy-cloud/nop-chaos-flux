@@ -77,60 +77,76 @@ export const queryFilterRendererDefinition: RegisteredRendererDefinition = {
   category: 'data',
   sourcePackage: '@nop-chaos/flux-renderers-data',
   authoringTransform: transformQueryFilterAuthoringSchema,
-  propContracts: {
-    body: {
-      shape: { kind: 'schema-definition', fieldRules: {} },
-      displayName: 'Body',
-      description: 'Query fields rendered through the embedded form (region carrier).',
-    },
-    togglable: {
-      shape: {
-        kind: 'union',
-        anyOf: [{ kind: 'boolean' }, { kind: 'object', fields: {} }],
-      },
-      displayName: 'Togglable',
-      description:
-        'Expand/collapse semantics: true or a config object (defaultCollapsed/collapsedLabel/expandedLabel) enables the collapse envelope around the embedded form.',
-      editorType: 'object',
-    },
-    submitLabel: {
-      shape: { kind: 'string' },
-      displayName: 'Submit Label',
-      description: 'Label of the default Search button (defaults to the i18n search message).',
-      editorType: 'text',
-    },
-    resetLabel: {
-      shape: { kind: 'string' },
-      displayName: 'Reset Label',
-      description: 'Label of the default Reset button (defaults to the i18n reset message).',
-      editorType: 'text',
-    },
-    onSubmit: {
-      shape: { kind: 'schema-definition', fieldRules: {}, actionValue: true },
-      displayName: 'Submit Action',
-      description:
-        'Query chain dispatched through the embedded form submit pipeline (validation then submit). Lowered onto the embedded form by the authoring transform.',
-    },
-    onReset: {
-      shape: { kind: 'schema-definition', fieldRules: {}, actionValue: true },
-      displayName: 'Reset Action',
-      description:
-        'Reset chain dispatched after the embedded form resets. Lowered onto the default Reset button by the authoring transform.',
-    },
-  },
   component: QueryFilterRenderer,
   fields: [
-    { key: 'body', kind: 'prop' },
+    {
+      key: 'body',
+      kind: 'prop',
+      contract: {
+        shape: { kind: 'schema-definition', fieldRules: {} },
+        displayName: 'Body',
+        description: 'Query fields rendered through the embedded form (region carrier).',
+      },
+    },
     { key: 'actions', kind: 'prop' },
     { key: 'filterForm', kind: 'region', regionKey: 'filterForm' },
     { key: 'mode', kind: 'prop' },
     { key: 'layout', kind: 'prop' },
     { key: 'columnCount', kind: 'prop' },
     { key: 'gap', kind: 'prop' },
-    { key: 'submitLabel', kind: 'prop' },
-    { key: 'resetLabel', kind: 'prop' },
-    { key: 'togglable', kind: 'prop' },
-    { key: 'onSubmit', kind: 'prop' },
-    { key: 'onReset', kind: 'prop' },
+    {
+      key: 'submitLabel',
+      kind: 'prop',
+      contract: {
+        shape: { kind: 'string' },
+        displayName: 'Submit Label',
+        description: 'Label of the default Search button (defaults to the i18n search message).',
+        editorType: 'text',
+      },
+    },
+    {
+      key: 'resetLabel',
+      kind: 'prop',
+      contract: {
+        shape: { kind: 'string' },
+        displayName: 'Reset Label',
+        description: 'Label of the default Reset button (defaults to the i18n reset message).',
+        editorType: 'text',
+      },
+    },
+    {
+      key: 'togglable',
+      kind: 'prop',
+      contract: {
+        shape: {
+          kind: 'union',
+          anyOf: [{ kind: 'boolean' }, { kind: 'object', fields: {} }],
+        },
+        displayName: 'Togglable',
+        description:
+          'Expand/collapse semantics: true or a config object (defaultCollapsed/collapsedLabel/expandedLabel) enables the collapse envelope around the embedded form.',
+        editorType: 'object',
+      },
+    },
+    {
+      key: 'onSubmit',
+      kind: 'prop',
+      contract: {
+        shape: { kind: 'schema-definition', fieldRules: {}, actionValue: true },
+        displayName: 'Submit Action',
+        description:
+          'Query chain dispatched through the embedded form submit pipeline (validation then submit). Lowered onto the embedded form by the authoring transform.',
+      },
+    },
+    {
+      key: 'onReset',
+      kind: 'prop',
+      contract: {
+        shape: { kind: 'schema-definition', fieldRules: {}, actionValue: true },
+        displayName: 'Reset Action',
+        description:
+          'Reset chain dispatched after the embedded form resets. Lowered onto the default Reset button by the authoring transform.',
+      },
+    },
   ],
 };

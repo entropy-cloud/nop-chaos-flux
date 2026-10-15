@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { createRendererRegistry, registerRendererDefinitions } from '@nop-chaos/flux-core';
+import { createRendererRegistry, registerRendererDefinitions, resolveRendererPropContracts } from '@nop-chaos/flux-core';
 import { industrialRendererDefinitions } from './renderer-definitions.js';
 import { registerScadaRenderers } from './index.js';
 import { hasScadaSymbol, clearScadaSymbolRegistry } from './symbols/symbol-registry.js';
@@ -58,7 +58,7 @@ describe('industrialRendererDefinitions', () => {
     // rendererClass（范本 basic-renderer-definitions.ts:174 instance-renderer）
     expect(def.rendererClass).toBe('instance-renderer');
     // propContracts：覆盖 5 个授权 prop key（config/width/height/viewport/events）
-    expect(Object.keys(def.propContracts ?? {}).sort()).toEqual(
+    expect(Object.keys(resolveRendererPropContracts(def)).sort()).toEqual(
       ['config', 'events', 'height', 'viewport', 'width'],
     );
     // eventContracts：5 events（onSymbolClick/onSymbolDblClick/onSymbolHover/onReady/onError）

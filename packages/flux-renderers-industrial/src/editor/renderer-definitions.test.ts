@@ -39,7 +39,15 @@ describe('industrialEditorRendererDefinitions (E5.1 完整 fields)', () => {
 
   it('scada-editor-canvas complete fields registered (E5.1: props + regions + events whole-object)', () => {
     const fields = industrialEditorRendererDefinitions[0].fields ?? [];
-    const byKey = new Map(fields.map((field) => [field.key, field]));
+    // RM-4 (plan 606): the events prop CONTRACT rides a second fields entry;
+    // classification reads the first declaration (find) — byKey follows
+    // first-declaration semantics to stay honest about kind.
+    const byKey = new Map(
+      fields
+        .slice()
+        .reverse()
+        .map((field) => [field.key, field]),
+    );
     // props
     expect(byKey.get('config')).toMatchObject({ key: 'config', kind: 'prop' });
     expect(byKey.get('width')).toMatchObject({ key: 'width', kind: 'prop' });

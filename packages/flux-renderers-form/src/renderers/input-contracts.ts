@@ -1,18 +1,19 @@
 /**
- * Plan 462 (2026-08-23): extracted the inline `propContracts` blocks
+ * Plan 462 (2026-08-23): extracted the inline prop-contract blocks
  * for `input.tsx` renderers into this sibling module so the parent
  * file stays under the 710-line lint ceiling. The companion
- * `formFieldContracts` shared array (readOnly / required / labelAlign)
+ * `formFieldContracts` shared record (readOnly / required / labelAlign)
  * lives in `field-utils/field-reading.tsx`; the per-input contracts
  * below are input-specific (select, checkbox, radio-group, etc.).
  *
- * Each input renderer's `propContracts` is built as
- * `{ ...formFieldContracts, ...selectSpecificContracts }` so the
- * shared base stays in one place.
+ * RM-4 (plan 606): the former per-renderer contract records
+ * (`...formFieldContracts`, `...selectSpecificContracts` spreads) are
+ * absorbed into the renderers' `fields` entries — renderers reference
+ * these records per key (`contract: selectSpecificContracts.multiple`).
  */
-import type { RendererPropContract } from '@nop-chaos/flux-core';
+import type { RendererFieldContract } from '@nop-chaos/flux-core';
 
-export const selectSpecificContracts: Record<string, RendererPropContract> = {
+export const selectSpecificContracts: Record<string, RendererFieldContract> = {
   multiple: { displayName: 'Multiple', shape: { kind: 'boolean' } },
   searchable: { displayName: 'Searchable', shape: { kind: 'boolean' } },
   clearable: { displayName: 'Clearable', shape: { kind: 'boolean' } },
@@ -28,7 +29,7 @@ export const selectSpecificContracts: Record<string, RendererPropContract> = {
   },
 };
 
-export const checkboxSpecificContracts: Record<string, RendererPropContract> = {
+export const checkboxSpecificContracts: Record<string, RendererFieldContract> = {
   shape: {
     displayName: 'Shape',
     shape: {
@@ -40,7 +41,7 @@ export const checkboxSpecificContracts: Record<string, RendererPropContract> = {
   },
 };
 
-export const radioGroupSpecificContracts: Record<string, RendererPropContract> = {
+export const radioGroupSpecificContracts: Record<string, RendererFieldContract> = {
   direction: {
     displayName: 'Direction',
     shape: {
@@ -52,7 +53,7 @@ export const radioGroupSpecificContracts: Record<string, RendererPropContract> =
   },
 };
 
-export const checkboxGroupSpecificContracts: Record<string, RendererPropContract> = {
+export const checkboxGroupSpecificContracts: Record<string, RendererFieldContract> = {
   checkAll: { displayName: 'Check All', shape: { kind: 'boolean' } },
   direction: {
     displayName: 'Direction',
@@ -65,7 +66,7 @@ export const checkboxGroupSpecificContracts: Record<string, RendererPropContract
   },
 };
 
-export const buttonGroupSelectSpecificContracts: Record<string, RendererPropContract> = {
+export const buttonGroupSelectSpecificContracts: Record<string, RendererFieldContract> = {
   multiple: { displayName: 'Multiple', shape: { kind: 'boolean' } },
   direction: {
     displayName: 'Direction',
@@ -78,7 +79,7 @@ export const buttonGroupSelectSpecificContracts: Record<string, RendererPropCont
   },
 };
 
-export const inputNumberSpecificContracts: Record<string, RendererPropContract> = {
+export const inputNumberSpecificContracts: Record<string, RendererFieldContract> = {
   precision: {
     displayName: 'Precision',
     shape: { kind: 'number' },
@@ -101,7 +102,7 @@ export const inputNumberSpecificContracts: Record<string, RendererPropContract> 
   },
 };
 
-export const sliderSpecificContracts: Record<string, RendererPropContract> = {
+export const sliderSpecificContracts: Record<string, RendererFieldContract> = {
   min: {
     displayName: 'Min',
     shape: { kind: 'number' },
@@ -123,7 +124,7 @@ export const sliderSpecificContracts: Record<string, RendererPropContract> = {
   },
 };
 
-export const ratingSpecificContracts: Record<string, RendererPropContract> = {
+export const ratingSpecificContracts: Record<string, RendererFieldContract> = {
   count: {
     displayName: 'Count',
     shape: { kind: 'number' },
@@ -135,7 +136,7 @@ export const ratingSpecificContracts: Record<string, RendererPropContract> = {
   allowClear: { displayName: 'Allow Clear', shape: { kind: 'boolean' } },
 };
 
-export const inputColorSpecificContracts: Record<string, RendererPropContract> = {
+export const inputColorSpecificContracts: Record<string, RendererFieldContract> = {
   valueFormat: {
     displayName: 'Value Format',
     shape: {
@@ -153,13 +154,13 @@ export const inputColorSpecificContracts: Record<string, RendererPropContract> =
   },
 };
 
-const orgSourceContract = (displayName: string, description: string): RendererPropContract => ({
+const orgSourceContract = (displayName: string, description: string): RendererFieldContract => ({
   shape: { kind: 'schema-definition', fieldRules: {}, actionValue: true },
   displayName,
   description,
 });
 
-export const orgSelectSpecificContracts: Record<string, RendererPropContract> = {
+export const orgSelectSpecificContracts: Record<string, RendererFieldContract> = {
   multiple: { displayName: 'Multiple', shape: { kind: 'boolean' } },
   searchable: { displayName: 'Searchable', shape: { kind: 'boolean' } },
   searchMergeMode: {
@@ -201,24 +202,15 @@ export const orgSelectSpecificContracts: Record<string, RendererPropContract> = 
   },
 };
 
-/**
- * input-city (plan 506) narrows the org family contract: search / multiple /
- * searchable / searchMergeMode do not exist on the type (Omit in
- * `InputCitySchema`) — the authored-props contract face must exclude them
- * too, or designers could author no-op fields.
- */
-const {
-  multiple: _multiple,
-  searchable: _searchable,
-  searchMergeMode: _searchMergeMode,
-  sourceSearch: _sourceSearch,
-  ...inputCityNarrowed
-} = orgSelectSpecificContracts;
-
-export const inputCitySpecificContracts: Record<string, RendererPropContract> = inputCityNarrowed;
+// input-city (plan 506) narrows the org family contract: search / multiple /
+// searchable / searchMergeMode do not exist on the type (Omit in
+// `InputCitySchema`). RM-4 (plan 606): the narrowed contract record is gone —
+// input-city consumes the shared `orgSelectSpecificContracts` references
+// through its filtered `inputCityFieldRules` (the narrowed keys are dropped
+// from the fields list, so the authored-props contract face stays narrowed).
 
 
-export const signatureSpecificContracts: Record<string, RendererPropContract> = {
+export const signatureSpecificContracts: Record<string, RendererFieldContract> = {
   penColor: {
     displayName: 'Pen Color',
     shape: { kind: 'string' },

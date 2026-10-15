@@ -184,14 +184,14 @@ describe('inspector-field-model defensive branches', () => {
     const definition = def({
       type: 'opts',
       defaultSchema: { type: 'opts' },
-      propContracts: {
-        mode: {
+      fields: [
+        { key: 'mode', kind: 'prop', contract: {
           shape: { kind: 'union', anyOf: [{ kind: 'literal', value: 'a' }, { kind: 'literal', value: 'b' }] },
           displayName: 'Mode',
           editorType: 'select',
           defaultValue: 'a',
-        },
-      },
+        } },
+        ],
     });
     const node = injectSessionIds({ type: 'opts', mode: 'b' }, createSeededRandom(62)) as never;
     const schema = buildInspectorSchema(resolveRendererAuthoringContract(definition));

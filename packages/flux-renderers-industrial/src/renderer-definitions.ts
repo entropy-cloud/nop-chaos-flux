@@ -55,48 +55,6 @@ export const industrialRendererDefinitions: RegisteredRendererDefinition[] = [
     defaultSchema: { type: 'scada-canvas', config: { version: 1, variables: [], symbols: [] } },
     rendererClass: 'instance-renderer',
     component: LazyScadaCanvasRenderer,
-    propContracts: {
-      config: {
-        // 组态 JSON：内嵌字符串（JSON 文本）或对象（已解析）；source-enabled。
-        shape: { kind: 'unknown' },
-        displayName: 'Config',
-        description:
-          'Scada scene config JSON (string JSON-text or parsed object). Validated at runtime via parseScadaConfig/validateScadaConfig. Supports expression binding.',
-        editorType: 'code',
-        required: false,
-      },
-      width: {
-        shape: { kind: 'number' },
-        displayName: 'Width',
-        description: 'Canvas width in px; omit to fill container.',
-        editorType: 'number',
-      },
-      height: {
-        shape: { kind: 'number' },
-        displayName: 'Height',
-        description: 'Canvas height in px; omit to fill container.',
-        editorType: 'number',
-      },
-      viewport: {
-        shape: {
-          kind: 'object',
-          fields: {
-            fit: { kind: 'union', anyOf: [{ kind: 'literal', value: 'contain' }, { kind: 'literal', value: 'fill' }] },
-            center: { kind: 'boolean' },
-          },
-          optional: ['fit', 'center'],
-        },
-        displayName: 'Viewport',
-        description: 'Initial viewport policy (fit/center).',
-      },
-      events: {
-        // ActionSchema 对象整体（onSymbolClick/onSymbolDblClick/onSymbolHover/onReady/onError）。
-        shape: { kind: 'unknown' },
-        displayName: 'Events',
-        description:
-          'Schema-level event hooks (onSymbolClick/onSymbolDblClick/onSymbolHover/onReady/onError). Dispatched via createNormalizedActionEvent + helpers.dispatch (see eventContracts for payload shapes).',
-      },
-    },
     eventContracts: {
       onSymbolClick: {
         displayName: 'Symbol Click',
@@ -194,11 +152,66 @@ export const industrialRendererDefinitions: RegisteredRendererDefinition[] = [
       },
     ],
     fields: [
-      { key: 'config', kind: 'prop' },
-      { key: 'width', kind: 'prop' },
-      { key: 'height', kind: 'prop' },
-      { key: 'viewport', kind: 'prop' },
-      { key: 'events', kind: 'prop' },
+      {
+        key: 'config',
+        kind: 'prop',
+        contract: {
+          // 组态 JSON：内嵌字符串（JSON 文本）或对象（已解析）；source-enabled。
+          shape: { kind: 'unknown' },
+          displayName: 'Config',
+          description:
+            'Scada scene config JSON (string JSON-text or parsed object). Validated at runtime via parseScadaConfig/validateScadaConfig. Supports expression binding.',
+          editorType: 'code',
+          required: false,
+        },
+      },
+      {
+        key: 'width',
+        kind: 'prop',
+        contract: {
+          shape: { kind: 'number' },
+          displayName: 'Width',
+          description: 'Canvas width in px; omit to fill container.',
+          editorType: 'number',
+        },
+      },
+      {
+        key: 'height',
+        kind: 'prop',
+        contract: {
+          shape: { kind: 'number' },
+          displayName: 'Height',
+          description: 'Canvas height in px; omit to fill container.',
+          editorType: 'number',
+        },
+      },
+      {
+        key: 'viewport',
+        kind: 'prop',
+        contract: {
+          shape: {
+            kind: 'object',
+            fields: {
+              fit: { kind: 'union', anyOf: [{ kind: 'literal', value: 'contain' }, { kind: 'literal', value: 'fill' }] },
+              center: { kind: 'boolean' },
+            },
+            optional: ['fit', 'center'],
+          },
+          displayName: 'Viewport',
+          description: 'Initial viewport policy (fit/center).',
+        },
+      },
+      {
+        key: 'events',
+        kind: 'prop',
+        contract: {
+          // ActionSchema 对象整体（onSymbolClick/onSymbolDblClick/onSymbolHover/onReady/onError）。
+          shape: { kind: 'unknown' },
+          displayName: 'Events',
+          description:
+            'Schema-level event hooks (onSymbolClick/onSymbolDblClick/onSymbolHover/onReady/onError). Dispatched via createNormalizedActionEvent + helpers.dispatch (see eventContracts for payload shapes).',
+        },
+      },
       { key: 'loading', kind: 'region', regionKey: 'loading' },
       { key: 'empty', kind: 'region', regionKey: 'empty' },
     ],

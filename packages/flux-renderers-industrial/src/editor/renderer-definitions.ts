@@ -29,80 +29,6 @@ export const industrialEditorRendererDefinitions: RegisteredRendererDefinition[]
     rendererClass: 'domain-host-renderer',
     component: ScadaEditorCanvasRenderer,
     hostContract: scadaEditorHostContract,
-    propContracts: {
-      statusPath: {
-        shape: { kind: 'string' },
-        displayName: 'Status Path',
-        description: 'Host runtime status publication path (P3.3): {kind, dirty, busy, error, canUndo, canRedo, selectionCount, mode, status}.',
-        editorType: 'expression',
-      },
-      config: {
-        shape: { kind: 'unknown' },
-        displayName: 'Config',
-        description:
-          'Initial scene config JSON (string JSON-text or parsed object). Validated at runtime via parseScadaConfig/validateScadaConfig.',
-        editorType: 'code',
-        required: false,
-      },
-      width: {
-        shape: { kind: 'number' },
-        displayName: 'Width',
-        description: 'Canvas width in px; omit to fill container.',
-        editorType: 'number',
-      },
-      height: {
-        shape: { kind: 'number' },
-        displayName: 'Height',
-        description: 'Canvas height in px; omit to fill container.',
-        editorType: 'number',
-      },
-      mode: {
-        shape: { kind: 'union', anyOf: [{ kind: 'literal', value: 'edit' }, { kind: 'literal', value: 'preview' }] },
-        displayName: 'Mode',
-        description: 'Editor mode (edit ↔ preview).',
-      },
-      commitPolicy: {
-        shape: { kind: 'union', anyOf: [{ kind: 'literal', value: 'manual' }, { kind: 'literal', value: 'auto' }] },
-        displayName: 'Commit Policy',
-        description: 'Commit policy (manual default / auto).',
-      },
-      viewport: {
-        shape: {
-          kind: 'object',
-          fields: {
-            fit: { kind: 'union', anyOf: [{ kind: 'literal', value: 'contain' }, { kind: 'literal', value: 'fill' }] },
-            center: { kind: 'boolean' },
-          },
-          optional: ['fit', 'center'],
-        },
-        displayName: 'Viewport',
-        description: 'Initial viewport policy (fit/center), applied once on mount.',
-      },
-      events: {
-        shape: { kind: 'unknown' },
-        displayName: 'Events',
-        description:
-          'Schema-level event hooks (onReady/onError/onSelectionChange/onModeChange/onSessionChange/onSave/onLoad). Dispatched via createNormalizedActionEvent + helpers.dispatch.',
-      },
-      templateStorage: {
-        shape: { kind: 'unknown' },
-        displayName: 'Template Storage',
-        description:
-          'Host-injected template storage callbacks (listTemplates/saveTemplate/deleteTemplate). Omitted: template dialog shows an unwired hint.',
-      },
-      stationStorage: {
-        shape: { kind: 'unknown' },
-        displayName: 'Station Storage',
-        description:
-          'Host-injected station/screen storage callbacks (loadStation/saveStation/loadScreen/saveScreen/deleteScreen). Screens are serialized config documents.',
-      },
-      previewMock: {
-        shape: { kind: 'unknown' },
-        displayName: 'Preview Mock Source',
-        description:
-          'Preview-mode built-in mock point source (true or { intervalMs }). Auto-starts a random-walk injection on entering preview; stops and restores the scene on leaving.',
-      },
-    },
     eventContracts: {
       onReady: {
         displayName: 'Ready',
@@ -178,13 +104,82 @@ export const industrialEditorRendererDefinitions: RegisteredRendererDefinition[]
       },
     },
     fields: [
-      { key: 'statusPath', kind: 'prop' },
-      { key: 'config', kind: 'prop' },
-      { key: 'width', kind: 'prop' },
-      { key: 'height', kind: 'prop' },
-      { key: 'mode', kind: 'prop' },
-      { key: 'commitPolicy', kind: 'prop' },
-      { key: 'viewport', kind: 'prop' },
+      {
+        key: 'statusPath',
+        kind: 'prop',
+        contract: {
+          shape: { kind: 'string' },
+          displayName: 'Status Path',
+          description: 'Host runtime status publication path (P3.3): {kind, dirty, busy, error, canUndo, canRedo, selectionCount, mode, status}.',
+          editorType: 'expression',
+        },
+      },
+      {
+        key: 'config',
+        kind: 'prop',
+        contract: {
+          shape: { kind: 'unknown' },
+          displayName: 'Config',
+          description:
+            'Initial scene config JSON (string JSON-text or parsed object). Validated at runtime via parseScadaConfig/validateScadaConfig.',
+          editorType: 'code',
+          required: false,
+        },
+      },
+      {
+        key: 'width',
+        kind: 'prop',
+        contract: {
+          shape: { kind: 'number' },
+          displayName: 'Width',
+          description: 'Canvas width in px; omit to fill container.',
+          editorType: 'number',
+        },
+      },
+      {
+        key: 'height',
+        kind: 'prop',
+        contract: {
+          shape: { kind: 'number' },
+          displayName: 'Height',
+          description: 'Canvas height in px; omit to fill container.',
+          editorType: 'number',
+        },
+      },
+      {
+        key: 'mode',
+        kind: 'prop',
+        contract: {
+          shape: { kind: 'union', anyOf: [{ kind: 'literal', value: 'edit' }, { kind: 'literal', value: 'preview' }] },
+          displayName: 'Mode',
+          description: 'Editor mode (edit ↔ preview).',
+        },
+      },
+      {
+        key: 'commitPolicy',
+        kind: 'prop',
+        contract: {
+          shape: { kind: 'union', anyOf: [{ kind: 'literal', value: 'manual' }, { kind: 'literal', value: 'auto' }] },
+          displayName: 'Commit Policy',
+          description: 'Commit policy (manual default / auto).',
+        },
+      },
+      {
+        key: 'viewport',
+        kind: 'prop',
+        contract: {
+          shape: {
+            kind: 'object',
+            fields: {
+              fit: { kind: 'union', anyOf: [{ kind: 'literal', value: 'contain' }, { kind: 'literal', value: 'fill' }] },
+              center: { kind: 'boolean' },
+            },
+            optional: ['fit', 'center'],
+          },
+          displayName: 'Viewport',
+          description: 'Initial viewport policy (fit/center), applied once on mount.',
+        },
+      },
       // D-1 裁定：events 为整体字段（非 events.* event 规则）——flux-compiler classifyField 仅匹配顶层 key。
       // plan 521 / W2：kind 'ignored'（echarts 同型）——events 保持 raw schema，跳过编译期深求值：
       // args 里的 `${event.*}` 模板（如 onSave 载荷 serializedConfig）必须在 dispatch 期结合 normalized
@@ -196,7 +191,16 @@ export const industrialEditorRendererDefinitions: RegisteredRendererDefinition[]
       { key: 'templateStorage', kind: 'ignored' },
       { key: 'stationStorage', kind: 'ignored' },
       // plan 522 / L5.5（design-renderer.md §13.3）：preview 态内置模拟数据源开关。
-      { key: 'previewMock', kind: 'prop' },
+      {
+        key: 'previewMock',
+        kind: 'prop',
+        contract: {
+          shape: { kind: 'unknown' },
+          displayName: 'Preview Mock Source',
+          description:
+            'Preview-mode built-in mock point source (true or { intervalMs }). Auto-starts a random-walk injection on entering preview; stops and restores the scene on leaving.',
+        },
+      },
       { key: 'palette', kind: 'region' },
       { key: 'inspector', kind: 'region' },
       { key: 'toolbox', kind: 'region' },
@@ -206,6 +210,36 @@ export const industrialEditorRendererDefinitions: RegisteredRendererDefinition[]
       { key: 'loading', kind: 'region' },
       { key: 'empty', kind: 'region' },
       { key: 'error', kind: 'region' },
+      {
+        key: 'events',
+        kind: 'prop',
+        contract: {
+          shape: { kind: 'unknown' },
+          displayName: 'Events',
+          description:
+            'Schema-level event hooks (onReady/onError/onSelectionChange/onModeChange/onSessionChange/onSave/onLoad). Dispatched via createNormalizedActionEvent + helpers.dispatch.',
+        },
+      },
+      {
+        key: 'templateStorage',
+        kind: 'prop',
+        contract: {
+          shape: { kind: 'unknown' },
+          displayName: 'Template Storage',
+          description:
+            'Host-injected template storage callbacks (listTemplates/saveTemplate/deleteTemplate). Omitted: template dialog shows an unwired hint.',
+        },
+      },
+      {
+        key: 'stationStorage',
+        kind: 'prop',
+        contract: {
+          shape: { kind: 'unknown' },
+          displayName: 'Station Storage',
+          description:
+            'Host-injected station/screen storage callbacks (loadStation/saveStation/loadScreen/saveScreen/deleteScreen). Screens are serialized config documents.',
+        },
+      },
     ],
   },
 ];

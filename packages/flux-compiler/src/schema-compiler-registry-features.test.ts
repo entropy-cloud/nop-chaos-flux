@@ -1,11 +1,14 @@
 import { describe, expect, it } from 'vitest';
-import type { RegisteredRendererDefinition, RendererDefinition } from '@nop-chaos/flux-core';
+import type {
+  RegisteredRendererDefinition,
+  RendererFieldContract,
+} from '@nop-chaos/flux-core';
 import {
   importHostRenderer,
   createTestCompiler,
 } from './schema-compiler-registry-fixtures.js';
 
-const tableColumnsContract: NonNullable<RendererDefinition['propContracts']>['columns'] = {
+const tableColumnsContract: RendererFieldContract = {
   shape: {
     kind: 'array',
     item: {
@@ -35,7 +38,7 @@ const tableColumnsContract: NonNullable<RendererDefinition['propContracts']>['co
   displayName: 'Columns',
 };
 
-const variantFieldVariantsContract: NonNullable<RendererDefinition['propContracts']>['variants'] = {
+const variantFieldVariantsContract: RendererFieldContract = {
   shape: {
     kind: 'array',
     item: {
@@ -71,7 +74,9 @@ describe('createSchemaCompiler', () => {
     const tableRenderer: RegisteredRendererDefinition = {
       type: 'table',
       component: () => null,
-      propContracts: { columns: tableColumnsContract },
+      fields: [
+        { key: 'columns', kind: 'prop', contract: tableColumnsContract },
+      ],
     };
     const buttonRenderer: RegisteredRendererDefinition = {
       type: 'button',
@@ -100,7 +105,9 @@ describe('createSchemaCompiler', () => {
     const tableRenderer: RegisteredRendererDefinition = {
       type: 'table',
       component: () => null,
-      propContracts: { columns: tableColumnsContract },
+      fields: [
+        { key: 'columns', kind: 'prop', contract: tableColumnsContract },
+      ],
     };
     const textRendererLocal: RegisteredRendererDefinition = {
       type: 'text',
@@ -128,7 +135,9 @@ describe('createSchemaCompiler', () => {
     const tableRenderer: RegisteredRendererDefinition = {
       type: 'table',
       component: () => null,
-      propContracts: { columns: tableColumnsContract },
+      fields: [
+        { key: 'columns', kind: 'prop', contract: tableColumnsContract },
+      ],
     };
     const textRendererLocal: RegisteredRendererDefinition = {
       type: 'text',
@@ -157,7 +166,9 @@ describe('createSchemaCompiler', () => {
     const variantFieldRenderer: RegisteredRendererDefinition = {
       type: 'variant-field',
       component: () => null,
-      propContracts: { variants: variantFieldVariantsContract },
+      fields: [
+        { key: 'variants', kind: 'prop', contract: variantFieldVariantsContract },
+      ],
     };
     const textRendererLocal: RegisteredRendererDefinition = {
       type: 'text',
@@ -189,8 +200,10 @@ describe('createSchemaCompiler', () => {
     const tableRenderer: RegisteredRendererDefinition = {
       type: 'table',
       component: () => null,
-      fields: [{ key: 'empty', kind: 'value-or-region', regionKey: 'empty' }],
-      propContracts: { columns: tableColumnsContract },
+      fields: [
+        { key: 'empty', kind: 'value-or-region', regionKey: 'empty' },
+        { key: 'columns', kind: 'prop', contract: tableColumnsContract },
+      ],
     };
     const textRendererLocal: RegisteredRendererDefinition = {
       type: 'text',

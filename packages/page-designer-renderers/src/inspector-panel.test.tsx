@@ -121,10 +121,8 @@ describe('InspectorPanel', () => {
         type: 'domain-host-widget',
         rendererClass: 'domain-host-renderer',
         defaultSchema: { type: 'domain-host-widget' },
-        propContracts: {
-          title: { shape: { kind: 'string' }, displayName: 'Title' },
-        },
-        fields: [{ key: 'body', kind: 'region', regionKey: 'body' }],
+        fields: [{ key: 'body', kind: 'region', regionKey: 'body' },
+        { key: 'title', kind: 'prop', contract: { shape: { kind: 'string' }, displayName: 'Title' } },],
       }),
     );
     const definition = registry.get('domain-host-widget');
@@ -172,13 +170,13 @@ describe('InspectorPanel', () => {
       def({
         type: 'jsonish',
         defaultSchema: { type: 'jsonish', payload: { a: 1 } },
-        propContracts: {
-          payload: {
+        fields: [
+          { key: 'payload', kind: 'prop', contract: {
             shape: { kind: 'object', fields: {} },
             displayName: 'Payload',
             description: 'structured payload',
-          },
-        },
+          } },
+          ],
       }) as unknown as RendererDefinition,
     );
     const definition = registry.get('jsonish');

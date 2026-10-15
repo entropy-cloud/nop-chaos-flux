@@ -40,7 +40,9 @@ function buildRegistry(): RendererRegistry {
     def({
       type: 'input-text',
       defaultSchema: { type: 'input-text', name: 'field' },
-      propContracts: { label: { shape: { kind: 'string' }, displayName: 'Label' } },
+      fields: [
+        { key: 'label', kind: 'prop', contract: { shape: { kind: 'string' }, displayName: 'Label' } },
+        ],
     }),
     def({ type: 'domain-widget', rendererClass: 'domain-host-renderer', defaultSchema: { type: 'domain-widget' } }),
   ];

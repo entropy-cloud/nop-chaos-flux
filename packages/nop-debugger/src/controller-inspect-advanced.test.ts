@@ -34,13 +34,6 @@ describe('controller inspector advanced DOM and registry lookup', () => {
                 type: 'designer-page',
                 component: () => null,
                 rendererClass: 'domain-host-renderer',
-                propContracts: {
-                  config: {
-                    displayName: 'Config',
-                    shape: { kind: 'object' },
-                    required: true,
-                  },
-                },
                 hostContract: {
                   family: 'designer',
                   defaultVersion: '1.0',
@@ -71,6 +64,13 @@ describe('controller inspector advanced DOM and registry lookup', () => {
                       : undefined;
                   },
                 },
+                fields: [
+                  { key: 'config', kind: 'prop', contract: {
+                    displayName: 'Config',
+                    shape: { kind: 'object' },
+                    required: true,
+                  } },
+                  ],
               }
             : undefined,
         ),

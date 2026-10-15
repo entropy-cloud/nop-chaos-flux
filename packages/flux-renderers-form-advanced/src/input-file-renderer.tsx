@@ -1,11 +1,7 @@
 import type { BaseSchema, RendererComponentProps, RegisteredRendererDefinition } from '@nop-chaos/flux-core';
 import { formFieldRules } from '@nop-chaos/flux-renderers-form';
 import { UploadFieldRenderer } from './upload-field.js';
-import {
-  deleteActionPropContract,
-  uploadActionPropContract,
-  uploadFieldRules,
-} from './upload-schemas.js';
+import { uploadFieldRules } from './upload-schemas.js';
 
 export function InputFileRenderer(props: RendererComponentProps) {
   return UploadFieldRenderer(props, { kind: 'file', marker: 'nop-input-file' });
@@ -17,10 +13,6 @@ export const inputFileRendererDefinition: RegisteredRendererDefinition = {
   category: 'Form Advanced',
   sourcePackage: '@nop-chaos/flux-renderers-form-advanced',
   component: InputFileRenderer,
-  propContracts: {
-    uploadAction: uploadActionPropContract,
-    deleteAction: deleteActionPropContract,
-  },
   fields: [...formFieldRules, ...uploadFieldRules],
   validation: {
     kind: 'field',

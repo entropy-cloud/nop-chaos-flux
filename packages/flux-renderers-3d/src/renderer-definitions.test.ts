@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createRendererRegistry } from '@nop-chaos/flux-core';
+import { createRendererRegistry, resolveRendererPropContracts } from '@nop-chaos/flux-core';
 import { registerThreeRenderers, threeCanvasRendererDefinition } from './renderer-definitions.js';
 
 describe('three-canvas renderer definition (plan 465 Phase 2)', () => {
@@ -37,7 +37,7 @@ describe('three-canvas renderer definition (plan 465 Phase 2)', () => {
   });
 
   it('exposes propContracts for the four source-enabled props', () => {
-    const contracts = threeCanvasRendererDefinition.propContracts ?? {};
+    const contracts = resolveRendererPropContracts(threeCanvasRendererDefinition);
     expect(Object.keys(contracts).sort()).toEqual(['bindings', 'events', 'height', 'scene']);
     // plan 473: height joins as a plain string prop (editorType text); the
     // four structured props keep the source-enabled code editor

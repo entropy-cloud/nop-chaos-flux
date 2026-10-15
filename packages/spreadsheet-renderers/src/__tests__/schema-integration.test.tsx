@@ -8,6 +8,7 @@ import {
   useScopeSelector,
 } from '@nop-chaos/flux-react';
 import { createActionScope } from '@nop-chaos/flux-runtime';
+import { resolveRendererPropContracts } from '@nop-chaos/flux-core';
 import type { RendererDefinition, RendererEnv } from '@nop-chaos/flux-core';
 import { createEmptyDocument } from '@nop-chaos/spreadsheet-core';
 import {
@@ -102,7 +103,7 @@ describe('spreadsheet-page schema integration', () => {
       (candidate) => candidate.type === 'spreadsheet-page',
     );
 
-    expect(definition?.propContracts?.config?.shape).toEqual({
+    expect(resolveRendererPropContracts(definition!).config?.shape).toEqual({
       kind: 'object',
       fields: {
         defaultRowHeight: { kind: 'number' },

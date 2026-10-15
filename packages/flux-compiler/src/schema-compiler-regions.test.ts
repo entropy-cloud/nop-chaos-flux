@@ -15,8 +15,7 @@ describe('schema-compiler regions', () => {
     const tabsFixture: RegisteredRendererDefinition = {
       type: 'tabs-fixture',
       component: () => null,
-      propContracts: {
-        items: {
+      fields: [{ key: 'items', kind: 'prop', contract: {
           shape: {
             kind: 'array',
             item: {
@@ -31,9 +30,7 @@ describe('schema-compiler regions', () => {
             },
           },
           displayName: 'Items',
-        },
-      },
-      fields: [{ key: 'items', kind: 'prop' }],
+        } }],
     };
     const textRenderer: RegisteredRendererDefinition = {
       type: 'text',

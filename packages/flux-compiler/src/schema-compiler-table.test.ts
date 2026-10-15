@@ -1,12 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import {
   createRendererRegistry,
-  type RegisteredRendererDefinition, RendererDefinition,
+  type RegisteredRendererDefinition,
+  type RendererFieldContract,
+  RendererDefinition,
 } from '@nop-chaos/flux-core';
 import { createSchemaCompiler } from './index.js';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
 
-const tableColumnsContract: NonNullable<RendererDefinition['propContracts']>['columns'] = {
+const tableColumnsContract: RendererFieldContract = {
   shape: {
     kind: 'array',
     item: {
@@ -40,8 +42,11 @@ function makeTableRenderer(extra: Partial<RendererDefinition> = {}): RegisteredR
   return {
     type: 'table',
     component: () => null,
-    propContracts: { columns: tableColumnsContract },
     ...extra,
+    fields: [
+      ...(extra.fields ?? []),
+      { key: 'columns', kind: 'prop', contract: tableColumnsContract },
+    ],
   };
 }
 

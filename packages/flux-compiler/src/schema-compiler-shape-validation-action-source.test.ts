@@ -289,8 +289,7 @@ describe('shape validation action and source diagnostics', () => {
     const renderer: RegisteredRendererDefinition = {
       type: 'page',
       component: () => null,
-      propContracts: { data: { shape: { kind: 'unknown' }, displayName: 'data' } },
-      fields: [{ key: 'data', kind: 'prop' }],
+      fields: [{ key: 'data', kind: 'prop', contract: { shape: { kind: 'unknown' }, displayName: 'data' } }],
     };
     const compiler = makeCompiler([renderer]);
 
@@ -308,8 +307,7 @@ describe('shape validation action and source diagnostics', () => {
     const renderer: RegisteredRendererDefinition = {
       type: 'page',
       component: () => null,
-      propContracts: { data: { shape: { kind: 'unknown' }, displayName: 'data' } },
-      fields: [{ key: 'data', kind: 'prop' }],
+      fields: [{ key: 'data', kind: 'prop', contract: { shape: { kind: 'unknown' }, displayName: 'data' } }],
     };
     const compiler = makeCompiler([renderer]);
 
@@ -327,8 +325,7 @@ describe('shape validation action and source diagnostics', () => {
     const renderer: RegisteredRendererDefinition = {
       type: 'page',
       component: () => null,
-      propContracts: { data: { shape: { kind: 'unknown' }, displayName: 'data' } },
-      fields: [{ key: 'data', kind: 'prop' }],
+      fields: [{ key: 'data', kind: 'prop', contract: { shape: { kind: 'unknown' }, displayName: 'data' } }],
     };
     const compiler = makeCompiler([renderer]);
 
@@ -408,7 +405,9 @@ describe('shape validation action and source diagnostics', () => {
     const renderer: RegisteredRendererDefinition = {
       type: 'text',
       component: () => null,
-      propContracts: { text: { shape: { kind: 'unknown' }, displayName: 'text' } },
+      fields: [
+        { key: 'text', kind: 'prop', contract: { shape: { kind: 'unknown' }, displayName: 'text' } },
+      ],
     };
     const compiler = makeCompiler([renderer]);
 
@@ -425,7 +424,9 @@ describe('shape validation action and source diagnostics', () => {
     const renderer: RegisteredRendererDefinition = {
       type: 'text',
       component: () => null,
-      propContracts: { text: { shape: { kind: 'unknown' }, displayName: 'text' } },
+      fields: [
+        { key: 'text', kind: 'prop', contract: { shape: { kind: 'unknown' }, displayName: 'text' } },
+      ],
     };
     const compiler = makeCompiler([renderer]);
 

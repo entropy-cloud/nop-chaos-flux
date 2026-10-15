@@ -1,7 +1,7 @@
 import type {
   ActionSchema,
   BoundFieldSchemaBase,
-  RendererPropContract,
+  RendererFieldContract,
   SchemaFieldRule,
   SchemaObject,
 } from '@nop-chaos/flux-core';
@@ -11,14 +11,14 @@ import type {
  * ActionSchema[]) preserved as a template via schema-definition actionValue —
  * never row-scope expression-evaluated at compile/render time.
  */
-export const uploadActionPropContract: RendererPropContract = {
+const uploadActionPropContract: RendererFieldContract = {
   shape: { kind: 'schema-definition', fieldRules: {}, actionValue: true },
   displayName: 'Upload Action',
   description:
     'Host action reference that performs the upload (ActionSchema | ActionSchema[]). Template-preserved.',
 };
 
-export const deleteActionPropContract: RendererPropContract = {
+const deleteActionPropContract: RendererFieldContract = {
   shape: { kind: 'schema-definition', fieldRules: {}, actionValue: true },
   displayName: 'Delete Action',
   description:
@@ -113,8 +113,8 @@ export const uploadFieldRules: SchemaFieldRule[] = [
   { key: 'accept', kind: 'prop' },
   { key: 'maxFiles', kind: 'prop' },
   { key: 'maxSize', kind: 'prop' },
-  { key: 'uploadAction', kind: 'prop' },
-  { key: 'deleteAction', kind: 'prop' },
+  { key: 'uploadAction', kind: 'prop', contract: uploadActionPropContract },
+  { key: 'deleteAction', kind: 'prop', contract: deleteActionPropContract },
   { key: 'valueMode', kind: 'prop' },
   { key: 'buttonText', kind: 'prop' },
   { key: 'onReject', kind: 'event' },

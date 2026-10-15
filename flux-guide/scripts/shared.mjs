@@ -61,6 +61,10 @@ export function buildFullRegistry() {
   return buildRegistry();
 }
 
+export async function loadFluxCore() {
+  return import(`${REPO_ROOT}/packages/flux-core/dist/index.js`);
+}
+
 export async function loadRegisteredDefinitions() {
   const registry = await buildFullRegistry();
   return registry.list();
@@ -114,6 +118,8 @@ export function contractToFieldType(shape, valueType) {
 
 /**
  * Determine the TypeScript type for a schema field given its kind and contracts.
+ * `propContracts` is the resolved prop-contract view (RM-4: built from the
+ * `fields` inline `contract` entries via `resolveRendererPropContracts`).
  */
 export function resolveFieldType(field, propContracts, eventContracts) {
   const kind = field.kind;

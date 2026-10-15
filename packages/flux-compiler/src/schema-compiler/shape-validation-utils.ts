@@ -47,10 +47,6 @@ export function getAcceptedSchemaKeys(renderer: RendererDefinition): Set<string>
     keys.add(key);
   }
 
-  for (const key of Object.keys(renderer.propContracts ?? {})) {
-    keys.add(key);
-  }
-
   for (const field of renderer.fields ?? []) {
     if (field.key) {
       keys.add(field.key);

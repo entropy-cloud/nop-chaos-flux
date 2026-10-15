@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { resolveRendererPropContracts } from '@nop-chaos/flux-core';
 import { formRendererDefinitions } from '../definitions.js';
 import { deriveFrequency, parseCron, serializeCron } from '../cron/index.js';
 // Proof 先行（plan 541）：以下模块尚不存在 → import 失败级红
@@ -7,8 +8,9 @@ import { buildWizardCron } from '../renderers/cron-editor-wizard.js';
 describe('cron-editor v2 契约（cron 轨道 C6, plan 541）', () => {
   it('definition 挂接 v2 prop 契约（翻转 v1 锚点）', () => {
     const def = formRendererDefinitions.find((d) => d.type === 'cron-editor');
+    const resolved = resolveRendererPropContracts(def!);
     for (const key of ['showRepeat', 'showRange', 'presets']) {
-      expect(def?.propContracts?.[key], `propContracts.${key}`).toBeDefined();
+      expect(resolved[key], `propContracts.${key}`).toBeDefined();
     }
     const keys = (def?.fields ?? []).map((f) => (typeof f === 'object' && 'key' in f ? f.key : null));
     expect(keys).toEqual(expect.arrayContaining(['showRepeat', 'showRange', 'presets']));

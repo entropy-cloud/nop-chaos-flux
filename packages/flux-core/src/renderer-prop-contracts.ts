@@ -2,19 +2,14 @@ import type { RendererDefinition } from './types/renderer-core.js';
 import type { RendererPropContract } from './types/renderer-definition-types.js';
 
 /**
- * Dual-read view over a renderer's prop contracts (RM-3, plan 605): the
- * `propContracts` record is the authoritative base, and `fields` entries that
- * carry an inline `contract` (kind 'prop') fill in keys the record does not
- * cover. With no inline contracts — the current state of every declaration —
- * the output is key-for-key identical to `propContracts ?? {}`; RM-4 removes
- * the record and this helper degrades to the fields-only single source.
+ * Contract view over a renderer's `fields` entries (RM-3 plan 605; RM-4 plan
+ * 606 removed the former `propContracts` record — the inline `contract` on
+ * `kind: 'prop'` entries is the single source).
  */
 export function resolveRendererPropContracts(
   renderer: RendererDefinition,
 ): Readonly<Record<string, RendererPropContract>> {
-  const contracts: Record<string, RendererPropContract> = {
-    ...(renderer.propContracts ?? {}),
-  };
+  const contracts: Record<string, RendererPropContract> = {};
 
   for (const field of renderer.fields ?? []) {
     if (field.kind !== 'prop' || !field.key || !field.contract) {

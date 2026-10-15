@@ -18,10 +18,11 @@ function def(partial: Partial<RendererDefinition> & { type: string }): RendererD
 
 const STRING_PROP_DEFINITION = def({
   type: 'widget',
-  propContracts: {
-    value: { shape: { kind: 'string' }, displayName: 'Value' },
-    count: { shape: { kind: 'number' }, displayName: 'Count' },
-  },
+
+  fields: [
+    { key: 'value', kind: 'prop', contract: { shape: { kind: 'string' }, displayName: 'Value' } },
+    { key: 'count', kind: 'prop', contract: { shape: { kind: 'number' }, displayName: 'Count' } },
+    ],
 });
 
 function boundNode(extra: Record<string, unknown> = {}) {

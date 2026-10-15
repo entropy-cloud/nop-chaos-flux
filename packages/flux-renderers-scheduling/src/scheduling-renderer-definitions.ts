@@ -14,13 +14,6 @@ export const schedulingRendererDefinitions: RegisteredRendererDefinition[] = [
     sourcePackage: '@nop-chaos/flux-renderers-scheduling',
     defaultSchema: { type: 'gantt' },
     component: Gantt,
-    propContracts: {
-      showWeekends: { displayName: 'Show Weekends', shape: { kind: 'boolean' } },
-      showToday: { displayName: 'Show Today', shape: { kind: 'boolean' } },
-      draggable: { displayName: 'Draggable', shape: { kind: 'boolean' } },
-      editable: { displayName: 'Editable', shape: { kind: 'boolean' } },
-      linkable: { displayName: 'Linkable', shape: { kind: 'boolean' } },
-    },
     componentCapabilityContracts: [
       {
         handle: 'zoomIn',
@@ -59,11 +52,11 @@ export const schedulingRendererDefinitions: RegisteredRendererDefinition[] = [
       { key: 'defaultZoom', kind: 'prop' },
       { key: 'cellWidth', kind: 'prop' },
       { key: 'taskBarHeight', kind: 'prop' },
-      { key: 'showWeekends', kind: 'prop' },
-      { key: 'showToday', kind: 'prop' },
-      { key: 'draggable', kind: 'prop' },
-      { key: 'editable', kind: 'prop' },
-      { key: 'linkable', kind: 'prop' },
+      { key: 'showWeekends', kind: 'prop', contract: { displayName: 'Show Weekends', shape: { kind: 'boolean' } } },
+      { key: 'showToday', kind: 'prop', contract: { displayName: 'Show Today', shape: { kind: 'boolean' } } },
+      { key: 'draggable', kind: 'prop', contract: { displayName: 'Draggable', shape: { kind: 'boolean' } } },
+      { key: 'editable', kind: 'prop', contract: { displayName: 'Editable', shape: { kind: 'boolean' } } },
+      { key: 'linkable', kind: 'prop', contract: { displayName: 'Linkable', shape: { kind: 'boolean' } } },
       { key: 'taskBar', kind: 'region', regionKey: 'taskBar', params: ['task'] },
       { key: 'toolbar', kind: 'region', regionKey: 'toolbar' },
       { key: 'editor', kind: 'region', regionKey: 'editor', params: ['task', 'onSave', 'onCancel'] },
@@ -102,47 +95,6 @@ export const schedulingRendererDefinitions: RegisteredRendererDefinition[] = [
     sourcePackage: '@nop-chaos/flux-renderers-scheduling',
     defaultSchema: { type: 'kanban' },
     component: KanbanBoard,
-    propContracts: {
-      collapsedOwnership: {
-        displayName: 'Collapsed Ownership',
-        shape: {
-          kind: 'union',
-          anyOf: ['local', 'controlled', 'scope'].map((v) => ({ kind: 'literal', value: v })),
-        },
-        editorType: 'select',
-        defaultValue: 'local',
-      },
-      columnDraggable: { displayName: 'Column Draggable', shape: { kind: 'boolean' } },
-      draggable: { displayName: 'Draggable', shape: { kind: 'boolean' } },
-      keyboardReorder: { displayName: 'Keyboard Reorder', shape: { kind: 'unknown' } },
-      wipStrict: { displayName: 'WIP Strict', shape: { kind: 'boolean' } },
-      kanbanOwnership: {
-        displayName: 'Kanban Ownership',
-        shape: {
-          kind: 'union',
-          anyOf: ['local', 'controlled', 'scope'].map((v) => ({ kind: 'literal', value: v })),
-        },
-        editorType: 'select',
-        defaultValue: 'local',
-      },
-      columnAggregate: {
-        displayName: 'Column Aggregate',
-        description:
-          'Board-level per-column header aggregate: each column aggregates its own filtered card set into the default header. fn count ignores field; sum/avg/min/max read card data[field] and skip non-numeric values ("-" fallback when none).',
-        shape: {
-          kind: 'object',
-          fields: {
-            fn: {
-              kind: 'union',
-              anyOf: ['sum', 'avg', 'min', 'max', 'count'].map((v) => ({ kind: 'literal', value: v })),
-            },
-            field: { kind: 'string' },
-            label: { kind: 'string' },
-          },
-          optional: ['field', 'label'],
-        },
-      },
-    },
     componentCapabilityContracts: [
       {
         handle: 'scrollToCard',
@@ -211,7 +163,27 @@ export const schedulingRendererDefinitions: RegisteredRendererDefinition[] = [
       { key: 'columnsConfig', kind: 'prop' },
       { key: 'columnHeader', kind: 'region', regionKey: 'columnHeader' },
       { key: 'columnHeaderToolbar', kind: 'region', regionKey: 'columnHeaderToolbar' },
-      { key: 'columnAggregate', kind: 'prop' },
+      {
+        key: 'columnAggregate',
+        kind: 'prop',
+        contract: {
+          displayName: 'Column Aggregate',
+          description:
+            'Board-level per-column header aggregate: each column aggregates its own filtered card set into the default header. fn count ignores field; sum/avg/min/max read card data[field] and skip non-numeric values ("-" fallback when none).',
+          shape: {
+            kind: 'object',
+            fields: {
+              fn: {
+                kind: 'union',
+                anyOf: ['sum', 'avg', 'min', 'max', 'count'].map((v) => ({ kind: 'literal', value: v })),
+              },
+              field: { kind: 'string' },
+              label: { kind: 'string' },
+            },
+            optional: ['field', 'label'],
+          },
+        },
+      },
       { key: 'cardTemplate', kind: 'region', regionKey: 'cardTemplate', params: ['card', 'column', 'index'] },
       { key: 'columnFooter', kind: 'region', regionKey: 'columnFooter' },
       { key: 'empty', kind: 'region', regionKey: 'empty' },
@@ -220,20 +192,52 @@ export const schedulingRendererDefinitions: RegisteredRendererDefinition[] = [
       { key: 'filterCard', kind: 'prop' },
       { key: 'filterTags', kind: 'prop' },
       { key: 'columnWidth', kind: 'prop' },
-      { key: 'columnDraggable', kind: 'prop' },
-      { key: 'draggable', kind: 'prop' },
-      { key: 'keyboardReorder', kind: 'prop' },
-      { key: 'wipStrict', kind: 'prop' },
+      {
+        key: 'columnDraggable',
+        kind: 'prop',
+        contract: { displayName: 'Column Draggable', shape: { kind: 'boolean' } }
+      },
+      { key: 'draggable', kind: 'prop', contract: { displayName: 'Draggable', shape: { kind: 'boolean' } } },
+      {
+        key: 'keyboardReorder',
+        kind: 'prop',
+        contract: { displayName: 'Keyboard Reorder', shape: { kind: 'unknown' } }
+      },
+      { key: 'wipStrict', kind: 'prop', contract: { displayName: 'WIP Strict', shape: { kind: 'boolean' } } },
 
       { key: 'collapsedStatePath', kind: 'prop' },
-      { key: 'collapsedOwnership', kind: 'prop' },
+      {
+        key: 'collapsedOwnership',
+        kind: 'prop',
+        contract: {
+          displayName: 'Collapsed Ownership',
+          shape: {
+            kind: 'union',
+            anyOf: ['local', 'controlled', 'scope'].map((v) => ({ kind: 'literal', value: v })),
+          },
+          editorType: 'select',
+          defaultValue: 'local',
+        },
+      },
       // consumed: applied to KanbanColumn sub-elements
       { key: 'columnHeaderClassName', kind: 'prop' },
       { key: 'cardClassName', kind: 'prop' },
       { key: 'columnFooterClassName', kind: 'prop' },
       // consumed: kanbanOwnership/kanbanStatePath gate board ownership
       // (controlled -> rawData read-only; scope -> kanbanStatePath writes)
-      { key: 'kanbanOwnership', kind: 'prop' },
+      {
+        key: 'kanbanOwnership',
+        kind: 'prop',
+        contract: {
+          displayName: 'Kanban Ownership',
+          shape: {
+            kind: 'union',
+            anyOf: ['local', 'controlled', 'scope'].map((v) => ({ kind: 'literal', value: v })),
+          },
+          editorType: 'select',
+          defaultValue: 'local',
+        },
+      },
       { key: 'kanbanStatePath', kind: 'prop' },
       // legacy: declared for schema compatibility (design §7); board
       // ownership reads kanbanStatePath only (CR P2-4 sync)
@@ -256,68 +260,53 @@ export const schedulingRendererDefinitions: RegisteredRendererDefinition[] = [
     sourcePackage: '@nop-chaos/flux-renderers-scheduling',
     defaultSchema: { type: 'calendar', view: 'month' },
     component: Calendar,
-    propContracts: {
-      view: {
-        displayName: 'View',
-        shape: {
-          kind: 'union',
-          anyOf: ['month', 'week', 'day'].map((v) => ({ kind: 'literal', value: v })),
-        },
-        editorType: 'select',
-        defaultValue: 'month',
-      },
-      firstDayOfWeek: {
-        displayName: 'First Day Of Week',
-        shape: {
-          kind: 'union',
-          anyOf: [
-            { kind: 'literal', value: 0 },
-            { kind: 'literal', value: 1 },
-          ],
-        },
-        editorType: 'select',
-        defaultValue: 0,
-      },
-      showWeekends: { displayName: 'Show Weekends', shape: { kind: 'boolean' } },
-      showCrossDayLines: { displayName: 'Show Cross Day Lines', shape: { kind: 'boolean' } },
-      monthShape: {
-        displayName: 'Month Shape',
-        shape: {
-          kind: 'union',
-          anyOf: ['resource', 'grid'].map((v) => ({ kind: 'literal', value: v })),
-        },
-        editorType: 'select',
-        defaultValue: 'resource',
-      },
-      timezoneSelector: { displayName: 'Timezone Selector', shape: { kind: 'boolean' } },
-      batchScheduling: { displayName: 'Batch Scheduling', shape: { kind: 'boolean' } },
-      viewOwnership: {
-        displayName: 'View Ownership',
-        shape: {
-          kind: 'union',
-          anyOf: ['local', 'controlled', 'scope'].map((v) => ({ kind: 'literal', value: v })),
-        },
-        editorType: 'select',
-        defaultValue: 'local',
-      },
-      dateOwnership: {
-        displayName: 'Date Ownership',
-        shape: {
-          kind: 'union',
-          anyOf: ['local', 'controlled', 'scope'].map((v) => ({ kind: 'literal', value: v })),
-        },
-        editorType: 'select',
-        defaultValue: 'local',
-      },
-    },
     fields: [
-      { key: 'view', kind: 'prop' },
+      {
+        key: 'view',
+        kind: 'prop',
+        contract: {
+          displayName: 'View',
+          shape: {
+            kind: 'union',
+            anyOf: ['month', 'week', 'day'].map((v) => ({ kind: 'literal', value: v })),
+          },
+          editorType: 'select',
+          defaultValue: 'month',
+        },
+      },
       { key: 'date', kind: 'prop' },
       { key: 'events', kind: 'prop' },
       { key: 'resources', kind: 'prop' },
-      { key: 'firstDayOfWeek', kind: 'prop' },
-      { key: 'monthShape', kind: 'prop' },
-      { key: 'showWeekends', kind: 'prop' },
+      {
+        key: 'firstDayOfWeek',
+        kind: 'prop',
+        contract: {
+          displayName: 'First Day Of Week',
+          shape: {
+            kind: 'union',
+            anyOf: [
+              { kind: 'literal', value: 0 },
+              { kind: 'literal', value: 1 },
+            ],
+          },
+          editorType: 'select',
+          defaultValue: 0,
+        },
+      },
+      {
+        key: 'monthShape',
+        kind: 'prop',
+        contract: {
+          displayName: 'Month Shape',
+          shape: {
+            kind: 'union',
+            anyOf: ['resource', 'grid'].map((v) => ({ kind: 'literal', value: v })),
+          },
+          editorType: 'select',
+          defaultValue: 'resource',
+        },
+      },
+      { key: 'showWeekends', kind: 'prop', contract: { displayName: 'Show Weekends', shape: { kind: 'boolean' } } },
       { key: 'maxConcurrent', kind: 'prop' },
       { key: 'eventTemplate', kind: 'region', regionKey: 'eventTemplate' },
       { key: 'loading', kind: 'region', regionKey: 'loading' },
@@ -344,14 +333,50 @@ export const schedulingRendererDefinitions: RegisteredRendererDefinition[] = [
       // registered for schema-surface stability, same pattern as
       // onBatchSchedule/onImport/onTimezoneChange.
       { key: 'onGroupToggle', kind: 'event' },
-      { key: 'showCrossDayLines', kind: 'prop' },
-      { key: 'timezoneSelector', kind: 'prop' },
-      { key: 'batchScheduling', kind: 'prop' },
+      {
+        key: 'showCrossDayLines',
+        kind: 'prop',
+        contract: { displayName: 'Show Cross Day Lines', shape: { kind: 'boolean' } }
+      },
+      {
+        key: 'timezoneSelector',
+        kind: 'prop',
+        contract: { displayName: 'Timezone Selector', shape: { kind: 'boolean' } }
+      },
+      {
+        key: 'batchScheduling',
+        kind: 'prop',
+        contract: { displayName: 'Batch Scheduling', shape: { kind: 'boolean' } }
+      },
       { key: 'resources[].resources', kind: 'prop' },
       { key: 'resources[].open', kind: 'prop' },
-      { key: 'viewOwnership', kind: 'prop' },
+      {
+        key: 'viewOwnership',
+        kind: 'prop',
+        contract: {
+          displayName: 'View Ownership',
+          shape: {
+            kind: 'union',
+            anyOf: ['local', 'controlled', 'scope'].map((v) => ({ kind: 'literal', value: v })),
+          },
+          editorType: 'select',
+          defaultValue: 'local',
+        },
+      },
       { key: 'viewStatePath', kind: 'prop' },
-      { key: 'dateOwnership', kind: 'prop' },
+      {
+        key: 'dateOwnership',
+        kind: 'prop',
+        contract: {
+          displayName: 'Date Ownership',
+          shape: {
+            kind: 'union',
+            anyOf: ['local', 'controlled', 'scope'].map((v) => ({ kind: 'literal', value: v })),
+          },
+          editorType: 'select',
+          defaultValue: 'local',
+        },
+      },
       { key: 'dateStatePath', kind: 'prop' },
       { key: 'locale', kind: 'prop' },
       { key: 'statusPath', kind: 'prop' },

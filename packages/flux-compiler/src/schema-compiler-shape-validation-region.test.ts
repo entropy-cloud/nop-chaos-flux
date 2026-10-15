@@ -7,13 +7,17 @@ describe('shape validation region traversal diagnostics', () => {
     const cardRenderer: RegisteredRendererDefinition = {
       type: 'card',
       component: () => null,
-      propContracts: { title: { shape: { kind: 'unknown' }, displayName: 'title' } },
-      fields: [{ key: 'title', kind: 'value-or-region', regionKey: 'title' }],
+      fields: [
+        { key: 'title', kind: 'value-or-region', regionKey: 'title' },
+        { key: 'title', kind: 'prop', contract: { shape: { kind: 'unknown' }, displayName: 'title' } },
+      ],
     };
     const textRenderer: RegisteredRendererDefinition = {
       type: 'text',
       component: () => null,
-      propContracts: { text: { shape: { kind: 'unknown' }, displayName: 'text' } },
+      fields: [
+        { key: 'text', kind: 'prop', contract: { shape: { kind: 'unknown' }, displayName: 'text' } },
+      ],
     };
     const compiler = makeCompiler([cardRenderer, textRenderer]);
 
@@ -63,7 +67,9 @@ describe('shape validation region traversal diagnostics', () => {
     const renderer: RegisteredRendererDefinition = {
       type: 'text',
       component: () => null,
-      propContracts: { text: { shape: { kind: 'unknown' }, displayName: 'text' } },
+      fields: [
+        { key: 'text', kind: 'prop', contract: { shape: { kind: 'unknown' }, displayName: 'text' } },
+      ],
     };
     const compiler = makeCompiler([renderer]);
 
@@ -88,8 +94,8 @@ describe('shape validation region traversal diagnostics', () => {
     const tableRenderer: RegisteredRendererDefinition = {
       type: 'table',
       component: () => null,
-      propContracts: {
-        columns: {
+      fields: [
+        { key: 'columns', kind: 'prop', contract: {
           shape: {
             kind: 'array',
             item: {
@@ -117,13 +123,15 @@ describe('shape validation region traversal diagnostics', () => {
             },
           },
           displayName: 'Columns',
-        },
-      },
+        } },
+      ],
     };
     const textRenderer: RegisteredRendererDefinition = {
       type: 'text',
       component: () => null,
-      propContracts: { text: { shape: { kind: 'unknown' }, displayName: 'text' } },
+      fields: [
+        { key: 'text', kind: 'prop', contract: { shape: { kind: 'unknown' }, displayName: 'text' } },
+      ],
     };
     const compiler = makeCompiler([tableRenderer, textRenderer]);
 

@@ -113,17 +113,6 @@ const sharedSurfaceFields = [
   { key: 'defaultOpen', kind: 'prop' as const, valueType: 'boolean' as const },
   { key: 'statusPath', kind: 'prop' as const },
   { key: 'container', kind: 'prop' as const },
-  { key: 'showMask', kind: 'prop' as const, valueType: 'boolean' as const },
-  { key: 'closeOnEsc', kind: 'prop' as const, valueType: 'boolean' as const },
-  { key: 'size', kind: 'prop' as const },
-  { key: 'width', kind: 'prop' as const },
-  { key: 'height', kind: 'prop' as const },
-  { key: 'showCloseButton', kind: 'prop' as const, valueType: 'boolean' as const },
-  { key: 'confirm', kind: 'prop' as const },
-  { key: 'isolate', kind: 'prop' as const, valueType: 'boolean' as const },
-  { key: 'bodyClassName', kind: 'prop' as const },
-  { key: 'headerClassName', kind: 'prop' as const },
-  { key: 'footerClassName', kind: 'prop' as const },
 ];
 
 const surfaceHandleCapabilityContracts = [
@@ -153,47 +142,86 @@ export const dialogRendererDefinition: RegisteredRendererDefinition = {
   category: 'layout',
   sourcePackage: '@nop-chaos/flux-renderers-basic',
   component: DialogRenderer,
-  propContracts: {
-    closeOnOutsideClick: booleanPropContract(
-      'Close on outside click',
-      'Closes the dialog when the overlay is clicked. Defaults to true.',
-    ),
-    closeOnEsc: booleanPropContract(
-      'Close on Esc',
-      'Closes the dialog when the Escape key is pressed. Defaults to true.',
-    ),
-    size: sizePropContract,
-    width: dimensionPropContract(
-      'Width override',
-      'Explicit width (number = px, otherwise CSS length). Overrides the size-derived width when set.',
-    ),
-    height: dimensionPropContract(
-      'Height override',
-      'Explicit height (number = px, otherwise CSS length). Overrides the size-derived height when set.',
-    ),
-    showCloseButton: booleanPropContract(
-      'Show close button',
-      'Renders the top-right close affordance. Defaults to true.',
-    ),
-    showMask: booleanPropContract(
-      'Show mask',
-      'Renders the surface overlay mask. Defaults to true.',
-    ),
-    confirm: confirmPropContract,
-    isolate: booleanPropContract(
-      'Scope isolation',
-      'When true, cuts off parent scope inheritance — the dialog body only sees own data. Defaults to false.',
-    ),
-    bodyClassName: stringPropContract('Body className', 'className applied to DialogBody.'),
-    headerClassName: stringPropContract('Header className', 'className applied to DialogHeader.'),
-    footerClassName: stringPropContract('Footer className', 'className applied to DialogFooter.'),
-  },
   eventContracts: surfaceEventContracts,
   componentCapabilityContracts: surfaceHandleCapabilityContracts,
   fields: sharedSurfaceFields.concat([
-    { key: 'closeOnOutsideClick', kind: 'prop' as const, valueType: 'boolean' as const },
+    {
+      key: 'closeOnOutsideClick',
+      kind: 'prop' as const,
+      valueType: 'boolean' as const,
+      contract: booleanPropContract(
+        'Close on outside click',
+        'Closes the dialog when the overlay is clicked. Defaults to true.',
+      ),
+    },
     { key: 'draggable', kind: 'prop' as const, valueType: 'boolean' as const },
     { key: 'allowFullscreen', kind: 'prop' as const, valueType: 'boolean' as const },
+    {
+      key: 'closeOnEsc',
+      kind: 'prop' as const,
+      valueType: 'boolean' as const,
+      contract: booleanPropContract(
+        'Close on Esc',
+        'Closes the dialog when the Escape key is pressed. Defaults to true.',
+      ),
+    },
+    { key: 'size', kind: 'prop' as const, contract: sizePropContract },
+    {
+      key: 'width',
+      kind: 'prop' as const,
+      contract: dimensionPropContract(
+        'Width override',
+        'Explicit width (number = px, otherwise CSS length). Overrides the size-derived width when set.',
+      ),
+    },
+    {
+      key: 'height',
+      kind: 'prop' as const,
+      contract: dimensionPropContract(
+        'Height override',
+        'Explicit height (number = px, otherwise CSS length). Overrides the size-derived height when set.',
+      ),
+    },
+    {
+      key: 'showCloseButton',
+      kind: 'prop' as const,
+      valueType: 'boolean' as const,
+      contract: booleanPropContract(
+        'Show close button',
+        'Renders the top-right close affordance. Defaults to true.',
+      ),
+    },
+    {
+      key: 'showMask',
+      kind: 'prop' as const,
+      valueType: 'boolean' as const,
+      contract: booleanPropContract('Show mask', 'Renders the surface overlay mask. Defaults to true.'),
+    },
+    { key: 'confirm', kind: 'prop' as const, contract: confirmPropContract },
+    {
+      key: 'isolate',
+      kind: 'prop' as const,
+      valueType: 'boolean' as const,
+      contract: booleanPropContract(
+        'Scope isolation',
+        'When true, cuts off parent scope inheritance — the dialog body only sees own data. Defaults to false.',
+      ),
+    },
+    {
+      key: 'bodyClassName',
+      kind: 'prop' as const,
+      contract: stringPropContract('Body className', 'className applied to DialogBody.'),
+    },
+    {
+      key: 'headerClassName',
+      kind: 'prop' as const,
+      contract: stringPropContract('Header className', 'className applied to DialogHeader.'),
+    },
+    {
+      key: 'footerClassName',
+      kind: 'prop' as const,
+      contract: stringPropContract('Footer className', 'className applied to DialogFooter.'),
+    },
   ]),
 };
 
@@ -203,51 +231,94 @@ export const drawerRendererDefinition: RegisteredRendererDefinition = {
   category: 'layout',
   sourcePackage: '@nop-chaos/flux-renderers-basic',
   component: DrawerRenderer,
-  propContracts: {
-    closeOnOutside: booleanPropContract(
-      'Close on outside click',
-      'Closes the drawer when the overlay is clicked. Defaults to true. Mirrors dialog closeOnOutsideClick (E2f asymmetric-bug fix).',
-    ),
-    closeOnEsc: booleanPropContract(
-      'Close on Esc',
-      'Closes the drawer when the Escape key is pressed. Defaults to true.',
-    ),
-    size: sizePropContract,
-    width: dimensionPropContract(
-      'Width override',
-      'Explicit width for left/right drawers (number = px, otherwise CSS length). Overrides the size-derived width.',
-    ),
-    height: dimensionPropContract(
-      'Height override',
-      'Explicit height for top/bottom drawers (number = px, otherwise CSS length). Overrides the size-derived height.',
-    ),
-    showCloseButton: booleanPropContract(
-      'Show close button',
-      'Renders the surface-level close affordance. Defaults to true.',
-    ),
-    showMask: booleanPropContract(
-      'Show mask',
-      'Renders the surface overlay mask. Defaults to true.',
-    ),
-    resizable: booleanPropContract(
-      'Resizable',
-      'Renders a resize handle on the drawer edge. Local state (resets on reopen).',
-    ),
-    confirm: confirmPropContract,
-    isolate: booleanPropContract(
-      'Scope isolation',
-      'When true, cuts off parent scope inheritance — the drawer body only sees own data. Defaults to false.',
-    ),
-    bodyClassName: stringPropContract('Body className', 'className applied to DrawerBody.'),
-    headerClassName: stringPropContract('Header className', 'className applied to DrawerHeader.'),
-    footerClassName: stringPropContract('Footer className', 'className applied to DrawerFooter.'),
-  },
   eventContracts: surfaceEventContracts,
   componentCapabilityContracts: surfaceHandleCapabilityContracts,
   fields: sharedSurfaceFields.concat([
     { key: 'side', kind: 'prop' as const },
-    { key: 'closeOnOutside', kind: 'prop' as const, valueType: 'boolean' as const },
-    { key: 'resizable', kind: 'prop' as const, valueType: 'boolean' as const },
+    {
+      key: 'closeOnOutside',
+      kind: 'prop' as const,
+      valueType: 'boolean' as const,
+      contract: booleanPropContract(
+        'Close on outside click',
+        'Closes the drawer when the overlay is clicked. Defaults to true. Mirrors dialog closeOnOutsideClick (E2f asymmetric-bug fix).',
+      ),
+    },
+    {
+      key: 'resizable',
+      kind: 'prop' as const,
+      valueType: 'boolean' as const,
+      contract: booleanPropContract(
+        'Resizable',
+        'Renders a resize handle on the drawer edge. Local state (resets on reopen).',
+      ),
+    },
+    {
+      key: 'closeOnEsc',
+      kind: 'prop' as const,
+      valueType: 'boolean' as const,
+      contract: booleanPropContract(
+        'Close on Esc',
+        'Closes the drawer when the Escape key is pressed. Defaults to true.',
+      ),
+    },
+    { key: 'size', kind: 'prop' as const, contract: sizePropContract },
+    {
+      key: 'width',
+      kind: 'prop' as const,
+      contract: dimensionPropContract(
+        'Width override',
+        'Explicit width for left/right drawers (number = px, otherwise CSS length). Overrides the size-derived width.',
+      ),
+    },
+    {
+      key: 'height',
+      kind: 'prop' as const,
+      contract: dimensionPropContract(
+        'Height override',
+        'Explicit height for top/bottom drawers (number = px, otherwise CSS length). Overrides the size-derived height.',
+      ),
+    },
+    {
+      key: 'showCloseButton',
+      kind: 'prop' as const,
+      valueType: 'boolean' as const,
+      contract: booleanPropContract(
+        'Show close button',
+        'Renders the surface-level close affordance. Defaults to true.',
+      ),
+    },
+    {
+      key: 'showMask',
+      kind: 'prop' as const,
+      valueType: 'boolean' as const,
+      contract: booleanPropContract('Show mask', 'Renders the surface overlay mask. Defaults to true.'),
+    },
+    { key: 'confirm', kind: 'prop' as const, contract: confirmPropContract },
+    {
+      key: 'isolate',
+      kind: 'prop' as const,
+      valueType: 'boolean' as const,
+      contract: booleanPropContract(
+        'Scope isolation',
+        'When true, cuts off parent scope inheritance — the drawer body only sees own data. Defaults to false.',
+      ),
+    },
+    {
+      key: 'bodyClassName',
+      kind: 'prop' as const,
+      contract: stringPropContract('Body className', 'className applied to DrawerBody.'),
+    },
+    {
+      key: 'headerClassName',
+      kind: 'prop' as const,
+      contract: stringPropContract('Header className', 'className applied to DrawerHeader.'),
+    },
+    {
+      key: 'footerClassName',
+      kind: 'prop' as const,
+      contract: stringPropContract('Footer className', 'className applied to DrawerFooter.'),
+    },
   ]),
 };
 
@@ -276,36 +347,6 @@ export const commandPaletteRendererDefinition: RegisteredRendererDefinition = {
   sourcePackage: '@nop-chaos/flux-renderers-basic',
   defaultSchema: { type: 'command-palette', items: [] },
   component: CommandPaletteRenderer,
-  propContracts: {
-    placeholder: stringPropContract(
-      'Placeholder',
-      'Search input placeholder text. Defaults to the i18n "search" message.',
-    ),
-    shouldFilter: booleanPropContract(
-      'Should Filter',
-      'cmdk built-in query filtering. Disable to drive items with schema expressions (external filtering). Defaults to true.',
-    ),
-    emptyText: stringPropContract(
-      'Empty text',
-      'Empty state copy shown when no items match. Defaults to the i18n "no results" message.',
-    ),
-    hotkey: stringPropContract(
-      'Hotkey',
-      'Local invocation key binding, e.g. "mod+k". No-op on controlled palettes (open prop); no conflict arbitration — global keybindings are G-B2 scope.',
-    ),
-    closeOnEsc: booleanPropContract(
-      'Close on Esc',
-      'Closes the palette when the Escape key is pressed. Defaults to true.',
-    ),
-    closeOnOutsideClick: booleanPropContract(
-      'Close on outside click',
-      'Closes the palette when the overlay or outside area is pressed. Defaults to true.',
-    ),
-    showMask: booleanPropContract(
-      'Show mask',
-      'Renders the overlay mask. Defaults to true.',
-    ),
-  },
   eventContracts: commandPaletteEventContracts,
   componentCapabilityContracts: surfaceHandleCapabilityContracts,
   fields: [
@@ -321,17 +362,67 @@ export const commandPaletteRendererDefinition: RegisteredRendererDefinition = {
       // not freeze the node's prop bag. tree-controls precedent.
       sourceStateKey: 'sourceState',
     },
-    { key: 'placeholder', kind: 'prop' as const },
-    { key: 'shouldFilter', kind: 'prop' as const, valueType: 'boolean' as const },
-    { key: 'emptyText', kind: 'prop' as const },
-    { key: 'hotkey', kind: 'prop' as const },
+    {
+      key: 'placeholder',
+      kind: 'prop' as const,
+      contract: stringPropContract(
+        'Placeholder',
+        'Search input placeholder text. Defaults to the i18n "search" message.',
+      ),
+    },
+    {
+      key: 'shouldFilter',
+      kind: 'prop' as const,
+      valueType: 'boolean' as const,
+      contract: booleanPropContract(
+        'Should Filter',
+        'cmdk built-in query filtering. Disable to drive items with schema expressions (external filtering). Defaults to true.',
+      ),
+    },
+    {
+      key: 'emptyText',
+      kind: 'prop' as const,
+      contract: stringPropContract(
+        'Empty text',
+        'Empty state copy shown when no items match. Defaults to the i18n "no results" message.',
+      ),
+    },
+    {
+      key: 'hotkey',
+      kind: 'prop' as const,
+      contract: stringPropContract(
+        'Hotkey',
+        'Local invocation key binding, e.g. "mod+k". No-op on controlled palettes (open prop); no conflict arbitration — global keybindings are G-B2 scope.',
+      ),
+    },
     compileOpenBinding,
     { key: 'defaultOpen', kind: 'prop' as const, valueType: 'boolean' as const },
     { key: 'statusPath', kind: 'prop' as const },
     { key: 'container', kind: 'prop' as const },
-    { key: 'closeOnEsc', kind: 'prop' as const, valueType: 'boolean' as const },
-    { key: 'closeOnOutsideClick', kind: 'prop' as const, valueType: 'boolean' as const },
-    { key: 'showMask', kind: 'prop' as const, valueType: 'boolean' as const },
+    {
+      key: 'closeOnEsc',
+      kind: 'prop' as const,
+      valueType: 'boolean' as const,
+      contract: booleanPropContract(
+        'Close on Esc',
+        'Closes the palette when the Escape key is pressed. Defaults to true.',
+      ),
+    },
+    {
+      key: 'closeOnOutsideClick',
+      kind: 'prop' as const,
+      valueType: 'boolean' as const,
+      contract: booleanPropContract(
+        'Close on outside click',
+        'Closes the palette when the overlay or outside area is pressed. Defaults to true.',
+      ),
+    },
+    {
+      key: 'showMask',
+      kind: 'prop' as const,
+      valueType: 'boolean' as const,
+      contract: booleanPropContract('Show mask', 'Renders the overlay mask. Defaults to true.'),
+    },
     { key: 'onOpen', kind: 'event' as const },
     { key: 'onClose', kind: 'event' as const },
     { key: 'onCommand', kind: 'event' as const },

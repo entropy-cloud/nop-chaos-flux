@@ -140,10 +140,8 @@ describe('JsonSourceView', () => {
       def({
         type: 'page',
         defaultSchema: { type: 'page', body: [] },
-        fields: [{ key: 'body', kind: 'region', regionKey: 'body' }],
-        propContracts: {
-          breadcrumb: { shape: { kind: 'array', item: { kind: 'unknown' } }, displayName: 'Breadcrumb' },
-        },
+        fields: [{ key: 'body', kind: 'region', regionKey: 'body' },
+        { key: 'breadcrumb', kind: 'prop', contract: { shape: { kind: 'array', item: { kind: 'unknown' } }, displayName: 'Breadcrumb' } },],
         eventContracts: {
           onClick: { displayName: 'Click', description: 'Root activated.' },
         },

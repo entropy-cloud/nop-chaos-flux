@@ -54,21 +54,26 @@ export const contentRendererDefinitions: RegisteredRendererDefinition[] = [
     displayName: 'Separator',
     category: 'content',
     component: SeparatorRenderer,
-    propContracts: {
-      orientation: {
-        displayName: 'Orientation',
-        shape: {
-          kind: 'union',
-          anyOf: ['horizontal', 'vertical'].map((v) => ({ kind: 'literal', value: v })),
-        },
-        editorType: 'select',
-        defaultValue: 'horizontal',
-      },
-      decorative: { displayName: 'Decorative', shape: { kind: 'boolean' } },
-    },
     fields: [
-      { key: 'orientation', kind: 'prop' },
-      { key: 'decorative', kind: 'prop', valueType: 'boolean' },
+      {
+        key: 'orientation',
+        kind: 'prop',
+        contract: {
+          displayName: 'Orientation',
+          shape: {
+            kind: 'union',
+            anyOf: ['horizontal', 'vertical'].map((v) => ({ kind: 'literal', value: v })),
+          },
+          editorType: 'select',
+          defaultValue: 'horizontal',
+        },
+      },
+      {
+        key: 'decorative',
+        kind: 'prop',
+        valueType: 'boolean',
+        contract: { displayName: 'Decorative', shape: { kind: 'boolean' } }
+      },
       { key: 'label', kind: 'value-or-region', regionKey: 'label' },
     ],
   }),
@@ -114,29 +119,33 @@ export const contentRendererDefinitions: RegisteredRendererDefinition[] = [
     displayName: 'Result',
     category: 'content',
     component: ResultRenderer,
-    propContracts: {
-      status: {
-        // 09-01 (plan 483 Phase 7 batch c) adjudicated as an open string:
-        // a closed union here makes the runtime strip unknown values before
-        // render, which defeats the render-visible dev-warn contract below
-        // and the result-status-invalid regression test.
-        shape: { kind: 'string' },
-        displayName: 'Status',
-        description:
-          "Final-state semantics mapping to the default icon and semantic color. Defaults to 'info'; unknown values degrade to info with a dev warning (validated at render, not by the shape gate, so authoring mistakes stay visible).",
-        editorType: 'select',
-        defaultValue: 'info',
-      },
-      icon: {
-        shape: { kind: 'string' },
-        displayName: 'Icon',
-        description: 'Optional lucide icon name; overrides the status default icon.',
-        editorType: 'expression',
-      },
-    },
     fields: [
-      { key: 'status', kind: 'prop' },
-      { key: 'icon', kind: 'prop' },
+      {
+        key: 'status',
+        kind: 'prop',
+        contract: {
+          // 09-01 (plan 483 Phase 7 batch c) adjudicated as an open string:
+          // a closed union here makes the runtime strip unknown values before
+          // render, which defeats the render-visible dev-warn contract below
+          // and the result-status-invalid regression test.
+          shape: { kind: 'string' },
+          displayName: 'Status',
+          description:
+            "Final-state semantics mapping to the default icon and semantic color. Defaults to 'info'; unknown values degrade to info with a dev warning (validated at render, not by the shape gate, so authoring mistakes stay visible).",
+          editorType: 'select',
+          defaultValue: 'info',
+        },
+      },
+      {
+        key: 'icon',
+        kind: 'prop',
+        contract: {
+          shape: { kind: 'string' },
+          displayName: 'Icon',
+          description: 'Optional lucide icon name; overrides the status default icon.',
+          editorType: 'expression',
+        },
+      },
       { key: 'title', kind: 'value-or-region', regionKey: 'title' },
       { key: 'description', kind: 'value-or-region', regionKey: 'description' },
       { key: 'actions', kind: 'region', regionKey: 'actions' },
@@ -165,24 +174,25 @@ export const contentRendererDefinitions: RegisteredRendererDefinition[] = [
     displayName: 'Link',
     category: 'content',
     component: LinkRenderer,
-    propContracts: {
-      target: {
-        displayName: 'Target',
-        shape: {
-          kind: 'union',
-          anyOf: ['_self', '_blank', '_parent', '_top'].map((v) => ({
-            kind: 'literal',
-            value: v,
-          })),
-        },
-        editorType: 'select',
-        defaultValue: '_self',
-      },
-    },
     fields: [
       { key: 'label', kind: 'value-or-region', regionKey: 'label' },
       { key: 'href', kind: 'prop' },
-      { key: 'target', kind: 'prop' },
+      {
+        key: 'target',
+        kind: 'prop',
+        contract: {
+          displayName: 'Target',
+          shape: {
+            kind: 'union',
+            anyOf: ['_self', '_blank', '_parent', '_top'].map((v) => ({
+              kind: 'literal',
+              value: v,
+            })),
+          },
+          editorType: 'select',
+          defaultValue: '_self',
+        },
+      },
       { key: 'rel', kind: 'prop' },
       { key: 'download', kind: 'prop' },
       { key: 'onClick', kind: 'event' },
@@ -193,19 +203,25 @@ export const contentRendererDefinitions: RegisteredRendererDefinition[] = [
     displayName: 'Image',
     category: 'content',
     component: ImageRenderer,
-    propContracts: {
-      preview: { displayName: 'Preview', shape: { kind: 'boolean' } },
-      lazy: { displayName: 'Lazy', shape: { kind: 'boolean' } },
-    },
     fields: [
       { key: 'src', kind: 'prop' },
       { key: 'alt', kind: 'prop' },
       { key: 'title', kind: 'prop' },
-      { key: 'preview', kind: 'prop', valueType: 'boolean' },
+      {
+        key: 'preview',
+        kind: 'prop',
+        valueType: 'boolean',
+        contract: { displayName: 'Preview', shape: { kind: 'boolean' } }
+      },
       { key: 'fit', kind: 'prop' },
       { key: 'width', kind: 'prop' },
       { key: 'height', kind: 'prop' },
-      { key: 'lazy', kind: 'prop', valueType: 'boolean' },
+      {
+        key: 'lazy',
+        kind: 'prop',
+        valueType: 'boolean',
+        contract: { displayName: 'Lazy', shape: { kind: 'boolean' } }
+      },
       { key: 'fetcher', kind: 'prop' },
       { key: 'onClick', kind: 'event' },
       { key: 'onLoadError', kind: 'event' },
@@ -251,37 +267,6 @@ export const contentRendererDefinitions: RegisteredRendererDefinition[] = [
     displayName: 'Cards',
     category: 'data',
     component: CardsRenderer,
-    propContracts: {
-      items: {
-        shape: { kind: 'array', item: { kind: 'unknown' } },
-        displayName: 'Items',
-        description:
-          'The single collection field: the array of records rendered through the card region.',
-        editorType: 'expression',
-      },
-      selectionMode: {
-        shape: {
-          kind: 'union',
-          anyOf: [
-            { kind: 'literal', value: 'none' },
-            { kind: 'literal', value: 'single' },
-            { kind: 'literal', value: 'multiple' },
-          ],
-        },
-        displayName: 'Selection Mode',
-        description:
-          'Selection ownership is local controlled state. "none" disables selection, "single" is mutually exclusive, "multiple" accumulates.',
-        editorType: 'select',
-        defaultValue: 'none',
-      },
-      keyField: {
-        shape: { kind: 'string' },
-        displayName: 'Key Field',
-        description: 'Field used to derive a stable per-card key. Falls back to the card index when absent.',
-        editorType: 'expression',
-        defaultValue: 'id',
-      },
-    },
     eventContracts: {
       onItemClick: {
         displayName: 'On Item Click',
@@ -309,10 +294,48 @@ export const contentRendererDefinitions: RegisteredRendererDefinition[] = [
       },
     },
     fields: [
-      { key: 'items', kind: 'prop' },
+      {
+        key: 'items',
+        kind: 'prop',
+        contract: {
+          shape: { kind: 'array', item: { kind: 'unknown' } },
+          displayName: 'Items',
+          description:
+            'The single collection field: the array of records rendered through the card region.',
+          editorType: 'expression',
+        },
+      },
       { key: 'columns', kind: 'prop' },
-      { key: 'selectionMode', kind: 'prop' },
-      { key: 'keyField', kind: 'prop' },
+      {
+        key: 'selectionMode',
+        kind: 'prop',
+        contract: {
+          shape: {
+            kind: 'union',
+            anyOf: [
+              { kind: 'literal', value: 'none' },
+              { kind: 'literal', value: 'single' },
+              { kind: 'literal', value: 'multiple' },
+            ],
+          },
+          displayName: 'Selection Mode',
+          description:
+            'Selection ownership is local controlled state. "none" disables selection, "single" is mutually exclusive, "multiple" accumulates.',
+          editorType: 'select',
+          defaultValue: 'none',
+        },
+      },
+      {
+        key: 'keyField',
+        kind: 'prop',
+        contract: {
+          shape: { kind: 'string' },
+          displayName: 'Key Field',
+          description: 'Field used to derive a stable per-card key. Falls back to the card index when absent.',
+          editorType: 'expression',
+          defaultValue: 'id',
+        },
+      },
       { key: 'onItemClick', kind: 'event' },
       { key: 'onSelectionChange', kind: 'event' },
       { key: 'card', kind: 'region', params: ['item', 'index'], isolate: false },
@@ -324,36 +347,6 @@ export const contentRendererDefinitions: RegisteredRendererDefinition[] = [
     displayName: 'Alert',
     category: 'content',
     component: AlertRenderer,
-    propContracts: {
-      level: {
-        shape: {
-          kind: 'union',
-          anyOf: [
-            { kind: 'literal', value: 'info' },
-            { kind: 'literal', value: 'success' },
-            { kind: 'literal', value: 'warning' },
-            { kind: 'literal', value: 'error' },
-          ],
-        },
-        displayName: 'Level',
-        description: 'Feedback level mapping to visual variant + default icon. Defaults to "info".',
-        editorType: 'select',
-        defaultValue: 'info',
-      },
-      icon: {
-        shape: { kind: 'string' },
-        displayName: 'Icon',
-        description: 'Optional lucide icon name; overrides the level-default icon.',
-        editorType: 'expression',
-      },
-      closable: {
-        shape: { kind: 'boolean' },
-        displayName: 'Closable',
-        description: 'When true, renders a close button that fires onClose and hides the alert.',
-        editorType: 'switch',
-        defaultValue: false,
-      },
-    },
     eventContracts: {
       onClose: {
         displayName: 'On Close',
@@ -365,9 +358,47 @@ export const contentRendererDefinitions: RegisteredRendererDefinition[] = [
       },
     },
     fields: [
-      { key: 'level', kind: 'prop' },
-      { key: 'icon', kind: 'prop' },
-      { key: 'closable', kind: 'prop', valueType: 'boolean' },
+      {
+        key: 'level',
+        kind: 'prop',
+        contract: {
+          shape: {
+            kind: 'union',
+            anyOf: [
+              { kind: 'literal', value: 'info' },
+              { kind: 'literal', value: 'success' },
+              { kind: 'literal', value: 'warning' },
+              { kind: 'literal', value: 'error' },
+            ],
+          },
+          displayName: 'Level',
+          description: 'Feedback level mapping to visual variant + default icon. Defaults to "info".',
+          editorType: 'select',
+          defaultValue: 'info',
+        },
+      },
+      {
+        key: 'icon',
+        kind: 'prop',
+        contract: {
+          shape: { kind: 'string' },
+          displayName: 'Icon',
+          description: 'Optional lucide icon name; overrides the level-default icon.',
+          editorType: 'expression',
+        },
+      },
+      {
+        key: 'closable',
+        kind: 'prop',
+        valueType: 'boolean',
+        contract: {
+          shape: { kind: 'boolean' },
+          displayName: 'Closable',
+          description: 'When true, renders a close button that fires onClose and hides the alert.',
+          editorType: 'switch',
+          defaultValue: false,
+        },
+      },
       { key: 'title', kind: 'value-or-region', regionKey: 'title' },
       { key: 'body', kind: 'value-or-region', regionKey: 'body' },
       { key: 'actions', kind: 'region', regionKey: 'actions' },
@@ -379,37 +410,47 @@ export const contentRendererDefinitions: RegisteredRendererDefinition[] = [
     displayName: 'Mapping',
     category: 'content',
     component: MappingRenderer,
-    propContracts: {
-      value: {
-        shape: { kind: 'unknown' },
-        displayName: 'Value',
-        description: 'The input value to map. Looked up against the map table (key coerced to string).',
-        editorType: 'expression',
-      },
-      map: {
-        shape: { kind: 'record', value: { kind: 'unknown' } },
-        displayName: 'Map',
-        description: 'Lookup table: keys are string-coerced values, values are the rendered result (text/badge fragment).',
-        editorType: 'expression',
-      },
-      defaultLabel: {
-        shape: { kind: 'string' },
-        displayName: 'Default Label',
-        description: 'Shown when the value is present but misses the map; takes precedence over placeholder on miss.',
-        editorType: 'expression',
-      },
-      placeholder: {
-        shape: { kind: 'string' },
-        displayName: 'Placeholder',
-        description: 'Shown when the value is empty (null/undefined), or when missing with no defaultLabel.',
-        editorType: 'expression',
-      },
-    },
     fields: [
-      { key: 'value', kind: 'prop' },
-      { key: 'map', kind: 'prop' },
-      { key: 'defaultLabel', kind: 'prop' },
-      { key: 'placeholder', kind: 'prop' },
+      {
+        key: 'value',
+        kind: 'prop',
+        contract: {
+          shape: { kind: 'unknown' },
+          displayName: 'Value',
+          description: 'The input value to map. Looked up against the map table (key coerced to string).',
+          editorType: 'expression',
+        },
+      },
+      {
+        key: 'map',
+        kind: 'prop',
+        contract: {
+          shape: { kind: 'record', value: { kind: 'unknown' } },
+          displayName: 'Map',
+          description: 'Lookup table: keys are string-coerced values, values are the rendered result (text/badge fragment).',
+          editorType: 'expression',
+        },
+      },
+      {
+        key: 'defaultLabel',
+        kind: 'prop',
+        contract: {
+          shape: { kind: 'string' },
+          displayName: 'Default Label',
+          description: 'Shown when the value is present but misses the map; takes precedence over placeholder on miss.',
+          editorType: 'expression',
+        },
+      },
+      {
+        key: 'placeholder',
+        kind: 'prop',
+        contract: {
+          shape: { kind: 'string' },
+          displayName: 'Placeholder',
+          description: 'Shown when the value is empty (null/undefined), or when missing with no defaultLabel.',
+          editorType: 'expression',
+        },
+      },
       { key: 'source', kind: 'prop' },
       { key: 'item', kind: 'region', regionKey: 'item' },
     ],
@@ -419,44 +460,57 @@ export const contentRendererDefinitions: RegisteredRendererDefinition[] = [
     displayName: 'Status',
     category: 'content',
     component: StatusRenderer,
-    propContracts: {
-      value: {
-        shape: { kind: 'unknown' },
-        displayName: 'Value',
-        description: 'The business status value to project onto a labelled, level-colored Badge.',
-        editorType: 'expression',
-      },
-      labelMap: {
-        shape: { kind: 'record', value: { kind: 'unknown' } },
-        displayName: 'Label Map',
-        description: 'Value→display label table. A value not present here is treated as a miss (placeholder fallback).',
-        editorType: 'expression',
-      },
-      levelMap: {
-        shape: { kind: 'record', value: { kind: 'unknown' } },
-        displayName: 'Level Map',
-        description: 'Value→semantic level table (success/warning/error/info/default/processing/pending/inactive). Projects to Badge color.',
-        editorType: 'expression',
-      },
-      iconMap: {
-        shape: { kind: 'record', value: { kind: 'unknown' } },
-        displayName: 'Icon Map',
-        description: 'Value→lucide icon name table. Optional; missing keys render without an icon.',
-        editorType: 'expression',
-      },
-      placeholder: {
-        shape: { kind: 'string' },
-        displayName: 'Placeholder',
-        description: 'Shown when the value is empty or misses the labelMap.',
-        editorType: 'expression',
-      },
-    },
     fields: [
-      { key: 'value', kind: 'prop' },
-      { key: 'labelMap', kind: 'prop' },
-      { key: 'levelMap', kind: 'prop' },
-      { key: 'iconMap', kind: 'prop' },
-      { key: 'placeholder', kind: 'prop' },
+      {
+        key: 'value',
+        kind: 'prop',
+        contract: {
+          shape: { kind: 'unknown' },
+          displayName: 'Value',
+          description: 'The business status value to project onto a labelled, level-colored Badge.',
+          editorType: 'expression',
+        },
+      },
+      {
+        key: 'labelMap',
+        kind: 'prop',
+        contract: {
+          shape: { kind: 'record', value: { kind: 'unknown' } },
+          displayName: 'Label Map',
+          description: 'Value→display label table. A value not present here is treated as a miss (placeholder fallback).',
+          editorType: 'expression',
+        },
+      },
+      {
+        key: 'levelMap',
+        kind: 'prop',
+        contract: {
+          shape: { kind: 'record', value: { kind: 'unknown' } },
+          displayName: 'Level Map',
+          description: 'Value→semantic level table (success/warning/error/info/default/processing/pending/inactive). Projects to Badge color.',
+          editorType: 'expression',
+        },
+      },
+      {
+        key: 'iconMap',
+        kind: 'prop',
+        contract: {
+          shape: { kind: 'record', value: { kind: 'unknown' } },
+          displayName: 'Icon Map',
+          description: 'Value→lucide icon name table. Optional; missing keys render without an icon.',
+          editorType: 'expression',
+        },
+      },
+      {
+        key: 'placeholder',
+        kind: 'prop',
+        contract: {
+          shape: { kind: 'string' },
+          displayName: 'Placeholder',
+          description: 'Shown when the value is empty or misses the labelMap.',
+          editorType: 'expression',
+        },
+      },
     ],
   }),
   defineContentRenderer({
@@ -497,14 +551,6 @@ export const contentRendererDefinitions: RegisteredRendererDefinition[] = [
     displayName: 'Carousel',
     category: 'content',
     component: CarouselRenderer,
-    propContracts: {
-      items: {
-        shape: { kind: 'array', item: { kind: 'unknown' } },
-        displayName: 'Items',
-        description: 'The slide collection: each item may carry image/title/caption.',
-        editorType: 'expression',
-      },
-    },
     eventContracts: {
       onChange: {
         displayName: 'On Change',
@@ -520,7 +566,16 @@ export const contentRendererDefinitions: RegisteredRendererDefinition[] = [
       },
     },
     fields: [
-      { key: 'items', kind: 'prop' },
+      {
+        key: 'items',
+        kind: 'prop',
+        contract: {
+          shape: { kind: 'array', item: { kind: 'unknown' } },
+          displayName: 'Items',
+          description: 'The slide collection: each item may carry image/title/caption.',
+          editorType: 'expression',
+        },
+      },
       { key: 'autoPlay', kind: 'prop', valueType: 'boolean' },
       { key: 'interval', kind: 'prop' },
       { key: 'loop', kind: 'prop', valueType: 'boolean' },
@@ -550,19 +605,6 @@ export const contentRendererDefinitions: RegisteredRendererDefinition[] = [
     category: 'content',
     defaultSchema: { type: 'diff-view', viewType: 'split', showLineNumbers: true },
     component: DiffViewRenderer,
-    propContracts: {
-      viewType: {
-        displayName: 'View Type',
-        shape: {
-          kind: 'union',
-          anyOf: ['split', 'unified'].map((v) => ({ kind: 'literal', value: v })),
-        },
-        editorType: 'select',
-        defaultValue: 'split',
-      },
-      showLineNumbers: { displayName: 'Show Line Numbers', shape: { kind: 'boolean' } },
-      showInlineDiff: { displayName: 'Show Inline Diff', shape: { kind: 'boolean' } },
-    },
     eventContracts: {
       onLineClick: {
         displayName: 'On Line Click',
@@ -597,9 +639,31 @@ export const contentRendererDefinitions: RegisteredRendererDefinition[] = [
       { key: 'files', kind: 'prop' },
       { key: 'activeFileIndex', kind: 'prop' },
       { key: 'language', kind: 'prop' },
-      { key: 'viewType', kind: 'prop' },
-      { key: 'showLineNumbers', kind: 'prop', valueType: 'boolean' },
-      { key: 'showInlineDiff', kind: 'prop', valueType: 'boolean' },
+      {
+        key: 'viewType',
+        kind: 'prop',
+        contract: {
+          displayName: 'View Type',
+          shape: {
+            kind: 'union',
+            anyOf: ['split', 'unified'].map((v) => ({ kind: 'literal', value: v })),
+          },
+          editorType: 'select',
+          defaultValue: 'split',
+        },
+      },
+      {
+        key: 'showLineNumbers',
+        kind: 'prop',
+        valueType: 'boolean',
+        contract: { displayName: 'Show Line Numbers', shape: { kind: 'boolean' } }
+      },
+      {
+        key: 'showInlineDiff',
+        kind: 'prop',
+        valueType: 'boolean',
+        contract: { displayName: 'Show Inline Diff', shape: { kind: 'boolean' } }
+      },
       { key: 'defaultCollapsedLines', kind: 'prop' },
       { key: 'wrapLines', kind: 'prop', valueType: 'boolean' },
       { key: 'onLineClick', kind: 'event' },

@@ -36,15 +36,6 @@ export const basicRendererDefinitions: RegisteredRendererDefinition[] = [
         kind: 'injected-local',
       },
     },
-    propContracts: {
-      breadcrumb: {
-        shape: { kind: 'array', item: { kind: 'unknown' } },
-        displayName: 'Breadcrumb',
-        description:
-          'Page-header breadcrumb entries ({ label, href? }); accepts an array or an expression resolving to one. Rendered above the title row; malformed entries are skipped.',
-        editorType: 'expression',
-      },
-    },
     fields: [
       { key: 'title', kind: 'value-or-region', regionKey: 'title' },
       { key: 'body', kind: 'region', regionKey: 'body' },
@@ -52,7 +43,17 @@ export const basicRendererDefinitions: RegisteredRendererDefinition[] = [
       { key: 'footer', kind: 'region', regionKey: 'footer' },
       { key: 'aside', kind: 'region', regionKey: 'aside' },
       { key: 'extra', kind: 'region', regionKey: 'extra' },
-      { key: 'breadcrumb', kind: 'prop' },
+      {
+        key: 'breadcrumb',
+        kind: 'prop',
+        contract: {
+          shape: { kind: 'array', item: { kind: 'unknown' } },
+          displayName: 'Breadcrumb',
+          description:
+            'Page-header breadcrumb entries ({ label, href? }); accepts an array or an expression resolving to one. Rendered above the title row; malformed entries are skipped.',
+          editorType: 'expression',
+        },
+      },
       { key: 'data', kind: 'prop' },
       { key: 'subTitle', kind: 'prop' },
       { key: 'remark', kind: 'prop' },
@@ -81,7 +82,6 @@ export const basicRendererDefinitions: RegisteredRendererDefinition[] = [
     sourcePackage: '@nop-chaos/flux-renderers-basic',
     defaultSchema: { type: 'container', body: [] },
     component: ContainerRenderer,
-    propContracts: containerContracts,
     eventContracts: {
       onClick: {
         displayName: 'Click',
@@ -102,9 +102,9 @@ export const basicRendererDefinitions: RegisteredRendererDefinition[] = [
       { key: 'body', kind: 'region', regionKey: 'body' },
       { key: 'header', kind: 'region', regionKey: 'header' },
       { key: 'footer', kind: 'region', regionKey: 'footer' },
-      { key: 'direction', kind: 'prop' },
-      { key: 'wrap', kind: 'prop', valueType: 'boolean' },
-      { key: 'align', kind: 'prop' },
+      { key: 'direction', kind: 'prop', contract: containerContracts.direction },
+      { key: 'wrap', kind: 'prop', valueType: 'boolean', contract: containerContracts.wrap },
+      { key: 'align', kind: 'prop', contract: containerContracts.align },
       { key: 'gap', kind: 'prop' },
       { key: 'responsiveDirection', kind: 'prop' },
       { key: 'responsiveWrap', kind: 'prop' },
@@ -171,7 +171,6 @@ export const basicRendererDefinitions: RegisteredRendererDefinition[] = [
     sourcePackage: '@nop-chaos/flux-renderers-basic',
     defaultSchema: { type: 'flex', body: [] },
     component: FlexRenderer,
-    propContracts: flexContracts,
     eventContracts: {
       onClick: {
         displayName: 'Click',
@@ -191,11 +190,11 @@ export const basicRendererDefinitions: RegisteredRendererDefinition[] = [
     fields: [
       { key: 'body', kind: 'region', regionKey: 'body' },
       { key: 'items', kind: 'region', regionKey: 'items' },
-      { key: 'direction', kind: 'prop' },
-      { key: 'wrap', kind: 'prop', valueType: 'boolean' },
-      { key: 'align', kind: 'prop' },
-      { key: 'justify', kind: 'prop' },
-      { key: 'alignContent', kind: 'prop' },
+      { key: 'direction', kind: 'prop', contract: flexContracts.direction },
+      { key: 'wrap', kind: 'prop', valueType: 'boolean', contract: flexContracts.wrap },
+      { key: 'align', kind: 'prop', contract: flexContracts.align },
+      { key: 'justify', kind: 'prop', contract: flexContracts.justify },
+      { key: 'alignContent', kind: 'prop', contract: flexContracts.alignContent },
       { key: 'gap', kind: 'prop' },
       { key: 'responsiveDirection', kind: 'prop' },
       { key: 'responsiveWrap', kind: 'prop' },
@@ -210,15 +209,14 @@ export const basicRendererDefinitions: RegisteredRendererDefinition[] = [
     sourcePackage: '@nop-chaos/flux-renderers-basic',
     defaultSchema: { type: 'text', text: 'Text' },
     component: TextRenderer,
-    propContracts: textContracts,
     fields: [
       { key: 'name', kind: 'prop' },
       { key: 'text', kind: 'prop', allowSource: true },
       { key: 'body', kind: 'prop' },
-      { key: 'tag', kind: 'prop' },
-      { key: 'copyable', kind: 'prop', valueType: 'boolean' },
+      { key: 'tag', kind: 'prop', contract: textContracts.tag },
+      { key: 'copyable', kind: 'prop', valueType: 'boolean', contract: textContracts.copyable },
       { key: 'maxLine', kind: 'prop' },
-      { key: 'maxLineToggle', kind: 'prop', valueType: 'boolean' },
+      { key: 'maxLineToggle', kind: 'prop', valueType: 'boolean', contract: textContracts.maxLineToggle },
       { key: 'label', kind: 'prop' },
       { key: 'required', kind: 'meta', valueType: 'boolean' },
       { key: 'readOnly', kind: 'meta', valueType: 'boolean' },
@@ -233,105 +231,6 @@ export const basicRendererDefinitions: RegisteredRendererDefinition[] = [
     defaultSchema: { type: 'button', label: 'Button' },
     rendererClass: 'instance-renderer',
     rendererTraits: ['trigger'],
-    propContracts: {
-      label: {
-        shape: { kind: 'string' },
-        displayName: 'Label',
-        description: 'Button text content.',
-        editorType: 'text',
-        defaultValue: 'Button',
-      },
-      variant: {
-        shape: {
-          kind: 'union',
-          anyOf: [
-            { kind: 'literal', value: 'default' },
-            { kind: 'literal', value: 'primary' },
-            { kind: 'literal', value: 'destructive' },
-            { kind: 'literal', value: 'outline' },
-            { kind: 'literal', value: 'secondary' },
-            { kind: 'literal', value: 'ghost' },
-            { kind: 'literal', value: 'link' },
-            { kind: 'literal', value: 'info' },
-            { kind: 'literal', value: 'success' },
-            { kind: 'literal', value: 'warning' },
-            { kind: 'literal', value: 'danger' },
-            { kind: 'literal', value: 'light' },
-            { kind: 'literal', value: 'dark' },
-          ],
-        },
-        displayName: 'Variant',
-        editorType: 'select',
-        defaultValue: 'default',
-      },
-      size: {
-        shape: {
-          kind: 'union',
-          anyOf: [
-            { kind: 'literal', value: 'default' },
-            { kind: 'literal', value: 'xs' },
-            { kind: 'literal', value: 'sm' },
-            { kind: 'literal', value: 'lg' },
-            { kind: 'literal', value: 'icon' },
-            { kind: 'literal', value: 'icon-xs' },
-            { kind: 'literal', value: 'icon-sm' },
-            { kind: 'literal', value: 'icon-lg' },
-          ],
-        },
-        displayName: 'Size',
-        editorType: 'select',
-        defaultValue: 'default',
-      },
-      disabled: {
-        shape: { kind: 'boolean' },
-        displayName: 'Disabled',
-        description: 'Disables user interaction when true.',
-        editorType: 'switch',
-      },
-      icon: {
-        shape: { kind: 'string' },
-        displayName: 'Icon',
-        description: 'Lucide icon name rendered before the label.',
-        editorType: 'text',
-      },
-      rightIcon: {
-        shape: { kind: 'string' },
-        displayName: 'Right Icon',
-        description: 'Lucide icon name rendered after the label.',
-        editorType: 'text',
-      },
-      loading: {
-        shape: { kind: 'boolean' },
-        displayName: 'Loading',
-        description:
-          'Shows a spinner and forces disabled. Accepts an expression string (subsumes amis loadingOn).',
-        editorType: 'switch',
-      },
-      tooltip: {
-        shape: { kind: 'string' },
-        displayName: 'Tooltip',
-        description: 'Hover tooltip text shown when the button is enabled.',
-        editorType: 'text',
-      },
-      disabledTip: {
-        shape: { kind: 'string' },
-        displayName: 'Disabled Tip',
-        description: 'Tooltip text shown when the button is disabled (overrides tooltip).',
-        editorType: 'text',
-      },
-      block: {
-        shape: { kind: 'boolean' },
-        displayName: 'Block',
-        description: 'Renders the button at full width.',
-        editorType: 'switch',
-      },
-      active: {
-        shape: { kind: 'boolean' },
-        displayName: 'Active',
-        description: 'Toggle/pressed state. Adds data-active and aria-pressed.',
-        editorType: 'switch',
-      },
-    },
     eventContracts: {
       onClick: {
         displayName: 'Click',
@@ -357,16 +256,120 @@ export const basicRendererDefinitions: RegisteredRendererDefinition[] = [
       },
     ],
     fields: [
-      { key: 'label', kind: 'prop' },
-      { key: 'variant', kind: 'prop' },
-      { key: 'size', kind: 'prop' },
+      {
+        key: 'label',
+        kind: 'prop',
+        contract: {
+          shape: { kind: 'string' },
+          displayName: 'Label',
+          description: 'Button text content.',
+          editorType: 'text',
+          defaultValue: 'Button',
+        },
+      },
+      {
+        key: 'variant',
+        kind: 'prop',
+        contract: {
+          shape: {
+            kind: 'union',
+            anyOf: [
+              { kind: 'literal', value: 'default' },
+              { kind: 'literal', value: 'primary' },
+              { kind: 'literal', value: 'destructive' },
+              { kind: 'literal', value: 'outline' },
+              { kind: 'literal', value: 'secondary' },
+              { kind: 'literal', value: 'ghost' },
+              { kind: 'literal', value: 'link' },
+              { kind: 'literal', value: 'info' },
+              { kind: 'literal', value: 'success' },
+              { kind: 'literal', value: 'warning' },
+              { kind: 'literal', value: 'danger' },
+              { kind: 'literal', value: 'light' },
+              { kind: 'literal', value: 'dark' },
+            ],
+          },
+          displayName: 'Variant',
+          editorType: 'select',
+          defaultValue: 'default',
+        },
+      },
+      {
+        key: 'size',
+        kind: 'prop',
+        contract: {
+          shape: {
+            kind: 'union',
+            anyOf: [
+              { kind: 'literal', value: 'default' },
+              { kind: 'literal', value: 'xs' },
+              { kind: 'literal', value: 'sm' },
+              { kind: 'literal', value: 'lg' },
+              { kind: 'literal', value: 'icon' },
+              { kind: 'literal', value: 'icon-xs' },
+              { kind: 'literal', value: 'icon-sm' },
+              { kind: 'literal', value: 'icon-lg' },
+            ],
+          },
+          displayName: 'Size',
+          editorType: 'select',
+          defaultValue: 'default',
+        },
+      },
       { key: 'disabled', kind: 'meta' },
-      { key: 'loading', kind: 'prop', valueType: 'boolean' },
+      {
+        key: 'loading',
+        kind: 'prop',
+        valueType: 'boolean',
+        contract: {
+          shape: { kind: 'boolean' },
+          displayName: 'Loading',
+          description:
+            'Shows a spinner and forces disabled. Accepts an expression string (subsumes amis loadingOn).',
+          editorType: 'switch',
+        },
+      },
       { key: 'onClick', kind: 'event' },
-      { key: 'icon', kind: 'prop' },
-      { key: 'rightIcon', kind: 'prop' },
-      { key: 'tooltip', kind: 'prop' },
-      { key: 'disabledTip', kind: 'prop' },
+      {
+        key: 'icon',
+        kind: 'prop',
+        contract: {
+          shape: { kind: 'string' },
+          displayName: 'Icon',
+          description: 'Lucide icon name rendered before the label.',
+          editorType: 'text',
+        },
+      },
+      {
+        key: 'rightIcon',
+        kind: 'prop',
+        contract: {
+          shape: { kind: 'string' },
+          displayName: 'Right Icon',
+          description: 'Lucide icon name rendered after the label.',
+          editorType: 'text',
+        },
+      },
+      {
+        key: 'tooltip',
+        kind: 'prop',
+        contract: {
+          shape: { kind: 'string' },
+          displayName: 'Tooltip',
+          description: 'Hover tooltip text shown when the button is enabled.',
+          editorType: 'text',
+        },
+      },
+      {
+        key: 'disabledTip',
+        kind: 'prop',
+        contract: {
+          shape: { kind: 'string' },
+          displayName: 'Disabled Tip',
+          description: 'Tooltip text shown when the button is disabled (overrides tooltip).',
+          editorType: 'text',
+        },
+      },
       { key: 'tooltipPlacement', kind: 'prop' },
       { key: 'countDown', kind: 'prop' },
       { key: 'countDownTpl', kind: 'prop' },
@@ -374,8 +377,38 @@ export const basicRendererDefinitions: RegisteredRendererDefinition[] = [
       { key: 'href', kind: 'prop' },
       { key: 'target', kind: 'prop' },
       { key: 'rel', kind: 'prop' },
-      { key: 'block', kind: 'prop', valueType: 'boolean' },
-      { key: 'active', kind: 'prop', valueType: 'boolean' },
+      {
+        key: 'block',
+        kind: 'prop',
+        valueType: 'boolean',
+        contract: {
+          shape: { kind: 'boolean' },
+          displayName: 'Block',
+          description: 'Renders the button at full width.',
+          editorType: 'switch',
+        },
+      },
+      {
+        key: 'active',
+        kind: 'prop',
+        valueType: 'boolean',
+        contract: {
+          shape: { kind: 'boolean' },
+          displayName: 'Active',
+          description: 'Toggle/pressed state. Adds data-active and aria-pressed.',
+          editorType: 'switch',
+        },
+      },
+      {
+        key: 'disabled',
+        kind: 'prop',
+        contract: {
+          shape: { kind: 'boolean' },
+          displayName: 'Disabled',
+          description: 'Disables user interaction when true.',
+          editorType: 'switch',
+        },
+      },
     ],
   },
   {
@@ -385,10 +418,9 @@ export const basicRendererDefinitions: RegisteredRendererDefinition[] = [
     sourcePackage: '@nop-chaos/flux-renderers-basic',
     defaultSchema: { type: 'icon', icon: 'star' },
     component: IconRenderer,
-    propContracts: iconContracts,
     fields: [
-      { key: 'icon', kind: 'prop' },
-      { key: 'size', kind: 'prop' },
+      { key: 'icon', kind: 'prop', contract: iconContracts.icon },
+      { key: 'size', kind: 'prop', contract: iconContracts.size },
       { key: 'color', kind: 'prop' },
     ],
     staticCapable: true,
@@ -400,10 +432,9 @@ export const basicRendererDefinitions: RegisteredRendererDefinition[] = [
     sourcePackage: '@nop-chaos/flux-renderers-basic',
     defaultSchema: { type: 'badge', text: 'Badge' },
     component: BadgeRenderer,
-    propContracts: badgeContracts,
     fields: [
       { key: 'text', kind: 'prop' },
-      { key: 'level', kind: 'prop' },
+      { key: 'level', kind: 'prop', contract: badgeContracts.level },
     ],
     staticCapable: true,
   },
@@ -511,22 +542,6 @@ export const basicRendererDefinitions: RegisteredRendererDefinition[] = [
     sourcePackage: '@nop-chaos/flux-renderers-basic',
     defaultSchema: { type: 'keyboard', bindings: [] },
     component: KeyboardRenderer,
-    propContracts: {
-      chordTimeout: {
-        shape: { kind: 'number' },
-        displayName: 'Chord Timeout',
-        description:
-          'Chord window in ms. A token after the first must arrive within this window to continue a sequence; on timeout the buffer resets (falling back to a complete prefix binding when one exists). Default 1000.',
-        editorType: 'number',
-      },
-      bindings: {
-        shape: { kind: 'array', item: { kind: 'unknown' } },
-        displayName: 'Bindings',
-        description:
-          'Keyboard bindings: `keys` (single combo "mod+shift+s" or space-separated chord "g o"), optional `when` (raw expression, no ${}), `allowInInput` (default false), `preventDefault` (default true), `action` (static dispatch track).',
-        editorType: 'object-array',
-      },
-    },
     eventContracts: {
       onTrigger: {
         displayName: 'Trigger',
@@ -543,8 +558,28 @@ export const basicRendererDefinitions: RegisteredRendererDefinition[] = [
       },
     },
     fields: [
-      { key: 'bindings', kind: 'prop' },
-      { key: 'chordTimeout', kind: 'prop' },
+      {
+        key: 'bindings',
+        kind: 'prop',
+        contract: {
+          shape: { kind: 'array', item: { kind: 'unknown' } },
+          displayName: 'Bindings',
+          description:
+            'Keyboard bindings: `keys` (single combo "mod+shift+s" or space-separated chord "g o"), optional `when` (raw expression, no ${}), `allowInInput` (default false), `preventDefault` (default true), `action` (static dispatch track).',
+          editorType: 'object-array',
+        },
+      },
+      {
+        key: 'chordTimeout',
+        kind: 'prop',
+        contract: {
+          shape: { kind: 'number' },
+          displayName: 'Chord Timeout',
+          description:
+            'Chord window in ms. A token after the first must arrive within this window to continue a sequence; on timeout the buffer resets (falling back to a complete prefix binding when one exists). Default 1000.',
+          editorType: 'number',
+        },
+      },
       { key: 'onTrigger', kind: 'event' },
     ],
   },

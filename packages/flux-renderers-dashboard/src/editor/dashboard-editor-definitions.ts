@@ -11,70 +11,6 @@ export const dashboardEditorRendererDefinition: RegisteredRendererDefinition = {
   rendererClass: 'domain-host-renderer',
   component: DashboardEditorRenderer,
   hostContract: dashboardEditorHostContract,
-  propContracts: {
-    layout: {
-      shape: { kind: 'unknown' },
-      displayName: 'Layout',
-      description:
-        'Initial layout document: { panels: [{ id, type, x, y, w, h, title?, props?, source? }] } (object or JSON string; expression usable).',
-      editorType: 'expression',
-    },
-    cols: {
-      shape: { kind: 'number' },
-      displayName: 'Columns',
-      description: 'Grid column count (default 12).',
-      editorType: 'expression',
-    },
-    rowHeight: {
-      shape: { kind: 'number' },
-      displayName: 'Row Height',
-      description: 'Grid row height in px (default 40).',
-      editorType: 'expression',
-    },
-    gap: {
-      shape: { kind: 'number' },
-      displayName: 'Gap',
-      description: 'Panel gap in px (default 8).',
-      editorType: 'expression',
-    },
-    height: {
-      shape: { kind: 'number' },
-      displayName: 'Height',
-      description: 'Canvas height in px (default 600).',
-      editorType: 'expression',
-    },
-    mode: {
-      shape: {
-        kind: 'union',
-        anyOf: [
-          { kind: 'literal', value: 'edit' },
-          { kind: 'literal', value: 'preview' },
-        ],
-      },
-      displayName: 'Mode',
-      description: 'Initial editor mode (default edit).',
-      editorType: 'select',
-    },
-    commitPolicy: {
-      shape: {
-        kind: 'union',
-        anyOf: [
-          { kind: 'literal', value: 'manual' },
-          { kind: 'literal', value: 'auto' },
-        ],
-      },
-      displayName: 'Commit Policy',
-      description: 'manual (default): explicit Save commits; auto: every change commits.',
-      editorType: 'select',
-      defaultValue: 'manual',
-    },
-    statusPath: {
-      shape: { kind: 'string' },
-      displayName: 'Status Path',
-      description: 'Host runtime status publication path (P3.3): {kind, dirty, busy, error, canUndo, canRedo, selectionCount}.',
-      editorType: 'expression',
-    },
-  },
   eventContracts: {
     onSave: {
       displayName: 'On Save',
@@ -127,17 +63,103 @@ export const dashboardEditorRendererDefinition: RegisteredRendererDefinition = {
     },
   },
   fields: [
-    { key: 'layout', kind: 'prop' },
-    { key: 'cols', kind: 'prop' },
-    { key: 'rowHeight', kind: 'prop' },
-    { key: 'gap', kind: 'prop' },
-    { key: 'height', kind: 'prop' },
-    { key: 'mode', kind: 'prop' },
-    { key: 'commitPolicy', kind: 'prop' },
+    {
+      key: 'layout',
+      kind: 'prop',
+      contract: {
+        shape: { kind: 'unknown' },
+        displayName: 'Layout',
+        description:
+          'Initial layout document: { panels: [{ id, type, x, y, w, h, title?, props?, source? }] } (object or JSON string; expression usable).',
+        editorType: 'expression',
+      },
+    },
+    {
+      key: 'cols',
+      kind: 'prop',
+      contract: {
+        shape: { kind: 'number' },
+        displayName: 'Columns',
+        description: 'Grid column count (default 12).',
+        editorType: 'expression',
+      },
+    },
+    {
+      key: 'rowHeight',
+      kind: 'prop',
+      contract: {
+        shape: { kind: 'number' },
+        displayName: 'Row Height',
+        description: 'Grid row height in px (default 40).',
+        editorType: 'expression',
+      },
+    },
+    {
+      key: 'gap',
+      kind: 'prop',
+      contract: {
+        shape: { kind: 'number' },
+        displayName: 'Gap',
+        description: 'Panel gap in px (default 8).',
+        editorType: 'expression',
+      },
+    },
+    {
+      key: 'height',
+      kind: 'prop',
+      contract: {
+        shape: { kind: 'number' },
+        displayName: 'Height',
+        description: 'Canvas height in px (default 600).',
+        editorType: 'expression',
+      },
+    },
+    {
+      key: 'mode',
+      kind: 'prop',
+      contract: {
+        shape: {
+          kind: 'union',
+          anyOf: [
+            { kind: 'literal', value: 'edit' },
+            { kind: 'literal', value: 'preview' },
+          ],
+        },
+        displayName: 'Mode',
+        description: 'Initial editor mode (default edit).',
+        editorType: 'select',
+      },
+    },
+    {
+      key: 'commitPolicy',
+      kind: 'prop',
+      contract: {
+        shape: {
+          kind: 'union',
+          anyOf: [
+            { kind: 'literal', value: 'manual' },
+            { kind: 'literal', value: 'auto' },
+          ],
+        },
+        displayName: 'Commit Policy',
+        description: 'manual (default): explicit Save commits; auto: every change commits.',
+        editorType: 'select',
+        defaultValue: 'manual',
+      },
+    },
     { key: 'onSave', kind: 'event' },
     { key: 'onError', kind: 'event' },
     { key: 'onSessionChange', kind: 'event' },
     { key: 'onModeChange', kind: 'event' },
-    { key: 'statusPath', kind: 'prop' },
+    {
+      key: 'statusPath',
+      kind: 'prop',
+      contract: {
+        shape: { kind: 'string' },
+        displayName: 'Status Path',
+        description: 'Host runtime status publication path (P3.3): {kind, dirty, busy, error, canUndo, canRedo, selectionCount}.',
+        editorType: 'expression',
+      },
+    },
   ],
 };

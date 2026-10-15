@@ -6,10 +6,7 @@ import { createSchemaCompiler } from './index.js';
 export const strictTextRenderer: RegisteredRendererDefinition = {
   type: 'strict-text',
   component: () => null,
-  propContracts: {
-    text: { shape: { kind: 'unknown' }, displayName: 'text' },
-  },
-  fields: [{ key: 'text', kind: 'prop' }],
+  fields: [{ key: 'text', kind: 'prop', contract: { shape: { kind: 'unknown' }, displayName: 'text' } }],
 };
 
 export const actionHostRenderer: RegisteredRendererDefinition = {

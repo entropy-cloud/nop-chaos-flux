@@ -43,13 +43,13 @@ function findNamespaceValidator(diagnostics: SchemaCompilerDiagnosticsContext, n
 function validateKnownPropValue(
   schema: BaseSchema,
   renderer: RendererDefinition,
-  propContracts: Readonly<Record<string, RendererPropContract>>,
+  contracts: Readonly<Record<string, RendererPropContract>>,
   key: string,
   keyPath: string,
   diagnostics: SchemaCompilerDiagnosticsContext,
   skippedPropKeys: Set<string>,
 ) {
-  const contract = propContracts[key];
+  const contract = contracts[key];
   if (!contract) {
     return;
   }
@@ -136,7 +136,7 @@ export function inspectSchemaNodeFields(
 } {
   const pointer = schemaPathToJsonPointer(path);
   const acceptedKeys = getAcceptedSchemaKeys(renderer);
-  const propContracts = resolveRendererPropContracts(renderer);
+  const contracts = resolveRendererPropContracts(renderer);
   const skippedPropKeys = new Set<string>();
   const extensions: Record<string, unknown> = {};
 
@@ -229,7 +229,7 @@ export function inspectSchemaNodeFields(
       continue;
     }
 
-    validateKnownPropValue(schema, renderer, propContracts, key, keyPath, diagnostics, skippedPropKeys);
+    validateKnownPropValue(schema, renderer, contracts, key, keyPath, diagnostics, skippedPropKeys);
 
     const sourceCandidate = value as Record<string, unknown> | undefined;
 

@@ -1,4 +1,5 @@
 import React from 'react';
+import { resolveRendererPropContracts } from '@nop-chaos/flux-core';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { createEmptyDocument, createSpreadsheetCore } from '@nop-chaos/spreadsheet-core';
@@ -155,7 +156,7 @@ describe('spreadsheet grid interactions', () => {
     expect(definition?.rendererTraits).toEqual(
       expect.arrayContaining(['workbench-shell', 'builder-facing']),
     );
-    expect(definition?.propContracts?.document?.required).toBe(true);
+    expect(resolveRendererPropContracts(definition!).document?.required).toBe(true);
   });
 
   it('records selection dispatch failures instead of dropping them silently', async () => {

@@ -35,12 +35,6 @@ const tableColumnsShape = {
 export const tableRenderer: RegisteredRendererDefinition = {
   type: 'table',
   component: () => null,
-  propContracts: {
-    columns: {
-      shape: tableColumnsShape,
-      displayName: 'Columns',
-    },
-  },
   fields: [
     { key: 'onRowClick', kind: 'event' },
     { key: 'onSortChange', kind: 'event' },
@@ -50,6 +44,14 @@ export const tableRenderer: RegisteredRendererDefinition = {
     { key: 'onRefresh', kind: 'event' },
     { key: 'empty', kind: 'value-or-region', regionKey: 'empty' },
     { key: 'loadingContent', kind: 'value-or-region', regionKey: 'loading' },
+    {
+      key: 'columns',
+      kind: 'prop',
+      contract: {
+        shape: tableColumnsShape,
+        displayName: 'Columns',
+      },
+    },
   ],
 };
 
@@ -58,12 +60,6 @@ export const crudRenderer: RegisteredRendererDefinition = {
   component: () => null,
   rendererClass: 'flux-owner-renderer',
   rendererTraits: ['semantic-owner', 'composite'],
-  propContracts: {
-    columns: {
-      shape: tableColumnsShape,
-      displayName: 'Columns',
-    },
-  },
   fields: [
     { key: 'queryForm', kind: 'prop' },
     { key: 'toolbar', kind: 'region' },
@@ -73,6 +69,14 @@ export const crudRenderer: RegisteredRendererDefinition = {
     { key: 'onRowClick', kind: 'event' },
     { key: 'onSelectionChange', kind: 'event' },
     { key: 'onRefresh', kind: 'event' },
+    {
+      key: 'columns',
+      kind: 'prop',
+      contract: {
+        shape: tableColumnsShape,
+        displayName: 'Columns',
+      },
+    },
   ],
 };
 

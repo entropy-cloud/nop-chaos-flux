@@ -1,4 +1,5 @@
 import { readFileSync } from 'node:fs';
+import { resolveRendererPropContracts } from '@nop-chaos/flux-core';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { treeControlRendererDefinitions } from '../tree-controls.js';
@@ -73,7 +74,7 @@ describe('C3.5 tree family schema contract honesty (P1-1)', () => {
 
   it('searchSource/childrenSource keep the actionValue contract (08-02 classification)', () => {
     for (const definition of Object.values(TREE_DEFINITIONS)) {
-      const contracts = definition.propContracts ?? {};
+      const contracts = resolveRendererPropContracts(definition);
       const searchShape = contracts.searchSource?.shape as
         | { kind?: string; actionValue?: boolean }
         | undefined;

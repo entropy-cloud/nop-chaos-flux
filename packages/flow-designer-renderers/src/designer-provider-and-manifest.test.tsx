@@ -1,4 +1,4 @@
-import type { ActionContext } from '@nop-chaos/flux-core';
+import { resolveRendererPropContracts, type ActionContext } from '@nop-chaos/flux-core';
 import { createDesignerCore, type DesignerCore, type DesignerSnapshot } from '@nop-chaos/flow-designer-core';
 import { describe, expect, it, vi } from 'vitest';
 import { createDesignerActionProvider, flowDesignerRendererDefinitions } from './index.js';
@@ -535,8 +535,8 @@ describe('flowDesignerRendererDefinitions', () => {
     expect(designerPageDef?.rendererTraits).toEqual(
       expect.arrayContaining(['workbench-shell', 'builder-facing']),
     );
-    expect(designerPageDef?.propContracts?.config?.required).toBe(true);
-    expect(designerPageDef?.propContracts?.statusPath).toBeTruthy();
+    expect(resolveRendererPropContracts(designerPageDef!).config?.required).toBe(true);
+    expect(resolveRendererPropContracts(designerPageDef!).statusPath).toBeTruthy();
     expect(designerPageDef?.scopeExportContracts).toBeUndefined();
     expect(designerPageDef?.hostContract?.family).toBe('designer');
     expect(designerPageDef?.hostContract?.defaultVersion).toBe('1.0');

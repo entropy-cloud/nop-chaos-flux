@@ -18,13 +18,14 @@ function def(partial: Partial<RendererDefinition> & { type: string }): RendererD
 
 const EXPRESSION_PROP_DEFINITION = def({
   type: 'expr-widget',
-  propContracts: {
-    breadcrumb: {
+
+  fields: [
+    { key: 'breadcrumb', kind: 'prop', contract: {
       shape: { kind: 'string' },
       displayName: 'Breadcrumb',
       editorType: 'expression',
-    },
-  },
+    } },
+    ],
 });
 
 describe('createFormulaExpressionAdapter', () => {

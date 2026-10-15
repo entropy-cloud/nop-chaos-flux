@@ -1,5 +1,5 @@
 import type { RegisteredRendererDefinition, SchemaFieldRule } from '@nop-chaos/flux-core';
-import { formFieldContracts, formFieldRules } from '../field-utils.js';
+import { formFieldContractRules } from '../field-utils.js';
 import { createFieldValidation, validateInputFieldSchema } from './input.js';
 import { signatureSpecificContracts } from './input-contracts.js';
 import { InputSignatureRenderer } from './signature-renderer.js';
@@ -9,21 +9,17 @@ import { InputSignatureRenderer } from './signature-renderer.js';
  * canvas. Value = PNG data URL; zero strokes ⇔ undefined (值语义不变式).
  */
 const signatureFieldRules: SchemaFieldRule[] = [
-  { key: 'penColor', kind: 'prop' },
-  { key: 'penWidth', kind: 'prop', valueType: 'number' },
-  { key: 'height', kind: 'prop', valueType: 'number' },
-  { key: 'backgroundColor', kind: 'prop' },
-  { key: 'clearable', kind: 'prop', valueType: 'boolean' },
+  { key: 'penColor', kind: 'prop', contract: signatureSpecificContracts.penColor },
+  { key: 'penWidth', kind: 'prop', valueType: 'number', contract: signatureSpecificContracts.penWidth },
+  { key: 'height', kind: 'prop', valueType: 'number', contract: signatureSpecificContracts.height },
+  { key: 'backgroundColor', kind: 'prop', contract: signatureSpecificContracts.backgroundColor },
+  { key: 'clearable', kind: 'prop', valueType: 'boolean', contract: signatureSpecificContracts.clearable },
 ];
 
 export const inputSignatureRendererDefinition: RegisteredRendererDefinition = {
   type: 'input-signature',
   sourcePackage: '@nop-chaos/flux-renderers-form',
-  propContracts: {
-    ...formFieldContracts,
-    ...signatureSpecificContracts,
-  },
-  fields: [...formFieldRules, ...signatureFieldRules],
+  fields: [...formFieldContractRules, ...signatureFieldRules],
   validation: createFieldValidation(),
   schemaValidator: validateInputFieldSchema,
   componentCapabilityContracts: [

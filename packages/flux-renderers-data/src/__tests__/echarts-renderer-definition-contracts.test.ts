@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { resolveRendererPropContracts } from '@nop-chaos/flux-core';
 import { createRendererRegistry } from '@nop-chaos/flux-core';
 import { dataRendererDefinitions, echartsRendererDefinition, registerDataRenderers } from '../index.js';
 import { validateEChartsSchema } from '../echarts-schema-validation.js';
@@ -32,7 +33,13 @@ describe('echarts renderer definition contracts', () => {
     ]) {
       expect(fieldKinds[key]).toBe('prop');
     }
-    expect(fieldKinds.events).toBe('ignored');
+    // RM-4 (plan 606): the fields array now also carries the events prop
+    // CONTRACT entry (second declaration); classification reads the FIRST
+    // entry (find), which stays 'ignored' — asserted by the dedicated test
+    // below. fieldKinds reflects first-declaration semantics accordingly.
+    expect(
+      (echartsRendererDefinition.fields ?? []).find((field) => field.key === 'events')?.kind,
+    ).toBe('ignored');
     expect(fieldKinds.empty).toBe('value-or-region');
   });
 
@@ -70,13 +77,16 @@ describe('echarts renderer definition contracts', () => {
     expect(echartsRendererDefinition.componentCapabilityContracts?.map((c) => c.handle)).toEqual([
       'resize',
     ]);
-    expect(echartsRendererDefinition.propContracts?.renderer?.shape).toMatchObject({
+    // RM-4 (plan 606): prop contracts live on the fields entries now — read
+    // through the centralized dual-read helper.
+    const resolved = resolveRendererPropContracts(echartsRendererDefinition);
+    expect(resolved.renderer?.shape).toMatchObject({
       kind: 'union',
     });
-    expect(echartsRendererDefinition.propContracts?.notMerge?.shape).toMatchObject({
+    expect(resolved.notMerge?.shape).toMatchObject({
       kind: 'boolean',
     });
-    expect(echartsRendererDefinition.propContracts?.lazyUpdate?.shape).toMatchObject({
+    expect(resolved.lazyUpdate?.shape).toMatchObject({
       kind: 'boolean',
     });
   });

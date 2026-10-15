@@ -3,12 +3,7 @@ import { cn } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
 import { formFieldRules } from '@nop-chaos/flux-renderers-form';
 import { UploadFieldRenderer } from './upload-field.js';
-import {
-  deleteActionPropContract,
-  imageFieldRules,
-  type UploadResultItem,
-  uploadActionPropContract,
-} from './upload-schemas.js';
+import { imageFieldRules, type UploadResultItem } from './upload-schemas.js';
 import type { ReactNode } from 'react';
 
 function ImagePreview(props: { item: UploadResultItem; mode: 'thumbnail' | 'fill' }) {
@@ -44,10 +39,6 @@ export const inputImageRendererDefinition: RegisteredRendererDefinition = {
   category: 'Form Advanced',
   sourcePackage: '@nop-chaos/flux-renderers-form-advanced',
   component: InputImageRenderer,
-  propContracts: {
-    uploadAction: uploadActionPropContract,
-    deleteAction: deleteActionPropContract,
-  },
   fields: [...formFieldRules, ...imageFieldRules],
   validation: {
     kind: 'field',

@@ -287,20 +287,6 @@ export const treeControlRendererDefinitions: RegisteredRendererDefinition[] = [
     displayName: 'Input Tree',
     category: 'Form Advanced',
     sourcePackage: '@nop-chaos/flux-renderers-form-advanced',
-    propContracts: {
-      searchSource: {
-        shape: { kind: 'schema-definition', fieldRules: {}, actionValue: true },
-        displayName: 'Search Source',
-        description:
-          'On-demand remote search action descriptor (ActionSchema). Template-preserved; ${searchQuery} evaluated at dispatch.',
-      },
-      childrenSource: {
-        shape: { kind: 'schema-definition', fieldRules: {}, actionValue: true },
-        displayName: 'Children Source',
-        description:
-          'On-demand lazy child source descriptor (ActionSchema). Template-preserved; ${expandedNodeValue} evaluated at dispatch.',
-      },
-    },
     fields: [
       ...formFieldRules,
       { key: 'options', kind: 'prop', allowSource: true, sourceStateKey: 'optionsSourceState' },
@@ -315,8 +301,26 @@ export const treeControlRendererDefinitions: RegisteredRendererDefinition[] = [
       { key: 'showPathLabel', kind: 'prop', valueType: 'boolean' },
       { key: 'clearable', kind: 'prop', valueType: 'boolean' },
       { key: 'virtualThreshold', kind: 'prop' },
-      { key: 'childrenSource', kind: 'prop' },
-      { key: 'searchSource', kind: 'prop' },
+      {
+        key: 'childrenSource',
+        kind: 'prop',
+        contract: {
+          shape: { kind: 'schema-definition', fieldRules: {}, actionValue: true },
+          displayName: 'Children Source',
+          description:
+            'On-demand lazy child source descriptor (ActionSchema). Template-preserved; ${expandedNodeValue} evaluated at dispatch.',
+        },
+      },
+      {
+        key: 'searchSource',
+        kind: 'prop',
+        contract: {
+          shape: { kind: 'schema-definition', fieldRules: {}, actionValue: true },
+          displayName: 'Search Source',
+          description:
+            'On-demand remote search action descriptor (ActionSchema). Template-preserved; ${searchQuery} evaluated at dispatch.',
+        },
+      },
       { key: 'enableNodePath', kind: 'prop', valueType: 'boolean' },
       { key: 'pathSeparator', kind: 'prop' },
       { key: 'placeholder', kind: 'prop' },
@@ -344,20 +348,6 @@ export const treeControlRendererDefinitions: RegisteredRendererDefinition[] = [
     displayName: 'Tree Select',
     category: 'Form Advanced',
     sourcePackage: '@nop-chaos/flux-renderers-form-advanced',
-    propContracts: {
-      searchSource: {
-        shape: { kind: 'schema-definition', fieldRules: {}, actionValue: true },
-        displayName: 'Search Source',
-        description:
-          'On-demand remote search action descriptor (ActionSchema). Template-preserved; ${searchQuery} evaluated at dispatch.',
-      },
-      childrenSource: {
-        shape: { kind: 'schema-definition', fieldRules: {}, actionValue: true },
-        displayName: 'Children Source',
-        description:
-          'On-demand lazy child source descriptor (ActionSchema). Template-preserved; ${expandedNodeValue} evaluated at dispatch.',
-      },
-    },
     fields: [
       ...formFieldRules,
       { key: 'options', kind: 'prop', allowSource: true, sourceStateKey: 'optionsSourceState' },
@@ -373,8 +363,26 @@ export const treeControlRendererDefinitions: RegisteredRendererDefinition[] = [
       { key: 'clearable', kind: 'prop', valueType: 'boolean' },
       { key: 'placeholder', kind: 'prop' },
       { key: 'virtualThreshold', kind: 'prop' },
-      { key: 'childrenSource', kind: 'prop' },
-      { key: 'searchSource', kind: 'prop' },
+      {
+        key: 'childrenSource',
+        kind: 'prop',
+        contract: {
+          shape: { kind: 'schema-definition', fieldRules: {}, actionValue: true },
+          displayName: 'Children Source',
+          description:
+            'On-demand lazy child source descriptor (ActionSchema). Template-preserved; ${expandedNodeValue} evaluated at dispatch.',
+        },
+      },
+      {
+        key: 'searchSource',
+        kind: 'prop',
+        contract: {
+          shape: { kind: 'schema-definition', fieldRules: {}, actionValue: true },
+          displayName: 'Search Source',
+          description:
+            'On-demand remote search action descriptor (ActionSchema). Template-preserved; ${searchQuery} evaluated at dispatch.',
+        },
+      },
       { key: 'enableNodePath', kind: 'prop', valueType: 'boolean' },
       { key: 'pathSeparator', kind: 'prop' },
     ],

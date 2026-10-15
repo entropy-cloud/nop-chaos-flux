@@ -1,20 +1,22 @@
 import { describe, expect, it } from 'vitest';
-import type { FluxSchemaDefinitionShape } from '@nop-chaos/flux-core';
+import { resolveRendererPropContracts, type FluxSchemaDefinitionShape } from '@nop-chaos/flux-core';
 import { layoutRendererDefinitions } from './layout-renderer-definitions.js';
 import { isStepDisabled } from './wizard-renderer.js';
 
 function getWizardStepsShape(): FluxSchemaDefinitionShape {
   const wizardDef = layoutRendererDefinitions.find((def) => def.type === 'wizard');
-  const stepsContract = wizardDef?.propContracts?.steps;
+  // RM-4 (plan 606): prop contracts live on the fields entries — read through
+  // the centralized dual-read helper.
+  const stepsContract = resolveRendererPropContracts(wizardDef!).steps;
   const shape = stepsContract?.shape;
   if (shape?.kind !== 'array' || shape.item.kind !== 'schema-definition') {
-    throw new Error('wizard steps propContract schema-definition not found in production definitions');
+    throw new Error('wizard steps contract schema-definition not found in production definitions');
   }
   return shape.item;
 }
 
 describe('wizard step.disabled — compile-through boolean-literal contract (unified pipeline)', () => {
-  it('production propContracts declares steps.disabled as literal kind (envelope auto-wrapping)', () => {
+  it('production wizard contract declares steps.disabled as literal kind (envelope auto-wrapping)', () => {
     const itemShape = getWizardStepsShape();
 
     // disabled → literal: the compiler auto-wraps into __nopPreserveLiteral.

@@ -617,14 +617,6 @@ export const pickerRendererDefinition: RegisteredRendererDefinition = {
       description: 'Clear the committed picker value (registered via useInputComponentHandle).',
     },
   ],
-  propContracts: {
-    labelResolveAction: {
-      shape: { kind: 'schema-definition', fieldRules: {}, actionValue: true },
-      displayName: 'Label Resolve Action',
-      description:
-        'Action that resolves stored values into display labels (ActionSchema). Template-preserved.',
-    },
-  },
   fields: [
     { key: 'name', kind: 'prop' },
     ...formFieldRules,
@@ -642,7 +634,16 @@ export const pickerRendererDefinition: RegisteredRendererDefinition = {
     { key: 'joinValues', kind: 'prop', valueType: 'boolean' },
     { key: 'extractValue', kind: 'prop', valueType: 'boolean' },
     { key: 'embed', kind: 'prop', valueType: 'boolean' },
-    { key: 'labelResolveAction', kind: 'prop' },
+    {
+      key: 'labelResolveAction',
+      kind: 'prop',
+      contract: {
+        shape: { kind: 'schema-definition', fieldRules: {}, actionValue: true },
+        displayName: 'Label Resolve Action',
+        description:
+          'Action that resolves stored values into display labels (ActionSchema). Template-preserved.',
+      },
+    },
     { key: 'autoFill', kind: 'prop', lazyEval: true, params: ['row'] },
     { key: 'readOnly', kind: 'prop' },
     { key: 'onPick', kind: 'event' },

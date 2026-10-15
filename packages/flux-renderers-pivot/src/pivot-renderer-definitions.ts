@@ -129,129 +129,6 @@ export const pivotRendererDefinitions: RegisteredRendererDefinition[] = [
     sourcePackage: '@nop-chaos/flux-renderers-pivot',
     component: LazyPivotTableRenderer,
     schemaValidator: validatePivotSchema,
-    propContracts: {
-      records: {
-        shape: { kind: 'array', item: { kind: 'object', fields: {} } },
-        displayName: 'Records',
-        description:
-          '直接数据入口（对象数组）。与 source 互斥，二者同设时 source 优先 + dev warn。',
-        editorType: 'expression',
-      },
-      source: {
-        shape: { kind: 'array', item: { kind: 'object', fields: {} } },
-        displayName: 'Source',
-        description: '原始数据集入口（对象数组），优先于 records。',
-        editorType: 'expression',
-      },
-      rowDimensions: {
-        shape: {
-          kind: 'array',
-          item: {
-            kind: 'union',
-            anyOf: [
-              { kind: 'string' },
-              {
-                kind: 'object',
-                fields: { dimensionKey: { kind: 'string' }, title: { kind: 'string' } },
-                optional: ['title'],
-              },
-            ],
-          },
-        },
-        displayName: 'Row Dimensions',
-        description: '行维度：字符串或 { dimensionKey, title?, headerStyle? } 对象。',
-        editorType: 'array',
-      },
-      columnDimensions: {
-        shape: {
-          kind: 'array',
-          item: {
-            kind: 'union',
-            anyOf: [
-              { kind: 'string' },
-              {
-                kind: 'object',
-                fields: { dimensionKey: { kind: 'string' }, title: { kind: 'string' } },
-                optional: ['title'],
-              },
-            ],
-          },
-        },
-        displayName: 'Column Dimensions',
-        description: '列维度：字符串或 { dimensionKey, title?, headerStyle? } 对象。',
-        editorType: 'array',
-      },
-      indicators: {
-        shape: {
-          kind: 'array',
-          item: {
-            kind: 'object',
-            fields: {
-              field: { kind: 'string' },
-              title: { kind: 'string' },
-              aggregationType: {
-                kind: 'union',
-                anyOf: [
-                  { kind: 'literal', value: 'SUM' },
-                  { kind: 'literal', value: 'AVG' },
-                  { kind: 'literal', value: 'COUNT' },
-                  { kind: 'literal', value: 'MIN' },
-                  { kind: 'literal', value: 'MAX' },
-                  { kind: 'literal', value: 'NONE' },
-                ],
-              },
-              cellType: {
-                kind: 'union',
-                anyOf: [
-                  { kind: 'literal', value: 'text' },
-                  { kind: 'literal', value: 'progressbar' },
-                  { kind: 'literal', value: 'sparkline' },
-                ],
-              },
-            },
-            optional: ['title', 'aggregationType', 'cellType'],
-          },
-        },
-        displayName: 'Indicators',
-        description: '指标（值列）：field + 聚合类型 + cellType。',
-        editorType: 'array',
-      },
-      dataConfig: {
-        shape: { kind: 'object', fields: {} },
-        displayName: 'Data Config',
-        description: '聚合/排序/过滤/小计总计配置（totals/sortRules/filterRules）。',
-        editorType: 'object',
-      },
-      cornerTitleOnDimension: {
-        shape: {
-          kind: 'union',
-          anyOf: [
-            { kind: 'literal', value: 'row' },
-            { kind: 'literal', value: 'column' },
-            { kind: 'literal', value: 'none' },
-            { kind: 'literal', value: 'all' },
-          ],
-        },
-        displayName: 'Corner Title On Dimension',
-        description: '角标 titleOnDimension 映射。',
-        editorType: 'select',
-      },
-      height: {
-        shape: {
-          kind: 'union',
-          anyOf: [{ kind: 'number' }, { kind: 'string' }],
-        },
-        displayName: 'Height',
-        defaultValue: 320,
-      },
-      loading: { shape: { kind: 'boolean' }, displayName: 'Loading', defaultValue: false },
-      theme: {
-        shape: { kind: 'object', fields: {} },
-        displayName: 'Theme',
-        description: 'VTable theme 覆盖（映射层产出后按 key 覆盖）。',
-        editorType: 'object',
-      },
-    },
     eventContracts: {
       onCellClick: {
         displayName: 'On Cell Click',
@@ -303,16 +180,167 @@ export const pivotRendererDefinitions: RegisteredRendererDefinition[] = [
     },
     fields: [
       { key: 'label', kind: 'prop' },
-      { key: 'records', kind: 'prop' },
-      { key: 'source', kind: 'prop' },
-      { key: 'rowDimensions', kind: 'prop' },
-      { key: 'columnDimensions', kind: 'prop' },
-      { key: 'indicators', kind: 'prop' },
-      { key: 'dataConfig', kind: 'prop' },
-      { key: 'cornerTitleOnDimension', kind: 'prop' },
-      { key: 'height', kind: 'prop' },
-      { key: 'loading', kind: 'prop' },
-      { key: 'theme', kind: 'prop' },
+      {
+        key: 'records',
+        kind: 'prop',
+        contract: {
+          shape: { kind: 'array', item: { kind: 'object', fields: {} } },
+          displayName: 'Records',
+          description:
+            '直接数据入口（对象数组）。与 source 互斥，二者同设时 source 优先 + dev warn。',
+          editorType: 'expression',
+        },
+      },
+      {
+        key: 'source',
+        kind: 'prop',
+        contract: {
+          shape: { kind: 'array', item: { kind: 'object', fields: {} } },
+          displayName: 'Source',
+          description: '原始数据集入口（对象数组），优先于 records。',
+          editorType: 'expression',
+        },
+      },
+      {
+        key: 'rowDimensions',
+        kind: 'prop',
+        contract: {
+          shape: {
+            kind: 'array',
+            item: {
+              kind: 'union',
+              anyOf: [
+                { kind: 'string' },
+                {
+                  kind: 'object',
+                  fields: { dimensionKey: { kind: 'string' }, title: { kind: 'string' } },
+                  optional: ['title'],
+                },
+              ],
+            },
+          },
+          displayName: 'Row Dimensions',
+          description: '行维度：字符串或 { dimensionKey, title?, headerStyle? } 对象。',
+          editorType: 'array',
+        },
+      },
+      {
+        key: 'columnDimensions',
+        kind: 'prop',
+        contract: {
+          shape: {
+            kind: 'array',
+            item: {
+              kind: 'union',
+              anyOf: [
+                { kind: 'string' },
+                {
+                  kind: 'object',
+                  fields: { dimensionKey: { kind: 'string' }, title: { kind: 'string' } },
+                  optional: ['title'],
+                },
+              ],
+            },
+          },
+          displayName: 'Column Dimensions',
+          description: '列维度：字符串或 { dimensionKey, title?, headerStyle? } 对象。',
+          editorType: 'array',
+        },
+      },
+      {
+        key: 'indicators',
+        kind: 'prop',
+        contract: {
+          shape: {
+            kind: 'array',
+            item: {
+              kind: 'object',
+              fields: {
+                field: { kind: 'string' },
+                title: { kind: 'string' },
+                aggregationType: {
+                  kind: 'union',
+                  anyOf: [
+                    { kind: 'literal', value: 'SUM' },
+                    { kind: 'literal', value: 'AVG' },
+                    { kind: 'literal', value: 'COUNT' },
+                    { kind: 'literal', value: 'MIN' },
+                    { kind: 'literal', value: 'MAX' },
+                    { kind: 'literal', value: 'NONE' },
+                  ],
+                },
+                cellType: {
+                  kind: 'union',
+                  anyOf: [
+                    { kind: 'literal', value: 'text' },
+                    { kind: 'literal', value: 'progressbar' },
+                    { kind: 'literal', value: 'sparkline' },
+                  ],
+                },
+              },
+              optional: ['title', 'aggregationType', 'cellType'],
+            },
+          },
+          displayName: 'Indicators',
+          description: '指标（值列）：field + 聚合类型 + cellType。',
+          editorType: 'array',
+        },
+      },
+      {
+        key: 'dataConfig',
+        kind: 'prop',
+        contract: {
+          shape: { kind: 'object', fields: {} },
+          displayName: 'Data Config',
+          description: '聚合/排序/过滤/小计总计配置（totals/sortRules/filterRules）。',
+          editorType: 'object',
+        },
+      },
+      {
+        key: 'cornerTitleOnDimension',
+        kind: 'prop',
+        contract: {
+          shape: {
+            kind: 'union',
+            anyOf: [
+              { kind: 'literal', value: 'row' },
+              { kind: 'literal', value: 'column' },
+              { kind: 'literal', value: 'none' },
+              { kind: 'literal', value: 'all' },
+            ],
+          },
+          displayName: 'Corner Title On Dimension',
+          description: '角标 titleOnDimension 映射。',
+          editorType: 'select',
+        },
+      },
+      {
+        key: 'height',
+        kind: 'prop',
+        contract: {
+          shape: {
+            kind: 'union',
+            anyOf: [{ kind: 'number' }, { kind: 'string' }],
+          },
+          displayName: 'Height',
+          defaultValue: 320,
+        },
+      },
+      {
+        key: 'loading',
+        kind: 'prop',
+        contract: { shape: { kind: 'boolean' }, displayName: 'Loading', defaultValue: false }
+      },
+      {
+        key: 'theme',
+        kind: 'prop',
+        contract: {
+          shape: { kind: 'object', fields: {} },
+          displayName: 'Theme',
+          description: 'VTable theme 覆盖（映射层产出后按 key 覆盖）。',
+          editorType: 'object',
+        },
+      },
       { key: 'empty', kind: 'value-or-region', regionKey: 'empty' },
       { key: 'onCellClick', kind: 'event' },
       { key: 'onSelectionChange', kind: 'event' },

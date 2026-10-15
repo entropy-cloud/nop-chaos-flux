@@ -24,8 +24,7 @@ function makeCompiler(renderers: RegisteredRendererDefinition[] = []) {
 const textRenderer: RegisteredRendererDefinition = {
   type: 'text',
   component: () => null,
-  propContracts: { text: { shape: { kind: 'string' }, required: true, displayName: 'Text' } },
-  fields: [{ key: 'text', kind: 'prop' }],
+  fields: [{ key: 'text', kind: 'prop', contract: { shape: { kind: 'string' }, required: true, displayName: 'Text' } }],
 };
 
 const containerRenderer: RegisteredRendererDefinition = {

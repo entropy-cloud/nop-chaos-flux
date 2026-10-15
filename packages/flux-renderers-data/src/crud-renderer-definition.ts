@@ -11,310 +11,6 @@ export const crudRendererDefinition: RegisteredRendererDefinition = {
   rendererTraits: ['semantic-owner', 'composite'],
   authoringTransform: transformCrudAuthoringSchema,
   schemaValidator: validateCrudSchema,
-  propContracts: {
-    statusPath: {
-      shape: { kind: 'string' },
-      displayName: 'Status Path',
-      description: 'Publishes the readonly CRUD summary to scope.',
-      editorType: 'path',
-    },
-    source: {
-      shape: {
-        kind: 'union',
-        anyOf: [
-          { kind: 'array', item: { kind: 'unknown' } },
-          { kind: 'unknown', description: 'Data source expression or source schema.' },
-        ],
-      },
-      displayName: 'Source',
-      description: 'Rows rendered by the CRUD table.',
-      editorType: 'source',
-    },
-    queryForm: {
-      shape: { kind: 'object', fields: {} },
-      displayName: 'Query Form',
-      description: 'Optional embedded query form configuration or migrated AMIS filter form.',
-      editorType: 'object',
-    },
-    quickSaveAction: {
-      shape: { kind: 'schema-definition', fieldRules: {}, actionValue: true },
-      displayName: 'Quick Save Action',
-      description:
-        'Action dispatched for batch quick-save (ActionSchema). Template-preserved; row scope evaluated at dispatch.',
-    },
-    quickSaveItemAction: {
-      shape: { kind: 'schema-definition', fieldRules: {}, actionValue: true },
-      displayName: 'Quick Save Item Action',
-      description:
-        'Action dispatched per row on quick save (ActionSchema). Template-preserved; row scope evaluated at dispatch.',
-    },
-    columns: {
-      shape: {
-        kind: 'array',
-        item: {
-          kind: 'schema-definition',
-          fieldRules: {
-            label: {
-              kind: 'value-or-region',
-              regionKey: 'labelRegionKey',
-            },
-            buttons: {
-              kind: 'region',
-              regionKey: 'buttonsRegionKey',
-              params: ['record', 'index'],
-              isolate: true,
-            },
-            cell: {
-              kind: 'region',
-              regionKey: 'cellRegionKey',
-              params: ['record', 'index'],
-              isolate: true,
-            },
-            body: {
-              kind: 'region',
-              regionKey: 'quickEditBodyRegionKey',
-              regionKeySuffix: 'quickEditBody',
-            },
-            quickEdit: {
-              kind: 'region',
-              sourceKey: 'body',
-              regionKey: 'quickEditBodyRegionKey',
-              regionKeySuffix: 'quickEditBody',
-            },
-            searchable: {
-              kind: 'value-or-region',
-              regionKey: 'searchableRegionKey',
-            },
-          },
-        },
-      },
-      displayName: 'Columns',
-      description:
-        'Table column declarations, including operation, fixed, searchable, filterable, and quick-edit metadata.',
-      editorType: 'crud-columns',
-    },
-    listMode: {
-      shape: {
-        kind: 'union',
-        anyOf: [
-          { kind: 'literal', value: 'table' },
-          { kind: 'literal', value: 'cards' },
-          { kind: 'literal', value: 'list' },
-        ],
-      },
-      displayName: 'List Mode',
-      description:
-        "Row rendering carrier: 'table' (default, zero-regression), 'cards', or 'list'. In cards/list modes CRUD self-holds selection and drives pagination.",
-      editorType: 'select',
-      defaultValue: 'table',
-    },
-    rowKey: {
-      shape: { kind: 'string' },
-      displayName: 'Row Key',
-      description: 'Stable record key field used by CRUD/table selection and row identity.',
-      editorType: 'text',
-    },
-    pageField: {
-      shape: { kind: 'string' },
-      displayName: 'Page Field',
-      description: 'Request/query field name used for the current page parameter.',
-      editorType: 'text',
-    },
-    pageSizeField: {
-      shape: { kind: 'string' },
-      displayName: 'Page Size Field',
-      description: 'Request/query field name used for the page size parameter.',
-      editorType: 'text',
-    },
-    defaultParams: {
-      shape: { kind: 'object', fields: {} },
-      displayName: 'Default Params',
-      description: 'Default query/refresh parameters merged into the CRUD workflow input.',
-      editorType: 'object',
-    },
-    toolbar: {
-      shape: { kind: 'unknown' },
-      displayName: 'Toolbar',
-      description: 'Top toolbar region or migrated headerToolbar content.',
-      editorType: 'region',
-    },
-    listActions: {
-      shape: { kind: 'unknown' },
-      displayName: 'List Actions',
-      description:
-        'List-level actions such as create, refresh, export, or selection-driven batch actions.',
-      editorType: 'region',
-    },
-    footerToolbar: {
-      shape: { kind: 'unknown' },
-      displayName: 'Footer Toolbar',
-      description: 'Bottom toolbar region or migrated footerToolbar content.',
-      editorType: 'region',
-    },
-    toolbarLayout: {
-      shape: { kind: 'object', fields: {} },
-      displayName: 'Toolbar Layout',
-      description: 'Structured toolbar blocks such as pagination, statistics, and columns toggler.',
-      editorType: 'object',
-    },
-    selection: {
-      shape: { kind: 'unknown' },
-      displayName: 'Selection',
-      description:
-        'Row selection enablement & config: true / "multiple" (checkbox), "single" (radio), or a config object. Setting it (truthy) enables the selection column; omit to disable. Config fields include keepOnPageChange, maxSelectionLength, checkableWhen, toggleOnRowClick, and selectAllMode ("all" default | "page" — scopes the header select-all to the current page).',
-      editorType: 'object',
-    },
-    selectionStatePath: {
-      shape: { kind: 'string' },
-      displayName: 'Selection Path',
-      description: 'Scope path used when selection ownership is scope-based.',
-      editorType: 'path',
-    },
-    selectionField: {
-      shape: { kind: 'string' },
-      displayName: 'Selection Field',
-      description:
-        'Batch-action payload field carrying the selected row keys (AMIS-parity `${ids}` template). Default: ids.',
-      editorType: 'text',
-    },
-    selectionOwnership: {
-      shape: {
-        kind: 'union',
-        anyOf: [
-          { kind: 'literal', value: 'local' },
-          { kind: 'literal', value: 'controlled' },
-          { kind: 'literal', value: 'scope' },
-        ],
-      },
-      displayName: 'Selection Ownership',
-      description:
-        'Ownership mode for the selection slice. The CRUD composite always owns this state in scope (per-instance `$_crud.<id>.selection`, overridable via `selectionStatePath`); "local"/"controlled" values are accepted for schema compatibility but behave as scope-owned (docs/components/crud/design.md §4).',
-      editorType: 'select',
-      defaultValue: 'local',
-    },
-    paginationOwnership: {
-      shape: {
-        kind: 'union',
-        anyOf: [
-          { kind: 'literal', value: 'local' },
-          { kind: 'literal', value: 'controlled' },
-          { kind: 'literal', value: 'scope' },
-        ],
-      },
-      displayName: 'Pagination Ownership',
-      description:
-        'Ownership mode for the pagination slice. The CRUD composite always owns this state in scope (per-instance `$_crud.<id>.pagination`, overridable via `paginationStatePath`); "local"/"controlled" values are accepted for schema compatibility but behave as scope-owned (docs/components/crud/design.md §4).',
-      editorType: 'select',
-      defaultValue: 'local',
-    },
-    paginationStatePath: {
-      shape: { kind: 'string' },
-      displayName: 'Pagination Path',
-      description: 'Scope path used when pagination ownership is scope-based.',
-      editorType: 'path',
-    },
-    sortOwnership: {
-      shape: {
-        kind: 'union',
-        anyOf: [
-          { kind: 'literal', value: 'local' },
-          { kind: 'literal', value: 'controlled' },
-          { kind: 'literal', value: 'scope' },
-        ],
-      },
-      displayName: 'Sort Ownership',
-      description:
-        'Ownership mode for the sort slice. The CRUD composite always owns this state in scope (per-instance `$_crud.<id>.sort`, overridable via `sortStatePath`); "local"/"controlled" values are accepted for schema compatibility but behave as scope-owned (docs/components/crud/design.md §4).',
-      editorType: 'select',
-      defaultValue: 'local',
-    },
-    sortStatePath: {
-      shape: { kind: 'string' },
-      displayName: 'Sort Path',
-      description: 'Scope path used when sort ownership is scope-based.',
-      editorType: 'path',
-    },
-    filterOwnership: {
-      shape: {
-        kind: 'union',
-        anyOf: [
-          { kind: 'literal', value: 'local' },
-          { kind: 'literal', value: 'controlled' },
-          { kind: 'literal', value: 'scope' },
-        ],
-      },
-      displayName: 'Filter Ownership',
-      description:
-        'Ownership mode for the filter slice. The CRUD composite always owns this state in scope (per-instance `$_crud.<id>.filters`, overridable via `filterStatePath`); "local"/"controlled" values are accepted for schema compatibility but behave as scope-owned (docs/components/crud/design.md §4).',
-      editorType: 'select',
-      defaultValue: 'local',
-    },
-    filterStatePath: {
-      shape: { kind: 'string' },
-      displayName: 'Filter Path',
-      description: 'Scope path used when filter ownership is scope-based.',
-      editorType: 'path',
-    },
-    columnSettings: {
-      shape: { kind: 'object', fields: {} },
-      displayName: 'Column Settings',
-      description:
-        'Column visibility and order management, including overlay and inline entry modes; drag reorder is still deferred.',
-      editorType: 'object',
-    },
-    polling: {
-      shape: { kind: 'object', fields: {} },
-      displayName: 'Polling',
-      description:
-        'Polling orchestration that toggles the upstream data-source controller start/stop based on the enabled gate and optional sourceId addressing.',
-      editorType: 'object',
-    },
-    filterTogglable: {
-      shape: {
-        kind: 'union',
-        anyOf: [{ kind: 'boolean' }, { kind: 'object', fields: {} }],
-      },
-      displayName: 'Filter Togglable',
-      description:
-        'Collapsible query region configuration; when truthy the queryForm region renders inside a collapse container with a toggle button.',
-      editorType: 'object',
-    },
-    pagination: {
-      shape: {
-        kind: 'object',
-        fields: {
-          mode: {
-            kind: 'union',
-            anyOf: [
-              { kind: 'literal', value: 'pages' },
-              { kind: 'literal', value: 'infinite' },
-            ],
-          },
-        },
-        optional: ['mode'],
-      },
-      displayName: 'Pagination',
-      description:
-        "Pagination mode: 'pages' (default, standard pagination) or 'infinite' (infinite scroll with IntersectionObserver).",
-      editorType: 'object',
-      defaultValue: 'pages',
-    },
-    loadAction: {
-      shape: { kind: 'unknown' },
-      displayName: 'Load Action',
-      description:
-        'Action dispatched to fetch CRUD data. Receives pagination/query/sort/filters bindings. Replaces the source + onRefresh pattern.',
-      editorType: 'object',
-    },
-    loadAllData: {
-      shape: { kind: 'boolean' },
-      displayName: 'Load All Data',
-      description:
-        'When true, fetch all data on first load and perform pagination/sort/filter client-side. Only effective when loadAction is set.',
-      editorType: 'boolean',
-      defaultValue: false,
-    },
-  },
   eventContracts: {
     onQuerySubmit: {
       displayName: 'Query Submit',
@@ -426,44 +122,393 @@ export const crudRendererDefinition: RegisteredRendererDefinition = {
   component: CrudRenderer,
   fields: [
     { key: 'name', kind: 'prop' },
-    { key: 'statusPath', kind: 'prop' },
-    { key: 'source', kind: 'prop', allowSource: true },
-    { key: 'columns', kind: 'prop' },
-    { key: 'listMode', kind: 'prop' },
+    {
+      key: 'statusPath',
+      kind: 'prop',
+      contract: {
+        shape: { kind: 'string' },
+        displayName: 'Status Path',
+        description: 'Publishes the readonly CRUD summary to scope.',
+        editorType: 'path',
+      },
+    },
+    {
+      key: 'source',
+      kind: 'prop',
+      allowSource: true,
+      contract: {
+        shape: {
+          kind: 'union',
+          anyOf: [
+            { kind: 'array', item: { kind: 'unknown' } },
+            { kind: 'unknown', description: 'Data source expression or source schema.' },
+          ],
+        },
+        displayName: 'Source',
+        description: 'Rows rendered by the CRUD table.',
+        editorType: 'source',
+      },
+    },
+    {
+      key: 'columns',
+      kind: 'prop',
+      contract: {
+        shape: {
+          kind: 'array',
+          item: {
+            kind: 'schema-definition',
+            fieldRules: {
+              label: {
+                kind: 'value-or-region',
+                regionKey: 'labelRegionKey',
+              },
+              buttons: {
+                kind: 'region',
+                regionKey: 'buttonsRegionKey',
+                params: ['record', 'index'],
+                isolate: true,
+              },
+              cell: {
+                kind: 'region',
+                regionKey: 'cellRegionKey',
+                params: ['record', 'index'],
+                isolate: true,
+              },
+              body: {
+                kind: 'region',
+                regionKey: 'quickEditBodyRegionKey',
+                regionKeySuffix: 'quickEditBody',
+              },
+              quickEdit: {
+                kind: 'region',
+                sourceKey: 'body',
+                regionKey: 'quickEditBodyRegionKey',
+                regionKeySuffix: 'quickEditBody',
+              },
+              searchable: {
+                kind: 'value-or-region',
+                regionKey: 'searchableRegionKey',
+              },
+            },
+          },
+        },
+        displayName: 'Columns',
+        description:
+          'Table column declarations, including operation, fixed, searchable, filterable, and quick-edit metadata.',
+        editorType: 'crud-columns',
+      },
+    },
+    {
+      key: 'listMode',
+      kind: 'prop',
+      contract: {
+        shape: {
+          kind: 'union',
+          anyOf: [
+            { kind: 'literal', value: 'table' },
+            { kind: 'literal', value: 'cards' },
+            { kind: 'literal', value: 'list' },
+          ],
+        },
+        displayName: 'List Mode',
+        description:
+          "Row rendering carrier: 'table' (default, zero-regression), 'cards', or 'list'. In cards/list modes CRUD self-holds selection and drives pagination.",
+        editorType: 'select',
+        defaultValue: 'table',
+      },
+    },
     { key: 'card', kind: 'region', params: ['item', 'index'], isolate: false },
     { key: 'item', kind: 'region', params: ['item', 'index'], isolate: false },
-    { key: 'rowKey', kind: 'prop' },
-    { key: 'selection', kind: 'prop' },
-    { key: 'selectionField', kind: 'prop' },
-    { key: 'selectionOwnership', kind: 'prop' },
-    { key: 'selectionStatePath', kind: 'prop' },
-    { key: 'paginationOwnership', kind: 'prop' },
-    { key: 'paginationStatePath', kind: 'prop' },
-    { key: 'sortOwnership', kind: 'prop' },
-    { key: 'sortStatePath', kind: 'prop' },
-    { key: 'filterOwnership', kind: 'prop' },
-    { key: 'filterStatePath', kind: 'prop' },
-    { key: 'pageField', kind: 'prop' },
-    { key: 'pageSizeField', kind: 'prop' },
-    { key: 'defaultParams', kind: 'prop' },
+    {
+      key: 'rowKey',
+      kind: 'prop',
+      contract: {
+        shape: { kind: 'string' },
+        displayName: 'Row Key',
+        description: 'Stable record key field used by CRUD/table selection and row identity.',
+        editorType: 'text',
+      },
+    },
+    {
+      key: 'selection',
+      kind: 'prop',
+      contract: {
+        shape: { kind: 'unknown' },
+        displayName: 'Selection',
+        description:
+          'Row selection enablement & config: true / "multiple" (checkbox), "single" (radio), or a config object. Setting it (truthy) enables the selection column; omit to disable. Config fields include keepOnPageChange, maxSelectionLength, checkableWhen, toggleOnRowClick, and selectAllMode ("all" default | "page" — scopes the header select-all to the current page).',
+        editorType: 'object',
+      },
+    },
+    {
+      key: 'selectionField',
+      kind: 'prop',
+      contract: {
+        shape: { kind: 'string' },
+        displayName: 'Selection Field',
+        description:
+          'Batch-action payload field carrying the selected row keys (AMIS-parity `${ids}` template). Default: ids.',
+        editorType: 'text',
+      },
+    },
+    {
+      key: 'selectionOwnership',
+      kind: 'prop',
+      contract: {
+        shape: {
+          kind: 'union',
+          anyOf: [
+            { kind: 'literal', value: 'local' },
+            { kind: 'literal', value: 'controlled' },
+            { kind: 'literal', value: 'scope' },
+          ],
+        },
+        displayName: 'Selection Ownership',
+        description:
+          'Ownership mode for the selection slice. The CRUD composite always owns this state in scope (per-instance `$_crud.<id>.selection`, overridable via `selectionStatePath`); "local"/"controlled" values are accepted for schema compatibility but behave as scope-owned (docs/components/crud/design.md §4).',
+        editorType: 'select',
+        defaultValue: 'local',
+      },
+    },
+    {
+      key: 'selectionStatePath',
+      kind: 'prop',
+      contract: {
+        shape: { kind: 'string' },
+        displayName: 'Selection Path',
+        description: 'Scope path used when selection ownership is scope-based.',
+        editorType: 'path',
+      },
+    },
+    {
+      key: 'paginationOwnership',
+      kind: 'prop',
+      contract: {
+        shape: {
+          kind: 'union',
+          anyOf: [
+            { kind: 'literal', value: 'local' },
+            { kind: 'literal', value: 'controlled' },
+            { kind: 'literal', value: 'scope' },
+          ],
+        },
+        displayName: 'Pagination Ownership',
+        description:
+          'Ownership mode for the pagination slice. The CRUD composite always owns this state in scope (per-instance `$_crud.<id>.pagination`, overridable via `paginationStatePath`); "local"/"controlled" values are accepted for schema compatibility but behave as scope-owned (docs/components/crud/design.md §4).',
+        editorType: 'select',
+        defaultValue: 'local',
+      },
+    },
+    {
+      key: 'paginationStatePath',
+      kind: 'prop',
+      contract: {
+        shape: { kind: 'string' },
+        displayName: 'Pagination Path',
+        description: 'Scope path used when pagination ownership is scope-based.',
+        editorType: 'path',
+      },
+    },
+    {
+      key: 'sortOwnership',
+      kind: 'prop',
+      contract: {
+        shape: {
+          kind: 'union',
+          anyOf: [
+            { kind: 'literal', value: 'local' },
+            { kind: 'literal', value: 'controlled' },
+            { kind: 'literal', value: 'scope' },
+          ],
+        },
+        displayName: 'Sort Ownership',
+        description:
+          'Ownership mode for the sort slice. The CRUD composite always owns this state in scope (per-instance `$_crud.<id>.sort`, overridable via `sortStatePath`); "local"/"controlled" values are accepted for schema compatibility but behave as scope-owned (docs/components/crud/design.md §4).',
+        editorType: 'select',
+        defaultValue: 'local',
+      },
+    },
+    {
+      key: 'sortStatePath',
+      kind: 'prop',
+      contract: {
+        shape: { kind: 'string' },
+        displayName: 'Sort Path',
+        description: 'Scope path used when sort ownership is scope-based.',
+        editorType: 'path',
+      },
+    },
+    {
+      key: 'filterOwnership',
+      kind: 'prop',
+      contract: {
+        shape: {
+          kind: 'union',
+          anyOf: [
+            { kind: 'literal', value: 'local' },
+            { kind: 'literal', value: 'controlled' },
+            { kind: 'literal', value: 'scope' },
+          ],
+        },
+        displayName: 'Filter Ownership',
+        description:
+          'Ownership mode for the filter slice. The CRUD composite always owns this state in scope (per-instance `$_crud.<id>.filters`, overridable via `filterStatePath`); "local"/"controlled" values are accepted for schema compatibility but behave as scope-owned (docs/components/crud/design.md §4).',
+        editorType: 'select',
+        defaultValue: 'local',
+      },
+    },
+    {
+      key: 'filterStatePath',
+      kind: 'prop',
+      contract: {
+        shape: { kind: 'string' },
+        displayName: 'Filter Path',
+        description: 'Scope path used when filter ownership is scope-based.',
+        editorType: 'path',
+      },
+    },
+    {
+      key: 'pageField',
+      kind: 'prop',
+      contract: {
+        shape: { kind: 'string' },
+        displayName: 'Page Field',
+        description: 'Request/query field name used for the current page parameter.',
+        editorType: 'text',
+      },
+    },
+    {
+      key: 'pageSizeField',
+      kind: 'prop',
+      contract: {
+        shape: { kind: 'string' },
+        displayName: 'Page Size Field',
+        description: 'Request/query field name used for the page size parameter.',
+        editorType: 'text',
+      },
+    },
+    {
+      key: 'defaultParams',
+      kind: 'prop',
+      contract: {
+        shape: { kind: 'object', fields: {} },
+        displayName: 'Default Params',
+        description: 'Default query/refresh parameters merged into the CRUD workflow input.',
+        editorType: 'object',
+      },
+    },
     { key: 'syncLocation', kind: 'prop' },
-    { key: 'columnSettings', kind: 'prop' },
+    {
+      key: 'columnSettings',
+      kind: 'prop',
+      contract: {
+        shape: { kind: 'object', fields: {} },
+        displayName: 'Column Settings',
+        description:
+          'Column visibility and order management, including overlay and inline entry modes; drag reorder is still deferred.',
+        editorType: 'object',
+      },
+    },
     { key: 'responsive', kind: 'prop' },
     { key: 'autoClearSelectionOnRefresh', kind: 'prop' },
     { key: 'autoGenerateQueryForm', kind: 'prop' },
     { key: 'clientMode', kind: 'prop' },
-    { key: 'polling', kind: 'prop' },
-    { key: 'filterTogglable', kind: 'prop' },
-    { key: 'pagination', kind: 'prop' },
-    { key: 'quickSaveAction', kind: 'prop' },
-    { key: 'quickSaveItemAction', kind: 'prop' },
+    {
+      key: 'polling',
+      kind: 'prop',
+      contract: {
+        shape: { kind: 'object', fields: {} },
+        displayName: 'Polling',
+        description:
+          'Polling orchestration that toggles the upstream data-source controller start/stop based on the enabled gate and optional sourceId addressing.',
+        editorType: 'object',
+      },
+    },
+    {
+      key: 'filterTogglable',
+      kind: 'prop',
+      contract: {
+        shape: {
+          kind: 'union',
+          anyOf: [{ kind: 'boolean' }, { kind: 'object', fields: {} }],
+        },
+        displayName: 'Filter Togglable',
+        description:
+          'Collapsible query region configuration; when truthy the queryForm region renders inside a collapse container with a toggle button.',
+        editorType: 'object',
+      },
+    },
+    {
+      key: 'pagination',
+      kind: 'prop',
+      contract: {
+        shape: {
+          kind: 'object',
+          fields: {
+            mode: {
+              kind: 'union',
+              anyOf: [
+                { kind: 'literal', value: 'pages' },
+                { kind: 'literal', value: 'infinite' },
+              ],
+            },
+          },
+          optional: ['mode'],
+        },
+        displayName: 'Pagination',
+        description:
+          "Pagination mode: 'pages' (default, standard pagination) or 'infinite' (infinite scroll with IntersectionObserver).",
+        editorType: 'object',
+        defaultValue: 'pages',
+      },
+    },
+    {
+      key: 'quickSaveAction',
+      kind: 'prop',
+      contract: {
+        shape: { kind: 'schema-definition', fieldRules: {}, actionValue: true },
+        displayName: 'Quick Save Action',
+        description:
+          'Action dispatched for batch quick-save (ActionSchema). Template-preserved; row scope evaluated at dispatch.',
+      },
+    },
+    {
+      key: 'quickSaveItemAction',
+      kind: 'prop',
+      contract: {
+        shape: { kind: 'schema-definition', fieldRules: {}, actionValue: true },
+        displayName: 'Quick Save Item Action',
+        description:
+          'Action dispatched per row on quick save (ActionSchema). Template-preserved; row scope evaluated at dispatch.',
+      },
+    },
     { key: 'loadAction', kind: 'reaction' },
-    { key: 'loadAllData', kind: 'prop' },
+    {
+      key: 'loadAllData',
+      kind: 'prop',
+      contract: {
+        shape: { kind: 'boolean' },
+        displayName: 'Load All Data',
+        description:
+          'When true, fetch all data on first load and perform pagination/sort/filter client-side. Only effective when loadAction is set.',
+        editorType: 'boolean',
+        defaultValue: false,
+      },
+    },
     { key: 'dataStatePath', kind: 'prop' },
     { key: 'autoJumpToTopOnPagerChange', kind: 'prop', valueType: 'boolean' },
     { key: 'totalField', kind: 'prop' },
     { key: 'hideQuickSaveBtn', kind: 'prop', valueType: 'boolean' },
-    { key: 'queryForm', kind: 'prop' },
+    {
+      key: 'queryForm',
+      kind: 'prop',
+      contract: {
+        shape: { kind: 'object', fields: {} },
+        displayName: 'Query Form',
+        description: 'Optional embedded query form configuration or migrated AMIS filter form.',
+        editorType: 'object',
+      },
+    },
     { key: 'queryFormRegion', kind: 'region', regionKey: 'queryFormRegion' },
     { key: 'toolbar', kind: 'region' },
     { key: 'listActions', kind: 'region' },
@@ -477,5 +522,57 @@ export const crudRendererDefinition: RegisteredRendererDefinition = {
     { key: 'onSelectionChange', kind: 'event' },
     { key: 'onRefresh', kind: 'event' },
     { key: 'onError', kind: 'event' },
+    {
+      key: 'toolbar',
+      kind: 'prop',
+      contract: {
+        shape: { kind: 'unknown' },
+        displayName: 'Toolbar',
+        description: 'Top toolbar region or migrated headerToolbar content.',
+        editorType: 'region',
+      },
+    },
+    {
+      key: 'listActions',
+      kind: 'prop',
+      contract: {
+        shape: { kind: 'unknown' },
+        displayName: 'List Actions',
+        description:
+          'List-level actions such as create, refresh, export, or selection-driven batch actions.',
+        editorType: 'region',
+      },
+    },
+    {
+      key: 'footerToolbar',
+      kind: 'prop',
+      contract: {
+        shape: { kind: 'unknown' },
+        displayName: 'Footer Toolbar',
+        description: 'Bottom toolbar region or migrated footerToolbar content.',
+        editorType: 'region',
+      },
+    },
+    {
+      key: 'toolbarLayout',
+      kind: 'prop',
+      contract: {
+        shape: { kind: 'object', fields: {} },
+        displayName: 'Toolbar Layout',
+        description: 'Structured toolbar blocks such as pagination, statistics, and columns toggler.',
+        editorType: 'object',
+      },
+    },
+    {
+      key: 'loadAction',
+      kind: 'prop',
+      contract: {
+        shape: { kind: 'unknown' },
+        displayName: 'Load Action',
+        description:
+          'Action dispatched to fetch CRUD data. Receives pagination/query/sort/filters bindings. Replaces the source + onRefresh pattern.',
+        editorType: 'object',
+      },
+    },
   ],
 };

@@ -27,28 +27,22 @@ const flexRenderer: RegisteredRendererDefinition = {
   type: 'flex',
   sourcePackage: '@nop-chaos/flux-renderers-basic',
   component: FlexRenderer,
-  propContracts: {
-    direction: {
+  fields: [
+    { key: 'body', kind: 'region', regionKey: 'body' },
+    { key: 'direction', kind: 'prop', contract: {
       displayName: 'Direction',
       editorType: 'select',
       shape: { kind: 'union', anyOf: FLEX_DIRECTION_LITERALS.map((v) => ({ kind: 'literal', value: v })) },
-    },
-    align: {
+    } },
+    { key: 'wrap', kind: 'prop', valueType: 'boolean', contract: { displayName: 'Wrap', shape: { kind: 'boolean' } } },
+    { key: 'align', kind: 'prop', contract: {
       displayName: 'Align',
       shape: { kind: 'union', anyOf: FLEX_ALIGN_LITERALS.map((v) => ({ kind: 'literal', value: v })) },
-    },
-    justify: {
+    } },
+    { key: 'justify', kind: 'prop', contract: {
       displayName: 'Justify',
       shape: { kind: 'union', anyOf: FLEX_JUSTIFY_LITERALS.map((v) => ({ kind: 'literal', value: v })) },
-    },
-    wrap: { displayName: 'Wrap', shape: { kind: 'boolean' } },
-  },
-  fields: [
-    { key: 'body', kind: 'region', regionKey: 'body' },
-    { key: 'direction', kind: 'prop' },
-    { key: 'wrap', kind: 'prop', valueType: 'boolean' },
-    { key: 'align', kind: 'prop' },
-    { key: 'justify', kind: 'prop' },
+    } },
   ],
 };
 
@@ -56,22 +50,17 @@ const containerRenderer: RegisteredRendererDefinition = {
   type: 'container',
   sourcePackage: '@nop-chaos/flux-renderers-basic',
   component: ContainerRenderer,
-  propContracts: {
-    direction: {
-      displayName: 'Direction',
-      shape: { kind: 'union', anyOf: [{ kind: 'literal', value: 'row' }, { kind: 'literal', value: 'column' }] },
-    },
-    align: {
-      displayName: 'Align',
-      shape: { kind: 'union', anyOf: ['start', 'center', 'end', 'stretch'].map((v) => ({ kind: 'literal', value: v })) },
-    },
-    wrap: { displayName: 'Wrap', shape: { kind: 'boolean' } },
-  },
   fields: [
     { key: 'body', kind: 'region', regionKey: 'body' },
-    { key: 'direction', kind: 'prop' },
-    { key: 'align', kind: 'prop' },
-    { key: 'wrap', kind: 'prop', valueType: 'boolean' },
+    { key: 'direction', kind: 'prop', contract: {
+      displayName: 'Direction',
+      shape: { kind: 'union', anyOf: [{ kind: 'literal', value: 'row' }, { kind: 'literal', value: 'column' }] },
+    } },
+    { key: 'align', kind: 'prop', contract: {
+      displayName: 'Align',
+      shape: { kind: 'union', anyOf: ['start', 'center', 'end', 'stretch'].map((v) => ({ kind: 'literal', value: v })) },
+    } },
+    { key: 'wrap', kind: 'prop', valueType: 'boolean', contract: { displayName: 'Wrap', shape: { kind: 'boolean' } } },
   ],
 };
 

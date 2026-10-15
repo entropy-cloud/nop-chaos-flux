@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { resolveRendererPropContracts } from '@nop-chaos/flux-core';
 import { basicRendererDefinitions } from '../index.js';
 
 describe('basic renderer static contracts', () => {
@@ -7,7 +8,7 @@ describe('basic renderer static contracts', () => {
 
     expect(button?.rendererClass).toBe('instance-renderer');
     expect(button?.rendererTraits).toContain('trigger');
-    expect(button?.propContracts?.label?.shape.kind).toBe('string');
+    expect(resolveRendererPropContracts(button!)?.label?.shape.kind).toBe('string');
     expect(button?.eventContracts?.onClick?.displayName).toBe('Click');
     expect(button?.hostContract).toBeUndefined();
   });
@@ -15,8 +16,9 @@ describe('basic renderer static contracts', () => {
   it('declares tabs finite option prop contracts', () => {
     const tabs = basicRendererDefinitions.find((definition) => definition.type === 'tabs');
 
-    expect(tabs?.propContracts?.variant?.shape.kind).toBe('union');
-    expect(tabs?.propContracts?.orientation?.shape.kind).toBe('union');
+    const tabsContracts = resolveRendererPropContracts(tabs!);
+    expect(tabsContracts?.variant?.shape.kind).toBe('union');
+    expect(tabsContracts?.orientation?.shape.kind).toBe('union');
   });
 
   it('publishes tabs component capability contracts for the view-management handle family', () => {

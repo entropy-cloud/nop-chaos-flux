@@ -35,7 +35,7 @@
 - RM-1. 类型层收口（propSchema 死字段删除、CompiledRendererContract 派生化、registry 入参类型化）: `done`（plan `docs/plans/603-rm1-type-layer-plan.md`，closure audit agent_0714ce30 approved 2026-10-15；执行发现：CompiledRendererContract 派生形态受型变约束收敛为"S 仅协变槽+非泛型 ValidationContributor 引用+非泛型键 Pick"，涟漪约 185 文件声明级清扫，`pnpm -r typecheck` 42/42 口径入 plan）
 - RM-2. 帧族收敛（wrap/frameRootTag/frameWrap 单权威路径 + FrameWrapMode 词表归一）: `done`（plan `docs/plans/604-rm2-frame-family-plan.md`，closure audit agent_c198acc9 approved 2026-10-15；definition 级 frameWrap 经 resolver 三参单路径生效，B3 fieldset 语义自此真实生效[此前死声明，分析报告 A5/roadmap 基线两处已就地勘误]）
 - RM-3. fields+propContracts 合并·阶段一（新形态落地 + 编译器/门禁双读）: `done`（plan `docs/plans/605-rm3-field-contract-dual-read-plan.md`，closure audit agent_e5ad2fd8 approved 2026-10-15；新形态=fields 条目 contract 成员[shape 必填]，集中双读 helper resolveRendererPropContracts，七消费位切换含编译侧 schema-definition 分类；RM-4 承接全量迁移+旧形态删除）
-- RM-4. fields+propContracts 合并·阶段二（全量迁移 + 旧形态删除）: `todo`
+- RM-4. fields+propContracts 合并·阶段二（全量迁移 + 旧形态删除）: `done`（plan `docs/plans/606-rm4-propcontracts-removal-plan.md`，closure audit agent_2bcd8d11 有条件批准→M1 coverage 双死分支删/M2 docs 三处单源终态清残→复验绿；84 声明文件迁移+~24 只读位，结构等价快照 155 renderer 逐字节零差异[判别变异自证]，旧形态全删[Shape 字段/helper 底座/utils 分支/coverage 死分支/finite-prop-contracts 8 项重锚]，flux-guide schema.d.ts 重生成；contract-honesty 零改动裁定在 plan）
 - RM-5. 事件契约单源化（eventContracts 收敛至字段条目）: `todo`
 - RM-6. scope 符号单源化（scopeExportContracts+injectedLocals 合并）: `todo`
 - RM-7. 编译结构只读硬化 + 框架内部 raw schema 读迁移（name/modalContainer）: `todo`
@@ -66,7 +66,7 @@
 | RM-1 类型层收口            | `done` | 分析报告 A1/B6/B7/C                   | RM-0       | contract 门禁                              | [603](../plans/603-rm1-type-layer-plan.md)               |
 | RM-2 帧族收敛              | `done` | 分析报告 A5；plan 460 B3 语义         | RM-1       | strict validation 语料、判别变异           | [604](../plans/604-rm2-frame-family-plan.md)             |
 | RM-3 双声明合并·一         | `done` | 分析报告 A2/A3                        | RM-1       | schema-prop-coverage、defineRendererFamily | [605](../plans/605-rm3-field-contract-dual-read-plan.md) |
-| RM-4 双声明合并·二         | `todo` | 同上                                  | RM-3       | contract-honesty、validate-pages --strict  | —                                                        |
+| RM-4 双声明合并·二         | `done` | 同上                                  | RM-3       | contract-honesty、validate-pages --strict  | [606](../plans/606-rm4-propcontracts-removal-plan.md)    |
 | RM-5 事件契约单源化        | `todo` | 分析报告 A3                           | RM-4       | contract-honesty                           | —                                                        |
 | RM-6 scope 符号单源化      | `todo` | 分析报告 A4                           | RM-3       | symbol-helpers 测试                        | —                                                        |
 | RM-7 只读硬化+raw 读迁移   | `todo` | 分析报告 §5.2/5.4 #2#3                | RM-0       | node-runtime 解析缓存管线                  | —                                                        |

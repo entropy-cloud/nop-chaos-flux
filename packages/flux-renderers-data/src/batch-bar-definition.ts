@@ -61,42 +61,53 @@ export const batchBarRendererDefinition: RegisteredRendererDefinition = {
   category: 'data',
   sourcePackage: '@nop-chaos/flux-renderers-data',
   schemaValidator: validateBatchBarSchema,
-  propContracts: {
-    selectionPath: {
-      shape: { kind: 'string' },
-      displayName: 'Selection Path',
-      description:
-        'Raw scope path (no ${}) of the selection string array. Crud host: "$crud.selectedRowKeys" inside toolbar/listActions/footerToolbar; table host: the table selectionStatePath (e.g. "issueSelection") — the table writes it only under selectionOwnership:"scope" (the default "local" never writes it, so the bar renders nothing with a one-time dev warn).',
-      editorType: 'path',
-    },
-    countTemplate: {
-      shape: { kind: 'string' },
-      displayName: 'Count Template',
-      description:
-        "Count label template evaluated against a child scope { count, selectedRowKeys } (e.g. '已选择 ${count} 项'). Defaults to the i18n selected-count message. Evaluation failure falls back to the raw count (dev warn).",
-      editorType: 'text',
-    },
-    clearTarget: {
-      shape: { kind: 'string' },
-      displayName: 'Clear Target',
-      description:
-        'Component id of the owning crud/table. Declaring it renders the built-in clear button; resolution prefers the crud clearSelection handle, then the table setSelection handle with an empty set. Missing target = no-op + dev warn.',
-      editorType: 'text',
-    },
-    clearLabel: {
-      shape: { kind: 'string' },
-      displayName: 'Clear Label',
-      description:
-        'Label of the built-in clear button (defaults to the i18n clear-selection message).',
-      editorType: 'text',
-    },
-  },
   component: BatchBarRenderer,
   fields: [
-    { key: 'selectionPath', kind: 'prop' },
-    { key: 'countTemplate', kind: 'prop', lazyEval: true },
-    { key: 'clearTarget', kind: 'prop' },
-    { key: 'clearLabel', kind: 'prop' },
+    {
+      key: 'selectionPath',
+      kind: 'prop',
+      contract: {
+        shape: { kind: 'string' },
+        displayName: 'Selection Path',
+        description:
+          'Raw scope path (no ${}) of the selection string array. Crud host: "$crud.selectedRowKeys" inside toolbar/listActions/footerToolbar; table host: the table selectionStatePath (e.g. "issueSelection") — the table writes it only under selectionOwnership:"scope" (the default "local" never writes it, so the bar renders nothing with a one-time dev warn).',
+        editorType: 'path',
+      },
+    },
+    {
+      key: 'countTemplate',
+      kind: 'prop',
+      lazyEval: true,
+      contract: {
+        shape: { kind: 'string' },
+        displayName: 'Count Template',
+        description:
+          "Count label template evaluated against a child scope { count, selectedRowKeys } (e.g. '已选择 ${count} 项'). Defaults to the i18n selected-count message. Evaluation failure falls back to the raw count (dev warn).",
+        editorType: 'text',
+      },
+    },
+    {
+      key: 'clearTarget',
+      kind: 'prop',
+      contract: {
+        shape: { kind: 'string' },
+        displayName: 'Clear Target',
+        description:
+          'Component id of the owning crud/table. Declaring it renders the built-in clear button; resolution prefers the crud clearSelection handle, then the table setSelection handle with an empty set. Missing target = no-op + dev warn.',
+        editorType: 'text',
+      },
+    },
+    {
+      key: 'clearLabel',
+      kind: 'prop',
+      contract: {
+        shape: { kind: 'string' },
+        displayName: 'Clear Label',
+        description:
+          'Label of the built-in clear button (defaults to the i18n clear-selection message).',
+        editorType: 'text',
+      },
+    },
     { key: 'actions', kind: 'region' },
   ],
 };

@@ -75,100 +75,6 @@ export const mapRendererDefinitions: RegisteredRendererDefinition[] = [
     sourcePackage: '@nop-chaos/flux-renderers-map',
     component: LazyMapRenderer,
     schemaValidator: validateMapSchema,
-    propContracts: {
-      mapType: {
-        shape: {
-          kind: 'union',
-          anyOf: [
-            { kind: 'literal', value: 'pin' },
-            { kind: 'literal', value: 'region' },
-          ],
-        },
-        displayName: 'Map Type',
-        description: 'Dual mode: pin (point markers + OpenLayers built-in cluster) | region (GeoJSON choropleth).',
-        editorType: 'select',
-        defaultValue: 'pin',
-      },
-      basemap: {
-        shape: { kind: 'object', fields: {} },
-        displayName: 'Basemap',
-        description:
-          'Tile source: { url, attribution, type: xyz|wms }. Defaults to OSM xyz. Tile keys live in the url, injected via schema/RendererEnv (no hardcoded keys).',
-        editorType: 'object',
-      },
-      regionData: {
-        shape: { kind: 'array', item: { kind: 'object', fields: {} } },
-        displayName: 'Region Data',
-        description: 'Region-mode values: [{ name, value }]. Evaluated via scope/data-source expressions.',
-        editorType: 'expression',
-      },
-      geojsonName: {
-        shape: {
-          kind: 'union',
-          anyOf: [
-            { kind: 'literal', value: 'china-provinces' },
-            { kind: 'literal', value: 'world-countries' },
-          ],
-        },
-        displayName: 'Builtin GeoJSON',
-        description:
-          'Builtin boundary data shipped inside the package (src/map-data/*.json, loaded with the lazy chunk). Used when geojsonSource is absent.',
-        editorType: 'select',
-        defaultValue: 'china-provinces',
-      },
-      geojsonSource: {
-        shape: { kind: 'schema-definition', fieldRules: {}, actionValue: true },
-        displayName: 'GeoJSON Source',
-        description:
-          'Action loading custom boundary data (helpers.dispatch → FeatureCollection sanitize → cached reuse). Overrides geojsonName when present. Executed through RendererEnv (no direct fetch).',
-      },
-      pinData: {
-        shape: { kind: 'array', item: { kind: 'object', fields: {} } },
-        displayName: 'Pin Data',
-        description: 'Pin-mode points: [{ name, lat, lng, value? }]. Evaluated via scope/data-source expressions.',
-        editorType: 'expression',
-      },
-      cluster: {
-        shape: { kind: 'boolean' },
-        displayName: 'Cluster',
-        description: 'Aggregate nearby pins with the OpenLayers built-in Cluster source.',
-        editorType: 'switch',
-        defaultValue: true,
-      },
-      visualMap: {
-        shape: { kind: 'object', fields: {} },
-        displayName: 'Visual Map',
-        description:
-          'Color scale: { min?, max?, colors?, defaultColor? }. Values interpolate across colors, clamped outside the range.',
-        editorType: 'object',
-      },
-      center: {
-        shape: { kind: 'array', item: { kind: 'number' } },
-        displayName: 'Center',
-        description: 'Initial view center [lng, lat].',
-        editorType: 'expression',
-      },
-      zoom: {
-        shape: { kind: 'number' },
-        displayName: 'Zoom',
-        description: 'Initial zoom level. Defaults to 2 (world) / 4 (china-provinces).',
-        editorType: 'number',
-      },
-      height: {
-        shape: { kind: 'number' },
-        displayName: 'Height',
-        description: 'Container height in px. Defaults to 400.',
-        editorType: 'number',
-        defaultValue: 400,
-      },
-      loading: {
-        shape: { kind: 'boolean' },
-        displayName: 'Loading',
-        description: 'External loading flag (data-source driven). Renders the loading slot when true.',
-        editorType: 'switch',
-        defaultValue: false,
-      },
-    },
     eventContracts: {
       onClick: {
         displayName: 'On Click',
@@ -193,18 +99,148 @@ export const mapRendererDefinitions: RegisteredRendererDefinition[] = [
       },
     },
     fields: [
-      { key: 'mapType', kind: 'prop' },
-      { key: 'basemap', kind: 'prop' },
-      { key: 'regionData', kind: 'prop' },
-      { key: 'geojsonName', kind: 'prop' },
-      { key: 'geojsonSource', kind: 'prop' },
-      { key: 'pinData', kind: 'prop' },
-      { key: 'cluster', kind: 'prop', valueType: 'boolean' },
-      { key: 'visualMap', kind: 'prop' },
-      { key: 'center', kind: 'prop' },
-      { key: 'zoom', kind: 'prop' },
-      { key: 'height', kind: 'prop' },
-      { key: 'loading', kind: 'prop', valueType: 'boolean' },
+      {
+        key: 'mapType',
+        kind: 'prop',
+        contract: {
+          shape: {
+            kind: 'union',
+            anyOf: [
+              { kind: 'literal', value: 'pin' },
+              { kind: 'literal', value: 'region' },
+            ],
+          },
+          displayName: 'Map Type',
+          description: 'Dual mode: pin (point markers + OpenLayers built-in cluster) | region (GeoJSON choropleth).',
+          editorType: 'select',
+          defaultValue: 'pin',
+        },
+      },
+      {
+        key: 'basemap',
+        kind: 'prop',
+        contract: {
+          shape: { kind: 'object', fields: {} },
+          displayName: 'Basemap',
+          description:
+            'Tile source: { url, attribution, type: xyz|wms }. Defaults to OSM xyz. Tile keys live in the url, injected via schema/RendererEnv (no hardcoded keys).',
+          editorType: 'object',
+        },
+      },
+      {
+        key: 'regionData',
+        kind: 'prop',
+        contract: {
+          shape: { kind: 'array', item: { kind: 'object', fields: {} } },
+          displayName: 'Region Data',
+          description: 'Region-mode values: [{ name, value }]. Evaluated via scope/data-source expressions.',
+          editorType: 'expression',
+        },
+      },
+      {
+        key: 'geojsonName',
+        kind: 'prop',
+        contract: {
+          shape: {
+            kind: 'union',
+            anyOf: [
+              { kind: 'literal', value: 'china-provinces' },
+              { kind: 'literal', value: 'world-countries' },
+            ],
+          },
+          displayName: 'Builtin GeoJSON',
+          description:
+            'Builtin boundary data shipped inside the package (src/map-data/*.json, loaded with the lazy chunk). Used when geojsonSource is absent.',
+          editorType: 'select',
+          defaultValue: 'china-provinces',
+        },
+      },
+      {
+        key: 'geojsonSource',
+        kind: 'prop',
+        contract: {
+          shape: { kind: 'schema-definition', fieldRules: {}, actionValue: true },
+          displayName: 'GeoJSON Source',
+          description:
+            'Action loading custom boundary data (helpers.dispatch → FeatureCollection sanitize → cached reuse). Overrides geojsonName when present. Executed through RendererEnv (no direct fetch).',
+        },
+      },
+      {
+        key: 'pinData',
+        kind: 'prop',
+        contract: {
+          shape: { kind: 'array', item: { kind: 'object', fields: {} } },
+          displayName: 'Pin Data',
+          description: 'Pin-mode points: [{ name, lat, lng, value? }]. Evaluated via scope/data-source expressions.',
+          editorType: 'expression',
+        },
+      },
+      {
+        key: 'cluster',
+        kind: 'prop',
+        valueType: 'boolean',
+        contract: {
+          shape: { kind: 'boolean' },
+          displayName: 'Cluster',
+          description: 'Aggregate nearby pins with the OpenLayers built-in Cluster source.',
+          editorType: 'switch',
+          defaultValue: true,
+        },
+      },
+      {
+        key: 'visualMap',
+        kind: 'prop',
+        contract: {
+          shape: { kind: 'object', fields: {} },
+          displayName: 'Visual Map',
+          description:
+            'Color scale: { min?, max?, colors?, defaultColor? }. Values interpolate across colors, clamped outside the range.',
+          editorType: 'object',
+        },
+      },
+      {
+        key: 'center',
+        kind: 'prop',
+        contract: {
+          shape: { kind: 'array', item: { kind: 'number' } },
+          displayName: 'Center',
+          description: 'Initial view center [lng, lat].',
+          editorType: 'expression',
+        },
+      },
+      {
+        key: 'zoom',
+        kind: 'prop',
+        contract: {
+          shape: { kind: 'number' },
+          displayName: 'Zoom',
+          description: 'Initial zoom level. Defaults to 2 (world) / 4 (china-provinces).',
+          editorType: 'number',
+        },
+      },
+      {
+        key: 'height',
+        kind: 'prop',
+        contract: {
+          shape: { kind: 'number' },
+          displayName: 'Height',
+          description: 'Container height in px. Defaults to 400.',
+          editorType: 'number',
+          defaultValue: 400,
+        },
+      },
+      {
+        key: 'loading',
+        kind: 'prop',
+        valueType: 'boolean',
+        contract: {
+          shape: { kind: 'boolean' },
+          displayName: 'Loading',
+          description: 'External loading flag (data-source driven). Renders the loading slot when true.',
+          editorType: 'switch',
+          defaultValue: false,
+        },
+      },
       { key: 'empty', kind: 'value-or-region', regionKey: 'empty' },
       { key: 'onClick', kind: 'event' },
     ],

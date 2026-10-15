@@ -241,4 +241,4 @@ calendar（`view: "month"`）新增 `monthShape` 形态档：`resource`（缺省
 
 ## Page Designer（标准页面设计器，L6 S2 MVP）
 
-playground `#/page-designer` 提供可视化编排任意 flux JSON 页面的标准设计器 MVP：palette（registry 三条过滤：domain-host 排除/无 defaultSchema 排除/白名单）+ 真渲染画布（覆盖层选中/拖放，`data-psid` 锚点投影）+ inspector（`buildInspectorSchema` 由 propContracts 自动生成；提交走命令事务=1 undo 步）+ JSON 源码视图（xui:sid 导出剥离 round-trip）。六域设计器产物为不透明叶子（仅 propContracts 级编辑）。契约：`docs/components/page-designer/design-architecture.md`。
+playground `#/page-designer` 提供可视化编排任意 flux JSON 页面的标准设计器 MVP：palette（registry 三条过滤：domain-host 排除/无 defaultSchema 排除/白名单）+ 真渲染画布（覆盖层选中/拖放，`data-psid` 锚点投影）+ inspector（`buildInspectorSchema` 由 `fields` 内联 `contract`（`resolveRendererPropContracts` 视图）自动生成；提交走命令事务=1 undo 步）+ JSON 源码视图（xui:sid 导出剥离 round-trip）。六域设计器产物为不透明叶子（仅字段 contract 级编辑）。契约：`docs/components/page-designer/design-architecture.md`。

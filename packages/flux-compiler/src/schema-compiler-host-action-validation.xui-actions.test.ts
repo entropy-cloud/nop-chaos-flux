@@ -8,8 +8,7 @@ describe('host action validation xui:actions validation', () => {
     const compiler = createCompiler({
       type: 'strict-text',
       component: () => null,
-      propContracts: { text: { shape: { kind: 'unknown' }, displayName: 'text' } },
-      fields: [{ key: 'text', kind: 'prop' }],
+      fields: [{ key: 'text', kind: 'prop', contract: { shape: { kind: 'unknown' }, displayName: 'text' } }],
     });
 
     expect(
@@ -33,8 +32,7 @@ describe('host action validation xui:actions validation', () => {
     const compiler = createCompiler({
       type: 'strict-text',
       component: () => null,
-      propContracts: { text: { shape: { kind: 'unknown' }, displayName: 'text' } },
-      fields: [{ key: 'text', kind: 'prop' }],
+      fields: [{ key: 'text', kind: 'prop', contract: { shape: { kind: 'unknown' }, displayName: 'text' } }],
     });
 
     expect(
@@ -58,8 +56,7 @@ describe('host action validation xui:actions validation', () => {
     const compiler = createCompiler({
       type: 'strict-text',
       component: () => null,
-      propContracts: { text: { shape: { kind: 'unknown' }, displayName: 'text' } },
-      fields: [{ key: 'text', kind: 'prop' }],
+      fields: [{ key: 'text', kind: 'prop', contract: { shape: { kind: 'unknown' }, displayName: 'text' } }],
     });
 
     expect(
@@ -83,8 +80,7 @@ describe('host action validation xui:actions validation', () => {
     const compiler = createCompiler({
       type: 'strict-text',
       component: () => null,
-      propContracts: { text: { shape: { kind: 'unknown' }, displayName: 'text' } },
-      fields: [{ key: 'text', kind: 'prop' }],
+      fields: [{ key: 'text', kind: 'prop', contract: { shape: { kind: 'unknown' }, displayName: 'text' } }],
     });
 
     expect(
@@ -111,8 +107,7 @@ describe('host action validation xui:actions validation', () => {
     const compiler = createCompiler({
       type: 'strict-text',
       component: () => null,
-      propContracts: { text: { shape: { kind: 'unknown' }, displayName: 'text' } },
-      fields: [{ key: 'text', kind: 'prop' }],
+      fields: [{ key: 'text', kind: 'prop', contract: { shape: { kind: 'unknown' }, displayName: 'text' } }],
     });
 
     expect(
@@ -139,8 +134,7 @@ describe('host action validation xui:actions validation', () => {
     const compiler = createCompiler({
       type: 'strict-text',
       component: () => null,
-      propContracts: { text: { shape: { kind: 'unknown' }, displayName: 'text' } },
-      fields: [{ key: 'text', kind: 'prop' }],
+      fields: [{ key: 'text', kind: 'prop', contract: { shape: { kind: 'unknown' }, displayName: 'text' } }],
     });
 
     expect(
@@ -166,8 +160,7 @@ describe('host action validation xui:actions validation', () => {
     const compiler = createCompiler({
       type: 'strict-text',
       component: () => null,
-      propContracts: { text: { shape: { kind: 'unknown' }, displayName: 'text' } },
-      fields: [{ key: 'text', kind: 'prop' }],
+      fields: [{ key: 'text', kind: 'prop', contract: { shape: { kind: 'unknown' }, displayName: 'text' } }],
     });
 
     expect(
@@ -194,8 +187,7 @@ describe('host action validation xui:actions validation', () => {
     const compiler = createCompiler({
       type: 'strict-text',
       component: () => null,
-      propContracts: { text: { shape: { kind: 'unknown' }, displayName: 'text' } },
-      fields: [{ key: 'text', kind: 'prop' }],
+      fields: [{ key: 'text', kind: 'prop', contract: { shape: { kind: 'unknown' }, displayName: 'text' } }],
     });
 
     expect(

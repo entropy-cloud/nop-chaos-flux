@@ -20,16 +20,6 @@ export const mobileRendererDefinitions: RegisteredRendererDefinition[] = [
     sourcePackage: '@nop-chaos/flux-renderers-mobile',
     defaultSchema: { type: 'pull-refresh', body: [] },
     component: PullRefreshRenderer,
-    propContracts: {
-      direction: {
-        displayName: 'Direction',
-        description: 'OA-14: locked to "down" (pull-up loading belongs to infinite-scroll).',
-        shape: { kind: 'literal', value: 'down' },
-        editorType: 'select',
-        defaultValue: 'down',
-      },
-      disabled: { displayName: 'Disabled', shape: { kind: 'boolean' } },
-    },
     eventContracts: {
       onRefresh: {
         displayName: 'On Refresh',
@@ -50,7 +40,17 @@ export const mobileRendererDefinitions: RegisteredRendererDefinition[] = [
       // OA-14: `direction` is locked to 'down' (pull-up loading belongs to
       // `infinite-scroll`). Kept as a field so existing schemas with
       // `direction: 'down'` remain valid; `'up'` is now a TS compile error.
-      { key: 'direction', kind: 'prop' },
+      {
+        key: 'direction',
+        kind: 'prop',
+        contract: {
+          displayName: 'Direction',
+          description: 'OA-14: locked to "down" (pull-up loading belongs to infinite-scroll).',
+          shape: { kind: 'literal', value: 'down' },
+          editorType: 'select',
+          defaultValue: 'down',
+        },
+      },
       { key: 'threshold', kind: 'prop' },
       { key: 'loadingText', kind: 'prop' },
       { key: 'pullingText', kind: 'prop' },
@@ -58,7 +58,12 @@ export const mobileRendererDefinitions: RegisteredRendererDefinition[] = [
       { key: 'successText', kind: 'prop' },
       { key: 'successDuration', kind: 'prop' },
       { key: 'animationDuration', kind: 'prop' },
-      { key: 'disabled', kind: 'prop', valueType: 'boolean' },
+      {
+        key: 'disabled',
+        kind: 'prop',
+        valueType: 'boolean',
+        contract: { displayName: 'Disabled', shape: { kind: 'boolean' } }
+      },
       { key: 'onRefresh', kind: 'event' },
     ],
   },
@@ -69,12 +74,6 @@ export const mobileRendererDefinitions: RegisteredRendererDefinition[] = [
     sourcePackage: '@nop-chaos/flux-renderers-mobile',
     defaultSchema: { type: 'infinite-scroll', body: [] },
     component: InfiniteScrollRenderer,
-    propContracts: {
-      disabled: { displayName: 'Disabled', shape: { kind: 'boolean' } },
-      immediateCheck: { displayName: 'Immediate Check', shape: { kind: 'boolean' } },
-      hasMore: { displayName: 'Has More', shape: { kind: 'boolean' } },
-      loading: { displayName: 'Loading', shape: { kind: 'boolean' } },
-    },
     eventContracts: {
       onLoadMore: {
         displayName: 'On Load More',
@@ -92,13 +91,33 @@ export const mobileRendererDefinitions: RegisteredRendererDefinition[] = [
     fields: [
       { key: 'body', kind: 'region', regionKey: 'body' },
       { key: 'distance', kind: 'prop' },
-      { key: 'disabled', kind: 'prop', valueType: 'boolean' },
+      {
+        key: 'disabled',
+        kind: 'prop',
+        valueType: 'boolean',
+        contract: { displayName: 'Disabled', shape: { kind: 'boolean' } }
+      },
       { key: 'loadingText', kind: 'prop' },
       { key: 'finishedText', kind: 'prop' },
       { key: 'errorText', kind: 'prop' },
-      { key: 'immediateCheck', kind: 'prop', valueType: 'boolean' },
-      { key: 'hasMore', kind: 'prop', valueType: 'boolean' },
-      { key: 'loading', kind: 'prop', valueType: 'boolean' },
+      {
+        key: 'immediateCheck',
+        kind: 'prop',
+        valueType: 'boolean',
+        contract: { displayName: 'Immediate Check', shape: { kind: 'boolean' } }
+      },
+      {
+        key: 'hasMore',
+        kind: 'prop',
+        valueType: 'boolean',
+        contract: { displayName: 'Has More', shape: { kind: 'boolean' } }
+      },
+      {
+        key: 'loading',
+        kind: 'prop',
+        valueType: 'boolean',
+        contract: { displayName: 'Loading', shape: { kind: 'boolean' } }
+      },
       { key: 'error', kind: 'prop' },
       { key: 'onLoadMore', kind: 'event' },
     ],
@@ -110,19 +129,6 @@ export const mobileRendererDefinitions: RegisteredRendererDefinition[] = [
     sourcePackage: '@nop-chaos/flux-renderers-mobile',
     defaultSchema: { type: 'swipe-cell', body: [] },
     component: SwipeCellRenderer,
-    propContracts: {
-      direction: {
-        displayName: 'Direction',
-        shape: {
-          kind: 'union',
-          anyOf: ['left', 'right', 'both'].map((v) => ({ kind: 'literal', value: v })),
-        },
-        editorType: 'select',
-        defaultValue: 'right',
-      },
-      disabled: { displayName: 'Disabled', shape: { kind: 'boolean' } },
-      closeOnOutside: { displayName: 'Close On Outside', shape: { kind: 'boolean' } },
-    },
     eventContracts: {
       onAction: {
         displayName: 'On Action',
@@ -166,9 +172,31 @@ export const mobileRendererDefinitions: RegisteredRendererDefinition[] = [
       { key: 'left', kind: 'region', regionKey: 'left' },
       { key: 'right', kind: 'region', regionKey: 'right' },
       { key: 'threshold', kind: 'prop' },
-      { key: 'direction', kind: 'prop' },
-      { key: 'disabled', kind: 'prop', valueType: 'boolean' },
-      { key: 'closeOnOutside', kind: 'prop', valueType: 'boolean' },
+      {
+        key: 'direction',
+        kind: 'prop',
+        contract: {
+          displayName: 'Direction',
+          shape: {
+            kind: 'union',
+            anyOf: ['left', 'right', 'both'].map((v) => ({ kind: 'literal', value: v })),
+          },
+          editorType: 'select',
+          defaultValue: 'right',
+        },
+      },
+      {
+        key: 'disabled',
+        kind: 'prop',
+        valueType: 'boolean',
+        contract: { displayName: 'Disabled', shape: { kind: 'boolean' } }
+      },
+      {
+        key: 'closeOnOutside',
+        kind: 'prop',
+        valueType: 'boolean',
+        contract: { displayName: 'Close On Outside', shape: { kind: 'boolean' } }
+      },
       { key: 'onAction', kind: 'event' },
       { key: 'onOpen', kind: 'event' },
       { key: 'onClose', kind: 'event' },
@@ -181,11 +209,6 @@ export const mobileRendererDefinitions: RegisteredRendererDefinition[] = [
     sourcePackage: '@nop-chaos/flux-renderers-mobile',
     defaultSchema: { type: 'countdown', time: 60_000 },
     component: CountdownRenderer,
-    propContracts: {
-      millisecond: { displayName: 'Millisecond', shape: { kind: 'boolean' } },
-      paused: { displayName: 'Paused', shape: { kind: 'boolean' } },
-      autoStart: { displayName: 'Auto Start', shape: { kind: 'boolean' } },
-    },
     eventContracts: {
       onFinish: {
         displayName: 'On Finish',
@@ -203,9 +226,24 @@ export const mobileRendererDefinitions: RegisteredRendererDefinition[] = [
       { key: 'time', kind: 'prop' },
       { key: 'targetTime', kind: 'prop' },
       { key: 'format', kind: 'prop' },
-      { key: 'millisecond', kind: 'prop', valueType: 'boolean' },
-      { key: 'paused', kind: 'prop', valueType: 'boolean' },
-      { key: 'autoStart', kind: 'prop', valueType: 'boolean' },
+      {
+        key: 'millisecond',
+        kind: 'prop',
+        valueType: 'boolean',
+        contract: { displayName: 'Millisecond', shape: { kind: 'boolean' } }
+      },
+      {
+        key: 'paused',
+        kind: 'prop',
+        valueType: 'boolean',
+        contract: { displayName: 'Paused', shape: { kind: 'boolean' } }
+      },
+      {
+        key: 'autoStart',
+        kind: 'prop',
+        valueType: 'boolean',
+        contract: { displayName: 'Auto Start', shape: { kind: 'boolean' } }
+      },
       { key: 'prefix', kind: 'prop' },
       { key: 'suffix', kind: 'prop' },
       { key: 'onFinish', kind: 'event' },
@@ -218,41 +256,57 @@ export const mobileRendererDefinitions: RegisteredRendererDefinition[] = [
     sourcePackage: '@nop-chaos/flux-renderers-mobile',
     defaultSchema: { type: 'notice-bar', text: 'Notice' },
     component: NoticeBarRenderer,
-    propContracts: {
-      scrollable: { displayName: 'Scrollable', shape: { kind: 'boolean' } },
-      direction: {
-        displayName: 'Direction',
-        shape: {
-          kind: 'union',
-          anyOf: ['left', 'right'].map((v) => ({ kind: 'literal', value: v })),
-        },
-        editorType: 'select',
-        defaultValue: 'left',
-      },
-      loop: { displayName: 'Loop', shape: { kind: 'boolean' } },
-      closable: { displayName: 'Closable', shape: { kind: 'boolean' } },
-      variant: {
-        displayName: 'Variant',
-        shape: {
-          kind: 'union',
-          anyOf: ['info', 'warning', 'success', 'error'].map((v) => ({
-            kind: 'literal',
-            value: v,
-          })),
-        },
-        editorType: 'select',
-        defaultValue: 'info',
-      },
-    },
     fields: [
       { key: 'text', kind: 'prop' },
-      { key: 'scrollable', kind: 'prop', valueType: 'boolean' },
+      {
+        key: 'scrollable',
+        kind: 'prop',
+        valueType: 'boolean',
+        contract: { displayName: 'Scrollable', shape: { kind: 'boolean' } }
+      },
       { key: 'speed', kind: 'prop' },
-      { key: 'direction', kind: 'prop' },
-      { key: 'loop', kind: 'prop', valueType: 'boolean' },
-      { key: 'closable', kind: 'prop', valueType: 'boolean' },
+      {
+        key: 'direction',
+        kind: 'prop',
+        contract: {
+          displayName: 'Direction',
+          shape: {
+            kind: 'union',
+            anyOf: ['left', 'right'].map((v) => ({ kind: 'literal', value: v })),
+          },
+          editorType: 'select',
+          defaultValue: 'left',
+        },
+      },
+      {
+        key: 'loop',
+        kind: 'prop',
+        valueType: 'boolean',
+        contract: { displayName: 'Loop', shape: { kind: 'boolean' } }
+      },
+      {
+        key: 'closable',
+        kind: 'prop',
+        valueType: 'boolean',
+        contract: { displayName: 'Closable', shape: { kind: 'boolean' } }
+      },
       { key: 'icon', kind: 'prop' },
-      { key: 'variant', kind: 'prop' },
+      {
+        key: 'variant',
+        kind: 'prop',
+        contract: {
+          displayName: 'Variant',
+          shape: {
+            kind: 'union',
+            anyOf: ['info', 'warning', 'success', 'error'].map((v) => ({
+              kind: 'literal',
+              value: v,
+            })),
+          },
+          editorType: 'select',
+          defaultValue: 'info',
+        },
+      },
       { key: 'onClick', kind: 'event' },
       { key: 'onClose', kind: 'event' },
     ],

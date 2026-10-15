@@ -1,10 +1,11 @@
 /**
- * Plan 462 (2026-08-23): extracted the inline `propContracts` blocks
+ * Plan 462 (2026-08-23): extracted the inline prop-contract blocks
  * for the basic package renderers into this sibling module so the
  * main `basic-renderer-definitions.ts` file stays under the 710-line
- * lint ceiling. Each entry is a `RendererPropContract` keyed by prop
- * name; renderers in the parent file reference these as
- * `propContracts: { ...containerContracts, ... }`.
+ * lint ceiling. Each entry is a `RendererFieldContract` keyed by prop
+ * name; renderers in the parent file reference these from their
+ * `fields` entries as `contract: containerContracts.direction` etc.
+ * (RM-4, plan 606: absorbed from the former `propContracts` records).
  *
  * Conventions:
  * - union-of-literals shapes are kept inline (the `anyOf` array
@@ -16,9 +17,9 @@
  * - `defaultValue` matches the convention used by the existing
  *   `button` renderer's `variant` (line ~218 of the parent file).
  */
-import type { RendererPropContract } from '@nop-chaos/flux-core';
+import type { RendererFieldContract } from '@nop-chaos/flux-core';
 
-export const containerContracts: Record<string, RendererPropContract> = {
+export const containerContracts: Record<string, RendererFieldContract> = {
   direction: {
     shape: {
       kind: 'union',
@@ -46,7 +47,7 @@ export const containerContracts: Record<string, RendererPropContract> = {
   },
 };
 
-export const flexContracts: Record<string, RendererPropContract> = {
+export const flexContracts: Record<string, RendererFieldContract> = {
   direction: {
     shape: {
       kind: 'union',
@@ -119,7 +120,7 @@ export const flexContracts: Record<string, RendererPropContract> = {
   },
 };
 
-export const textContracts: Record<string, RendererPropContract> = {
+export const textContracts: Record<string, RendererFieldContract> = {
   tag: {
     shape: {
       kind: 'union',
@@ -155,7 +156,7 @@ export const textContracts: Record<string, RendererPropContract> = {
   },
 };
 
-export const iconContracts: Record<string, RendererPropContract> = {
+export const iconContracts: Record<string, RendererFieldContract> = {
   icon: {
     shape: { kind: 'string' },
     displayName: 'Icon',
@@ -180,7 +181,7 @@ export const iconContracts: Record<string, RendererPropContract> = {
   },
 };
 
-export const badgeContracts: Record<string, RendererPropContract> = {
+export const badgeContracts: Record<string, RendererFieldContract> = {
   level: {
     shape: {
       kind: 'union',

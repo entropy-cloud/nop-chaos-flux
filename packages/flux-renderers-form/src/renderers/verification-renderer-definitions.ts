@@ -1,5 +1,5 @@
 import type { RegisteredRendererDefinition, SchemaFieldRule } from '@nop-chaos/flux-core';
-import { formFieldContracts, formFieldRules } from '../field-utils.js';
+import { formFieldContractRules } from '../field-utils.js';
 import { createFieldValidation, validateInputFieldSchema } from './input.js';
 import { VerificationCodeRenderer } from './verification-code-renderer.js';
 
@@ -9,25 +9,25 @@ import { VerificationCodeRenderer } from './verification-code-renderer.js';
  * length < `length` ⇔ `undefined`.
  */
 const verificationFieldRules: SchemaFieldRule[] = [
-  { key: 'length', kind: 'prop', valueType: 'number' },
-  { key: 'masked', kind: 'prop', valueType: 'boolean' },
-];
-
-export const inputVerificationRendererDefinition: RegisteredRendererDefinition = {
-  type: 'verification-code',
-  sourcePackage: '@nop-chaos/flux-renderers-form',
-  propContracts: {
-    ...formFieldContracts,
-    length: {
+  {
+    key: 'length',
+    kind: 'prop',
+    valueType: 'number',
+    contract: {
       displayName: 'Length',
       shape: { kind: 'number' },
       description: 'Cell count (defaults to 6; non-positive/non-integer falls back to 6).',
       editorType: 'number',
       defaultValue: 6,
     },
-    masked: { displayName: 'Masked', shape: { kind: 'boolean' } },
   },
-  fields: [...formFieldRules, ...verificationFieldRules],
+  { key: 'masked', kind: 'prop', valueType: 'boolean', contract: { displayName: 'Masked', shape: { kind: 'boolean' } } },
+];
+
+export const inputVerificationRendererDefinition: RegisteredRendererDefinition = {
+  type: 'verification-code',
+  sourcePackage: '@nop-chaos/flux-renderers-form',
+  fields: [...formFieldContractRules, ...verificationFieldRules],
   validation: createFieldValidation(),
   schemaValidator: validateInputFieldSchema,
   componentCapabilityContracts: [

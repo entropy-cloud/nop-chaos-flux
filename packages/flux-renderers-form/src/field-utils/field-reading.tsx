@@ -2,7 +2,7 @@ import {
   type CompiledValidationBehavior,
   type FormFieldStateSnapshot,
   type RendererComponentProps,
-  type RendererPropContract,
+  type RendererFieldContract,
   type SchemaFieldRule,
   type ValidationError,
 } from '@nop-chaos/flux-core';
@@ -50,7 +50,7 @@ const validationVisibilityLiterals = ['touched', 'dirty', 'visited', 'submit'].m
 const requiredDependentContract = (
   displayName: string,
   description: string,
-): RendererPropContract => ({
+): RendererFieldContract => ({
   displayName,
   description,
   shape: {
@@ -65,7 +65,7 @@ const requiredDependentContract = (
   editorType: 'object',
 });
 
-export const formFieldContracts: Record<string, RendererPropContract> = {
+const formFieldContracts: Record<string, RendererFieldContract> = {
   readOnly: {
     displayName: 'Read Only',
     description: 'Renders the field as non-editable; user input is ignored.',
@@ -160,6 +160,41 @@ export const formFieldRules: SchemaFieldRule[] = [
   { key: 'requiredWhen', kind: 'prop' },
   { key: 'requiredUnless', kind: 'prop' },
   ...formFieldChromeRules,
+];
+
+/**
+ * RM-4 (plan 606): contract-bearing variant of `formFieldRules` for the
+ * input-renderer family that used to spread `formFieldContracts` into its
+ * per-renderer prop-contract records. Each rule carries its
+ * `formFieldContracts` entry by reference (single object, not a copy);
+ * `format` existed only in the former contract record (no rule side) and
+ * is appended as a standalone entry. The plain `formFieldRules` stays
+ * contract-free for consumers that never declared the shared contract
+ * surface (form-advanced fields, date/hidden renderers, ...) — attaching
+ * the contracts there would have grown their resolved contract view.
+ */
+export const formFieldContractRules: SchemaFieldRule[] = [
+  formLabelFieldRule,
+  { key: 'name', kind: 'prop' },
+  { key: 'value', kind: 'prop' },
+  { key: 'readOnly', kind: 'prop', valueType: 'boolean', contract: formFieldContracts.readOnly },
+  { key: 'required', kind: 'prop', valueType: 'boolean', contract: formFieldContracts.required },
+  // Compiler-consumed validation behavior/rules (flux-compiler
+  // validation-collection + validation-lowering read these from any
+  // field-contributing schema node).
+  { key: 'validateOn', kind: 'prop', contract: formFieldContracts.validateOn },
+  { key: 'showErrorOn', kind: 'prop', contract: formFieldContracts.showErrorOn },
+  { key: 'equalsField', kind: 'prop', contract: formFieldContracts.equalsField },
+  { key: 'notEqualsField', kind: 'prop', contract: formFieldContracts.notEqualsField },
+  { key: 'requiredWhen', kind: 'prop', contract: formFieldContracts.requiredWhen },
+  { key: 'requiredUnless', kind: 'prop', contract: formFieldContracts.requiredUnless },
+  { key: 'hint', kind: 'value-or-region', regionKey: 'hint' },
+  { key: 'description', kind: 'value-or-region', regionKey: 'description' },
+  { key: 'remark', kind: 'prop' },
+  { key: 'labelRemark', kind: 'prop' },
+  { key: 'labelAlign', kind: 'prop', contract: formFieldContracts.labelAlign },
+  { key: 'labelWidth', kind: 'prop' },
+  { key: 'format', kind: 'prop', contract: formFieldContracts.format },
 ];
 
 export function resolveFieldLabelContent(

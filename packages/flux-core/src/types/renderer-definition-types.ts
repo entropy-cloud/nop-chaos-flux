@@ -103,7 +103,6 @@ export interface RendererDefinitionShape<S extends BaseSchema = BaseSchema> {
   defaultSchema?: Partial<S>;
   rendererClass?: RendererClass;
   rendererTraits?: readonly string[];
-  propContracts?: Readonly<Record<string, RendererPropContract>>;
   eventContracts?: Readonly<Record<string, RendererEventContract>>;
   componentCapabilityContracts?: readonly RendererCapabilityContract[];
   scopeExportContracts?: Readonly<Record<string, FluxValueShape>>;
