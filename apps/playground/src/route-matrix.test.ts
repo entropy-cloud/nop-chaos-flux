@@ -15,7 +15,15 @@ import {
   type RouteSpec,
 } from './route-model';
 import { RENDERER_LAB_REGISTRY } from './component-lab/renderer-lab-registry';
-import { HOME_NAV_CARDS, type HomeNavCard } from './home-cards';
+import { HOME_NAV_CARDS, HOME_NAV_SECTIONS, type HomeNavCard } from './home-cards';
+import {
+  DOMAIN_HOME_FAMILY,
+  HOME_FAMILY_META,
+  HOME_FAMILY_ORDER,
+  isAggregateFamily,
+} from './home-families';
+import { AI_GALLERY_ENTRIES } from './ai-gallery/ai-gallery-model';
+import { AI_GALLERY_REGISTRY } from './ai-gallery/ai-gallery-registry';
 import { COMPLEX_PAGE_ENTRIES } from './complex-pages/complex-pages-model';
 import { basicRendererDefinitions } from '@nop-chaos/flux-renderers-basic';
 import { formRendererDefinitions } from '@nop-chaos/flux-renderers-form';
@@ -275,12 +283,15 @@ describe('Home entry registry - drift guards (missing-components L0.2)', () => {
   );
   const domainCardIds = new Set(domainCards.map((card) => card.id));
 
-  it('invariant 1: every domain entry without homeVisible:false has a home card', () => {
+  it('invariant 1: every domain entry has a home card, unless hidden or aggregate-collapsed', () => {
     for (const entry of DOMAIN_RENDERER_ROUTES) {
-      if (entry.homeVisible === false) {
+      const family = DOMAIN_HOME_FAMILY[entry.id];
+      const collapsed = family ? isAggregateFamily(family) : false;
+      if (entry.homeVisible === false || collapsed) {
         expect(
           domainCardIds.has(entry.id),
-          `domain entry '${entry.id}' is homeVisible:false but appears on home`,
+          `domain entry '${entry.id}' must not have its own home card ` +
+            `(homeVisible:false or aggregate family)`,
         ).toBe(false);
       } else {
         expect(
@@ -333,6 +344,93 @@ describe('Home entry registry - drift guards (missing-components L0.2)', () => {
     for (const card of domainCards) {
       const hash = buildRoute({ kind: 'domain', domainId: card.target.domainId });
       expect(parseRoute(hash)).toEqual({ kind: 'domain', domainId: card.target.domainId });
+    }
+  });
+});
+
+describe('Home family IA (home reorganization)', () => {
+  it('every home-visible domain entry is assigned a family', () => {
+    for (const entry of DOMAIN_RENDERER_ROUTES) {
+      if (entry.homeVisible === false) continue;
+      expect(
+        DOMAIN_HOME_FAMILY[entry.id],
+        `home-visible entry '${entry.id}' has no family assignment`,
+      ).toBeDefined();
+    }
+  });
+
+  it('the family map never invents ids outside the home-visible domain registry', () => {
+    const visibleIds = new Set(
+      DOMAIN_RENDERER_ROUTES.filter((entry) => entry.homeVisible !== false).map((entry) => entry.id),
+    );
+    for (const id of Object.keys(DOMAIN_HOME_FAMILY)) {
+      expect(visibleIds.has(id), `family map entry '${id}' has no home-visible domain entry`).toBe(
+        true,
+      );
+    }
+  });
+
+  it('declared families are all real, ordered, and non-empty', () => {
+    const used = new Set(Object.values(DOMAIN_HOME_FAMILY));
+    for (const family of used) {
+      expect(HOME_FAMILY_META[family], `family '${family}' missing from HOME_FAMILY_META`).toBeDefined();
+      expect(HOME_FAMILY_ORDER, `family '${family}' missing from HOME_FAMILY_ORDER`).toContain(family);
+    }
+    for (const family of HOME_FAMILY_ORDER) {
+      expect(used.has(family), `declared family '${family}' has no entries`).toBe(true);
+    }
+  });
+
+  it('home sections render every card exactly once and cover all families + the galleries section', () => {
+    const flattened = HOME_NAV_SECTIONS.flatMap((section) => section.cards);
+    const flattenedIds = flattened.map((card) => card.id);
+    expect(flattenedIds.sort()).toEqual(HOME_NAV_CARDS.map((card) => card.id).sort());
+    expect(new Set(flattenedIds).size).toBe(flattenedIds.length);
+    const sectionIds = HOME_NAV_SECTIONS.map((section) => section.id);
+    expect(sectionIds).toContain('galleries');
+    for (const family of HOME_FAMILY_ORDER) {
+      expect(sectionIds, `section '${family}' missing from home sections`).toContain(family);
+    }
+  });
+
+  it('aggregate families expose exactly one aggregate card with a non-domain target', () => {
+    for (const family of HOME_FAMILY_ORDER) {
+      if (!isAggregateFamily(family)) continue;
+      const section = HOME_NAV_SECTIONS.find((candidate) => candidate.id === family);
+      expect(section, `aggregate section '${family}' missing`).toBeDefined();
+      expect(section!.cards).toHaveLength(1);
+      expect(section!.cards[0].target.kind).not.toBe('domain');
+    }
+  });
+});
+
+describe('AI gallery inventory', () => {
+  const aiFamilyIds = Object.entries(DOMAIN_HOME_FAMILY)
+    .filter(([, family]) => family === 'ai')
+    .map(([id]) => id)
+    .sort();
+
+  it('gallery entries match the ai family exactly', () => {
+    expect(AI_GALLERY_ENTRIES.map((entry) => entry.id).sort()).toEqual(aiFamilyIds);
+  });
+
+  it('every gallery entry has a registered demo component and vice versa', () => {
+    const entryIds = new Set(AI_GALLERY_ENTRIES.map((entry) => entry.id));
+    for (const id of entryIds) {
+      expect(AI_GALLERY_REGISTRY[id], `gallery demo missing for '${id}'`).toBeDefined();
+    }
+    for (const id of Object.keys(AI_GALLERY_REGISTRY)) {
+      expect(entryIds.has(id), `registry entry '${id}' has no gallery entry`).toBe(true);
+    }
+  });
+
+  it('gallery routes parse/build round-trip (index + every demo)', () => {
+    expect(parseRoute('#/ai')).toEqual({ kind: 'ai-gallery' });
+    expect(buildRoute({ kind: 'ai-gallery' })).toBe('#/ai');
+    for (const entry of AI_GALLERY_ENTRIES) {
+      const hash = buildRoute({ kind: 'ai-gallery-demo', demoId: entry.id });
+      expect(hash).toBe(`#/ai/${entry.id}`);
+      expect(parseRoute(hash)).toEqual({ kind: 'ai-gallery-demo', demoId: entry.id });
     }
   });
 });

@@ -18,6 +18,9 @@ It answers two questions:
 - `apps/playground/src/use-route.ts`
 - `apps/playground/src/component-lab/component-lab-page.tsx`
 - `apps/playground/src/component-lab/renderer-lab-registry.ts`
+- `apps/playground/src/home-cards.ts`
+- `apps/playground/src/home-families.ts`
+- `apps/playground/src/ai-gallery/ai-gallery-page.tsx`
 - `apps/playground/src/pages/home-page.tsx`
 - `packages/nop-debugger/src/panel.tsx`
 
@@ -75,12 +78,18 @@ This satisfies the stable-URL requirement without introducing a router dependenc
 
 Route spec types (`RouteSpec` in `apps/playground/src/route-model.ts`):
 
-| Hash            | Route Kind     | Description                                                       |
-| --------------- | -------------- | ----------------------------------------------------------------- |
-| `#/`            | `home`         | Playground home navigation hall                                   |
-| `#/lab`         | `lab`          | Component Lab shell (no renderer selected)                        |
-| `#/lab/<id>`    | `lab-renderer` | Component Lab with a specific renderer selected                   |
-| `#/<domain-id>` | `domain`       | Existing domain host pages (flow-designer, report-designer, etc.) |
+| Hash                   | Route Kind        | Description                                                       |
+| ---------------------- | ----------------- | ----------------------------------------------------------------- |
+| `#/`                   | `home`            | Playground home navigation hall                                   |
+| `#/lab`                | `lab`             | Component Lab shell (no renderer selected)                        |
+| `#/lab/<id>`           | `lab-renderer`    | Component Lab with a specific renderer selected                   |
+| `#/complex-pages`      | `showcase`        | Complex Pages gallery (no page selected)                          |
+| `#/complex-pages/<id>` | `showcase-page`   | Complex Pages gallery with a specific page selected               |
+| `#/ai`                 | `ai-gallery`      | AI Scenarios gallery shell (no demo selected)                     |
+| `#/ai/<id>`            | `ai-gallery-demo` | AI Scenarios gallery with a specific `ai-*` demo embedded         |
+| `#/<domain-id>`        | `domain`          | Existing domain host pages (flow-designer, report-designer, etc.) |
+
+The standalone `#/<ai-id>` domain routes (e.g. `#/ai-chat`) remain reachable as deep links; `#/ai/<id>` is the aggregate gallery view of the same demos.
 
 The `useRoute` hook in `apps/playground/src/use-route.ts` reads and writes the hash and exposes a stable `navigate(spec)` callback.
 
@@ -98,11 +107,13 @@ The inventory is cross-checked against the live renderer registries by `route-ma
 
 The home page card list is a **pure derivation of the route registries** — it is never hand-maintained:
 
-- `apps/playground/src/home-cards.ts` exports `HOME_NAV_CARDS`: two aggregate cards (Component Lab covering `ALL_SHARED_RENDERER_ROUTES`, Complex Pages covering `COMPLEX_PAGE_ENTRIES`) plus one card per `DOMAIN_RENDERER_ROUTES` entry, using the registry entry's `title` / `eyebrow` / `description` verbatim.
+- `apps/playground/src/home-families.ts` owns the home **scenario-family** layer: 12 ordered families, ordered by prominence/usage (`core`, `forms`, `data`, `content`, `designers`, `ai`, `scheduling`, `graph-bi`, `mobile`, `industrial`, `performance`, `diagnostics`) and `DOMAIN_HOME_FAMILY`, which assigns every home-visible domain entry to exactly one family. This keeps the family IA in the home layer without growing `domain-route-entries.ts`. `HOME_AGGREGATE_FAMILIES` declares families whose entries collapse into one aggregate card (currently `ai`).
+- `apps/playground/src/home-cards.ts` exports `HOME_NAV_SECTIONS`: a `galleries` section (two aggregate cards — Component Lab covering `ALL_SHARED_RENDERER_ROUTES`, Complex Pages covering `COMPLEX_PAGE_ENTRIES`) plus one labelled section per family, each card using the registry entry's `title` / `eyebrow` / `description` verbatim. `HOME_NAV_CARDS` is the flattened view of the same cards. An aggregate family renders exactly one card (e.g. the `ai` family → a single "AI Scenarios" card targeting `ai-gallery`).
 - `DomainRouteEntry.homeVisible: false` is the explicit opt-out for entries that deliberately stay off the home page (reference pages such as `leafer-examples`, or route entries whose demo page was removed, such as `dingtalk-flow-demo`). Absent flag defaults to home-visible.
-- `route-matrix.test.ts` pins the derivation with scoped drift guards: ① every domain entry without `homeVisible:false` must have a home card (and vice versa); ② the aggregate lab card exists (lab id coverage itself is pinned by the existing lab-registry invariants); ③ the aggregate showcase card exists and matches the complex-pages registry scale; ④ every home domain card round-trips through `parseRoute`/`buildRoute`.
+- `apps/playground/src/ai-gallery/` owns the AI gallery: `ai-gallery-model.ts` derives entry titles/descriptions from `DOMAIN_RENDERER_ROUTES` and owns only the phase grouping; `ai-gallery-registry.tsx` lazy-loads the 14 existing `ai-*` demo pages; `ai-gallery-page.tsx` is the shell (left nav grouped by phase, embedded preview).
+- `route-matrix.test.ts` pins the derivation with scoped drift guards: ① every domain entry has a home card unless `homeVisible:false` or aggregate-collapsed (and vice versa); ② the aggregate lab card exists (lab id coverage itself is pinned by the existing lab-registry invariants); ③ the aggregate showcase card exists and matches the complex-pages registry scale; ④ every home domain card round-trips through `parseRoute`/`buildRoute`; ⑤ the family map is complete both ways and every declared family is non-empty; ⑥ home sections render every card exactly once and cover every family; ⑦ aggregate families expose exactly one non-domain card; ⑧ the AI gallery inventory matches the `ai` family and the gallery registry covers it bidirectionally.
 
-Adding a routable domain page therefore requires only registering it in `DOMAIN_RENDERER_ROUTES` (plus its App.tsx case); the home card, and the guard tests, follow automatically.
+Adding a routable domain page therefore requires registering it in `DOMAIN_RENDERER_ROUTES` (plus its App.tsx case) and assigning it a family; the home card, section placement, and guard tests follow automatically.
 
 ## Component Lab
 
@@ -166,7 +177,8 @@ Benefits:
 - live registry alignment: verifies `ALL_SHARED_RENDERER_ROUTES` covers every registered type in the basic/form/data registries
 - lab registry coverage: verifies every route entry has a corresponding `RENDERER_LAB_REGISTRY` component
 - domain inventory completeness: verifies the current domain pages remain registered
-- home entry registry drift guards: home cards must equal the registry derivation (`homeVisible` respected, no orphan cards, aggregate cards present, round-trip navigability)
+- home entry registry drift guards: home cards must equal the registry derivation (`homeVisible` respected, aggregate families collapsed, no orphan cards, aggregate cards present, round-trip navigability)
+- home family IA guards: every home-visible entry has a family, the family map invents no ids, every declared family is non-empty, sections render every card exactly once, and the AI gallery inventory matches the `ai` family with bidirectional registry coverage
 
 ## Related Documents
 

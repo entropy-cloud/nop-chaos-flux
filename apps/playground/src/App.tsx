@@ -26,6 +26,7 @@ import { Toaster } from '@nop-chaos/ui';
 
 import { ComponentLabPage } from './component-lab';
 import { ComplexPagesShowcase } from './complex-pages';
+import { AiGalleryPage } from './ai-gallery';
 import { useRoute } from './use-route';
 import type { RouteSpec } from './route-model';
 import { readDiagnosticsEnabled } from './route-model';
@@ -159,6 +160,8 @@ function renderPage(route: RouteSpec, navigate: (spec: RouteSpec) => void) {
               navigate({ kind: 'lab' });
             } else if (target.kind === 'showcase') {
               navigate({ kind: 'showcase' });
+            } else if (target.kind === 'ai-gallery') {
+              navigate({ kind: 'ai-gallery' });
             } else {
               navigate({ kind: 'domain', domainId: target.domainId });
             }
@@ -194,6 +197,22 @@ function renderPage(route: RouteSpec, navigate: (spec: RouteSpec) => void) {
         <ComplexPagesShowcase
           activePageId={route.pageId}
           onSelectPage={(id) => navigate({ kind: 'showcase-page', pageId: id })}
+          onBack={goHome}
+        />
+      );
+    case 'ai-gallery':
+      return (
+        <AiGalleryPage
+          activeDemoId={null}
+          onSelectDemo={(id) => navigate({ kind: 'ai-gallery-demo', demoId: id })}
+          onBack={goHome}
+        />
+      );
+    case 'ai-gallery-demo':
+      return (
+        <AiGalleryPage
+          activeDemoId={route.demoId}
+          onSelectDemo={(id) => navigate({ kind: 'ai-gallery-demo', demoId: id })}
           onBack={goHome}
         />
       );

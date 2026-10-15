@@ -63,7 +63,9 @@ export type RouteSpec =
   | { kind: 'lab-renderer'; rendererId: string }
   | { kind: 'domain'; domainId: string }
   | { kind: 'showcase' }
-  | { kind: 'showcase-page'; pageId: string };
+  | { kind: 'showcase-page'; pageId: string }
+  | { kind: 'ai-gallery' }
+  | { kind: 'ai-gallery-demo'; demoId: string };
 
 export function readDiagnosticsEnabled(search: string): boolean {
   const normalized = search.startsWith('?') ? search.slice(1) : search;
@@ -95,6 +97,16 @@ export function parseRoute(hash: string): RouteSpec {
     return { kind: 'showcase' };
   }
 
+  // AI gallery shell (`#/ai` and `#/ai/<demoId>`) — the aggregate surface the
+  // home AI card routes into. Distinct from the standalone `#/<ai-id>` domain
+  // routes, which stay reachable as deep links.
+  if (segments[0] === 'ai') {
+    if (segments.length >= 2) {
+      return { kind: 'ai-gallery-demo', demoId: segments[1] };
+    }
+    return { kind: 'ai-gallery' };
+  }
+
   const domainIds = DOMAIN_RENDERER_ROUTES.map((r) => r.id);
   if (segments[0] && domainIds.includes(segments[0])) {
     return { kind: 'domain', domainId: segments[0] };
@@ -117,5 +129,9 @@ export function buildRoute(spec: RouteSpec): string {
       return '#/complex-pages';
     case 'showcase-page':
       return `#/complex-pages/${spec.pageId}`;
+    case 'ai-gallery':
+      return '#/ai';
+    case 'ai-gallery-demo':
+      return `#/ai/${spec.demoId}`;
   }
 }
