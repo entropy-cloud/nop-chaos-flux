@@ -116,7 +116,7 @@ export function DesignerPaletteContent(props: {
           className="h-8 text-sm"
         />
       </div>
-      <div className="flex-1 min-h-0 overflow-y-auto p-3">
+      <div className="nop-palette-scroll flex-1 min-h-0 overflow-y-auto p-3">
         {isFiltering && totalMatches === 0 && (
           <div
             data-testid="designer-palette-empty"
