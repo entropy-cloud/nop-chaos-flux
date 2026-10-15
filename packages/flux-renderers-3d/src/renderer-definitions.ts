@@ -1,4 +1,4 @@
-import { registerRendererDefinitions, type RendererDefinition, type RendererRegistry } from '@nop-chaos/flux-core';
+import { registerRendererDefinitions, type RegisteredRendererDefinition, type RendererRegistry } from '@nop-chaos/flux-core';
 import { createLazyRendererComponent } from '@nop-chaos/flux-react';
 import type { ThreeCanvasSchema } from './schemas.js';
 
@@ -8,7 +8,7 @@ const LazyThreeCanvasRenderer = createLazyRendererComponent<ThreeCanvasSchema>(
   () => import('./renderer/three-canvas.js').then((m) => m.ThreeCanvasRenderer),
 );
 
-export const threeCanvasRendererDefinition: RendererDefinition = {
+export const threeCanvasRendererDefinition: RegisteredRendererDefinition = {
   type: 'three-canvas',
   component: LazyThreeCanvasRenderer,
   propContracts: {

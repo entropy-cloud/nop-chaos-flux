@@ -1,4 +1,4 @@
-import type { RendererDefinition, SchemaFieldRule } from '@nop-chaos/flux-core';
+import type { RegisteredRendererDefinition, SchemaFieldRule } from '@nop-chaos/flux-core';
 import { formFieldContracts, formFieldRules } from '../field-utils.js';
 import { createFieldValidation, validateInputFieldSchema } from './input.js';
 import { VerificationCodeRenderer } from './verification-code-renderer.js';
@@ -13,7 +13,7 @@ const verificationFieldRules: SchemaFieldRule[] = [
   { key: 'masked', kind: 'prop', valueType: 'boolean' },
 ];
 
-export const inputVerificationRendererDefinition: RendererDefinition = {
+export const inputVerificationRendererDefinition: RegisteredRendererDefinition = {
   type: 'verification-code',
   sourcePackage: '@nop-chaos/flux-renderers-form',
   propContracts: {

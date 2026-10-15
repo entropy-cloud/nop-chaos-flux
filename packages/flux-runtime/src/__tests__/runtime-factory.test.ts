@@ -1,8 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
-import { createRendererRegistry, type RendererDefinition } from '@nop-chaos/flux-core';
+import { createRendererRegistry, type RegisteredRendererDefinition } from '@nop-chaos/flux-core';
 import { createModuleCache, createRendererRuntime } from '../index.js';
 
-const textRenderer: RendererDefinition = {
+const textRenderer: RegisteredRendererDefinition = {
   type: 'text',
   component: () => null,
 };

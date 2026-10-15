@@ -1,4 +1,4 @@
-import type { RendererDefinition, SchemaFieldRule } from '@nop-chaos/flux-core';
+import type { RegisteredRendererDefinition, SchemaFieldRule } from '@nop-chaos/flux-core';
 import { formFieldContracts, formFieldRules } from '../field-utils.js';
 import { createFieldValidation, validateInputFieldSchema } from './input.js';
 import { signatureSpecificContracts } from './input-contracts.js';
@@ -16,7 +16,7 @@ const signatureFieldRules: SchemaFieldRule[] = [
   { key: 'clearable', kind: 'prop', valueType: 'boolean' },
 ];
 
-export const inputSignatureRendererDefinition: RendererDefinition = {
+export const inputSignatureRendererDefinition: RegisteredRendererDefinition = {
   type: 'input-signature',
   sourcePackage: '@nop-chaos/flux-renderers-form',
   propContracts: {

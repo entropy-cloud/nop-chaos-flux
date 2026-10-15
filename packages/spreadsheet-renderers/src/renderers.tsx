@@ -1,7 +1,7 @@
 import '@nop-chaos/spreadsheet-renderers/canvas-styles.css';
 import {
   registerRendererDefinitions,
-  type RendererDefinition,
+  type RegisteredRendererDefinition,
   type RendererRegistry,
 } from '@nop-chaos/flux-core';
 import { createLazyRendererComponent } from '@nop-chaos/flux-react';
@@ -12,7 +12,7 @@ const LazySpreadsheetPageRenderer = createLazyRendererComponent<SpreadsheetPageS
   () => import('./page-renderer.js').then((m) => m.SpreadsheetPageRenderer),
 );
 
-export const spreadsheetRendererDefinitions: RendererDefinition[] = [
+export const spreadsheetRendererDefinitions: RegisteredRendererDefinition[] = [
   {
     type: 'spreadsheet-page',
     component: LazySpreadsheetPageRenderer,

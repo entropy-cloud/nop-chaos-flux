@@ -22,7 +22,7 @@ import { registerReportDesignerRenderers } from '@nop-chaos/report-designer-rend
  * recipe 常量为本文件单一声明源（页内一行消费）。
  */
 
-import type { RendererDefinition } from '@nop-chaos/flux-core';
+import type { RegisteredRendererDefinition } from '@nop-chaos/flux-core';
 
 /**
  * 注册条目：register 函数（家族注册入口）或 renderer definition（flux-react
@@ -30,7 +30,7 @@ import type { RendererDefinition } from '@nop-chaos/flux-core';
  */
 export type DesignerRegistryEntry =
   | ((registry: RendererRegistry) => void)
-  | RendererDefinition;
+  | RegisteredRendererDefinition;
 
 export type DesignerRegistryRecipe = {
   register: readonly DesignerRegistryEntry[];

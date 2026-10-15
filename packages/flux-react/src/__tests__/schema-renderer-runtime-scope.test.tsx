@@ -1,7 +1,7 @@
 import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
-import type { RendererDefinition } from '@nop-chaos/flux-core';
+import type { RegisteredRendererDefinition } from '@nop-chaos/flux-core';
 import { useScopeSelector } from '../hooks.js';
 import { createSchemaRenderer } from '../schema-renderer.js';
 import { createExpressionCompiler } from '@nop-chaos/flux-formula';
@@ -32,7 +32,7 @@ function FormStatusProbeRenderer() {
   return <div data-testid="form-status-probe">{JSON.stringify(formStatus)}</div>;
 }
 
-const formStatusProbeRendererDefinition: RendererDefinition = {
+const formStatusProbeRendererDefinition: RegisteredRendererDefinition = {
   type: 'form-status-probe',
   component: FormStatusProbeRenderer,
 };

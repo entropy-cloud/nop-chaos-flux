@@ -1,5 +1,5 @@
 import { defineRendererFamily } from '@nop-chaos/flux-core';
-import type { RendererDefinition } from '@nop-chaos/flux-core';
+import type { RegisteredRendererDefinition } from '@nop-chaos/flux-core';
 import { AlertRenderer } from './alert-renderer.js';
 import { AudioRenderer } from './audio.js';
 import { CardRenderer } from './card.js';
@@ -48,7 +48,7 @@ const defineContentRenderer = defineRendererFamily({
   defaultSchema: (type) => ({ type }),
 });
 
-export const contentRendererDefinitions: RendererDefinition[] = [
+export const contentRendererDefinitions: RegisteredRendererDefinition[] = [
   defineContentRenderer({
     type: 'separator',
     displayName: 'Separator',

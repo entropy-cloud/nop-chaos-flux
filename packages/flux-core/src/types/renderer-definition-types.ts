@@ -15,10 +15,17 @@ import type {
   ValidationRule,
 } from './validation.js';
 
-export type RendererRendererClass =
+export type RendererClass =
   | 'instance-renderer'
   | 'flux-owner-renderer'
   | 'domain-host-renderer';
+
+/**
+ * @deprecated Transitional alias for `RendererClass` (RM-1, plan 603).
+ * Migrate imports to `RendererClass`; removal tracked by the renderer
+ * metamodel roadmap follow-up.
+ */
+export type RendererRendererClass = RendererClass;
 
 export interface RendererPropContract {
   shape: FluxValueShape;
@@ -72,8 +79,7 @@ export interface RendererDefinitionShape<S extends BaseSchema = BaseSchema> {
   icon?: string;
   category?: string;
   defaultSchema?: Partial<S>;
-  propSchema?: Record<string, unknown>;
-  rendererClass?: RendererRendererClass;
+  rendererClass?: RendererClass;
   rendererTraits?: readonly string[];
   propContracts?: Readonly<Record<string, RendererPropContract>>;
   eventContracts?: Readonly<Record<string, RendererEventContract>>;

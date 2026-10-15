@@ -1,4 +1,4 @@
-import type { RendererDefinition, RendererEnv } from '@nop-chaos/flux-core';
+import type { RegisteredRendererDefinition, RendererEnv } from '@nop-chaos/flux-core';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createDefaultEnv, createSchemaRenderer } from '@nop-chaos/flux-react';
 import React from 'react';
@@ -6,18 +6,18 @@ import React from 'react';
 // Plan 594 (CX-15): hand-written env stub → shared createDefaultEnv.
 const env: RendererEnv = createDefaultEnv();
 
-export const pageRenderer: RendererDefinition = {
+export const pageRenderer: RegisteredRendererDefinition = {
   type: 'page',
   component: (props) => <section>{props.regions.body?.render() as React.ReactNode}</section>,
   fields: [{ key: 'body', kind: 'region', regionKey: 'body' }],
 };
 
-export const textRenderer: RendererDefinition = {
+export const textRenderer: RegisteredRendererDefinition = {
   type: 'text',
   component: (props) => <span>{String(props.props.text ?? '')}</span>,
 };
 
-export const buttonRenderer: RendererDefinition = {
+export const buttonRenderer: RegisteredRendererDefinition = {
   type: 'button',
   component: (props) => (
     <button
@@ -124,7 +124,7 @@ const responsiveVariantsShape = {
   },
 };
 
-export function createLayoutSchemaRenderer(extra: RendererDefinition[] = []) {
+export function createLayoutSchemaRenderer(extra: RegisteredRendererDefinition[] = []) {
   return createSchemaRenderer([
     pageRenderer,
     textRenderer,

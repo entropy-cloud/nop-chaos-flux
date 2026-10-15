@@ -1,34 +1,34 @@
 import { describe, expect, it } from 'vitest';
-import type { RendererDefinition } from '@nop-chaos/flux-core';
+import type { RegisteredRendererDefinition } from '@nop-chaos/flux-core';
 import { makeCompiler } from './schema-compiler-shape-validation-test-utils.js';
 
-const buttonRenderer: RendererDefinition = {
+const buttonRenderer: RegisteredRendererDefinition = {
   type: 'button',
   component: () => null,
   fields: [{ key: 'onClick', kind: 'event' }],
 };
 
-const dataSourceRenderer: RendererDefinition = {
+const dataSourceRenderer: RegisteredRendererDefinition = {
   type: 'data-source',
   component: () => null,
   compilation: {
     artifacts: ['data-source'],
   },
-  propSchema: { action: { type: 'string' }, args: { type: 'object' } },
+  propContracts: { action: { shape: { kind: 'unknown' }, displayName: 'action' }, args: { shape: { kind: 'unknown' }, displayName: 'args' } },
   fields: [
     { key: 'action', kind: 'prop' },
     { key: 'args', kind: 'prop' },
   ],
 };
 
-const sourceCarrierRenderer: RendererDefinition = {
+const sourceCarrierRenderer: RegisteredRendererDefinition = {
   type: 'page',
   component: () => null,
-  propSchema: { data: { type: 'object' } },
+  propContracts: { data: { shape: { kind: 'unknown' }, displayName: 'data' } },
   fields: [{ key: 'data', kind: 'prop' }],
 };
 
-function validateAjaxClick(onClick: unknown, renderer: RendererDefinition = buttonRenderer) {
+function validateAjaxClick(onClick: unknown, renderer: RegisteredRendererDefinition = buttonRenderer) {
   const compiler = makeCompiler([renderer]);
   return compiler.validate?.({ type: renderer.type, onClick } as never) ?? [];
 }

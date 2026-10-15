@@ -4,7 +4,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createSchemaRenderer, useCurrentForm } from '@nop-chaos/flux-react';
 import { basicRendererDefinitions } from '@nop-chaos/flux-renderers-basic';
-import type { RendererComponentProps, RendererDefinition } from '@nop-chaos/flux-core';
+import type { RendererComponentProps, RegisteredRendererDefinition } from '@nop-chaos/flux-core';
 import { formRendererDefinitions } from '@nop-chaos/flux-renderers-form';
 import { env } from '../test-support.js';
 import { formAdvancedRendererDefinitions } from '../index.js';
@@ -48,7 +48,7 @@ function FormCommitProbeRenderer(props: RendererComponentProps) {
   return null;
 }
 
-const formCommitProbeRenderer: RendererDefinition = {
+const formCommitProbeRenderer: RegisteredRendererDefinition = {
   type: 'form-commit-probe',
   component: FormCommitProbeRenderer,
 };

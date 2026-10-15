@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type {
   ActionContext,
   RendererComponentProps,
-  RendererDefinition,
+  RegisteredRendererDefinition,
 } from '@nop-chaos/flux-core';
 import { t } from '@nop-chaos/flux-i18n';
 import { Button } from '@nop-chaos/ui';
@@ -29,7 +29,7 @@ afterEach(() => {
   cleanup();
 });
 
-const saveProbeRenderer: RendererDefinition = {
+const saveProbeRenderer: RegisteredRendererDefinition = {
   type: 'save-probe',
   component: SaveProbeRenderer,
   fields: [{ key: 'onClick', kind: 'event' }],

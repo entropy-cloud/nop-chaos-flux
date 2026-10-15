@@ -3,7 +3,7 @@ import { useVirtualizer } from '@tanstack/react-virtual';
 import type {
   BaseSchema,
   RendererComponentProps,
-  RendererDefinition,
+  RegisteredRendererDefinition,
   ValidationRule,
 } from '@nop-chaos/flux-core';
 import { writeFieldValue } from './write-field-value.js';
@@ -624,7 +624,7 @@ function TransferPane(props: TransferPaneProps) {
   );
 }
 
-export const transferRendererDefinition: RendererDefinition = {
+export const transferRendererDefinition: RegisteredRendererDefinition = {
   type: 'transfer',
   displayName: 'Transfer',
   category: 'Form Advanced',

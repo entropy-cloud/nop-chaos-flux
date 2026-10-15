@@ -1,4 +1,4 @@
-import type { RendererDefinition, RendererEnv } from '@nop-chaos/flux-core';
+import type { RegisteredRendererDefinition, RendererDefinition, RendererEnv } from '@nop-chaos/flux-core';
 
 export function compiledRule(rule: any, path: string, index = 0) {
   return {
@@ -14,12 +14,12 @@ export function compiledRule(rule: any, path: string, index = 0) {
   };
 }
 
-export const textRenderer: RendererDefinition = {
+export const textRenderer: RegisteredRendererDefinition = {
   type: 'text',
   component: () => null,
 };
 
-export const pageRenderer: RendererDefinition = {
+export const pageRenderer: RegisteredRendererDefinition = {
   type: 'page',
   component: () => null,
   fields: [{ key: 'body', kind: 'region', regionKey: 'body' }],
@@ -48,7 +48,7 @@ export const importHostRenderer: RendererDefinition = {
   component: () => null,
 };
 
-export const formRenderer: RendererDefinition = {
+export const formRenderer: RegisteredRendererDefinition = {
   type: 'form',
   component: () => null,
   fields: [
@@ -64,7 +64,7 @@ export const formRenderer: RendererDefinition = {
   },
 };
 
-export const inputRenderer: RendererDefinition = {
+export const inputRenderer: RegisteredRendererDefinition = {
   type: 'input-text',
   component: () => null,
   validation: {

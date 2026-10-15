@@ -1,4 +1,4 @@
-import { toJsonPointer, type BaseSchema, type RendererDefinition, type RendererSchemaValidationContext } from '@nop-chaos/flux-core';
+import { toJsonPointer, type BaseSchema, type RegisteredRendererDefinition, type RendererSchemaValidationContext } from '@nop-chaos/flux-core';
 import { FormRenderer } from './form.js';
 import type { FormSchema } from '../schemas.js';
 import { validateHiddenFieldPolicySchema } from './hidden-field-policy-schema.js';
@@ -94,7 +94,7 @@ function validateFormSchema(context: RendererSchemaValidationContext<BaseSchema>
   validateHiddenFieldPolicySchema(context);
 }
 
-export const formRendererDefinition: RendererDefinition = {
+export const formRendererDefinition: RegisteredRendererDefinition = {
   type: 'form',
   displayName: 'Form',
   category: 'form',

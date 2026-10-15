@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { RendererDefinition } from '@nop-chaos/flux-core';
+import type { RegisteredRendererDefinition } from '@nop-chaos/flux-core';
 import {
   PRESERVE_LITERAL_MARKER,
   compileFixture,
@@ -7,7 +7,7 @@ import {
 } from './schema-compiler-schema-definition-unified-test-support.js';
 
 describe('unified fieldRules region extraction (compiledKey semantics)', () => {
-  const tabsFixture: RendererDefinition = {
+  const tabsFixture: RegisteredRendererDefinition = {
     type: 'tabs-fixture',
     displayName: 'Tabs Fixture',
     component: () => null,
@@ -97,7 +97,7 @@ describe('unified fieldRules region extraction (compiledKey semantics)', () => {
 });
 
 describe('unified fieldRules nested source region extraction', () => {
-  const tableFixture: RendererDefinition = {
+  const tableFixture: RegisteredRendererDefinition = {
     type: 'table-fixture',
     displayName: 'Table Fixture',
     component: () => null,
@@ -244,7 +244,7 @@ describe('unified fieldRules nested source region extraction', () => {
 });
 
 describe('unified fieldRules literal sourceKey (variant match.when)', () => {
-  const variantFixture: RendererDefinition = {
+  const variantFixture: RegisteredRendererDefinition = {
     type: 'variant-fixture',
     displayName: 'Variant Fixture',
     component: () => null,
@@ -289,7 +289,7 @@ describe('unified fieldRules literal sourceKey (variant match.when)', () => {
 });
 
 describe('unified fieldRules value-or-region (crud columns[].searchable)', () => {
-  const searchableFixture: RendererDefinition = {
+  const searchableFixture: RegisteredRendererDefinition = {
     type: 'searchable-fixture',
     displayName: 'Searchable Fixture',
     component: () => null,

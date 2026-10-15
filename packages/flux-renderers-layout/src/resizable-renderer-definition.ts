@@ -1,4 +1,4 @@
-import type { RendererDefinition } from '@nop-chaos/flux-core';
+import type { RegisteredRendererDefinition } from '@nop-chaos/flux-core';
 import { ResizableRenderer } from './resizable-renderer.js';
 
 /**
@@ -27,7 +27,7 @@ const resizablePanelCapabilityContracts = [
   },
 ] as const;
 
-export const resizableRendererDefinition: RendererDefinition = {
+export const resizableRendererDefinition: RegisteredRendererDefinition = {
   type: 'resizable',
   displayName: 'Resizable',
   category: 'layout',

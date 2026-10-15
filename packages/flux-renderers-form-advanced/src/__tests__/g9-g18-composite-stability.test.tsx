@@ -5,7 +5,7 @@ import { formAdvancedRendererDefinitions } from '../index.js';
 import { basicRendererDefinitions } from '@nop-chaos/flux-renderers-basic';
 import { formRendererDefinitions } from '@nop-chaos/flux-renderers-form';
 import { createSchemaRenderer } from '@nop-chaos/flux-react';
-import type { RendererComponentProps, RendererDefinition, FormRuntime } from '@nop-chaos/flux-core';
+import type { RendererComponentProps, RegisteredRendererDefinition, FormRuntime } from '@nop-chaos/flux-core';
 import { useCurrentForm, useScopeSelector } from '@nop-chaos/flux-react';
 import { env, formulaCompiler } from '../test-support.js';
 import { installFormAdvancedTestHooks } from '../test-support.js';
@@ -66,7 +66,7 @@ function FormRegisterSpyRenderer(_props: RendererComponentProps) {
   return null;
 }
 
-const formRegisterSpyRenderer: RendererDefinition = {
+const formRegisterSpyRenderer: RegisteredRendererDefinition = {
   type: 'form-register-spy',
   component: FormRegisterSpyRenderer,
 };
@@ -78,12 +78,12 @@ function ScalarValueDisplayRenderer(_props: RendererComponentProps) {
   return <span data-testid="scalar-item">{String(value ?? '')}</span>;
 }
 
-const scalarValueDisplayRenderer: RendererDefinition = {
+const scalarValueDisplayRenderer: RegisteredRendererDefinition = {
   type: 'scalar-value-display',
   component: ScalarValueDisplayRenderer,
 };
 
-function renderSchema(schema: object, extra: RendererDefinition[] = []) {
+function renderSchema(schema: object, extra: RegisteredRendererDefinition[] = []) {
   const SchemaRenderer = createSchemaRenderer([
     ...basicRendererDefinitions,
     ...allFormDefs,

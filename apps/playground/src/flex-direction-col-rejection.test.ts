@@ -13,7 +13,7 @@
  * tests should be replaced by tests that pull the real registry.
  */
 import { describe, it, expect } from 'vitest';
-import type { RendererDefinition } from '@nop-chaos/flux-core';
+import type { RegisteredRendererDefinition } from '@nop-chaos/flux-core';
 import { createRendererRegistry } from '@nop-chaos/flux-core';
 import { createFormulaCompiler, createExpressionCompiler } from '@nop-chaos/flux-formula';
 import { createSchemaCompiler } from '@nop-chaos/flux-compiler';
@@ -23,7 +23,7 @@ const FLEX_DIRECTION_LITERALS = ['row', 'column', 'row-reverse', 'column-reverse
 const FLEX_ALIGN_LITERALS = ['start', 'center', 'end', 'stretch', 'baseline'] as const;
 const FLEX_JUSTIFY_LITERALS = ['start', 'center', 'end', 'between', 'around', 'evenly'] as const;
 
-const flexRenderer: RendererDefinition = {
+const flexRenderer: RegisteredRendererDefinition = {
   type: 'flex',
   sourcePackage: '@nop-chaos/flux-renderers-basic',
   component: FlexRenderer,
@@ -52,7 +52,7 @@ const flexRenderer: RendererDefinition = {
   ],
 };
 
-const containerRenderer: RendererDefinition = {
+const containerRenderer: RegisteredRendererDefinition = {
   type: 'container',
   sourcePackage: '@nop-chaos/flux-renderers-basic',
   component: ContainerRenderer,

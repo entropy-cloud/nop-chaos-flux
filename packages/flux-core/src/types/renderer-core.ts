@@ -217,12 +217,23 @@ export interface RendererDefinition<
   S extends BaseSchema = BaseSchema,
   P extends Record<string, unknown> = RendererResolvedProps<S>,
 > extends RendererDefinitionShape<S> {
-  type: S['type'];
   component?: BivariantCallback<[RendererComponentProps<S, P>], RendererRenderOutput>;
 }
 
+/**
+ * Registration-invariant view of `RendererDefinition`: `component` is required
+ * in the type. `RendererRegistry.register` enforces the same invariant with a
+ * defensive runtime throw (RM-1 plan 603).
+ */
+export interface RegisteredRendererDefinition<
+  S extends BaseSchema = BaseSchema,
+  P extends Record<string, unknown> = RendererResolvedProps<S>,
+> extends RendererDefinition<S, P> {
+  component: BivariantCallback<[RendererComponentProps<S, P>], RendererRenderOutput>;
+}
+
 export interface RendererRegistry {
-  register(definition: RendererDefinition, options?: { override?: boolean }): void;
+  register(definition: RegisteredRendererDefinition, options?: { override?: boolean }): void;
   get(type: string): RendererDefinition | undefined;
   has(type: string): boolean;
   list(): RendererDefinition[];

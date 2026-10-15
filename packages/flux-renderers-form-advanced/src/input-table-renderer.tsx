@@ -3,7 +3,7 @@ import type {
   BaseSchema,
   CompiledRuntimeValue,
   RendererComponentProps,
-  RendererDefinition,
+  RegisteredRendererDefinition,
   ScopeRef,
   ValidationRule,
 } from '@nop-chaos/flux-core';
@@ -291,7 +291,7 @@ export function InputTableRenderer(props: RendererComponentProps<InputTableSchem
   );
 }
 
-export const inputTableRendererDefinition: RendererDefinition = {
+export const inputTableRendererDefinition: RegisteredRendererDefinition = {
   type: 'input-table',
   displayName: 'Input Table',
   category: 'Form Advanced',

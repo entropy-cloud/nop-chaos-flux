@@ -1,5 +1,5 @@
 import React from 'react';
-import type { RendererComponentProps, RendererDefinition } from '@nop-chaos/flux-core';
+import type { RendererComponentProps, RegisteredRendererDefinition } from '@nop-chaos/flux-core';
 import {
   useCurrentFormFieldState,
   useCurrentValidationScope,
@@ -137,7 +137,7 @@ export function TagListRenderer(props: RendererComponentProps<TagListSchema>) {
   );
 }
 
-export const tagListRendererDefinition: RendererDefinition = {
+export const tagListRendererDefinition: RegisteredRendererDefinition = {
   type: 'tag-list',
   displayName: 'Tag List',
   category: 'Form Advanced',

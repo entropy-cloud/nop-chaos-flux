@@ -3,6 +3,7 @@ import type {
   BaseSchema,
   FormRuntime,
   RendererComponentProps,
+  RegisteredRendererDefinition,
   RendererDefinition,
   RuntimeFieldRegistration,
   ScopeRef,
@@ -540,7 +541,7 @@ const conditionBuilderValidation: RendererDefinition['validation'] = {
   },
 };
 
-export const conditionBuilderRendererDefinition: RendererDefinition = {
+export const conditionBuilderRendererDefinition: RegisteredRendererDefinition = {
   type: 'condition-builder',
   displayName: 'Condition Builder',
   category: 'Form Advanced',

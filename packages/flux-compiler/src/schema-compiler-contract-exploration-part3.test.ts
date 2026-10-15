@@ -1,11 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type {
-  HostCapabilityProjectionManifest,
-  RendererDefinition,
-  RendererHostContract,
-  SchemaDiagnostic,
-  TemplateNode,
-} from '@nop-chaos/flux-core';
+import type { HostCapabilityProjectionManifest, RegisteredRendererDefinition, RendererHostContract, SchemaDiagnostic, TemplateNode } from '@nop-chaos/flux-core';
 import { createRendererRegistry } from '@nop-chaos/flux-core';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
 import {
@@ -15,27 +9,27 @@ import {
   isInsideCapableRegion,
 } from './index.js';
 
-function makeCompiler(renderers: RendererDefinition[] = []) {
+function makeCompiler(renderers: RegisteredRendererDefinition[] = []) {
   return createSchemaCompiler({
     registry: createRendererRegistry(renderers),
     expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
   });
 }
 
-const textRenderer: RendererDefinition = {
+const textRenderer: RegisteredRendererDefinition = {
   type: 'text',
   component: () => null,
-  propSchema: { text: { type: 'string' } },
+  propContracts: { text: { shape: { kind: 'unknown' }, displayName: 'text' } },
   fields: [{ key: 'text', kind: 'prop' }],
 };
 
-const containerRenderer: RendererDefinition = {
+const containerRenderer: RegisteredRendererDefinition = {
   type: 'container',
   component: () => null,
   fields: [{ key: 'body', kind: 'region', regionKey: 'body' }],
 };
 
-const buttonRenderer: RendererDefinition = {
+const buttonRenderer: RegisteredRendererDefinition = {
   type: 'button',
   component: () => null,
   fields: [
@@ -161,7 +155,7 @@ describe('contract exploration: diagnostics context edge cases', () => {
 
 describe('contract exploration: source validation', () => {
   it('H69: source without formula/action/args is flagged', () => {
-    const renderer: RendererDefinition = {
+    const renderer: RegisteredRendererDefinition = {
       type: 'page',
       component: () => null,
       fields: [{ key: 'data', kind: 'prop' }],
@@ -182,7 +176,7 @@ describe('contract exploration: source validation', () => {
   });
 
   it('H70: source with valid formula is not flagged', () => {
-    const renderer: RendererDefinition = {
+    const renderer: RegisteredRendererDefinition = {
       type: 'page',
       component: () => null,
       fields: [{ key: 'data', kind: 'prop' }],
@@ -197,7 +191,7 @@ describe('contract exploration: source validation', () => {
   });
 
   it('H71: source with action and valid args is not flagged', () => {
-    const renderer: RendererDefinition = {
+    const renderer: RegisteredRendererDefinition = {
       type: 'page',
       component: () => null,
       fields: [{ key: 'data', kind: 'prop' }],
@@ -305,7 +299,7 @@ describe('contract exploration: deep probes and additional candidates', () => {
       projection: { fields: {} },
       capabilities: { namespace: 'test', methods: {} },
     };
-    const parentRenderer: RendererDefinition = {
+    const parentRenderer: RegisteredRendererDefinition = {
       type: 'parent-host',
       component: () => null,
       fields: [{ key: 'body', kind: 'region', regionKey: 'body' }],
@@ -315,7 +309,7 @@ describe('contract exploration: deep probes and additional candidates', () => {
         resolveManifest: (s) => s === '1.0' ? v1Manifest : undefined,
       } satisfies RendererHostContract,
     };
-    const childRenderer: RendererDefinition = {
+    const childRenderer: RegisteredRendererDefinition = {
       type: 'child-host',
       component: () => null,
       fields: [{ key: 'body', kind: 'region', regionKey: 'body' }],
@@ -393,7 +387,7 @@ describe('contract exploration: deep probes and additional candidates', () => {
 
   it('H86: FIXED - schemaValidator called exactly once in validate', () => {
     const seen: Array<{ path: string }> = [];
-    const validatedRenderer: RendererDefinition = {
+    const validatedRenderer: RegisteredRendererDefinition = {
       type: 'validated',
       component: () => null,
       schemaValidator({ schema: _schema, path, emit: _emit }) {
@@ -428,7 +422,7 @@ describe('contract exploration: deep probes and additional candidates', () => {
   });
 
   it('H88: source with dependsOn validates dependency paths', () => {
-    const renderer: RendererDefinition = {
+    const renderer: RegisteredRendererDefinition = {
       type: 'page',
       component: () => null,
       fields: [{ key: 'data', kind: 'prop' }],
@@ -459,7 +453,7 @@ describe('contract exploration: deep probes and additional candidates', () => {
       projection: { fields: {} },
       capabilities: { namespace: 'test', methods: {} },
     };
-    const mismatchRenderer: RendererDefinition = {
+    const mismatchRenderer: RegisteredRendererDefinition = {
       type: 'mismatch-host',
       component: () => null,
       hostContract: {

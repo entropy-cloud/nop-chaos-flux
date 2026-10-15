@@ -1,22 +1,22 @@
 import { describe, expect, it } from 'vitest';
-import type { RendererDefinition, TemplateNode } from '@nop-chaos/flux-core';
+import type { RegisteredRendererDefinition, TemplateNode } from '@nop-chaos/flux-core';
 import { createRendererRegistry } from '@nop-chaos/flux-core';
 import { createSchemaCompiler } from './index.js';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
 
-const containerRenderer: RendererDefinition = {
+const containerRenderer: RegisteredRendererDefinition = {
   type: 'container',
   component: () => null,
   fields: [{ key: 'body', kind: 'region' }],
 };
 
-const buttonRenderer: RendererDefinition = {
+const buttonRenderer: RegisteredRendererDefinition = {
   type: 'button',
   component: () => null,
   fields: [{ key: 'onClick', kind: 'event' }],
 };
 
-function createCompiler(...definitions: RendererDefinition[]) {
+function createCompiler(...definitions: RegisteredRendererDefinition[]) {
   return createSchemaCompiler({
     registry: createRendererRegistry(definitions),
     expressionCompiler: createExpressionCompiler(createFormulaCompiler()),

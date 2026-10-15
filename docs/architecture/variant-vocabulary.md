@@ -78,7 +78,7 @@ Current compiler baseline:
 
 Relevant implementation baseline:
 
-- `packages/flux-compiler/src/schema-compiler/shape-validation-utils.ts` uses `propContracts` and `propSchema` to build accepted key sets.
+- `packages/flux-compiler/src/schema-compiler/shape-validation-utils.ts` uses `propContracts` to build accepted key sets.
 - `packages/flux-compiler/src/schema-compiler/shape-validation.ts` now reports both unknown keys and invalid finite prop values, while still invoking renderer-owned `schemaValidator` hooks for nested/domain-specific validation.
 - `packages/flux-compiler/src/schema-compiler/flux-value-shape-validation.ts` is the reusable `FluxValueShape` validator shared by ordinary renderer props and host capability args.
 - `packages/flux-renderers-basic/src/basic-renderer-definitions.ts` declares `button.variant` and `tabs.variant` as finite unions consumed by validation.
@@ -261,6 +261,6 @@ Interpretation:
 - `packages/ui/src/components/ui/tabs.tsx` - current TabsList variant source.
 - `packages/flux-renderers-basic/src/schemas.ts` - public `button.variant` and `tabs.variant` schema contracts.
 - `packages/flux-compiler/src/schema-compiler/shape-validation.ts` - current schema structural diagnostics path.
-- `packages/flux-compiler/src/schema-compiler/shape-validation-utils.ts` - accepted-key metadata usage for `propContracts` / `propSchema`.
+- `packages/flux-compiler/src/schema-compiler/shape-validation-utils.ts` - accepted-key metadata usage for `propContracts`.
 - `docs/references/flux-json-conventions.md` - JSON authoring naming conventions.
 - `scripts/analyze-variant-vocabulary.mjs` - current repository scanner for `variant` definitions and usages.

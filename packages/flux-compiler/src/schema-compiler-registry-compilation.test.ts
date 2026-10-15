@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   createRendererRegistry,
   getCompiledCidState,
-  type RendererDefinition,
+  type RegisteredRendererDefinition,
   type TemplateNode,
 } from '@nop-chaos/flux-core';
 import {
@@ -151,7 +151,7 @@ describe('createSchemaCompiler', () => {
   });
 
   it('applies renderer authoringTransform before compilation', () => {
-    const transformedRenderer: RendererDefinition = {
+    const transformedRenderer: RegisteredRendererDefinition = {
       type: 'transform-probe',
       component: () => null,
       authoringTransform: ({ schema }) => {
@@ -184,7 +184,7 @@ describe('createSchemaCompiler', () => {
   });
 
   it('uses field-level compile when present and leaves other props on default compilation', () => {
-    const customCompileRenderer: RendererDefinition = {
+    const customCompileRenderer: RegisteredRendererDefinition = {
       type: 'custom-compile-probe',
       component: () => null,
       fields: [
@@ -273,7 +273,7 @@ describe('createSchemaCompiler', () => {
   });
 
   it('keeps allowSource value-or-region source carriers on the value channel', () => {
-    const sourceAwareRenderer: RendererDefinition = {
+    const sourceAwareRenderer: RegisteredRendererDefinition = {
       type: 'source-title-probe',
       component: () => null,
       fields: [{ key: 'title', kind: 'value-or-region', regionKey: 'title', allowSource: true }],
@@ -291,7 +291,7 @@ describe('createSchemaCompiler', () => {
   });
 
   it('lets field compile hooks override the compileValue symbolTable', () => {
-    const renderer: RendererDefinition = {
+    const renderer: RegisteredRendererDefinition = {
       type: 'symbol-table-probe',
       component: () => null,
       fields: [

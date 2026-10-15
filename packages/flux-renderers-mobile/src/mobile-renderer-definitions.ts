@@ -1,4 +1,4 @@
-import type { RendererDefinition } from '@nop-chaos/flux-core';
+import type { RegisteredRendererDefinition } from '@nop-chaos/flux-core';
 import type {
   CountdownSchema,
   InfiniteScrollSchema,
@@ -12,7 +12,7 @@ import { NoticeBarRenderer } from './notice-bar.js';
 import { PullRefreshRenderer } from './pull-refresh.js';
 import { SwipeCellRenderer } from './swipe-cell.js';
 
-export const mobileRendererDefinitions: RendererDefinition[] = [
+export const mobileRendererDefinitions: RegisteredRendererDefinition[] = [
   {
     type: 'pull-refresh',
     displayName: 'Pull Refresh',

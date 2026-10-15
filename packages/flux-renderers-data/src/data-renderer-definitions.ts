@@ -1,4 +1,4 @@
-import type { RendererDefinition } from '@nop-chaos/flux-core';
+import type { RegisteredRendererDefinition } from '@nop-chaos/flux-core';
 import { createLazyRendererComponent } from '@nop-chaos/flux-react';
 import { DataSourceRenderer } from './data-source-renderer.js';
 import { validateTableSchema } from './data-schema-validation.js';
@@ -24,7 +24,7 @@ export { sparklineRendererDefinition } from './sparkline-renderer-definition.js'
 export { echartsRendererDefinition } from './echarts-renderer-definition.js';
 import { echartsRendererDefinition } from './echarts-renderer-definition.js';
 
-export const dataRendererDefinitions: RendererDefinition[] = [
+export const dataRendererDefinitions: RegisteredRendererDefinition[] = [
   {
     type: 'table',
     displayName: 'Table',

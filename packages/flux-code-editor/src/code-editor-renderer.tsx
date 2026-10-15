@@ -1,6 +1,6 @@
 import './code-editor-styles.css';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import type { RendererDefinition, SchemaFieldRule } from '@nop-chaos/flux-core';
+import type { RegisteredRendererDefinition, SchemaFieldRule } from '@nop-chaos/flux-core';
 import { t } from '@nop-chaos/flux-i18n';
 import { resolveRendererSlotContent, useRenderScope } from '@nop-chaos/flux-react';
 import { formFieldChromeRules } from '@nop-chaos/flux-renderers-form';
@@ -311,7 +311,7 @@ export function CodeEditorRenderer(props: CodeEditorRendererProps) {
   );
 }
 
-export const codeEditorRendererDefinition: RendererDefinition = {
+export const codeEditorRendererDefinition: RegisteredRendererDefinition = {
   type: 'code-editor',
   component: CodeEditorRenderer,
   sourcePackage: '@nop-chaos/flux-code-editor',

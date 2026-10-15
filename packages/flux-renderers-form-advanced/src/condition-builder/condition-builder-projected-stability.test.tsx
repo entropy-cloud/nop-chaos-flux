@@ -1,7 +1,7 @@
 import React from 'react';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
-import type { RendererComponentProps, RendererDefinition, ScopeRef } from '@nop-chaos/flux-core';
+import type { RendererComponentProps, RegisteredRendererDefinition, ScopeRef } from '@nop-chaos/flux-core';
 import { useRenderScope } from '@nop-chaos/flux-react';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createSchemaRenderer } from '@nop-chaos/flux-react';
@@ -23,7 +23,7 @@ const ScopeIdentityProbeRenderer = (_props: RendererComponentProps) => {
   return <div data-testid="scope-identity-probe" />;
 };
 
-const scopeIdentityProbeDefinition: RendererDefinition = {
+const scopeIdentityProbeDefinition: RegisteredRendererDefinition = {
   type: 'scope-identity-probe',
   component: ScopeIdentityProbeRenderer,
 };

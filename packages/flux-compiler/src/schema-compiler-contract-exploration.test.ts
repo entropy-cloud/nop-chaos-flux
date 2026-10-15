@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type {
   HostCapabilityProjectionManifest,
-  RendererDefinition,
+  RegisteredRendererDefinition, RendererDefinition,
   RendererHostContract,
 } from '@nop-chaos/flux-core';
 import { createRendererRegistry } from '@nop-chaos/flux-core';
@@ -14,28 +14,27 @@ import {
   createSchemaCompilerDiagnosticsContext,
 } from './index.js';
 
-function makeCompiler(renderers: RendererDefinition[] = []) {
+function makeCompiler(renderers: RegisteredRendererDefinition[] = []) {
   return createSchemaCompiler({
     registry: createRendererRegistry(renderers),
     expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
   });
 }
 
-const textRenderer: RendererDefinition = {
+const textRenderer: RegisteredRendererDefinition = {
   type: 'text',
   component: () => null,
-  propSchema: { text: { type: 'string' } },
   propContracts: { text: { shape: { kind: 'string' }, required: true, displayName: 'Text' } },
   fields: [{ key: 'text', kind: 'prop' }],
 };
 
-const containerRenderer: RendererDefinition = {
+const containerRenderer: RegisteredRendererDefinition = {
   type: 'container',
   component: () => null,
   fields: [{ key: 'body', kind: 'region', regionKey: 'body' }],
 };
 
-const buttonRenderer: RendererDefinition = {
+const buttonRenderer: RegisteredRendererDefinition = {
   type: 'button',
   component: () => null,
   fields: [
@@ -44,7 +43,7 @@ const buttonRenderer: RendererDefinition = {
   ],
 };
 
-const openRenderer: RendererDefinition = {
+const openRenderer: RegisteredRendererDefinition = {
   type: 'open',
   component: () => null,
   fields: [{ key: 'label', kind: 'prop' }],
@@ -60,7 +59,7 @@ const _formRenderer: RendererDefinition = {
   },
 };
 
-const valueOrRegionRenderer: RendererDefinition = {
+const valueOrRegionRenderer: RegisteredRendererDefinition = {
   type: 'card',
   component: () => null,
   fields: [{ key: 'title', kind: 'value-or-region', regionKey: 'title' }],
@@ -89,7 +88,7 @@ const testManifest: HostCapabilityProjectionManifest = {
   },
 };
 
-const hostContractRenderer: RendererDefinition = {
+const hostContractRenderer: RegisteredRendererDefinition = {
   type: 'host-owner',
   component: () => null,
   fields: [
@@ -111,7 +110,7 @@ const hostContractRenderer: RendererDefinition = {
   } satisfies RendererHostContract,
 };
 
-const actionRenderer: RendererDefinition = {
+const actionRenderer: RegisteredRendererDefinition = {
   type: 'action-child',
   component: () => null,
   fields: [{ key: 'onClick', kind: 'event' }],

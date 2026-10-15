@@ -1,7 +1,7 @@
 import type {
   BaseSchema,
   FieldCompileContext,
-  RendererDefinition,
+  RegisteredRendererDefinition,
   RendererRegistry,
   RendererSchemaValidationContext,
 } from '@nop-chaos/flux-core';
@@ -201,7 +201,7 @@ function compileToolbarItem(
 
 export type { ReportDesignerPageSchemaInput, ReportDesignerPageSchema };
 
-export const reportDesignerRendererDefinitions: RendererDefinition[] = [
+export const reportDesignerRendererDefinitions: RegisteredRendererDefinition[] = [
   {
     type: 'report-inspector-shell',
     component: LazyReportInspectorShellRenderer,

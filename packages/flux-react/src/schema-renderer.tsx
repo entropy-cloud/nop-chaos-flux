@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import type { BaseSchema, SchemaRendererProps } from '@nop-chaos/flux-core';
+import type { BaseSchema, RegisteredRendererDefinition, SchemaRendererProps } from '@nop-chaos/flux-core';
 import {
   createRendererRegistry,
   isStrictValidationEnabled,
@@ -9,7 +9,6 @@ import {
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createRendererRuntime } from '@nop-chaos/flux-runtime';
 import { ensureRendererComponent } from './auto-renderer.js';
-import type { RendererDefinition } from './react-contracts.js';
 import { createDefaultSchemaDiagnosticReporter } from './schema-diagnostics-reporter.js';
 import {
   ActionScopeContext,
@@ -183,7 +182,7 @@ function CompiledSchemaTree(props: {
   );
 }
 
-export function createSchemaRenderer(registryDefinitions: RendererDefinition[] = []) {
+export function createSchemaRenderer(registryDefinitions: RegisteredRendererDefinition[] = []) {
   const registry = createRendererRegistry(registryDefinitions.map(ensureRendererComponent));
 
   return function SchemaRenderer(props: SchemaRendererProps) {

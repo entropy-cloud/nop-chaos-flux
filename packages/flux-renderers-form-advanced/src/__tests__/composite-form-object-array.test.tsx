@@ -1,7 +1,7 @@
 import React from 'react';
 import { describe, expect, it } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
-import type { RendererDefinition } from '@nop-chaos/flux-core';
+import type { RegisteredRendererDefinition } from '@nop-chaos/flux-core';
 import { createSchemaRenderer } from '@nop-chaos/flux-react';
 import { useScopeSelector } from '@nop-chaos/flux-react';
 import {
@@ -23,7 +23,7 @@ function ScopeSelectorProbeRenderer() {
   return <span data-testid="scope-selector-probe">{JSON.stringify(snapshot)}</span>;
 }
 
-const scopeSelectorProbeRenderer: RendererDefinition = {
+const scopeSelectorProbeRenderer: RegisteredRendererDefinition = {
   type: 'scope-selector-probe',
   component: () => <ScopeSelectorProbeRenderer />,
 };

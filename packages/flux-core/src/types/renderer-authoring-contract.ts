@@ -10,13 +10,13 @@ import type {
 import type {
   RendererEventContract,
   RendererPropContract,
-  RendererRendererClass,
+  RendererClass,
   RendererCapabilityContract,
 } from './renderer-definition-types.js';
 
 export interface ResolvedAuthoringContract {
   rendererType: string;
-  rendererClass: RendererRendererClass;
+  rendererClass: RendererClass;
   rendererTraits: readonly string[];
   editableProps: Readonly<Record<string, RendererPropContract>>;
   events: Readonly<Record<string, RendererEventContract>>;

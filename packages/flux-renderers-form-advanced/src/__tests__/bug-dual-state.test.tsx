@@ -5,7 +5,7 @@ import { t } from '@nop-chaos/flux-i18n';
 import type {
   ApiSchema,
   ApiRequestContext,
-  RendererDefinition,
+  RegisteredRendererDefinition,
   RendererEnv,
   FormRuntime,
 } from '@nop-chaos/flux-core';
@@ -34,7 +34,7 @@ const env: RendererEnv = {
 
 const PlainScopeSchemaRenderer = createSchemaRenderer(allFormDefs);
 
-const buttonRenderer: RendererDefinition = {
+const buttonRenderer: RegisteredRendererDefinition = {
   type: 'button',
   component: (props) => (
     <button type="button" onClick={() => void props.events.onClick?.()}>
@@ -109,7 +109,7 @@ describe('bug: dual state in array-editor and key-value renderers', () => {
       return null;
     }
 
-    const formHandleProbeRenderer: RendererDefinition = {
+    const formHandleProbeRenderer: RegisteredRendererDefinition = {
       type: 'form-handle-probe',
       component: FormHandleProbe,
     };

@@ -5,12 +5,12 @@ import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createSchemaRenderer } from '@nop-chaos/flux-react';
 import { basicRendererDefinitions } from '@nop-chaos/flux-renderers-basic';
 import { formRendererDefinitions } from '../index.js';
-import type { RendererDefinition } from '@nop-chaos/flux-core';
+import type { RegisteredRendererDefinition } from '@nop-chaos/flux-core';
 import { env, formTestHarness } from './form-test-support.js';
 
 const { submitCalls } = formTestHarness;
 
-function makeRenderer(extra: RendererDefinition[] = []) {
+function makeRenderer(extra: RegisteredRendererDefinition[] = []) {
   return createSchemaRenderer([
     ...basicRendererDefinitions,
     ...formRendererDefinitions,

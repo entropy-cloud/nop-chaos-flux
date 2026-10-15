@@ -3,7 +3,7 @@ import type {
   ActionSchema,
   BaseSchema,
   RendererComponentProps,
-  RendererDefinition,
+  RegisteredRendererDefinition,
   ScopeRef,
 } from '@nop-chaos/flux-core';
 import { actionAdapter, getIn, setIn } from '@nop-chaos/flux-core';
@@ -500,7 +500,7 @@ export function ObjectFieldRenderer(props: RendererComponentProps<ObjectFieldSch
   );
 }
 
-export const objectFieldRendererDefinition: RendererDefinition = {
+export const objectFieldRendererDefinition: RegisteredRendererDefinition = {
   type: 'object-field',
   displayName: 'Object Field',
   category: 'Form Advanced',

@@ -1,6 +1,6 @@
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import type { RendererDefinition } from '@nop-chaos/flux-core';
+import type { RegisteredRendererDefinition } from '@nop-chaos/flux-core';
 import {
   createDashboardSchemaRenderer,
   createSpiedEditorDefinition,
@@ -325,7 +325,7 @@ describe('DashboardEditorRenderer arrow-key navigation (A2)', () => {
   });
 
   it('ignores Arrow keys while focus is inside an input (early exit branch)', () => {
-    const inputPanelRenderer: RendererDefinition = {
+    const inputPanelRenderer: RegisteredRendererDefinition = {
       type: 'input-panel',
       component: () => <input data-testid="panel-input" defaultValue="" readOnly />,
     };

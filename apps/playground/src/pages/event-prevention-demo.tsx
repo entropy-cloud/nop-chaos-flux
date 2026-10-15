@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createSchemaRenderer, createDefaultRegistry } from '@nop-chaos/flux-react';
-import type { RendererDefinition, RendererEnv } from '@nop-chaos/flux-core';
+import type { RegisteredRendererDefinition, RendererEnv } from '@nop-chaos/flux-core';
 import { registerBasicRenderers } from '@nop-chaos/flux-renderers-basic';
 import { registerFormRenderers } from '@nop-chaos/flux-renderers-form';
 import { Button } from '@nop-chaos/ui';
 
-const preventFormSubmitRenderer: RendererDefinition = {
+const preventFormSubmitRenderer: RegisteredRendererDefinition = {
   type: 'native-submit-form',
   component: (props) => (
     <form
@@ -24,7 +24,7 @@ const preventFormSubmitRenderer: RendererDefinition = {
   fields: [{ key: 'onSubmit', kind: 'event' }],
 };
 
-const preventLinkRenderer: RendererDefinition = {
+const preventLinkRenderer: RegisteredRendererDefinition = {
   type: 'native-link',
   component: (props) => (
     <a
@@ -40,7 +40,7 @@ const preventLinkRenderer: RendererDefinition = {
   fields: [{ key: 'onClick', kind: 'event' }],
 };
 
-const preventKeydownRenderer: RendererDefinition = {
+const preventKeydownRenderer: RegisteredRendererDefinition = {
   type: 'native-keydown-input',
   component: (props) => (
     <input

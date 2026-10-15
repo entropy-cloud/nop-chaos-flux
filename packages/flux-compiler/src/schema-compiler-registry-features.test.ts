@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { RendererDefinition } from '@nop-chaos/flux-core';
+import type { RegisteredRendererDefinition, RendererDefinition } from '@nop-chaos/flux-core';
 import {
   importHostRenderer,
   createTestCompiler,
@@ -68,12 +68,12 @@ describe('createSchemaCompiler', () => {
   });
 
   it('extracts table operation buttons into compiled regions', () => {
-    const tableRenderer: RendererDefinition = {
+    const tableRenderer: RegisteredRendererDefinition = {
       type: 'table',
       component: () => null,
       propContracts: { columns: tableColumnsContract },
     };
-    const buttonRenderer: RendererDefinition = {
+    const buttonRenderer: RegisteredRendererDefinition = {
       type: 'button',
       component: () => null,
     };
@@ -97,12 +97,12 @@ describe('createSchemaCompiler', () => {
   });
 
   it('extracts table column label fragments into compiled regions', () => {
-    const tableRenderer: RendererDefinition = {
+    const tableRenderer: RegisteredRendererDefinition = {
       type: 'table',
       component: () => null,
       propContracts: { columns: tableColumnsContract },
     };
-    const textRendererLocal: RendererDefinition = {
+    const textRendererLocal: RegisteredRendererDefinition = {
       type: 'text',
       component: () => null,
     };
@@ -125,12 +125,12 @@ describe('createSchemaCompiler', () => {
   });
 
   it('extracts table column cell fragments into compiled regions', () => {
-    const tableRenderer: RendererDefinition = {
+    const tableRenderer: RegisteredRendererDefinition = {
       type: 'table',
       component: () => null,
       propContracts: { columns: tableColumnsContract },
     };
-    const textRendererLocal: RendererDefinition = {
+    const textRendererLocal: RegisteredRendererDefinition = {
       type: 'text',
       component: () => null,
     };
@@ -154,12 +154,12 @@ describe('createSchemaCompiler', () => {
   });
 
   it('extracts deep-field nested regions without requiring a custom normalizer', () => {
-    const variantFieldRenderer: RendererDefinition = {
+    const variantFieldRenderer: RegisteredRendererDefinition = {
       type: 'variant-field',
       component: () => null,
       propContracts: { variants: variantFieldVariantsContract },
     };
-    const textRendererLocal: RendererDefinition = {
+    const textRendererLocal: RegisteredRendererDefinition = {
       type: 'text',
       component: () => null,
     };
@@ -186,13 +186,13 @@ describe('createSchemaCompiler', () => {
   });
 
   it('treats table empty as a plain prop or compiled region based on field metadata', () => {
-    const tableRenderer: RendererDefinition = {
+    const tableRenderer: RegisteredRendererDefinition = {
       type: 'table',
       component: () => null,
       fields: [{ key: 'empty', kind: 'value-or-region', regionKey: 'empty' }],
       propContracts: { columns: tableColumnsContract },
     };
-    const textRendererLocal: RendererDefinition = {
+    const textRendererLocal: RegisteredRendererDefinition = {
       type: 'text',
       component: () => null,
     };

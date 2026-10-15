@@ -1,9 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type {
-  HostCapabilityProjectionManifest,
-  RendererDefinition,
-  RendererPlugin,
-} from '@nop-chaos/flux-core';
+import type { HostCapabilityProjectionManifest, RegisteredRendererDefinition, RendererPlugin } from '@nop-chaos/flux-core';
 import { createRendererRegistry } from '@nop-chaos/flux-core';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createSchemaCompiler, validateSchema } from './index.js';
@@ -11,7 +7,7 @@ import { makeCompiler } from './schema-compiler-shape-validation-test-utils.js';
 
 describe('compile and validate integration', () => {
   it('handles plugins with beforeCompile and afterCompile', () => {
-    const textRenderer: RendererDefinition = { type: 'text', component: () => null };
+    const textRenderer: RegisteredRendererDefinition = { type: 'text', component: () => null };
     const plugin: RendererPlugin = {
       name: 'uppercase-plugin',
       beforeCompile(schema) {
@@ -37,7 +33,7 @@ describe('compile and validate integration', () => {
   });
 
   it('runs beforeCompile once during validate, matching compile semantics', () => {
-    const textRenderer: RendererDefinition = { type: 'text', component: () => null };
+    const textRenderer: RegisteredRendererDefinition = { type: 'text', component: () => null };
     let beforeCompileCalls = 0;
     const plugin: RendererPlugin = {
       name: 'count-before-compile',
@@ -60,7 +56,7 @@ describe('compile and validate integration', () => {
   });
 
   it('reports host contract family mismatch', () => {
-    const renderer: RendererDefinition = {
+    const renderer: RegisteredRendererDefinition = {
       type: 'host-mismatch',
       component: () => null,
       hostContract: {
@@ -97,7 +93,7 @@ describe('compile and validate integration', () => {
       projection: { fields: {} },
       capabilities: { namespace: 'designer', methods: {} },
     };
-    const renderer: RendererDefinition = {
+    const renderer: RegisteredRendererDefinition = {
       type: 'designer-host',
       component: () => null,
       fields: [{ key: 'toolbar', kind: 'region', regionKey: 'toolbar' }],
@@ -110,7 +106,7 @@ describe('compile and validate integration', () => {
         capabilityPublication: { mode: 'whole-owner' },
       },
     };
-    const childRenderer: RendererDefinition = {
+    const childRenderer: RegisteredRendererDefinition = {
       type: 'child-host',
       component: () => null,
       fields: [{ key: 'body', kind: 'region', regionKey: 'body' }],
@@ -144,14 +140,14 @@ describe('compile and validate integration', () => {
   });
 
   it('throws on invalid schema root during compile', () => {
-    const renderer: RendererDefinition = { type: 'text', component: () => null };
+    const renderer: RegisteredRendererDefinition = { type: 'text', component: () => null };
     const compiler = makeCompiler([renderer]);
 
     expect(() => compiler.compile('not-a-schema' as any)).toThrow('Invalid schema root');
   });
 
   it('throws on maximum nesting depth exceeded', () => {
-    const renderer: RendererDefinition = {
+    const renderer: RegisteredRendererDefinition = {
       type: 'container',
       component: () => null,
       fields: [{ key: 'body', kind: 'region', regionKey: 'body' }],
@@ -167,7 +163,7 @@ describe('compile and validate integration', () => {
   });
 
   it('reports invalid data-source with both formula and action', () => {
-    const renderer: RendererDefinition = {
+    const renderer: RegisteredRendererDefinition = {
       type: 'data-source',
       component: () => null,
       compilation: {
@@ -189,7 +185,7 @@ describe('compile and validate integration', () => {
   });
 
   it('reports invalid data-source with neither formula nor action', () => {
-    const renderer: RendererDefinition = {
+    const renderer: RegisteredRendererDefinition = {
       type: 'data-source',
       component: () => null,
       compilation: {
@@ -209,7 +205,7 @@ describe('compile and validate integration', () => {
   });
 
   it('validates reaction actions', () => {
-    const renderer: RendererDefinition = {
+    const renderer: RegisteredRendererDefinition = {
       type: 'reaction',
       component: () => null,
       compilation: {
@@ -228,7 +224,7 @@ describe('compile and validate integration', () => {
   });
 
   it('validates reaction watch and control fields', () => {
-    const renderer: RendererDefinition = {
+    const renderer: RegisteredRendererDefinition = {
       type: 'reaction',
       component: () => null,
       compilation: {
@@ -257,7 +253,7 @@ describe('compile and validate integration', () => {
   });
 
   it('validates missing ajax args payloads', () => {
-    const renderer: RendererDefinition = { type: 'button', component: () => null, fields: [{ key: 'onClick', kind: 'event' }] };
+    const renderer: RegisteredRendererDefinition = { type: 'button', component: () => null, fields: [{ key: 'onClick', kind: 'event' }] };
     const compiler = makeCompiler([renderer]);
 
     expect(compiler.validate?.({ type: 'button', onClick: { action: 'ajax' } } as any)).toEqual(
@@ -268,7 +264,7 @@ describe('compile and validate integration', () => {
   });
 
   it('validates lifecycle action shapes', () => {
-    const renderer: RendererDefinition = { type: 'text', component: () => null };
+    const renderer: RegisteredRendererDefinition = { type: 'text', component: () => null };
     const compiler = makeCompiler([renderer]);
 
     expect(compiler.validate?.({ type: 'text', onMount: 'bad-action' } as any)).toEqual(
@@ -279,7 +275,7 @@ describe('compile and validate integration', () => {
   });
 
   it('reports unknown xui namespace properties', () => {
-    const renderer: RendererDefinition = { type: 'text', component: () => null };
+    const renderer: RegisteredRendererDefinition = { type: 'text', component: () => null };
     const compiler = makeCompiler([renderer]);
 
     expect(
@@ -300,7 +296,7 @@ describe('compile and validate integration', () => {
   });
 
   it('reports invalid xui:imports entries that are not objects', () => {
-    const renderer: RendererDefinition = { type: 'text', component: () => null };
+    const renderer: RegisteredRendererDefinition = { type: 'text', component: () => null };
     const compiler = makeCompiler([renderer]);
 
     expect(
@@ -316,7 +312,7 @@ describe('compile and validate integration', () => {
   });
 
   it('reports xui:imports with non-object options', () => {
-    const renderer: RendererDefinition = { type: 'text', component: () => null };
+    const renderer: RegisteredRendererDefinition = { type: 'text', component: () => null };
     const compiler = makeCompiler([renderer]);
 
     expect(
@@ -335,13 +331,13 @@ describe('compile and validate integration', () => {
   });
 
   it('validates data-source with action args containing api', () => {
-    const renderer: RendererDefinition = {
+    const renderer: RegisteredRendererDefinition = {
       type: 'data-source',
       component: () => null,
       compilation: {
         artifacts: ['data-source'],
       },
-      propSchema: { action: { type: 'string' }, args: { type: 'object' } },
+      propContracts: { action: { shape: { kind: 'unknown' }, displayName: 'action' }, args: { shape: { kind: 'unknown' }, displayName: 'args' } },
       fields: [
         { key: 'action', kind: 'prop' },
         { key: 'args', kind: 'prop' },
@@ -360,7 +356,7 @@ describe('compile and validate integration', () => {
   });
 
   it('compileNode compiles a single node', () => {
-    const renderer: RendererDefinition = { type: 'text', component: () => null };
+    const renderer: RegisteredRendererDefinition = { type: 'text', component: () => null };
     const compiler = makeCompiler([renderer]);
 
     const node = compiler.compileNode?.({ type: 'text', text: 'Hello' }, { path: '$', renderer });
@@ -369,7 +365,7 @@ describe('compile and validate integration', () => {
   });
 
   it('prepare resolves import URLs', async () => {
-    const renderer: RendererDefinition = { type: 'text', component: () => null };
+    const renderer: RegisteredRendererDefinition = { type: 'text', component: () => null };
     const compiler = makeCompiler([renderer]);
 
     const result = await compiler.prepare?.(
@@ -384,7 +380,7 @@ describe('compile and validate integration', () => {
   });
 
   it('prepare returns empty imports when no xui:imports', async () => {
-    const renderer: RendererDefinition = { type: 'text', component: () => null };
+    const renderer: RegisteredRendererDefinition = { type: 'text', component: () => null };
     const compiler = makeCompiler([renderer]);
 
     const result = await compiler.prepare?.({ type: 'text', text: 'Hello' });

@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { createRendererRegistry, type RendererDefinition } from '@nop-chaos/flux-core';
+import { createRendererRegistry, type RegisteredRendererDefinition } from '@nop-chaos/flux-core';
 import { validateSchema } from './index.js';
 
-const buttonRenderer: RendererDefinition = {
+const buttonRenderer: RegisteredRendererDefinition = {
   type: 'button',
   component: () => null,
-  propSchema: { label: { type: 'string' } },
+  propContracts: { label: { shape: { kind: 'unknown' }, displayName: 'label' } },
   fields: [{ key: 'onClick', kind: 'event' }],
 };
 

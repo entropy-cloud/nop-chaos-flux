@@ -4,7 +4,7 @@ import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/re
 import type {
   ApiRequestContext,
   RendererComponentProps,
-  RendererDefinition,
+  RegisteredRendererDefinition,
   RendererEnv,
   RendererRuntime,
 } from '@nop-chaos/flux-core';
@@ -74,7 +74,7 @@ function ExecuteSourceProbeRenderer(props: RendererComponentProps) {
   return <pre data-testid="execute-source-probe">{result}</pre>;
 }
 
-const executeSourceProbe: RendererDefinition = {
+const executeSourceProbe: RegisteredRendererDefinition = {
   type: 'execute-source-probe',
   component: ExecuteSourceProbeRenderer,
 };

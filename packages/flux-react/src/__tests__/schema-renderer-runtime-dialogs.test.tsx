@@ -1,7 +1,7 @@
 import React from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
-import type { RendererComponentProps, RendererDefinition } from '@nop-chaos/flux-core';
+import type { RendererComponentProps, RegisteredRendererDefinition } from '@nop-chaos/flux-core';
 import { createSchemaRenderer } from '../index.js';
 import { useCurrentComponentRegistry } from '../hooks.js';
 import {
@@ -53,7 +53,7 @@ function ComponentHandleWithIdProvider(props: RendererComponentProps) {
   return <span data-testid={`component-id-registry-scope-${label}`}>{componentRegistry?.id ?? ''}</span>;
 }
 
-const componentHandleWithIdProviderRenderer: RendererDefinition = {
+const componentHandleWithIdProviderRenderer: RegisteredRendererDefinition = {
   type: 'component-handle-with-id-provider',
   component: ComponentHandleWithIdProvider,
 };

@@ -1,16 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import type {
-  RendererDefinition,
-  TemplateNode,
-  CompiledValidationNode,
-  SchemaValue,
-} from '@nop-chaos/flux-core';
+import type { RegisteredRendererDefinition, TemplateNode, CompiledValidationNode, SchemaValue } from '@nop-chaos/flux-core';
 import { createRendererRegistry } from '@nop-chaos/flux-core';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createSchemaCompiler } from './index.js';
 import { collectValidationModel } from './schema-compiler/validation-collection.js';
 
-const formRenderer: RendererDefinition = {
+const formRenderer: RegisteredRendererDefinition = {
   type: 'form',
   component: () => null,
   fields: [{ key: 'body', kind: 'region', regionKey: 'body' }],
@@ -23,7 +18,7 @@ const formRenderer: RendererDefinition = {
   },
 };
 
-const inputRenderer: RendererDefinition = {
+const inputRenderer: RegisteredRendererDefinition = {
   type: 'input-text',
   component: () => null,
   validation: {
@@ -37,7 +32,7 @@ const inputRenderer: RendererDefinition = {
   },
 };
 
-const arrayInputRenderer: RendererDefinition = {
+const arrayInputRenderer: RegisteredRendererDefinition = {
   type: 'array-input',
   component: () => null,
   validation: {
@@ -55,7 +50,7 @@ const arrayInputRenderer: RendererDefinition = {
   },
 };
 
-const objectInputRenderer: RendererDefinition = {
+const objectInputRenderer: RegisteredRendererDefinition = {
   type: 'object-input',
   component: () => null,
   validation: {
@@ -70,7 +65,7 @@ const objectInputRenderer: RendererDefinition = {
   },
 };
 
-const blockingInputRenderer: RendererDefinition = {
+const blockingInputRenderer: RegisteredRendererDefinition = {
   type: 'blocking-input',
   component: () => null,
   validation: {
@@ -87,7 +82,7 @@ const blockingInputRenderer: RendererDefinition = {
   },
 };
 
-const childPrefixRenderer: RendererDefinition = {
+const childPrefixRenderer: RegisteredRendererDefinition = {
   type: 'prefix-input',
   component: () => null,
   fields: [{ key: 'body', kind: 'region', regionKey: 'body' }],
@@ -105,7 +100,7 @@ const childPrefixRenderer: RendererDefinition = {
   },
 };
 
-const containerRenderer: RendererDefinition = {
+const containerRenderer: RegisteredRendererDefinition = {
   type: 'container',
   component: () => null,
   fields: [{ key: 'body', kind: 'region', regionKey: 'body' }],
@@ -130,7 +125,7 @@ function createContainerBranch(depth: number, breadth: number, prefix: string): 
   };
 }
 
-const pageRendererCollector: RendererDefinition = {
+const pageRendererCollector: RegisteredRendererDefinition = {
   type: 'page',
   component: () => null,
   fields: [{ key: 'body', kind: 'region', regionKey: 'body' }],
@@ -139,7 +134,7 @@ const pageRendererCollector: RendererDefinition = {
   },
 };
 
-const containerWithoutCollect: RendererDefinition = {
+const containerWithoutCollect: RegisteredRendererDefinition = {
   type: 'container',
   component: () => null,
   fields: [{ key: 'body', kind: 'region', regionKey: 'body' }],
@@ -217,7 +212,7 @@ describe('collectValidationModel', () => {
   });
 
   it('records explicit child owner metadata for non-form create-owner renderers', () => {
-    const detailRenderer: RendererDefinition = {
+    const detailRenderer: RegisteredRendererDefinition = {
       type: 'detail-view',
       component: () => null,
       fields: [{ key: 'content', kind: 'region', regionKey: 'content' }],
@@ -487,7 +482,7 @@ describe('collectValidationModel', () => {
   });
 
   it('handles non-field renderer without getFieldPath', () => {
-    const nonFieldRenderer: RendererDefinition = {
+    const nonFieldRenderer: RegisteredRendererDefinition = {
       type: 'display',
       component: () => null,
       validation: {
@@ -513,7 +508,7 @@ describe('collectValidationModel', () => {
   });
 
   it('stops validation collection at create-owner boundaries', () => {
-    const nestedFormRenderer: RendererDefinition = {
+    const nestedFormRenderer: RegisteredRendererDefinition = {
       type: 'nested-form',
       component: () => null,
       fields: [{ key: 'body', kind: 'region', regionKey: 'body' }],
@@ -553,7 +548,7 @@ describe('collectValidationModel', () => {
   });
 
   it('stops validation collection at detail-view create-owner boundary', () => {
-    const detailRenderer: RendererDefinition = {
+    const detailRenderer: RegisteredRendererDefinition = {
       type: 'detail-view',
       component: () => null,
       fields: [{ key: 'content', kind: 'region', regionKey: 'content' }],

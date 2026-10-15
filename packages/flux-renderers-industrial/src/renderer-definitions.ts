@@ -1,4 +1,4 @@
-import type { RendererDefinition } from '@nop-chaos/flux-core';
+import type { RegisteredRendererDefinition } from '@nop-chaos/flux-core';
 import { LazyScadaCanvasRenderer } from './scada-canvas-lazy.js';
 
 /**
@@ -43,7 +43,7 @@ const symbolEventPayloadShape = {
  * `eventContracts`/`componentCapabilityContracts`，工具链（authoring-contract resolver、shape-validation、
  * 文档导出）可发现 5 events + 9 handles，无需运行 renderer 实例。
  */
-export const industrialRendererDefinitions: RendererDefinition[] = [
+export const industrialRendererDefinitions: RegisteredRendererDefinition[] = [
   {
     type: 'scada-canvas',
     displayName: 'Scada Canvas',

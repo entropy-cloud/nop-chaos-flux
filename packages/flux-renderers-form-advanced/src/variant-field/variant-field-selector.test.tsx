@@ -1,7 +1,7 @@
 import React from 'react';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
-import type { RendererDefinition } from '@nop-chaos/flux-core';
+import type { RegisteredRendererDefinition } from '@nop-chaos/flux-core';
 import { useCurrentForm, useCurrentValidationScope, useScopeSelector } from '@nop-chaos/flux-react';
 import { createSchemaRenderer } from '@nop-chaos/flux-react';
 import { basicRendererDefinitions } from '@nop-chaos/flux-renderers-basic';
@@ -25,7 +25,7 @@ function ScopeSelectorProbeRenderer() {
   return <span data-testid="scope-selector-probe">{JSON.stringify(snapshot)}</span>;
 }
 
-const scopeSelectorProbeRenderer: RendererDefinition = {
+const scopeSelectorProbeRenderer: RegisteredRendererDefinition = {
   type: 'scope-selector-probe',
   component: () => <ScopeSelectorProbeRenderer />,
 };
@@ -70,7 +70,7 @@ function ValidationOwnerExternalErrorProbe() {
   );
 }
 
-const validationOwnerExternalErrorProbeRenderer: RendererDefinition = {
+const validationOwnerExternalErrorProbeRenderer: RegisteredRendererDefinition = {
   type: 'validation-owner-external-error-probe',
   component: ValidationOwnerExternalErrorProbe,
 };
@@ -91,7 +91,7 @@ function SetPayloadValueProbe() {
   );
 }
 
-const setPayloadValueProbeRenderer: RendererDefinition = {
+const setPayloadValueProbeRenderer: RegisteredRendererDefinition = {
   type: 'set-payload-value-probe',
   component: SetPayloadValueProbe,
 };

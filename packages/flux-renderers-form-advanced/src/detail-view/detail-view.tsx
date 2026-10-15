@@ -2,7 +2,7 @@ import React from 'react';
 import type {
   ActionSchema,
   RendererComponentProps,
-  RendererDefinition,
+  RegisteredRendererDefinition,
 } from '@nop-chaos/flux-core';
 import { resolveRendererSlotContent } from '@nop-chaos/flux-react';
 import {
@@ -622,7 +622,7 @@ function compileDetailValueAdaptationAction(value: unknown, context: {
   return value;
 }
 
-export const detailViewRendererDefinition: RendererDefinition<DetailViewSchema> = {
+export const detailViewRendererDefinition: RegisteredRendererDefinition<DetailViewSchema> = {
   type: 'detail-view',
   displayName: 'Detail View',
   category: 'Form Advanced',

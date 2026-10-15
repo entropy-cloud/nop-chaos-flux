@@ -1,12 +1,12 @@
 import { cleanup, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import type { RendererDefinition, RendererEnv } from '@nop-chaos/flux-core';
+import type { RegisteredRendererDefinition, RendererEnv } from '@nop-chaos/flux-core';
 import { buttonRenderer, createDataSchemaRenderer, env, formulaCompiler } from '../test-support.js';
 
 // 最小 card 定义（避免测试引入跨包依赖；与 flux-renderers-content card 的
 // title/header/body regions 契约一致）。
-const cardDefinition: RendererDefinition = {
+const cardDefinition: RegisteredRendererDefinition = {
   type: 'card',
   component: (props) => {
     const titleNode = props.regions.title?.render() as React.ReactNode | undefined;

@@ -3,12 +3,12 @@
 import { cleanup, render, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import React from 'react';
-import type { RendererDefinition, RendererEnv } from '@nop-chaos/flux-core';
+import type { RegisteredRendererDefinition, RendererEnv } from '@nop-chaos/flux-core';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createSchemaRenderer } from '@nop-chaos/flux-react';
 import { contentRendererDefinitions } from './content-renderer-definitions.js';
 
-const pageRenderer: RendererDefinition = {
+const pageRenderer: RegisteredRendererDefinition = {
   type: 'page',
   component: (props) => <section>{props.regions.body?.render() as React.ReactNode}</section>,
   fields: [{ key: 'body', kind: 'region', regionKey: 'body' }],

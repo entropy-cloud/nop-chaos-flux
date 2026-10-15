@@ -1,5 +1,5 @@
 import React, { useRef } from 'react';
-import type { RendererComponentProps, RendererDefinition } from '@nop-chaos/flux-core';
+import type { RendererComponentProps, RegisteredRendererDefinition } from '@nop-chaos/flux-core';
 import { useInputComponentHandle } from '@nop-chaos/flux-react';
 import { t } from '@nop-chaos/flux-i18n';
 import {
@@ -281,7 +281,7 @@ function TreeSelectRenderer(props: RendererComponentProps<TreeSelectSchema>) {
   );
 }
 
-export const treeControlRendererDefinitions: RendererDefinition[] = [
+export const treeControlRendererDefinitions: RegisteredRendererDefinition[] = [
   {
     type: 'input-tree',
     displayName: 'Input Tree',

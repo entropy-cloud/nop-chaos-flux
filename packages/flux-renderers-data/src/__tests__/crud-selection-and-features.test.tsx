@@ -1,7 +1,7 @@
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { Button } from '@nop-chaos/ui';
-import type { RendererComponentProps, RendererDefinition } from '@nop-chaos/flux-core';
+import type { RendererComponentProps, RegisteredRendererDefinition } from '@nop-chaos/flux-core';
 import { buttonRenderer, createDataSchemaRenderer, env, formulaCompiler } from '../test-support.js';
 
 afterEach(cleanup);
@@ -19,7 +19,7 @@ function DisabledAwareButtonRenderer(props: RendererComponentProps) {
   );
 }
 
-const disabledAwareButtonRenderer: RendererDefinition = {
+const disabledAwareButtonRenderer: RegisteredRendererDefinition = {
   type: 'button',
   component: DisabledAwareButtonRenderer,
   fields: [{ key: 'onClick', kind: 'event' }],

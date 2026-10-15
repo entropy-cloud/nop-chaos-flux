@@ -1,7 +1,7 @@
 import { cleanup, render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { useEffect } from 'react';
-import type { RendererDefinition } from '@nop-chaos/flux-core';
+import type { RegisteredRendererDefinition } from '@nop-chaos/flux-core';
 import { useRenderScope } from '@nop-chaos/flux-react';
 import { createDataSchemaRenderer, env, formulaCompiler } from '../test-support.js';
 
@@ -18,7 +18,7 @@ describe('CRUD loadAction dependsOn reactive refetch', () => {
     cleanup();
     const calls: Array<{ deptId?: string }> = [];
 
-    const scopeWriter: RendererDefinition = {
+    const scopeWriter: RegisteredRendererDefinition = {
       type: 'scope-writer',
       component: function ScopeWriter() {
         const scope = useRenderScope();

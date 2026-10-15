@@ -2,7 +2,7 @@ import React from 'react';
 import type {
   BaseSchema,
   RendererComponentProps,
-  RendererDefinition,
+  RegisteredRendererDefinition,
 } from '@nop-chaos/flux-core';
 import { writeFieldValue } from './write-field-value.js';
 import { getIn } from '@nop-chaos/flux-core';
@@ -308,7 +308,7 @@ export function IconPickerRenderer(props: RendererComponentProps<IconPickerSchem
   );
 }
 
-export const iconPickerRendererDefinition: RendererDefinition = {
+export const iconPickerRendererDefinition: RegisteredRendererDefinition = {
   type: 'icon-picker',
   displayName: 'Icon Picker',
   category: 'Form Advanced',

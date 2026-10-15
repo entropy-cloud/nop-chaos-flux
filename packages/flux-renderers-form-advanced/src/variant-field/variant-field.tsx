@@ -2,7 +2,7 @@ import React from 'react';
 import type {
   BaseSchema,
   RendererComponentProps,
-  RendererDefinition,
+  RegisteredRendererDefinition,
 } from '@nop-chaos/flux-core';
 import { getIn } from '@nop-chaos/flux-core';
 import {
@@ -99,7 +99,7 @@ export function VariantFieldRenderer(props: RendererComponentProps<VariantFieldS
   );
 }
 
-export const variantFieldRendererDefinition: RendererDefinition<VariantFieldSchema> = {
+export const variantFieldRendererDefinition: RegisteredRendererDefinition<VariantFieldSchema> = {
   type: 'variant-field',
   displayName: 'Variant Field',
   category: 'Form Advanced',

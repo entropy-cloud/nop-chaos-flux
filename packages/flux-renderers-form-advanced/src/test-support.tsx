@@ -6,7 +6,7 @@ import { Button } from '@nop-chaos/ui';
 import type {
   ApiRequestContext,
   RendererComponentProps,
-  RendererDefinition,
+  RegisteredRendererDefinition,
   RendererEnv,
 } from '@nop-chaos/flux-core';
 import { getIn } from '@nop-chaos/flux-core';
@@ -314,7 +314,7 @@ function ContactGroupRenderer(props: RendererComponentProps) {
   );
 }
 
-export const contactGroupRenderer: RendererDefinition = {
+export const contactGroupRenderer: RegisteredRendererDefinition = {
   type: 'contact-group',
   validation: {
     kind: 'field',
@@ -345,7 +345,7 @@ function FormStateProbeRenderer(props: RendererComponentProps) {
   return <pre data-testid={`form-state:${path}`}>{JSON.stringify(value ?? null)}</pre>;
 }
 
-export const formStateProbeRenderer: RendererDefinition = {
+export const formStateProbeRenderer: RegisteredRendererDefinition = {
   type: 'form-state-probe',
   component: FormStateProbeRenderer,
 };
@@ -357,7 +357,7 @@ function ScopeStateProbeRenderer(props: RendererComponentProps) {
   return <pre data-testid={`scope-state:${path}`}>{JSON.stringify(value ?? null)}</pre>;
 }
 
-export const scopeStateProbeRenderer: RendererDefinition = {
+export const scopeStateProbeRenderer: RegisteredRendererDefinition = {
   type: 'scope-state-probe',
   component: ScopeStateProbeRenderer,
 };
@@ -375,7 +375,7 @@ function HandlerIdentityProbeRenderer(props: RendererComponentProps) {
   return <span data-testid="handler-identity-probe">{name}</span>;
 }
 
-export const handlerIdentityProbeRenderer: RendererDefinition = {
+export const handlerIdentityProbeRenderer: RegisteredRendererDefinition = {
   type: 'handler-identity-probe',
   component: HandlerIdentityProbeRenderer,
 };
@@ -390,6 +390,6 @@ export function createFormSchemaRendererWithButton() {
   return createSchemaRenderer([...allFormDefs, buttonRenderer]);
 }
 
-export function createPageSchemaRenderer(extraDefinitions: RendererDefinition[] = []) {
+export function createPageSchemaRenderer(extraDefinitions: RegisteredRendererDefinition[] = []) {
   return createSchemaRenderer([...basicRendererDefinitions, ...allFormDefs, ...extraDefinitions]);
 }

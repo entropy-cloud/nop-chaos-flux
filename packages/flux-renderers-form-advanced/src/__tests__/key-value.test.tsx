@@ -1,6 +1,6 @@
 import React from 'react';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
-import type { RendererDefinition } from '@nop-chaos/flux-core';
+import type { RegisteredRendererDefinition } from '@nop-chaos/flux-core';
 import { createSchemaRenderer } from '@nop-chaos/flux-react';
 import { useCurrentFormState } from '@nop-chaos/flux-react';
 import { basicRendererDefinitions } from '@nop-chaos/flux-renderers-basic';
@@ -26,7 +26,7 @@ function FormValueProbeRenderer(props: { name: string; testid: string }) {
   return <span data-testid={props.testid}>{JSON.stringify(value)}</span>;
 }
 
-const formValueProbeRenderer: RendererDefinition = {
+const formValueProbeRenderer: RegisteredRendererDefinition = {
   type: 'form-key-value-probe',
   component: (props) => (
     <FormValueProbeRenderer

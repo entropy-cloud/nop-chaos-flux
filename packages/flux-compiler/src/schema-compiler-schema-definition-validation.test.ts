@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { FluxSchemaDefinitionShape, RendererDefinition } from '@nop-chaos/flux-core';
+import type { FluxSchemaDefinitionShape, RegisteredRendererDefinition } from '@nop-chaos/flux-core';
 import { matchesFluxValueShape } from '@nop-chaos/flux-core';
 import { createSchemaCompilerDiagnosticsContext } from './schema-compiler/diagnostics.js';
 import {
@@ -227,19 +227,19 @@ describe('summarizeExpectedFluxValueShape for schema-definition', () => {
 });
 
 describe('built-in action definition args validation', () => {
-  const actionButtonRenderer: RendererDefinition = {
+  const actionButtonRenderer: RegisteredRendererDefinition = {
     type: 'button',
     displayName: 'Button',
     component: () => null,
     fields: [{ key: 'label', kind: 'prop' }, { key: 'onClick', kind: 'event' }],
   };
-  const formRenderer: RendererDefinition = {
+  const formRenderer: RegisteredRendererDefinition = {
     type: 'form',
     displayName: 'Form',
     component: () => null,
     fields: [{ key: 'body', kind: 'region' }, { key: 'actions', kind: 'region' }],
   };
-  const textRenderer: RendererDefinition = {
+  const textRenderer: RegisteredRendererDefinition = {
     type: 'input-text',
     displayName: 'Input Text',
     component: () => null,

@@ -1,4 +1,4 @@
-import type { RendererComponentProps, RendererDefinition } from '@nop-chaos/flux-core';
+import type { RendererComponentProps, RegisteredRendererDefinition } from '@nop-chaos/flux-core';
 import { formFieldRules, useFormFieldFromProps } from '../field-utils.js';
 import { useHiddenFieldPolicy } from '../field-utils/field-hidden-policy.js';
 import type { HiddenSchema } from '../schemas.js';
@@ -17,7 +17,7 @@ export function HiddenRenderer(props: RendererComponentProps<HiddenSchema>) {
   return <input type="hidden" name={name || undefined} value={String(value ?? '')} data-slot="hidden-input" />;
 }
 
-export const hiddenRendererDefinition: RendererDefinition = {
+export const hiddenRendererDefinition: RegisteredRendererDefinition = {
   type: 'hidden',
   displayName: 'Hidden',
   category: 'form',

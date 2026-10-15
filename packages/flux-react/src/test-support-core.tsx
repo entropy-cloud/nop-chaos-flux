@@ -2,7 +2,7 @@ import React from 'react';
 import { afterEach, vi } from 'vitest';
 import { cleanup } from '@testing-library/react';
 import { Button, Input, Label } from '@nop-chaos/ui';
-import type { RendererComponentProps, RendererDefinition, RendererEnv } from '@nop-chaos/flux-core';
+import type { RendererComponentProps, RegisteredRendererDefinition, RendererDefinition, RendererEnv } from '@nop-chaos/flux-core';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createDefaultEnv } from './defaults.js';
 import { FormContext, ScopeContext } from './contexts.js';
@@ -30,13 +30,13 @@ export const env: RendererEnv = createDefaultEnv();
 
 export const sharedFormulaCompiler = createFormulaCompiler();
 
-export const textRenderer: RendererDefinition = {
+export const textRenderer: RegisteredRendererDefinition = {
   type: 'text',
   component: (props) => <span>{String(props.props.text ?? '')}</span>,
   fields: [{ key: 'text', kind: 'prop', allowSource: true }],
 };
 
-export const eventTextRenderer: RendererDefinition = {
+export const eventTextRenderer: RegisteredRendererDefinition = {
   type: 'event-text',
   component: (props) => <span>{String(props.props.text ?? '')}</span>,
   fields: [
@@ -45,7 +45,7 @@ export const eventTextRenderer: RendererDefinition = {
   ],
 };
 
-export const pageRenderer: RendererDefinition = {
+export const pageRenderer: RegisteredRendererDefinition = {
   type: 'page',
   component: (props) => <section>{asReactNode(props.regions.body?.render())}</section>,
   fields: [{ key: 'body', kind: 'region', regionKey: 'body' }],
@@ -104,7 +104,7 @@ function FormStub(props: RendererComponentProps) {
   );
 }
 
-export const formRenderer: RendererDefinition = {
+export const formRenderer: RegisteredRendererDefinition = {
   type: 'form',
   component: FormStub,
   fields: [{ key: 'body', kind: 'region', regionKey: 'body' }],
@@ -134,7 +134,7 @@ function ProbeInput() {
   );
 }
 
-export const probeInputRenderer: RendererDefinition = {
+export const probeInputRenderer: RegisteredRendererDefinition = {
   type: 'probe-input',
   component: ProbeInput,
 };
@@ -159,7 +159,7 @@ function ProbeButton() {
   );
 }
 
-export const probeButtonRenderer: RendererDefinition = {
+export const probeButtonRenderer: RegisteredRendererDefinition = {
   type: 'probe-button',
   component: (props) => (
     <Button variant="ghost" size="sm" disabled={props.props.disabled} aria-label="Search">
@@ -168,7 +168,7 @@ export const probeButtonRenderer: RendererDefinition = {
   ),
 };
 
-export const probeQueryInputRenderer: RendererDefinition = {
+export const probeQueryInputRenderer: RegisteredRendererDefinition = {
   type: 'probe-query-input',
   component: ProbeButton,
 };
@@ -180,7 +180,7 @@ function PageValueProbe() {
   return <span data-testid="page-value">{name}</span>;
 }
 
-export const pageValueProbeRenderer: RendererDefinition = {
+export const pageValueProbeRenderer: RegisteredRendererDefinition = {
   type: 'page-value-probe',
   component: PageValueProbe,
 };
@@ -253,7 +253,7 @@ function ActionScopeProbe() {
   );
 }
 
-export const selectorRenderer: RendererDefinition = {
+export const selectorRenderer: RegisteredRendererDefinition = {
   type: 'selector-text',
   component: SelectorText,
 };
@@ -269,17 +269,17 @@ function NodeIdentityProbe(props: RendererComponentProps) {
   );
 }
 
-export const nodeIdentityProbeRenderer: RendererDefinition = {
+export const nodeIdentityProbeRenderer: RegisteredRendererDefinition = {
   type: 'node-identity-probe',
   component: NodeIdentityProbe,
 };
 
-export const scopeLayerProbeRenderer: RendererDefinition = {
+export const scopeLayerProbeRenderer: RegisteredRendererDefinition = {
   type: 'scope-layer-probe',
   component: ScopeLayerProbe,
 };
 
-export const ownScopeValueProbeRenderer: RendererDefinition = {
+export const ownScopeValueProbeRenderer: RegisteredRendererDefinition = {
   type: 'own-scope-value-probe',
   component: OwnScopeValueProbe,
 };
@@ -289,7 +289,7 @@ export const actionScopeProbeRenderer: RendererDefinition = {
   component: ActionScopeProbe,
 };
 
-export const countingTextRenderer: RendererDefinition = {
+export const countingTextRenderer: RegisteredRendererDefinition = {
   type: 'counting-text',
   component: (props) => <span>{String(props.props.text ?? '')}</span>,
 };

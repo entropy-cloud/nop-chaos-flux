@@ -4,7 +4,7 @@ import type {
   BaseSchema,
   CompiledRuntimeValue,
   RendererComponentProps,
-  RendererDefinition,
+  RegisteredRendererDefinition,
   ValidationRule,
 } from '@nop-chaos/flux-core';
 import { writeFieldValue } from './write-field-value.js';
@@ -598,7 +598,7 @@ export function PickerRenderer(props: RendererComponentProps<PickerSchema>) {
   );
 }
 
-export const pickerRendererDefinition: RendererDefinition = {
+export const pickerRendererDefinition: RegisteredRendererDefinition = {
   type: 'picker',
   displayName: 'Picker',
   category: 'Form Advanced',

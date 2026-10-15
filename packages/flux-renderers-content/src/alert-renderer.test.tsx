@@ -2,7 +2,7 @@ import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
 import { t } from '@nop-chaos/flux-i18n';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
-import type { RendererDefinition, RendererEnv } from '@nop-chaos/flux-core';
+import type { RegisteredRendererDefinition, RendererEnv } from '@nop-chaos/flux-core';
 import React from 'react';
 import { createSchemaRenderer } from '@nop-chaos/flux-react';
 import { contentRendererDefinitions } from './content-renderer-definitions.js';
@@ -14,18 +14,18 @@ const env: RendererEnv = {
   notify: () => undefined,
 };
 
-const pageRenderer: RendererDefinition = {
+const pageRenderer: RegisteredRendererDefinition = {
   type: 'page',
   component: (props) => <section>{props.regions.body?.render() as React.ReactNode}</section>,
   fields: [{ key: 'body', kind: 'region', regionKey: 'body' }],
 };
 
-const textRenderer: RendererDefinition = {
+const textRenderer: RegisteredRendererDefinition = {
   type: 'text',
   component: (props) => <span>{String(props.props.text ?? '')}</span>,
 };
 
-const buttonRenderer: RendererDefinition = {
+const buttonRenderer: RegisteredRendererDefinition = {
   type: 'button',
   component: (props) => (
     <button type="button" data-testid={props.meta.testid ?? undefined} onClick={() => void props.events.onClick?.()}>

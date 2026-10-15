@@ -1,15 +1,15 @@
-import type { RendererDefinition, RendererRegistry } from './types.js';
+import type { RegisteredRendererDefinition, RendererRegistry } from './types.js';
 
-function validateDefinition(definition: RendererDefinition): void {
+function validateDefinition(definition: RegisteredRendererDefinition): void {
   if (!definition.component) {
     throw new Error(`Renderer definition for type "${definition.type}" must specify "component".`);
   }
 }
 
 export function createRendererRegistry(
-  initialDefinitions: RendererDefinition[] = [],
+  initialDefinitions: ReadonlyArray<RegisteredRendererDefinition> = [],
 ): RendererRegistry {
-  const map = new Map<string, RendererDefinition>();
+  const map = new Map<string, RegisteredRendererDefinition>();
 
   for (const definition of initialDefinitions) {
     validateDefinition(definition);
@@ -51,7 +51,7 @@ export function createRendererRegistry(
 
 export function registerRendererDefinitions(
   registry: RendererRegistry,
-  definitions: ReadonlyArray<RendererDefinition>,
+  definitions: ReadonlyArray<RegisteredRendererDefinition>,
 ): RendererRegistry {
   for (const definition of definitions) {
     registry.register(definition);

@@ -1,4 +1,4 @@
-import type { RendererDefinition } from '@nop-chaos/flux-core';
+import type { RegisteredRendererDefinition } from '@nop-chaos/flux-core';
 import { AiChatRenderer } from './renderers/ai-chat.js';
 import { AiMessageListRenderer } from './renderers/ai-message-list.js';
 import { AiBubbleRenderer } from './renderers/ai-bubble/index.js';
@@ -70,7 +70,7 @@ const booleanContract = (displayName: string) => ({
   editorType: 'switch',
 });
 
-export const aiRendererDefinitions: RendererDefinition[] = [
+export const aiRendererDefinitions: RegisteredRendererDefinition[] = [
   {
     type: 'ai-chat',
     displayName: 'AI Chat',

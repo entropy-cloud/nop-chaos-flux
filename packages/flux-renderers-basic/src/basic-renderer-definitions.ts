@@ -1,4 +1,4 @@
-import type { RendererDefinition } from '@nop-chaos/flux-core';
+import type { RegisteredRendererDefinition } from '@nop-chaos/flux-core';
 import { BadgeRenderer } from './badge.js';
 import { ButtonRenderer } from './button.js';
 import { ContainerRenderer } from './container.js';
@@ -23,7 +23,7 @@ import {
   textContracts,
 } from './basic-renderer-contracts.js';
 
-export const basicRendererDefinitions: RendererDefinition[] = [
+export const basicRendererDefinitions: RegisteredRendererDefinition[] = [
   {
     type: 'page',
     displayName: 'Page',

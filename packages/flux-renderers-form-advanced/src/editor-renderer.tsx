@@ -7,7 +7,7 @@ import Image from '@tiptap/extension-image';
 import Highlight from '@tiptap/extension-highlight';
 import { Placeholder } from '@tiptap/extensions';
 import type { Extensions } from '@tiptap/core';
-import type { BaseSchema, RendererComponentProps, RendererDefinition } from '@nop-chaos/flux-core';
+import type { BaseSchema, RendererComponentProps, RegisteredRendererDefinition } from '@nop-chaos/flux-core';
 import { sanitizeHtml } from '@nop-chaos/flux-renderers-content';
 /* Adjudication 01-04: form-advanced depends on content (sanitizeHtml), form (formFieldRules, useFormFieldController, etc.), and data (CrudColumnSchema/CrudSchema types). These are architecturally expected extension-package couplings. Accept-and-annotate: shared primitives live here by design; extraction would create an artificial shared package with no other consumers. */
 import { useInputComponentHandle } from '@nop-chaos/flux-react';
@@ -359,7 +359,7 @@ export function EditorRenderer(props: RendererComponentProps<EditorSchema>) {
   );
 }
 
-export const editorRendererDefinition: RendererDefinition = {
+export const editorRendererDefinition: RegisteredRendererDefinition = {
   type: 'editor',
   displayName: 'Editor',
   category: 'Form Advanced',

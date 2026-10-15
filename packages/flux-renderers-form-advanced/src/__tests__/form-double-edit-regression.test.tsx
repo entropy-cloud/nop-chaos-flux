@@ -2,7 +2,7 @@ import React from 'react';
 import { describe, expect, it } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { createSchemaRenderer, useCurrentForm } from '@nop-chaos/flux-react';
-import type { RendererDefinition } from '@nop-chaos/flux-core';
+import type { RegisteredRendererDefinition } from '@nop-chaos/flux-core';
 import { formRendererDefinitions } from '@nop-chaos/flux-renderers-form';
 import { formAdvancedRendererDefinitions } from '../index.js';
 import {
@@ -401,7 +401,7 @@ describe(
         );
       }
 
-      const setValueBtnRenderer: RendererDefinition = {
+      const setValueBtnRenderer: RegisteredRendererDefinition = {
         type: 'set-value-btn',
         component: SetDepartmentBtn,
       };

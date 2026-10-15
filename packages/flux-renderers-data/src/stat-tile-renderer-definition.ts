@@ -1,4 +1,4 @@
-import type { RendererDefinition } from '@nop-chaos/flux-core';
+import type { RegisteredRendererDefinition } from '@nop-chaos/flux-core';
 import { StatTileRenderer } from './stat-tile-renderer.js';
 
 /**
@@ -7,7 +7,7 @@ import { StatTileRenderer } from './stat-tile-renderer.js';
  * Extracted from `data-renderer-definitions.ts` to keep that file under the
  * 700-line lint cap.
  */
-export const statTileRendererDefinition: RendererDefinition = {
+export const statTileRendererDefinition: RegisteredRendererDefinition = {
   type: 'stat-tile',
   displayName: 'Stat Tile',
   category: 'data',

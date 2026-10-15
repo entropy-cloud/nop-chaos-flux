@@ -12,7 +12,7 @@ import type {
   FormRuntime,
   PageRuntime,
   RendererComponentProps,
-  RendererDefinition,
+  RegisteredRendererDefinition,
   RendererEnv,
 } from '@nop-chaos/flux-core';
 import type { NopDebuggerController } from '@nop-chaos/nop-debugger';
@@ -129,7 +129,7 @@ function PerfFormRuntimeProbeRenderer() {
   return <span data-testid="perf-form-runtime-probe" className="sr-only" />;
 }
 
-const perfPingButtonRendererDefinition: RendererDefinition = {
+const perfPingButtonRendererDefinition: RegisteredRendererDefinition = {
   type: 'perf-ping-button',
   displayName: 'Performance Ping Button',
   category: 'basic',
@@ -140,7 +140,7 @@ const perfPingButtonRendererDefinition: RendererDefinition = {
   ],
 };
 
-const perfRenderProbeRendererDefinition: RendererDefinition = {
+const perfRenderProbeRendererDefinition: RegisteredRendererDefinition = {
   type: 'perf-render-probe',
   displayName: 'Performance Render Probe',
   category: 'basic',
@@ -151,7 +151,7 @@ const perfRenderProbeRendererDefinition: RendererDefinition = {
   ],
 };
 
-const perfFormRuntimeProbeRendererDefinition: RendererDefinition = {
+const perfFormRuntimeProbeRendererDefinition: RegisteredRendererDefinition = {
   type: 'perf-form-runtime-probe',
   displayName: 'Performance Form Runtime Probe',
   category: 'basic',

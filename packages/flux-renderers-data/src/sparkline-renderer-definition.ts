@@ -1,4 +1,4 @@
-import type { RendererDefinition } from '@nop-chaos/flux-core';
+import type { RegisteredRendererDefinition } from '@nop-chaos/flux-core';
 import { SparklineRenderer } from './sparkline-renderer.js';
 import { validateSparklineSchema } from './sparkline-schema-validation.js';
 
@@ -8,7 +8,7 @@ import { validateSparklineSchema } from './sparkline-schema-validation.js';
  * Extracted from `data-renderer-definitions.ts` to keep that file under the
  * 700-line lint cap (stat-tile precedent).
  */
-export const sparklineRendererDefinition: RendererDefinition = {
+export const sparklineRendererDefinition: RegisteredRendererDefinition = {
   type: 'sparkline',
   displayName: 'Sparkline',
   category: 'data',

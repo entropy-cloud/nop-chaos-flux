@@ -6,7 +6,7 @@ import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createSchemaRenderer } from '../schema-renderer.js';
 import { useCurrentForm, useCurrentValidationScope } from '../hooks.js';
 import { env, formRenderer, pageRenderer } from '../test-support-core.js';
-import type { RendererDefinition } from '@nop-chaos/flux-core';
+import type { RegisteredRendererDefinition } from '@nop-chaos/flux-core';
 import { createRendererRuntime } from '@nop-chaos/flux-runtime';
 import { createRendererRegistry } from '@nop-chaos/flux-core';
 
@@ -26,7 +26,7 @@ const testState: {
   latestValidationOwner: undefined,
 };
 
-const validationOwnerStateProbeRenderer: RendererDefinition = {
+const validationOwnerStateProbeRenderer: RegisteredRendererDefinition = {
   type: 'validation-owner-state-probe',
   component: function ValidationOwnerStateProbe() {
     const validationOwner = useCurrentValidationScope();
@@ -48,7 +48,7 @@ const nestedOwnerProbeState: {
   currentFormScopeId: undefined,
 };
 
-const nestedFormOwnerProbeRenderer: RendererDefinition = {
+const nestedFormOwnerProbeRenderer: RegisteredRendererDefinition = {
   type: 'nested-form-owner-probe',
   component: function NestedFormOwnerProbe() {
     const validationOwner = useCurrentValidationScope();
@@ -61,7 +61,7 @@ const nestedFormOwnerProbeRenderer: RendererDefinition = {
   },
 };
 
-const fieldProbeRenderer: RendererDefinition = {
+const fieldProbeRenderer: RegisteredRendererDefinition = {
   type: 'field-probe',
   component: () => <span data-testid="field-probe">field</span>,
   validation: {

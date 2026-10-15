@@ -1,4 +1,4 @@
-import type { RendererDefinition } from '@nop-chaos/flux-core';
+import type { RegisteredRendererDefinition } from '@nop-chaos/flux-core';
 import {
   SCALAR_INPUT_CAPABILITY_CONTRACTS,
 } from './input-shared.js';
@@ -21,7 +21,7 @@ import { InputColorRenderer } from './input-color-renderer.js';
  * Registered as a sibling definitions module (date-renderer-definitions
  * precedent) so `renderers/input.tsx` stays under the 700-line check ceiling.
  */
-export const formAtomsRendererDefinitions: RendererDefinition[] = [
+export const formAtomsRendererDefinitions: RegisteredRendererDefinition[] = [
   {
     type: 'slider',
     sourcePackage: '@nop-chaos/flux-renderers-form',

@@ -1,4 +1,4 @@
-import { registerRendererDefinitions, type RendererDefinition, type RendererRegistry } from '@nop-chaos/flux-core';
+import { registerRendererDefinitions, type RegisteredRendererDefinition, type RendererRegistry } from '@nop-chaos/flux-core';
 import { iconPickerRendererDefinition } from './icon-picker.js';
 import { arrayEditorRendererDefinition } from './array-editor.js';
 import { arrayFieldRendererDefinition } from './composite-field/array-field.js';
@@ -52,10 +52,10 @@ export type {
 } from './upload-schemas.js';
 export type { EditorSchema, EditorToolbarButton } from './editor-schemas.js';
 
-// The `as RendererDefinition[]` cast is structurally required, not redundant:
-// detail-field/detail-view definitions are typed as `RendererDefinition<DetailFieldSchema>`,
+// The `as RegisteredRendererDefinition[]` cast is structurally required, not redundant:
+// detail-field/detail-view definitions are typed as `RegisteredRendererDefinition<DetailFieldSchema>`,
 // and `ValidationContributor<S>` is invariant, so the specific-schema definitions are
-// not assignable to `RendererDefinition<BaseSchema>[]` without it (verified: removing the
+// not assignable to `RegisteredRendererDefinition<BaseSchema>[]` without it (verified: removing the
 // cast fails the build with TS2322). The C-08 substantive change — using the shared
 // `registerRendererDefinitions` helper — is in place below.
 export const formAdvancedRendererDefinitions = [
@@ -77,7 +77,7 @@ export const formAdvancedRendererDefinitions = [
   transferRendererDefinition,
   pickerRendererDefinition,
   iconPickerRendererDefinition,
-] as RendererDefinition[];
+] as RegisteredRendererDefinition[];
 
 export function registerFormAdvancedRenderers(registry: RendererRegistry) {
   return registerRendererDefinitions(registry, formAdvancedRendererDefinitions);

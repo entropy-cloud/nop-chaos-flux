@@ -1,6 +1,6 @@
 import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
-import type { RendererDefinition } from '@nop-chaos/flux-core';
+import type { RegisteredRendererDefinition } from '@nop-chaos/flux-core';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { createSchemaRenderer } from './schema-renderer.js';
 import {
@@ -28,7 +28,7 @@ describe('createSchemaRenderer import scope boundaries', () => {
       })),
     };
     const actionScopeIds: string[] = [];
-    const actionScopeProbeRenderer: RendererDefinition = {
+    const actionScopeProbeRenderer: RegisteredRendererDefinition = {
       type: 'action-scope-probe',
       component: function ActionScopeProbe(props: any) {
         const actionScope = useCurrentActionScope();

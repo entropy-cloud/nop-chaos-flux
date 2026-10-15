@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import type { RendererComponentProps, RendererDefinition } from '@nop-chaos/flux-core';
+import type { RendererComponentProps, RegisteredRendererDefinition } from '@nop-chaos/flux-core';
 import { useScopeSelector } from '@nop-chaos/flux-react';
 import { createAiSchemaRenderer } from '../../__tests__/ai-test-support.js';
 import { AiChatRenderer } from '../ai-chat.js';
@@ -43,7 +43,7 @@ function MessagesProbe(): React.ReactElement {
   return <span data-testid="messages-probe" />;
 }
 
-export const messagesProbe: RendererDefinition = {
+export const messagesProbe: RegisteredRendererDefinition = {
   type: 'messages-probe',
   component: MessagesProbe,
 };
@@ -77,7 +77,7 @@ function SpyAiChat(props: RendererComponentProps<AiChatSchema>): React.ReactElem
   return <Chat {...props} events={wrappedEvents} />;
 }
 
-export const spyChat: RendererDefinition = {
+export const spyChat: RegisteredRendererDefinition = {
   type: 'spy-ai-chat',
   component: SpyAiChat,
 };

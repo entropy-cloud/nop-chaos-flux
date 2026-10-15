@@ -1,5 +1,5 @@
 import React from 'react';
-import type { ApiRequestContext, RendererDefinition, RendererEnv } from '@nop-chaos/flux-core';
+import type { ApiRequestContext, RegisteredRendererDefinition, RendererEnv } from '@nop-chaos/flux-core';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { initFluxI18n, resetFluxI18n } from '@nop-chaos/flux-i18n';
 import { useRenderScope } from '@nop-chaos/flux-react';
@@ -30,7 +30,7 @@ export function makeCapturingFetcher(submitValues: Record<string, unknown>[]) {
 
 export const formulaCompiler = createFormulaCompiler();
 
-export const buttonRenderer: RendererDefinition = {
+export const buttonRenderer: RegisteredRendererDefinition = {
   type: 'button',
   component: (props) => (
     <button type="button" onClick={() => void props.events.onClick?.()}>
@@ -40,7 +40,7 @@ export const buttonRenderer: RendererDefinition = {
   fields: [{ key: 'onClick', kind: 'event' }],
 };
 
-export const arrayItemInstanceProbeRenderer: RendererDefinition = {
+export const arrayItemInstanceProbeRenderer: RegisteredRendererDefinition = {
   type: 'array-item-instance-probe',
   component: (props) => (
     <ArrayItemInstanceProbeWithInstancePath instancePath={props.node.instancePath} />

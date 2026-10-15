@@ -3,7 +3,7 @@ import {
   createRendererRegistry,
   type NodeRuntimeState,
   type RuntimeValueState,
-  type RendererDefinition,
+  type RegisteredRendererDefinition,
 } from '@nop-chaos/flux-core';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createRendererRuntime } from '../index.js';
@@ -16,7 +16,7 @@ import { env } from './test-fixtures.js';
 // fallback when un-collectible) must preserve the same render-trigger behavior
 // for nodes without dynamic structural fields.
 
-const structuralRenderer: RendererDefinition = {
+const structuralRenderer: RegisteredRendererDefinition = {
   type: 'structural-probe',
   displayName: 'Structural Probe',
   category: 'Test',
@@ -29,7 +29,7 @@ const structuralRenderer: RendererDefinition = {
     { key: 'plain', kind: 'prop' },
     { key: 'itemData', kind: 'prop', lazyEval: true, params: ['item', 'index'] },
   ],
-} as unknown as RendererDefinition;
+} as unknown as RegisteredRendererDefinition;
 
 function createRuntimeStateFromTemplateNode(
   node: import('@nop-chaos/flux-core').TemplateNode,

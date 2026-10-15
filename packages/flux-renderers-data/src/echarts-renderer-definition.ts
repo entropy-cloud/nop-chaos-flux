@@ -1,4 +1,4 @@
-import type { FluxValueShape, RendererDefinition } from '@nop-chaos/flux-core';
+import type { FluxValueShape, RegisteredRendererDefinition } from '@nop-chaos/flux-core';
 import { createLazyRendererComponent } from '@nop-chaos/flux-react';
 import type { EChartsSchema } from './echarts-schemas.js';
 import { validateEChartsSchema } from './echarts-schema-validation.js';
@@ -68,7 +68,7 @@ const ECHARTS_EVENT_CONTRACTS = {
   },
 } as const;
 
-export const echartsRendererDefinition: RendererDefinition = {
+export const echartsRendererDefinition: RegisteredRendererDefinition = {
   type: 'echarts',
   displayName: 'ECharts',
   category: 'data',

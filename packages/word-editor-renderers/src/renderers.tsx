@@ -1,6 +1,6 @@
 import {
   registerRendererDefinitions,
-  type RendererDefinition,
+  type RegisteredRendererDefinition,
   type RendererRegistry,
 } from '@nop-chaos/flux-core';
 import { createLazyRendererComponent } from '@nop-chaos/flux-react';
@@ -39,7 +39,7 @@ const savedDocumentDataShape = {
   },
 };
 
-export const wordEditorRendererDefinitions: RendererDefinition[] = [
+export const wordEditorRendererDefinitions: RegisteredRendererDefinition[] = [
   {
     type: 'word-editor-page',
     component: LazyWordEditorPage,

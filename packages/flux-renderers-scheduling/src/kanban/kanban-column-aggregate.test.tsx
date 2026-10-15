@@ -2,7 +2,7 @@ import { cleanup, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createSchemaRenderer } from '@nop-chaos/flux-react';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
-import type { RendererDefinition, RendererEnv } from '@nop-chaos/flux-core';
+import type { RegisteredRendererDefinition, RendererEnv } from '@nop-chaos/flux-core';
 import { schedulingRendererDefinitions } from '../scheduling-renderer-definitions.js';
 
 // G-C kanban per-column header aggregate contract (owner plan
@@ -11,11 +11,11 @@ import { schedulingRendererDefinitions } from '../scheduling-renderer-definition
 // beside the count badge; region override suppresses it; missing declaration
 // is a zero-regression no-op.
 
-const probeDefinition: RendererDefinition = {
+const probeDefinition: RegisteredRendererDefinition = {
   type: 'aggregate-probe',
   component: ((props: { props: { text?: unknown } }) => (
     <span>{String(props.props?.text ?? '')}</span>
-  )) as unknown as RendererDefinition['component'],
+  )) as unknown as RegisteredRendererDefinition['component'],
   fields: [{ key: 'text', kind: 'prop' }],
 };
 

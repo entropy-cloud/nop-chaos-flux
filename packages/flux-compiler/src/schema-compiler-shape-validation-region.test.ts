@@ -1,19 +1,19 @@
 import { describe, expect, it } from 'vitest';
-import type { RendererDefinition } from '@nop-chaos/flux-core';
+import type { RegisteredRendererDefinition } from '@nop-chaos/flux-core';
 import { makeCompiler } from './schema-compiler-shape-validation-test-utils.js';
 
 describe('shape validation region traversal diagnostics', () => {
   it('traverses value-or-region fields during validation', () => {
-    const cardRenderer: RendererDefinition = {
+    const cardRenderer: RegisteredRendererDefinition = {
       type: 'card',
       component: () => null,
-      propSchema: { title: { type: 'string' } },
+      propContracts: { title: { shape: { kind: 'unknown' }, displayName: 'title' } },
       fields: [{ key: 'title', kind: 'value-or-region', regionKey: 'title' }],
     };
-    const textRenderer: RendererDefinition = {
+    const textRenderer: RegisteredRendererDefinition = {
       type: 'text',
       component: () => null,
-      propSchema: { text: { type: 'string' } },
+      propContracts: { text: { shape: { kind: 'unknown' }, displayName: 'text' } },
     };
     const compiler = makeCompiler([cardRenderer, textRenderer]);
 
@@ -25,7 +25,7 @@ describe('shape validation region traversal diagnostics', () => {
   });
 
   it('does not traverse source carriers on allowSource value-or-region fields', () => {
-    const renderer: RendererDefinition = {
+    const renderer: RegisteredRendererDefinition = {
       type: 'card',
       component: () => null,
       fields: [{ key: 'title', kind: 'value-or-region', regionKey: 'title', allowSource: true }],
@@ -40,7 +40,7 @@ describe('shape validation region traversal diagnostics', () => {
   });
 
   it('rejects any $-prefixed param names on direct regions during validation', () => {
-    const renderer: RendererDefinition = {
+    const renderer: RegisteredRendererDefinition = {
       type: 'card',
       component: () => null,
       fields: [{ key: 'body', kind: 'region', regionKey: 'body', params: ['$record'] }],
@@ -60,10 +60,10 @@ describe('shape validation region traversal diagnostics', () => {
   });
 
   it('preserves compile failure cause on owner-facing validation diagnostics', () => {
-    const renderer: RendererDefinition = {
+    const renderer: RegisteredRendererDefinition = {
       type: 'text',
       component: () => null,
-      propSchema: { text: { type: 'string' } },
+      propContracts: { text: { shape: { kind: 'unknown' }, displayName: 'text' } },
     };
     const compiler = makeCompiler([renderer]);
 
@@ -85,7 +85,7 @@ describe('shape validation region traversal diagnostics', () => {
   });
 
   it('traverses deep extracted table regions during validation', () => {
-    const tableRenderer: RendererDefinition = {
+    const tableRenderer: RegisteredRendererDefinition = {
       type: 'table',
       component: () => null,
       propContracts: {
@@ -120,10 +120,10 @@ describe('shape validation region traversal diagnostics', () => {
         },
       },
     };
-    const textRenderer: RendererDefinition = {
+    const textRenderer: RegisteredRendererDefinition = {
       type: 'text',
       component: () => null,
-      propSchema: { text: { type: 'string' } },
+      propContracts: { text: { shape: { kind: 'unknown' }, displayName: 'text' } },
     };
     const compiler = makeCompiler([tableRenderer, textRenderer]);
 

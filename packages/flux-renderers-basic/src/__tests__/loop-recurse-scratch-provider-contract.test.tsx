@@ -1,7 +1,7 @@
 import React from 'react';
 import { cleanup, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { RendererComponentProps, RendererDefinition, RendererRuntime, ScopeRef } from '@nop-chaos/flux-core';
+import type { RendererComponentProps, RegisteredRendererDefinition, RendererRuntime, ScopeRef } from '@nop-chaos/flux-core';
 import { useStructuralLoopContext } from '@nop-chaos/flux-react';
 import { createBasicSchemaRenderer, env, formulaCompiler } from '../test-support.js';
 
@@ -72,7 +72,7 @@ function StructuralCtxProbeRenderer(_props: RendererComponentProps) {
 }
 /* eslint-enable react-compiler/react-compiler, react-hooks/immutability */
 
-const ctxProbeRenderer: RendererDefinition = {
+const ctxProbeRenderer: RegisteredRendererDefinition = {
   type: 'ctx-probe',
   component: StructuralCtxProbeRenderer,
   fields: [],

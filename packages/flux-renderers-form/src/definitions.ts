@@ -1,6 +1,6 @@
 import {
   registerRendererDefinitions,
-  type RendererDefinition,
+  type RegisteredRendererDefinition,
   type RendererRegistry,
 } from '@nop-chaos/flux-core';
 import { fieldsetRendererDefinition } from './renderers/fieldset.js';
@@ -27,7 +27,7 @@ export { inputSignatureRendererDefinition } from './renderers/signature-renderer
 export { inputVerificationRendererDefinition } from './renderers/verification-renderer-definitions.js';
 export { cronEditorRendererDefinition } from './renderers/cron-editor-renderer-definitions.js';
 
-export const formRendererDefinitions: RendererDefinition[] = [
+export const formRendererDefinitions: RegisteredRendererDefinition[] = [
   formRendererDefinition,
   fieldsetRendererDefinition,
   hiddenRendererDefinition,

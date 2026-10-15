@@ -32,7 +32,7 @@
 > 状态流转：plan 通过独立 draft review → `todo` 改 `planned`；plan 通过 closure audit → `planned` 改 `done`（不得提前）。一个 plan 对应本文一个工作项；**执行顺序 = 本列表顺序**（AI 不得重排、不得跳项）。单个工作项执行中证实无法被一个 plan 收口时，经人工确认拆分为 successor 工作项（component-audit 先例），不得静默缩水验收口径。
 
 - RM-0. 政策与基线（schema-retention policy owner 文档 + 元模型权威声明 + 两处死代码清理）: `done`（plan `docs/plans/602-rm0-retention-policy-plan.md`，closure audit agent_5203f11c approved 2026-10-15；裁决表 12 行生效，RM-8 范围钉定=保留通道钉文档+scanner 门禁）
-- RM-1. 类型层收口（propSchema 死字段删除、CompiledRendererContract 派生化、registry 入参类型化）: `todo`
+- RM-1. 类型层收口（propSchema 死字段删除、CompiledRendererContract 派生化、registry 入参类型化）: `done`（plan `docs/plans/603-rm1-type-layer-plan.md`，closure audit agent_0714ce30 approved 2026-10-15；执行发现：CompiledRendererContract 派生形态受型变约束收敛为"S 仅协变槽+非泛型 ValidationContributor 引用+非泛型键 Pick"，涟漪约 185 文件声明级清扫，`pnpm -r typecheck` 42/42 口径入 plan）
 - RM-2. 帧族收敛（wrap/frameRootTag/frameWrap 单权威路径 + FrameWrapMode 词表归一）: `todo`
 - RM-3. fields+propContracts 合并·阶段一（新形态落地 + 编译器/门禁双读）: `todo`
 - RM-4. fields+propContracts 合并·阶段二（全量迁移 + 旧形态删除）: `todo`
@@ -63,7 +63,7 @@
 | 工作项                     | 状态   | Owner 事实源                          | 依赖       | 复用                                       | Plan                                             |
 | -------------------------- | ------ | ------------------------------------- | ---------- | ------------------------------------------ | ------------------------------------------------ |
 | RM-0 政策与基线            | `done` | 分析报告 §5.4 + `renderer-runtime.md` | 无         | 既有文档骨架                               | [602](../plans/602-rm0-retention-policy-plan.md) |
-| RM-1 类型层收口            | `todo` | 分析报告 A1/B6/B7/C                   | RM-0       | contract 门禁                              | —                                                |
+| RM-1 类型层收口            | `done` | 分析报告 A1/B6/B7/C                   | RM-0       | contract 门禁                              | [603](../plans/603-rm1-type-layer-plan.md)       |
 | RM-2 帧族收敛              | `todo` | 分析报告 A5；plan 460 B3 语义         | RM-1       | strict validation 语料、判别变异           | —                                                |
 | RM-3 双声明合并·一         | `todo` | 分析报告 A2/A3                        | RM-1       | schema-prop-coverage、defineRendererFamily | —                                                |
 | RM-4 双声明合并·二         | `todo` | 同上                                  | RM-3       | contract-honesty、validate-pages --strict  | —                                                |

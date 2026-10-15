@@ -1,4 +1,4 @@
-import type { BaseSchema, RendererDefinition, RendererSchemaValidationContext } from '@nop-chaos/flux-core';
+import type { BaseSchema, RegisteredRendererDefinition, RendererSchemaValidationContext } from '@nop-chaos/flux-core';
 import { PIVOT_AGGREGATION_TYPES, PIVOT_CELL_TYPES, PIVOT_CORNER_TITLE_VALUES } from './pivot-vocabulary.js';
 import { createLazyRendererComponent } from '@nop-chaos/flux-react';
 import type { PivotTableSchema } from './schemas.js';
@@ -121,7 +121,7 @@ function validatePivotSchema(context: RendererSchemaValidationContext<BaseSchema
   }
 }
 
-export const pivotRendererDefinitions: RendererDefinition[] = [
+export const pivotRendererDefinitions: RegisteredRendererDefinition[] = [
   {
     type: 'pivot-table',
     displayName: 'Pivot Table',

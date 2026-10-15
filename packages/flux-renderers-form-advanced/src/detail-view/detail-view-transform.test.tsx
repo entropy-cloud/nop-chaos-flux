@@ -1,6 +1,6 @@
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
-import type { NodeRuntimeState, RendererDefinition, RuntimeValueState } from '@nop-chaos/flux-core';
+import type { NodeRuntimeState, RegisteredRendererDefinition, RuntimeValueState } from '@nop-chaos/flux-core';
 import { createRendererRegistry } from '@nop-chaos/flux-core';
 import { useCurrentForm, useScopeSelector } from '@nop-chaos/flux-react';
 import { createExpressionCompiler } from '@nop-chaos/flux-formula';
@@ -17,7 +17,7 @@ import { installFormAdvancedTestHooks } from '../test-support.js';
 
 installFormAdvancedTestHooks();
 
-const detailViewLikeRenderer: RendererDefinition = {
+const detailViewLikeRenderer: RegisteredRendererDefinition = {
   type: 'detail-view-like',
   component: function DetailViewLike(props: any) {
     const form = useCurrentForm();
@@ -44,7 +44,7 @@ const detailViewLikeRenderer: RendererDefinition = {
   fields: [{ key: 'viewer', kind: 'region', regionKey: 'viewer' }],
 };
 
-const importedSummaryProbeRenderer: RendererDefinition = {
+const importedSummaryProbeRenderer: RegisteredRendererDefinition = {
   type: 'imported-summary-probe',
   component: function ImportedSummaryProbe() {
     const name = useScopeSelector(
@@ -67,7 +67,7 @@ const importedSummaryProbeRenderer: RendererDefinition = {
   },
 };
 
-const propsTextProbeRenderer: RendererDefinition = {
+const propsTextProbeRenderer: RegisteredRendererDefinition = {
   type: 'props-text-probe',
   component: function PropsTextProbe(props: any) {
     return <span data-testid={String(props.props.testid ?? 'props-text-probe')}>{String(props.props.text ?? '')}</span>;

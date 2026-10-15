@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import type { BaseSchema, RendererComponentProps, RendererDefinition } from '@nop-chaos/flux-core';
+import type { BaseSchema, RendererComponentProps, RegisteredRendererDefinition } from '@nop-chaos/flux-core';
 import { resolveRendererSlotContent, hasRendererSlotContent } from '@nop-chaos/flux-react';
 import { resolveGap } from '@nop-chaos/flux-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger, cn } from '@nop-chaos/ui';
@@ -136,7 +136,7 @@ function FieldsetRenderer(props: RendererComponentProps<FieldsetSchema>) {
 
 export { FieldsetRenderer };
 
-export const fieldsetRendererDefinition: RendererDefinition = {
+export const fieldsetRendererDefinition: RegisteredRendererDefinition = {
   type: 'fieldset',
   displayName: 'FieldSet',
   category: 'form',

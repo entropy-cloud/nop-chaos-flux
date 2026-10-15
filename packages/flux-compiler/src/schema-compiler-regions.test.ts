@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { RendererDefinition } from '@nop-chaos/flux-core';
+import type { RegisteredRendererDefinition } from '@nop-chaos/flux-core';
 import { createRendererRegistry, validateRegionParams } from '@nop-chaos/flux-core';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createSchemaCompiler } from './index.js';
@@ -12,7 +12,7 @@ describe('schema-compiler regions', () => {
   });
 
   it('rejects any $-prefixed nested fieldRules region param name through the unified pipeline', () => {
-    const tabsFixture: RendererDefinition = {
+    const tabsFixture: RegisteredRendererDefinition = {
       type: 'tabs-fixture',
       component: () => null,
       propContracts: {
@@ -35,7 +35,7 @@ describe('schema-compiler regions', () => {
       },
       fields: [{ key: 'items', kind: 'prop' }],
     };
-    const textRenderer: RendererDefinition = {
+    const textRenderer: RegisteredRendererDefinition = {
       type: 'text',
       component: () => null,
     };

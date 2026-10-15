@@ -1,5 +1,5 @@
 import React from 'react';
-import type { RendererComponentProps, RendererDefinition, RendererEnv } from '@nop-chaos/flux-core';
+import type { RendererComponentProps, RegisteredRendererDefinition, RendererEnv } from '@nop-chaos/flux-core';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createDefaultEnv, createSchemaRenderer } from '@nop-chaos/flux-react';
 import { basicRendererDefinitions } from './index.js';
@@ -16,13 +16,13 @@ function ScopeProbeRenderer(props: RendererComponentProps) {
   );
 }
 
-export const scopeProbeRenderer: RendererDefinition = {
+export const scopeProbeRenderer: RegisteredRendererDefinition = {
   type: 'scope-probe',
   component: ScopeProbeRenderer,
   fields: [{ key: 'value', kind: 'prop' }],
 };
 
-export function createBasicSchemaRenderer(extra: RendererDefinition[] = []) {
+export function createBasicSchemaRenderer(extra: RegisteredRendererDefinition[] = []) {
   return createSchemaRenderer([...basicRendererDefinitions, ...extra]);
 }
 

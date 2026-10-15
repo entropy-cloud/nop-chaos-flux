@@ -2,7 +2,7 @@ import React from 'react';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { t } from '@nop-chaos/flux-i18n';
 import { createSchemaRenderer, useCurrentFormState } from '@nop-chaos/flux-react';
-import type { RendererDefinition } from '@nop-chaos/flux-core';
+import type { RegisteredRendererDefinition } from '@nop-chaos/flux-core';
 import { basicRendererDefinitions } from '@nop-chaos/flux-renderers-basic';
 import { formRendererDefinitions } from '@nop-chaos/flux-renderers-form';
 import { describe, expect, it } from 'vitest';
@@ -19,7 +19,7 @@ function IconValueProbe(props: { name: string; testid: string }) {
   return <span data-testid={props.testid}>{typeof value === 'string' ? value : ''}</span>;
 }
 
-const iconValueProbeRenderer: RendererDefinition = {
+const iconValueProbeRenderer: RegisteredRendererDefinition = {
   type: 'icon-value-probe',
   component: (props) => (
     <IconValueProbe

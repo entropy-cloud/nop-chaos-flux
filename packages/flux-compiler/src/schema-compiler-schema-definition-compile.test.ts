@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { FluxSchemaDefinitionShape, RendererDefinition } from '@nop-chaos/flux-core';
+import type { FluxSchemaDefinitionShape, RegisteredRendererDefinition } from '@nop-chaos/flux-core';
 import { createRendererRegistry } from '@nop-chaos/flux-core';
 import { createSchemaCompiler } from './schema-compiler.js';
 import { classifySchemaDefinitionValue } from './schema-compiler/node-compiler-helpers.js';
@@ -14,7 +14,7 @@ const PRESERVE_LITERAL_MARKER = '__nopPreserveLiteral';
  * This test is written FIRST (red) and turns green once the propContracts.shape
  * schema-definition pipeline lands in compileSingleNode.
  */
-const dropdownFixtureDefinition: RendererDefinition = {
+const dropdownFixtureDefinition: RegisteredRendererDefinition = {
   type: 'dropdown-fixture',
   displayName: 'Dropdown Fixture',
   component: () => null,
@@ -135,7 +135,7 @@ describe('schema-definition compile pipeline (red-line)', () => {
 });
 
 describe('schema-definition compile region extraction branch', () => {
-  const regionFixtureDefinition: RendererDefinition = {
+  const regionFixtureDefinition: RegisteredRendererDefinition = {
     type: 'region-fixture',
     displayName: 'Region Fixture',
     component: () => null,
@@ -243,7 +243,7 @@ describe('schema-definition classifier graceful non-schema field', () => {
 });
 
 describe('schema-definition actionValue compile branch', () => {
-  const actionValueFixtureDefinition: RendererDefinition = {
+  const actionValueFixtureDefinition: RegisteredRendererDefinition = {
     type: 'action-value-fixture',
     displayName: 'Action Value Fixture',
     component: () => null,
@@ -326,7 +326,7 @@ describe('schema-definition actionValue compile branch', () => {
 });
 
 describe('P0 action-value props are never props-expression polluted', () => {
-  function makeActionValueRenderer(type: string, propKey: string): RendererDefinition {
+  function makeActionValueRenderer(type: string, propKey: string): RegisteredRendererDefinition {
     return {
       type,
       displayName: type,

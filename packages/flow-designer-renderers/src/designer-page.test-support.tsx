@@ -1,6 +1,6 @@
 import React from 'react';
 import { afterEach, beforeEach, vi } from 'vitest';
-import type { RendererDefinition, RendererEnv } from '@nop-chaos/flux-core';
+import type { RegisteredRendererDefinition, RendererEnv } from '@nop-chaos/flux-core';
 import type { DesignerConfig } from '@nop-chaos/flow-designer-core';
 import { changeLanguage, initFluxI18n, resetFluxI18n } from '@nop-chaos/flux-i18n';
 import { createSchemaRenderer } from '@nop-chaos/flux-react';
@@ -49,12 +49,12 @@ vi.mock('@nop-chaos/flow-designer-core', async () => {
   };
 });
 
-const textRenderer: RendererDefinition = {
+const textRenderer: RegisteredRendererDefinition = {
   type: 'text',
   component: (props) => <span>{String(props.props.text ?? '')}</span>,
 };
 
-const pageRenderer: RendererDefinition = {
+const pageRenderer: RegisteredRendererDefinition = {
   type: 'page',
   component: () => <section />,
   fields: [{ key: 'body', kind: 'region', regionKey: 'body' }],

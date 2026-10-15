@@ -1,6 +1,6 @@
 import {
   createRendererRegistry,
-  type RendererDefinition,
+  type RegisteredRendererDefinition,
 } from '@nop-chaos/flux-core';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createSchemaCompiler } from './index.js';
@@ -32,7 +32,7 @@ const tableColumnsShape = {
   },
 };
 
-export const tableRenderer: RendererDefinition = {
+export const tableRenderer: RegisteredRendererDefinition = {
   type: 'table',
   component: () => null,
   propContracts: {
@@ -53,7 +53,7 @@ export const tableRenderer: RendererDefinition = {
   ],
 };
 
-export const crudRenderer: RendererDefinition = {
+export const crudRenderer: RegisteredRendererDefinition = {
   type: 'crud',
   component: () => null,
   rendererClass: 'flux-owner-renderer',
@@ -76,7 +76,7 @@ export const crudRenderer: RendererDefinition = {
   ],
 };
 
-export const dataSourceRenderer: RendererDefinition = {
+export const dataSourceRenderer: RegisteredRendererDefinition = {
   type: 'data-source',
   component: () => null,
   compilation: {
@@ -84,24 +84,24 @@ export const dataSourceRenderer: RendererDefinition = {
   },
 };
 
-export const localDataRendererDefinitions: RendererDefinition[] = [
+export const localDataRendererDefinitions: RegisteredRendererDefinition[] = [
   tableRenderer,
   crudRenderer,
   dataSourceRenderer,
 ];
 
-export const textRenderer: RendererDefinition = {
+export const textRenderer: RegisteredRendererDefinition = {
   type: 'text',
   component: () => null,
 };
 
-export const pageRenderer: RendererDefinition = {
+export const pageRenderer: RegisteredRendererDefinition = {
   type: 'page',
   component: () => null,
   fields: [{ key: 'body', kind: 'region', regionKey: 'body' }],
 };
 
-export const cardRenderer: RendererDefinition = {
+export const cardRenderer: RegisteredRendererDefinition = {
   type: 'card',
   component: () => null,
   fields: [
@@ -110,18 +110,18 @@ export const cardRenderer: RendererDefinition = {
   ],
 };
 
-export const actionButtonRenderer: RendererDefinition = {
+export const actionButtonRenderer: RegisteredRendererDefinition = {
   type: 'action-button',
   component: () => null,
   fields: [{ key: 'onClick', kind: 'event' }],
 };
 
-export const importHostRenderer: RendererDefinition = {
+export const importHostRenderer: RegisteredRendererDefinition = {
   type: 'import-host',
   component: () => null,
 };
 
-export const formRenderer: RendererDefinition = {
+export const formRenderer: RegisteredRendererDefinition = {
   type: 'form',
   component: () => null,
   fields: [
@@ -137,7 +137,7 @@ export const formRenderer: RendererDefinition = {
   },
 };
 
-export const inputRenderer: RendererDefinition = {
+export const inputRenderer: RegisteredRendererDefinition = {
   type: 'input-text',
   component: () => null,
   validation: {
@@ -151,7 +151,7 @@ export const inputRenderer: RendererDefinition = {
   },
 };
 
-export function createTestCompiler(definitions: RendererDefinition[]) {
+export function createTestCompiler(definitions: RegisteredRendererDefinition[]) {
   const registry = createRendererRegistry(definitions);
   return createSchemaCompiler({
     registry,

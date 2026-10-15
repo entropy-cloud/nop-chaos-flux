@@ -13,7 +13,7 @@ import {
 } from '@nop-chaos/flux-react';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createRendererRuntime } from '@nop-chaos/flux-runtime';
-import { createRendererRegistry, type RendererDefinition } from '@nop-chaos/flux-core';
+import { createRendererRegistry, type RegisteredRendererDefinition } from '@nop-chaos/flux-core';
 
 export interface ThreeTestEnvironment {
   runtime: ReturnType<typeof createRendererRuntime>;
@@ -27,7 +27,7 @@ export interface ThreeTestEnvironment {
 }
 
 export function createThreeTestEnvironment(
-  definitions: RendererDefinition[] = [],
+  definitions: RegisteredRendererDefinition[] = [],
   data: Record<string, unknown> = {},
 ): ThreeTestEnvironment {
   const expressionCompiler = createExpressionCompiler(createFormulaCompiler());

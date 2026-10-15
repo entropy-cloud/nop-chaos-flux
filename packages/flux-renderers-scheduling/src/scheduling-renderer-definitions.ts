@@ -1,4 +1,4 @@
-import type { RendererDefinition } from '@nop-chaos/flux-core';
+import type { RegisteredRendererDefinition } from '@nop-chaos/flux-core';
 import type { GanttSchema, KanbanSchema, CalendarSchema, BarcodeInputSchema } from './schemas.js';
 import { Calendar } from './calendar/calendar.js';
 import { Gantt } from './gantt/gantt.js';
@@ -6,7 +6,7 @@ import { KanbanBoard } from './kanban/kanban-board.js';
 import { BarcodeInputRenderer } from './barcode-input/barcode-input.js';
 import { barcodeInputFieldRules, createBarcodeInputFieldValidation } from './barcode-input/barcode-input-schemas.js';
 
-export const schedulingRendererDefinitions: RendererDefinition[] = [
+export const schedulingRendererDefinitions: RegisteredRendererDefinition[] = [
   {
     type: 'gantt',
     displayName: 'Gantt',

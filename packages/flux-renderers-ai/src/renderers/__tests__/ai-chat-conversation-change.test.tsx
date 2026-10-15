@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, render, waitFor } from '@testing-library/react';
 import React, { useEffect, useState } from 'react';
-import type { RendererComponentProps, RendererDefinition } from '@nop-chaos/flux-core';
+import type { RendererComponentProps, RegisteredRendererDefinition } from '@nop-chaos/flux-core';
 import {
   aiFormulaCompiler,
   aiMockEnv,
@@ -65,7 +65,7 @@ function SpyAiChat(props: RendererComponentProps<AiChatSchema>): React.ReactElem
   return <Chat {...props} events={wrappedEvents} />;
 }
 
-const spyChat: RendererDefinition = { type: 'spy-ai-chat', component: SpyAiChat };
+const spyChat: RegisteredRendererDefinition = { type: 'spy-ai-chat', component: SpyAiChat };
 const SchemaRenderer = createAiSchemaRenderer([spyChat]);
 
 interface HarnessProps {

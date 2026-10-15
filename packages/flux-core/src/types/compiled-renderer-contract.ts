@@ -1,51 +1,67 @@
-import type { BaseSchema, SchemaFieldRule } from './schema.js';
 import type { CompiledActionProgram } from './actions.js';
-import type { ValidationRule } from './validation.js';
+import type { BaseSchema } from './schema.js';
+import type {
+  RendererDefinitionShape,
+  ValidationContributor,
+} from './renderer-definition-types.js';
 
-export interface CompiledRendererContract<S extends BaseSchema = BaseSchema> {
+/**
+ * Runtime subset of `RendererDefinitionShape` materialized onto every
+ * compiled template node. Derived from the shape (RM-1 plan 603): the
+ * non-generic channels are `Pick`ed (renaming or removing a shape key breaks
+ * here at compile time) and `validation` references `ValidationContributor`
+ * by name, so new members of shared channel types flow through without a
+ * hand-copy to miss. `component` is the only non-shape member; it stays
+ * opaque (`unknown`) on the compiled face.
+ *
+ * Variance constraint (RM-1 execution finding): `S` must appear only in the
+ * covariant `type` slot. Generic-schema slots (`validation?: ValidationContributor<S>`)
+ * or `Pick`ing S-generic members make cross-instantiation comparisons
+ * (`CompiledRendererContract<PageSchema>` → `CompiledRendererContract<BaseSchema>`
+ * under `TemplateNode`) resolve through the same-generic-interface shortcut,
+ * which measures `S` as invariant and breaks every concrete-schema renderer's
+ * `component` assignment. The non-generic `ValidationContributor` reference
+ * keeps the runtime objects identical (the compiler copies `definition.validation`
+ * wholesale) while keeping the type-level chain covariant.
+ */
+export type CompiledRendererContract<S extends BaseSchema = BaseSchema> = {
   type: S['type'];
+  validation?: ValidationContributor;
+} & Pick<
+  RendererDefinitionShape<S>,
+  | 'scopePolicy'
+  | 'actionScopePolicy'
+  | 'componentRegistryPolicy'
+  | 'fields'
+  | 'validationDefaults'
+  | 'compilation'
+  | 'wrap'
+  | 'frameRootTag'
+  | 'frameWrap'
+  | 'staticCapable'
+> & {
   component?: unknown;
-  scopePolicy?: 'inherit' | 'form';
-  actionScopePolicy?: 'inherit' | 'new';
-  componentRegistryPolicy?: 'inherit' | 'new';
-  fields?: readonly SchemaFieldRule[];
-  validation?: {
-    kind: 'field' | 'container' | 'none';
-    valueKind?: 'scalar' | 'array' | 'object';
-    ownerResolution?: 'inherit-owner' | 'create-owner' | 'no-owner';
-    childContractMode?: 'ignore' | 'summary-gate' | 'recurse-submit';
-    getFieldPath?(schema: S, ctx: { schema: S; renderer: CompiledRendererContract<S>; path: string; fieldPathPrefix?: string }): string | undefined;
-    collectRules?(schema: S, ctx: { schema: S; renderer: CompiledRendererContract<S>; path: string; fieldPathPrefix?: string }): ValidationRule[];
-    getChildFieldPathPrefix?(schema: S, ctx: { schema: S; renderer: CompiledRendererContract<S>; path: string; fieldPathPrefix?: string }): string | false | undefined;
-  };
-  validationDefaults?: {
-    defaultChildContractMode?: 'ignore' | 'summary-gate' | 'recurse-submit';
-    collectDescendantValidation?: boolean;
-  };
-  compilation?: {
-    artifacts?: readonly ('data-source' | 'reaction')[];
-  };
-  wrap?: boolean;
-  frameRootTag?: 'div' | 'label';
-  frameWrap?: 'label' | 'group' | 'none';
-  staticCapable?: boolean;
-}
+};
 
-export function toCompiledRendererContract<S extends BaseSchema = BaseSchema>(definition: {
-  type: S['type'];
-  component?: unknown;
-  scopePolicy?: 'inherit' | 'form';
-  actionScopePolicy?: 'inherit' | 'new';
-  componentRegistryPolicy?: 'inherit' | 'new';
-  fields?: readonly SchemaFieldRule[];
-  validation?: CompiledRendererContract<S>['validation'];
-  validationDefaults?: CompiledRendererContract<S>['validationDefaults'];
-  compilation?: CompiledRendererContract<S>['compilation'];
-  wrap?: boolean;
-  frameRootTag?: 'div' | 'label';
-  frameWrap?: 'label' | 'group' | 'none';
-  staticCapable?: boolean;
-}): CompiledRendererContract<S> {
+export function toCompiledRendererContract<S extends BaseSchema = BaseSchema>(
+  definition: {
+    type: S['type'];
+    component?: unknown;
+    validation?: ValidationContributor;
+  } & Pick<
+    RendererDefinitionShape<S>,
+    | 'scopePolicy'
+    | 'actionScopePolicy'
+    | 'componentRegistryPolicy'
+    | 'fields'
+    | 'validationDefaults'
+    | 'compilation'
+    | 'wrap'
+    | 'frameRootTag'
+    | 'frameWrap'
+    | 'staticCapable'
+  >,
+): CompiledRendererContract<S> {
   return {
     type: definition.type,
     component: definition.component,

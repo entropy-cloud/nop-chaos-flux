@@ -4,7 +4,7 @@ import {
   type BaseSchema,
   stringAdapter,
   type RendererComponentProps,
-  type RendererDefinition,
+  type RegisteredRendererDefinition,
   type RendererSchemaValidationContext,
   type SchemaFieldRule,
   type ValidationRule,
@@ -356,7 +356,7 @@ export function createRangeFieldValidation() {
   };
 }
 
-export const inputRendererDefinitions: RendererDefinition[] = [
+export const inputRendererDefinitions: RegisteredRendererDefinition[] = [
   {
     type: 'input-text',
     sourcePackage: '@nop-chaos/flux-renderers-form',

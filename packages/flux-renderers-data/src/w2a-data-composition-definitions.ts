@@ -1,4 +1,4 @@
-import type { RendererDefinition } from '@nop-chaos/flux-core';
+import type { RegisteredRendererDefinition } from '@nop-chaos/flux-core';
 import { PaginationRenderer } from './pagination-renderer.js';
 import { StatisticsRenderer } from './statistics-renderer.js';
 
@@ -8,7 +8,7 @@ import { StatisticsRenderer } from './statistics-renderer.js';
  * Extracted from `data-renderer-definitions.ts` to keep that file under the
  * 700-line lint cap.
  */
-export const w2aDataCompositionDefinitions: RendererDefinition[] = [
+export const w2aDataCompositionDefinitions: RegisteredRendererDefinition[] = [
   {
     type: 'pagination',
     displayName: 'Pagination',

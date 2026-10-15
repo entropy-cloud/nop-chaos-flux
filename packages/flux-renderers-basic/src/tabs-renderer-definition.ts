@@ -1,7 +1,7 @@
-import type { RendererDefinition } from '@nop-chaos/flux-core';
+import type { RegisteredRendererDefinition } from '@nop-chaos/flux-core';
 import { TabsRenderer } from './tabs.js';
 
-export const tabsRendererDefinition: RendererDefinition = {
+export const tabsRendererDefinition: RegisteredRendererDefinition = {
   type: 'tabs',
   displayName: 'Tabs',
   category: 'layout',

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { RendererDefinition } from '@nop-chaos/flux-core';
+import type { RegisteredRendererDefinition } from '@nop-chaos/flux-core';
 import { makeCompiler } from './schema-compiler-shape-validation-test-utils.js';
 
 describe('shape validation action and source diagnostics', () => {
@@ -12,7 +12,7 @@ describe('shape validation action and source diagnostics', () => {
   });
 
   it('reports missing type field as invalid root', () => {
-    const renderer: RendererDefinition = { type: 'text', component: () => null };
+    const renderer: RegisteredRendererDefinition = { type: 'text', component: () => null };
     const compiler = makeCompiler([renderer]);
 
     expect(compiler.validate?.({ label: 'test' } as any)).toEqual(
@@ -21,7 +21,7 @@ describe('shape validation action and source diagnostics', () => {
   });
 
   it('reports empty type field', () => {
-    const renderer: RendererDefinition = { type: 'text', component: () => null };
+    const renderer: RegisteredRendererDefinition = { type: 'text', component: () => null };
     const compiler = makeCompiler([renderer]);
 
     expect(compiler.validate?.({ type: '' })).toEqual(
@@ -38,7 +38,7 @@ describe('shape validation action and source diagnostics', () => {
   });
 
   it('reports invalid region node', () => {
-    const renderer: RendererDefinition = {
+    const renderer: RegisteredRendererDefinition = {
       type: 'container',
       component: () => null,
       fields: [{ key: 'body', kind: 'region', regionKey: 'body' }],
@@ -51,7 +51,7 @@ describe('shape validation action and source diagnostics', () => {
   });
 
   it('reports invalid action shape', () => {
-    const renderer: RendererDefinition = {
+    const renderer: RegisteredRendererDefinition = {
       type: 'button',
       component: () => null,
       fields: [{ key: 'onClick', kind: 'event' }],
@@ -64,7 +64,7 @@ describe('shape validation action and source diagnostics', () => {
   });
 
   it('reports action without action field', () => {
-    const renderer: RendererDefinition = {
+    const renderer: RegisteredRendererDefinition = {
       type: 'button',
       component: () => null,
       fields: [{ key: 'onClick', kind: 'event' }],
@@ -82,7 +82,7 @@ describe('shape validation action and source diagnostics', () => {
   });
 
   it('reports invalid action args', () => {
-    const renderer: RendererDefinition = {
+    const renderer: RegisteredRendererDefinition = {
       type: 'button',
       component: () => null,
       fields: [{ key: 'onClick', kind: 'event' }],
@@ -105,7 +105,7 @@ describe('shape validation action and source diagnostics', () => {
   });
 
   it('reports invalid dynamic-renderer loadAction shape through renderer validation', () => {
-    const renderer: RendererDefinition = {
+    const renderer: RegisteredRendererDefinition = {
       type: 'dynamic-renderer',
       component: () => null,
       fields: [{ key: 'loadAction', kind: 'prop' }],
@@ -139,7 +139,7 @@ describe('shape validation action and source diagnostics', () => {
   });
 
   it('reports non-array parallel in action', () => {
-    const renderer: RendererDefinition = {
+    const renderer: RegisteredRendererDefinition = {
       type: 'button',
       component: () => null,
       fields: [{ key: 'onClick', kind: 'event' }],
@@ -162,7 +162,7 @@ describe('shape validation action and source diagnostics', () => {
   });
 
   it('reports invalid onSettled action shape', () => {
-    const renderer: RendererDefinition = {
+    const renderer: RegisteredRendererDefinition = {
       type: 'button',
       component: () => null,
       fields: [{ key: 'onClick', kind: 'event' }],
@@ -186,7 +186,7 @@ describe('shape validation action and source diagnostics', () => {
   });
 
   it('reports invalid action when shape for when field', () => {
-    const renderer: RendererDefinition = {
+    const renderer: RegisteredRendererDefinition = {
       type: 'button',
       component: () => null,
       fields: [{ key: 'onClick', kind: 'event' }],
@@ -210,7 +210,7 @@ describe('shape validation action and source diagnostics', () => {
   });
 
   it('reports invalid preventDefault shape on action', () => {
-    const renderer: RendererDefinition = {
+    const renderer: RegisteredRendererDefinition = {
       type: 'button',
       component: () => null,
       fields: [{ key: 'onClick', kind: 'event' }],
@@ -235,7 +235,7 @@ describe('shape validation action and source diagnostics', () => {
   });
 
   it('reports invalid stopPropagation shape on action', () => {
-    const renderer: RendererDefinition = {
+    const renderer: RegisteredRendererDefinition = {
       type: 'button',
       component: () => null,
       fields: [{ key: 'onClick', kind: 'event' }],
@@ -260,7 +260,7 @@ describe('shape validation action and source diagnostics', () => {
   });
 
   it('accepts valid boolean and expression forms for preventDefault and stopPropagation', () => {
-    const renderer: RendererDefinition = {
+    const renderer: RegisteredRendererDefinition = {
       type: 'button',
       component: () => null,
       fields: [{ key: 'onClick', kind: 'event' }],
@@ -286,10 +286,10 @@ describe('shape validation action and source diagnostics', () => {
   });
 
   it('reports invalid source shape', () => {
-    const renderer: RendererDefinition = {
+    const renderer: RegisteredRendererDefinition = {
       type: 'page',
       component: () => null,
-      propSchema: { data: { type: 'object' } },
+      propContracts: { data: { shape: { kind: 'unknown' }, displayName: 'data' } },
       fields: [{ key: 'data', kind: 'prop' }],
     };
     const compiler = makeCompiler([renderer]);
@@ -305,10 +305,10 @@ describe('shape validation action and source diagnostics', () => {
   });
 
   it('reports invalid source action type', () => {
-    const renderer: RendererDefinition = {
+    const renderer: RegisteredRendererDefinition = {
       type: 'page',
       component: () => null,
-      propSchema: { data: { type: 'object' } },
+      propContracts: { data: { shape: { kind: 'unknown' }, displayName: 'data' } },
       fields: [{ key: 'data', kind: 'prop' }],
     };
     const compiler = makeCompiler([renderer]);
@@ -324,10 +324,10 @@ describe('shape validation action and source diagnostics', () => {
   });
 
   it('rejects dynamic structural data-source name and statusPath', () => {
-    const renderer: RendererDefinition = {
+    const renderer: RegisteredRendererDefinition = {
       type: 'page',
       component: () => null,
-      propSchema: { data: { type: 'object' } },
+      propContracts: { data: { shape: { kind: 'unknown' }, displayName: 'data' } },
       fields: [{ key: 'data', kind: 'prop' }],
     };
     const compiler = makeCompiler([renderer]);
@@ -361,7 +361,7 @@ describe('shape validation action and source diagnostics', () => {
   });
 
   it('reports invalid dependsOn entries', () => {
-    const renderer: RendererDefinition = {
+    const renderer: RegisteredRendererDefinition = {
       type: 'page',
       component: () => null,
       fields: [{ key: 'body', kind: 'region', regionKey: 'body' }],
@@ -387,7 +387,7 @@ describe('shape validation action and source diagnostics', () => {
   });
 
   it('reports non-array dependsOn', () => {
-    const renderer: RendererDefinition = {
+    const renderer: RegisteredRendererDefinition = {
       type: 'page',
       component: () => null,
       fields: [{ key: 'body', kind: 'region', regionKey: 'body' }],
@@ -405,10 +405,10 @@ describe('shape validation action and source diagnostics', () => {
   });
 
   it('deduplicates diagnostic entries', () => {
-    const renderer: RendererDefinition = {
+    const renderer: RegisteredRendererDefinition = {
       type: 'text',
       component: () => null,
-      propSchema: { text: { type: 'string' } },
+      propContracts: { text: { shape: { kind: 'unknown' }, displayName: 'text' } },
     };
     const compiler = makeCompiler([renderer]);
 
@@ -422,10 +422,10 @@ describe('shape validation action and source diagnostics', () => {
   });
 
   it('respects maxIssues limit', () => {
-    const renderer: RendererDefinition = {
+    const renderer: RegisteredRendererDefinition = {
       type: 'text',
       component: () => null,
-      propSchema: { text: { type: 'string' } },
+      propContracts: { text: { shape: { kind: 'unknown' }, displayName: 'text' } },
     };
     const compiler = makeCompiler([renderer]);
 
@@ -440,7 +440,7 @@ describe('shape validation action and source diagnostics', () => {
   });
 
   it('reports renderer schemaValidator issues', () => {
-    const renderer: RendererDefinition = {
+    const renderer: RegisteredRendererDefinition = {
       type: 'validated',
       component: () => null,
       schemaValidator({ emit }) {

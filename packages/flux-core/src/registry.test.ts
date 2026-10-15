@@ -1,13 +1,19 @@
 import { describe, expect, it, vi } from 'vitest';
 import { createRendererRegistry, registerRendererDefinitions } from './registry.js';
-import type { RendererDefinition } from './types.js';
+import type { RegisteredRendererDefinition, RendererDefinition } from './types.js';
 
-function createMockDefinition(type: string, overrides?: Partial<RendererDefinition>): RendererDefinition {
+function createMockDefinition(
+  type: string,
+  overrides?: Partial<RendererDefinition>,
+): RegisteredRendererDefinition {
+  // Tests for the defensive runtime throw deliberately pass
+  // `component: undefined` through overrides; the assertion mirrors the
+  // registration-invariant type while keeping that path constructible.
   return {
     type,
     component: vi.fn(),
     ...overrides,
-  };
+  } as RegisteredRendererDefinition;
 }
 
 describe('createRendererRegistry', () => {

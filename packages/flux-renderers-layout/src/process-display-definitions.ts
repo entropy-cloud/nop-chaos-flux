@@ -1,8 +1,8 @@
-import type { RendererDefinition } from '@nop-chaos/flux-core';
+import type { RegisteredRendererDefinition } from '@nop-chaos/flux-core';
 import { StepsRenderer } from './steps-renderer.js';
 import { TimelineRenderer } from './timeline-renderer.js';
 
-export const stepsRendererDefinition: RendererDefinition = {
+export const stepsRendererDefinition: RegisteredRendererDefinition = {
   type: 'steps',
   displayName: 'Steps',
   category: 'layout',
@@ -89,7 +89,7 @@ export const stepsRendererDefinition: RendererDefinition = {
   ],
 };
 
-export const timelineRendererDefinition: RendererDefinition = {
+export const timelineRendererDefinition: RegisteredRendererDefinition = {
   type: 'timeline',
   displayName: 'Timeline',
   category: 'layout',

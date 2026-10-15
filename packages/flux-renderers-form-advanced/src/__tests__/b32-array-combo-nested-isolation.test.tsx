@@ -1,7 +1,7 @@
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
-import type { RendererComponentProps, RendererDefinition } from '@nop-chaos/flux-core';
+import type { RendererComponentProps, RegisteredRendererDefinition } from '@nop-chaos/flux-core';
 import { formAdvancedRendererDefinitions } from '../index.js';
 import { basicRendererDefinitions } from '@nop-chaos/flux-renderers-basic';
 import { formRendererDefinitions } from '@nop-chaos/flux-renderers-form';
@@ -21,7 +21,7 @@ afterEach(() => {
   cleanup();
 });
 
-function renderSchema(schema: object, extraDefs: RendererDefinition[] = []) {
+function renderSchema(schema: object, extraDefs: RegisteredRendererDefinition[] = []) {
   const SchemaRenderer = createSchemaRenderer([
     ...basicRendererDefinitions,
     ...allFormDefs,
@@ -159,7 +159,7 @@ function ItemRenderCountProbe() {
   return <span data-testid={`render-probe-${id}`}>{id}</span>;
 }
 
-const itemRenderCountProbeRenderer: RendererDefinition = {
+const itemRenderCountProbeRenderer: RegisteredRendererDefinition = {
   type: 'item-render-probe',
   component: ItemRenderCountProbe,
 };
@@ -230,7 +230,7 @@ function SetFlagButton(props: RendererComponentProps) {
   );
 }
 
-const setFlagButtonRenderer: RendererDefinition = {
+const setFlagButtonRenderer: RegisteredRendererDefinition = {
   type: 'set-flag-button',
   component: SetFlagButton,
 };

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { RendererDefinition } from '@nop-chaos/flux-core';
+import type { RegisteredRendererDefinition } from '@nop-chaos/flux-core';
 import {
   compileNode,
   createCompiler,
@@ -10,7 +10,7 @@ import {
 } from './schema-compiler-prop-coverage.test-support.js';
 
 describe('schema property coverage - dialog', () => {
-  const textRenderer: RendererDefinition = {
+  const textRenderer: RegisteredRendererDefinition = {
     type: 'text',
     component: noop,
     fields: [{ key: 'text', kind: 'prop' }],
@@ -65,7 +65,7 @@ describe('schema property coverage - dialog', () => {
 });
 
 describe('schema property coverage - drawer', () => {
-  const textRenderer: RendererDefinition = {
+  const textRenderer: RegisteredRendererDefinition = {
     type: 'text',
     component: noop,
     fields: [{ key: 'text', kind: 'prop' }],

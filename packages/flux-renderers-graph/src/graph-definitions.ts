@@ -1,4 +1,4 @@
-import type { RendererDefinition } from '@nop-chaos/flux-core';
+import type { RegisteredRendererDefinition } from '@nop-chaos/flux-core';
 import { createLazyRendererComponent } from '@nop-chaos/flux-react';
 import type { GraphSchema } from './schemas.js';
 
@@ -7,7 +7,7 @@ const LazyGraphRenderer = createLazyRendererComponent<GraphSchema>(
   () => import('./graph-renderer.js').then((m) => m.GraphRenderer),
 );
 
-export const graphRendererDefinitions: RendererDefinition[] = [
+export const graphRendererDefinitions: RegisteredRendererDefinition[] = [
   {
     type: 'graph',
     displayName: 'Graph',

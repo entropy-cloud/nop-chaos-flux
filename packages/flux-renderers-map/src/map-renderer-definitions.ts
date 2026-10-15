@@ -1,4 +1,4 @@
-import type { RendererDefinition, RendererSchemaValidationContext } from '@nop-chaos/flux-core';
+import type { RegisteredRendererDefinition, RendererSchemaValidationContext } from '@nop-chaos/flux-core';
 import type { BaseSchema } from '@nop-chaos/flux-core';
 import { createLazyRendererComponent } from '@nop-chaos/flux-react';
 import type { MapSchema } from './schemas.js';
@@ -67,7 +67,7 @@ export function validateMapSchema(context: RendererSchemaValidationContext<BaseS
   }
 }
 
-export const mapRendererDefinitions: RendererDefinition[] = [
+export const mapRendererDefinitions: RegisteredRendererDefinition[] = [
   {
     type: 'map',
     displayName: 'Map',

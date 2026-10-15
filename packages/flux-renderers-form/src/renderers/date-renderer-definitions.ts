@@ -1,4 +1,4 @@
-import type { RendererDefinition, SchemaFieldRule } from '@nop-chaos/flux-core';
+import type { RegisteredRendererDefinition, SchemaFieldRule } from '@nop-chaos/flux-core';
 import { InputDateRenderer } from './input-date-renderer.js';
 import { InputDatetimeRenderer } from './input-datetime-renderer.js';
 import { InputTimeRenderer } from './input-time-renderer.js';
@@ -42,7 +42,7 @@ const FOCUS_CAPABILITY_CONTRACTS = [
   },
 ] as const;
 
-export const dateRendererDefinitions: RendererDefinition[] = [
+export const dateRendererDefinitions: RegisteredRendererDefinition[] = [
   {
     type: 'input-date',
     displayName: 'Input Date',

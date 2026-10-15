@@ -1,6 +1,6 @@
 import '../../test-support';
 import React from 'react';
-import type { ApiRequestContext, RendererDefinition, RendererEnv } from '@nop-chaos/flux-core';
+import type { ApiRequestContext, RegisteredRendererDefinition, RendererEnv } from '@nop-chaos/flux-core';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { useCurrentForm, useRenderScope, useScopeSelector } from '@nop-chaos/flux-react';
 import { formRendererDefinitions } from '@nop-chaos/flux-renderers-form';
@@ -34,7 +34,7 @@ function FieldValueProbeRenderer(props: { name: string; 'data-testid': string })
   return <span data-testid={props['data-testid']}>{JSON.stringify(value)}</span>;
 }
 
-export const fieldValueProbeRenderer: RendererDefinition = {
+export const fieldValueProbeRenderer: RegisteredRendererDefinition = {
   type: 'field-value-probe',
   component: (p) => (
     <FieldValueProbeRenderer
@@ -55,7 +55,7 @@ function ScopeSelectorProbeRenderer() {
   return <span data-testid="scope-selector-probe">{JSON.stringify(snapshot)}</span>;
 }
 
-export const scopeSelectorProbeRenderer: RendererDefinition = {
+export const scopeSelectorProbeRenderer: RegisteredRendererDefinition = {
   type: 'scope-selector-probe',
   component: () => <ScopeSelectorProbeRenderer />,
 };
@@ -108,12 +108,12 @@ function ObjectScopeMutationRenderer() {
   );
 }
 
-export const objectScopeMutationRenderer: RendererDefinition = {
+export const objectScopeMutationRenderer: RegisteredRendererDefinition = {
   type: 'object-scope-mutation-probe',
   component: () => <ObjectScopeMutationRenderer />,
 };
 
-export const submitButtonRenderer: RendererDefinition = {
+export const submitButtonRenderer: RegisteredRendererDefinition = {
   type: 'button',
   component: (props) => (
     <button type="button" onClick={() => void props.events.onClick?.()}>

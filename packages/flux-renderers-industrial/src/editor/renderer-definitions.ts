@@ -1,4 +1,4 @@
-import type { RendererDefinition } from '@nop-chaos/flux-core';
+import type { RegisteredRendererDefinition } from '@nop-chaos/flux-core';
 import { ScadaEditorCanvasRenderer } from './scada-editor-canvas.js';
 import { scadaEditorHostContract } from './scada-editor-manifest.js';
 
@@ -14,7 +14,7 @@ import { scadaEditorHostContract } from './scada-editor-manifest.js';
  * **不并入** runtime `registerScadaRenderers`（`src/index.ts`），保证 runtime bundle 不拉入
  * `@leafer-in/editor`（design-architecture.md §4.4.1 模块图隔离证明）。
  */
-export const industrialEditorRendererDefinitions: RendererDefinition[] = [
+export const industrialEditorRendererDefinitions: RegisteredRendererDefinition[] = [
   {
     type: 'scada-editor-canvas',
     displayName: 'Scada Editor Canvas',

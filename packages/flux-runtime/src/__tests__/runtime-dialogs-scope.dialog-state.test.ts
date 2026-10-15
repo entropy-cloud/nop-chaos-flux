@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createRendererRegistry, type RendererDefinition } from '@nop-chaos/flux-core';
+import { createRendererRegistry, type RegisteredRendererDefinition } from '@nop-chaos/flux-core';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createRendererRuntime } from '../index.js';
 import { textRenderer, pageRenderer, env } from './test-fixtures.js';
@@ -107,7 +107,7 @@ describe('createRendererRuntime - dialog state', () => {
   });
 
   it('activates action-opened surface validation owners when the opened body compiles a validation plan', async () => {
-    const fieldProbeRenderer: RendererDefinition = {
+    const fieldProbeRenderer: RegisteredRendererDefinition = {
       type: 'field-probe',
       component: () => null,
       validation: {
@@ -226,7 +226,7 @@ describe('createRendererRuntime - dialog state', () => {
   });
 
   it('stores ownerNodeInstance in dialog state when opened from a trigger node', async () => {
-    const buttonRenderer: RendererDefinition = {
+    const buttonRenderer: RegisteredRendererDefinition = {
       type: 'button',
       component: () => null,
     };

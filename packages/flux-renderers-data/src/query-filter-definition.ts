@@ -1,4 +1,4 @@
-import type { ActionSchema, RendererDefinition, RendererAuthoringTransformContext, BaseSchema } from '@nop-chaos/flux-core';
+import type { ActionSchema, RegisteredRendererDefinition, RendererAuthoringTransformContext, BaseSchema } from '@nop-chaos/flux-core';
 import { t } from '@nop-chaos/flux-i18n';
 import { QueryFilterRenderer } from './query-filter.js';
 import type { QueryFilterSchema } from './schemas.js';
@@ -71,7 +71,7 @@ export function transformQueryFilterAuthoringSchema(
   return { ...schema, filterForm: form };
 }
 
-export const queryFilterRendererDefinition: RendererDefinition = {
+export const queryFilterRendererDefinition: RegisteredRendererDefinition = {
   type: 'query-filter',
   displayName: 'Query Filter',
   category: 'data',

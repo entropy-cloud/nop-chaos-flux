@@ -1,7 +1,7 @@
 import React from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
-import type { RendererDefinition } from '@nop-chaos/flux-core';
+import type { RegisteredRendererDefinition } from '@nop-chaos/flux-core';
 import { createSchemaRenderer } from '../schema-renderer.js';
 import { useCurrentForm } from '../hooks.js';
 import { env, formRenderer, pageRenderer, sharedFormulaCompiler } from '../test-support-probes.js';
@@ -26,7 +26,7 @@ describe('Form owner boundary cleanup', () => {
       component: FormAwareProbe,
     };
 
-    const toggleFormRenderer: RendererDefinition = {
+    const toggleFormRenderer: RegisteredRendererDefinition = {
       type: 'toggle-form-host',
       component: function ToggleFormHost(props: any) {
         const [showForm, setShowForm] = React.useState(true);

@@ -1,6 +1,7 @@
 import React from 'react';
 import type {
   BaseSchema,
+  RegisteredRendererDefinition,
   RendererComponentProps,
   RendererResolvedProps,
 } from '@nop-chaos/flux-core';
@@ -44,7 +45,7 @@ export function createAutoRendererComponent<
  */
 const ensuredDefinitions = new WeakMap<
   object,
-  RendererDefinition<BaseSchema, Record<string, unknown>>
+  RegisteredRendererDefinition<BaseSchema, Record<string, unknown>>
 >();
 
 const REACT_PROVIDER_TYPE = Symbol.for('react.provider');
@@ -111,15 +112,15 @@ function invokeRendererComponent(
 
 export function ensureRendererComponent<S extends BaseSchema, P extends Record<string, unknown>>(
   definition: RendererDefinition<S, P>,
-): RendererDefinition<S, P> {
+): RegisteredRendererDefinition<S, P> {
   if (definition.component && definition.wrap) {
     // 字段族：FieldFrame 帧根拥有锚点，组件输出根不补章（防双层标记）。
-    return definition;
+    return definition as RegisteredRendererDefinition<S, P>;
   }
 
   // 记忆化：同一 definition 重复 ensure（如测试注册表合并同一数组两次）必须
   // 返回同一包装对象，保持注册表 `existing !== definition` 的身份豁免语义。
-  const cached = ensuredDefinitions.get(definition) as RendererDefinition<S, P> | undefined;
+  const cached = ensuredDefinitions.get(definition) as RegisteredRendererDefinition<S, P> | undefined;
   if (cached) return cached;
 
   const rendererType: string = definition.type;
@@ -130,7 +131,7 @@ export function ensureRendererComponent<S extends BaseSchema, P extends Record<s
         { rendererType },
       );
 
-  const ensured: RendererDefinition<S, P> = {
+  const ensured: RegisteredRendererDefinition<S, P> = {
     ...definition,
     component: (props: RendererComponentProps<S, P>) =>
       stampRenderedRoot(
@@ -143,7 +144,7 @@ export function ensureRendererComponent<S extends BaseSchema, P extends Record<s
   };
   ensuredDefinitions.set(
     definition,
-    ensured as unknown as RendererDefinition<BaseSchema, Record<string, unknown>>,
+    ensured as unknown as RegisteredRendererDefinition<BaseSchema, Record<string, unknown>>,
   );
   return ensured;
 }

@@ -1,14 +1,14 @@
 import { describe, expect, it } from 'vitest';
-import type { RendererDefinition } from '@nop-chaos/flux-core';
+import type { RegisteredRendererDefinition } from '@nop-chaos/flux-core';
 import { createRendererRegistry } from '@nop-chaos/flux-core';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { validateSchema } from './schema-compiler.js';
 
-const arrayEditorRenderer: RendererDefinition = {
+const arrayEditorRenderer: RegisteredRendererDefinition = {
   type: 'array-editor',
   component: (() => null) as any,
 };
-const inputNumberRenderer: RendererDefinition = {
+const inputNumberRenderer: RegisteredRendererDefinition = {
   type: 'input-number',
   component: (() => null) as any,
   fields: [
@@ -16,7 +16,7 @@ const inputNumberRenderer: RendererDefinition = {
     { key: 'onChange', kind: 'event' },
   ],
 };
-const pageRenderer: RendererDefinition = {
+const pageRenderer: RegisteredRendererDefinition = {
   type: 'page',
   component: (() => null) as any,
   fields: [{ key: 'body', kind: 'region', regionKey: 'body' }],

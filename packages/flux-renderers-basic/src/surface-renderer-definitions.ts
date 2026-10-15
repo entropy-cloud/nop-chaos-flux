@@ -1,5 +1,5 @@
 import type {
-  RendererDefinition,
+  RegisteredRendererDefinition,
 } from '@nop-chaos/flux-core';
 import { CommandPaletteRenderer } from './command-palette.js';
 import { DialogRenderer } from './dialog.js';
@@ -147,7 +147,7 @@ const surfaceHandleCapabilityContracts = [
   },
 ] as const;
 
-export const dialogRendererDefinition: RendererDefinition = {
+export const dialogRendererDefinition: RegisteredRendererDefinition = {
   type: 'dialog',
   displayName: 'Dialog',
   category: 'layout',
@@ -197,7 +197,7 @@ export const dialogRendererDefinition: RendererDefinition = {
   ]),
 };
 
-export const drawerRendererDefinition: RendererDefinition = {
+export const drawerRendererDefinition: RegisteredRendererDefinition = {
   type: 'drawer',
   displayName: 'Drawer',
   category: 'layout',
@@ -269,7 +269,7 @@ const commandPaletteEventContracts = {
   },
 };
 
-export const commandPaletteRendererDefinition: RendererDefinition = {
+export const commandPaletteRendererDefinition: RegisteredRendererDefinition = {
   type: 'command-palette',
   displayName: 'Command Palette',
   category: 'layout',

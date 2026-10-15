@@ -1,7 +1,7 @@
 import React from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
-import type { RendererComponentProps, RendererDefinition } from '@nop-chaos/flux-core';
+import type { RendererComponentProps, RegisteredRendererDefinition } from '@nop-chaos/flux-core';
 import { createSchemaRenderer } from '@nop-chaos/flux-react';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { basicRendererDefinitions } from '@nop-chaos/flux-renderers-basic';
@@ -39,7 +39,7 @@ function StopPropLinkRenderer(_props: RendererComponentProps) {
   );
 }
 
-const stopPropLinkRenderer: RendererDefinition = {
+const stopPropLinkRenderer: RegisteredRendererDefinition = {
   type: 'stop-prop-link',
   component: StopPropLinkRenderer,
 };

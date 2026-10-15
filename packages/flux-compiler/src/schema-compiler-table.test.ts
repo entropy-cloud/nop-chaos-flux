@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   createRendererRegistry,
-  type RendererDefinition,
+  type RegisteredRendererDefinition, RendererDefinition,
 } from '@nop-chaos/flux-core';
 import { createSchemaCompiler } from './index.js';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
@@ -36,7 +36,7 @@ const tableColumnsContract: NonNullable<RendererDefinition['propContracts']>['co
   displayName: 'Columns',
 };
 
-function makeTableRenderer(extra: Partial<RendererDefinition> = {}): RendererDefinition {
+function makeTableRenderer(extra: Partial<RendererDefinition> = {}): RegisteredRendererDefinition {
   return {
     type: 'table',
     component: () => null,
@@ -48,7 +48,7 @@ function makeTableRenderer(extra: Partial<RendererDefinition> = {}): RendererDef
 describe('createSchemaCompiler', () => {
   it('extracts table column label fragments into compiled regions', () => {
     const tableRenderer = makeTableRenderer();
-    const textRenderer: RendererDefinition = {
+    const textRenderer: RegisteredRendererDefinition = {
       type: 'text',
       component: () => null,
     };
@@ -76,7 +76,7 @@ describe('createSchemaCompiler', () => {
 
   it('extracts table column cell fragments into compiled regions', () => {
     const tableRenderer = makeTableRenderer();
-    const textRenderer: RendererDefinition = {
+    const textRenderer: RegisteredRendererDefinition = {
       type: 'text',
       component: () => null,
     };
@@ -105,7 +105,7 @@ describe('createSchemaCompiler', () => {
 
   it('extracts table column body fragments into quick edit compiled regions', () => {
     const tableRenderer = makeTableRenderer();
-    const textRenderer: RendererDefinition = {
+    const textRenderer: RegisteredRendererDefinition = {
       type: 'text',
       component: () => null,
     };
@@ -138,7 +138,7 @@ describe('createSchemaCompiler', () => {
     const tableRenderer = makeTableRenderer({
       fields: [{ key: 'empty', kind: 'value-or-region', regionKey: 'empty' }],
     });
-    const textRenderer: RendererDefinition = {
+    const textRenderer: RegisteredRendererDefinition = {
       type: 'text',
       component: () => null,
     };
@@ -167,7 +167,7 @@ describe('createSchemaCompiler', () => {
 
   it('does not warn when table cells use bare field names (expanded from record)', () => {
     const tableRenderer = makeTableRenderer();
-    const textRenderer: RendererDefinition = {
+    const textRenderer: RegisteredRendererDefinition = {
       type: 'text',
       component: () => null,
     };
@@ -196,7 +196,7 @@ describe('createSchemaCompiler', () => {
 
   it('accepts $slot.record in table parameterized slots without slot diagnostics', () => {
     const tableRenderer = makeTableRenderer();
-    const textRenderer: RendererDefinition = {
+    const textRenderer: RegisteredRendererDefinition = {
       type: 'text',
       component: () => null,
     };

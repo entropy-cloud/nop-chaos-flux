@@ -1,7 +1,7 @@
 import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
-import { createRendererRegistry, type RendererDefinition } from '@nop-chaos/flux-core';
+import { createRendererRegistry, type RegisteredRendererDefinition } from '@nop-chaos/flux-core';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createRendererRuntime } from '@nop-chaos/flux-runtime';
 import { Button } from '@nop-chaos/ui';
@@ -10,7 +10,7 @@ import { useCurrentActionScope, useCurrentComponentRegistry } from '../hooks.js'
 import { createSchemaRenderer } from '../schema-renderer.js';
 import { env, pageRenderer, textRenderer } from '../test-support-core.js';
 
-const inputTextRenderer: RendererDefinition = {
+const inputTextRenderer: RegisteredRendererDefinition = {
   type: 'input-text',
   component: (props: any) => (
     <label className="nop-field" data-cid={props.meta.cid != null ? String(props.meta.cid) : undefined}>
@@ -20,7 +20,7 @@ const inputTextRenderer: RendererDefinition = {
   ),
 };
 
-const formRenderer: RendererDefinition = {
+const formRenderer: RegisteredRendererDefinition = {
   type: 'form',
   component: (props: any) => <form>{props.regions.body?.render?.()}</form>,
   fields: [{ key: 'body', kind: 'region', regionKey: 'body' }],
@@ -30,7 +30,7 @@ const formRenderer: RendererDefinition = {
   },
 };
 
-const openDialogButtonRenderer: RendererDefinition = {
+const openDialogButtonRenderer: RegisteredRendererDefinition = {
   type: 'open-dialog-button',
   component: (props: any) => (
     <Button onClick={(event) => props.events.onClick?.(event)}>

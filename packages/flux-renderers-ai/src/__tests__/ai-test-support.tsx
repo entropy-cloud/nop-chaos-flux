@@ -5,7 +5,7 @@
  * from a production import path. Do not import from src proper.
  */
 import React, { useEffect } from 'react';
-import type { RendererDefinition, RendererEnv } from '@nop-chaos/flux-core';
+import type { RegisteredRendererDefinition, RendererEnv } from '@nop-chaos/flux-core';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createSchemaRenderer, useCurrentActionScope, useScopeSelector } from '@nop-chaos/flux-react';
 import { initFluxI18n, resetFluxI18n } from '@nop-chaos/flux-i18n';
@@ -16,18 +16,18 @@ import { aiRendererDefinitions } from '../ai-renderer-definitions.js';
 resetFluxI18n();
 initFluxI18n({ lng: 'en-US', fallbackLng: 'en-US' });
 
-const pageRenderer: RendererDefinition = {
+const pageRenderer: RegisteredRendererDefinition = {
   type: 'page',
   component: (props) => <section>{props.regions.body?.render() as React.ReactNode}</section>,
   fields: [{ key: 'body', kind: 'region', regionKey: 'body' }],
 };
 
-const textRenderer: RendererDefinition = {
+const textRenderer: RegisteredRendererDefinition = {
   type: 'text',
   component: (props) => <span>{String(props.props.text ?? '')}</span>,
 };
 
-const buttonRenderer: RendererDefinition = {
+const buttonRenderer: RegisteredRendererDefinition = {
   type: 'test-button',
   component: (props) => (
     <button type="button" data-testid={props.meta.testid ?? 'test-button'} onClick={() => void props.events.onClick?.()}>
@@ -68,12 +68,12 @@ const capturedScopeHolder: { current: import('@nop-chaos/flux-core').ActionScope
 // Package-private (knip: the probe renderer is consumed only by
 // createAiSchemaRenderer below; the holder accessors had zero consumers and
 // were removed with the WA-ai-006 relocation).
-const aiScopeProbeRenderer: RendererDefinition = {
+const aiScopeProbeRenderer: RegisteredRendererDefinition = {
   type: 'ai-scope-probe',
   component: AiScopeProbe,
 };
 
-export function createAiSchemaRenderer(extra: RendererDefinition[] = []) {
+export function createAiSchemaRenderer(extra: RegisteredRendererDefinition[] = []) {
   return createSchemaRenderer([
     pageRenderer,
     textRenderer,

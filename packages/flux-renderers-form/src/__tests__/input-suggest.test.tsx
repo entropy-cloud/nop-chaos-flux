@@ -7,7 +7,7 @@ import type {
   BaseSchema,
   CompiledDataSource,
   RendererComponentProps,
-  RendererDefinition,
+  RegisteredRendererDefinition,
   RendererEnv,
 } from '@nop-chaos/flux-core';
 import { changeLanguage, initFluxI18n, resetFluxI18n } from '@nop-chaos/flux-i18n';
@@ -54,7 +54,7 @@ function StubDataSourceRenderer(props: RendererComponentProps) {
   return null;
 }
 
-const stubDataSourceDefinition: RendererDefinition = {
+const stubDataSourceDefinition: RegisteredRendererDefinition = {
   type: 'data-source',
   sourcePackage: '@nop-chaos/flux-renderers-form',
   component: StubDataSourceRenderer,

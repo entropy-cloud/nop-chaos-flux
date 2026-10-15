@@ -1,8 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type {
-  RendererDefinition,
-  TemplateNode,
-} from '@nop-chaos/flux-core';
+import type { RegisteredRendererDefinition, TemplateNode } from '@nop-chaos/flux-core';
 import { createRendererRegistry } from '@nop-chaos/flux-core';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
 import {
@@ -12,27 +9,27 @@ import {
   appendJsonPointer,
 } from './index.js';
 
-function makeCompiler(renderers: RendererDefinition[] = []) {
+function makeCompiler(renderers: RegisteredRendererDefinition[] = []) {
   return createSchemaCompiler({
     registry: createRendererRegistry(renderers),
     expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
   });
 }
 
-const textRenderer: RendererDefinition = {
+const textRenderer: RegisteredRendererDefinition = {
   type: 'text',
   component: () => null,
-  propSchema: { text: { type: 'string' } },
+  propContracts: { text: { shape: { kind: 'unknown' }, displayName: 'text' } },
   fields: [{ key: 'text', kind: 'prop' }],
 };
 
-const containerRenderer: RendererDefinition = {
+const containerRenderer: RegisteredRendererDefinition = {
   type: 'container',
   component: () => null,
   fields: [{ key: 'body', kind: 'region', regionKey: 'body' }],
 };
 
-const buttonRenderer: RendererDefinition = {
+const buttonRenderer: RegisteredRendererDefinition = {
   type: 'button',
   component: () => null,
   fields: [
@@ -41,7 +38,7 @@ const buttonRenderer: RendererDefinition = {
   ],
 };
 
-const multiRegionRenderer: RendererDefinition = {
+const multiRegionRenderer: RegisteredRendererDefinition = {
   type: 'multi-region',
   component: () => null,
   fields: [
@@ -136,7 +133,7 @@ describe('contract exploration: edge schemas', () => {
   });
 
   it('H41: schema with data-source missing both formula and action is flagged', () => {
-    const dsRenderer: RendererDefinition = {
+    const dsRenderer: RegisteredRendererDefinition = {
       type: 'data-source',
       component: () => null,
       fields: [],
@@ -166,7 +163,7 @@ describe('contract exploration: edge schemas', () => {
   });
 
   it('H42: schema with data-source having both formula and action is flagged', () => {
-    const dsRenderer: RendererDefinition = {
+    const dsRenderer: RegisteredRendererDefinition = {
       type: 'data-source',
       component: () => null,
       fields: [],
@@ -198,7 +195,7 @@ describe('contract exploration: edge schemas', () => {
   });
 
   it('H43: schema with reaction validates actions shape', () => {
-    const reactionRenderer: RendererDefinition = {
+    const reactionRenderer: RegisteredRendererDefinition = {
       type: 'reaction',
       component: () => null,
       fields: [],

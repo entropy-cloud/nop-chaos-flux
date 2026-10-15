@@ -1,9 +1,9 @@
-import type { RendererDefinition } from '@nop-chaos/flux-core';
+import type { RegisteredRendererDefinition, RendererDefinition } from '@nop-chaos/flux-core';
 import { createRendererRegistry } from '@nop-chaos/flux-core';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createSchemaCompiler } from './index.js';
 
-export function createCompiler(...definitions: RendererDefinition[]) {
+export function createCompiler(...definitions: RegisteredRendererDefinition[]) {
   return createSchemaCompiler({
     registry: createRendererRegistry(definitions),
     expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
@@ -20,7 +20,7 @@ export function compileNode(
   return Array.isArray(compiled.root) ? compiled.root[0] : compiled.root;
 }
 
-export const dialogRenderer: RendererDefinition = {
+export const dialogRenderer: RegisteredRendererDefinition = {
   type: 'dialog',
   component: noop,
   fields: [
@@ -34,7 +34,7 @@ export const dialogRenderer: RendererDefinition = {
   ],
 };
 
-export const drawerRenderer: RendererDefinition = {
+export const drawerRenderer: RegisteredRendererDefinition = {
   type: 'drawer',
   component: noop,
   fields: [
@@ -66,7 +66,7 @@ export const buttonRenderer: RendererDefinition = {
   fields: [{ key: 'onClick', kind: 'event' }],
 };
 
-export const loopRenderer: RendererDefinition = {
+export const loopRenderer: RegisteredRendererDefinition = {
   type: 'loop',
   component: noop,
   defaultSchema: { type: 'loop', body: [] },
@@ -82,7 +82,7 @@ export const loopRenderer: RendererDefinition = {
   ],
 };
 
-export const recurseRenderer: RendererDefinition = {
+export const recurseRenderer: RegisteredRendererDefinition = {
   type: 'recurse',
   component: noop,
   fields: [
@@ -96,7 +96,7 @@ export const recurseRenderer: RendererDefinition = {
   ],
 };
 
-export const tabsRenderer: RendererDefinition = {
+export const tabsRenderer: RegisteredRendererDefinition = {
   type: 'tabs',
   component: noop,
   propContracts: {
@@ -138,7 +138,7 @@ export const tabsRenderer: RendererDefinition = {
   ],
 };
 
-export const formRenderer: RendererDefinition = {
+export const formRenderer: RegisteredRendererDefinition = {
   type: 'form',
   component: noop,
   defaultSchema: { type: 'form', body: [], actions: [] },
@@ -185,7 +185,7 @@ export const formRenderer: RendererDefinition = {
   },
 };
 
-export const tableRenderer: RendererDefinition = {
+export const tableRenderer: RegisteredRendererDefinition = {
   type: 'table',
   component: noop,
   propContracts: {
@@ -231,7 +231,7 @@ export const tableRenderer: RendererDefinition = {
   ],
 };
 
-export const treeRenderer: RendererDefinition = {
+export const treeRenderer: RegisteredRendererDefinition = {
   type: 'tree',
   component: noop,
   fields: [
@@ -252,7 +252,7 @@ export const treeRenderer: RendererDefinition = {
   ],
 };
 
-export const chartRenderer: RendererDefinition = {
+export const chartRenderer: RegisteredRendererDefinition = {
   type: 'chart',
   component: noop,
   fields: [
@@ -263,7 +263,7 @@ export const chartRenderer: RendererDefinition = {
   ],
 };
 
-export const crudRenderer: RendererDefinition = {
+export const crudRenderer: RegisteredRendererDefinition = {
   type: 'crud',
   component: noop,
   propContracts: {
@@ -333,7 +333,7 @@ export const crudRenderer: RendererDefinition = {
   ],
 };
 
-export const variantFieldRenderer: RendererDefinition = {
+export const variantFieldRenderer: RegisteredRendererDefinition = {
   type: 'variant-field',
   component: noop,
   fields: [
@@ -349,7 +349,7 @@ export const variantFieldRenderer: RendererDefinition = {
   ],
 };
 
-export const detailFieldRenderer: RendererDefinition = {
+export const detailFieldRenderer: RegisteredRendererDefinition = {
   type: 'detail-field',
   component: noop,
   wrap: true,

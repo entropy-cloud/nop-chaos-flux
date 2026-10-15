@@ -1,6 +1,6 @@
 import type {
   BaseSchema,
-  RendererDefinition,
+  RegisteredRendererDefinition,
   RendererSchemaValidationContext,
 } from '@nop-chaos/flux-core';
 import { toJsonPointer } from '@nop-chaos/flux-core';
@@ -55,7 +55,7 @@ export function validateBatchBarSchema(context: RendererSchemaValidationContext<
   }
 }
 
-export const batchBarRendererDefinition: RendererDefinition = {
+export const batchBarRendererDefinition: RegisteredRendererDefinition = {
   type: 'batch-bar',
   displayName: 'Batch Bar',
   category: 'data',

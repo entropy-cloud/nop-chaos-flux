@@ -1,7 +1,7 @@
 import React from 'react';
 import { cleanup, render, waitFor, act, fireEvent } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { RendererComponentProps, RendererDefinition, RendererHelpers } from '@nop-chaos/flux-core';
+import type { RendererComponentProps, RegisteredRendererDefinition, RendererHelpers } from '@nop-chaos/flux-core';
 import { createSchemaRenderer, createDefaultEnv } from '@nop-chaos/flux-react';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { resetLeaferMock } from '../test-support/leafer-ui-mock.js';
@@ -218,7 +218,7 @@ describe('scada-editor-canvas events dispatch', () => {
   // plan 2026-08-07-1835-2 Phase 5 / multi P1-12：先前 onReady 测试零 dispatch 断言（false-green——
   // onReadyAction = vi.fn() 是 dead code，仅查 data-status）。现用 dispatch-spy 包裹渲染器，
   // 断言 helpers.dispatch 经 scada-editor:ready 事件真实调用（移除 dispatch 实现会让此 test 红）。
-  function createDispatchSpiedDefinitions(dispatchSpy: ReturnType<typeof vi.fn>): RendererDefinition[] {
+  function createDispatchSpiedDefinitions(dispatchSpy: ReturnType<typeof vi.fn>): RegisteredRendererDefinition[] {
     function SpiedEditor(props: RendererComponentProps<ScadaEditorCanvasSchema>) {
       const helpers = ({ ...(props.helpers as object), dispatch: dispatchSpy }) as unknown as RendererHelpers;
       return <ScadaEditorCanvasRenderer {...props} helpers={helpers} />;

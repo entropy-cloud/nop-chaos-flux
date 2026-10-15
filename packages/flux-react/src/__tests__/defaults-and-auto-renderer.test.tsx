@@ -4,6 +4,7 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import type {
   BaseSchema,
   ExecutableApiRequest,
+  RegisteredRendererDefinition,
   RendererComponentProps,
   RendererRegistry,
 } from '@nop-chaos/flux-core';
@@ -93,7 +94,7 @@ describe('defaults and auto renderer', () => {
     expect(fieldFamily.component).toBe(component);
 
     // 非字段族：包装且同一 definition 重复 ensure 返回同一包装（注册表身份语义）。
-    const plain = { type: 'b', component } as unknown as RendererDefinition;
+    const plain = { type: 'b', component } as unknown as RegisteredRendererDefinition;
     const wrappedOnce = ensureRendererComponent(plain);
     expect(typeof wrappedOnce.component).toBe('function');
     expect(ensureRendererComponent(plain)).toBe(wrappedOnce);
@@ -113,7 +114,7 @@ describe('defaults and auto renderer', () => {
       registry.register({
         type: 'plain-react',
         reactComponent: () => null,
-      } as RendererDefinition),
+      } as unknown as RegisteredRendererDefinition),
     ).toThrow(/must specify "component"/i);
 
     expect(() =>

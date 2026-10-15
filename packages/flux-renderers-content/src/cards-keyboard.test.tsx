@@ -1,7 +1,7 @@
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
-import type { RendererComponentProps, RendererDefinition, RendererEnv } from '@nop-chaos/flux-core';
+import type { RendererComponentProps, RegisteredRendererDefinition, RendererEnv } from '@nop-chaos/flux-core';
 import React from 'react';
 import { createSchemaRenderer, useCurrentActionScope } from '@nop-chaos/flux-react';
 import { contentRendererDefinitions } from './content-renderer-definitions.js';
@@ -23,13 +23,13 @@ const env: RendererEnv = {
   notify: () => undefined,
 };
 
-const pageRenderer: RendererDefinition = {
+const pageRenderer: RegisteredRendererDefinition = {
   type: 'page',
   component: (props) => <section>{props.regions.body?.render() as React.ReactNode}</section>,
   fields: [{ key: 'body', kind: 'region', regionKey: 'body' }],
 };
 
-const textRenderer: RendererDefinition = {
+const textRenderer: RegisteredRendererDefinition = {
   type: 'text',
   component: (props) => <span>{String(props.props.text ?? '')}</span>,
 };
@@ -57,7 +57,7 @@ function CaptureCounter(props: RendererComponentProps) {
   );
 }
 
-const captureCounterRenderer: RendererDefinition = {
+const captureCounterRenderer: RegisteredRendererDefinition = {
   type: 'capture-counter',
   component: CaptureCounter,
 };

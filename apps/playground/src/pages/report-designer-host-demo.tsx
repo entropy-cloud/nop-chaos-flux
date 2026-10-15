@@ -9,7 +9,7 @@ import {
 } from '@nop-chaos/report-designer-core';
 import { defineReportDesignerPageSchema } from '@nop-chaos/report-designer-renderers';
 import { useScopeSelector } from '@nop-chaos/flux-react';
-import type { RendererDefinition } from '@nop-chaos/flux-core';
+import type { RegisteredRendererDefinition } from '@nop-chaos/flux-core';
 import { Button, cn } from '@nop-chaos/ui';
 import { createDesignerRegistry, REPORT_DESIGNER_DEMO_RECIPE } from '../designer-hosts/registry-factory.js';
 import { fieldSources } from './report-designer-demo-shared.js';
@@ -45,7 +45,7 @@ function HostDirtyProbe() {
   );
 }
 
-const hostDirtyProbeRenderer: RendererDefinition = {
+const hostDirtyProbeRenderer: RegisteredRendererDefinition = {
   type: 'host-dirty-probe',
   component: HostDirtyProbe,
 };

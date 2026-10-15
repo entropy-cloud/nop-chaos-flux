@@ -1,4 +1,4 @@
-import type { RendererDefinition } from '@nop-chaos/flux-core';
+import type { RegisteredRendererDefinition } from '@nop-chaos/flux-core';
 import { GridRenderer } from './grid-renderer.js';
 import { CollapseRenderer } from './collapse-renderer.js';
 import { ButtonGroupRenderer } from './button-group-renderer.js';
@@ -8,7 +8,7 @@ import { ResponsiveRenderer } from './responsive-renderer.js';
 import { stepsRendererDefinition, timelineRendererDefinition } from './process-display-definitions.js';
 import { resizableRendererDefinition } from './resizable-renderer-definition.js';
 
-export const layoutRendererDefinitions: RendererDefinition[] = [
+export const layoutRendererDefinitions: RegisteredRendererDefinition[] = [
   {
     type: 'wizard',
     displayName: 'Wizard',

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { RendererDefinition, SchemaInput } from '@nop-chaos/flux-core';
+import type { RegisteredRendererDefinition, SchemaInput } from '@nop-chaos/flux-core';
 import {
   createRendererRegistry,
   createSchemaDiagnosticCollector,
@@ -112,7 +112,7 @@ describe('对照: unified pipeline vs legacy manual normalize (语义一致)', (
     });
   }
 
-  function legacyDefinition(): RendererDefinition {
+  function legacyDefinition(): RegisteredRendererDefinition {
     return {
       type: 'legacy-fixture',
       displayName: 'Legacy Fixture',
@@ -155,7 +155,7 @@ describe('对照: unified pipeline vs legacy manual normalize (语义一致)', (
     return node;
   }
 
-  function unifiedDefinition(): RendererDefinition {
+  function unifiedDefinition(): RegisteredRendererDefinition {
     return {
       type: 'unified-fixture',
       displayName: 'Unified Fixture',
@@ -211,7 +211,7 @@ describe('对照: unified pipeline vs legacy manual normalize (语义一致)', (
 });
 
 describe('typed item semantics (explicit type → registry definition)', () => {
-  const childCardDefinition: RendererDefinition = {
+  const childCardDefinition: RegisteredRendererDefinition = {
     type: 'child-card',
     displayName: 'Child Card',
     component: () => null,
@@ -222,7 +222,7 @@ describe('typed item semantics (explicit type → registry definition)', () => {
     ],
   };
 
-  const typedContainerDefinition: RendererDefinition = {
+  const typedContainerDefinition: RegisteredRendererDefinition = {
     type: 'typed-container',
     displayName: 'Typed Container',
     component: () => null,
@@ -248,7 +248,7 @@ describe('typed item semantics (explicit type → registry definition)', () => {
 
   function compileTypedFixture(
     authored: Record<string, unknown>,
-    definitions: RendererDefinition[] = [typedContainerDefinition, childCardDefinition],
+    definitions: RegisteredRendererDefinition[] = [typedContainerDefinition, childCardDefinition],
   ): TemplateNode {
     const registry = createRendererRegistry([
       ...definitions,
@@ -339,11 +339,11 @@ describe('typed item semantics (explicit type → registry definition)', () => {
   });
 
   it('validates typed item region fields per the child definition (validation side)', () => {
-    const closedText: RendererDefinition = {
+    const closedText: RegisteredRendererDefinition = {
       type: 'text',
       displayName: 'Text',
       component: () => null,
-      propSchema: { text: { type: 'string' } },
+      propContracts: { text: { shape: { kind: 'unknown' }, displayName: 'text' } },
       fields: [{ key: 'text', kind: 'prop' }],
     };
     const registry = createRendererRegistry([

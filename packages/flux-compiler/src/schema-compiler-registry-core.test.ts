@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { createRendererRegistry, type RendererDefinition } from '@nop-chaos/flux-core';
+import { createRendererRegistry, type RegisteredRendererDefinition } from '@nop-chaos/flux-core';
 import { textRenderer } from './schema-compiler-registry-fixtures.js';
 
 describe('createSchemaCompiler', () => {
@@ -13,7 +13,7 @@ describe('createSchemaCompiler', () => {
     const registry = createRendererRegistry([textRenderer]);
 
     expect(() =>
-      registry.register({ ...textRenderer, component: () => 'override' } as RendererDefinition),
+      registry.register({ ...textRenderer, component: () => 'override' } as RegisteredRendererDefinition),
     ).toThrow('Duplicate renderer definition for type "text"');
   });
 
@@ -22,7 +22,7 @@ describe('createSchemaCompiler', () => {
 
     try {
       const registry = createRendererRegistry([textRenderer]);
-      const override = { ...textRenderer, component: () => 'override' } as RendererDefinition;
+      const override = { ...textRenderer, component: () => 'override' } as RegisteredRendererDefinition;
 
       registry.register(override, { override: true });
 
@@ -36,7 +36,7 @@ describe('createSchemaCompiler', () => {
   });
 
   it('preserves renderer metadata through the registry contract', () => {
-    const metadataRenderer: RendererDefinition = {
+    const metadataRenderer: RegisteredRendererDefinition = {
       type: 'metadata-text',
       component: () => null,
       displayName: 'Metadata Text',
@@ -46,12 +46,6 @@ describe('createSchemaCompiler', () => {
       defaultSchema: {
         type: 'metadata-text',
         text: 'Hello',
-      },
-      propSchema: {
-        type: 'object',
-        properties: {
-          text: { type: 'string' },
-        },
       },
     };
     const registry = createRendererRegistry([metadataRenderer]);
@@ -64,12 +58,6 @@ describe('createSchemaCompiler', () => {
       defaultSchema: {
         type: 'metadata-text',
         text: 'Hello',
-      },
-      propSchema: {
-        type: 'object',
-        properties: {
-          text: { type: 'string' },
-        },
       },
     });
   });

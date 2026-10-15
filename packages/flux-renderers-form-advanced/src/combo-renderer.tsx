@@ -5,7 +5,7 @@ import type {
   FormRuntime,
   InstanceFrame,
   RendererComponentProps,
-  RendererDefinition,
+  RegisteredRendererDefinition,
   ScopeRef,
   ValidationRule,
 } from '@nop-chaos/flux-core';
@@ -361,7 +361,7 @@ export function ComboRenderer(props: RendererComponentProps<ComboSchema>) {
   );
 }
 
-export const comboRendererDefinition: RendererDefinition = {
+export const comboRendererDefinition: RegisteredRendererDefinition = {
   type: 'combo',
   displayName: 'Combo',
   category: 'Form Advanced',

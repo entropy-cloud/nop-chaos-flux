@@ -3,7 +3,7 @@ import {
   isSchemaInput,
   registerRendererDefinitions,
   type FieldCompileContext,
-  type RendererDefinition,
+  type RegisteredRendererDefinition,
   type RendererRegistry,
 } from '@nop-chaos/flux-core';
 import { createLazyRendererComponent } from '@nop-chaos/flux-react';
@@ -223,7 +223,7 @@ function validateDesignerPageSchema(context: import('@nop-chaos/flux-core').Rend
   validateDesignerPageDocumentPrerequisite(context);
 }
 
-export const flowDesignerRendererDefinitions: RendererDefinition[] = [
+export const flowDesignerRendererDefinitions: RegisteredRendererDefinition[] = [
   {
     type: 'designer-page',
     component: LazyDesignerPageRenderer,

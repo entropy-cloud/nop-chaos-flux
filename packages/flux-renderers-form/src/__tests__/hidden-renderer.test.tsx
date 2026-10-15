@@ -5,7 +5,7 @@ import '../test-dom-polyfills';
 import type {
   ApiSchema,
   ApiRequestContext,
-  RendererDefinition,
+  RegisteredRendererDefinition,
   RendererEnv,
   FormRuntime,
   SchemaInput,
@@ -41,7 +41,7 @@ async function renderWithFormProbe(schema: SchemaInput): Promise<FormRuntime> {
     return null;
   }
 
-  const formProbeRenderer: RendererDefinition = {
+  const formProbeRenderer: RegisteredRendererDefinition = {
     type: 'form-probe',
     component: FormProbe,
   };

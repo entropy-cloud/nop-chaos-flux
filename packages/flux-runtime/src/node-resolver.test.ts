@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   createRendererRegistry,
   type NodeInstance,
-  type RendererDefinition,
+  type RegisteredRendererDefinition,
   type RendererEnv,
   type ResolvedNodeMeta,
   type ScopeRef,
@@ -17,7 +17,7 @@ const defaultResolvedMeta: ResolvedNodeMeta = {
   changed: false,
 };
 
-const textRenderer: RendererDefinition = {
+const textRenderer: RegisteredRendererDefinition = {
   type: 'text',
   component: () => null,
 };

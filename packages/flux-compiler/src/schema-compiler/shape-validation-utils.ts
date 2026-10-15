@@ -25,10 +25,7 @@ export function getSchemaNamespace(key: string): string | undefined {
 }
 
 export function hasClosedPropModel(renderer: RendererDefinition): boolean {
-  return (
-    Object.keys(renderer.propSchema ?? {}).length > 0 ||
-    Object.keys(renderer.propContracts ?? {}).length > 0
-  );
+  return Object.keys(renderer.propContracts ?? {}).length > 0;
 }
 
 export function getAcceptedSchemaKeys(renderer: RendererDefinition): Set<string> {
@@ -47,10 +44,6 @@ export function getAcceptedSchemaKeys(renderer: RendererDefinition): Set<string>
   }
 
   for (const key of Object.keys(renderer.defaultSchema ?? {})) {
-    keys.add(key);
-  }
-
-  for (const key of Object.keys(renderer.propSchema ?? {})) {
     keys.add(key);
   }
 

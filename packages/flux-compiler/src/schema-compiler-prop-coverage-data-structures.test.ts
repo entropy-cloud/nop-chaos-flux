@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { RendererDefinition } from '@nop-chaos/flux-core';
+import type { RegisteredRendererDefinition } from '@nop-chaos/flux-core';
 import {
   chartRenderer,
   compileNode,
@@ -244,7 +244,7 @@ describe('schema property coverage - variant-field', () => {
 });
 
 describe('schema property coverage - detail-field', () => {
-  const textRenderer: RendererDefinition = {
+  const textRenderer: RegisteredRendererDefinition = {
     type: 'text',
     component: noop,
     fields: [{ key: 'text', kind: 'prop' }],
@@ -264,7 +264,7 @@ describe('schema property coverage - detail-field', () => {
 });
 
 describe('schema property coverage - detail-view', () => {
-  const detailViewRenderer: RendererDefinition = {
+  const detailViewRenderer: RegisteredRendererDefinition = {
     type: 'detail-view',
     component: noop,
     fields: [
@@ -273,7 +273,7 @@ describe('schema property coverage - detail-view', () => {
       { key: 'content', kind: 'region', regionKey: 'content' },
     ],
   };
-  const textRenderer: RendererDefinition = {
+  const textRenderer: RegisteredRendererDefinition = {
     type: 'text',
     component: noop,
     fields: [{ key: 'text', kind: 'prop' }],

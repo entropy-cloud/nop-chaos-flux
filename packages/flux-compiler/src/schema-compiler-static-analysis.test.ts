@@ -1,46 +1,42 @@
 import { describe, expect, it } from 'vitest';
-import {
-  createRendererRegistry,
-  type RendererDefinition,
-  type TemplateNode,
-} from '@nop-chaos/flux-core';
+import { createRendererRegistry, type RegisteredRendererDefinition, type TemplateNode } from '@nop-chaos/flux-core';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createSchemaCompiler } from './index.js';
 import { buildWrapProvidersClosure, PROVIDER_BUILD_ORDER } from './schema-compiler/static-analysis.js';
 
-const textRenderer: RendererDefinition = {
+const textRenderer: RegisteredRendererDefinition = {
   type: 'text',
   component: () => null,
   staticCapable: true,
 };
 
-const containerRenderer: RendererDefinition = {
+const containerRenderer: RegisteredRendererDefinition = {
   type: 'container',
   component: () => null,
   fields: [{ key: 'body', kind: 'region', regionKey: 'body' }],
   staticCapable: true,
 };
 
-const iconRenderer: RendererDefinition = {
+const iconRenderer: RegisteredRendererDefinition = {
   type: 'icon',
   component: () => null,
   staticCapable: true,
 };
 
-const buttonRenderer: RendererDefinition = {
+const buttonRenderer: RegisteredRendererDefinition = {
   type: 'button',
   component: () => null,
   fields: [{ key: 'onClick', kind: 'event' }],
   staticCapable: false,
 };
 
-const inputRenderer: RendererDefinition = {
+const inputRenderer: RegisteredRendererDefinition = {
   type: 'input-text',
   component: () => null,
   staticCapable: false,
 };
 
-const formRenderer: RendererDefinition = {
+const formRenderer: RegisteredRendererDefinition = {
   type: 'form',
   component: () => null,
   fields: [{ key: 'body', kind: 'region', regionKey: 'body' }],
@@ -51,7 +47,7 @@ const formRenderer: RendererDefinition = {
   staticCapable: false,
 };
 
-function createTestCompiler(renderers: RendererDefinition[]) {
+function createTestCompiler(renderers: RegisteredRendererDefinition[]) {
   const registry = createRendererRegistry(renderers);
   return createSchemaCompiler({
     registry,

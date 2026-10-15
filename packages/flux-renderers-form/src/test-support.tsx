@@ -6,7 +6,7 @@ import type {
   ApiSchema,
   ApiRequestContext,
   RendererComponentProps,
-  RendererDefinition,
+  RegisteredRendererDefinition, RendererDefinition,
   RendererEnv,
 } from '@nop-chaos/flux-core';
 import { getIn } from '@nop-chaos/flux-core';
@@ -186,7 +186,7 @@ export const env: RendererEnv = {
   },
 };
 
-export const buttonRenderer: RendererDefinition = {
+export const buttonRenderer: RegisteredRendererDefinition = {
   type: 'button',
   component: (props) => (
     <button type="button" onClick={(event) => void props.events.onClick?.(event)}>
@@ -272,7 +272,7 @@ function FormStateProbeRenderer(props: RendererComponentProps) {
   return <pre data-testid={`form-state:${path}`}>{JSON.stringify(value ?? null)}</pre>;
 }
 
-export const formStateProbeRenderer: RendererDefinition = {
+export const formStateProbeRenderer: RegisteredRendererDefinition = {
   type: 'form-state-probe',
   component: FormStateProbeRenderer,
 };
@@ -284,7 +284,7 @@ function ScopeStateProbeRenderer(props: RendererComponentProps) {
   return <pre data-testid={`scope-state:${path}`}>{JSON.stringify(value ?? null)}</pre>;
 }
 
-export const scopeStateProbeRenderer: RendererDefinition = {
+export const scopeStateProbeRenderer: RegisteredRendererDefinition = {
   type: 'scope-state-probe',
   component: ScopeStateProbeRenderer,
 };
@@ -302,7 +302,7 @@ function HandlerIdentityProbeRenderer(props: RendererComponentProps) {
   return <span data-testid="handler-identity-probe">{name}</span>;
 }
 
-export const handlerIdentityProbeRenderer: RendererDefinition = {
+export const handlerIdentityProbeRenderer: RegisteredRendererDefinition = {
   type: 'handler-identity-probe',
   component: HandlerIdentityProbeRenderer,
 };

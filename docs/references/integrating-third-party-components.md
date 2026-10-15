@@ -514,7 +514,7 @@ function MyRenderer(props) {
 | `icon`                    | no                          | —           | Icon name for tooling                                              |
 | `sourcePackage`           | no                          | —           | Package name for tooling                                           |
 | `defaultSchema`           | no                          | —           | Default schema values when inserting                               |
-| `propSchema`              | no                          | —           | Renderer-local prop schema metadata                                |
+| `propContracts`           | no                          | —           | Per-prop value-shape + tooling metadata (`RendererPropContract`)   |
 | `regions`                 | no                          | —           | Declared region names                                              |
 | `fields`                  | no                          | —           | `SchemaFieldRule[]` for compiler field classification              |
 | `validation`              | no                          | —           | `ValidationContributor` for form validation                        |

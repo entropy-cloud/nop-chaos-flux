@@ -17,7 +17,7 @@ import {
 import {
   stringAdapter,
   type RendererComponentProps,
-  type RendererDefinition,
+  type RegisteredRendererDefinition,
   type SchemaFieldRule,
 } from '@nop-chaos/flux-core';
 import { resolveFieldFrameErrorRefs } from '@nop-chaos/flux-react';
@@ -341,7 +341,7 @@ export function MarkdownEditorRenderer(props: RendererComponentProps<MarkdownEdi
   );
 }
 
-export const markdownEditorRendererDefinition: RendererDefinition = {
+export const markdownEditorRendererDefinition: RegisteredRendererDefinition = {
   type: 'markdown-editor',
   sourcePackage: '@nop-chaos/flux-renderers-form',
   fields: [...formFieldRules, ...markdownEditorFieldRules],

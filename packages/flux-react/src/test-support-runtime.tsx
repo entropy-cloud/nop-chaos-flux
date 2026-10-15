@@ -6,7 +6,7 @@ import type {
   ActionSchema,
   DataSourceSchema,
   RendererComponentProps,
-  RendererDefinition,
+  RegisteredRendererDefinition, RendererDefinition,
   RendererHelpers,
 } from '@nop-chaos/flux-core';
 import { compileDataSource } from '@nop-chaos/flux-compiler';
@@ -116,7 +116,7 @@ export const compositeProbeRenderer: RendererDefinition = {
   component: CompositeErrorProbe,
 };
 
-export const buttonRenderer: RendererDefinition = {
+export const buttonRenderer: RegisteredRendererDefinition = {
   type: 'button',
   component: (props) => (
     <Button variant="ghost" size="sm" onClick={() => void props.events.onClick?.()}>
@@ -145,12 +145,12 @@ function PollingSource(props: RendererComponentProps<DataSourceSchema>) {
   return null;
 }
 
-export const pollingSourceRenderer: RendererDefinition = {
+export const pollingSourceRenderer: RegisteredRendererDefinition = {
   type: 'polling-source',
-  component: PollingSource as RendererDefinition['component'],
+  component: PollingSource as RegisteredRendererDefinition['component'],
 };
 
-export const cidProbeRenderer: RendererDefinition = {
+export const cidProbeRenderer: RegisteredRendererDefinition = {
   type: 'cid-probe',
   component: (props) => (
     <span data-testid="cid-root" data-cid={props.meta.cid || undefined}>
@@ -159,7 +159,7 @@ export const cidProbeRenderer: RendererDefinition = {
   ),
 };
 
-export const wrapProbeRenderer: RendererDefinition = {
+export const wrapProbeRenderer: RegisteredRendererDefinition = {
   type: 'wrap-probe',
   wrap: true,
   frameRootTag: 'div',
@@ -215,18 +215,18 @@ function FragmentScopeProbeHost(props: RendererComponentProps) {
   );
 }
 
-export const fragmentRenderHostRenderer: RendererDefinition = {
+export const fragmentRenderHostRenderer: RegisteredRendererDefinition = {
   type: 'fragment-render-host',
   component: FragmentRenderHost,
 };
 
-export const fragmentScopeProbeHostRenderer: RendererDefinition = {
+export const fragmentScopeProbeHostRenderer: RegisteredRendererDefinition = {
   type: 'fragment-scope-probe-host',
   component: FragmentScopeProbeHost,
   fields: [{ key: 'body', kind: 'region', regionKey: 'body' }],
 };
 
-export const scopedHostRenderer: RendererDefinition = {
+export const scopedHostRenderer: RegisteredRendererDefinition = {
   type: 'scoped-host',
   component: (props) => <section>{asReactNode(props.regions.body?.render())}</section>,
   fields: [{ key: 'body', kind: 'region', regionKey: 'body' }],
@@ -258,7 +258,7 @@ function NamespaceProvider(props: RendererComponentProps) {
   return <span data-testid={`namespace-scope-${label}`}>{actionScope?.id ?? ''}</span>;
 }
 
-export const namespaceProviderRenderer: RendererDefinition = {
+export const namespaceProviderRenderer: RegisteredRendererDefinition = {
   type: 'namespace-provider',
   component: NamespaceProvider,
 };
@@ -295,7 +295,7 @@ function ComponentHandleProvider(props: RendererComponentProps) {
   );
 }
 
-export const componentHandleProviderRenderer: RendererDefinition = {
+export const componentHandleProviderRenderer: RegisteredRendererDefinition = {
   type: 'component-handle-provider',
   component: ComponentHandleProvider,
 };
@@ -322,7 +322,7 @@ function DispatchProbe(props: RendererComponentProps) {
   );
 }
 
-export const dispatchProbeRenderer: RendererDefinition = {
+export const dispatchProbeRenderer: RegisteredRendererDefinition = {
   type: 'dispatch-probe',
   component: DispatchProbe,
 };
@@ -340,7 +340,7 @@ function ToggleHost(props: RendererComponentProps) {
   );
 }
 
-export const toggleHostRenderer: RendererDefinition = {
+export const toggleHostRenderer: RegisteredRendererDefinition = {
   type: 'toggle-host',
   component: ToggleHost,
   fields: [{ key: 'body', kind: 'region', regionKey: 'body' }],
@@ -348,7 +348,7 @@ export const toggleHostRenderer: RendererDefinition = {
 
 export function createDispatchCaptureRenderer(
   onCapture: (dispatch: RendererHelpers['dispatch']) => void,
-): RendererDefinition {
+): RegisteredRendererDefinition {
   function DispatchCapture(props: RendererComponentProps) {
     React.useEffect(() => {
       onCapture(props.helpers.dispatch);

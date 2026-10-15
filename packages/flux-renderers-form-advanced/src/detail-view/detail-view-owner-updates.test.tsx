@@ -1,6 +1,6 @@
 import React from 'react';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
-import type { RendererDefinition } from '@nop-chaos/flux-core';
+import type { RegisteredRendererDefinition } from '@nop-chaos/flux-core';
 import { useScopeSelector } from '@nop-chaos/flux-react';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { baseEnv, createPageSchemaRenderer, formulaCompiler } from '../test-support.js';
@@ -26,7 +26,7 @@ function DetailViewerLifecycleProbe() {
   return <span data-testid="viewer-lifecycle">{String(title ?? '')}</span>;
 }
 
-const detailViewerLifecycleProbeRenderer: RendererDefinition = {
+const detailViewerLifecycleProbeRenderer: RegisteredRendererDefinition = {
   type: 'detail-viewer-lifecycle-probe',
   component: DetailViewerLifecycleProbe,
 };

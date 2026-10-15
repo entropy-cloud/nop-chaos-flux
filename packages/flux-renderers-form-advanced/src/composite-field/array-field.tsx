@@ -4,7 +4,7 @@ import type {
   FormRuntime,
   InstanceFrame,
   RendererComponentProps,
-  RendererDefinition,
+  RegisteredRendererDefinition,
   ScopeRef,
 } from '@nop-chaos/flux-core';
 import { getIn } from '@nop-chaos/flux-core';
@@ -556,7 +556,7 @@ export function ArrayFieldRenderer(props: RendererComponentProps<ArrayFieldSchem
   );
 }
 
-export const arrayFieldRendererDefinition: RendererDefinition = {
+export const arrayFieldRendererDefinition: RegisteredRendererDefinition = {
   type: 'array-field',
   displayName: 'Array Field',
   category: 'Form Advanced',

@@ -1,28 +1,28 @@
 import { describe, expect, it } from 'vitest';
-import type { RendererDefinition } from '@nop-chaos/flux-core';
+import type { RegisteredRendererDefinition, RendererDefinition } from '@nop-chaos/flux-core';
 import { makeCompiler } from './schema-compiler-shape-validation-test-utils.js';
 import { getAcceptedSchemaKeys } from './schema-compiler/shape-validation-utils.js';
 
-const closedInputRenderer: RendererDefinition = {
+const closedInputRenderer: RegisteredRendererDefinition = {
   type: 'closed-input',
   component: () => null,
-  propSchema: { name: { type: 'string' } },
+  propContracts: { name: { shape: { kind: 'unknown' }, displayName: 'name' } },
   fields: [{ key: 'name', kind: 'prop' }],
 };
 
-const openRenderer: RendererDefinition = {
+const openRenderer: RegisteredRendererDefinition = {
   type: 'open-renderer',
   component: () => null,
   fields: [{ key: 'label', kind: 'prop' }],
 };
 
-const eventRenderer: RendererDefinition = {
+const eventRenderer: RegisteredRendererDefinition = {
   type: 'event-renderer',
   component: () => null,
   fields: [{ key: 'onClick', kind: 'event' }],
 };
 
-const arrayEditorRenderer: RendererDefinition = {
+const arrayEditorRenderer: RegisteredRendererDefinition = {
   type: 'array-editor',
   component: () => null,
 };
@@ -177,7 +177,7 @@ describe('event field explicit declaration driven classification', () => {
   });
 
   it('keeps explicit declared events outside the vocabulary legal (custom event names)', () => {
-    const customEventRenderer: RendererDefinition = {
+    const customEventRenderer: RegisteredRendererDefinition = {
       type: 'custom-event-renderer',
       component: () => null,
       fields: [{ key: 'onCustomThing', kind: 'event' }],
@@ -260,7 +260,7 @@ describe('getAcceptedSchemaKeys vocabulary coverage', () => {
     const renderer: RendererDefinition = {
       type: 'declared',
       component: () => null,
-      propSchema: { label: { type: 'string' } },
+      propContracts: { label: { shape: { kind: 'unknown' }, displayName: 'label' } },
       fields: [
         { key: 'label', kind: 'prop' },
         { key: 'onRowClick', kind: 'event' },

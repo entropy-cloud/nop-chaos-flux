@@ -3,7 +3,7 @@ import type {
   ActionSchema,
   BaseSchema,
   RendererComponentProps,
-  RendererDefinition,
+  RegisteredRendererDefinition,
 } from '@nop-chaos/flux-core';
 import { getIn } from '@nop-chaos/flux-core';
 import { resolveRendererSlotContent } from '@nop-chaos/flux-react';
@@ -410,7 +410,7 @@ function compileDetailValueAdaptationAction(value: unknown, context: {
   return value;
 }
 
-export const detailFieldRendererDefinition: RendererDefinition<DetailFieldSchema> = {
+export const detailFieldRendererDefinition: RegisteredRendererDefinition<DetailFieldSchema> = {
   type: 'detail-field',
   displayName: 'Detail Field',
   category: 'Form Advanced',

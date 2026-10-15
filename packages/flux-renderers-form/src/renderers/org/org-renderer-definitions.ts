@@ -1,4 +1,4 @@
-import type { RendererDefinition, SchemaFieldRule } from '@nop-chaos/flux-core';
+import type { RegisteredRendererDefinition, SchemaFieldRule } from '@nop-chaos/flux-core';
 import { formFieldContracts, formFieldRules } from '../../field-utils.js';
 import { createFieldValidation, validateInputFieldSchema } from '../input.js';
 import { inputCitySpecificContracts, orgSelectSpecificContracts } from '../input-contracts.js';
@@ -57,7 +57,7 @@ const orgSelectCapabilityContracts = [
   },
 ] as const;
 
-export const orgSelectRendererDefinitions: RendererDefinition[] = [
+export const orgSelectRendererDefinitions: RegisteredRendererDefinition[] = [
   {
     type: 'user-select',
     sourcePackage: '@nop-chaos/flux-renderers-form',
@@ -93,7 +93,7 @@ export const orgSelectRendererDefinitions: RendererDefinition[] = [
  * the shared org data surface (protocol §3: every level selectable by
  * default; orgDepth = province 0 / city 1 / district 2).
  */
-export const inputCityRendererDefinition: RendererDefinition = {
+export const inputCityRendererDefinition: RegisteredRendererDefinition = {
   type: 'input-city',
   sourcePackage: '@nop-chaos/flux-renderers-form',
   propContracts: {

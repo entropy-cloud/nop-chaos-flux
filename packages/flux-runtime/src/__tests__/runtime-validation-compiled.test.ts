@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   createRendererRegistry,
   type CompiledFormValidationModel,
-  type RendererDefinition,
+  type RegisteredRendererDefinition,
   getCompiledValidationDependents,
   getCompiledValidationField,
   getCompiledValidationNode,
@@ -20,7 +20,7 @@ import { formRenderer, inputRenderer, env, compiledRule } from './test-fixtures.
 
 describe('createRendererRuntime', () => {
   it('compiles validation nodes with array metadata', () => {
-    const arrayRenderer: RendererDefinition = {
+    const arrayRenderer: RegisteredRendererDefinition = {
       type: 'array-editor',
       component: () => null,
       validation: {

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type {
   HostCapabilityProjectionManifest,
-  RendererDefinition,
+  RegisteredRendererDefinition,
   RendererHostContract,
 } from '@nop-chaos/flux-core';
 import { createRendererRegistry } from '@nop-chaos/flux-core';
@@ -43,7 +43,7 @@ const automaticHostContract: RendererHostContract = {
   },
 };
 
-const automaticHostOwnerRenderer: RendererDefinition = {
+const automaticHostOwnerRenderer: RegisteredRendererDefinition = {
   type: 'designer-page',
   component: () => null,
   fields: [
@@ -53,7 +53,7 @@ const automaticHostOwnerRenderer: RendererDefinition = {
   hostContract: automaticHostContract,
 };
 
-const automaticHostButtonRenderer: RendererDefinition = {
+const automaticHostButtonRenderer: RegisteredRendererDefinition = {
   type: 'toolbar-button',
   component: () => null,
   fields: [{ key: 'onClick', kind: 'event' }],

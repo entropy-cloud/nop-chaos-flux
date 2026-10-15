@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
-import type { BaseSchema, RendererDefinition } from '@nop-chaos/flux-core';
+import type { BaseSchema, RegisteredRendererDefinition } from '@nop-chaos/flux-core';
 import { resetFluxI18n, initFluxI18n } from '@nop-chaos/flux-i18n';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createSchemaRenderer } from '@nop-chaos/flux-react';
@@ -16,7 +16,7 @@ const { submitCalls } = formTestHarness;
  * node at runtime; this stub surfaces the resolved content via a data attribute,
  * letting tests assert the editor→preview composition contract.
  */
-const stubMarkdownRenderer: RendererDefinition = {
+const stubMarkdownRenderer: RegisteredRendererDefinition = {
   type: 'markdown',
   fields: [{ key: 'content', kind: 'prop' }],
   component: (props) => (

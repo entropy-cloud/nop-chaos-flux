@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import type { RendererDefinition } from '@nop-chaos/flux-core';
+import type { RegisteredRendererDefinition } from '@nop-chaos/flux-core';
 import { createRendererRegistry } from '@nop-chaos/flux-core';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createSchemaCompiler } from './index.js';
 
-const reactionHostRenderer: RendererDefinition = {
+const reactionHostRenderer: RegisteredRendererDefinition = {
   type: 'reaction-host',
   component: () => null,
   fields: [{ key: 'loadAction', kind: 'reaction' }],

@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, render, waitFor } from '@testing-library/react';
 import React from 'react';
-import type { RendererDefinition } from '@nop-chaos/flux-core';
+import type { RegisteredRendererDefinition } from '@nop-chaos/flux-core';
 import { useScopeSelector } from '@nop-chaos/flux-react';
 import { DASHBOARD_EDITOR_MANIFEST_V1 } from './dashboard-editor-manifest.js';
 import { dashboardEditorRendererDefinition } from './dashboard-editor-definitions.js';
@@ -33,7 +33,7 @@ function StatusProbe() {
   );
 }
 
-const statusProbeRenderer: RendererDefinition = {
+const statusProbeRenderer: RegisteredRendererDefinition = {
   type: 'dashboard-status-probe',
   component: StatusProbe,
 };

@@ -1,10 +1,4 @@
-import type {
-  ActionContext,
-  RendererComponentProps,
-  RendererDefinition,
-  RendererEnv,
-  RendererEventHandler,
-} from '@nop-chaos/flux-core';
+import type { ActionContext, RendererComponentProps, RegisteredRendererDefinition, RendererEnv, RendererEventHandler } from '@nop-chaos/flux-core';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createDefaultEnv, createSchemaRenderer } from '@nop-chaos/flux-react';
 import { initFluxI18n } from '@nop-chaos/flux-i18n';
@@ -17,19 +11,19 @@ import { dashboardEditorRendererDefinition } from './editor/dashboard-editor-def
 // Plan 594 (CX-15): hand-written env stub → shared createDefaultEnv.
 const env: RendererEnv = createDefaultEnv();
 
-export const pageRenderer: RendererDefinition = {
+export const pageRenderer: RegisteredRendererDefinition = {
   type: 'page',
   component: (props) => <section>{props.regions.body?.render() as React.ReactNode}</section>,
   fields: [{ key: 'body', kind: 'region', regionKey: 'body' }],
 };
 
-export const textRenderer: RendererDefinition = {
+export const textRenderer: RegisteredRendererDefinition = {
   type: 'text',
   component: (props) => <span>{String(props.props.text ?? '')}</span>,
 };
 
 /** 面板内容 stub：透出 type + data/source + 自定义 prop（断言面板 fragment 装配）。 */
-export const panelContentRenderer: RendererDefinition = {
+export const panelContentRenderer: RegisteredRendererDefinition = {
   type: 'panel-content',
   component: (props) => (
     <div
@@ -44,7 +38,7 @@ export const panelContentRenderer: RendererDefinition = {
 };
 
 /** 面板内容 stub 族（chart/table/html/text —— 对齐 palette 默认类型清单，注册后入 palette）。 */
-function contentStub(type: string, testId: string): RendererDefinition {
+function contentStub(type: string, testId: string): RegisteredRendererDefinition {
   return {
     type,
     component: (props) => (
@@ -65,14 +59,14 @@ export const htmlStubRenderer = contentStub('html', 'html-stub');
 // WA-dashboard-002 (plan 568): test definitions derive from the production
 // tables ({...base}) so a new production field can no longer be silently
 // missing from the test surface (the fields table was copied verbatim twice).
-const dashboardEditorDefinitionForTest: RendererDefinition = {
+const dashboardEditorDefinitionForTest: RegisteredRendererDefinition = {
   ...dashboardEditorRendererDefinition,
   component: DashboardEditorRendererForTest,
 };
 
 export function createDashboardSchemaRenderer(
-  extra: RendererDefinition[] = [],
-  editorDefinition: RendererDefinition = dashboardEditorDefinitionForTest,
+  extra: RegisteredRendererDefinition[] = [],
+  editorDefinition: RegisteredRendererDefinition = dashboardEditorDefinitionForTest,
 ) {
   // 加载默认 locale（en-US），使 dashboard i18n 键在测试中断言真实文案。
   // WA-dashboard-002 (plan 568): the init used to run at module-evaluation
@@ -111,7 +105,7 @@ export const formulaCompiler = createFormulaCompiler();
  */
 export function createSpiedEditorDefinition(
   dispatchSpy: (action: unknown, ctx?: Partial<ActionContext>) => void,
-): RendererDefinition {
+): RegisteredRendererDefinition {
   function SpiedEditor(props: RendererComponentProps<DashboardEditorSchema>) {
     const spiedEvents = Object.fromEntries(
       Object.entries(props.events).map(([key, handler]) => [

@@ -2,7 +2,7 @@ import React from 'react';
 import type {
   BaseSchema,
   RendererComponentProps,
-  RendererDefinition,
+  RegisteredRendererDefinition,
   RuntimeFieldRegistration,
   ValidationRule,
 } from '@nop-chaos/flux-core';
@@ -290,7 +290,7 @@ export function KeyValueRenderer(props: RendererComponentProps<KeyValueSchema>) 
   );
 }
 
-export const keyValueRendererDefinition: RendererDefinition = {
+export const keyValueRendererDefinition: RegisteredRendererDefinition = {
   type: 'key-value',
   displayName: 'Key Value',
   category: 'Form Advanced',

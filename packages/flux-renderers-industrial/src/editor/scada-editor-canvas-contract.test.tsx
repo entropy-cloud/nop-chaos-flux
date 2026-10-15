@@ -6,7 +6,7 @@ import type {
   ComponentHandle,
   ComponentHandleRegistry,
   RendererComponentProps,
-  RendererDefinition,
+  RegisteredRendererDefinition,
   RendererHelpers,
 } from '@nop-chaos/flux-core';
 import { createSchemaRenderer, createDefaultEnv } from '@nop-chaos/flux-react';
@@ -49,7 +49,7 @@ afterEach(() => {
  * 可断言 save/load/onModeChange 等经 dispatch.mock.calls 验证（关 P1-12 false-green）。
  * 经 onComponentRegistryChange 捕获 registry，断言 runtime 9 句柄可达（P1-06）。
  */
-function createSpiedDefinitions(dispatchSpy: ReturnType<typeof vi.fn>): RendererDefinition[] {
+function createSpiedDefinitions(dispatchSpy: ReturnType<typeof vi.fn>): RegisteredRendererDefinition[] {
   function SpiedEditor(props: RendererComponentProps<ScadaEditorCanvasSchema>) {
     const helpers = ({ ...(props.helpers as object), dispatch: dispatchSpy }) as unknown as RendererHelpers;
     return <ScadaEditorCanvasRenderer {...props} helpers={helpers} />;

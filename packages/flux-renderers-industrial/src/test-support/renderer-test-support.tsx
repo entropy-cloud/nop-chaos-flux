@@ -16,7 +16,7 @@ import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux
 import { createRendererRuntime } from '@nop-chaos/flux-runtime';
 import {
   createRendererRegistry,
-  type RendererDefinition,
+  type RegisteredRendererDefinition,
   type RendererComponentProps,
   type RendererPlugin,
   type SchemaObject,
@@ -36,7 +36,7 @@ export interface ScadaTestEnvironment {
 }
 
 export function createScadaTestEnvironment(
-  definitions: RendererDefinition[],
+  definitions: RegisteredRendererDefinition[],
   data: Record<string, unknown> = {},
   options?: { plugins?: RendererPlugin[] },
 ): ScadaTestEnvironment {

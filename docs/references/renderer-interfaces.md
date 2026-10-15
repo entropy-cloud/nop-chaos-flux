@@ -130,7 +130,7 @@ Stable field groups:
 - Discovery metadata: `displayName`, `icon`, `category`, `sourcePackage`, `defaultSchema`
 - Renderer classification: `rendererClass`, `rendererTraits`, `injectedLocals`
 - Ordinary renderer authoring contracts: `propContracts`, `eventContracts`, `componentCapabilityContracts`, `scopeExportContracts`
-- Authoring adaptation: `propSchema`, `authoringTransform`
+- Authoring adaptation: `propContracts`, `authoringTransform`
 - Host-only contract: `hostContract`
 
 Classification baseline:

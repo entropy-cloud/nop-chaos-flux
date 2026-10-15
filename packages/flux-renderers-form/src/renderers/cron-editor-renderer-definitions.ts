@@ -1,4 +1,4 @@
-import type { RendererDefinition, SchemaFieldRule } from '@nop-chaos/flux-core';
+import type { RegisteredRendererDefinition, SchemaFieldRule } from '@nop-chaos/flux-core';
 import { formFieldContracts, formFieldRules } from '../field-utils.js';
 import { createFieldValidation } from './input.js';
 import { validateCronEditorSchema } from './cron-editor-schema-validator.js';
@@ -18,7 +18,7 @@ const cronFieldRules: SchemaFieldRule[] = [
   { key: 'presets', kind: 'prop' },
 ];
 
-export const cronEditorRendererDefinition: RendererDefinition = {
+export const cronEditorRendererDefinition: RegisteredRendererDefinition = {
   type: 'cron-editor',
   sourcePackage: '@nop-chaos/flux-renderers-form',
   propContracts: {

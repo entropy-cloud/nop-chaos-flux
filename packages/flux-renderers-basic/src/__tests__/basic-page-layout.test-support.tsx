@@ -1,7 +1,7 @@
-import { getIn, type RendererDefinition } from '@nop-chaos/flux-core';
+import { getIn, type RegisteredRendererDefinition } from '@nop-chaos/flux-core';
 import { useScopeSelector } from '@nop-chaos/flux-react';
 
-export const formRendererDefinitions: RendererDefinition[] = [
+export const formRendererDefinitions: RegisteredRendererDefinition[] = [
   {
     type: 'form',
     component: (props: any) => <form>{props.regions.body?.render?.()}</form>,
@@ -27,7 +27,7 @@ function ScopeStateProbe(props: any) {
   return <pre data-testid={`scope-state:${path}`}>{JSON.stringify(value ?? null)}</pre>;
 }
 
-export const scopeStateProbeRenderer: RendererDefinition = {
+export const scopeStateProbeRenderer: RegisteredRendererDefinition = {
   type: 'scope-state-probe',
   component: ScopeStateProbe,
   fields: [{ key: 'name', kind: 'prop' }],

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { RendererDefinition } from '@nop-chaos/flux-core';
+import type { RegisteredRendererDefinition } from '@nop-chaos/flux-core';
 import { createBaseCompileSymbolTable } from './compile-symbol-table.js';
 import { eventRenderer, pageRenderer, createCompiler } from './schema-compiler-host-action-validation.test-support.js';
 
@@ -8,7 +8,7 @@ describe('host action validation xui:actions validation', () => {
     const compiler = createCompiler({
       type: 'strict-text',
       component: () => null,
-      propSchema: { text: { type: 'string' } },
+      propContracts: { text: { shape: { kind: 'unknown' }, displayName: 'text' } },
       fields: [{ key: 'text', kind: 'prop' }],
     });
 
@@ -33,7 +33,7 @@ describe('host action validation xui:actions validation', () => {
     const compiler = createCompiler({
       type: 'strict-text',
       component: () => null,
-      propSchema: { text: { type: 'string' } },
+      propContracts: { text: { shape: { kind: 'unknown' }, displayName: 'text' } },
       fields: [{ key: 'text', kind: 'prop' }],
     });
 
@@ -58,7 +58,7 @@ describe('host action validation xui:actions validation', () => {
     const compiler = createCompiler({
       type: 'strict-text',
       component: () => null,
-      propSchema: { text: { type: 'string' } },
+      propContracts: { text: { shape: { kind: 'unknown' }, displayName: 'text' } },
       fields: [{ key: 'text', kind: 'prop' }],
     });
 
@@ -83,7 +83,7 @@ describe('host action validation xui:actions validation', () => {
     const compiler = createCompiler({
       type: 'strict-text',
       component: () => null,
-      propSchema: { text: { type: 'string' } },
+      propContracts: { text: { shape: { kind: 'unknown' }, displayName: 'text' } },
       fields: [{ key: 'text', kind: 'prop' }],
     });
 
@@ -111,7 +111,7 @@ describe('host action validation xui:actions validation', () => {
     const compiler = createCompiler({
       type: 'strict-text',
       component: () => null,
-      propSchema: { text: { type: 'string' } },
+      propContracts: { text: { shape: { kind: 'unknown' }, displayName: 'text' } },
       fields: [{ key: 'text', kind: 'prop' }],
     });
 
@@ -139,7 +139,7 @@ describe('host action validation xui:actions validation', () => {
     const compiler = createCompiler({
       type: 'strict-text',
       component: () => null,
-      propSchema: { text: { type: 'string' } },
+      propContracts: { text: { shape: { kind: 'unknown' }, displayName: 'text' } },
       fields: [{ key: 'text', kind: 'prop' }],
     });
 
@@ -166,7 +166,7 @@ describe('host action validation xui:actions validation', () => {
     const compiler = createCompiler({
       type: 'strict-text',
       component: () => null,
-      propSchema: { text: { type: 'string' } },
+      propContracts: { text: { shape: { kind: 'unknown' }, displayName: 'text' } },
       fields: [{ key: 'text', kind: 'prop' }],
     });
 
@@ -194,7 +194,7 @@ describe('host action validation xui:actions validation', () => {
     const compiler = createCompiler({
       type: 'strict-text',
       component: () => null,
-      propSchema: { text: { type: 'string' } },
+      propContracts: { text: { shape: { kind: 'unknown' }, displayName: 'text' } },
       fields: [{ key: 'text', kind: 'prop' }],
     });
 
@@ -272,12 +272,12 @@ describe('host action validation xui:actions validation', () => {
   });
 
   it('uses child xui:actions shadowing before unresolved diagnostics', () => {
-    const containerRenderer: RendererDefinition = {
+    const containerRenderer: RegisteredRendererDefinition = {
       type: 'container',
       component: () => null,
       fields: [{ key: 'body', kind: 'region' as const }],
     };
-    const buttonRenderer: RendererDefinition = {
+    const buttonRenderer: RegisteredRendererDefinition = {
       type: 'button',
       component: () => null,
       fields: [{ key: 'onClick', kind: 'event' as const }],
@@ -341,7 +341,7 @@ describe('host action validation xui:actions validation', () => {
   });
 
   it('validates component selector args when a unique componentId resolves to a published renderer contract', () => {
-    const formRendererWithContracts: RendererDefinition = {
+    const formRendererWithContracts: RegisteredRendererDefinition = {
       type: 'form',
       component: () => null,
       componentCapabilityContracts: [
@@ -387,7 +387,7 @@ describe('host action validation xui:actions validation', () => {
   });
 
   it('rejects component submit args when the published capability does not accept a payload', () => {
-    const formRendererWithContracts: RendererDefinition = {
+    const formRendererWithContracts: RegisteredRendererDefinition = {
       type: 'form',
       component: () => null,
       componentCapabilityContracts: [
@@ -426,7 +426,7 @@ describe('host action validation xui:actions validation', () => {
   });
 
   it('accepts omitted args for a component capability whose args shape is an all-optional object (mirrors runtime undefined→{})', () => {
-    const editorRendererWithContracts: RendererDefinition = {
+    const editorRendererWithContracts: RegisteredRendererDefinition = {
       type: 'array-editor',
       component: () => null,
       componentCapabilityContracts: [
@@ -462,7 +462,7 @@ describe('host action validation xui:actions validation', () => {
   });
 
   it('keeps component selectors warning-only when componentId is duplicate or componentName-based', () => {
-    const formRendererWithContracts: RendererDefinition = {
+    const formRendererWithContracts: RegisteredRendererDefinition = {
       type: 'form',
       component: () => null,
       componentCapabilityContracts: [

@@ -1,4 +1,4 @@
-import type { RendererDefinition, TemplateNode } from '@nop-chaos/flux-core';
+import type { RegisteredRendererDefinition, TemplateNode } from '@nop-chaos/flux-core';
 import { createRendererRegistry } from '@nop-chaos/flux-core';
 import { createSchemaCompiler } from './schema-compiler.js';
 
@@ -13,9 +13,9 @@ export const PRESERVE_LITERAL_MARKER = '__nopPreserveLiteral';
  */
 
 export function compileFixture(
-  definition: RendererDefinition,
+  definition: RegisteredRendererDefinition,
   authored: Record<string, unknown>,
-  extraRenderers: RendererDefinition[] = [],
+  extraRenderers: RegisteredRendererDefinition[] = [],
 ): TemplateNode {
   const registry = createRendererRegistry([
     definition,

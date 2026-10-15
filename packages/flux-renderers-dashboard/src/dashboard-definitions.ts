@@ -1,8 +1,8 @@
-import type { RendererDefinition } from '@nop-chaos/flux-core';
+import type { RegisteredRendererDefinition } from '@nop-chaos/flux-core';
 import { DashboardRenderer } from './dashboard-renderer.js';
 
 /** dashboard 运行态 renderer definition（编辑态 `dashboard-editor` 见 editor/）。 */
-export const dashboardRendererDefinition: RendererDefinition = {
+export const dashboardRendererDefinition: RegisteredRendererDefinition = {
   type: 'dashboard',
   displayName: 'Dashboard',
   category: 'layout',

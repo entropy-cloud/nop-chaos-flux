@@ -1,11 +1,6 @@
 import React, { useEffect } from 'react';
 import { Button } from '@nop-chaos/ui';
-import type {
-  ActionContext,
-  RendererComponentProps,
-  RendererDefinition,
-  RendererEnv,
-} from '@nop-chaos/flux-core';
+import type { ActionContext, RendererComponentProps, RegisteredRendererDefinition, RendererEnv } from '@nop-chaos/flux-core';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { formRendererDefinitions } from '@nop-chaos/flux-renderers-form';
 import {
@@ -26,13 +21,13 @@ import { dataRendererDefinitions } from './index.js';
 // semantics without the import-order side effect.
 export const env: RendererEnv = createDefaultEnv();
 
-export const pageRenderer: RendererDefinition = {
+export const pageRenderer: RegisteredRendererDefinition = {
   type: 'page',
   component: (props) => <section>{props.regions.body?.render() as React.ReactNode}</section>,
   fields: [{ key: 'body', kind: 'region', regionKey: 'body' }],
 };
 
-export const textRenderer: RendererDefinition = {
+export const textRenderer: RegisteredRendererDefinition = {
   type: 'text',
   component: (props) => <span>{String(props.props.text ?? '')}</span>,
   // Mirrors the real `text` definition's declared fields (basic-renderer-definitions);
@@ -40,7 +35,7 @@ export const textRenderer: RendererDefinition = {
   fields: [{ key: 'text', kind: 'prop', allowSource: true }],
 };
 
-export const iconRenderer: RendererDefinition = {
+export const iconRenderer: RegisteredRendererDefinition = {
   type: 'icon',
   component: (props) => (
     <span data-testid={props.meta.testid ?? undefined}>{String(props.props.icon ?? '')}</span>
@@ -48,7 +43,7 @@ export const iconRenderer: RendererDefinition = {
   fields: [{ key: 'icon', kind: 'prop' }],
 };
 
-export const nodeInstanceProbeRenderer: RendererDefinition = {
+export const nodeInstanceProbeRenderer: RegisteredRendererDefinition = {
   type: 'node-instance-probe',
   component: (props) => (
     <span data-testid="node-instance-probe">{JSON.stringify(props.node.instancePath ?? null)}</span>
@@ -60,7 +55,7 @@ function RowScopeIdProbeRenderer() {
   return <span data-testid="row-scope-id-probe">{scope.id}</span>;
 }
 
-export const rowScopeIdProbeRenderer: RendererDefinition = {
+export const rowScopeIdProbeRenderer: RegisteredRendererDefinition = {
   type: 'row-scope-id-probe',
   component: RowScopeIdProbeRenderer,
 };
@@ -72,7 +67,7 @@ function RowRecordNameProbeRenderer() {
   return <span data-testid="row-record-name-probe">{name}</span>;
 }
 
-export const rowRecordNameProbeRenderer: RendererDefinition = {
+export const rowRecordNameProbeRenderer: RegisteredRendererDefinition = {
   type: 'row-record-name-probe',
   component: RowRecordNameProbeRenderer,
 };
@@ -81,7 +76,7 @@ function ResolvedNameProbeRenderer(props: RendererComponentProps) {
   return <span data-testid="resolved-name-probe">{String(props.props.name ?? '')}</span>;
 }
 
-export const resolvedNameProbeRenderer: RendererDefinition = {
+export const resolvedNameProbeRenderer: RegisteredRendererDefinition = {
   type: 'resolved-name-probe',
   component: ResolvedNameProbeRenderer,
 };
@@ -99,7 +94,7 @@ function DispatchProbeRenderer(props: RendererComponentProps) {
   );
 }
 
-export const dispatchProbeRenderer: RendererDefinition = {
+export const dispatchProbeRenderer: RegisteredRendererDefinition = {
   type: 'dispatch-probe',
   component: DispatchProbeRenderer,
 };
@@ -154,13 +149,13 @@ function TestButtonRenderer(props: RendererComponentProps) {
   );
 }
 
-export const buttonRenderer: RendererDefinition = {
+export const buttonRenderer: RegisteredRendererDefinition = {
   type: 'button',
   component: TestButtonRenderer,
   fields: [{ key: 'onClick', kind: 'event' }],
 };
 
-export function createDataSchemaRenderer(extra: RendererDefinition[] = []) {
+export function createDataSchemaRenderer(extra: RegisteredRendererDefinition[] = []) {
   // 加载默认 locale（en-US），使 data i18n 键在测试中断言真实文案（plan 594 G5：
   // 自模块求值期移入工厂，WA-content-009 模式；form 工厂先例）。
   resetFluxI18n();

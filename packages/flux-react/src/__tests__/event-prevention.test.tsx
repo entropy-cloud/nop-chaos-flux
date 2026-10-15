@@ -1,7 +1,7 @@
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
-import type { RendererDefinition } from '@nop-chaos/flux-core';
+import type { RegisteredRendererDefinition } from '@nop-chaos/flux-core';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createSchemaRenderer } from '../schema-renderer.js';
 import { env, formRenderer, pageRenderer, textRenderer } from '../test-support-core.js';
@@ -21,7 +21,7 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-const btnRenderer: RendererDefinition = {
+const btnRenderer: RegisteredRendererDefinition = {
   type: 'btn',
   component: (props) => (
     <button
@@ -38,7 +38,7 @@ const btnRenderer: RendererDefinition = {
   fields: [{ key: 'onClick', kind: 'event' }],
 };
 
-const parentBtnRenderer: RendererDefinition = {
+const parentBtnRenderer: RegisteredRendererDefinition = {
   type: 'parent-btn',
   component: (props) => (
     <div
@@ -62,7 +62,7 @@ const parentBtnRenderer: RendererDefinition = {
   fields: [{ key: 'onClick', kind: 'event' }],
 };
 
-const formBtnRenderer: RendererDefinition = {
+const formBtnRenderer: RegisteredRendererDefinition = {
   type: 'form-btn',
   component: (props) => (
     <form
@@ -80,7 +80,7 @@ const formBtnRenderer: RendererDefinition = {
   fields: [{ key: 'onSubmit', kind: 'event' }],
 };
 
-function makeRenderer(extra: RendererDefinition[] = []) {
+function makeRenderer(extra: RegisteredRendererDefinition[] = []) {
   return createSchemaRenderer([
     pageRenderer,
     formRenderer,

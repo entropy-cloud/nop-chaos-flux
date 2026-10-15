@@ -1,13 +1,7 @@
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
 import { useEffect, useState } from 'react';
-import type {
-  BaseSchema,
-  InstanceFrame,
-  RendererComponentProps,
-  RendererDefinition,
-  ScopeRef,
-} from '@nop-chaos/flux-core';
+import type { BaseSchema, InstanceFrame, RendererComponentProps, RegisteredRendererDefinition, ScopeRef } from '@nop-chaos/flux-core';
 import { useRenderInstancePath } from '@nop-chaos/flux-react';
 import { buttonRenderer, createDataSchemaRenderer, env, formulaCompiler } from '../test-support.js';
 
@@ -97,7 +91,7 @@ function StubCardsRenderer(props: RendererComponentProps) {
   );
 }
 
-const stubCardsRenderer: RendererDefinition = {
+const stubCardsRenderer: RegisteredRendererDefinition = {
   type: 'cards',
   component: StubCardsRenderer,
   fields: [{ key: 'card', kind: 'region', params: ['item', 'index'], isolate: false }],
@@ -105,7 +99,7 @@ const stubCardsRenderer: RendererDefinition = {
 
 function renderCrud(
   schema: BaseSchema,
-  extra: RendererDefinition[] = [],
+  extra: RegisteredRendererDefinition[] = [],
   options: { strictValidation?: boolean } = {},
 ) {
   const SchemaRenderer = createDataSchemaRenderer([buttonRenderer, ...extra]);

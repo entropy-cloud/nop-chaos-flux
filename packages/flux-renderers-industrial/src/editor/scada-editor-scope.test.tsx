@@ -3,7 +3,7 @@ import { createSchemaRenderer, createDefaultEnv } from '@nop-chaos/flux-react';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { cleanup, render, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { RendererDefinition } from '@nop-chaos/flux-core';
+import type { RegisteredRendererDefinition } from '@nop-chaos/flux-core';
 import { useScopeSelector } from '@nop-chaos/flux-react';
 import { resetLeaferMock } from '../test-support/leafer-ui-mock.js';
 import { registerBuiltinScadaSymbols } from '../symbols/register-builtin.js';
@@ -45,7 +45,7 @@ function StatusProbe() {
   );
 }
 
-const statusProbeRenderer: RendererDefinition = {
+const statusProbeRenderer: RegisteredRendererDefinition = {
   type: 'scada-status-probe',
   component: StatusProbe,
 };

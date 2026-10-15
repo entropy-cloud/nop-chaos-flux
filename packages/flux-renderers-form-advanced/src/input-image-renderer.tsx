@@ -1,4 +1,4 @@
-import type { BaseSchema, RendererComponentProps, RendererDefinition } from '@nop-chaos/flux-core';
+import type { BaseSchema, RendererComponentProps, RegisteredRendererDefinition } from '@nop-chaos/flux-core';
 import { cn } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
 import { formFieldRules } from '@nop-chaos/flux-renderers-form';
@@ -38,7 +38,7 @@ export function InputImageRenderer(props: RendererComponentProps) {
   });
 }
 
-export const inputImageRendererDefinition: RendererDefinition = {
+export const inputImageRendererDefinition: RegisteredRendererDefinition = {
   type: 'input-image',
   displayName: 'Input Image',
   category: 'Form Advanced',

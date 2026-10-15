@@ -47,7 +47,7 @@ The first compiler-integrated diagnostics slice is now implemented.
 
 Current limitation:
 
-- unknown bare-key diagnostics are only reliable for renderers that expose a closed prop surface such as `propSchema` and/or richer renderer-owned validation; open-ended renderers still need incremental metadata or `schemaValidator` contributions before strict unknown-key checks become authoritative.
+- unknown bare-key diagnostics are only reliable for renderers that expose a closed prop surface such as `propContracts` and/or richer renderer-owned validation; open-ended renderers still need incremental metadata or `schemaValidator` contributions before strict unknown-key checks become authoritative.
 - compile-time finite-value validation intentionally skips dynamic expressions and source-shaped authored values because they require runtime evaluation.
 
 ## Problem
@@ -365,7 +365,7 @@ This lets the diagnostics pass detect obvious shape mistakes without duplicating
 
 Field metadata alone is not enough for richer renderer-owned contracts such as `table.columns`, `form.actions`, or domain-specific shells.
 
-Therefore the preferred design is to add a dedicated pure validator contribution on renderer definitions rather than overloading the current loose `propSchema` field.
+Therefore the preferred design is to add a dedicated pure validator contribution on renderer definitions rather than overloading the prop-contract surface (`propContracts`; the former loose `propSchema` field was removed by the renderer metamodel track, RM-1/plan 603).
 
 Directionally:
 

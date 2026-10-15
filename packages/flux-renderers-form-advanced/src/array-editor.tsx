@@ -4,7 +4,7 @@ import type {
   CompiledValidationBehavior,
   FormRuntime,
   RendererComponentProps,
-  RendererDefinition,
+  RegisteredRendererDefinition,
   RuntimeFieldRegistration,
   ValidationRule,
 } from '@nop-chaos/flux-core';
@@ -423,7 +423,7 @@ export function ArrayEditorRenderer(props: RendererComponentProps<ArrayEditorSch
   );
 }
 
-export const arrayEditorRendererDefinition: RendererDefinition = {
+export const arrayEditorRendererDefinition: RegisteredRendererDefinition = {
   type: 'array-editor',
   displayName: 'Array Editor',
   category: 'Form Advanced',

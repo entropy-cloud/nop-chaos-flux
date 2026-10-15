@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createSchemaRenderer, useCurrentFormState } from '@nop-chaos/flux-react';
-import type { RendererDefinition } from '@nop-chaos/flux-core';
+import type { RegisteredRendererDefinition } from '@nop-chaos/flux-core';
 import { formRendererDefinitions } from '@nop-chaos/flux-renderers-form';
 import { formAdvancedRendererDefinitions } from '../index.js';
 import { env } from '../test-support.js';
@@ -20,7 +20,7 @@ function ItemsProbe(props: { name: string; testid: string }) {
   return <span data-testid={props.testid}>{JSON.stringify(value)}</span>;
 }
 
-const itemsProbeRenderer: RendererDefinition = {
+const itemsProbeRenderer: RegisteredRendererDefinition = {
   type: 'array-items-probe',
   component: (props) => (
     <ItemsProbe

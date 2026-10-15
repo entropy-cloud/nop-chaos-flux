@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { createRendererRegistry, type RendererDefinition } from '@nop-chaos/flux-core';
+import { createRendererRegistry, type RegisteredRendererDefinition } from '@nop-chaos/flux-core';
 import { createSchemaCompiler, validateSchema } from './index.js';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
 
 describe('schema compiler renderer contract integration', () => {
   it('treats propContracts as a closed authoring prop model for diagnostics', () => {
-    const renderer: RendererDefinition = {
+    const renderer: RegisteredRendererDefinition = {
       type: 'contract-button',
       component: () => null,
       propContracts: {
@@ -46,7 +46,7 @@ describe('schema compiler renderer contract integration', () => {
   });
 
   it('runs authoringTransform before closed prop diagnostics', () => {
-    const renderer: RendererDefinition = {
+    const renderer: RegisteredRendererDefinition = {
       type: 'contract-transform-button',
       component: () => null,
       authoringTransform: ({ schema }) => {
@@ -83,7 +83,7 @@ describe('schema compiler renderer contract integration', () => {
   });
 
   it('skips invalid finite prop values from prop lowering during compile', () => {
-    const renderer: RendererDefinition = {
+    const renderer: RegisteredRendererDefinition = {
       type: 'contract-button',
       component: () => null,
       propContracts: {
@@ -118,7 +118,7 @@ describe('schema compiler renderer contract integration', () => {
   });
 
   it('accepts ${expr} for boolean props and normalizes non-boolean runtime results to undefined', () => {
-    const renderer: RendererDefinition = {
+    const renderer: RegisteredRendererDefinition = {
       type: 'contract-boolean',
       component: () => null,
       fields: [{ key: 'disabled', kind: 'prop', valueType: 'boolean' }],
@@ -149,7 +149,7 @@ describe('schema compiler renderer contract integration', () => {
   });
 
   it('rejects ordinary string literals for boolean props', () => {
-    const renderer: RendererDefinition = {
+    const renderer: RegisteredRendererDefinition = {
       type: 'contract-boolean',
       component: () => null,
       fields: [{ key: 'disabled', kind: 'prop', valueType: 'boolean' }],
@@ -175,7 +175,7 @@ describe('schema compiler renderer contract integration', () => {
   });
 
   it('prefers explicit validation ownerResolution over scopePolicy form fallback', () => {
-    const renderer: RendererDefinition = {
+    const renderer: RegisteredRendererDefinition = {
       type: 'owner-precedence',
       component: () => null,
       scopePolicy: 'form',
@@ -201,7 +201,7 @@ describe('schema compiler renderer contract integration', () => {
   });
 
   it('throws in strict mode when custom field compilation fails', () => {
-    const renderer: RendererDefinition = {
+    const renderer: RegisteredRendererDefinition = {
       type: 'custom-compile',
       component: () => null,
       fields: [
@@ -226,7 +226,7 @@ describe('schema compiler renderer contract integration', () => {
   });
 
   it('replaces the node with an explicit failure surface in continueOnError mode', () => {
-    const renderer: RendererDefinition = {
+    const renderer: RegisteredRendererDefinition = {
       type: 'custom-compile',
       component: () => null,
       fields: [

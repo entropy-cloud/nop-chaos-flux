@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import type { RendererDefinition } from '@nop-chaos/flux-core';
+import type { RegisteredRendererDefinition } from '@nop-chaos/flux-core';
 import { makeCompiler } from './schema-compiler-shape-validation-test-utils.js';
 import { createSchemaCompilerDiagnosticsContext } from './schema-compiler/diagnostics.js';
 import { validateFluxValueShape } from './schema-compiler/flux-value-shape-validation.js';
 
 describe('shape validation finite prop and value-shape diagnostics', () => {
   it('reports invalid finite prop values from propContracts', () => {
-    const renderer: RendererDefinition = {
+    const renderer: RegisteredRendererDefinition = {
       type: 'button',
       component: () => null,
       propContracts: {
@@ -69,7 +69,7 @@ describe('shape validation finite prop and value-shape diagnostics', () => {
   });
 
   it('accepts valid finite prop values from propContracts', () => {
-    const renderer: RendererDefinition = {
+    const renderer: RegisteredRendererDefinition = {
       type: 'button',
       component: () => null,
       propContracts: {
@@ -91,7 +91,7 @@ describe('shape validation finite prop and value-shape diagnostics', () => {
   });
 
   it('skips dynamic prop values during compile-time finite-value validation', () => {
-    const renderer: RendererDefinition = {
+    const renderer: RegisteredRendererDefinition = {
       type: 'button',
       component: () => null,
       propContracts: {
