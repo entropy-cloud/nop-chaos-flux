@@ -11,10 +11,17 @@ const rootDir = path.join(__dirname, '..');
 const baselineFile = path.join(rootDir, 'scripts', 'baselines', 'scanner-baselines.json');
 const SCANNER_DIR = path.join(rootDir, 'scripts', 'audit');
 
-// The three high-risk advisory scanners promoted to numeric-baseline gating
-// (cq-1 Phase 5). Counts only — per-entry identity is intentionally not
+// The five high-risk advisory scanners promoted to numeric-baseline gating
+// (cq-1 Phase 5; plan 601 WA-16 gate extension added find-todo-exitless and
+// find-as-any-casts). Counts only — per-entry identity is intentionally not
 // compared because scanner output ordering/format is not a stable contract.
-const BASELINED_SCANNERS = ['find-styling-suspects', 'discover-audit-suspects', 'find-test-global-leaks'];
+const BASELINED_SCANNERS = [
+  'find-styling-suspects',
+  'discover-audit-suspects',
+  'find-test-global-leaks',
+  'find-todo-exitless',
+  'find-as-any-casts',
+];
 
 function evaluateScannerCounts(currentCounts, baselineCounts) {
   const newReds = [];
@@ -71,7 +78,7 @@ async function main() {
       `${JSON.stringify({
         _header: {
           description:
-            'Numeric baselines for the three high-risk advisory scanners. A count above the baseline fails check:scanner-baselines (new suspects must be fixed or the baseline consciously re-registered).',
+            'Numeric baselines for the five high-risk advisory scanners. A count above the baseline fails check:scanner-baselines (new suspects must be fixed or the baseline consciously re-registered).',
           lastUpdated: new Date().toISOString().slice(0, 10),
         },
         scanners: counts,
