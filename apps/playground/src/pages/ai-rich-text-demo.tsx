@@ -2,7 +2,6 @@ import { useMemo } from 'react';
 import { Button } from '@nop-chaos/ui';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createSchemaRenderer, createDefaultRegistry } from '@nop-chaos/flux-react';
-import type { StreamApiRequest } from '@nop-chaos/flux-core';
 import { registerBasicRenderers } from '@nop-chaos/flux-renderers-basic';
 import { registerContentRenderers } from '@nop-chaos/flux-renderers-content';
 import { registerLayoutRenderers } from '@nop-chaos/flux-renderers-layout';
@@ -91,7 +90,7 @@ export function AiRichTextDemoPage({ onBack }: Props) {
         buildRequest: (req) => ({
           url: 'mock://ai/rich-text/chat/completions',
           method: 'POST',
-          data: { messages: req.messages, stream: true } as unknown as StreamApiRequest['data'],
+          data: { messages: req.messages, stream: true },
         }),
       }),
     [env],

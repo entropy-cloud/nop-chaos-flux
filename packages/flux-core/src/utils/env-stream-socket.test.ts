@@ -1,8 +1,9 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, expectTypeOf, it, vi } from 'vitest';
 import {
   StreamChunkParseError,
   decorateRendererEnv,
   type ApiFetcher,
+  type ExecutableApiRequest,
   type RendererEnv,
   type RendererEnvDecoratorHooks,
   type StreamApiRequest,
@@ -163,7 +164,7 @@ describe('decorateRendererEnv — openSocket hook', () => {
 
 describe('StreamApiRequest / StreamFetchResult type ergonomics', () => {
   it('StreamApiRequest accepts ExecutableApiRequest fields plus the two stream params', () => {
-    const request = {
+    const request: StreamApiRequest = {
       url: '/api/chat',
       method: 'POST',
       data: { prompt: 'hi' },
@@ -172,6 +173,44 @@ describe('StreamApiRequest / StreamFetchResult type ergonomics', () => {
     };
     expect(request.streamProtocol).toBe('sse');
     expect(request.streamChunkType).toBe('json');
+  });
+
+  // flux-core must not import from flux-renderers-ai (upward dependency is
+  // forbidden), so the engine ChatMessage essence is mirrored locally: a
+  // GENERIC INTERFACE with NO index signature — TypeScript never grants
+  // interfaces an implicit index signature, which is exactly what the pins
+  // below discriminate on. The exact member shape is irrelevant.
+  interface EngineMessage<M = unknown> {
+    id: string;
+    role: string;
+    content: unknown;
+    metadata?: M;
+  }
+
+  it('StreamApiRequest type contract: interface-typed body assignable directly, data?: unknown semantics, not assignable back to ExecutableApiRequest', () => {
+    // (a) The host construction shape used by all five AI connector hosts
+    // ({messages, stream, ...} with interface-typed messages) assigns DIRECTLY
+    // — no `as unknown as StreamApiRequest['data']` double cast (plan 600 G1).
+    type ChatCompletionBody = { messages: EngineMessage[]; stream: true };
+    expectTypeOf<ChatCompletionBody>().toExtend<StreamApiRequest['data']>();
+    const hostLiteral: StreamApiRequest = {
+      url: 'mock://ai/chat/completions',
+      method: 'POST',
+      data: { messages: [] as EngineMessage[], stream: true },
+    };
+    expect(hostLiteral.url).toBe('mock://ai/chat/completions');
+
+    // (b) Exchange-cost pin: the flat declaration drops the SchemaObject
+    // inheritance, so StreamApiRequest is NOT assignable back to
+    // ExecutableApiRequest (data?: unknown vs SchemaValue, plus no implicit
+    // index signature for interfaces). Red-leg mechanism: restoring the
+    // ExecutableApiRequest intersection turns this pin — and the whole type
+    // test file — tsc-red (compile-time discrimination, plan 600).
+    expectTypeOf<StreamApiRequest>().not.toExtend<ExecutableApiRequest>();
+
+    // (c) data is `unknown` (not SchemaValue): unknown accepts interface-typed
+    // bodies that SchemaValue's index signature rejects.
+    expectTypeOf<StreamApiRequest['data']>().toEqualTypeOf<unknown>();
   });
 
   it('StreamFetchResult exposes response + chunks with the expected envelope shape', async () => {

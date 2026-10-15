@@ -11,7 +11,7 @@
  * (Vite exposes them through `import.meta.env.VITE_*`), keeping secrets in
  * the host boundary. The package never sees them.
  */
-import type { RendererEnv, StreamApiRequest } from '@nop-chaos/flux-core';
+import type { RendererEnv } from '@nop-chaos/flux-core';
 import {
   createStreamBasedAiConnector,
   type AiConnector,
@@ -49,7 +49,7 @@ export function createOpenAICompatibleConnector(
         tools: req.tools,
         stream: true,
         ...config.extraParams,
-      } as unknown as StreamApiRequest['data'],
+      },
     }),
   });
 }

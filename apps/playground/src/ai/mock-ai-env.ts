@@ -156,7 +156,7 @@ export function createMockAiConnector(env: RendererEnv): AiConnector {
     buildRequest: (req) => ({
       url: 'mock://ai/chat/completions',
       method: 'POST',
-      data: { messages: req.messages, stream: true } as unknown as StreamApiRequest['data'],
+      data: { messages: req.messages, stream: true },
     }),
   });
 }

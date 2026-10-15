@@ -78,15 +78,40 @@ export type StreamProtocol = 'sse' | 'ndjson' | 'json-lines' | 'text' | 'raw';
 export type StreamChunkType = 'json' | 'text' | 'blob' | 'arraybuffer';
 
 /**
- * 流式请求：扩展 `ExecutableApiRequest`，复用 url/method/headers/body/dataType 等字段，
- * 新增两个可选的协议/解析参数。
+ * 流式请求：扁平重声明（不继承 `ExecutableApiRequest`/`SchemaObject`）。
+ * 原继承形态下 `data?: SchemaValue` 依赖索引签名，而 TS 只给对象字面量/类型
+ * 别名隐式索引签名、接口永无——宿主无法直接构造 interface-typed body（如 AI
+ * 消息数组），被迫 `as unknown as StreamApiRequest['data']` 双重 cast（plan 600
+ * 探针实录 TS2322+TS2352）。`data?: unknown` 后宿主直赋零 cast。
+ *
+ * 交换成本：本类型不再可赋回 `ExecutableApiRequest`（`data?: unknown` 对
+ * `SchemaValue` 不可赋 + 接口无隐式索引签名）。现无消费者（plan 600 全仓穷举，
+ * `StreamFetcher` 参数面本就是 `StreamApiRequest`）；五 never 标记保持
+ * fresh-literal excess-property 防护（与 `ExecutableApiRequest` 同防）。
+ * 类型钉：`env-stream-socket.test.ts` StreamApiRequest 工效块（恢复继承即
+ * tsc 红 = 类型钉红腿机制）。
  */
-export type StreamApiRequest = ExecutableApiRequest & {
+export interface StreamApiRequest {
+  url: string;
+  method?: string;
+  data?: unknown;
+  headers?: Record<string, string>;
+  selection?: string;
+  params?: never;
+  includeScope?: never;
+  responseAdaptor?: never;
+  requestAdaptor?: never;
+  /** Propagated from ApiSchema so the host stream fetcher can read `api.responseType`. */
+  responseType?: 'json' | 'blob' | 'text';
+  /** Propagated from ApiSchema so the host stream fetcher can read `api.downloadFileName`. */
+  downloadFileName?: string;
+  /** Request body encoding. `'json'` (default), `'form-data'` (multipart), `'form'` (urlencoded). */
+  dataType?: 'json' | 'form-data' | 'form';
   /** 流式协议，默认 `'sse'`。 */
   streamProtocol?: StreamProtocol;
   /** chunk 数据类型，默认 `'json'`。 */
   streamChunkType?: StreamChunkType;
-};
+}
 
 /**
  * 流式响应：`response` 携带连接级元信息（与 `ApiResponse` 同构，无 `data` 字段——

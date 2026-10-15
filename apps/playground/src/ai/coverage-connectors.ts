@@ -106,7 +106,7 @@ export function createCoverageConnectors(): { connectors: CoverageConnectors; en
       buildRequest: (req) => ({
         url,
         method: 'POST',
-        data: { messages: req.messages, stream: true } as unknown as StreamApiRequest['data'],
+        data: { messages: req.messages, stream: true },
       }),
     });
 
