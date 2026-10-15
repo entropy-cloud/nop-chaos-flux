@@ -1,0 +1,19 @@
+{
+  "name": "renderer-metamodel",
+  "description": "Renderer 注册元模型与编译结构收口 mission：以 docs/analysis/2026-10-15-renderer-definition-metamodel-review.md 为事实源，按 docs/backlog/renderer-metamodel-roadmap.md 的 RM-0~RM-8 顺序推进——①runtime schema-retention policy owner 文档与元模型权威声明（含两处死代码清理；#7~#12 公开契约通道的迁移/删除裁决随 RM-0 draft review 人工确认）；②类型层收口（propSchema 死字段删除含 12 个测试内联声明迁移、CompiledRendererContract 派生化消灭手抄副本、RendererRendererClass 改名留 alias、registry 入参类型化）；③帧族收敛（wrap/frameRootTag/frameWrap 单权威路径、FrameWrapMode 词表归一）；④fields+propContracts 双声明通道两阶段合并（新形态双读→66/41 声明文件并集全量迁移→旧形态删除）；⑤事件契约单源化与⑥scope 符号单源化；⑦TemplateNode 只读硬化 + 框架内部 raw schema 读迁移；⑧公开 API 六条 raw schema 通道按政策裁决收口（裁决为迁移/删除的通道 ≥2 时按通道组预拆 successor）。范围排除：roadmap 显式排除清单所列 C 表小项（events 通道 | undefined 值类型、defineRendererFamily 双重断言、Shape 28 字段分组注释）不在此轨立案，RendererResolvedProps Omit 漏 frameWrap 已并入 RM-0 钉面。本轨为结构收口型非审计驱动轨道，无 deep-audit/open-audit 提示词依赖（prompts 留空，执行以 planGuide 为准）。全程约束：模板零运行时写入不回退、编译快照体积不增、过渡期双读不双写、保护区 plan-first 且公开导出增删执行前人工确认、每项 typecheck/build/lint/test 全绿 + check 零新增红 + 行为面判别变异、新门禁入 CI 只增不减。",
+  "model": "opencode-go/deepseek-v4-flash",
+  "variant": "max",
+  "roadmapPath": "docs/backlog/renderer-metamodel-roadmap.md",
+  "plansDir": "docs/plans",
+  "planGuide": "docs/plans/00-plan-authoring-and-execution-guide.md",
+  "contextDir": "docs/context",
+  "moduleDir": ".",
+  "auditsDir": "docs/audits",
+  "commands": {
+    "test": "pnpm test",
+    "build": "pnpm build",
+    "lint": "pnpm lint",
+    "typecheck": "pnpm typecheck"
+  },
+  "commitFormat": "refactor(renderer-metamodel): <description>"
+}
