@@ -40,6 +40,13 @@ import {
   type LinearIssueListRow,
 } from './mock-backend-linear-issues';
 import { buildLinearIssueDetail } from './mock-backend-linear-detail';
+import {
+  createEndpointCounter,
+  createUrlParamReader,
+  faceResponse,
+  readOptInHooks,
+  withOptInHooks,
+} from './mock-backend-replica-kit';
 
 export * from './mock-backend-linear-issues';
 export * from './mock-backend-linear-detail';
@@ -347,16 +354,8 @@ type LinearTestHooks = {
   lastBulkUpdate?: Record<string, unknown>;
 };
 
-function readLinearTestHooks(): LinearTestHooks | undefined {
-  return (globalThis as { __linearTestHooks?: LinearTestHooks }).__linearTestHooks;
-}
-
-function countLinearEndpointCall(url: string): void {
-  const counters = (globalThis as { __linearEndpointCalls?: Record<string, number> }).__linearEndpointCalls;
-  if (!counters) return;
-  const name = url.slice(url.indexOf('Linear__')).split('?')[0];
-  counters[name] = (counters[name] ?? 0) + 1;
-}
+const countLinearEndpointCall = createEndpointCounter({ countersKey: '__linearEndpointCalls', prefix: 'Linear__' });
+const readLinearTestHooks = () => readOptInHooks<LinearTestHooks>('__linearTestHooks');
 
 /**
  * Full `/r/Linear__*` fetcher branch. Read payloads clone out of the session
@@ -371,11 +370,7 @@ export function createLinearFetcherBranch(db: LinearDatabase, clone: <T>(value: 
     }
     countLinearEndpointCall(url);
     const normalizedMethod = method.toLowerCase();
-    const qs = url.includes('?') ? new URLSearchParams(url.split('?')[1]) : new URLSearchParams();
-    const read = (key: string): string | undefined => {
-      const value = params[key] ?? body[key] ?? qs.get(key);
-      return value === undefined || value === null ? undefined : String(value);
-    };
+    const read = createUrlParamReader(url, params, body);
 
     // ----- writes (P4b) -----
     if (normalizedMethod === 'post') {
@@ -413,7 +408,7 @@ export function createLinearFetcherBranch(db: LinearDatabase, clone: <T>(value: 
           ? { status: 0, data: clone({ ok: true, updated: result.updated }) as T }
           : { status: 1, data: clone({ ok: false, error: result.error }) as T };
       }
-      return { status: 1, data: clone({ ok: false, error: 'unknown Linear write endpoint' }) as T };
+      return faceResponse<T>({ status: 1, ok: false, error: 'unknown Linear write endpoint' });
     }
     if (normalizedMethod !== 'get') {
       return null;
@@ -465,10 +460,9 @@ export function createLinearFetcherBranch(db: LinearDatabase, clone: <T>(value: 
 
   // Opt-in e2e hook: force the ln-move-miss branch through the exact endpoint
   // path — the drag UI cannot produce an unknown card/column (P4b Phase 3).
-  const hooks = (globalThis as { __linearTestHooks?: LinearTestHooks }).__linearTestHooks;
-  if (hooks) {
+  withOptInHooks<LinearTestHooks>('__linearTestHooks', (hooks) => {
     hooks.moveMiss = false;
-  }
+  });
 
   return handleLinearBranch;
 }

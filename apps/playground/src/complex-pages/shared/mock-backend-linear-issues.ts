@@ -19,6 +19,8 @@
  * brand asset appears in the datasets.
  */
 
+import { paginateRows, unwrapPatch } from './mock-backend-replica-kit';
+
 export type LinearIssueStatus = 'backlog' | 'todo' | 'in_progress' | 'done' | 'cancelled';
 export type LinearPriority = 'urgent' | 'high' | 'medium' | 'low' | 'none';
 
@@ -235,16 +237,7 @@ export function paginateLinear<T>(
   page: number,
   pageSize: number,
 ): { items: T[]; total: number; page: number; pageSize: number; pages: number } {
-  const safePage = Math.max(1, page);
-  const safeSize = Math.max(1, pageSize);
-  const start = (safePage - 1) * safeSize;
-  return {
-    items: rows.slice(start, start + safeSize),
-    total: rows.length,
-    page: safePage,
-    pageSize: safeSize,
-    pages: Math.max(1, Math.ceil(rows.length / safeSize)),
-  };
+  return paginateRows(rows, page, pageSize, { sizeKey: 'pageSize', clampPages: true });
 }
 
 export interface LinearBoardPayload {
@@ -377,9 +370,7 @@ export function applyLinearIssuePatch(row: LinearIssue, patch: LinearIssuePatch)
 export function bulkUpdateLinearIssues(rows: LinearIssue[], input: Record<string, unknown>): LinearWriteResult {
   const ids = toStringArray(input.ids);
   if (ids.length === 0) return { ok: false, error: 'no ids' };
-  const patchSource = (input.patch && typeof input.patch === 'object' && !Array.isArray(input.patch)
-    ? input.patch
-    : input) as Record<string, unknown>;
+  const patchSource = unwrapPatch(input, { key: 'patch' });
   const patch = pickLinearIssuePatch(patchSource);
   if (!patch || Object.keys(patch).length === 0) return { ok: false, error: 'invalid patch' };
   const idSet = new Set(ids);

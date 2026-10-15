@@ -7,7 +7,7 @@
       "files": 20,
       "exports": 430,
       "types": 585,
-      "dependencies": 2,
+      "dependencies": 1,
       "devDependencies": 16,
       "unlisted": 35
     },
@@ -1055,10 +1055,7 @@
     "packages/flux-react/src/schema-diagnostics-reporter.ts#SchemaDiagnosticReporter",
     "packages/flux-renderers-form/src/renderers/form-load-action.ts#FormLoadState"
   ],
-  "dependencies": [
-    "apps/playground/package.json#@nop-chaos/page-designer-core",
-    "packages/flux-renderers-mobile/package.json#@nop-chaos/flux-react"
-  ],
+  "dependencies": ["packages/flux-renderers-mobile/package.json#@nop-chaos/flux-react"],
   "devDependencies": [
     "package.json#@stryker-mutator/vitest-runner",
     "package.json#@types/three",

@@ -25,6 +25,7 @@ import {
   type StRiskLevel,
   type StPaymentStatus,
 } from './mock-backend-stripe-types';
+import { paginateRows } from './mock-backend-replica-kit';
 
 const CUSTOMERS = [
   '云帆文创',
@@ -248,15 +249,9 @@ export function paginateStPayments(
   page: number,
   perPage: number,
 ): StPaymentsPayload {
-  const size = Math.max(1, perPage);
-  const current = Math.max(1, page);
-  const start = (current - 1) * size;
-  const items = rows.slice(start, start + size).map(toStPaymentRow);
-  return {
-    items,
-    total: rows.length,
-    page: current,
-    perPage: size,
-    pages: Math.ceil(rows.length / size),
-  };
+  return paginateRows(rows, page, perPage, {
+    sizeKey: 'perPage',
+    clampPages: false,
+    project: toStPaymentRow,
+  });
 }

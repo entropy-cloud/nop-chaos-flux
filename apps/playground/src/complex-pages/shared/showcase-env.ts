@@ -8,25 +8,29 @@ import {
 } from './mock-backend';
 import { createAntdProOrders, createAntdProFetcherBranch } from './mock-backend-antdpro';
 import { createCalEventMeta, createCalFetcherBranch } from './mock-backend-cal';
-import { createLinearDatabase, createLinearFetcherBranch, type LinearFetcherBranchInput } from './mock-backend-linear';
+import { createLinearDatabase, createLinearFetcherBranch } from './mock-backend-linear';
 import { createNotionDatabase, createNotionFetcherBranch } from './mock-backend-notion';
 import { createSundialFetcherBranch } from './mock-backend-sundial-branch';
 import { createAirtableDatabase, createAirtableFetcherBranch } from './mock-backend-airtable';
 import { createStripeDatabase, createStripeFetcherBranch } from './mock-backend-stripe';
+import {
+  APPROVAL_STATUS_LABELS,
+  asNumber,
+  createReplicaBranches,
+  labelOf,
+  PAYMENT_METHOD_LABELS,
+  PAYMENT_STATUS_LABELS,
+  paginateRows,
+  readOrderId,
+  unwrapPatch,
+  warnUnknownEndpointOnce,
+} from './mock-backend-replica-kit';
 import { confirmBridge } from './confirm-bridge';
 import { createMockAiStream, createMockAiConnector, createAiImportLoader } from '../../ai/mock-ai-env';
 import { mockToolSchemas, mockToolExecutor } from '../../ai/tool-mock';
 
-type ReplicaFetcherBranch = <T>(input: LinearFetcherBranchInput) => { status: number; data: T } | null;
-
 function asRecord(value: unknown): Record<string, unknown> {
   return (value ?? {}) as Record<string, unknown>;
-}
-
-function asNumber(value: unknown): number | undefined {
-  if (typeof value === 'number') return value;
-  if (typeof value === 'string' && value !== '' && !Number.isNaN(Number(value))) return Number(value);
-  return undefined;
 }
 
 function filterUsers(db: MockDatabase, params: Record<string, unknown>) {
@@ -104,7 +108,7 @@ export function createShowcaseEnv(): { env: RendererEnv; db: MockDatabase } {
   const handleLinearBranch = createLinearFetcherBranch(createLinearDatabase(), clone);
   const handleSundialBranch = createSundialFetcherBranch(db, clone);
   const handleNotionBranch = createNotionFetcherBranch(createNotionDatabase(), clone);
-  const replicaBranches: Array<[string, ReplicaFetcherBranch]> = [
+  const handleReplicaBranches = createReplicaBranches([
     ['/r/AntdPro__', handleAntdProBranch],
     ['/r/Cal__', handleCalBranch],
     ['/r/Linear__', handleLinearBranch],
@@ -112,7 +116,7 @@ export function createShowcaseEnv(): { env: RendererEnv; db: MockDatabase } {
     ['/r/Airtable__', createAirtableFetcherBranch(createAirtableDatabase(), clone)],
     ['/r/Stripe__', createStripeFetcherBranch(createStripeDatabase(), clone)],
     ['/r/Sundial__', handleSundialBranch],
-  ];
+  ]);
 
   const fetcher = async function fetcher<T>(api: FetcherApi): Promise<{ status: number; data: T }> {
     const url = api.url ?? '';
@@ -129,17 +133,15 @@ export function createShowcaseEnv(): { env: RendererEnv; db: MockDatabase } {
       const qs = url.includes('?') ? new URLSearchParams(url.split('?')[1]) : new URLSearchParams();
       const page = Math.max(1, asNumber(qs.get('page')) ?? 1);
       const pageSize = Math.max(1, asNumber(qs.get('perPage')) ?? 10);
-      const start = (page - 1) * pageSize;
-      const paged = db.depts.slice(start, start + pageSize);
-      return { status: 0, data: clone({ items: paged, total: db.depts.length }) as T };
+      const { items, total } = paginateRows(db.depts, page, pageSize, { sizeKey: 'perPage', clampPages: true });
+      return { status: 0, data: clone({ items, total }) as T };
     }
     if (url.includes('/r/Tag__findPage') && method === 'get') {
       const qs = url.includes('?') ? new URLSearchParams(url.split('?')[1]) : new URLSearchParams();
       const page = Math.max(1, asNumber(qs.get('page')) ?? 1);
       const pageSize = Math.max(1, asNumber(qs.get('perPage')) ?? 10);
-      const start = (page - 1) * pageSize;
-      const paged = db.tags.slice(start, start + pageSize);
-      return { status: 0, data: clone({ items: paged, total: db.tags.length }) as T };
+      const { items, total } = paginateRows(db.tags, page, pageSize, { sizeKey: 'perPage', clampPages: true });
+      return { status: 0, data: clone({ items, total }) as T };
     }
 
     // ----- Users -----
@@ -239,7 +241,6 @@ export function createShowcaseEnv(): { env: RendererEnv; db: MockDatabase } {
 
     // ----- Approval tasks -----
     if (url.includes('/r/ApprovalTask__findPage') && method === 'get') {
-      const STATUS_LABELS: Record<string, string> = { pending: '待审批', approved: '已通过', rejected: '已驳回' };
       const merged = { ...params, ...body };
       let rows = db.approvalTasks.slice();
       const status = typeof merged.status === 'string' ? merged.status : '';
@@ -249,7 +250,7 @@ export function createShowcaseEnv(): { env: RendererEnv; db: MockDatabase } {
         const lower = keyword.toLowerCase();
         rows = rows.filter((t) => t.title.toLowerCase().includes(lower) || t.applicant.toLowerCase().includes(lower));
       }
-      const items = rows.map((t) => ({ ...t, status_label: STATUS_LABELS[t.status] ?? t.status }));
+      const items = rows.map((t) => ({ ...t, status_label: labelOf(APPROVAL_STATUS_LABELS, t.status, { fallbackToRaw: true }) }));
       return { status: 0, data: clone({ items, total: items.length }) as T };
     }
     if (url.includes('/r/ApprovalTask__get') && method === 'get') {
@@ -290,18 +291,17 @@ export function createShowcaseEnv(): { env: RendererEnv; db: MockDatabase } {
     // ----- Order sub-tables -----
     // OrderItem CRUD — independent sub-table maintenance with inline edit.
     if (url.includes('/r/OrderItem__findPage') && method === 'post') {
-      const orderId = typeof body.orderId === 'string' ? body.orderId : '';
+      const orderId = readOrderId(body);
       const items = db.orderItems
         .filter((i) => i.orderId === orderId)
         .map((i) => ({ ...i, subtotal: Number(((i.qty ?? 0) * (i.price ?? 0)).toFixed(2)) }));
       const page = Math.max(1, asNumber(body.page) ?? 1);
       const pageSize = Math.max(1, asNumber(body.pageSize) ?? 10);
-      const start = (page - 1) * pageSize;
-      const paged = items.slice(start, start + pageSize);
-      return { status: 0, data: clone({ items: paged, total: items.length }) as T };
+      const { items: paged, total } = paginateRows(items, page, pageSize, { sizeKey: 'pageSize', clampPages: true });
+      return { status: 0, data: clone({ items: paged, total }) as T };
     }
     if (url.includes('/r/OrderItem__save') && method === 'post') {
-      const source = (body.record && typeof body.record === 'object' ? body.record : body) as Record<string, unknown>;
+      const source = unwrapPatch(body, { key: 'record' });
       const id = typeof source.id === 'string' && source.id ? source.id : '';
       const existing = db.orderItems.find((i) => i.id === id);
       if (existing) {
@@ -331,39 +331,37 @@ export function createShowcaseEnv(): { env: RendererEnv; db: MockDatabase } {
       return { status: 0, data: clone({ success: true }) as T };
     }
     if (url.includes('/r/OrderItem__find') && method === 'get') {
-      const orderId = typeof body.orderId === 'string' ? body.orderId : (typeof params.orderId === 'string' ? params.orderId : '');
+      const orderId = readOrderId(body, params);
       const items = db.orderItems
         .filter((i) => i.orderId === orderId)
         .map((i) => ({ ...i, subtotal: Number(((i.qty ?? 0) * (i.price ?? 0)).toFixed(2)) }));
       return { status: 0, data: clone({ items, total: items.length }) as T };
     }
     if (url.includes('/r/OrderLog__find') && method === 'get') {
-      const orderId = typeof body.orderId === 'string' ? body.orderId : (typeof params.orderId === 'string' ? params.orderId : '');
+      const orderId = readOrderId(body, params);
       const items = db.orderLogs.filter((l) => l.orderId === orderId);
       return { status: 0, data: clone({ items, total: items.length }) as T };
     }
     if (url.includes('/r/Address__find') && method === 'get') {
-      const orderId = typeof body.orderId === 'string' ? body.orderId : (typeof params.orderId === 'string' ? params.orderId : '');
+      const orderId = readOrderId(body, params);
       const items = db.addresses
         .filter((a) => a.orderId === orderId)
         .map((a) => ({ ...a, isDefaultLabel: a.isDefault ? '是' : '否' }));
       return { status: 0, data: clone({ items, total: items.length }) as T };
     }
     if (url.includes('/r/Payment__find') && method === 'get') {
-      const orderId = typeof body.orderId === 'string' ? body.orderId : (typeof params.orderId === 'string' ? params.orderId : '');
-      const METHOD_LABELS: Record<string, string> = { alipay: '支付宝', wechat: '微信', card: '银行卡', balance: '余额' };
-      const STATUS_LABELS: Record<string, string> = { success: '成功', pending: '处理中', failed: '失败' };
+      const orderId = readOrderId(body, params);
       const items = db.payments
         .filter((p) => p.orderId === orderId)
         .map((p) => ({
           ...p,
-          method_label: METHOD_LABELS[p.method] ?? p.method,
-          status_label: STATUS_LABELS[p.status] ?? p.status,
+          method_label: labelOf(PAYMENT_METHOD_LABELS, p.method, { fallbackToRaw: true }),
+          status_label: labelOf(PAYMENT_STATUS_LABELS, p.status, { fallbackToRaw: true }),
         }));
       return { status: 0, data: clone({ items, total: items.length }) as T };
     }
     if (url.includes('/r/Shipment__find') && method === 'get') {
-      const orderId = typeof body.orderId === 'string' ? body.orderId : (typeof params.orderId === 'string' ? params.orderId : '');
+      const orderId = readOrderId(body, params);
       const items = db.shipments.filter((s) => s.orderId === orderId);
       return { status: 0, data: clone({ items, total: items.length }) as T };
     }
@@ -377,7 +375,7 @@ export function createShowcaseEnv(): { env: RendererEnv; db: MockDatabase } {
       return { status: 0, data: clone({ items, total: items.length }) as T };
     }
     if (url.includes('/r/Budget__save')) {
-      const source = (body.record && typeof body.record === 'object' ? body.record : body) as Record<string, unknown>;
+      const source = unwrapPatch(body, { key: 'record' });
       const id = typeof source.id === 'string' ? source.id : '';
       const target = db.budgets.find((b) => b.id === id);
       if (target) {
@@ -473,10 +471,10 @@ export function createShowcaseEnv(): { env: RendererEnv; db: MockDatabase } {
       return { status: 0, data: clone({ items: rows, total: rows.length }) as T };
     }
     if (url.includes('/r/Dashboard__approvals') && method === 'get') {
-      const STATUS_LABELS: Record<string, string> = { pending: '待审批', approved: '已通过', rejected: '已驳回' };
+      // 无 `?? status` 原文回退：unknown → undefined（plan 599 R1 m3 先钉后收敛）。
       const items = db.approvalTasks
         .filter((t) => t.status === 'pending')
-        .map((t) => ({ ...t, status_label: STATUS_LABELS[t.status] }));
+        .map((t) => ({ ...t, status_label: labelOf(APPROVAL_STATUS_LABELS, t.status) }));
       return { status: 0, data: clone({ items, total: items.length }) as T };
     }
 
@@ -499,15 +497,12 @@ export function createShowcaseEnv(): { env: RendererEnv; db: MockDatabase } {
 
     // ----- App-replica endpoints (P2a antdpro / P3a cal / P4a linear / P5a
     // notion / P6a airtable / P7a stripe; get-only reads — writes belong to
-    // each Pi-b). Bodies live in mock modules (700-line gate); [prefix,
-    // handler] loop. -----
-    for (const [prefix, handleReplicaBranch] of replicaBranches) {
-      if (url.includes(prefix)) {
-        const handled = handleReplicaBranch<T>({ url, method, params, body });
-        if (handled) return handled;
-      }
-    }
+    // each Pi-b). Bodies live in mock modules (700-line gate); the
+    // [prefix, handler] dispatch loop lives in the replica kit. -----
+    const handled = handleReplicaBranches<T>({ url, method, params, body });
+    if (handled) return handled;
 
+    warnUnknownEndpointOnce(url);
     return { status: 0, data: null as T };
   };
 

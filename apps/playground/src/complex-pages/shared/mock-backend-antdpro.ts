@@ -10,6 +10,8 @@
  * All copy is original self-authored Chinese; no Ant Design Pro sample data.
  */
 
+import { asNumber as asAntdProNumber, createEndpointCounter, createUrlParamReader, paginateRows } from './mock-backend-replica-kit';
+
 export type AntdProOrderStatus = 'pending' | 'processing' | 'shipped' | 'done' | 'cancelled';
 export type AntdProChannel = 'web' | 'miniapp' | 'store' | 'app';
 
@@ -150,16 +152,7 @@ export function filterAntdProOrders(rows: AntdProOrder[], filter: AntdProOrderFi
 }
 
 export function paginateAntdPro<T>(rows: T[], page: number, pageSize: number): { items: T[]; total: number; page: number; pageSize: number; pages: number } {
-  const safePage = Math.max(1, page);
-  const safeSize = Math.max(1, pageSize);
-  const start = (safePage - 1) * safeSize;
-  return {
-    items: rows.slice(start, start + safeSize),
-    total: rows.length,
-    page: safePage,
-    pageSize: safeSize,
-    pages: Math.max(1, Math.ceil(rows.length / safeSize)),
-  };
+  return paginateRows(rows, page, pageSize, { sizeKey: 'pageSize', clampPages: true });
 }
 
 export function findAntdProOrder(rows: AntdProOrder[], id: string): AntdProOrder | null {
@@ -275,12 +268,6 @@ export interface AntdProFetcherBranchInput {
   body: Record<string, unknown>;
 }
 
-function asAntdProNumber(value: unknown): number | undefined {
-  if (typeof value === 'number') return value;
-  if (typeof value === 'string' && value !== '' && !Number.isNaN(Number(value))) return Number(value);
-  return undefined;
-}
-
 function antdproNowStamp(): string {
   const now = new Date();
   return `${now.getFullYear()}-${pad(now.getMonth() + 1, 2)}-${pad(now.getDate(), 2)} ${pad(now.getHours(), 2)}:${pad(now.getMinutes(), 2)}`;
@@ -391,25 +378,17 @@ export function approveAntdProOrder(
  */
 export function createAntdProFetcherBranch(orders: AntdProOrder[], clone: <T>(value: T) => T) {
   let currentOrderId: string | null = null;
+  // Opt-in e2e observation hook (window.__antdproEndpointCalls); production no-op.
+  const countAntdProEndpointCall = createEndpointCounter({ countersKey: '__antdproEndpointCalls', prefix: 'AntdPro__' });
 
   return function handleAntdProBranch<T>(input: AntdProFetcherBranchInput): { status: number; data: T } | null {
     const { url, method, params, body } = input;
     if (!url.includes('/r/AntdPro__')) {
       return null;
     }
-    // Opt-in e2e observation hook: specs pre-create window.__antdproEndpointCalls
-    // via addInitScript; production never sets it, so this stays a no-op.
-    const counters = (globalThis as { __antdproEndpointCalls?: Record<string, number> }).__antdproEndpointCalls;
-    if (counters) {
-      const name = url.slice(url.indexOf('AntdPro__')).split('?')[0];
-      counters[name] = (counters[name] ?? 0) + 1;
-    }
+    countAntdProEndpointCall(url);
     const normalizedMethod = method.toLowerCase();
-    const qs = url.includes('?') ? new URLSearchParams(url.split('?')[1]) : new URLSearchParams();
-    const read = (key: string): string | undefined => {
-      const value = params[key] ?? body[key] ?? qs.get(key);
-      return value === undefined || value === null ? undefined : String(value);
-    };
+    const read = createUrlParamReader(url, params, body);
 
     if (normalizedMethod === 'post') {
       if (url.includes('/r/AntdPro__saveOrder')) {

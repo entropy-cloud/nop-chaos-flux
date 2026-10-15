@@ -3,12 +3,7 @@ import {
   type MockDatabase, type SundialSettings, type SundialTask,
   type SundialTaskView,
 } from './mock-backend';
-
-function asNumber(value: unknown): number | undefined {
-  if (typeof value === 'number') return value;
-  if (typeof value === 'string' && value !== '' && !Number.isNaN(Number(value))) return Number(value);
-  return undefined;
-}
+import { asNumber } from './mock-backend-replica-kit';
 
 export function createSundialFetcherBranch(db: MockDatabase, cloneFn: <T>(value: T) => T) {
   const clone = cloneFn;

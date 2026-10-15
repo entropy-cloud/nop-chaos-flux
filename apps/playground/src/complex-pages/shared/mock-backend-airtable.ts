@@ -48,6 +48,15 @@ import type {
   AirtableDatabase,
   AtRecord,
 } from './mock-backend-airtable-types';
+import {
+  createEndpointCounter,
+  createUrlParamReader,
+  faceResponse,
+  placeholderFrom,
+  readOptInHooks,
+  withOptInHooks,
+  type ReplicaFallbackFace,
+} from './mock-backend-replica-kit';
 
 export * from './mock-backend-airtable-types';
 export * from './mock-backend-airtable-records';
@@ -71,16 +80,14 @@ type AirtableTestHooks = {
   lastUpdate?: Record<string, unknown>;
 };
 
-function readAirtableTestHooks(): AirtableTestHooks | undefined {
-  return (globalThis as { __airtableTestHooks?: AirtableTestHooks }).__airtableTestHooks;
-}
+const countAirtableEndpointCall = createEndpointCounter({ countersKey: '__airtableEndpointCalls', prefix: 'Airtable__' });
+const readAirtableTestHooks = () => readOptInHooks<AirtableTestHooks>('__airtableTestHooks');
 
-function countAirtableEndpointCall(url: string): void {
-  const counters = (globalThis as { __airtableEndpointCalls?: Record<string, number> }).__airtableEndpointCalls;
-  if (!counters) return;
-  const name = url.slice(url.indexOf('Airtable__')).split('?')[0];
-  counters[name] = (counters[name] ?? 0) + 1;
-}
+const AIRTABLE_UNKNOWN_FACES: Record<'write' | 'method' | 'read', ReplicaFallbackFace> = {
+  write: { status: 1, ok: false, error: 'unknown Airtable write endpoint' },
+  method: { status: 1, ok: false, error: 'unknown Airtable endpoint' },
+  read: { status: 0, ok: false, error: 'unknown replica endpoint' },
+};
 
 /**
  * Full `/r/Airtable__*` fetcher branch. Read payloads clone out of the
@@ -95,8 +102,7 @@ export function createAirtableFetcherBranch(
   clone: <T>(value: T) => T,
 ) {
   function placeholderRecord(id: string): AtRecord {
-    const fallback = db.records[0];
-    return { ...fallback, id, title: '未找到记录（占位样本）' };
+    return placeholderFrom(db.records[0], id, { title: '未找到记录（占位样本）' });
   }
 
   function findNeighbor(id: string, offset: -1 | 1): string | undefined {
@@ -135,17 +141,13 @@ export function createAirtableFetcherBranch(
           ? { status: 0, data: clone({ ok: true, id: result.id }) as T }
           : { status: 1, data: clone({ ok: false, error: result.error }) as T };
       }
-      return { status: 1, data: clone({ ok: false, error: 'unknown Airtable write endpoint' }) as T };
+      return faceResponse<T>(AIRTABLE_UNKNOWN_FACES.write);
     }
     if (normalizedMethod !== 'get') {
-      return { status: 1, data: clone({ ok: false, error: 'unknown Airtable endpoint' }) as T };
+      return faceResponse<T>(AIRTABLE_UNKNOWN_FACES.method);
     }
 
-    const qs = url.includes('?') ? new URLSearchParams(url.split('?')[1]) : new URLSearchParams();
-    const read = (key: string): string | undefined => {
-      const value = params[key] ?? body[key] ?? qs.get(key);
-      return value === undefined || value === null ? undefined : String(value);
-    };
+    const read = createUrlParamReader(url, params, body);
 
     // ----- reads (P6a) + search/sort/group parameterization (P6b) -----
     if (url.includes('/r/Airtable__records')) {
@@ -185,15 +187,14 @@ export function createAirtableFetcherBranch(
         }) as T,
       };
     }
-    return { status: 0, data: clone({ ok: false, error: 'unknown replica endpoint' }) as T };
+    return faceResponse<T>(AIRTABLE_UNKNOWN_FACES.read);
   }
 
   // Opt-in e2e hook: force the miss branch through the exact endpoint path —
   // the edit UI cannot produce unknown ids (P6b Phase 1, notion precedent).
-  const hooks = (globalThis as { __airtableTestHooks?: AirtableTestHooks }).__airtableTestHooks;
-  if (hooks) {
+  withOptInHooks<AirtableTestHooks>('__airtableTestHooks', (hooks) => {
     hooks.updateMiss = false;
-  }
+  });
 
   return handleAirtableBranch;
 }

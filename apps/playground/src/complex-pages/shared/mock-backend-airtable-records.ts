@@ -21,6 +21,7 @@ import {
   type AtRecordRow,
   type AtSummary,
 } from './mock-backend-airtable-types';
+import { paginateRows } from './mock-backend-replica-kit';
 const TITLES = [
   '首页信息流卡片双列布局切换',
   '会员结算页金额精度对齐',
@@ -257,11 +258,11 @@ export function paginateAirtable(rows: AtRecord[], page: number, perPage: number
   perPage: number;
   pages: number;
 } {
-  const size = Math.max(1, perPage);
-  const current = Math.max(1, page);
-  const start = (current - 1) * size;
-  const items = rows.slice(start, start + size).map(toAirtableRecordRow);
-  return { items, total: rows.length, page: current, perPage: size, pages: Math.ceil(rows.length / size) };
+  return paginateRows(rows, page, perPage, {
+    sizeKey: 'perPage',
+    clampPages: false,
+    project: toAirtableRecordRow,
+  });
 }
 
 export function summarizeAirtable(rows: AtRecord[]): AtSummary {

@@ -42,6 +42,16 @@ import {
 import { createStripeEmptyOverview, createStripeOverview } from './mock-backend-stripe-overview';
 import { exportStripePayments, refundStripePayment } from './mock-backend-stripe-writes';
 import type { StripeDatabase, StPayment } from './mock-backend-stripe-types';
+import {
+  createEndpointCounter,
+  createUrlParamReader,
+  faceResponse,
+  parseUrlQuery,
+  placeholderFrom,
+  readOptInHooks,
+  withOptInHooks,
+  type ReplicaFallbackFace,
+} from './mock-backend-replica-kit';
 
 export * from './mock-backend-stripe-types';
 export * from './mock-backend-stripe-payments';
@@ -65,19 +75,14 @@ type StripeTestHooks = {
   lastUrl?: string;
 };
 
-function readStripeTestHooks(): StripeTestHooks | undefined {
-  return (globalThis as { __stripeTestHooks?: StripeTestHooks }).__stripeTestHooks;
-}
+const countStripeEndpointCall = createEndpointCounter({ countersKey: '__stripeEndpointCalls', prefix: 'Stripe__', hooksKey: '__stripeTestHooks' });
+const readStripeTestHooks = () => readOptInHooks<StripeTestHooks>('__stripeTestHooks');
 
-function countStripeEndpointCall(url: string): void {
-  const counters = (globalThis as { __stripeEndpointCalls?: Record<string, number> })
-    .__stripeEndpointCalls;
-  if (!counters) return;
-  const name = url.slice(url.indexOf('Stripe__')).split('?')[0];
-  counters[name] = (counters[name] ?? 0) + 1;
-  const hooks = readStripeTestHooks();
-  if (hooks) hooks.lastUrl = url;
-}
+const STRIPE_UNKNOWN_FACES: Record<'write' | 'method' | 'read', ReplicaFallbackFace> = {
+  write: { status: 1, ok: false, error: 'unknown Stripe endpoint' },
+  method: { status: 1, ok: false, error: 'unknown Stripe endpoint' },
+  read: { status: 0, ok: false, error: 'unknown replica endpoint' },
+};
 
 /**
  * Full `/r/Stripe__*` fetcher branch. Read payloads clone out of the session
@@ -88,8 +93,10 @@ function countStripeEndpointCall(url: string): void {
  */
 export function createStripeFetcherBranch(db: StripeDatabase, clone: <T>(value: T) => T) {
   function placeholderPayment(id: string): StPayment {
-    const fallback = db.payments[0];
-    return { ...fallback, id, customer: '未找到交易（占位样本）', description: '占位记录' };
+    return placeholderFrom(db.payments[0], id, {
+      customer: '未找到交易（占位样本）',
+      description: '占位记录',
+    });
   }
 
   function handleStripeBranch<T>(
@@ -132,17 +139,13 @@ export function createStripeFetcherBranch(db: StripeDatabase, clone: <T>(value: 
           ? { status: 0, data: clone(result) as T }
           : { status: 1, data: clone(result) as T };
       }
-      return { status: 1, data: clone({ ok: false, error: 'unknown Stripe endpoint' }) as T };
+      return faceResponse<T>(STRIPE_UNKNOWN_FACES.write);
     }
     if (normalizedMethod !== 'get') {
-      return { status: 1, data: clone({ ok: false, error: 'unknown Stripe endpoint' }) as T };
+      return faceResponse<T>(STRIPE_UNKNOWN_FACES.method);
     }
 
-    const qs = url.includes('?') ? new URLSearchParams(url.split('?')[1]) : new URLSearchParams();
-    const read = (key: string): string | undefined => {
-      const value = params[key] ?? body[key] ?? qs.get(key);
-      return value === undefined || value === null ? undefined : String(value);
-    };
+    const read = createUrlParamReader(url, params, body);
 
     // ----- reads (P7a) + search/filter/range parameterization (P7b) -----
     if (url.includes('/r/Stripe__payments')) {
@@ -182,20 +185,19 @@ export function createStripeFetcherBranch(db: StripeDatabase, clone: <T>(value: 
     }
     if (url.includes('/r/Stripe__overview')) {
       const payload =
-        qs.get('empty') === '1' || isStEmptyRange(read('range'))
+        parseUrlQuery(url).get('empty') === '1' || isStEmptyRange(read('range'))
           ? createStripeEmptyOverview()
           : createStripeOverview();
       return { status: 0, data: clone(payload) as T };
     }
-    return { status: 0, data: clone({ ok: false, error: 'unknown replica endpoint' }) as T };
+    return faceResponse<T>(STRIPE_UNKNOWN_FACES.read);
   }
 
   // Opt-in e2e hook reset: keep the forced-miss flag from leaking across
   // specs (airtable precedent).
-  const hooks = (globalThis as { __stripeTestHooks?: StripeTestHooks }).__stripeTestHooks;
-  if (hooks) {
+  withOptInHooks<StripeTestHooks>('__stripeTestHooks', (hooks) => {
     hooks.refundMiss = false;
-  }
+  });
 
   return handleStripeBranch;
 }

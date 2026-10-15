@@ -7,6 +7,8 @@
  * state (pointer, guest list, bookings) lives in the branch factory closure.
  * All copy is original self-authored Chinese.
  */
+import { createEndpointCounter, createUrlParamReader, placeholderFrom, withOptInHooks } from './mock-backend-replica-kit';
+
 export type CalSlotState = 'available' | 'almost-full' | 'expired';
 export type CalSlotPeriod = 'morning' | 'afternoon' | 'evening';
 
@@ -345,6 +347,8 @@ export function createCalFetcherBranch(event: CalEventMeta, clone: <T>(value: T)
   let guests: string[] = [...CAL_GUEST_SEED];
   const bookings: CalBookingRecord[] = [];
   let bookingSeq = 0;
+  // Opt-in e2e observation hooks (mirror mock-backend-antdpro); production no-ops.
+  const countCalEndpointCall = createEndpointCounter({ countersKey: '__calEndpointCalls', prefix: 'Cal__' });
 
   function findSlot(slotId: string): { slot: CalSlot; date: string; duration: number } | null {
     const parsed = calParseSlotId(slotId);
@@ -360,16 +364,9 @@ export function createCalFetcherBranch(event: CalEventMeta, clone: <T>(value: T)
   function handleCalBranch<T>(input: CalFetcherBranchInput): { status: number; data: T } | null {
     const { url, method, params, body } = input;
     if (!url.includes('/r/Cal__')) return null;
-    // Opt-in e2e observation hooks (mirror mock-backend-antdpro): specs pre-create window.__calEndpointCalls / window.__calTestHooks via addInitScript; production never sets them, so both stay no-ops.
-    const counters = (globalThis as { __calEndpointCalls?: Record<string, number> }).__calEndpointCalls;
-    const counterName = counters ? url.slice(url.indexOf('Cal__')).split('?')[0] : '';
-    if (counters) counters[counterName] = (counters[counterName] ?? 0) + 1;
+    countCalEndpointCall(url);
     const normalizedMethod = method.toLowerCase();
-    const qs = url.includes('?') ? new URLSearchParams(url.split('?')[1]) : new URLSearchParams();
-    const read = (key: string): string | undefined => {
-      const value = params[key] ?? body[key] ?? qs.get(key);
-      return value === undefined || value === null ? undefined : String(value);
-    };
+    const read = createUrlParamReader(url, params, body);
 
     if (normalizedMethod === 'post') {
       if (url.includes('/r/Cal__selectSlot')) {
@@ -452,7 +449,7 @@ export function createCalFetcherBranch(event: CalEventMeta, clone: <T>(value: T)
     if (url.includes('/r/Cal__event')) {
       const id = read('id') ?? event.id;
       const matched = id === event.id;
-      const record = matched ? event : { ...event, id, title: '预约活动（占位）' };
+      const record = matched ? event : placeholderFrom(event, id, { title: '预约活动（占位）' });
       return { status: 0, data: clone(record) as T };
     }
     if (url.includes('/r/Cal__selectedSlot')) {
@@ -484,9 +481,7 @@ export function createCalFetcherBranch(event: CalEventMeta, clone: <T>(value: T)
   }
 
   // Opt-in e2e hook: force-select via the exact endpoint path — reaches the expired-pointer branch (cal-book-expired) that the disabled UI button cannot (P3b Phase 3 I9).
-  const hooks = (globalThis as { __calTestHooks?: { selectSlot?: (slotId: string) => void } })
-    .__calTestHooks;
-  if (hooks) {
+  withOptInHooks<{ selectSlot?: (slotId: string) => void }>('__calTestHooks', (hooks) => {
     hooks.selectSlot = (slotId) =>
       handleCalBranch({
         url: '/r/Cal__selectSlot',
@@ -494,6 +489,6 @@ export function createCalFetcherBranch(event: CalEventMeta, clone: <T>(value: T)
         params: {},
         body: { slotId },
       });
-  }
+  });
   return handleCalBranch;
 }

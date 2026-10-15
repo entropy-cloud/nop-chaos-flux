@@ -15,6 +15,7 @@
 
 import type { NotionColor, NotionRecord, NotionRecordRow, NotionStatus } from './mock-backend-notion-types';
 import { NOTION_CATEGORY_LABELS, NOTION_PEOPLE, NOTION_STATUS_META } from './mock-backend-notion-types';
+import { paginateRows } from './mock-backend-replica-kit';
 
 const NOTION_TITLES = [
   '首页信息流卡片支持双列布局切换',
@@ -161,15 +162,6 @@ export function filterNotionRecords(rows: NotionRecord[], keyword?: string): Not
 }
 
 export function paginateNotion<T>(rows: T[], page: number, pageSize: number) {
-  const safePage = Math.max(1, page);
-  const safeSize = Math.max(1, pageSize);
-  const start = (safePage - 1) * safeSize;
-  return {
-    items: rows.slice(start, start + safeSize),
-    total: rows.length,
-    page: safePage,
-    pageSize: safeSize,
-    pages: Math.max(1, Math.ceil(rows.length / safeSize)),
-  };
+  return paginateRows(rows, page, pageSize, { sizeKey: 'pageSize', clampPages: true });
 }
 /* ── View-config overrides (I3/I4/I11 session 态载体) ──────────────────── */

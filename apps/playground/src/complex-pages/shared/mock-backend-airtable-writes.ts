@@ -24,6 +24,7 @@ import {
   type AtRecord,
 } from './mock-backend-airtable-types';
 import { airtableWriteStamp } from './mock-backend-airtable-records';
+import { unwrapPatch } from './mock-backend-replica-kit';
 
 export interface AirtableWriteResult {
   ok: boolean;
@@ -137,9 +138,7 @@ export function updateAirtableRecord(rows: AtRecord[], input: Record<string, unk
   const row = rows.find((r) => r.id === id);
   if (!row) return { ok: false, error: 'record not found' };
   if (input.forceMiss === true) return { ok: false, error: 'forced update miss' };
-  const patchSource = (input.patch && typeof input.patch === 'object' && !Array.isArray(input.patch)
-    ? input.patch
-    : input) as Record<string, unknown>;
+  const patchSource = unwrapPatch(input, { key: 'patch' });
   const patch = pickAirtablePatch(patchSource);
   if (patch === null) return { ok: false, error: 'invalid field' };
   if (Object.keys(patch).length === 0) return { ok: false, error: 'empty patch' };
@@ -165,9 +164,7 @@ export function updateAirtableViewConfig(
 ): AirtableWriteResult {
   const viewId = typeof input.viewId === 'string' ? input.viewId : '';
   if (viewId !== 'grid') return { ok: false, error: 'unknown viewId' };
-  const patchSource = (input.patch && typeof input.patch === 'object' && !Array.isArray(input.patch)
-    ? input.patch
-    : input) as Record<string, unknown>;
+  const patchSource = unwrapPatch(input, { key: 'patch' });
   const sortValue = patchSource.sort;
   if (sortValue === undefined) return { ok: false, error: 'empty patch' };
   if (sortValue !== null && typeof sortValue !== 'string') return { ok: false, error: 'invalid sort' };

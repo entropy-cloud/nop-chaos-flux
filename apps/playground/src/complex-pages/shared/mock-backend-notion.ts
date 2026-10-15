@@ -48,6 +48,15 @@ import type {
   NotionViewConfig,
   NotionViewType,
 } from './mock-backend-notion-types';
+import {
+  createEndpointCounter,
+  createUrlParamReader,
+  faceResponse,
+  placeholderFrom,
+  readOptInHooks,
+  withOptInHooks,
+  type ReplicaFallbackFace,
+} from './mock-backend-replica-kit';
 
 export * from './mock-backend-notion-types';
 export * from './mock-backend-notion-records';
@@ -120,16 +129,14 @@ type NotionTestHooks = {
   lastUpdate?: Record<string, unknown>;
 };
 
-function readNotionTestHooks(): NotionTestHooks | undefined {
-  return (globalThis as { __notionTestHooks?: NotionTestHooks }).__notionTestHooks;
-}
+const countNotionEndpointCall = createEndpointCounter({ countersKey: '__notionEndpointCalls', prefix: 'Notion__' });
+const readNotionTestHooks = () => readOptInHooks<NotionTestHooks>('__notionTestHooks');
 
-function countNotionEndpointCall(url: string): void {
-  const counters = (globalThis as { __notionEndpointCalls?: Record<string, number> }).__notionEndpointCalls;
-  if (!counters) return;
-  const name = url.slice(url.indexOf('Notion__')).split('?')[0];
-  counters[name] = (counters[name] ?? 0) + 1;
-}
+const NOTION_UNKNOWN_FACES: Record<'write' | 'method' | 'read', ReplicaFallbackFace> = {
+  write: { status: 1, ok: false, error: 'unknown Notion write endpoint' },
+  method: { status: 1, ok: false, error: 'unknown Notion endpoint' },
+  read: { status: 0, ok: false, error: 'unknown replica endpoint' },
+};
 
 /**
  * Full `/r/Notion__*` fetcher branch. Read payloads clone out of the session
@@ -197,17 +204,13 @@ export function createNotionFetcherBranch(
           ? { status: 0, data: clone({ ok: true, id: result.id }) as T }
           : { status: 1, data: clone({ ok: false, error: result.error }) as T };
       }
-      return { status: 1, data: clone({ ok: false, error: 'unknown Notion write endpoint' }) as T };
+      return faceResponse<T>(NOTION_UNKNOWN_FACES.write);
     }
     if (normalizedMethod !== 'get') {
-      return { status: 1, data: clone({ ok: false, error: 'unknown Notion endpoint' }) as T };
+      return faceResponse<T>(NOTION_UNKNOWN_FACES.method);
     }
 
-    const qs = url.includes('?') ? new URLSearchParams(url.split('?')[1]) : new URLSearchParams();
-    const read = (key: string): string | undefined => {
-      const value = params[key] ?? body[key] ?? qs.get(key);
-      return value === undefined || value === null ? undefined : String(value);
-    };
+    const read = createUrlParamReader(url, params, body);
 
     // ----- reads (P5a) + copy-link no-op carrier (P5b) -----
     if (url.includes('/r/Notion__copyLink')) {
@@ -246,19 +249,18 @@ export function createNotionFetcherBranch(
     if (url.includes('/r/Notion__record')) {
       const id = (read('id') ?? '').replace(/^card-/, '');
       const found = db.records.find((r) => r.id === id);
-      const record = found ?? { ...db.records[0], id, title: '未找到记录（占位样本）' };
+      const record = found ?? placeholderFrom(db.records[0], id, { title: '未找到记录（占位样本）' });
       return { status: 0, data: clone(toNotionRecordRow(record)) as T };
     }
-    return { status: 0, data: clone({ ok: false, error: 'unknown replica endpoint' }) as T };
+    return faceResponse<T>(NOTION_UNKNOWN_FACES.read);
   }
 
   // Opt-in e2e hook: force the miss branches through the exact endpoint
   // paths — the drag/edit UI cannot produce unknown ids (P5b Phase 1).
-  const hooks = (globalThis as { __notionTestHooks?: NotionTestHooks }).__notionTestHooks;
-  if (hooks) {
+  withOptInHooks<NotionTestHooks>('__notionTestHooks', (hooks) => {
     hooks.moveMiss = false;
     hooks.updateMiss = false;
-  }
+  });
 
   return handleNotionBranch;
 }
