@@ -98,7 +98,6 @@
     "packages/flux-print-core/src/export-pdf.ts#renderPageToCanvas",
     "packages/flux-print-renderers/src/print-palette.tsx#ELEMENT_LABEL_KEYS",
     "packages/flux-react/src/form-state.ts#isValidationFieldEffectivelyRequired",
-    "packages/flux-react/src/node-renderer-utils.ts#getNodeSchemaFrameWrap",
     "packages/flux-react/src/node-renderer-utils.ts#shouldWarnOnImportFailure",
     "packages/flux-react/src/node-renderer.tsx#resolveFrameWrapMode",
     "packages/flux-react/src/render-nodes.tsx#normalizeNodeInput",
