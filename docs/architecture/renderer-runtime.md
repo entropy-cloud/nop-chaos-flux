@@ -246,7 +246,7 @@ Meaning:
 
 - `templateNode` is the authoritative structural channel. The top-level `schema`, `id`, and `path` fields are convenience projections of it (`templateNode.schema`, `templateNode.id`, `templateNode.templatePath`, assembled at the `NodeRenderer` resolved-props step). Convenience projections exist because they have real renderer-side usage; they are not a second source of truth.
 - `props` is the render-plane projection; `meta` is the control-plane projection. For the mirrored control fields (`disabled` / `className` / `testid`): read `props.*` when the value feeds renderer output; read `meta.*` for control state, lifecycle participation, and wrapper decisions. Both are projections of the same compiled programs — renderers must not treat one as a cache of the other or write back into either.
-- `frameWrap` authority: the effective frame-wrap mode is `resolvedMeta.frameWrap` (consumed by `NodeFrameWrapper`); `schema.frameWrap` is the authored input that feeds the meta program. Renderers MUST NOT read `frameWrap` from `props` — see the Omit-list erratum below.
+- `frameWrap` authority: the effective frame-wrap mode is resolved by `resolveFrameWrapMode(definitionWrap, definitionFrameWrap, authoredFrameWrap)` (RM-2, plan 604) — the authored per-instance value wins, the definition-level `frameWrap` default applies only without an authored override, and non-wrap-compatible renderers never frame. Renderers MUST NOT read `frameWrap` from `props` — see the Omit-list erratum below.
 - `RendererResolvedProps` Omit-list erratum: the Omit list omits `when/visible/hidden/disabled/className/frameClassName/testid/readOnly/required` but not `frameWrap`, so the type still exposes a `props.frameWrap` read slot. This is a type-level double-channel face only: at runtime, authored `frameWrap` is classified into the meta program (via `META_FIELDS`) and the runtime props bag (assembled from `propsProgram`) never carries it. Removing the stale type slot is a deliberate non-goal of the pinning pass — changing the Omit list requires a dedicated plan.
 
 `RendererHelpers` also expose two evaluation channels:
@@ -374,6 +374,13 @@ The current baseline uses three distinct renderer-owned metadata surfaces for fo
 - Owner: the renderer definition.
 - Current baseline use case: wrapped composite controls such as `array-editor`, `array-field`, `tag-list`, `condition-builder`, `key-value`, and `detail-field` declare `frameRootTag: 'div'`.
 - Boundary: this only controls wrapper root semantics. It does not own layout, styling, or validation behavior.
+
+#### `frameWrap` (definition-level default)
+
+- Purpose: declare the renderer's default frame layout for instances that do not author a `frameWrap` override. Values: `'label' | 'group' | 'none'` (no boolean at the definition level; the schema-level `FrameWrapMode` boolean is normalized at the single point `resolveFrameWrapMode`).
+- Owner: the renderer definition.
+- Current baseline use case: `radio-group` and `checkbox-group` declare `'group'` (plan 460 B3) so their multi-option control area is framed as `<fieldset>/<legend>` — a `<label>` wrapper forwards gap-area clicks to the first option control and silently selects it. Effective since RM-2 (plan 604); before that the declarations were inert.
+- Boundary: the definition default only applies when the schema instance does not author `frameWrap` and the renderer is wrap-compatible (`wrap: true`); authored values always win.
 
 #### `propContracts[key].shape` schema-definition (nested schema transport)
 

@@ -1,7 +1,6 @@
 import React from 'react';
 import type {
   FormRuntime,
-  FrameWrapMode,
   RendererComponentProps,
   RenderRegionHandle,
   ResolvedNodeMeta,
@@ -12,6 +11,7 @@ import {
   FieldFrame,
   FormContext,
   FormLayoutContext,
+  resolveFrameWrapMode,
   ScopeContext,
   ValidationContext,
   toFieldRemarkProps,
@@ -96,12 +96,10 @@ export function VariantFieldView({
   variants,
 }: VariantFieldViewProps) {
   const frameWrap = meta.frameWrap ?? schemaProps.frameWrap;
-  const frameWrapMode: FrameWrapMode =
-    frameWrap === false || frameWrap === 'none'
-      ? 'none'
-      : frameWrap === 'group'
-        ? 'group'
-        : 'label';
+  // RM-2 (plan 604): the definition-level default is not in play here (the
+  // variant field self-frames), so pass `undefined`; this stays the single
+  // boolean-normalization point for the frame family.
+  const frameWrapMode = resolveFrameWrapMode(true, undefined, frameWrap);
   const renderActiveRegion = (region: RenderRegionHandle | undefined) => (
     <VariantFieldProviders form={variantForm} scope={variantScope} validationOwner={variantValidationOwner}>
       {asReactNode(region?.render())}

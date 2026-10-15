@@ -316,8 +316,12 @@ describe('input component handles: clear/reset/focus', () => {
 
     clickButton('Focus');
     await waitFor(() => {
-      const group = screen.getByRole('group', { name: 'Tags' });
-      expect(group.contains(document.activeElement)).toBe(true);
+      // RM-2 (plan 604): the group frame adds a <fieldset> around the
+      // checkbox-group root, so both the fieldset and the renderer's own
+      // group container carry the accessible name; any of them containing
+      // the focused element proves the focus landed in the control.
+      const groups = screen.getAllByRole('group', { name: 'Tags' });
+      expect(groups.some((group) => group.contains(document.activeElement))).toBe(true);
     });
   });
 

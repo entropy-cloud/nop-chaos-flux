@@ -33,7 +33,7 @@
 
 - RM-0. 政策与基线（schema-retention policy owner 文档 + 元模型权威声明 + 两处死代码清理）: `done`（plan `docs/plans/602-rm0-retention-policy-plan.md`，closure audit agent_5203f11c approved 2026-10-15；裁决表 12 行生效，RM-8 范围钉定=保留通道钉文档+scanner 门禁）
 - RM-1. 类型层收口（propSchema 死字段删除、CompiledRendererContract 派生化、registry 入参类型化）: `done`（plan `docs/plans/603-rm1-type-layer-plan.md`，closure audit agent_0714ce30 approved 2026-10-15；执行发现：CompiledRendererContract 派生形态受型变约束收敛为"S 仅协变槽+非泛型 ValidationContributor 引用+非泛型键 Pick"，涟漪约 185 文件声明级清扫，`pnpm -r typecheck` 42/42 口径入 plan）
-- RM-2. 帧族收敛（wrap/frameRootTag/frameWrap 单权威路径 + FrameWrapMode 词表归一）: `todo`
+- RM-2. 帧族收敛（wrap/frameRootTag/frameWrap 单权威路径 + FrameWrapMode 词表归一）: `done`（plan `docs/plans/604-rm2-frame-family-plan.md`，closure audit agent_c198acc9 approved 2026-10-15；definition 级 frameWrap 经 resolver 三参单路径生效，B3 fieldset 语义自此真实生效[此前死声明，分析报告 A5/roadmap 基线两处已就地勘误]）
 - RM-3. fields+propContracts 合并·阶段一（新形态落地 + 编译器/门禁双读）: `todo`
 - RM-4. fields+propContracts 合并·阶段二（全量迁移 + 旧形态删除）: `todo`
 - RM-5. 事件契约单源化（eventContracts 收敛至字段条目）: `todo`
@@ -55,7 +55,7 @@
 
 - `RendererDefinitionShape` 28 字段平铺 7 类关注点；`propSchema` 零生产声明（仅 2 个 test-support 与 12 个测试内联声明文件，见分析报告 A1 勘误注）；`fields` 与 `propContracts` 双写（声明文件数 66/41，统一口径：`grep -rln "<pattern>" packages/flux-renderers-*/src --include="*.ts" --include="*.tsx" | grep -v "\.test\."`（pattern 分别取 `fields: \[` 与 `propContracts:`），2026-10-15 实测；R2 勘误——初稿 66/33 系 fields 计入 .tsx 而 propContracts 漏计 .tsx 的不对称口径所致，执行时以 plan 内重新枚举为准）、`eventContracts` 与 `fields(kind:'event')` 双写、`scopeExportContracts`+`injectedLocals` 对 `$crud`/`$form` 双写。
 - `CompiledRendererContract` 手抄 `ValidationContributor`/`RendererValidationDefaults`/`ScopePolicy`（compiled-renderer-contract.ts:12-24）；registry `component` 必填仅运行时 throw、类型 optional；`RendererDefinition` 重复声明 `type`。
-- 帧族 4 层（wrap/frameRootTag/frameWrap + schema 覆盖 + meta 解析），`FrameWrapMode` boolean 双词表，definition.frameWrap 走 metaProgram 间接、wrap 直读。
+- 帧族 4 层（wrap/frameRootTag/frameWrap + schema 覆盖 + meta 解析），`FrameWrapMode` boolean 双词表，definition.frameWrap 走 metaProgram 间接、wrap 直读。【勘误 2026-10-15,RM-2/plan 604 live 重枚举:definition.frameWrap 实为零消费死声明(无 metaProgram 种子注入、无运行时读取点,B3 语义从未生效),plan 604 以 resolver 第三入参使其单路径生效】
 - 模板零运行时写入（grep 证），但无 freeze、`Readonly<>` 不完整；框架内部 raw schema 读 4 处（name/modalContainer/\_schema 死变量/getNodeSchemaFrameWrap 死函数），公开 API raw 通道 6 条，无 retention policy owner 文档；plan 132（归档）仅收口 data-source/reaction 两条。
 
 ## Phases 表
@@ -64,7 +64,7 @@
 | -------------------------- | ------ | ------------------------------------- | ---------- | ------------------------------------------ | ------------------------------------------------ |
 | RM-0 政策与基线            | `done` | 分析报告 §5.4 + `renderer-runtime.md` | 无         | 既有文档骨架                               | [602](../plans/602-rm0-retention-policy-plan.md) |
 | RM-1 类型层收口            | `done` | 分析报告 A1/B6/B7/C                   | RM-0       | contract 门禁                              | [603](../plans/603-rm1-type-layer-plan.md)       |
-| RM-2 帧族收敛              | `todo` | 分析报告 A5；plan 460 B3 语义         | RM-1       | strict validation 语料、判别变异           | —                                                |
+| RM-2 帧族收敛              | `done` | 分析报告 A5；plan 460 B3 语义         | RM-1       | strict validation 语料、判别变异           | [604](../plans/604-rm2-frame-family-plan.md)     |
 | RM-3 双声明合并·一         | `todo` | 分析报告 A2/A3                        | RM-1       | schema-prop-coverage、defineRendererFamily | —                                                |
 | RM-4 双声明合并·二         | `todo` | 同上                                  | RM-3       | contract-honesty、validate-pages --strict  | —                                                |
 | RM-5 事件契约单源化        | `todo` | 分析报告 A3                           | RM-4       | contract-honesty                           | —                                                |

@@ -16,6 +16,11 @@ const state = vi.hoisted(() => ({
 }));
 
 vi.mock('@nop-chaos/flux-react', () => ({
+  resolveFrameWrapMode: (_wrap: unknown, _definitionDefault: unknown, authored: unknown) => {
+    if (authored === false || authored === 'none') return 'none';
+    if (authored === 'group') return 'group';
+    return 'label';
+  },
   FieldFrame: ({ label, children }: { label?: React.ReactNode; children?: React.ReactNode }) => (
     <>
       {label}

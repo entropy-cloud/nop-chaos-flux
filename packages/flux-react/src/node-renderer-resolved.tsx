@@ -433,6 +433,7 @@ export const NodeRendererResolved = memo(function NodeRendererResolved(props: {
     <NodeFrameWrapper
       templateNode={props.node}
       definitionWrap={props.node.component.wrap}
+      definitionFrameWrap={props.node.component.frameWrap}
       resolvedMeta={finalResolvedMeta}
       resolvedPropsValue={resolvedComponentProps}
       regions={regions}

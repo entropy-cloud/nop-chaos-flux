@@ -21,23 +21,31 @@ import {
 
 describe('resolveFrameWrapMode', () => {
   it('returns none when renderer definition is not wrap-compatible', () => {
-    expect(resolveFrameWrapMode(false, undefined)).toBe('none');
-    expect(resolveFrameWrapMode(false, true)).toBe('none');
-    expect(resolveFrameWrapMode(false, 'label')).toBe('none');
-    expect(resolveFrameWrapMode(false, 'group')).toBe('none');
-    expect(resolveFrameWrapMode(false, 'none')).toBe('none');
+    expect(resolveFrameWrapMode(false, undefined, undefined)).toBe('none');
+    expect(resolveFrameWrapMode(false, undefined, true)).toBe('none');
+    expect(resolveFrameWrapMode(false, undefined, 'label')).toBe('none');
+    expect(resolveFrameWrapMode(false, 'group', 'group')).toBe('none');
+    expect(resolveFrameWrapMode(false, 'group', 'none')).toBe('none');
   });
 
   it('preserves default label wrapping when frameWrap is unset or label-like', () => {
-    expect(resolveFrameWrapMode(true, undefined)).toBe('label');
-    expect(resolveFrameWrapMode(true, true)).toBe('label');
-    expect(resolveFrameWrapMode(true, 'label')).toBe('label');
+    expect(resolveFrameWrapMode(true, undefined, undefined)).toBe('label');
+    expect(resolveFrameWrapMode(true, undefined, true)).toBe('label');
+    expect(resolveFrameWrapMode(true, 'label', 'label')).toBe('label');
   });
 
   it('allows wrap-compatible renderers to opt out or use group layout', () => {
-    expect(resolveFrameWrapMode(true, false)).toBe('none');
-    expect(resolveFrameWrapMode(true, 'none')).toBe('none');
-    expect(resolveFrameWrapMode(true, 'group')).toBe('group');
+    expect(resolveFrameWrapMode(true, undefined, false)).toBe('none');
+    expect(resolveFrameWrapMode(true, undefined, 'none')).toBe('none');
+    expect(resolveFrameWrapMode(true, undefined, 'group')).toBe('group');
+  });
+
+  it('falls back to the definition-level frameWrap default only without an authored override (RM-2)', () => {
+    expect(resolveFrameWrapMode(true, 'group', undefined)).toBe('group');
+    expect(resolveFrameWrapMode(true, 'group', false)).toBe('none');
+    expect(resolveFrameWrapMode(true, 'group', 'label')).toBe('label');
+    expect(resolveFrameWrapMode(true, 'none', undefined)).toBe('none');
+    expect(resolveFrameWrapMode(true, 'label', undefined)).toBe('label');
   });
 });
 
@@ -462,6 +470,7 @@ describe('reactive meta and draggable dialogs', () => {
             schema: { type: 'wrap-probe', frameWrap: false },
           } as any}
           definitionWrap={true}
+          definitionFrameWrap={undefined}
           resolvedMeta={{ frameWrap: 'group' } as any}
           resolvedPropsValue={{ name: 'query', label: 'Query' }}
           regions={{}}
@@ -476,6 +485,74 @@ describe('reactive meta and draggable dialogs', () => {
     // resolvedMeta.frameWrap = 'group' overrides templateNode.schema.frameWrap = false
     // 'group' renders as <fieldset> (checkbox layout) instead of <label>
     expect(field?.tagName).toBe('FIELDSET');
+  });
+
+  it('honors the definition-level frameWrap default when the schema does not author an override (RM-2 quadrants)', () => {
+    const renderWith = (definitionFrameWrap: 'label' | 'group' | 'none' | undefined, authored: unknown) =>
+      render(
+        <FormContext.Provider value={{ store: { subscribe: () => () => undefined, getState: () => EMPTY_FORM_STORE_STATE }, validation: undefined } as any}>
+          <NodeFrameWrapper
+            templateNode={{
+              type: 'wrap-probe',
+              component: { frameRootTag: 'div', frameWrap: definitionFrameWrap },
+              schema: authored === undefined ? { type: 'wrap-probe' } : { type: 'wrap-probe', frameWrap: authored },
+            } as any}
+            definitionWrap={true}
+            definitionFrameWrap={definitionFrameWrap}
+            resolvedMeta={{ frameWrap: authored } as any}
+            resolvedPropsValue={{}}
+            regions={{}}
+          >
+            <input aria-label="quadrant-probe" />
+          </NodeFrameWrapper>
+        </FormContext.Provider>,
+      );
+
+    // Quadrant 1 (plan 460 B3): no authored override → definition default 'group' wins.
+    const q1 = renderWith('group', undefined);
+    expect(q1.container.querySelector('.nop-field')?.tagName).toBe('FIELDSET');
+
+    // Quadrant 2: authored 'group' → group regardless of definition default.
+    const q2 = renderWith(undefined, 'group');
+    expect(q2.container.querySelector('.nop-field')?.tagName).toBe('FIELDSET');
+
+    // Quadrant 3: authored suppression beats the definition default.
+    const q3 = renderWith('group', 'none');
+    expect(q3.container.querySelector('.nop-field')).toBeNull();
+
+    // Quadrant 4: authored label/true → default (non-group) layout even when
+    // the definition says group; the probe's frameRootTag is 'div', so the
+    // frame root renders as <div> rather than <fieldset>.
+    const q4 = renderWith('group', true);
+    expect(q4.container.querySelector('.nop-field')?.tagName).toBe('DIV');
+  });
+
+  it('keeps the frame fallbacks intact: no definition default → label; wrap=false → none', () => {
+    const renderWith = (definitionWrap: boolean, definitionFrameWrap: 'label' | 'group' | 'none' | undefined) =>
+      render(
+        <FormContext.Provider value={{ store: { subscribe: () => () => undefined, getState: () => EMPTY_FORM_STORE_STATE }, validation: undefined } as any}>
+          <NodeFrameWrapper
+            templateNode={{
+              type: 'wrap-probe',
+              component: { frameRootTag: 'div', frameWrap: definitionFrameWrap },
+              schema: { type: 'wrap-probe' },
+            } as any}
+            definitionWrap={definitionWrap}
+            definitionFrameWrap={definitionFrameWrap}
+            resolvedMeta={{} as any}
+            resolvedPropsValue={{}}
+            regions={{}}
+          >
+            <input aria-label="fallback-probe" />
+          </NodeFrameWrapper>
+        </FormContext.Provider>,
+      );
+
+    // Invariant 1: renderer without a definition frameWrap default still gets
+    // the default (non-group) layout — probe frameRootTag 'div' → <div> root.
+    expect(renderWith(true, undefined).container.querySelector('.nop-field')?.tagName).toBe('DIV');
+    // Invariant 2: non-wrap-compatible renderer never frames.
+    expect(renderWith(false, 'group').container.querySelector('.nop-field')).toBeNull();
   });
 
   it('uses resolved frame props instead of raw schema values for field chrome', async () => {
@@ -503,6 +580,7 @@ describe('reactive meta and draggable dialogs', () => {
             },
           } as any}
           definitionWrap={true}
+          definitionFrameWrap={undefined}
           resolvedMeta={{} as any}
           resolvedPropsValue={{
             name: 'query',
@@ -548,6 +626,7 @@ describe('reactive meta and draggable dialogs', () => {
             schema: { type: 'wrap-probe', frameWrap: true },
           } as any}
           definitionWrap={true}
+          definitionFrameWrap={undefined}
           resolvedMeta={{} as any}
           resolvedPropsValue={{ name: 'query', label: 'Resolved Query' }}
           regions={{

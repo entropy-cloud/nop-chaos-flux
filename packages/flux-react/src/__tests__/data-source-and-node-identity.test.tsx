@@ -319,6 +319,7 @@ describe('createSchemaRenderer data sources and node identity', () => {
           },
         } as any}
         definitionWrap
+        definitionFrameWrap={undefined}
         resolvedMeta={{} as any}
         resolvedPropsValue={{ label: 'Resolved label' }}
         regions={{} as any}
@@ -343,6 +344,7 @@ describe('createSchemaRenderer data sources and node identity', () => {
           schema: { type: 'tag-list', label: 'Tags' },
         } as any}
         definitionWrap
+        definitionFrameWrap={undefined}
         resolvedMeta={{} as any}
         resolvedPropsValue={{ label: 'Tags' }}
         regions={{} as any}

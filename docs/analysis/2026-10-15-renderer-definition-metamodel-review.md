@@ -54,7 +54,7 @@ key 集合的对账目前靠 `schema-prop-coverage` 门禁测试兜底。66 个�
 帧控制分散在 `wrap`(boolean)、`frameRootTag`、`frameWrap`(definition 默认)三层 definition 字段,加上 `schema.frameWrap` 实例覆盖和 `meta.frameWrap` 解析结果,共 4 层。两个问题:
 
 1. **词表冗余**:`FrameWrapMode = boolean | 'label' | 'group' | 'none'` 中 `false ≡ 'none'`、`true ≡ 'label'`——`resolveFrameWrapMode`(`node-renderer-utils.ts:3-20`)第一步就是把 boolean 归一化掉。同一概念两套词表。
-2. **链路绕**:definition 级 `frameWrap`(plan 460 B3 为 radio/checkbox-group 引入)不被 `resolveFrameWrapMode` 直读,须经 `metaProgram → resolvedMeta.frameWrap` 间接生效;而同级的 `wrap` 布尔却被直读。同一个"definition 帧默认值"关注点,两个字段走两条完全不同的路径。
+2. **链路绕**:definition 级 `frameWrap`(plan 460 B3 为 radio/checkbox-group 引入)不被 `resolveFrameWrapMode` 直读,须经 `metaProgram → resolvedMeta.frameWrap` 间接生效;而同级的 `wrap` 布尔却被直读。同一个"definition 帧默认值"关注点,两个字段走两条完全不同的路径。【勘误 2026-10-15,RM-2/plan 604 live 重枚举:definition 级 frameWrap 实为零消费死声明——metaProgram 只编译 schema authored 字段、无 definition 种子注入,全仓无任何运行时读取点,B3 fieldset 语义从未生效(无 authored frameWrap 的 radio/checkbox-group 渲染 label 帧);plan 604 以 resolver 第三入参使其经单一路径生效】
 
 ### B6. `CompiledRendererContract` 手抄类型 — 漂移风险最高的一处
 

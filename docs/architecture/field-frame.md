@@ -41,7 +41,7 @@ Controls opt into FieldFrame at renderer-definition time through `RendererDefini
 
 Schema instances can then refine that default with `frameWrap` on `BaseSchema`:
 
-- unset: follow the renderer definition's `wrap`
+- unset: follow the renderer definition's frame default — `frameWrap` if the definition declares one (e.g. radio-group/checkbox-group declare `'group'` so their multi-option control area is framed as `<fieldset>/<legend>`), falling back to the default `<label>` layout when it does not; a renderer that is not wrap-compatible never frames
 - `false` or `'none'`: suppress FieldFrame for this instance
 - `true` or `'label'`: use the default `<label>` layout
 - `'group'`: use the grouped `<fieldset>/<legend>` layout

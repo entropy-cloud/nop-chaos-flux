@@ -9,6 +9,7 @@ import { resolveFrameWrapMode } from './node-renderer-utils.js';
 export function NodeFrameWrapper(props: {
   templateNode: TemplateNode;
   definitionWrap: boolean | undefined;
+  definitionFrameWrap: 'label' | 'group' | 'none' | undefined;
   resolvedMeta: ResolvedNodeMeta;
   resolvedPropsValue: Record<string, unknown>;
   regions: Readonly<Record<string, RenderRegionHandle>>;
@@ -16,6 +17,7 @@ export function NodeFrameWrapper(props: {
 }) {
   const frameWrapMode = resolveFrameWrapMode(
     props.definitionWrap,
+    props.definitionFrameWrap,
     props.resolvedMeta.frameWrap,
   );
 

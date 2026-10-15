@@ -274,7 +274,10 @@ describe('input renderer source state branches', () => {
     );
 
     expect(screen.getByRole('radiogroup', { name: 'Status' })).toBeTruthy();
-    expect(screen.getByRole('group', { name: 'Tags' })).toBeTruthy();
+    // RM-2 (plan 604): the group frame adds a <fieldset> (role=group, named by
+    // its legend) around the checkbox-group's own group container, so the
+    // accessible name now matches both — assert the name is present.
+    expect(screen.getAllByRole('group', { name: 'Tags' }).length).toBeGreaterThan(0);
   });
 
   it('removes checkbox-group values when an already-selected option is unchecked', async () => {

@@ -84,6 +84,10 @@ describe('form dom-structure contract (root anchors, plan 529)', () => {
     ]);
     const fieldRoot = container.querySelector('.nop-field[data-field="d"]')!;
     expect(fieldRoot).toBeTruthy();
+    // plan 460 B3 / RM-2 (plan 604): radio-group declares definition-level
+    // frameWrap: 'group'; with no authored override the frame root must be a
+    // <fieldset> (grouped layout), not the gap-click-stealing <label>.
+    expect(fieldRoot.tagName).toBe('FIELDSET');
     expect(fieldRoot.getAttribute('data-renderer')).toBe('radio-group');
     expect(fieldRoot.getAttribute('data-cid')).toBeTruthy();
   });

@@ -33,7 +33,7 @@ export { RenderNodes, resolveRendererSlotContent, hasRendererSlotContent, useSch
 export { DialogHost } from './dialog-host.js';
 export { FieldFrame, toFieldRemarkProps, resolveFieldFrameErrorRefs } from './field-frame.js';
 export type { FieldFrameProps, FieldRemarkProps, FieldRemarkSchemaLike, FieldFrameInjectedAria } from './field-frame.js';
-export { NodeRenderer } from './node-renderer.js';
+export { NodeRenderer, resolveFrameWrapMode } from './node-renderer.js';
 export { createNormalizedActionEvent } from './renderer-helpers.js';
 export {
   useRendererRuntime,

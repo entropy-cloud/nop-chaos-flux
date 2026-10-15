@@ -1,8 +1,16 @@
-import type { XuiImportSpec } from '@nop-chaos/flux-core';
+import type { FrameWrapMode, XuiImportSpec } from '@nop-chaos/flux-core';
 
+/**
+ * The single boolean→vocabulary normalization point for the frame family
+ * (RM-2, plan 604). Authored per-instance `frameWrap` wins; without it the
+ * definition-level default applies (plan 460 B3: radio/checkbox-group default
+ * to the grouped fieldset layout); renderers that are not wrap-compatible
+ * never frame.
+ */
 export function resolveFrameWrapMode(
   definitionWrap: boolean | undefined,
-  schemaFrameWrap: boolean | 'label' | 'group' | 'none' | undefined,
+  definitionFrameWrap: 'label' | 'group' | 'none' | undefined,
+  schemaFrameWrap: FrameWrapMode | undefined,
 ): 'label' | 'group' | 'none' {
   if (!definitionWrap) {
     return 'none';
@@ -14,6 +22,18 @@ export function resolveFrameWrapMode(
 
   if (schemaFrameWrap === 'group') {
     return 'group';
+  }
+
+  if (schemaFrameWrap === true || schemaFrameWrap === 'label') {
+    return 'label';
+  }
+
+  if (definitionFrameWrap === 'group') {
+    return 'group';
+  }
+
+  if (definitionFrameWrap === 'none') {
+    return 'none';
   }
 
   return 'label';
