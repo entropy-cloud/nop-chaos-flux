@@ -11,57 +11,6 @@ export const dashboardEditorRendererDefinition: RegisteredRendererDefinition = {
   rendererClass: 'domain-host-renderer',
   component: DashboardEditorRenderer,
   hostContract: dashboardEditorHostContract,
-  eventContracts: {
-    onSave: {
-      displayName: 'On Save',
-      description:
-        'Dispatched as dashboard-editor:save after a successful commit. Payload: { serialized }.',
-      payload: {
-        kind: 'object',
-        fields: {
-          serialized: { kind: 'string' },
-        },
-      },
-    },
-    onError: {
-      displayName: 'On Error',
-      description:
-        'Dispatched as dashboard-editor:error when a save fails. Payload: { code, message }.',
-      payload: {
-        kind: 'object',
-        fields: {
-          code: { kind: 'string' },
-          message: { kind: 'string' },
-        },
-      },
-    },
-    onSessionChange: {
-      displayName: 'Session Change',
-      description:
-        'Dispatched as dashboard-editor:sessionChange on any session notify (P3.2 minimal event set). Payload: session summary.',
-      payload: {
-        kind: 'object',
-        fields: {
-          canUndo: { kind: 'boolean' },
-          canRedo: { kind: 'boolean' },
-          dirty: { kind: 'boolean' },
-          selection: { kind: 'array', item: { kind: 'string' } },
-          mode: { kind: 'string' },
-        },
-      },
-    },
-    onModeChange: {
-      displayName: 'Mode Change',
-      description:
-        'Dispatched as dashboard-editor:modeChange when the editor switches edit/preview (P3.2). Payload: { mode }.',
-      payload: {
-        kind: 'object',
-        fields: {
-          mode: { kind: 'string' },
-        },
-      },
-    },
-  },
   fields: [
     {
       key: 'layout',
@@ -147,10 +96,71 @@ export const dashboardEditorRendererDefinition: RegisteredRendererDefinition = {
         defaultValue: 'manual',
       },
     },
-    { key: 'onSave', kind: 'event' },
-    { key: 'onError', kind: 'event' },
-    { key: 'onSessionChange', kind: 'event' },
-    { key: 'onModeChange', kind: 'event' },
+    {
+      key: 'onSave',
+      kind: 'event',
+      contract: {
+        displayName: 'On Save',
+        description:
+          'Dispatched as dashboard-editor:save after a successful commit. Payload: { serialized }.',
+        payload: {
+          kind: 'object',
+          fields: {
+            serialized: { kind: 'string' },
+          },
+        },
+      },
+    },
+    {
+      key: 'onError',
+      kind: 'event',
+      contract: {
+        displayName: 'On Error',
+        description:
+          'Dispatched as dashboard-editor:error when a save fails. Payload: { code, message }.',
+        payload: {
+          kind: 'object',
+          fields: {
+            code: { kind: 'string' },
+            message: { kind: 'string' },
+          },
+        },
+      },
+    },
+    {
+      key: 'onSessionChange',
+      kind: 'event',
+      contract: {
+        displayName: 'Session Change',
+        description:
+          'Dispatched as dashboard-editor:sessionChange on any session notify (P3.2 minimal event set). Payload: session summary.',
+        payload: {
+          kind: 'object',
+          fields: {
+            canUndo: { kind: 'boolean' },
+            canRedo: { kind: 'boolean' },
+            dirty: { kind: 'boolean' },
+            selection: { kind: 'array', item: { kind: 'string' } },
+            mode: { kind: 'string' },
+          },
+        },
+      },
+    },
+    {
+      key: 'onModeChange',
+      kind: 'event',
+      contract: {
+        displayName: 'Mode Change',
+        description:
+          'Dispatched as dashboard-editor:modeChange when the editor switches edit/preview (P3.2). Payload: { mode }.',
+        payload: {
+          kind: 'object',
+          fields: {
+            mode: { kind: 'string' },
+          },
+        },
+      },
+    },
     {
       key: 'statusPath',
       kind: 'prop',

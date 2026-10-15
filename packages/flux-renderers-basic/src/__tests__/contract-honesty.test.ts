@@ -6,5 +6,5 @@ runContractHonestyGuardSuite({
   packageName: 'flux-renderers-basic',
   definitions: basicRendererDefinitions,
   srcDir: `${import.meta.dirname}/..`,
-  discoveryBaseline: { renderers: 18, eventKeys: 13, capabilityHandles: 17 },
+  discoveryBaseline: { renderers: 18, eventKeys: 18, capabilityHandles: 17 },
 });

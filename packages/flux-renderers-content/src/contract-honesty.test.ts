@@ -6,5 +6,5 @@ runContractHonestyGuardSuite({
   packageName: 'flux-renderers-content',
   definitions: contentRendererDefinitions,
   srcDir: `${import.meta.dirname}/..`,
-  discoveryBaseline: { renderers: 20, eventKeys: 6, capabilityHandles: 0 },
+  discoveryBaseline: { renderers: 20, eventKeys: 13, capabilityHandles: 0 },
 });

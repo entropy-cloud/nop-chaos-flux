@@ -219,10 +219,44 @@ export const codeEditorFieldRules: SchemaFieldRule[] = [
       editorType: 'text',
     },
   },
-  { key: 'onChange', kind: 'event' },
-  { key: 'onFocus', kind: 'event' },
-  { key: 'onBlur', kind: 'event' },
-  { key: 'onEditorMount', kind: 'event' },
+  {
+    key: 'onChange',
+    kind: 'event',
+    contract: {
+      displayName: 'Change',
+      description: 'Runs when the editor value changes.',
+      payload: { kind: 'string' },
+    },
+  },
+  {
+    key: 'onFocus',
+    kind: 'event',
+    contract: {
+      displayName: 'Focus',
+      description: 'Runs when the editor receives focus.',
+    },
+  },
+  {
+    key: 'onBlur',
+    kind: 'event',
+    contract: {
+      displayName: 'Blur',
+      description: 'Runs when the editor loses focus.',
+    },
+  },
+  {
+    key: 'onEditorMount',
+    kind: 'event',
+    contract: {
+      displayName: 'Editor Mount',
+      description:
+        'Runs after the CodeMirror editor (or MergeView) is mounted. Payload: { editorId }. Use the `getEditorView` component handle for imperative access to the EditorView instance.',
+      payload: {
+        kind: 'object',
+        fields: { editorId: { kind: 'string' } },
+      },
+    },
+  },
 ];
 
 export function CodeEditorRenderer(props: CodeEditorRendererProps) {
@@ -463,30 +497,6 @@ export const codeEditorRendererDefinition: RegisteredRendererDefinition = {
   type: 'code-editor',
   component: CodeEditorRenderer,
   sourcePackage: '@nop-chaos/flux-code-editor',
-  eventContracts: {
-    onChange: {
-      displayName: 'Change',
-      description: 'Runs when the editor value changes.',
-      payload: { kind: 'string' },
-    },
-    onFocus: {
-      displayName: 'Focus',
-      description: 'Runs when the editor receives focus.',
-    },
-    onBlur: {
-      displayName: 'Blur',
-      description: 'Runs when the editor loses focus.',
-    },
-    onEditorMount: {
-      displayName: 'Editor Mount',
-      description:
-        'Runs after the CodeMirror editor (or MergeView) is mounted. Payload: { editorId }. Use the `getEditorView` component handle for imperative access to the EditorView instance.',
-      payload: {
-        kind: 'object',
-        fields: { editorId: { kind: 'string' } },
-      },
-    },
-  },
   componentCapabilityContracts: [
     {
       handle: 'clear',

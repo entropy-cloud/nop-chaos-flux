@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { resolveRendererPropContracts } from '@nop-chaos/flux-core';
+import { resolveRendererEventContracts, resolveRendererPropContracts } from '@nop-chaos/flux-core';
 import { formRendererDefinitions } from '../index.js';
 
 describe('form renderer definition contracts', () => {
@@ -27,7 +27,7 @@ describe('form renderer definition contracts', () => {
 
   it('form has event contract for submitAction', () => {
     const form = formRendererDefinitions.find((d) => d.type === 'form');
-    expect(form?.eventContracts?.submitAction?.displayName).toBe('Submit');
+    expect(form && resolveRendererEventContracts(form).submitAction?.displayName).toBe('Submit');
   });
 
   it('form does not have hostContract', () => {
@@ -155,10 +155,10 @@ describe('form renderer definition contracts', () => {
     }
   });
 
-  it('form eventContracts declare loadAction alongside the other lifecycle events', () => {
+  it('form fields declare loadAction alongside the other lifecycle event contracts', () => {
     const form = formRendererDefinitions.find((d) => d.type === 'form');
-    expect(form?.eventContracts?.loadAction?.displayName).toBeDefined();
-    expect(Object.keys(form?.eventContracts ?? {})).toEqual(
+    expect(form && resolveRendererEventContracts(form).loadAction?.displayName).toBeDefined();
+    expect(Object.keys(form ? resolveRendererEventContracts(form) : {})).toEqual(
       expect.arrayContaining([
         'initAction',
         'loadAction',

@@ -1,6 +1,9 @@
 import { describe, expect, expectTypeOf, it } from 'vitest';
 import type { RendererFieldContract } from './index.js';
-import { resolveRendererPropContracts } from './renderer-prop-contracts.js';
+import {
+  resolveRendererEventContracts,
+  resolveRendererPropContracts,
+} from './renderer-prop-contracts.js';
 import type { RegisteredRendererDefinition } from './index.js';
 
 function makeRenderer(definition: Record<string, unknown>): RegisteredRendererDefinition {
@@ -88,5 +91,44 @@ describe('resolveRendererPropContracts (RM-4 fields-only)', () => {
     expectTypeOf(resolveRendererPropContracts).returns.toMatchTypeOf<
       Readonly<Record<string, { shape: unknown; displayName: string }>>
     >();
+  });
+});
+
+describe('resolveRendererEventContracts (RM-5 single source)', () => {
+  it('surfaces fields-only event contracts as event contracts', () => {
+    const renderer = makeRenderer({
+      type: 'evt',
+      component: () => null,
+      fields: [
+        {
+          key: 'onClick',
+          kind: 'event',
+          contract: {
+            displayName: 'Click',
+            payload: { kind: 'object', fields: { row: { kind: 'unknown' } } },
+          },
+        },
+        { key: 'onBlur', kind: 'event' },
+      ],
+    });
+
+    const events = resolveRendererEventContracts(renderer);
+    expect(events.onClick).toEqual({
+      displayName: 'Click',
+      description: undefined,
+      payload: { kind: 'object', fields: { row: { kind: 'unknown' } } },
+    });
+    // events without an inline contract carry no authoring metadata
+    expect(events.onBlur).toBeUndefined();
+  });
+
+  it('defaults the display name to the field key', () => {
+    const renderer = makeRenderer({
+      type: 'evt2',
+      component: () => null,
+      fields: [{ key: 'onRowClick', kind: 'event', contract: { payload: { kind: 'unknown' } } }],
+    });
+
+    expect(resolveRendererEventContracts(renderer).onRowClick?.displayName).toBe('onRowClick');
   });
 });

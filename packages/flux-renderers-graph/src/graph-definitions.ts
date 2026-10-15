@@ -54,45 +54,6 @@ export const graphRendererDefinitions: RegisteredRendererDefinition[] = [
         args: { kind: 'object', fields: { keyword: { kind: 'string' } } },
       },
     ],
-    eventContracts: {
-      onNodeClick: {
-        displayName: 'On Node Click',
-        payload: {
-          kind: 'object',
-          fields: {
-            type: { kind: 'literal', value: 'graph:node-click' },
-            nodeId: { kind: 'string' },
-            node: { kind: 'object', fields: {} },
-          },
-        },
-      },
-      onNodeDoubleClick: {
-        displayName: 'On Node Double Click',
-        payload: {
-          kind: 'object',
-          fields: {
-            type: { kind: 'literal', value: 'graph:node-double-click' },
-            nodeId: { kind: 'string' },
-            node: { kind: 'object', fields: {} },
-          },
-        },
-      },
-      onSelectionChange: {
-        displayName: 'On Selection Change',
-        description: 'Single-selection payload; both fields are null when deselected.',
-        payload: {
-          kind: 'object',
-          fields: {
-            type: { kind: 'literal', value: 'graph:selection-change' },
-            nodeId: { kind: 'union', anyOf: [{ kind: 'string' }, { kind: 'literal', value: null }] },
-            node: {
-              kind: 'union',
-              anyOf: [{ kind: 'object', fields: {} }, { kind: 'literal', value: null }],
-            },
-          },
-        },
-      },
-    },
     fields: [
       {
         key: 'nodes',
@@ -188,9 +149,55 @@ export const graphRendererDefinitions: RegisteredRendererDefinition[] = [
       { key: 'maxZoom', kind: 'prop', contract: { shape: { kind: 'number' }, displayName: 'Max Zoom', defaultValue: 2 } },
       { key: 'node', kind: 'region', params: ['node', 'nodeId', 'index'] },
       { key: 'empty', kind: 'value-or-region', regionKey: 'empty' },
-      { key: 'onNodeClick', kind: 'event' },
-      { key: 'onNodeDoubleClick', kind: 'event' },
-      { key: 'onSelectionChange', kind: 'event' },
+      {
+        key: 'onNodeClick',
+        kind: 'event',
+        contract: {
+          displayName: 'On Node Click',
+          payload: {
+            kind: 'object',
+            fields: {
+              type: { kind: 'literal', value: 'graph:node-click' },
+              nodeId: { kind: 'string' },
+              node: { kind: 'object', fields: {} },
+            },
+          },
+        },
+      },
+      {
+        key: 'onNodeDoubleClick',
+        kind: 'event',
+        contract: {
+          displayName: 'On Node Double Click',
+          payload: {
+            kind: 'object',
+            fields: {
+              type: { kind: 'literal', value: 'graph:node-double-click' },
+              nodeId: { kind: 'string' },
+              node: { kind: 'object', fields: {} },
+            },
+          },
+        },
+      },
+      {
+        key: 'onSelectionChange',
+        kind: 'event',
+        contract: {
+          displayName: 'On Selection Change',
+          description: 'Single-selection payload; both fields are null when deselected.',
+          payload: {
+            kind: 'object',
+            fields: {
+              type: { kind: 'literal', value: 'graph:selection-change' },
+              nodeId: { kind: 'union', anyOf: [{ kind: 'string' }, { kind: 'literal', value: null }] },
+              node: {
+                kind: 'union',
+                anyOf: [{ kind: 'object', fields: {} }, { kind: 'literal', value: null }],
+              },
+            },
+          },
+        },
+      },
     ],
   },
 ];

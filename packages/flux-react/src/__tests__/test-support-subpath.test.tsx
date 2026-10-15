@@ -102,7 +102,7 @@ const fixtureDefinitions: RendererDefinition[] = [
   {
     type: 'fixture-dummy',
     component: () => null,
-    eventContracts: { onFake: { displayName: 'Fake' } },
+    fields: [{ key: 'onFake', kind: 'event', contract: { displayName: 'Fake' } }],
   },
 ];
 

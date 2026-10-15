@@ -70,5 +70,4 @@ function CellStylePanel() {
 export const reportCellStylePanelDefinition = {
   type: 'report-cell-style-panel',
   component: CellStylePanel,
-  eventContracts: {},
 } as never;

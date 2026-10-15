@@ -8,12 +8,14 @@ describe('resolveRendererAuthoringContract', () => {
       type: 'button',
       component: () => null,
       rendererClass: 'instance-renderer',
-      eventContracts: {
-        onClick: {
-          displayName: 'Click',
-        },
-      },
       fields: [
+        {
+          key: 'onClick',
+          kind: 'event',
+          contract: {
+            displayName: 'Click',
+          },
+        },
         { key: 'label', kind: 'prop', contract: {
           shape: { kind: 'string' },
           displayName: 'Label',

@@ -348,7 +348,7 @@ An unknown `type` is a compile-time schema diagnostic even when the JSON is synt
 
 The compiler should reuse `RendererDefinition.fields` as the first structural hint layer.
 
-This is a lowering/classification concern, not the same thing as ordinary renderer authoring metadata such as `propContracts`, `eventContracts`, or `componentCapabilityContracts`.
+This is a lowering/classification concern, not the same thing as ordinary renderer authoring metadata such as the `fields` inline contracts or `componentCapabilityContracts`.
 
 Those descriptors already tell the compiler whether a field is:
 

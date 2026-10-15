@@ -1,3 +1,4 @@
+import { resolveRendererEventContracts } from '@nop-chaos/flux-core';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { resolveRendererPropContracts } from '@nop-chaos/flux-core';
@@ -39,12 +40,12 @@ describe('command-palette definition contracts', () => {
       'close',
       'toggle',
     ]);
-    expect(Object.keys(definition?.eventContracts ?? {})).toEqual([
+    expect(Object.keys(definition ? resolveRendererEventContracts(definition) : {})).toEqual([
       'onOpen',
       'onClose',
       'onCommand',
     ]);
-    const onCommandPayload = definition?.eventContracts?.onCommand?.payload as {
+    const onCommandPayload = (definition && resolveRendererEventContracts(definition).onCommand?.payload) as {
       fields: Record<string, unknown>;
     };
     expect(Object.keys(onCommandPayload.fields)).toEqual(['id', 'item', 'groupId']);

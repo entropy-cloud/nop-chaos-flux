@@ -193,10 +193,10 @@ describe('inspector-field-model event fallback', () => {
       def({
         type: 'plain-events',
         defaultSchema: { type: 'plain-events' },
-        eventContracts: { fire: { displayName: 'Fire!' } },
         fields: [
           { key: 'size', kind: 'prop', contract: { shape: { kind: 'number' }, displayName: 'Size' } },
-          ],
+          { key: 'fire', kind: 'event', contract: { displayName: 'Fire!' } },
+        ],
       }),
     );
     const definition = registry.get('plain-events')!;

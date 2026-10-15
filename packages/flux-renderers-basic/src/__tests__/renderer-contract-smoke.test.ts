@@ -1,3 +1,4 @@
+import { resolveRendererEventContracts } from '@nop-chaos/flux-core';
 import { describe, expect, it } from 'vitest';
 import { basicRendererDefinitions } from '../index.js';
 
@@ -41,8 +42,10 @@ describe('renderer definition contract smoke tests', () => {
 
   it('button has event contracts with onClick', () => {
     const button = basicRendererDefinitions.find((d) => d.type === 'button');
-    expect(button?.eventContracts?.onClick).toBeTruthy();
-    expect(button?.eventContracts?.onClick?.displayName).toBeTruthy();
+    expect(button).toBeTruthy();
+    const events = resolveRendererEventContracts(button!);
+    expect(events.onClick).toBeTruthy();
+    expect(events.onClick?.displayName).toBeTruthy();
   });
 
   it('layout renderers have region fields', () => {

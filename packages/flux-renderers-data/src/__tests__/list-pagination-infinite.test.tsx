@@ -1,7 +1,7 @@
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { ComponentCapabilityActionContext, ComponentHandleRegistry } from '@nop-chaos/flux-core';
-import { resolveRendererPropContracts } from '@nop-chaos/flux-core';
+import { resolveRendererPropContracts, resolveRendererEventContracts } from '@nop-chaos/flux-core';
 import { t } from '@nop-chaos/flux-i18n';
 import { createDataSchemaRenderer, env, formulaCompiler } from '../test-support.js';
 import { dataRendererDefinitions } from '../index.js';
@@ -226,7 +226,7 @@ describe('list pagination integration', () => {
     expect(listDef).toBeTruthy();
     const fieldKeys = (listDef!.fields ?? []).map((f) => f.key);
     const contractKeys = Object.keys(resolveRendererPropContracts(listDef!));
-    const eventKeys = Object.keys(listDef!.eventContracts ?? {});
+    const eventKeys = Object.keys(resolveRendererEventContracts(listDef!));
     const allKeys = new Set([...fieldKeys, ...contractKeys, ...eventKeys]);
     // No request-trigger fields: api / source / initFetch / action / interval / sendOn
     for (const forbidden of ['api', 'source', 'initFetch', 'action', 'interval', 'sendOn']) {

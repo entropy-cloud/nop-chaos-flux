@@ -123,21 +123,6 @@ export const layoutRendererDefinitions: RegisteredRendererDefinition[] = [
     category: 'layout',
     sourcePackage: '@nop-chaos/flux-renderers-layout',
     component: CollapseRenderer,
-    eventContracts: {
-      onChange: {
-        displayName: 'On Change',
-        description:
-          'Dispatched when expand state changes. Payload: { value, expandedKeys, multiple }. value is a single key or null when multiple=false, an array when multiple=true.',
-        payload: {
-          kind: 'object',
-          fields: {
-            value: { kind: 'unknown' },
-            expandedKeys: { kind: 'array', item: { kind: 'string' } },
-            multiple: { kind: 'boolean' },
-          },
-        },
-      },
-    },
     fields: [
       {
         key: 'items',
@@ -250,7 +235,23 @@ export const layoutRendererDefinitions: RegisteredRendererDefinition[] = [
           defaultValue: true,
         },
       },
-      { key: 'onChange', kind: 'event' },
+      {
+        key: 'onChange',
+        kind: 'event',
+        contract: {
+          displayName: 'On Change',
+          description:
+            'Dispatched when expand state changes. Payload: { value, expandedKeys, multiple }. value is a single key or null when multiple=false, an array when multiple=true.',
+          payload: {
+            kind: 'object',
+            fields: {
+              value: { kind: 'unknown' },
+              expandedKeys: { kind: 'array', item: { kind: 'string' } },
+              multiple: { kind: 'boolean' },
+            },
+          },
+        },
+      },
     ],
   },
   {
@@ -259,21 +260,6 @@ export const layoutRendererDefinitions: RegisteredRendererDefinition[] = [
     category: 'layout',
     sourcePackage: '@nop-chaos/flux-renderers-layout',
     component: ButtonGroupRenderer,
-    eventContracts: {
-      onChange: {
-        displayName: 'On Change',
-        description:
-          'Dispatched when selection changes (selectionMode ≠ none). Payload: { value, selectedKeys, selectionMode }.',
-        payload: {
-          kind: 'object',
-          fields: {
-            value: { kind: 'unknown' },
-            selectedKeys: { kind: 'array', item: { kind: 'string' } },
-            selectionMode: { kind: 'string' },
-          },
-        },
-      },
-    },
     fields: [
       {
         key: 'items',
@@ -392,7 +378,23 @@ export const layoutRendererDefinitions: RegisteredRendererDefinition[] = [
           editorType: 'expression',
         },
       },
-      { key: 'onChange', kind: 'event' },
+      {
+        key: 'onChange',
+        kind: 'event',
+        contract: {
+          displayName: 'On Change',
+          description:
+            'Dispatched when selection changes (selectionMode ≠ none). Payload: { value, selectedKeys, selectionMode }.',
+          payload: {
+            kind: 'object',
+            fields: {
+              value: { kind: 'unknown' },
+              selectedKeys: { kind: 'array', item: { kind: 'string' } },
+              selectionMode: { kind: 'string' },
+            },
+          },
+        },
+      },
     ],
   },
   {

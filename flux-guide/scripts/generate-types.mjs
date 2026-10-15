@@ -127,13 +127,15 @@ const BOUND_FIELD_EXTRA = new Set([
 
 // ─── Generate schema interface for one definition ───────────────────────────
 
-function generateInterface(def, resolvePropContracts) {
+function generateInterface(def, resolvePropContracts, resolveEventContracts) {
   const typeName = getInterfaceName(def.type);
   const fields = def.fields || [];
   // RM-4 (plan 606): the `propContracts` record is gone — the prop-contract
   // view is resolved from the `fields` inline `contract` entries.
   const propContracts = resolvePropContracts(def);
-  const eventContracts = def.eventContracts || {};
+  // RM-5 (plan 607): the `eventContracts` record is gone — the event-contract
+  // view is resolved from the `fields` kind:'event' inline `contract` entries.
+  const eventContracts = resolveEventContracts(def);
 
   // Determine base class
   const isFormField = def.category === 'form' || def.sourcePackage?.includes('flux-renderers-form');
@@ -155,13 +157,6 @@ function generateInterface(def, resolvePropContracts) {
 
     let tsType = resolveFieldType(field, propContracts, eventContracts);
     lines.push(`  ${toTSKey(field.key)}?: ${tsType};`);
-  }
-
-  // Additional keys from eventContracts not in fields
-  for (const key of Object.keys(eventContracts)) {
-    if (seenKeys.has(key)) continue;
-    seenKeys.add(key);
-    lines.push(`  ${toTSKey(key)}?: ActionSchema | ActionSchema[];`);
   }
 
   lines.push('}');
@@ -193,6 +188,7 @@ async function main() {
   console.log('Loading registered renderer definitions from dist...');
   const core = await loadFluxCore();
   const resolvePropContracts = core.resolveRendererPropContracts;
+  const resolveEventContracts = core.resolveRendererEventContracts;
   const defs = await loadRegisteredDefinitions();
   console.log(`  Loaded ${defs.length} definition(s)`);
 
@@ -201,7 +197,7 @@ async function main() {
   const typeNameMap = {}; // type -> interface name
 
   for (const def of defs) {
-    const result = generateInterface(def, resolvePropContracts);
+    const result = generateInterface(def, resolvePropContracts, resolveEventContracts);
     interfaces.push(result);
     typeNameMap[def.type] = result.typeName;
   }
@@ -222,7 +218,8 @@ async function main() {
   lines.push(' * Do not edit manually. Regenerate with: node flux-guide/scripts/generate-types.mjs');
   lines.push(' *');
   lines.push(' * Based on the RendererDefinition `fields` inline `contract` entries');
-  lines.push(' * (prop-contract view via `resolveRendererPropContracts`) from source packages.');
+  lines.push(' * (prop-contract view via `resolveRendererPropContracts`, event-contract');
+  lines.push(' * view via `resolveRendererEventContracts`) from source packages.');
   lines.push(' */');
   lines.push('');
   lines.push('import type {');
@@ -246,7 +243,7 @@ async function main() {
     lines.push('');
 
     for (const def of catDefs) {
-      const result = generateInterface(def, resolvePropContracts);
+      const result = generateInterface(def, resolvePropContracts, resolveEventContracts);
       lines.push(result.lines);
       lines.push('');
     }

@@ -1,3 +1,4 @@
+import { resolveRendererEventContracts } from '@nop-chaos/flux-core';
 import { describe, expect, it } from 'vitest';
 import { resolveRendererPropContracts } from '@nop-chaos/flux-core';
 import { createRendererRegistry } from '@nop-chaos/flux-core';
@@ -53,7 +54,9 @@ describe('echarts renderer definition contracts', () => {
   });
 
   it('publishes event contracts for the nine native echarts event keys', () => {
-    const contracts = echartsRendererDefinition.eventContracts ?? {};
+    // RM-5 (plan 607): the event-contract view derives from the fields
+    // kind:'event' entries.
+    const contracts = resolveRendererEventContracts(echartsRendererDefinition);
     const expected = [
       'onClick',
       'onDblClick',

@@ -82,22 +82,6 @@ export const basicRendererDefinitions: RegisteredRendererDefinition[] = [
     sourcePackage: '@nop-chaos/flux-renderers-basic',
     defaultSchema: { type: 'container', body: [] },
     component: ContainerRenderer,
-    eventContracts: {
-      onClick: {
-        displayName: 'Click',
-        description: 'Runs when the container root is activated.',
-        payload: {
-          kind: 'object',
-          fields: {
-            type: { kind: 'string' },
-            nativeEvent: { kind: 'unknown' },
-            currentTarget: { kind: 'unknown' },
-            target: { kind: 'unknown' },
-          },
-          optional: ['nativeEvent', 'currentTarget', 'target'],
-        },
-      },
-    },
     fields: [
       { key: 'body', kind: 'region', regionKey: 'body' },
       { key: 'header', kind: 'region', regionKey: 'header' },
@@ -111,7 +95,24 @@ export const basicRendererDefinitions: RegisteredRendererDefinition[] = [
       { key: 'bodyClassName', kind: 'prop' },
       { key: 'headerClassName', kind: 'prop' },
       { key: 'footerClassName', kind: 'prop' },
-      { key: 'onClick', kind: 'event' },
+      {
+        key: 'onClick',
+        kind: 'event',
+        contract: {
+          displayName: 'Click',
+          description: 'Runs when the container root is activated.',
+          payload: {
+            kind: 'object',
+            fields: {
+              type: { kind: 'string' },
+              nativeEvent: { kind: 'unknown' },
+              currentTarget: { kind: 'unknown' },
+              target: { kind: 'unknown' },
+            },
+            optional: ['nativeEvent', 'currentTarget', 'target'],
+          },
+        },
+      },
     ],
     staticCapable: true,
   },
@@ -171,22 +172,6 @@ export const basicRendererDefinitions: RegisteredRendererDefinition[] = [
     sourcePackage: '@nop-chaos/flux-renderers-basic',
     defaultSchema: { type: 'flex', body: [] },
     component: FlexRenderer,
-    eventContracts: {
-      onClick: {
-        displayName: 'Click',
-        description: 'Runs when the flex root is activated.',
-        payload: {
-          kind: 'object',
-          fields: {
-            type: { kind: 'string' },
-            nativeEvent: { kind: 'unknown' },
-            currentTarget: { kind: 'unknown' },
-            target: { kind: 'unknown' },
-          },
-          optional: ['nativeEvent', 'currentTarget', 'target'],
-        },
-      },
-    },
     fields: [
       { key: 'body', kind: 'region', regionKey: 'body' },
       { key: 'items', kind: 'region', regionKey: 'items' },
@@ -198,7 +183,24 @@ export const basicRendererDefinitions: RegisteredRendererDefinition[] = [
       { key: 'gap', kind: 'prop' },
       { key: 'responsiveDirection', kind: 'prop' },
       { key: 'responsiveWrap', kind: 'prop' },
-      { key: 'onClick', kind: 'event' },
+      {
+        key: 'onClick',
+        kind: 'event',
+        contract: {
+          displayName: 'Click',
+          description: 'Runs when the flex root is activated.',
+          payload: {
+            kind: 'object',
+            fields: {
+              type: { kind: 'string' },
+              nativeEvent: { kind: 'unknown' },
+              currentTarget: { kind: 'unknown' },
+              target: { kind: 'unknown' },
+            },
+            optional: ['nativeEvent', 'currentTarget', 'target'],
+          },
+        },
+      },
     ],
     staticCapable: true,
   },
@@ -231,22 +233,6 @@ export const basicRendererDefinitions: RegisteredRendererDefinition[] = [
     defaultSchema: { type: 'button', label: 'Button' },
     rendererClass: 'instance-renderer',
     rendererTraits: ['trigger'],
-    eventContracts: {
-      onClick: {
-        displayName: 'Click',
-        description: 'Runs when the user activates the button.',
-        payload: {
-          kind: 'object',
-          fields: {
-            type: { kind: 'string' },
-            nativeEvent: { kind: 'unknown' },
-            currentTarget: { kind: 'unknown' },
-            target: { kind: 'unknown' },
-          },
-          optional: ['nativeEvent', 'currentTarget', 'target'],
-        },
-      },
-    },
     component: ButtonRenderer,
     componentCapabilityContracts: [
       {
@@ -329,7 +315,24 @@ export const basicRendererDefinitions: RegisteredRendererDefinition[] = [
           editorType: 'switch',
         },
       },
-      { key: 'onClick', kind: 'event' },
+      {
+        key: 'onClick',
+        kind: 'event',
+        contract: {
+          displayName: 'Click',
+          description: 'Runs when the user activates the button.',
+          payload: {
+            kind: 'object',
+            fields: {
+              type: { kind: 'string' },
+              nativeEvent: { kind: 'unknown' },
+              currentTarget: { kind: 'unknown' },
+              target: { kind: 'unknown' },
+            },
+            optional: ['nativeEvent', 'currentTarget', 'target'],
+          },
+        },
+      },
       {
         key: 'icon',
         kind: 'prop',
@@ -542,21 +545,6 @@ export const basicRendererDefinitions: RegisteredRendererDefinition[] = [
     sourcePackage: '@nop-chaos/flux-renderers-basic',
     defaultSchema: { type: 'keyboard', bindings: [] },
     component: KeyboardRenderer,
-    eventContracts: {
-      onTrigger: {
-        displayName: 'Trigger',
-        description: 'Runs on every binding hit, after the static action track.',
-        payload: {
-          kind: 'object',
-          fields: {
-            keys: { kind: 'string' },
-            index: { kind: 'number' },
-            nativeEvent: { kind: 'unknown' },
-          },
-          optional: ['nativeEvent'],
-        },
-      },
-    },
     fields: [
       {
         key: 'bindings',
@@ -580,7 +568,23 @@ export const basicRendererDefinitions: RegisteredRendererDefinition[] = [
           editorType: 'number',
         },
       },
-      { key: 'onTrigger', kind: 'event' },
+      {
+        key: 'onTrigger',
+        kind: 'event',
+        contract: {
+          displayName: 'Trigger',
+          description: 'Runs on every binding hit, after the static action track.',
+          payload: {
+            kind: 'object',
+            fields: {
+              keys: { kind: 'string' },
+              index: { kind: 'number' },
+              nativeEvent: { kind: 'unknown' },
+            },
+            optional: ['nativeEvent'],
+          },
+        },
+      },
     ],
   },
   dialogRendererDefinition,

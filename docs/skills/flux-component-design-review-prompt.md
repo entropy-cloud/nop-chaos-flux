@@ -55,7 +55,7 @@ Flux 组件设计与常规 React 组件有三点根本不同，审查时必须�
 
 缺少任何一节为 **blocker**。
 
-- [ ] **§1 组件定位**：声明组件是什么、不是什么、owner 类型（instance-renderer / flux-owner-renderer / domain-host-renderer），以及 `propContracts`/`eventContracts`/`componentCapabilityContracts` 声明要求
+- [ ] **§1 组件定位**：声明组件是什么、不是什么、owner 类型（instance-renderer / flux-owner-renderer / domain-host-renderer），以及 `fields` 内联 contract（prop/event）与 `componentCapabilityContracts` 声明要求
 - [ ] **§2 与 AMIS/既有产品的能力对照**：Flux 决策表，逐项标记采纳/不采纳及理由。**必须有 AMIS → Flux 映射说明**
 - [ ] **§3 Flux renderer/type 定义**：`type` 字符串、`category`、`sourcePackage`、`fields` 数量、渲染策略
 - [ ] **§4 Schema 设计**：完整 TypeScript 接口，含所有字段类型、默认值、JSDoc

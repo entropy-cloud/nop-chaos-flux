@@ -20,7 +20,7 @@ describe('check-designer-conformance', () => {
   // plan 538 Phase 3 判别 fixtures：collapsed 契约接线规则（--root/--families 参数化入口）。
   // 未接线宿主样本必须被规则报红（旧脚本无此规则、无法产生期望的红——判别机制）；已接线样本绿。
   // fixture 树只含 scada 家族（--families scada 子集入口；断言 8 因 fixture root 无标准 doc 而跳过），
-  // 样本文件携带其余断言的契约标记（manifest/eventContracts/statusPath/editor-core/i18n/marker），
+  // 样本文件携带其余断言的契约标记（manifest/fields 内联事件契约/statusPath/editor-core/i18n/marker），
   // 使红绿两腿的差异只落在 collapsed 接线规则上。
   describe('collapsed contract wiring rule (plan 538)', () => {
     const fixturesRoot = mkdtempSync(join(tmpdir(), 'conformance-fixtures-'));
@@ -40,7 +40,7 @@ describe('check-designer-conformance', () => {
         [
           '/* conformed markers for non-collapsed assertions */',
           'export const MANIFEST_V1 = true;',
-          'export const eventContracts = {};',
+          "export const fields = [{ key: 'onReady', kind: 'event', contract: { displayName: 'Ready', payload: { kind: 'unknown' } } }];",
           'export const useStatusPathPublication = () => {};',
           "import '@nop-chaos/editor-core';",
           '/* i18n prefix sample: industrial.scada.editor */',

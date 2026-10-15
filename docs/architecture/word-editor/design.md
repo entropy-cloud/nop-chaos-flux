@@ -193,7 +193,7 @@ Save and autosave truth rules:
 - local dirty state is cleared only after the renderer-local save succeeds and the host `saveEvent` also returns success
 - a failed host save keeps the editor dirty so close protection, status publication, and host integrations still see unsaved work
 - explicit save passes the full `SavedDocumentData` envelope to the host `saveEvent(saved, ctx)` callback instead of a blank event payload
-- renderer `eventContracts` / `propContracts` 现在与这条 live baseline 对齐：`onBack` 发布 event-like payload，`onSave` 发布完整 `SavedDocumentData` envelope，`config` 公开 `leftPanel` / `rightPanel` 最小结构而不再是 opaque object
+- renderer 事件/prop 内联 contract（fields 条目，RM-4/RM-5 后单源）现在与这条 live baseline 对齐：`onBack` 发布 event-like payload，`onSave` 发布完整 `SavedDocumentData` envelope，`config` 公开 `leftPanel` / `rightPanel` 最小结构而不再是 opaque object
 - `statusPath.busy` tracks the renderer-local explicit save lifecycle, so external hosts can distinguish idle from in-flight save state
 - autosave and explicit save rebuild persisted `charts` / `codes` from live `nop:chart` / `nop:code` tags in the current canvas document; renderer-local chart/code arrays are runtime/UI state, not the persisted owner truth
 - explicit save uses `editor-store.paperSettings` as the saved paper-settings owner truth instead of treating bridge re-read state as a second authoritative source

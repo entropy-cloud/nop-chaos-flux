@@ -105,9 +105,9 @@ const sharedSurfaceFields = [
   { key: 'actions', kind: 'region' as const, regionKey: 'actions' },
   { key: 'header', kind: 'region' as const, regionKey: 'header' },
   { key: 'footer', kind: 'region' as const, regionKey: 'footer' },
-  { key: 'onOpen', kind: 'event' as const },
-  { key: 'onClose', kind: 'event' as const },
-  { key: 'onConfirm', kind: 'event' as const },
+  { key: 'onOpen', kind: 'event' as const, contract: surfaceEventContracts.onOpen },
+  { key: 'onClose', kind: 'event' as const, contract: surfaceEventContracts.onClose },
+  { key: 'onConfirm', kind: 'event' as const, contract: surfaceEventContracts.onConfirm },
   { key: 'data', kind: 'prop' as const },
   compileOpenBinding,
   { key: 'defaultOpen', kind: 'prop' as const, valueType: 'boolean' as const },
@@ -142,7 +142,6 @@ export const dialogRendererDefinition: RegisteredRendererDefinition = {
   category: 'layout',
   sourcePackage: '@nop-chaos/flux-renderers-basic',
   component: DialogRenderer,
-  eventContracts: surfaceEventContracts,
   componentCapabilityContracts: surfaceHandleCapabilityContracts,
   fields: sharedSurfaceFields.concat([
     {
@@ -231,7 +230,6 @@ export const drawerRendererDefinition: RegisteredRendererDefinition = {
   category: 'layout',
   sourcePackage: '@nop-chaos/flux-renderers-basic',
   component: DrawerRenderer,
-  eventContracts: surfaceEventContracts,
   componentCapabilityContracts: surfaceHandleCapabilityContracts,
   fields: sharedSurfaceFields.concat([
     { key: 'side', kind: 'prop' as const },
@@ -322,24 +320,6 @@ export const drawerRendererDefinition: RegisteredRendererDefinition = {
   ]),
 };
 
-const commandPaletteEventContracts = {
-  onOpen: surfaceEventContracts.onOpen,
-  onClose: surfaceEventContracts.onClose,
-  onCommand: {
-    displayName: 'Command',
-    description:
-      'Runs when a command item is executed, after the palette closes (close-then-dispatch).',
-    payload: {
-      kind: 'object' as const,
-      fields: {
-        id: { kind: 'string' as const },
-        item: { kind: 'unknown' as const },
-        groupId: { kind: 'string' as const },
-      },
-    },
-  },
-};
-
 export const commandPaletteRendererDefinition: RegisteredRendererDefinition = {
   type: 'command-palette',
   displayName: 'Command Palette',
@@ -347,7 +327,6 @@ export const commandPaletteRendererDefinition: RegisteredRendererDefinition = {
   sourcePackage: '@nop-chaos/flux-renderers-basic',
   defaultSchema: { type: 'command-palette', items: [] },
   component: CommandPaletteRenderer,
-  eventContracts: commandPaletteEventContracts,
   componentCapabilityContracts: surfaceHandleCapabilityContracts,
   fields: [
     { key: 'items', kind: 'prop' as const },
@@ -423,8 +402,24 @@ export const commandPaletteRendererDefinition: RegisteredRendererDefinition = {
       valueType: 'boolean' as const,
       contract: booleanPropContract('Show mask', 'Renders the overlay mask. Defaults to true.'),
     },
-    { key: 'onOpen', kind: 'event' as const },
-    { key: 'onClose', kind: 'event' as const },
-    { key: 'onCommand', kind: 'event' as const },
+    { key: 'onOpen', kind: 'event' as const, contract: surfaceEventContracts.onOpen },
+    { key: 'onClose', kind: 'event' as const, contract: surfaceEventContracts.onClose },
+    {
+      key: 'onCommand',
+      kind: 'event' as const,
+      contract: {
+        displayName: 'Command',
+        description:
+          'Runs when a command item is executed, after the palette closes (close-then-dispatch).',
+        payload: {
+          kind: 'object' as const,
+          fields: {
+            id: { kind: 'string' as const },
+            item: { kind: 'unknown' as const },
+            groupId: { kind: 'string' as const },
+          },
+        },
+      },
+    },
   ],
 };

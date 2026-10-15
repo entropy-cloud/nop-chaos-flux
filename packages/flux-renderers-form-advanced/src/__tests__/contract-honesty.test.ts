@@ -10,5 +10,5 @@ runContractHonestyGuardSuite({
   definitions: formAdvancedRendererDefinitions,
   srcDir: `${import.meta.dirname}/..`,
   h7Mode: 'sibling-wired',
-  discoveryBaseline: { renderers: 19, eventKeys: 0, capabilityHandles: 24 },
+  discoveryBaseline: { renderers: 19, eventKeys: 25, capabilityHandles: 24 },
 });

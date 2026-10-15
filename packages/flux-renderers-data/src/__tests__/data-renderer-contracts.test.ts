@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { resolveRendererEventContracts } from '@nop-chaos/flux-core';
 import { dataRendererDefinitions } from '../index.js';
 
 describe('data renderer static contracts', () => {
@@ -17,6 +18,6 @@ describe('data renderer static contracts', () => {
       'toggleSelection',
       'loadMore',
     ]);
-    expect(crud?.eventContracts?.onSelectionChange?.payload?.kind).toBe('object');
+    expect(resolveRendererEventContracts(crud!).onSelectionChange?.payload?.kind).toBe('object');
   });
 });

@@ -1,6 +1,6 @@
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import type { RendererEnv } from '@nop-chaos/flux-core';
+import { resolveRendererEventContracts, type RendererEnv } from '@nop-chaos/flux-core';
 import { t } from '@nop-chaos/flux-i18n';
 import { buttonRenderer, createDataSchemaRenderer, env, formulaCompiler } from '../test-support.js';
 import { queryFilterRendererDefinition } from '../query-filter-definition.js';
@@ -59,8 +59,9 @@ describe('query-filter definition contracts', () => {
     // The embedded form region is a region-carrier field (crud queryFormRegion precedent).
     expect(fieldKeys?.filter((k) => k === 'filterForm')).toHaveLength(1);
     // onSubmit/onReset are transform-consumed props, NOT event contracts (the
-    // renderer never reads props.events — lying-contract guard).
-    expect(definition?.eventContracts).toBeUndefined();
+    // renderer never reads props.events — lying-contract guard). RM-5: the
+    // event-contract view derives from fields kind:'event' entries.
+    expect(definition ? resolveRendererEventContracts(definition) : {}).toEqual({});
     expect(definition?.fields?.find((f) => f.key === 'onSubmit')?.kind).toBe('prop');
     expect(definition?.fields?.find((f) => f.key === 'onReset')?.kind).toBe('prop');
   });

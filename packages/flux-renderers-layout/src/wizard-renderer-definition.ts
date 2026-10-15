@@ -10,57 +10,6 @@ export const wizardRendererDefinition: RegisteredRendererDefinition = {
     category: 'layout',
     sourcePackage: '@nop-chaos/flux-renderers-layout',
     component: WizardRenderer,
-    eventContracts: {
-      onChange: {
-        displayName: 'On Change',
-        description:
-          'Navigation event (interaction layer). Dispatched when currentStepIndex changes via Next/Prev/step-click. Payload: { currentStepKey, currentStepIndex }.',
-        payload: {
-          kind: 'object',
-          fields: {
-            currentStepKey: { kind: 'unknown' },
-            currentStepIndex: { kind: 'number' },
-          },
-        },
-      },
-      onStepCommit: {
-        displayName: 'On Step Commit',
-        description:
-          'Semantic step-commit event (lifecycle layer). Dispatched when Next is clicked, BEFORE advancing. May validate or submit; failures surface as lastCommitStatus=error and prevent advancement.',
-        payload: {
-          kind: 'object',
-          fields: {
-            currentStepKey: { kind: 'unknown' },
-            currentStepIndex: { kind: 'number' },
-          },
-        },
-      },
-      onComplete: {
-        displayName: 'On Complete',
-        description:
-          'Lifecycle event dispatched when the final step is committed successfully. Payload: { currentStepKey, currentStepIndex }.',
-        payload: {
-          kind: 'object',
-          fields: {
-            currentStepKey: { kind: 'unknown' },
-            currentStepIndex: { kind: 'number' },
-          },
-        },
-      },
-      onStepError: {
-        displayName: 'On Step Error',
-        description:
-          'Lifecycle event dispatched when step commit fails or throws. Payload: { currentStepKey, currentStepIndex, reason, error? }.',
-        payload: {
-          kind: 'object',
-          fields: {
-            currentStepKey: { kind: 'unknown' },
-            currentStepIndex: { kind: 'number' },
-            reason: { kind: 'string' },
-          },
-        },
-      },
-    },
     fields: [
       {
         key: 'steps',
@@ -186,9 +135,70 @@ export const wizardRendererDefinition: RegisteredRendererDefinition = {
       { key: 'actionFinishLabel', kind: 'prop' },
       { key: 'actionNextLabel', kind: 'prop' },
       { key: 'actionPrevLabel', kind: 'prop' },
-      { key: 'onChange', kind: 'event' },
-      { key: 'onStepCommit', kind: 'event' },
-      { key: 'onComplete', kind: 'event' },
-      { key: 'onStepError', kind: 'event' },
+      {
+        key: 'onChange',
+        kind: 'event',
+        contract: {
+          displayName: 'On Change',
+          description:
+            'Navigation event (interaction layer). Dispatched when currentStepIndex changes via Next/Prev/step-click. Payload: { currentStepKey, currentStepIndex }.',
+          payload: {
+            kind: 'object',
+            fields: {
+              currentStepKey: { kind: 'unknown' },
+              currentStepIndex: { kind: 'number' },
+            },
+          },
+        },
+      },
+      {
+        key: 'onStepCommit',
+        kind: 'event',
+        contract: {
+          displayName: 'On Step Commit',
+          description:
+            'Semantic step-commit event (lifecycle layer). Dispatched when Next is clicked, BEFORE advancing. May validate or submit; failures surface as lastCommitStatus=error and prevent advancement.',
+          payload: {
+            kind: 'object',
+            fields: {
+              currentStepKey: { kind: 'unknown' },
+              currentStepIndex: { kind: 'number' },
+            },
+          },
+        },
+      },
+      {
+        key: 'onComplete',
+        kind: 'event',
+        contract: {
+          displayName: 'On Complete',
+          description:
+            'Lifecycle event dispatched when the final step is committed successfully. Payload: { currentStepKey, currentStepIndex }.',
+          payload: {
+            kind: 'object',
+            fields: {
+              currentStepKey: { kind: 'unknown' },
+              currentStepIndex: { kind: 'number' },
+            },
+          },
+        },
+      },
+      {
+        key: 'onStepError',
+        kind: 'event',
+        contract: {
+          displayName: 'On Step Error',
+          description:
+            'Lifecycle event dispatched when step commit fails or throws. Payload: { currentStepKey, currentStepIndex, reason, error? }.',
+          payload: {
+            kind: 'object',
+            fields: {
+              currentStepKey: { kind: 'unknown' },
+              currentStepIndex: { kind: 'number' },
+              reason: { kind: 'string' },
+            },
+          },
+        },
+      },
     ],
 };

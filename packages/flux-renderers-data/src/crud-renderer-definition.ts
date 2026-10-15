@@ -11,39 +11,6 @@ export const crudRendererDefinition: RegisteredRendererDefinition = {
   rendererTraits: ['semantic-owner', 'composite'],
   authoringTransform: transformCrudAuthoringSchema,
   schemaValidator: validateCrudSchema,
-  eventContracts: {
-    onQuerySubmit: {
-      displayName: 'Query Submit',
-      description: 'Runs when the CRUD query form submits.',
-    },
-    onQueryReset: {
-      displayName: 'Query Reset',
-      description: 'Runs when the CRUD query form resets.',
-    },
-    onRowClick: {
-      displayName: 'Row Click',
-      description: 'Runs when the user activates a row.',
-    },
-    onSelectionChange: {
-      displayName: 'Selection Change',
-      description: 'Runs when CRUD selection changes.',
-      payload: {
-        kind: 'object',
-        fields: {
-          selectedRowKeys: { kind: 'array', item: { kind: 'string' } },
-        },
-      },
-    },
-    onRefresh: {
-      displayName: 'Refresh',
-      description: 'Runs when the CRUD refresh action executes.',
-    },
-    onError: {
-      displayName: 'Load Error',
-      description:
-        'Runs when a loadAction dispatch fails. When omitted, the default behavior shows an error toast and keeps the current data.',
-    },
-  },
   componentCapabilityContracts: [
     {
       handle: 'refresh',
@@ -516,12 +483,61 @@ export const crudRendererDefinition: RegisteredRendererDefinition = {
     { key: 'empty', kind: 'value-or-region', regionKey: 'empty' },
     { key: 'headerClassName', kind: 'prop' },
     { key: 'bodyClassName', kind: 'prop' },
-    { key: 'onQuerySubmit', kind: 'event' },
-    { key: 'onQueryReset', kind: 'event' },
-    { key: 'onRowClick', kind: 'event' },
-    { key: 'onSelectionChange', kind: 'event' },
-    { key: 'onRefresh', kind: 'event' },
-    { key: 'onError', kind: 'event' },
+    {
+      key: 'onQuerySubmit',
+      kind: 'event',
+      contract: {
+        displayName: 'Query Submit',
+        description: 'Runs when the CRUD query form submits.',
+      },
+    },
+    {
+      key: 'onQueryReset',
+      kind: 'event',
+      contract: {
+        displayName: 'Query Reset',
+        description: 'Runs when the CRUD query form resets.',
+      },
+    },
+    {
+      key: 'onRowClick',
+      kind: 'event',
+      contract: {
+        displayName: 'Row Click',
+        description: 'Runs when the user activates a row.',
+      },
+    },
+    {
+      key: 'onSelectionChange',
+      kind: 'event',
+      contract: {
+        displayName: 'Selection Change',
+        description: 'Runs when CRUD selection changes.',
+        payload: {
+          kind: 'object',
+          fields: {
+            selectedRowKeys: { kind: 'array', item: { kind: 'string' } },
+          },
+        },
+      },
+    },
+    {
+      key: 'onRefresh',
+      kind: 'event',
+      contract: {
+        displayName: 'Refresh',
+        description: 'Runs when the CRUD refresh action executes.',
+      },
+    },
+    {
+      key: 'onError',
+      kind: 'event',
+      contract: {
+        displayName: 'Load Error',
+        description:
+          'Runs when a loadAction dispatch fails. When omitted, the default behavior shows an error toast and keeps the current data.',
+      },
+    },
     {
       key: 'toolbar',
       kind: 'prop',

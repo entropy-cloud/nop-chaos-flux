@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { dataRendererDefinitions } from '../index.js';
+import { resolveRendererEventContracts } from '@nop-chaos/flux-core';
 import { crudRendererDefinition } from '../crud-renderer-definition.js';
 import { transformCrudAuthoringSchema } from '../data-schema-validation.js';
 
@@ -102,7 +103,7 @@ describe('data renderer definition contracts', () => {
   });
 
   it('crud event contracts include onSelectionChange with payload shape', () => {
-    expect(crudRendererDefinition.eventContracts?.onSelectionChange?.payload?.kind).toBe('object');
+    expect(resolveRendererEventContracts(crudRendererDefinition).onSelectionChange?.payload?.kind).toBe('object');
   });
 
   it('crud exposes loadAction as a reaction field, loadAllData as a prop, and onError as an event only', () => {

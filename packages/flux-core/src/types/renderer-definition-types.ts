@@ -44,7 +44,8 @@ export interface RendererPropContract {
  * semantics as `propContracts.required`: a compile-time missing-property
  * diagnostic plus the tooling surface (distinct from `SchemaFieldRule.required`,
  * which is nested-validation semantics). `payload` is reserved for the RM-5
- * event-contract convergence and is not consumed yet. The contract never
+ * event-contract convergence (`resolveRendererEventContracts` consumes
+ * `payload` since RM-5/plan 607). The contract never
  * materializes into `TemplateNode` — it is read through
  * `resolveRendererPropContracts` at authoring/validation time.
  */
@@ -55,6 +56,21 @@ export interface RendererFieldContract {
   editorType?: string;
   defaultValue?: unknown;
   required?: boolean;
+  payload?: FluxValueShape;
+}
+
+/**
+ * Event-entry contract carrier (RM-5, plan 607): a `fields` entry with
+ * `kind: 'event'` may carry its authoring metadata inline via `contract` —
+ * the single-source replacement for the removed
+ * `RendererDefinitionShape.eventContracts` record. Read through
+ * `resolveRendererEventContracts`; never materialized into `TemplateNode`.
+ * Unlike `RendererFieldContract` (prop entries) it carries no `shape` member:
+ * the payload shape lives in `payload`.
+ */
+export interface RendererEventFieldContract {
+  displayName?: string;
+  description?: string;
   payload?: FluxValueShape;
 }
 
@@ -103,7 +119,6 @@ export interface RendererDefinitionShape<S extends BaseSchema = BaseSchema> {
   defaultSchema?: Partial<S>;
   rendererClass?: RendererClass;
   rendererTraits?: readonly string[];
-  eventContracts?: Readonly<Record<string, RendererEventContract>>;
   componentCapabilityContracts?: readonly RendererCapabilityContract[];
   scopeExportContracts?: Readonly<Record<string, FluxValueShape>>;
   injectedLocals?: Readonly<Record<string, Omit<SymbolInfo, 'name'>>>;

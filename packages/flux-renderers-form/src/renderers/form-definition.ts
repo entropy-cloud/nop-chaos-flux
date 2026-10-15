@@ -102,33 +102,6 @@ export const formRendererDefinition: RegisteredRendererDefinition = {
   defaultSchema: { type: 'form', body: [], actions: [] },
   rendererClass: 'flux-owner-renderer',
   rendererTraits: ['semantic-owner', 'interaction-owner'],
-  eventContracts: {
-    initAction: {
-      displayName: 'Init',
-      description: 'Runs after the form runtime is created.',
-    },
-    loadAction: {
-      displayName: 'Load',
-      description:
-        'Fetches initial values into the form after mount (gated by autoLoad). Also backs the form refresh handle.',
-    },
-    submitAction: {
-      displayName: 'Submit',
-      description: 'Primary submit pipeline for the form.',
-    },
-    onSubmitSuccess: {
-      displayName: 'Submit Success',
-      description: 'Runs after submit resolves successfully.',
-    },
-    onSubmitError: {
-      displayName: 'Submit Error',
-      description: 'Runs after submit fails.',
-    },
-    onValidateError: {
-      displayName: 'Validate Error',
-      description: 'Runs when validation blocks submission.',
-    },
-  },
   componentCapabilityContracts: [
     {
       handle: 'submit',
@@ -309,8 +282,23 @@ export const formRendererDefinition: RegisteredRendererDefinition = {
         defaultValue: true,
       },
     },
-    { key: 'initAction', kind: 'event' },
-    { key: 'loadAction', kind: 'event' },
+    {
+      key: 'initAction',
+      kind: 'event',
+      contract: {
+        displayName: 'Init',
+        description: 'Runs after the form runtime is created.',
+      },
+    },
+    {
+      key: 'loadAction',
+      kind: 'event',
+      contract: {
+        displayName: 'Load',
+        description:
+          'Fetches initial values into the form after mount (gated by autoLoad). Also backs the form refresh handle.',
+      },
+    },
     {
       key: 'autoLoad',
       kind: 'prop',
@@ -323,10 +311,38 @@ export const formRendererDefinition: RegisteredRendererDefinition = {
         defaultValue: true,
       },
     },
-    { key: 'submitAction', kind: 'event' },
-    { key: 'onSubmitSuccess', kind: 'event' },
-    { key: 'onSubmitError', kind: 'event' },
-    { key: 'onValidateError', kind: 'event' },
+    {
+      key: 'submitAction',
+      kind: 'event',
+      contract: {
+        displayName: 'Submit',
+        description: 'Primary submit pipeline for the form.',
+      },
+    },
+    {
+      key: 'onSubmitSuccess',
+      kind: 'event',
+      contract: {
+        displayName: 'Submit Success',
+        description: 'Runs after submit resolves successfully.',
+      },
+    },
+    {
+      key: 'onSubmitError',
+      kind: 'event',
+      contract: {
+        displayName: 'Submit Error',
+        description: 'Runs after submit fails.',
+      },
+    },
+    {
+      key: 'onValidateError',
+      kind: 'event',
+      contract: {
+        displayName: 'Validate Error',
+        description: 'Runs when validation blocks submission.',
+      },
+    },
     {
       key: 'statusPath',
       kind: 'prop',

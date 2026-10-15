@@ -20,21 +20,6 @@ export const mobileRendererDefinitions: RegisteredRendererDefinition[] = [
     sourcePackage: '@nop-chaos/flux-renderers-mobile',
     defaultSchema: { type: 'pull-refresh', body: [] },
     component: PullRefreshRenderer,
-    eventContracts: {
-      onRefresh: {
-        displayName: 'On Refresh',
-        description:
-          'Dispatched when a completed downward pull passes the threshold. Payload: { type, direction, threshold } — direction is always "down" (OA-14); threshold is the configured trigger distance in px.',
-        payload: {
-          kind: 'object',
-          fields: {
-            type: { kind: 'string' },
-            direction: { kind: 'string' },
-            threshold: { kind: 'number' },
-          },
-        },
-      },
-    },
     fields: [
       { key: 'body', kind: 'region', regionKey: 'body' },
       // OA-14: `direction` is locked to 'down' (pull-up loading belongs to
@@ -64,7 +49,23 @@ export const mobileRendererDefinitions: RegisteredRendererDefinition[] = [
         valueType: 'boolean',
         contract: { displayName: 'Disabled', shape: { kind: 'boolean' } }
       },
-      { key: 'onRefresh', kind: 'event' },
+      {
+        key: 'onRefresh',
+        kind: 'event',
+        contract: {
+          displayName: 'On Refresh',
+          description:
+            'Dispatched when a completed downward pull passes the threshold. Payload: { type, direction, threshold } — direction is always "down" (OA-14); threshold is the configured trigger distance in px.',
+          payload: {
+            kind: 'object',
+            fields: {
+              type: { kind: 'string' },
+              direction: { kind: 'string' },
+              threshold: { kind: 'number' },
+            },
+          },
+        },
+      },
     ],
   },
   {
@@ -74,20 +75,6 @@ export const mobileRendererDefinitions: RegisteredRendererDefinition[] = [
     sourcePackage: '@nop-chaos/flux-renderers-mobile',
     defaultSchema: { type: 'infinite-scroll', body: [] },
     component: InfiniteScrollRenderer,
-    eventContracts: {
-      onLoadMore: {
-        displayName: 'On Load More',
-        description:
-          'Dispatched when the list requests another page. Payload: { type, source } — source discriminates the trigger path: "intersection" (sentinel reached), "immediate" (immediateCheck on mount) or "retry" (user clicked the error retry button).',
-        payload: {
-          kind: 'object',
-          fields: {
-            type: { kind: 'string' },
-            source: { kind: 'string' },
-          },
-        },
-      },
-    },
     fields: [
       { key: 'body', kind: 'region', regionKey: 'body' },
       { key: 'distance', kind: 'prop' },
@@ -119,7 +106,22 @@ export const mobileRendererDefinitions: RegisteredRendererDefinition[] = [
         contract: { displayName: 'Loading', shape: { kind: 'boolean' } }
       },
       { key: 'error', kind: 'prop' },
-      { key: 'onLoadMore', kind: 'event' },
+      {
+        key: 'onLoadMore',
+        kind: 'event',
+        contract: {
+          displayName: 'On Load More',
+          description:
+            'Dispatched when the list requests another page. Payload: { type, source } — source discriminates the trigger path: "intersection" (sentinel reached), "immediate" (immediateCheck on mount) or "retry" (user clicked the error retry button).',
+          payload: {
+            kind: 'object',
+            fields: {
+              type: { kind: 'string' },
+              source: { kind: 'string' },
+            },
+          },
+        },
+      },
     ],
   },
   {
@@ -129,44 +131,6 @@ export const mobileRendererDefinitions: RegisteredRendererDefinition[] = [
     sourcePackage: '@nop-chaos/flux-renderers-mobile',
     defaultSchema: { type: 'swipe-cell', body: [] },
     component: SwipeCellRenderer,
-    eventContracts: {
-      onAction: {
-        displayName: 'On Action',
-        description:
-          'Dispatched when an interactive control inside a revealed action region is clicked. Payload: { type, side } — side is "open-left" (left region revealed) or "open-right" (right region revealed). The cell auto-rebounds after the dispatch.',
-        payload: {
-          kind: 'object',
-          fields: {
-            type: { kind: 'string' },
-            side: { kind: 'string' },
-          },
-        },
-      },
-      onOpen: {
-        displayName: 'On Open',
-        description:
-          'Dispatched when a swipe commits the cell open. Payload: { type, side } — side is "open-left" or "open-right".',
-        payload: {
-          kind: 'object',
-          fields: {
-            type: { kind: 'string' },
-            side: { kind: 'string' },
-          },
-        },
-      },
-      onClose: {
-        displayName: 'On Close',
-        description:
-          'Dispatched when the cell closes (outside pointer, action click, or sub-threshold drag). Payload: { type, side } — side reports the previously open side.',
-        payload: {
-          kind: 'object',
-          fields: {
-            type: { kind: 'string' },
-            side: { kind: 'string' },
-          },
-        },
-      },
-    },
     fields: [
       { key: 'body', kind: 'region', regionKey: 'body' },
       { key: 'left', kind: 'region', regionKey: 'left' },
@@ -197,9 +161,54 @@ export const mobileRendererDefinitions: RegisteredRendererDefinition[] = [
         valueType: 'boolean',
         contract: { displayName: 'Close On Outside', shape: { kind: 'boolean' } }
       },
-      { key: 'onAction', kind: 'event' },
-      { key: 'onOpen', kind: 'event' },
-      { key: 'onClose', kind: 'event' },
+      {
+        key: 'onAction',
+        kind: 'event',
+        contract: {
+          displayName: 'On Action',
+          description:
+            'Dispatched when an interactive control inside a revealed action region is clicked. Payload: { type, side } — side is "open-left" (left region revealed) or "open-right" (right region revealed). The cell auto-rebounds after the dispatch.',
+          payload: {
+            kind: 'object',
+            fields: {
+              type: { kind: 'string' },
+              side: { kind: 'string' },
+            },
+          },
+        },
+      },
+      {
+        key: 'onOpen',
+        kind: 'event',
+        contract: {
+          displayName: 'On Open',
+          description:
+            'Dispatched when a swipe commits the cell open. Payload: { type, side } — side is "open-left" or "open-right".',
+          payload: {
+            kind: 'object',
+            fields: {
+              type: { kind: 'string' },
+              side: { kind: 'string' },
+            },
+          },
+        },
+      },
+      {
+        key: 'onClose',
+        kind: 'event',
+        contract: {
+          displayName: 'On Close',
+          description:
+            'Dispatched when the cell closes (outside pointer, action click, or sub-threshold drag). Payload: { type, side } — side reports the previously open side.',
+          payload: {
+            kind: 'object',
+            fields: {
+              type: { kind: 'string' },
+              side: { kind: 'string' },
+            },
+          },
+        },
+      },
     ],
   },
   {
@@ -209,19 +218,6 @@ export const mobileRendererDefinitions: RegisteredRendererDefinition[] = [
     sourcePackage: '@nop-chaos/flux-renderers-mobile',
     defaultSchema: { type: 'countdown', time: 60_000 },
     component: CountdownRenderer,
-    eventContracts: {
-      onFinish: {
-        displayName: 'On Finish',
-        description:
-          'Dispatched exactly once when the countdown reaches zero (time or targetTime elapsed). Payload: { type: "finish" }.',
-        payload: {
-          kind: 'object',
-          fields: {
-            type: { kind: 'string' },
-          },
-        },
-      },
-    },
     fields: [
       { key: 'time', kind: 'prop' },
       { key: 'targetTime', kind: 'prop' },
@@ -246,7 +242,21 @@ export const mobileRendererDefinitions: RegisteredRendererDefinition[] = [
       },
       { key: 'prefix', kind: 'prop' },
       { key: 'suffix', kind: 'prop' },
-      { key: 'onFinish', kind: 'event' },
+      {
+        key: 'onFinish',
+        kind: 'event',
+        contract: {
+          displayName: 'On Finish',
+          description:
+            'Dispatched exactly once when the countdown reaches zero (time or targetTime elapsed). Payload: { type: "finish" }.',
+          payload: {
+            kind: 'object',
+            fields: {
+              type: { kind: 'string' },
+            },
+          },
+        },
+      },
     ],
   },
   {

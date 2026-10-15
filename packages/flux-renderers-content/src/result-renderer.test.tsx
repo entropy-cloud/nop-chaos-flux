@@ -1,7 +1,11 @@
 import { cleanup, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
-import type { RegisteredRendererDefinition, RendererEnv } from '@nop-chaos/flux-core';
+import {
+  resolveRendererEventContracts,
+  type RegisteredRendererDefinition,
+  type RendererEnv,
+} from '@nop-chaos/flux-core';
 import React from 'react';
 import { initFluxI18n, resetFluxI18n } from '@nop-chaos/flux-i18n';
 import { createSchemaRenderer } from '@nop-chaos/flux-react';
@@ -71,7 +75,9 @@ describe('result definition contracts', () => {
     for (const key of ['status', 'icon', 'title', 'description', 'actions']) {
       expect(fieldKeys).toContain(key);
     }
-    expect(definition?.eventContracts).toBeUndefined();
+    // RM-5: the event-contract view derives from fields kind:'event' entries —
+    // the result renderer declares none.
+    expect(definition ? resolveRendererEventContracts(definition) : {}).toEqual({});
   });
 });
 

@@ -8,21 +8,6 @@ export const stepsRendererDefinition: RegisteredRendererDefinition = {
   category: 'layout',
   sourcePackage: '@nop-chaos/flux-renderers-layout',
   component: StepsRenderer,
-  eventContracts: {
-    onChange: {
-      displayName: 'On Change',
-      description:
-        'Dispatched when the current step changes via click. Payload: { value, stepIndex, stepKey }. steps is a lightweight progress display — it does NOT own multi-step submit lifecycle (wizard domain).',
-      payload: {
-        kind: 'object',
-        fields: {
-          value: { kind: 'unknown' },
-          stepIndex: { kind: 'number' },
-          stepKey: { kind: 'unknown' },
-        },
-      },
-    },
-  },
   fields: [
     {
       key: 'items',
@@ -101,7 +86,23 @@ export const stepsRendererDefinition: RegisteredRendererDefinition = {
         defaultValue: 'horizontal',
       },
     },
-    { key: 'onChange', kind: 'event' },
+    {
+      key: 'onChange',
+      kind: 'event',
+      contract: {
+        displayName: 'On Change',
+        description:
+          'Dispatched when the current step changes via click. Payload: { value, stepIndex, stepKey }. steps is a lightweight progress display — it does NOT own multi-step submit lifecycle (wizard domain).',
+        payload: {
+          kind: 'object',
+          fields: {
+            value: { kind: 'unknown' },
+            stepIndex: { kind: 'number' },
+            stepKey: { kind: 'unknown' },
+          },
+        },
+      },
+    },
   ],
 };
 
@@ -111,21 +112,6 @@ export const timelineRendererDefinition: RegisteredRendererDefinition = {
   category: 'layout',
   sourcePackage: '@nop-chaos/flux-renderers-layout',
   component: TimelineRenderer,
-  eventContracts: {
-    onChange: {
-      displayName: 'On Change',
-      description:
-        'Dispatched when an event item is clicked (seek). Items are clickable only when onChange is declared. Payload: { value, index, item } — value is the item key (or index when no key), index is the logical-order index, item is the full event item data. timeline does NOT own playback — the host drives value for play/pause.',
-      payload: {
-        kind: 'object',
-        fields: {
-          value: { kind: 'unknown' },
-          index: { kind: 'number' },
-          item: { kind: 'unknown' },
-        },
-      },
-    },
-  },
   fields: [
     {
       key: 'items',
@@ -235,6 +221,22 @@ export const timelineRendererDefinition: RegisteredRendererDefinition = {
         defaultValue: false,
       },
     },
-    { key: 'onChange', kind: 'event' },
+    {
+      key: 'onChange',
+      kind: 'event',
+      contract: {
+        displayName: 'On Change',
+        description:
+          'Dispatched when an event item is clicked (seek). Items are clickable only when onChange is declared. Payload: { value, index, item } — value is the item key (or index when no key), index is the logical-order index, item is the full event item data. timeline does NOT own playback — the host drives value for play/pause.',
+        payload: {
+          kind: 'object',
+          fields: {
+            value: { kind: 'unknown' },
+            index: { kind: 'number' },
+            item: { kind: 'unknown' },
+          },
+        },
+      },
+    },
   ],
 };

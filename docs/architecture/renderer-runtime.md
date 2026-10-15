@@ -495,7 +495,7 @@ The key rule is that renderer-level contracts may reuse `FluxValueShape` as the 
 
 Current implementation baseline:
 
-- `packages/flux-core/src/types/renderer-core.ts` now defines `rendererClass`, `rendererTraits`, `eventContracts`, `componentCapabilityContracts`, and `scopeExportContracts` directly on `RendererDefinition` (prop value-shape contracts live inline on `fields` entries since RM-4)
+- `packages/flux-core/src/types/renderer-core.ts` now defines `rendererClass`, `rendererTraits`, `componentCapabilityContracts`, and `scopeExportContracts` directly on `RendererDefinition` (prop and event contracts live inline on `fields` entries since RM-4/RM-5)
 - `packages/flux-core/src/types/renderer-authoring-contract.ts` provides the tooling-facing `ResolvedAuthoringContract` adapter over those fields
 - initial pilot metadata started with `button`, `form`, `crud`, and `designer-page`; current live coverage also includes renderers such as `tabs`, `table`, `chart`, and `code-editor`, so the renderer definitions remain the source of truth for exact coverage
 

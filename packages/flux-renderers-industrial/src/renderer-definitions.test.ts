@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { createRendererRegistry, registerRendererDefinitions, resolveRendererPropContracts } from '@nop-chaos/flux-core';
+import { createRendererRegistry, registerRendererDefinitions, resolveRendererPropContracts, resolveRendererEventContracts } from '@nop-chaos/flux-core';
 import { industrialRendererDefinitions } from './renderer-definitions.js';
 import { registerScadaRenderers } from './index.js';
 import { hasScadaSymbol, clearScadaSymbolRegistry } from './symbols/symbol-registry.js';
@@ -53,7 +53,7 @@ describe('industrialRendererDefinitions', () => {
     expect(byKey.get('empty')).toMatchObject({ key: 'empty', kind: 'region', regionKey: 'empty' });
   });
 
-  it('scada-canvas static metadata is tooling-discoverable: rendererClass + propContracts + 5 eventContracts + 9 capabilityContracts (Phase 3)', () => {
+  it('scada-canvas static metadata is tooling-discoverable: rendererClass + propContracts + 5 fields event contracts + 9 capabilityContracts (Phase 3)', () => {
     const def = industrialRendererDefinitions[0];
     // rendererClass（范本 basic-renderer-definitions.ts:174 instance-renderer）
     expect(def.rendererClass).toBe('instance-renderer');
@@ -61,8 +61,8 @@ describe('industrialRendererDefinitions', () => {
     expect(Object.keys(resolveRendererPropContracts(def)).sort()).toEqual(
       ['config', 'events', 'height', 'viewport', 'width'],
     );
-    // eventContracts：5 events（onSymbolClick/onSymbolDblClick/onSymbolHover/onReady/onError）
-    expect(Object.keys(def.eventContracts ?? {}).sort()).toEqual(
+    // fields 事件契约（RM-5）：5 events（onSymbolClick/onSymbolDblClick/onSymbolHover/onReady/onError）
+    expect(Object.keys(resolveRendererEventContracts(def)).sort()).toEqual(
       ['onError', 'onReady', 'onSymbolClick', 'onSymbolDblClick', 'onSymbolHover'],
     );
     // componentCapabilityContracts：9 handles（design-renderer.md §8.5 表）

@@ -262,8 +262,13 @@ export interface SchemaFieldRule {
    * alternative to declaring the same prop a second time in the renderer's
    * `propContracts`. Only meaningful for `kind: 'prop'` entries. Read through
    * `resolveRendererPropContracts`; never materialized into `TemplateNode`.
+   * `kind: 'event'` entries (RM-5, plan 607) carry the event-form carrier
+   * `RendererEventFieldContract` (displayName/description/payload, no shape),
+   * read through `resolveRendererEventContracts`.
    */
-  contract?: import('./renderer-definition-types.js').RendererFieldContract;
+  contract?:
+    | import('./renderer-definition-types.js').RendererFieldContract
+    | import('./renderer-definition-types.js').RendererEventFieldContract;
 }
 
 export interface FieldCompileContext {

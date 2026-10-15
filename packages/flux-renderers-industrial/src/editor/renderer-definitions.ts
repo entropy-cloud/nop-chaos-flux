@@ -29,80 +29,6 @@ export const industrialEditorRendererDefinitions: RegisteredRendererDefinition[]
     rendererClass: 'domain-host-renderer',
     component: ScadaEditorCanvasRenderer,
     hostContract: scadaEditorHostContract,
-    eventContracts: {
-      onReady: {
-        displayName: 'Ready',
-        description: 'Fires when the editor mounts and the initial config is loaded (scada-editor:ready).',
-      },
-      onError: {
-        displayName: 'Error',
-        description: 'Fires on config validation/build failure (scada-editor:error).',
-        payload: {
-          kind: 'object',
-          fields: {
-            code: { kind: 'string' },
-            message: { kind: 'string' },
-          },
-        },
-      },
-      onSelectionChange: {
-        displayName: 'Selection Change',
-        description: 'Fires when the symbol selection changes (scada-editor:selectionChange).',
-        payload: {
-          kind: 'object',
-          fields: {
-            listNodeIds: { kind: 'array', item: { kind: 'string' } },
-          },
-        },
-      },
-      onModeChange: {
-        displayName: 'Mode Change',
-        description: 'Fires when the editor switches between edit/preview (scada-editor:modeChange).',
-        payload: {
-          kind: 'object',
-          fields: {
-            mode: { kind: 'union', anyOf: [{ kind: 'literal', value: 'edit' }, { kind: 'literal', value: 'preview' }] },
-          },
-        },
-      },
-      onSessionChange: {
-        displayName: 'Session Change',
-        description: 'Fires on any working-copy mutation: property edit, move, undo/redo (scada-editor:sessionChange).',
-        payload: {
-          kind: 'object',
-          fields: {
-            canUndo: { kind: 'boolean' },
-            canRedo: { kind: 'boolean' },
-            selection: { kind: 'array', item: { kind: 'string' } },
-            mode: { kind: 'string' },
-          },
-        },
-      },
-      onSave: {
-        displayName: 'Save',
-        description: 'Fires on manual save (scada-editor:save). P3.2: payload key unified to `serialized`; `serializedConfig` is the deprecated compat key (one version).',
-        payload: {
-          kind: 'object',
-          fields: {
-            serialized: { kind: 'string', description: 'Serialized config JSON (primary, P3.2 裁决③).' },
-            serializedConfig: {
-              kind: 'string',
-              description: 'Deprecated compat alias of `serialized` (one version; same value).',
-            },
-          },
-        },
-      },
-      onLoad: {
-        displayName: 'Load',
-        description: 'Fires when an external config is loaded via the load handle (scada-editor:load).',
-        payload: {
-          kind: 'object',
-          fields: {
-            config: { kind: 'unknown' },
-          },
-        },
-      },
-    },
     fields: [
       {
         key: 'statusPath',
@@ -238,6 +164,108 @@ export const industrialEditorRendererDefinitions: RegisteredRendererDefinition[]
           displayName: 'Station Storage',
           description:
             'Host-injected station/screen storage callbacks (loadStation/saveStation/loadScreen/saveScreen/deleteScreen). Screens are serialized config documents.',
+        },
+      },
+      // RM-5（plan 607）：事件契约自 `eventContracts` 记录迁入 fields 条目（尾部追加，
+      // contract 成员逐字同源）。
+      {
+        key: 'onReady',
+        kind: 'event',
+        contract: {
+          displayName: 'Ready',
+          description: 'Fires when the editor mounts and the initial config is loaded (scada-editor:ready).',
+        },
+      },
+      {
+        key: 'onError',
+        kind: 'event',
+        contract: {
+          displayName: 'Error',
+          description: 'Fires on config validation/build failure (scada-editor:error).',
+          payload: {
+            kind: 'object',
+            fields: {
+              code: { kind: 'string' },
+              message: { kind: 'string' },
+            },
+          },
+        },
+      },
+      {
+        key: 'onSelectionChange',
+        kind: 'event',
+        contract: {
+          displayName: 'Selection Change',
+          description: 'Fires when the symbol selection changes (scada-editor:selectionChange).',
+          payload: {
+            kind: 'object',
+            fields: {
+              listNodeIds: { kind: 'array', item: { kind: 'string' } },
+            },
+          },
+        },
+      },
+      {
+        key: 'onModeChange',
+        kind: 'event',
+        contract: {
+          displayName: 'Mode Change',
+          description: 'Fires when the editor switches between edit/preview (scada-editor:modeChange).',
+          payload: {
+            kind: 'object',
+            fields: {
+              mode: { kind: 'union', anyOf: [{ kind: 'literal', value: 'edit' }, { kind: 'literal', value: 'preview' }] },
+            },
+          },
+        },
+      },
+      {
+        key: 'onSessionChange',
+        kind: 'event',
+        contract: {
+          displayName: 'Session Change',
+          description: 'Fires on any working-copy mutation: property edit, move, undo/redo (scada-editor:sessionChange).',
+          payload: {
+            kind: 'object',
+            fields: {
+              canUndo: { kind: 'boolean' },
+              canRedo: { kind: 'boolean' },
+              selection: { kind: 'array', item: { kind: 'string' } },
+              mode: { kind: 'string' },
+            },
+          },
+        },
+      },
+      {
+        key: 'onSave',
+        kind: 'event',
+        contract: {
+          displayName: 'Save',
+          description: 'Fires on manual save (scada-editor:save). P3.2: payload key unified to `serialized`; `serializedConfig` is the deprecated compat key (one version).',
+          payload: {
+            kind: 'object',
+            fields: {
+              serialized: { kind: 'string', description: 'Serialized config JSON (primary, P3.2 裁决③).' },
+              serializedConfig: {
+                kind: 'string',
+                description: 'Deprecated compat alias of `serialized` (one version; same value).',
+              },
+            },
+          },
+        },
+      },
+      {
+        key: 'onLoad',
+        kind: 'event',
+        contract: {
+          displayName: 'Load',
+          description: 'Fires when an external config is loaded via the load handle (scada-editor:load).',
+          payload: {
+            kind: 'object',
+            fields: {
+              config: { kind: 'unknown' },
+            },
+          },
         },
       },
     ],

@@ -24,5 +24,5 @@ export function FixtureDummy(props: { events?: { onFake?: () => void } }) {
 export const fixtureRendererDefinition: RendererDefinition = {
   type: 'fixture-dummy',
   component: FixtureDummy,
-  eventContracts: { onFake: { displayName: 'Fake' } },
+  fields: [{ key: 'onFake', kind: 'event', contract: { displayName: 'Fake' } }],
 };

@@ -1,3 +1,4 @@
+import { resolveRendererEventContracts } from '@nop-chaos/flux-core';
 import { cleanup, render } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
 import { mobileRendererDefinitions } from './mobile-renderer-definitions.js';
@@ -70,35 +71,35 @@ describe('mobileRendererDefinitions', () => {
     );
   });
 
-  it('pull-refresh declares onRefresh eventContracts matching its payload (C7 P1-2)', () => {
+  it('pull-refresh declares the onRefresh event contract matching its payload (C7 P1-2)', () => {
     const def = mobileRendererDefinitions.find((d) => d.type === 'pull-refresh');
-    const contract = def?.eventContracts?.onRefresh;
+    const contract = def && resolveRendererEventContracts(def).onRefresh;
     expect(contract).toBeTruthy();
     const fields = (contract?.payload as { fields?: Record<string, unknown> } | undefined)?.fields;
     expect(Object.keys(fields ?? {})).toEqual(['type', 'direction', 'threshold']);
   });
 
-  it('infinite-scroll declares onLoadMore eventContracts matching its payload (C7 P1-2)', () => {
+  it('infinite-scroll declares the onLoadMore event contract matching its payload (C7 P1-2)', () => {
     const def = mobileRendererDefinitions.find((d) => d.type === 'infinite-scroll');
-    const contract = def?.eventContracts?.onLoadMore;
+    const contract = def && resolveRendererEventContracts(def).onLoadMore;
     expect(contract).toBeTruthy();
     const fields = (contract?.payload as { fields?: Record<string, unknown> } | undefined)?.fields;
     expect(Object.keys(fields ?? {})).toEqual(['type', 'source']);
   });
 
-  it('swipe-cell declares onAction/onOpen/onClose eventContracts matching their payloads (C7 P1-2)', () => {
+  it('swipe-cell declares onAction/onOpen/onClose event contracts matching their payloads (C7 P1-2)', () => {
     const def = mobileRendererDefinitions.find((d) => d.type === 'swipe-cell');
     for (const key of ['onAction', 'onOpen', 'onClose'] as const) {
-      const contract = def?.eventContracts?.[key];
-      expect(contract, `swipe-cell ${key} eventContracts`).toBeTruthy();
+      const contract = def && resolveRendererEventContracts(def)[key];
+      expect(contract, `swipe-cell ${key} event contract`).toBeTruthy();
       const fields = (contract?.payload as { fields?: Record<string, unknown> } | undefined)?.fields;
       expect(Object.keys(fields ?? {})).toEqual(['type', 'side']);
     }
   });
 
-  it('countdown declares onFinish eventContracts matching its payload (C7 P1-2)', () => {
+  it('countdown declares the onFinish event contract matching its payload (C7 P1-2)', () => {
     const def = mobileRendererDefinitions.find((d) => d.type === 'countdown');
-    const contract = def?.eventContracts?.onFinish;
+    const contract = def && resolveRendererEventContracts(def).onFinish;
     expect(contract).toBeTruthy();
     const fields = (contract?.payload as { fields?: Record<string, unknown> } | undefined)?.fields;
     expect(Object.keys(fields ?? {})).toEqual(['type']);

@@ -15,35 +15,6 @@ export const w2aDataCompositionDefinitions: RegisteredRendererDefinition[] = [
     category: 'data',
     sourcePackage: '@nop-chaos/flux-renderers-data',
     component: PaginationRenderer,
-    eventContracts: {
-      onChange: {
-        displayName: 'On Change',
-        description:
-          'Dispatched when currentPage changes (page click, prev/next, or page-size reset). Payload: { currentPage, pageSize, total }. Reports the normalized page value.',
-        payload: {
-          kind: 'object',
-          fields: {
-            currentPage: { kind: 'number' },
-            pageSize: { kind: 'number' },
-            total: { kind: 'number' },
-          },
-        },
-      },
-      onPageSizeChange: {
-        displayName: 'On Page Size Change',
-        description:
-          'Dispatched when the page size is changed via the selector. Resets currentPage to 1 to avoid empty pages. Payload: { pageSize, currentPage, totalPages, total }.',
-        payload: {
-          kind: 'object',
-          fields: {
-            pageSize: { kind: 'number' },
-            currentPage: { kind: 'number' },
-            totalPages: { kind: 'number' },
-            total: { kind: 'number' },
-          },
-        },
-      },
-    },
     fields: [
       {
         key: 'currentPage',
@@ -116,8 +87,41 @@ export const w2aDataCompositionDefinitions: RegisteredRendererDefinition[] = [
           editorType: 'expression',
         },
       },
-      { key: 'onChange', kind: 'event' },
-      { key: 'onPageSizeChange', kind: 'event' },
+      {
+        key: 'onChange',
+        kind: 'event',
+        contract: {
+          displayName: 'On Change',
+          description:
+            'Dispatched when currentPage changes (page click, prev/next, or page-size reset). Payload: { currentPage, pageSize, total }. Reports the normalized page value.',
+          payload: {
+            kind: 'object',
+            fields: {
+              currentPage: { kind: 'number' },
+              pageSize: { kind: 'number' },
+              total: { kind: 'number' },
+            },
+          },
+        },
+      },
+      {
+        key: 'onPageSizeChange',
+        kind: 'event',
+        contract: {
+          displayName: 'On Page Size Change',
+          description:
+            'Dispatched when the page size is changed via the selector. Resets currentPage to 1 to avoid empty pages. Payload: { pageSize, currentPage, totalPages, total }.',
+          payload: {
+            kind: 'object',
+            fields: {
+              pageSize: { kind: 'number' },
+              currentPage: { kind: 'number' },
+              totalPages: { kind: 'number' },
+              total: { kind: 'number' },
+            },
+          },
+        },
+      },
     ],
   },
   {

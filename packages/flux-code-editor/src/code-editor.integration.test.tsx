@@ -4,7 +4,7 @@ import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { t } from '@nop-chaos/flux-i18n';
 import { createSchemaRenderer, createDefaultRegistry } from '@nop-chaos/flux-react';
-import { resolveRendererPropContracts } from '@nop-chaos/flux-core';
+import { resolveRendererEventContracts, resolveRendererPropContracts } from '@nop-chaos/flux-core';
 import type { RendererEnv, SchemaInput } from '@nop-chaos/flux-core';
 import { registerBasicRenderers } from '@nop-chaos/flux-renderers-basic';
 import { registerFormRenderers } from '@nop-chaos/flux-renderers-form';
@@ -440,7 +440,9 @@ describe('code-editor integration', () => {
   it('publishes code-editor prop and event contracts for authoring discovery', () => {
     expect(codeEditorRendererDefinition.sourcePackage).toBe('@nop-chaos/flux-code-editor');
     expect(resolveRendererPropContracts(codeEditorRendererDefinition).language?.required).toBe(true);
-    expect(codeEditorRendererDefinition.eventContracts?.onChange?.payload).toEqual({ kind: 'string' });
+    expect(resolveRendererEventContracts(codeEditorRendererDefinition).onChange?.payload).toEqual({
+      kind: 'string',
+    });
   });
 
   it('localizes variable-panel action labels', () => {

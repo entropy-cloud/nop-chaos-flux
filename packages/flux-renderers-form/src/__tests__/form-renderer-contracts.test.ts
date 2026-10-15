@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { resolveRendererEventContracts } from '@nop-chaos/flux-core';
 import { formRendererDefinition } from '../renderers/form-definition.js';
 
 describe('form renderer static contracts', () => {
@@ -9,6 +10,6 @@ describe('form renderer static contracts', () => {
     expect(formRendererDefinition.componentCapabilityContracts?.map((item) => item.handle)).toEqual(
       ['submit', 'refresh', 'validate', 'reset', 'setValue', 'setValues', 'getValues'],
     );
-    expect(formRendererDefinition.eventContracts?.submitAction?.displayName).toBe('Submit');
+    expect(resolveRendererEventContracts(formRendererDefinition).submitAction?.displayName).toBe('Submit');
   });
 });

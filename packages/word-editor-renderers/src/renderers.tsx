@@ -47,27 +47,6 @@ export const wordEditorRendererDefinitions: RegisteredRendererDefinition[] = [
     sourcePackage: '@nop-chaos/word-editor-renderers',
     rendererClass: 'domain-host-renderer',
     rendererTraits: ['workbench-shell', 'builder-facing'],
-    eventContracts: {
-      onBack: {
-        displayName: 'Back',
-        description: 'Handles navigation back from the workbench shell.',
-        payload: {
-          kind: 'object',
-          fields: {
-            type: { kind: 'string' },
-            nativeEvent: { kind: 'unknown' },
-            currentTarget: { kind: 'unknown' },
-            target: { kind: 'unknown' },
-          },
-          optional: ['nativeEvent', 'currentTarget', 'target'],
-        },
-      },
-      onSave: {
-        displayName: 'Save',
-        description: 'Handles save completion for the current document.',
-        payload: savedDocumentDataShape,
-      },
-    },
     fields: [
       { key: 'title', kind: 'value-or-region', regionKey: 'title' },
       {
@@ -97,8 +76,33 @@ export const wordEditorRendererDefinitions: RegisteredRendererDefinition[] = [
           editorType: 'path',
         },
       },
-      { key: 'onBack', kind: 'event' },
-      { key: 'onSave', kind: 'event' },
+      {
+        key: 'onBack',
+        kind: 'event',
+        contract: {
+          displayName: 'Back',
+          description: 'Handles navigation back from the workbench shell.',
+          payload: {
+            kind: 'object',
+            fields: {
+              type: { kind: 'string' },
+              nativeEvent: { kind: 'unknown' },
+              currentTarget: { kind: 'unknown' },
+              target: { kind: 'unknown' },
+            },
+            optional: ['nativeEvent', 'currentTarget', 'target'],
+          },
+        },
+      },
+      {
+        key: 'onSave',
+        kind: 'event',
+        contract: {
+          displayName: 'Save',
+          description: 'Handles save completion for the current document.',
+          payload: savedDocumentDataShape,
+        },
+      },
       {
         key: 'initialDocument',
         kind: 'prop',

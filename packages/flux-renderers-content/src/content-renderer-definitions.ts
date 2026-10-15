@@ -5,7 +5,6 @@ import { AudioRenderer } from './audio.js';
 import { CardRenderer } from './card.js';
 import { CardsRenderer } from './cards-renderer.js';
 import { CarouselRenderer } from './carousel.js';
-import { DiffViewRenderer } from './diff-view/diff-view-renderer.js';
 import { EmptyRenderer } from './empty.js';
 import { HtmlRenderer } from './html.js';
 import { ImageRenderer } from './image.js';
@@ -15,6 +14,7 @@ import { MappingRenderer } from './mapping.js';
 import { MarkdownRenderer } from './markdown.js';
 import { ProgressRenderer } from './progress.js';
 import { QrCodeRenderer } from './qrcode.js';
+import { diffViewRendererDefinition } from './diff-view/diff-view-definition.js';
 import { ResultRenderer } from './result.js';
 import { SeparatorRenderer } from './separator.js';
 import { SpinnerRenderer } from './spinner.js';
@@ -267,32 +267,6 @@ export const contentRendererDefinitions: RegisteredRendererDefinition[] = [
     displayName: 'Cards',
     category: 'data',
     component: CardsRenderer,
-    eventContracts: {
-      onItemClick: {
-        displayName: 'On Item Click',
-        description:
-          'Dispatched when a card is clicked. Payload: { item, index, key }. The action scope is the per-card scope, so item/index are also reachable as scope values.',
-        payload: {
-          kind: 'object',
-          fields: {
-            item: { kind: 'unknown' },
-            index: { kind: 'number' },
-            key: { kind: 'string' },
-          },
-        },
-      },
-      onSelectionChange: {
-        displayName: 'On Selection Change',
-        description: 'Dispatched when the local selection changes. Payload: { selectedKeys, selectionMode }.',
-        payload: {
-          kind: 'object',
-          fields: {
-            selectedKeys: { kind: 'array', item: { kind: 'string' } },
-            selectionMode: { kind: 'string' },
-          },
-        },
-      },
-    },
     fields: [
       {
         key: 'items',
@@ -336,8 +310,38 @@ export const contentRendererDefinitions: RegisteredRendererDefinition[] = [
           defaultValue: 'id',
         },
       },
-      { key: 'onItemClick', kind: 'event' },
-      { key: 'onSelectionChange', kind: 'event' },
+      {
+        key: 'onItemClick',
+        kind: 'event',
+        contract: {
+          displayName: 'On Item Click',
+          description:
+            'Dispatched when a card is clicked. Payload: { item, index, key }. The action scope is the per-card scope, so item/index are also reachable as scope values.',
+          payload: {
+            kind: 'object',
+            fields: {
+              item: { kind: 'unknown' },
+              index: { kind: 'number' },
+              key: { kind: 'string' },
+            },
+          },
+        },
+      },
+      {
+        key: 'onSelectionChange',
+        kind: 'event',
+        contract: {
+          displayName: 'On Selection Change',
+          description: 'Dispatched when the local selection changes. Payload: { selectedKeys, selectionMode }.',
+          payload: {
+            kind: 'object',
+            fields: {
+              selectedKeys: { kind: 'array', item: { kind: 'string' } },
+              selectionMode: { kind: 'string' },
+            },
+          },
+        },
+      },
       { key: 'card', kind: 'region', params: ['item', 'index'], isolate: false },
       { key: 'empty', kind: 'value-or-region', regionKey: 'empty' },
     ],
@@ -347,16 +351,6 @@ export const contentRendererDefinitions: RegisteredRendererDefinition[] = [
     displayName: 'Alert',
     category: 'content',
     component: AlertRenderer,
-    eventContracts: {
-      onClose: {
-        displayName: 'On Close',
-        description: 'Dispatched when the close button is clicked (closable=true). Payload: { level }.',
-        payload: {
-          kind: 'object',
-          fields: { level: { kind: 'string' } },
-        },
-      },
-    },
     fields: [
       {
         key: 'level',
@@ -402,7 +396,18 @@ export const contentRendererDefinitions: RegisteredRendererDefinition[] = [
       { key: 'title', kind: 'value-or-region', regionKey: 'title' },
       { key: 'body', kind: 'value-or-region', regionKey: 'body' },
       { key: 'actions', kind: 'region', regionKey: 'actions' },
-      { key: 'onClose', kind: 'event' },
+      {
+        key: 'onClose',
+        kind: 'event',
+        contract: {
+          displayName: 'On Close',
+          description: 'Dispatched when the close button is clicked (closable=true). Payload: { level }.',
+          payload: {
+            kind: 'object',
+            fields: { level: { kind: 'string' } },
+          },
+        },
+      },
     ],
   }),
   defineContentRenderer({
@@ -551,20 +556,6 @@ export const contentRendererDefinitions: RegisteredRendererDefinition[] = [
     displayName: 'Carousel',
     category: 'content',
     component: CarouselRenderer,
-    eventContracts: {
-      onChange: {
-        displayName: 'On Change',
-        description:
-          'Dispatched when the active slide changes (embla select/autoplay/indicators/handle). Payload: { activeIndex, item } — a single canonical activeIndex key aligned with the schema/state field name.',
-        payload: {
-          kind: 'object',
-          fields: {
-            activeIndex: { kind: 'number' },
-            item: { kind: 'unknown' },
-          },
-        },
-      },
-    },
     fields: [
       {
         key: 'items',
@@ -581,7 +572,22 @@ export const contentRendererDefinitions: RegisteredRendererDefinition[] = [
       { key: 'loop', kind: 'prop', valueType: 'boolean' },
       { key: 'controls', kind: 'prop', valueType: 'boolean' },
       { key: 'indicators', kind: 'prop', valueType: 'boolean' },
-      { key: 'onChange', kind: 'event' },
+      {
+        key: 'onChange',
+        kind: 'event',
+        contract: {
+          displayName: 'On Change',
+          description:
+            'Dispatched when the active slide changes (embla select/autoplay/indicators/handle). Payload: { activeIndex, item } — a single canonical activeIndex key aligned with the schema/state field name.',
+          payload: {
+            kind: 'object',
+            fields: {
+              activeIndex: { kind: 'number' },
+              item: { kind: 'unknown' },
+            },
+          },
+        },
+      },
     ],
   }),
   defineContentRenderer({
@@ -599,81 +605,7 @@ export const contentRendererDefinitions: RegisteredRendererDefinition[] = [
       { key: 'onLoadError', kind: 'event' },
     ],
   }),
-  defineContentRenderer({
-    type: 'diff-view',
-    displayName: 'Diff View',
-    category: 'content',
-    defaultSchema: { type: 'diff-view', viewType: 'split', showLineNumbers: true },
-    component: DiffViewRenderer,
-    eventContracts: {
-      onLineClick: {
-        displayName: 'On Line Click',
-        description:
-          'Dispatched when a diff line is clicked (split/unified/three-column panes). Payload: { lineNumber, side, type } — side is old|new (split/unified) or old|middle|new (three-column); type is the row diff type (add|delete|context, or the three-way row types in three-column mode).',
-        payload: {
-          kind: 'object',
-          fields: {
-            lineNumber: { kind: 'number' },
-            side: { kind: 'string' },
-            type: { kind: 'string' },
-          },
-        },
-      },
-      onHunkExpand: {
-        displayName: 'On Hunk Expand',
-        description:
-          'Dispatched when a folded hunk is expanded or an expanded hunk is collapsed. Payload: { hunkIndex, expanded }.',
-        payload: {
-          kind: 'object',
-          fields: {
-            hunkIndex: { kind: 'number' },
-            expanded: { kind: 'boolean' },
-          },
-        },
-      },
-    },
-    fields: [
-      { key: 'oldContent', kind: 'prop' },
-      { key: 'newContent', kind: 'prop' },
-      { key: 'middleContent', kind: 'prop' },
-      { key: 'files', kind: 'prop' },
-      { key: 'activeFileIndex', kind: 'prop' },
-      { key: 'language', kind: 'prop' },
-      {
-        key: 'viewType',
-        kind: 'prop',
-        contract: {
-          displayName: 'View Type',
-          shape: {
-            kind: 'union',
-            anyOf: ['split', 'unified'].map((v) => ({ kind: 'literal', value: v })),
-          },
-          editorType: 'select',
-          defaultValue: 'split',
-        },
-      },
-      {
-        key: 'showLineNumbers',
-        kind: 'prop',
-        valueType: 'boolean',
-        contract: { displayName: 'Show Line Numbers', shape: { kind: 'boolean' } }
-      },
-      {
-        key: 'showInlineDiff',
-        kind: 'prop',
-        valueType: 'boolean',
-        contract: { displayName: 'Show Inline Diff', shape: { kind: 'boolean' } }
-      },
-      { key: 'defaultCollapsedLines', kind: 'prop' },
-      { key: 'wrapLines', kind: 'prop', valueType: 'boolean' },
-      { key: 'onLineClick', kind: 'event' },
-      { key: 'onHunkExpand', kind: 'event' },
-      { key: 'toggleViewType', kind: 'reaction' },
-      { key: 'setViewType', kind: 'reaction' },
-      { key: 'expandAll', kind: 'reaction' },
-      { key: 'collapseAll', kind: 'reaction' },
-    ],
-  }),
+  diffViewRendererDefinition,
 ];
 
 export type ContentRendererSchema =

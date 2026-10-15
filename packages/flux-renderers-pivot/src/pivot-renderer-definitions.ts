@@ -129,55 +129,6 @@ export const pivotRendererDefinitions: RegisteredRendererDefinition[] = [
     sourcePackage: '@nop-chaos/flux-renderers-pivot',
     component: LazyPivotTableRenderer,
     schemaValidator: validatePivotSchema,
-    eventContracts: {
-      onCellClick: {
-        displayName: 'On Cell Click',
-        payload: {
-          kind: 'object',
-          fields: {
-            type: { kind: 'literal', value: 'pivot:cell-click' },
-            col: { kind: 'number' },
-            row: { kind: 'number' },
-          },
-        },
-      },
-      onSelectionChange: {
-        displayName: 'On Selection Change',
-        payload: {
-          kind: 'object',
-          fields: {
-            type: { kind: 'literal', value: 'pivot:selection-change' },
-          },
-        },
-      },
-      onSort: {
-        displayName: 'On Sort Click',
-        payload: {
-          kind: 'object',
-          fields: {
-            type: { kind: 'literal', value: 'pivot:sort-click' },
-          },
-        },
-      },
-      onDrill: {
-        displayName: 'On Drill Click',
-        payload: {
-          kind: 'object',
-          fields: {
-            type: { kind: 'literal', value: 'pivot:drill-click' },
-          },
-        },
-      },
-      onCellEdit: {
-        displayName: 'On Cell Edit',
-        payload: {
-          kind: 'object',
-          fields: {
-            type: { kind: 'literal', value: 'pivot:cell-edit' },
-          },
-        },
-      },
-    },
     fields: [
       { key: 'label', kind: 'prop' },
       {
@@ -342,11 +293,73 @@ export const pivotRendererDefinitions: RegisteredRendererDefinition[] = [
         },
       },
       { key: 'empty', kind: 'value-or-region', regionKey: 'empty' },
-      { key: 'onCellClick', kind: 'event' },
-      { key: 'onSelectionChange', kind: 'event' },
-      { key: 'onSort', kind: 'event' },
-      { key: 'onDrill', kind: 'event' },
-      { key: 'onCellEdit', kind: 'event' },
+      {
+        key: 'onCellClick',
+        kind: 'event',
+        contract: {
+          displayName: 'On Cell Click',
+          payload: {
+            kind: 'object',
+            fields: {
+              type: { kind: 'literal', value: 'pivot:cell-click' },
+              col: { kind: 'number' },
+              row: { kind: 'number' },
+            },
+          },
+        },
+      },
+      {
+        key: 'onSelectionChange',
+        kind: 'event',
+        contract: {
+          displayName: 'On Selection Change',
+          payload: {
+            kind: 'object',
+            fields: {
+              type: { kind: 'literal', value: 'pivot:selection-change' },
+            },
+          },
+        },
+      },
+      {
+        key: 'onSort',
+        kind: 'event',
+        contract: {
+          displayName: 'On Sort Click',
+          payload: {
+            kind: 'object',
+            fields: {
+              type: { kind: 'literal', value: 'pivot:sort-click' },
+            },
+          },
+        },
+      },
+      {
+        key: 'onDrill',
+        kind: 'event',
+        contract: {
+          displayName: 'On Drill Click',
+          payload: {
+            kind: 'object',
+            fields: {
+              type: { kind: 'literal', value: 'pivot:drill-click' },
+            },
+          },
+        },
+      },
+      {
+        key: 'onCellEdit',
+        kind: 'event',
+        contract: {
+          displayName: 'On Cell Edit',
+          payload: {
+            kind: 'object',
+            fields: {
+              type: { kind: 'literal', value: 'pivot:cell-edit' },
+            },
+          },
+        },
+      },
     ],
   },
 ];

@@ -23,14 +23,14 @@ const LazyThreeCanvasRenderer = createLazyRendererComponent<ThreeCanvasSchema>((
 export const threeCanvasRendererDefinition: RendererDefinition = {
   type: 'three-canvas',
   component: LazyThreeCanvasRenderer,
-  // …static metadata (propContracts / eventContracts / fields) stays synchronous…
+  // …static metadata (fields with inline contracts) stays synchronous…
 };
 ```
 
 Rules:
 
 - `renderer-definitions.ts` (the host registration path) must NOT statically import the renderer implementation module or the heavy lib. The only allowed edge to the implementation is the dynamic `import()` inside the lazy loader.
-- Static metadata (`schemaValidator`, `propContracts`, `eventContracts`, `componentCapabilityContracts`, `fields`, `defaultSchema`) stays synchronous on the definition — only the component is lazy.
+- Static metadata (`schemaValidator`, `fields` with inline contracts, `componentCapabilityContracts`, `defaultSchema`) stays synchronous on the definition — only the component is lazy.
 - Package entries (`src/index.ts`) must not statically re-export heavy implementation modules (`ThreeCanvasRenderer`, `SceneManager`, …). Consumers register via `registerXxxRenderers`; anything else needs the heavy lib should dynamic-import it itself.
 
 ### 2. Module level — `createLazyLibLoader` (`@nop-chaos/flux-core`)

@@ -8,13 +8,14 @@ describe('schema compiler renderer contract integration', () => {
     const renderer: RegisteredRendererDefinition = {
       type: 'contract-button',
       component: () => null,
-      eventContracts: {
-        onClick: {
-          displayName: 'Click',
-        },
-      },
       fields: [
-        { key: 'onClick', kind: 'event' },
+        {
+          key: 'onClick',
+          kind: 'event',
+          contract: {
+            displayName: 'Click',
+          },
+        },
         {
           key: 'label',
           kind: 'prop',

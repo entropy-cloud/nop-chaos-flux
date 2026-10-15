@@ -68,6 +68,17 @@ const ECHARTS_EVENT_CONTRACTS = {
   },
 } as const;
 
+/**
+ * RM-5 (plan 607): the per-key event contract view over
+ * `ECHARTS_EVENT_CONTRACTS`, referenced from the `fields` entries below so the
+ * declarations stay single-source.
+ */
+const ECHARTS_EVENT_FIELDS = Object.entries(ECHARTS_EVENT_CONTRACTS).map(([key, contract]) => ({
+  key,
+  kind: 'event' as const,
+  contract,
+}));
+
 export const echartsRendererDefinition: RegisteredRendererDefinition = {
   type: 'echarts',
   displayName: 'ECharts',
@@ -75,7 +86,6 @@ export const echartsRendererDefinition: RegisteredRendererDefinition = {
   sourcePackage: '@nop-chaos/flux-renderers-data',
   component: LazyEChartsRenderer,
   schemaValidator: validateEChartsSchema,
-  eventContracts: ECHARTS_EVENT_CONTRACTS,
   componentCapabilityContracts: [
     {
       handle: 'resize',
@@ -145,5 +155,9 @@ export const echartsRendererDefinition: RegisteredRendererDefinition = {
         editorType: 'object',
       },
     },
+    // RM-5 (plan 607): event contracts moved from the former `eventContracts`
+    // record into `fields` entries (same shared contract objects, appended at
+    // the tail of the fields list).
+    ...ECHARTS_EVENT_FIELDS,
   ],
 };

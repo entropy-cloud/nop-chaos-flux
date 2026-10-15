@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { resolveRendererPropContracts } from '@nop-chaos/flux-core';
+import { resolveRendererEventContracts, resolveRendererPropContracts } from '@nop-chaos/flux-core';
 import { basicRendererDefinitions } from '../index.js';
 
 describe('basic renderer static contracts', () => {
@@ -9,7 +9,7 @@ describe('basic renderer static contracts', () => {
     expect(button?.rendererClass).toBe('instance-renderer');
     expect(button?.rendererTraits).toContain('trigger');
     expect(resolveRendererPropContracts(button!)?.label?.shape.kind).toBe('string');
-    expect(button?.eventContracts?.onClick?.displayName).toBe('Click');
+    expect(resolveRendererEventContracts(button!).onClick?.displayName).toBe('Click');
     expect(button?.hostContract).toBeUndefined();
   });
 

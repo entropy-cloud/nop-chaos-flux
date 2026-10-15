@@ -22,7 +22,7 @@ JSON Schema (含 type 字段)
 
 ## 类型定义位置
 
-**所有组件的 TypeScript 接口定义在 `flux-types/*.d.ts`，这是查字段的首选知识源。** 该文件由 `scripts/generate-types.mjs` **从已注册的运行时定义（`dist` 内存注册表）自动生成**——执行 `register*Renderers` 后读取每个 `RendererDefinition` 的 `fields`（内联 `contract`，经 `resolveRendererPropContracts` 解析为 prop-contract 视图）/`eventContracts`，因此 helper 函数、`...spread`、`.concat` 的字段都能完整解析。修改渲染器后运行 `pnpm --dir flux-guide generate-types` 重新生成（需先 `pnpm build`）。
+**所有组件的 TypeScript 接口定义在 `flux-types/*.d.ts`，这是查字段的首选知识源。** 该文件由 `scripts/generate-types.mjs` **从已注册的运行时定义（`dist` 内存注册表）自动生成**——执行 `register*Renderers` 后读取每个 `RendererDefinition` 的 `fields`（内联 `contract`，经 `resolveRendererPropContracts` 解析为 prop-contract 视图）/fields 事件条目内联 contract（经 resolveRendererEventContracts），因此 helper 函数、`...spread`、`.concat` 的字段都能完整解析。修改渲染器后运行 `pnpm --dir flux-guide generate-types` 重新生成（需先 `pnpm build`）。
 
 | 文件          | 内容                                                                                                      |
 | ------------- | --------------------------------------------------------------------------------------------------------- |

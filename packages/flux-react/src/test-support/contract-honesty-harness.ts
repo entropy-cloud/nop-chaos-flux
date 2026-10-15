@@ -94,8 +94,10 @@ export function computeContractHonestyDiscoveryCounts(
 ): ContractHonestyDiscoveryBaseline {
   return {
     renderers: definitions.length,
+    // RM-5 (plan 607): fields kind:'event' entries are the single event
+    // declaration surface (the former `eventContracts` record is gone).
     eventKeys: definitions.reduce(
-      (n, d) => n + (d.eventContracts ? Object.keys(d.eventContracts).length : 0),
+      (n, d) => n + (d.fields?.filter((f) => f.kind === 'event' && f.key).length ?? 0),
       0,
     ),
     capabilityHandles: definitions.reduce(
@@ -150,17 +152,19 @@ export function runContractHonestyGuardSuite(options: ContractHonestyHarnessOpti
       });
     } else {
       it('per-renderer isolation: a probe is flagged even when a sibling wires its contract (H7)', () => {
+        // RM-5 (plan 607): probes synthesize `fields` kind:'event' entries —
+        // the single event-declaration channel.
         const real = options.definitions.find(
           (d) =>
-            (d.eventContracts && Object.keys(d.eventContracts).length > 0) ||
+            d.fields?.some((f) => f.kind === 'event') ||
             (d.componentCapabilityContracts && d.componentCapabilityContracts.length > 0),
         );
-        const eventKey = real?.eventContracts && Object.keys(real.eventContracts)[0];
+        const eventKey = real?.fields?.find((f) => f.kind === 'event' && f.key)?.key;
         const handle = real?.componentCapabilityContracts?.[0]?.handle;
         const probe: RendererDefinition = {
           type: '__contract_probe__',
           component: () => null,
-          ...(eventKey ? { eventContracts: { [eventKey]: { displayName: 'X' } } } : {}),
+          ...(eventKey ? { fields: [{ key: eventKey, kind: 'event' as const }] } : {}),
           ...(handle ? { componentCapabilityContracts: [{ handle, displayName: 'X' }] } : {}),
         };
 
@@ -181,9 +185,7 @@ export function runContractHonestyGuardSuite(options: ContractHonestyHarnessOpti
         const probe: RendererDefinition = {
           type: '__contract_probe__',
           component: () => null,
-          eventContracts: {
-            onInjectedFakeEvent: { displayName: 'Fake' },
-          },
+          fields: [{ key: 'onInjectedFakeEvent', kind: 'event' }],
           ...(capabilityProbe
             ? { componentCapabilityContracts: [{ handle: 'injectedFakeCapability', displayName: 'Fake' }] }
             : {}),

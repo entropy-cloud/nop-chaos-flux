@@ -75,29 +75,6 @@ export const mapRendererDefinitions: RegisteredRendererDefinition[] = [
     sourcePackage: '@nop-chaos/flux-renderers-map',
     component: LazyMapRenderer,
     schemaValidator: validateMapSchema,
-    eventContracts: {
-      onClick: {
-        displayName: 'On Click',
-        description:
-          'Dispatched when a map feature is clicked (region feature or pin cluster member). Payload: { type: "map:feature-click", mapType, name, value, feature }. Empty-map clicks do not dispatch.',
-        payload: {
-          kind: 'object',
-          fields: {
-            type: { kind: 'literal', value: 'map:feature-click' },
-            mapType: {
-              kind: 'union',
-              anyOf: [
-                { kind: 'literal', value: 'pin' },
-                { kind: 'literal', value: 'region' },
-              ],
-            },
-            name: { kind: 'string' },
-            value: { kind: 'unknown' },
-            feature: { kind: 'object', fields: {} },
-          },
-        },
-      },
-    },
     fields: [
       {
         key: 'mapType',
@@ -242,7 +219,31 @@ export const mapRendererDefinitions: RegisteredRendererDefinition[] = [
         },
       },
       { key: 'empty', kind: 'value-or-region', regionKey: 'empty' },
-      { key: 'onClick', kind: 'event' },
+      {
+        key: 'onClick',
+        kind: 'event',
+        contract: {
+          displayName: 'On Click',
+          description:
+            'Dispatched when a map feature is clicked (region feature or pin cluster member). Payload: { type: "map:feature-click", mapType, name, value, feature }. Empty-map clicks do not dispatch.',
+          payload: {
+            kind: 'object',
+            fields: {
+              type: { kind: 'literal', value: 'map:feature-click' },
+              mapType: {
+                kind: 'union',
+                anyOf: [
+                  { kind: 'literal', value: 'pin' },
+                  { kind: 'literal', value: 'region' },
+                ],
+              },
+              name: { kind: 'string' },
+              value: { kind: 'unknown' },
+              feature: { kind: 'object', fields: {} },
+            },
+          },
+        },
+      },
     ],
   },
 ];

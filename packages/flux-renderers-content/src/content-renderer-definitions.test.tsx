@@ -1,6 +1,7 @@
 import { cleanup, render } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
 import React from 'react';
+import { resolveRendererEventContracts } from '@nop-chaos/flux-core';
 import { contentRendererDefinitions } from './content-renderer-definitions.js';
 import { createMockRendererProps } from './test-support.js';
 import { createTestRuntime, TestRuntimeProvider } from './test-support-runtime.js';
@@ -292,13 +293,14 @@ describe('contentRendererDefinitions', () => {
     expect(root.querySelector('[data-slot="status-badge"]')).toBeTruthy();
   });
 
-  it('carousel declares onChange eventContracts with the canonical activeIndex/item payload', () => {
+  it('carousel declares the onChange event contract on its fields entry with the canonical activeIndex/item payload', () => {
     // C6.4 P1-1: the carousel dispatches a payload-carrying onChange
     // ({activeIndex, item} — design.md §8 single canonical key) so the
-    // definition must declare the eventContracts for the editor contract
-    // surface (cards/alert/steps family precedent).
+    // definition must declare the event contract (RM-5 fields inline
+    // contract) for the editor contract surface (cards/alert/steps family
+    // precedent).
     const carousel = contentRendererDefinitions.find((d) => d.type === 'carousel');
-    const contracts = carousel?.eventContracts;
+    const contracts = carousel ? resolveRendererEventContracts(carousel) : undefined;
     expect(contracts?.onChange).toBeTruthy();
     const payload = contracts?.onChange?.payload;
     expect(payload).toBeTruthy();
@@ -309,13 +311,14 @@ describe('contentRendererDefinitions', () => {
     expect(fields && 'index' in fields).toBe(false);
   });
 
-  it('diff-view declares eventContracts for onLineClick and onHunkExpand (P1-7)', () => {
+  it('diff-view declares event contracts for onLineClick and onHunkExpand on its fields entries (P1-7)', () => {
     // C6.5 P1-7: onLineClick ({lineNumber, side, type} — design.md §4) and
     // onHunkExpand ({hunkIndex, expanded}) both carry payloads, so the
-    // definition must declare the eventContracts for the editor contract
-    // surface (carousel/cards/alert family precedent).
+    // definition must declare the event contracts (RM-5 fields inline
+    // contract) for the editor contract surface (carousel/cards/alert family
+    // precedent).
     const diffView = contentRendererDefinitions.find((d) => d.type === 'diff-view');
-    const contracts = diffView?.eventContracts;
+    const contracts = diffView ? resolveRendererEventContracts(diffView) : undefined;
     expect(contracts?.onLineClick).toBeTruthy();
     const clickPayload = contracts?.onLineClick?.payload;
     expect(clickPayload && clickPayload.kind === 'object' ? clickPayload : null).toBeTruthy();

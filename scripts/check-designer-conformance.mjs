@@ -40,8 +40,10 @@ const EXEMPTIONS = {
 const COLLAPSED_WIRED_FAMILIES = new Set(['flow', 'report', 'word', 'scada', 'dashboard']);
 
 // 档位标定（P0-P4 落地后的 conformed baseline；editor-designer-standard.md §2.6 裁定④ + §3 基线）：
-// - eventContracts 断言仅适用推送事件家族（dashboard/scada/word）；pull 型（flow/page/report/spreadsheet）
+// - fields 内联事件契约断言仅适用推送事件家族（dashboard/scada/word）；pull 型（flow/page/report/spreadsheet）
 //   经命令面 + statusPath 满足（§2.6 裁定④），print 为豁免② props 契约档。
+//   RM-5（plan 607）后事件契约单源为 fields `kind: 'event'` 条目（带 contract 载体），
+//   门禁锚随之重锚：`kind: 'event'` 声明 + `payload:` 载体双锚（旧 `eventContracts` 字面锚随字段删除失效）。
 // - word 内核 = canvas-editor 引擎（roadmap §3 基线 ✗，未列迁移项）→ needsEditorCore: false。
 const FAMILIES = [
   { family: 'flow', renderers: 'packages/flow-designer-renderers', core: 'packages/flow-designer-core', needsManifest: true, needsEditorCore: false, needsEventContracts: false, i18nPrefix: 'flux.flowDesigner' },
@@ -88,9 +90,15 @@ for (const f of FAMILIES) {
     assertCheck(f.family, 'manifest V1 存在', dirContains(join(ROOT, f.renderers), 'MANIFEST_V1'));
   }
 
-  // 2. 事件有 eventContracts（仅推送事件家族；pull 型经命令面+statusPath，§2.6 裁定④）
+  // 2. 事件有 fields 内联契约（仅推送事件家族；pull 型经命令面+statusPath，§2.6 裁定④）
+  // RM-5（plan 607）重锚：fields kind:'event' 声明 + contract payload 载体双锚，
+  // 保证语义“该 family 声明了事件契约”（裸 event 条目不满足 payload 锚）。
   if (f.needsEventContracts) {
-    assertCheck(f.family, 'eventContracts 声明存在', dirContains(renderersSrc, 'eventContracts'));
+    assertCheck(
+      f.family,
+      '事件契约声明存在（fields kind:event + contract payload）',
+      dirContains(renderersSrc, "kind: 'event'") && dirContains(renderersSrc, 'payload:'),
+    );
   }
 
   // 3. statusPath 发布

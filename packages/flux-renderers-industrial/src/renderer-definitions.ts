@@ -39,9 +39,9 @@ const symbolEventPayloadShape = {
  * prop（ActionSchema 字面量经 props 通道保留），事件派发由 renderer 桥接层经
  * `createNormalizedActionEvent` + `helpers.dispatch` 落地（见 renderer-boundary-audit.md 契约边界 D）。
  *
- * 静态元数据（plan 2026-08-04-1558-1 Phase 3）：补齐 `rendererClass`/`propContracts`/
- * `eventContracts`/`componentCapabilityContracts`，工具链（authoring-contract resolver、shape-validation、
- * 文档导出）可发现 5 events + 9 handles，无需运行 renderer 实例。
+ * 静态元数据（plan 2026-08-04-1558-1 Phase 3）：补齐 `rendererClass`/`componentCapabilityContracts`
+ * 与 RM-5 fields 内联事件契约（`kind: 'event'` 条目挂 `contract`），工具链（authoring-contract resolver、
+ * shape-validation、文档导出）可发现 5 events + 9 handles，无需运行 renderer 实例。
  */
 export const industrialRendererDefinitions: RegisteredRendererDefinition[] = [
   {
@@ -55,40 +55,6 @@ export const industrialRendererDefinitions: RegisteredRendererDefinition[] = [
     defaultSchema: { type: 'scada-canvas', config: { version: 1, variables: [], symbols: [] } },
     rendererClass: 'instance-renderer',
     component: LazyScadaCanvasRenderer,
-    eventContracts: {
-      onSymbolClick: {
-        displayName: 'Symbol Click',
-        description: 'Fires when a symbol is clicked (global hook outside per-symbol event declarations).',
-        payload: symbolEventPayloadShape,
-      },
-      onSymbolDblClick: {
-        displayName: 'Symbol Double Click',
-        description: 'Fires when a symbol is double-clicked.',
-        payload: symbolEventPayloadShape,
-      },
-      onSymbolHover: {
-        displayName: 'Symbol Hover',
-        description: 'Fires when the pointer enters a symbol.',
-        payload: symbolEventPayloadShape,
-      },
-      onReady: {
-        displayName: 'Ready',
-        description:
-          'Fires when the scene build completes (scada:ready). Change-baseline guarded: empty-diff reruns do not fire (P1-3).',
-      },
-      onError: {
-        displayName: 'Error',
-        description:
-          'Fires on config validation/build failure (scada:error). Runtime data errors do NOT escalate to canvas error (P1-8).',
-        payload: {
-          kind: 'object',
-          fields: {
-            code: { kind: 'string' },
-            message: { kind: 'string' },
-          },
-        },
-      },
-    },
     // 9 component handles（design-renderer.md §8.5 表；use-scada-handles.ts SCADA_HANDLE_METHODS）。
     componentCapabilityContracts: [
       {
@@ -209,11 +175,65 @@ export const industrialRendererDefinitions: RegisteredRendererDefinition[] = [
           shape: { kind: 'unknown' },
           displayName: 'Events',
           description:
-            'Schema-level event hooks (onSymbolClick/onSymbolDblClick/onSymbolHover/onReady/onError). Dispatched via createNormalizedActionEvent + helpers.dispatch (see eventContracts for payload shapes).',
+            'Schema-level event hooks (onSymbolClick/onSymbolDblClick/onSymbolHover/onReady/onError). Dispatched via createNormalizedActionEvent + helpers.dispatch (see the fields event contracts for payload shapes).',
         },
       },
       { key: 'loading', kind: 'region', regionKey: 'loading' },
       { key: 'empty', kind: 'region', regionKey: 'empty' },
+      // RM-5（plan 607）：事件契约自 `eventContracts` 记录迁入 fields 条目（尾部追加，
+      // contract 成员逐字同源）。
+      {
+        key: 'onSymbolClick',
+        kind: 'event',
+        contract: {
+          displayName: 'Symbol Click',
+          description: 'Fires when a symbol is clicked (global hook outside per-symbol event declarations).',
+          payload: symbolEventPayloadShape,
+        },
+      },
+      {
+        key: 'onSymbolDblClick',
+        kind: 'event',
+        contract: {
+          displayName: 'Symbol Double Click',
+          description: 'Fires when a symbol is double-clicked.',
+          payload: symbolEventPayloadShape,
+        },
+      },
+      {
+        key: 'onSymbolHover',
+        kind: 'event',
+        contract: {
+          displayName: 'Symbol Hover',
+          description: 'Fires when the pointer enters a symbol.',
+          payload: symbolEventPayloadShape,
+        },
+      },
+      {
+        key: 'onReady',
+        kind: 'event',
+        contract: {
+          displayName: 'Ready',
+          description:
+            'Fires when the scene build completes (scada:ready). Change-baseline guarded: empty-diff reruns do not fire (P1-3).',
+        },
+      },
+      {
+        key: 'onError',
+        kind: 'event',
+        contract: {
+          displayName: 'Error',
+          description:
+            'Fires on config validation/build failure (scada:error). Runtime data errors do NOT escalate to canvas error (P1-8).',
+          payload: {
+            kind: 'object',
+            fields: {
+              code: { kind: 'string' },
+              message: { kind: 'string' },
+            },
+          },
+        },
+      },
     ],
   },
 ];

@@ -3,7 +3,7 @@ import type { RendererDefinition } from './types/index.js';
 /**
  * Contract honesty guard utilities.
  *
- * A renderer that declares an `eventContracts`, a `fields(kind:'event')`, or a
+ * A renderer that declares a `fields(kind:'event')` entry or a
  * `componentCapabilityContracts` entry is advertising a contract to schema
  * authors. The guard verifies that every advertised contract key is actually
  * referenced by the renderer implementation (its component body or registered
@@ -436,11 +436,8 @@ export function findUnreferencedContracts(
       typeof resolved === 'string' ? resolved : (resolved.capabilityHandleSource ?? resolved.componentSource);
 
     const eventKeys = new Set<string>();
-    if (definition.eventContracts) {
-      for (const key of Object.keys(definition.eventContracts)) {
-        eventKeys.add(key);
-      }
-    }
+    // RM-5 (plan 607): fields is the single event-declaration source — the
+    // former `eventContracts` record merge is gone.
     if (definition.fields) {
       for (const field of definition.fields) {
         if (field.kind === 'event' && field.key) {

@@ -95,12 +95,12 @@ describe('contract-honesty per-definition isolation (G15)', () => {
     // masked by A. Per-definition source isolation must flag B.
     const rendererA = defineRenderer({
       type: 'alpha',
-      eventContracts: { onChange: { displayName: 'Change' } },
+      fields: [{ key: 'onChange', kind: 'event' }],
       componentCapabilityContracts: [{ handle: 'focus', displayName: 'Focus' }],
     });
     const rendererB = defineRenderer({
       type: 'beta',
-      eventContracts: { onChange: { displayName: 'Change' } },
+      fields: [{ key: 'onChange', kind: 'event' }],
       componentCapabilityContracts: [{ handle: 'focus', displayName: 'Focus' }],
     });
     const sourceA = `props.events.onChange(); methods: ['focus'];`;
@@ -127,7 +127,7 @@ describe('contract-honesty per-definition isolation (G15)', () => {
     expect(isRendererEventKeyReferenced('onChange', source)).toBe(false);
     expect(
       findUnreferencedContracts(
-        [defineRenderer({ eventContracts: { onChange: { displayName: 'Change' } } })],
+        [defineRenderer({ fields: [{ key: 'onChange', kind: 'event' }] })],
         source,
       ),
     ).toHaveLength(1);
@@ -135,7 +135,7 @@ describe('contract-honesty per-definition isolation (G15)', () => {
 
   it('keeps the synthetic probe true-negative (a fully unknown contract is flagged) with a blob source', () => {
     const probe = defineRenderer({
-      eventContracts: { onInjectedFakeEvent: { displayName: 'Fake' } },
+      fields: [{ key: 'onInjectedFakeEvent', kind: 'event' }],
       componentCapabilityContracts: [{ handle: 'injectedFakeCapability', displayName: 'Fake' }],
     });
 
@@ -166,7 +166,7 @@ describe('contract-honesty per-renderer source resolver (H7)', () => {
           export const alphaRendererDefinition: RendererDefinition = {
             type: 'alpha',
             component: AlphaRenderer,
-            eventContracts: { onChange: { displayName: 'Change' } },
+            fields: [{ key: 'onChange', kind: 'event' }],
           };
         `,
       },
@@ -177,7 +177,7 @@ describe('contract-honesty per-renderer source resolver (H7)', () => {
           export const betaRendererDefinition: RendererDefinition = {
             type: 'beta',
             component: BetaRenderer,
-            eventContracts: { onChange: { displayName: 'Change' } },
+            fields: [{ key: 'onChange', kind: 'event' }],
           };
         `,
       },
@@ -186,8 +186,8 @@ describe('contract-honesty per-renderer source resolver (H7)', () => {
 
     const violations = findUnreferencedContracts(
       [
-        { type: 'alpha', component: () => null, eventContracts: { onChange: { displayName: 'Change' } } },
-        { type: 'beta', component: () => null, eventContracts: { onChange: { displayName: 'Change' } } },
+        { type: 'alpha', component: () => null, fields: [{ key: 'onChange', kind: 'event' }] },
+        { type: 'beta', component: () => null, fields: [{ key: 'onChange', kind: 'event' }] },
       ],
       resolver,
     );
@@ -210,7 +210,7 @@ describe('contract-honesty per-renderer source resolver (H7)', () => {
           export const tableDefinition: RendererDefinition = {
             type: 'table',
             component: TableRenderer,
-            eventContracts: { onChange: { displayName: 'Change' } },
+            fields: [{ key: 'onChange', kind: 'event' }],
           };
         `,
       },
@@ -222,7 +222,7 @@ describe('contract-honesty per-renderer source resolver (H7)', () => {
     const resolver = buildPerRendererSourceResolver(files, ['table']);
 
     const violations = findUnreferencedContracts(
-      [{ type: 'table', component: () => null, eventContracts: { onChange: { displayName: 'Change' } } }],
+      [{ type: 'table', component: () => null, fields: [{ key: 'onChange', kind: 'event' }] }],
       resolver,
     );
 

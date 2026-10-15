@@ -50,17 +50,17 @@
 
 ### 2.6 事件面（MUST）
 
-- 宿主事件经 `helpers.dispatch` + `RendererDefinition.eventContracts` 声明；命名 `<family>:<event>`。
+- 宿主事件经 `helpers.dispatch` + `fields` 条目 `kind: 'event'` 内联 `contract`（payload 载体）声明；命名 `<family>:<event>`。
 - **save 事件 payload 统一 `{ serialized: string }`**（family 序列化文档的 JSON 字符串）。
-- 最小事件集 = `ready` / `error` / `sessionChange` / `save`；`selectionChange`/`modeChange`/`load` 按需补充，一旦补充须入 eventContracts。
-- **禁用裸 DOM `CustomEvent` 作宿主契约**；测试专用通道（如 `nop-designer:test-*` window 事件）须在本家族文档或 eventContracts 处显式豁免声明，不得无声存在。
+- 最小事件集 = `ready` / `error` / `sessionChange` / `save`；`selectionChange`/`modeChange`/`load` 按需补充，一旦补充须入对应 fields 事件条目的内联 contract。
+- **禁用裸 DOM `CustomEvent` 作宿主契约**；测试专用通道（如 `nop-designer:test-*` window 事件）须在本家族文档或对应 fields 事件条目 contract 的 description 处显式豁免声明，不得无声存在。
 - **最小事件集适用性（P3.2 裁决③适用性澄清，非豁免）**：最小事件集治理**推送型**事件面。pull 型家族（flow/spreadsheet/report——save 走 §2.5 命令面）经 capability（save）+ §2.4 statusPath（ready=busy/idle、error）满足，不强制新增推送事件；word 为混合型判例（save 经 `word-editor:save` 命令面触发后经 onSave 推送回执）。`sessionChange` payload 词汇：至少含 `{canUndo, canRedo, selection, mode}`（scada 现状），可含家族会话摘要附加键（dashboard 另含 `dirty`——EditorSessionState 直出，additive 方向）。
 - **save payload 键迁移纪律（裁决③落地注）**：键迁移须留一个版本兼容读（旧键保留/双键同值，description 注记 deprecated）+ dev log 声明；旧键删除归后续治理轮。
-- 验收观测点：eventContracts 声明的事件名/ payload 形状与实际 dispatch 一致；全仓 `new CustomEvent(` 在 renderer 包内无未豁免命中。
+- 验收观测点：fields 事件条目 contract 声明的事件名/payload 形状与实际 dispatch 一致；全仓 `new CustomEvent(` 在 renderer 包内无未豁免命中。
 
 ### 2.7 注册与元数据（MUST / SHOULD 分档）
 
-- （MUST）`RendererDefinition`（propContracts + eventContracts + actionScopePolicy）经 `registerRendererDefinitions` 注册；家族不维护绕开全局 registry 的私有实例注册表，除非 §5 豁免登记。
+- （MUST）`RendererDefinition`（fields 内联 prop/event contract + actionScopePolicy）经 `registerRendererDefinitions` 注册；家族不维护绕开全局 registry 的私有实例注册表，除非 §5 豁免登记。
 - （MUST）palette 目录声明式：来自注册表/家族 config 元数据，禁止代码内硬编码清单或代码内白名单。
 - **palette catalog 共享契约（P4.1）**：`packages/flux-react/src/workbench/palette-catalog.ts`（`buildDesignerPaletteCatalog` 声明 entries × registry 在场过滤；`resolvePaletteLabel` labelKey→label→type 回退）。家族声明单一源常量（如 `DEFAULT_DASHBOARD_PALETTE_CATALOG`）经 builder 生效；未注册 type 自动隐藏。**家族裁定**：dashboard=声明常量 + builder（原组件内硬编码清单消灭）；scada=符号注册表（`listScadaSymbols`）既存合规；flow=家族 config（`DesignerConfig.palette.groups`）既存合规；spreadsheet 无 palette；**page-designer 合规裁定**——`buildPaletteItems(registry, stage, {allowlist})` 全量 registry 驱动 + `MVP_PALETTE_TYPES` 导出声明清单（= 布局类型 + DESIGNER_SCAFFOLDS 键集），roadmap §3 "代码内白名单" 表述过时（白名单即 stage 类别声明常量 + host allowlist 出口，声明式合规）。
 - （SHOULD）inspector 优先 propContracts→SchemaInput 声明式生成（参照实现 `@nop-chaos/flux-core` authoring 域 `buildInspectorSchema`，P4.2 自 page-designer-core 迁入共享；page-designer-core 经兼容再导出保留旧路径）；域内特殊控件走扩展点，不整体手拼。**家族档位裁定（P4.2）**：page=参照实现；report=SchemaInput+form runtime 同向已合规；scada（符号分组字段模型）/dashboard（固定字段面板）/word·print（面板编辑器）=分档不采纳——域契约不同，采纳需先立域契约再重写面板，各家族平台化时按本档推进。

@@ -34,9 +34,6 @@ const LAYOUT_DEF = def({
   type: 'flex',
   category: 'layout',
   defaultSchema: { type: 'flex', body: [] },
-  eventContracts: {
-    onToggle: { displayName: 'Toggle' },
-  },
   fields: [
     {
       key: 'direction',
@@ -54,7 +51,7 @@ const LAYOUT_DEF = def({
     { key: 'note', kind: 'prop', contract: { shape: { kind: 'string' }, displayName: 'Note', editorType: 'textarea' } },
     { key: 'schema', kind: 'prop', contract: { shape: { kind: 'object', fields: {} }, displayName: 'Schema', editorType: 'json' } },
     { key: 'body', kind: 'region', regionKey: 'body' },
-    { key: 'onToggle', kind: 'event' },
+    { key: 'onToggle', kind: 'event', contract: { displayName: 'Toggle' } },
     { key: 'onRefresh', kind: 'reaction' },
   ],
 });

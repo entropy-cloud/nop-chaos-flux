@@ -4,7 +4,8 @@
  * Do not edit manually. Regenerate with: node flux-guide/scripts/generate-types.mjs
  *
  * Based on the RendererDefinition `fields` inline `contract` entries
- * (prop-contract view via `resolveRendererPropContracts`) from source packages.
+ * (prop-contract view via `resolveRendererPropContracts`, event-contract
+ * view via `resolveRendererEventContracts`) from source packages.
  */
 
 import type {

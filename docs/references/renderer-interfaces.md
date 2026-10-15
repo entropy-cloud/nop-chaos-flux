@@ -129,7 +129,7 @@ Stable field groups:
 - Runtime registration: `type`, `component`, `fields`, `scopePolicy`, `actionScopePolicy`, `componentRegistryPolicy`, `wrap`, `schemaValidator`, `validation`, `compilation`, `validationDefaults`, `frameRootTag`, `staticCapable`
 - Discovery metadata: `displayName`, `icon`, `category`, `sourcePackage`, `defaultSchema`
 - Renderer classification: `rendererClass`, `rendererTraits`, `injectedLocals`
-- Ordinary renderer authoring contracts: inline `fields[].contract`, `eventContracts`, `componentCapabilityContracts`, `scopeExportContracts`
+- Ordinary renderer authoring contracts: inline `fields[].contract` (prop shapes and event payloads — single source since RM-4/RM-5), `componentCapabilityContracts`, `scopeExportContracts`
 - Authoring adaptation: inline `fields[].contract` (single source since RM-4; read through `resolveRendererPropContracts`), `authoringTransform`
 - Host-only contract: `hostContract`
 
@@ -155,11 +155,11 @@ Inline `fields[].contract` (single source since RM-4/plan 606; read through `res
 - Contract language: uses `FluxValueShape` as the shared structural IR
 - Important boundary: this is not the same thing as runtime `RendererComponentProps['props']`
 
-`eventContracts`
+Inline event contracts on `fields` entries (single source since RM-5/plan 607; read through `resolveRendererEventContracts`)
 
 - Responsibility: author-declarable event entry points such as `onClick` or `submitAction`
 - Consumers: action authoring UI, event autocomplete, docs/examples
-- Runtime relationship: event handlers still resolve to `props.events` at render time; this field only describes the authored event surface
+- Runtime relationship: event handlers still resolve to `props.events` at render time; the contract only describes the authored event surface
 
 `componentCapabilityContracts`
 
@@ -194,7 +194,7 @@ Current adapter baseline:
 
 - `ResolvedAuthoringContract.rendererClass` comes from `RendererDefinition.rendererClass`
 - `ResolvedAuthoringContract.editableProps` comes from the renderer's `fields` contracts (via `resolveRendererPropContracts`)
-- `ResolvedAuthoringContract.events` comes from `RendererDefinition.eventContracts`
+- `ResolvedAuthoringContract.events` comes from the renderer's `fields` event contracts (via `resolveRendererEventContracts`)
 - `ResolvedAuthoringContract.componentCapabilityContracts` comes from `RendererDefinition.componentCapabilityContracts`
 - `ResolvedAuthoringContract.scopeExports` comes from `RendererDefinition.scopeExportContracts`
 - `ResolvedAuthoringContract.hostProjection` and `hostActions` are present only when `RendererDefinition.hostContract` resolves a manifest
