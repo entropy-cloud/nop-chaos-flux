@@ -1,4 +1,4 @@
-import type { TemplateNode, XuiImportSpec } from '@nop-chaos/flux-core';
+import type { XuiImportSpec } from '@nop-chaos/flux-core';
 
 export function resolveFrameWrapMode(
   definitionWrap: boolean | undefined,
@@ -60,12 +60,6 @@ export function collectSchemaImports(input: unknown): readonly XuiImportSpec[] {
 
   visit(input);
   return Array.from(seen.values());
-}
-
-export function getNodeSchemaFrameWrap(
-  node: TemplateNode,
-): boolean | 'label' | 'group' | 'none' | undefined {
-  return (node.schema as { frameWrap?: boolean | 'label' | 'group' | 'none' }).frameWrap;
 }
 
 export function shouldWarnOnImportFailure(): boolean {

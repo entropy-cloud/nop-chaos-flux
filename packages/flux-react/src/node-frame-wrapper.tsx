@@ -23,7 +23,6 @@ export function NodeFrameWrapper(props: {
     return <>{props.children}</>;
   }
 
-  const _schema = props.templateNode.schema as Record<string, unknown>;
   const fieldName =
     typeof props.resolvedPropsValue.name === 'string' ? props.resolvedPropsValue.name : undefined;
   const labelValue =

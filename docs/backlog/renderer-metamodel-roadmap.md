@@ -31,7 +31,7 @@
 > **这是全文件唯一的动态状态区。更新状态只改这里。** Phases 表的状态列为 guide 规范模板列，随本列表机械同步，不构成第二状态面（R3 m2）。
 > 状态流转：plan 通过独立 draft review → `todo` 改 `planned`；plan 通过 closure audit → `planned` 改 `done`（不得提前）。一个 plan 对应本文一个工作项；**执行顺序 = 本列表顺序**（AI 不得重排、不得跳项）。单个工作项执行中证实无法被一个 plan 收口时，经人工确认拆分为 successor 工作项（component-audit 先例），不得静默缩水验收口径。
 
-- RM-0. 政策与基线（schema-retention policy owner 文档 + 元模型权威声明 + 两处死代码清理）: `planned`（plan `docs/plans/602-rm0-retention-policy-plan.md`，draft review R2 pass 2026-10-15）
+- RM-0. 政策与基线（schema-retention policy owner 文档 + 元模型权威声明 + 两处死代码清理）: `done`（plan `docs/plans/602-rm0-retention-policy-plan.md`，closure audit agent_5203f11c approved 2026-10-15；裁决表 12 行生效，RM-8 范围钉定=保留通道钉文档+scanner 门禁）
 - RM-1. 类型层收口（propSchema 死字段删除、CompiledRendererContract 派生化、registry 入参类型化）: `todo`
 - RM-2. 帧族收敛（wrap/frameRootTag/frameWrap 单权威路径 + FrameWrapMode 词表归一）: `todo`
 - RM-3. fields+propContracts 合并·阶段一（新形态落地 + 编译器/门禁双读）: `todo`
@@ -60,17 +60,17 @@
 
 ## Phases 表
 
-| 工作项                     | 状态      | Owner 事实源                          | 依赖       | 复用                                       | Plan                                             |
-| -------------------------- | --------- | ------------------------------------- | ---------- | ------------------------------------------ | ------------------------------------------------ |
-| RM-0 政策与基线            | `planned` | 分析报告 §5.4 + `renderer-runtime.md` | 无         | 既有文档骨架                               | [602](../plans/602-rm0-retention-policy-plan.md) |
-| RM-1 类型层收口            | `todo`    | 分析报告 A1/B6/B7/C                   | RM-0       | contract 门禁                              | —                                                |
-| RM-2 帧族收敛              | `todo`    | 分析报告 A5；plan 460 B3 语义         | RM-1       | strict validation 语料、判别变异           | —                                                |
-| RM-3 双声明合并·一         | `todo`    | 分析报告 A2/A3                        | RM-1       | schema-prop-coverage、defineRendererFamily | —                                                |
-| RM-4 双声明合并·二         | `todo`    | 同上                                  | RM-3       | contract-honesty、validate-pages --strict  | —                                                |
-| RM-5 事件契约单源化        | `todo`    | 分析报告 A3                           | RM-4       | contract-honesty                           | —                                                |
-| RM-6 scope 符号单源化      | `todo`    | 分析报告 A4                           | RM-3       | symbol-helpers 测试                        | —                                                |
-| RM-7 只读硬化+raw 读迁移   | `todo`    | 分析报告 §5.2/5.4 #2#3                | RM-0       | node-runtime 解析缓存管线                  | —                                                |
-| RM-8 公开 API raw 通道收口 | `todo`    | RM-0 裁决表 §5.4 #7~#12               | RM-0、RM-7 | plan 132 先例                              | —                                                |
+| 工作项                     | 状态   | Owner 事实源                          | 依赖       | 复用                                       | Plan                                             |
+| -------------------------- | ------ | ------------------------------------- | ---------- | ------------------------------------------ | ------------------------------------------------ |
+| RM-0 政策与基线            | `done` | 分析报告 §5.4 + `renderer-runtime.md` | 无         | 既有文档骨架                               | [602](../plans/602-rm0-retention-policy-plan.md) |
+| RM-1 类型层收口            | `todo` | 分析报告 A1/B6/B7/C                   | RM-0       | contract 门禁                              | —                                                |
+| RM-2 帧族收敛              | `todo` | 分析报告 A5；plan 460 B3 语义         | RM-1       | strict validation 语料、判别变异           | —                                                |
+| RM-3 双声明合并·一         | `todo` | 分析报告 A2/A3                        | RM-1       | schema-prop-coverage、defineRendererFamily | —                                                |
+| RM-4 双声明合并·二         | `todo` | 同上                                  | RM-3       | contract-honesty、validate-pages --strict  | —                                                |
+| RM-5 事件契约单源化        | `todo` | 分析报告 A3                           | RM-4       | contract-honesty                           | —                                                |
+| RM-6 scope 符号单源化      | `todo` | 分析报告 A4                           | RM-3       | symbol-helpers 测试                        | —                                                |
+| RM-7 只读硬化+raw 读迁移   | `todo` | 分析报告 §5.2/5.4 #2#3                | RM-0       | node-runtime 解析缓存管线                  | —                                                |
+| RM-8 公开 API raw 通道收口 | `todo` | RM-0 裁决表 §5.4 #7~#12               | RM-0、RM-7 | plan 132 先例                              | —                                                |
 
 ## Phase Details（交付范围，无实现步骤）
 
