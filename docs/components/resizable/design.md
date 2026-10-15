@@ -52,7 +52,25 @@
 resizable 根节点（携带 schema `id` 时）注册 `type: 'resizable'` 的 component handle，能力方法 `collapse / expand / toggle` 委托给**可折叠面板**的 imperative API（多折叠面板取最后注册者）。按钮可声明：
 
 ```json
-{ "type": "button", "onClick": { "action": "component:toggle", "componentId": "split" } }
+{
+  "type": "page",
+  "body": [
+    {
+      "type": "resizable",
+      "id": "split",
+      "direction": "vertical",
+      "panels": [
+        { "key": "main", "body": [] },
+        { "key": "debug", "collapsible": true, "collapsedSize": 7, "body": [] }
+      ]
+    },
+    {
+      "type": "button",
+      "label": "切换",
+      "onClick": { "action": "component:toggle", "componentId": "split" }
+    }
+  ]
+}
 ```
 
 与 dialog / drawer / palette surface 的 `component:open|close|toggle` 同族契约；`componentCapabilityContracts` 在 renderer 定义声明三个 handle，编译期按 `componentId` → schema 节点（`type` + `id`）解析契约，避免 `unvalidated-component-target` 诊断。

@@ -11,7 +11,11 @@
           "defaultSize": 3,
           "min": 1,
           "max": 6,
-          "body": [{ "type": "text", "text": "Navigation pane (weight 3, clamp 1–6)" }]
+          "collapsible": true,
+          "collapsedSize": 2,
+          "body": [
+            { "type": "text", "text": "Navigation pane (weight 3, clamp 1–6, collapsible → 2%)" }
+          ]
         },
         {
           "key": "main",
