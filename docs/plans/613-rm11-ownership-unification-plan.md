@@ -1,6 +1,6 @@
 # 613 RM-11 ownership 词表与实现单源化（OwnershipMode 单类型 + `<axis>Ownership` 词表 + hook 原语合一）
 
-> Plan Status: draft
+> Plan Status: active
 > Last Reviewed: 2026-10-16
 > Source: `docs/backlog/renderer-metamodel-roadmap.md` RM-11；`docs/analysis/2026-10-15-renderer-vocabulary-consistency-analysis.md` §债二（owner 事实源，含三条 literal closure rg 口径）
 > Related: roadmap Cross-Cutting 7（单标准零兼容分叉，用户显式指令 2026-10-15）；`docs/references/naming-conventions.md` §4.8（axis 词表已入库）；WA-layout-001（plan 567，layout 包内收敛先例）
@@ -127,10 +127,10 @@ Exit Criteria:
 
 > 起草后、执行前的独立审查证据。由独立 fresh 子 agent 填写。
 
-- Reviewer / Agent: agent_927c80cf（R1，独立 fresh 子 agent，26 行/comm/改名面全量复现 + 12 消费方抽样核验）
-- Verdict: `fail`（R1 0B/4M/3m → 已修订，待 R2 复核）
-- Rounds: 1（R1 已回填；R2 待跑）
-- Findings addressed: M1=两候选"逐字同构"不成立（live 四处分歧：scope 写回归一 next??null vs 原值/local 初始序/scope 链末端 fallback/写回镜像；且 use-row-drag-sort:107-118 自带 warn 非"仅 layout 版"）→ Baseline 改语义对照表+分歧逐消费方保行为落迁移对照表+Non-Goals warn 去重披露；M2=5 消费方自定义 equality/transform 订阅原语承载缺口 → 原语 useOwnershipScopeValue 读法参数化 {select?,equality?}（授权链内显式扩展）；M3=账目两个"24"不可对账/schema 字段 17≠live 18/kanban.types.ts:80 归属不明 → 重列 18+3+3+1+1=26、:80 归 Phase 1、:84 松型归 Phase 2、统一 22+1+3 记账；M4=行数/行号漂移（value-ownership 87→136、use-table-sort 438→310 且分支 :118-188、interaction-owner 58→59、松型 :80/81→:84/85）→ 全部 live 重标；m1=basic schemas.ts 命中定性改注释位；m2=Phase 3 首项改"原语+判别钉先行勾验"；m3=resolveListPaginationOwnership 等价性判据点名垃圾输入归一。
+- Reviewer / Agent: agent_927c80cf（R1~R3）+ agent_7d58d624（R4 定点，独立 fresh 子 agent）
+- Verdict: `pass`（R4 定点核验零不一致，达成共识 → 升 active）
+- Rounds: 4（R1 fail 0B/4M/3m → 修订；R2 fail 0B/2M/1m[修订引入新声称不实：warn 携带面漏计 column-resize/list-pagination 两处+锚残留] → 修订；R3 fail 0B/1M[Baseline warn 句因引号形失配静默未替换] → 补落；R4 定点 pass）
+- Findings addressed: M1=两候选"逐字同构"不成立（live 四处分歧：scope 写回归一 next??null vs 原值/local 初始序/scope 链末端 fallback/写回镜像；且 use-row-drag-sort:107-118 自带 warn 非"仅 layout 版"）→ Baseline 改语义对照表+分歧逐消费方保行为落迁移对照表+Non-Goals warn 去重披露；M2=5 消费方自定义 equality/transform 订阅原语承载缺口 → 原语 useOwnershipScopeValue 读法参数化 {select?,equality?}（授权链内显式扩展）；M3=账目两个"24"不可对账/schema 字段 17≠live 18/kanban.types.ts:80 归属不明 → 重列 18+3+3+1+1=26、:80 归 Phase 1、:84 松型归 Phase 2、统一 22+1+3 记账；M4=行数/行号漂移（value-ownership 87→136、use-table-sort 438→310 且分支 :118-188、interaction-owner 58→59、松型 :80/81→:84/85）→ 全部 live 重标；m1=basic schemas.ts 命中定性改注释位；m2=Phase 3 首项改"原语+判别钉先行勾验"；m3=resolveListPaginationOwnership 等价性判据点名垃圾输入归一。R2 M-A=warn 携带面漏计 use-column-resize:106-110 与 list-pagination:124-128 两处自带降级 warn（后者 list-pagination-infinite.test.tsx:134 有存在断言）→ 四处自带口径落 Baseline/Non-Goals/Test Strategy[use-table-sort:154-156 系业务 warn 非降级类定性]；R2 M-B=Phase 2 松型锚 :80→:84；R2 m-1=安全阀措辞"同构"→"副本"。R3 M-A=Baseline warn 句引号形失配静默未替换 → 以精确文本补落。R4（agent_7d58d624）五项核验全过（三处口径闭合+use-column-resize:106-110 live 抽验吻合）。
 
 ## Closure Gates
 
