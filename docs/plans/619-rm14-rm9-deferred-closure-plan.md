@@ -9,7 +9,7 @@
 
 RM-9 收口时登记的两条 Deferred，经 2026-10-16 用户指令「按照你认为最合适的方式执行」授权，按 AI 判定收尾：
 
-1. **A8 类型载体收敛 → 改判为「保留 `type` + 分叉语义文档化」**。RM-13 拟制期的 live 发现否证了「`TemplateNode.type` 是纯冗余副本」的前提：**`type`（作者声明类型）与 `rendererType`（生效渲染器类型）在编译失败路径分叉**——失败节点由 `compileFailureRenderer` 顶替（`node-compiler-helpers.ts:59` `rendererType: compileFailureRenderer.type`），而 `type` 保留作者写的原始类型（`node-compiler.ts:566` 成功路径两者一致）。删除 `type` 会丢失「作者写的是什么类型」这一诊断信息。改判：**保留全部四个载体中的 `type` 与 `rendererType`**（`schema.type` 随 `schema` 载体存在、`component.type` 为 `rendererType` 的副本——见 Deferred 的逐载体裁定），在 TemplateNode 的 owner doc 落字分叉语义；RM-9 的 A8 successor（收敛删除）就此**以"不删"结案**。
+1. **A8 类型载体收敛 → 改判为「保留 `type` + 分叉语义文档化」**。RM-13 拟制期的 live 发现否证了「`TemplateNode.type` 是纯冗余副本」的前提：**`type`（作者声明类型）与 `rendererType`（生效渲染器类型）在编译失败路径分叉**——失败节点由 `compileFailureRenderer` 顶替（`node-compiler-helpers.ts:59` `rendererType: compileFailureRenderer.type`），而 `type` 保留作者写的原始类型（`node-compiler.ts:566` 成功路径两者一致）。删除 `type` 虽不丢失信息本体（`schema.type` 仍存），但会丢失**第一 class 的便利访问点与 `type`/`rendererType` 并列对照**——诊断工具与读者将须自行经 `schema.type` 间接取值并知晓失败路径分叉。改判：**保留全部四个载体中的 `type` 与 `rendererType`**（`schema.type` 随 `schema` 载体存在、`component.type` 为 `rendererType` 的副本——见 Deferred 的逐载体裁定），在 TemplateNode 的 owner doc 落字分叉语义；RM-9 的 A8 successor（收敛删除）就此**以"不删"结案**。
 2. **§5.3 静态快照体积不增 → 机器化落地**。以「代表性 fixture 编译产物的序列化字节预算」作为 Cross-Cutting 2 的机器门禁：固定 fixture + 固定编译入口，断言编译产物序列化字节数 ≤ 已登记基线；基线只许人工有意上调（棘轮），使「快照体积增长」从政策约束变为编译期可检测回归。
 
 ## 授权链
@@ -74,7 +74,7 @@ Targets: `docs/architecture/template-instantiation-and-node-identity.md`、`docs
 - Item Types: `Fix`、`Decision`、`Proof`
 
 - [ ] `template-instantiation-and-node-identity.md` 的 `TemplateNode` 成员表（`type: string` / `rendererType: string` 行）落字分叉语义注：`type` = 作者声明类型（编译失败路径保留原值，`node-compiler-helpers.ts:55/59` vs `rendererType: compileFailureRenderer.type`）；`rendererType` = 生效渲染器类型（诊断/调试工具链消费）；`component.type` 为 `rendererType` 的同值副本（RM-9/A8 裁定保留，见 RM-9 plan Deferred）；内部行身份等其余成员不受影响。
-- [ ] RM-9 plan 的 A8 Deferred 条目就地更新：保留裁定 + 文档化落点 + successor 结案（「RM-13 候选」编号已顺延为 RM-14 即本 plan）。
+- [ ] RM-9 plan 的 A8 Deferred 条目就地更新：保留裁定 + 文档化落点 + successor 结案（「RM-13 候选」编号已顺延为 RM-14 即本 plan）。**改写带日期与指向注**（「2026-10-16 由 RM-14/plan 619 结案」），使历史条目自洽可读（R1 m6）。
 - [ ] Proof：文档分叉描述与 live 代码逐点对应（行号引用可核）；RM-9 Deferred 更新后与 roadmap 状态一致。
 
 Exit Criteria:
@@ -104,18 +104,18 @@ Status: planned
 - Item Types: `Fix`、`Proof`
 
 - [ ] RM-9 plan §5.3 Deferred 条目就地更新：已机器化，指向 `compiled-snapshot-size.test.ts`（棘轮协议注明）。
-- [ ] flux-compiler 包测试全绿 + 全仓五门禁范围口径（typecheck/build/lint/test/check，含并行归因披露）。
+- [ ] flux-compiler 包测试全绿（focused 套件）。
 
 Exit Criteria:
 
-- [ ] RM-9 §5.3 条目结案落字；五门禁范围口径绿。
+- [ ] RM-9 §5.3 条目结案落字；flux-compiler focused 套件绿（全量五门禁属 Closure Gates，不入本 Phase——Minimum Rule 18）。
 
 ## Draft Review Record
 
 > 起草后、执行前的独立审查证据。由独立 fresh 子 agent 填写。
 
 - Reviewer / Agent: （待 draft review）
-- Verdict: `draft`
+- Verdict: （待审）
 - Rounds: 0
 - Findings addressed: —
 
