@@ -70,7 +70,7 @@ Targets: `packages/flux-xlang-debug/src/client/debug-client.ts`
 
 Exit Criteria:
 
-- [x] 客户端单测绿（Failure Paths 全表 + D2 §3.5 重连时序）——debug-client.test 9 用例：握手 token/session.open/transport 注册、九方法映射（toggle 派生+step 三分）、renew 排程+回执 setLease、可见性暂停恢复、事件→applier、重连快照回放、F4 重建、4401 终态、dispose 清理；执行中修复：sendRequest 门槛 state→connection（session.open 在 connecting 态发送）；微任务冲刷（vi.advanceTimersByTimeAsync）
+- [x] 客户端单测绿（D2 §3.5 重连时序）——debug-client.test 9 用例：握手 token/session.open/transport 注册、九方法映射（toggle 派生+step 三分）、renew 排程+回执 setLease、可见性暂停恢复、事件→applier、重连快照回放、F4 重建、4401 终态、dispose 清理；执行中修复：sendRequest 门槛 state→connection（session.open 在 connecting 态发送）。**618 审计勘正（M2）**：初版声称"Failure Paths 全表+超时 reject+getStackInfo 断言已测"不实——timeout/4400/4403/sessionClosed/RATE_LIMITED 用例已在本轮补齐（22/22），getStackInfo 位置补取断言仍在重连用例中未显式断言（登记 follow-up）
 - [x] 包内 typecheck/lint/test 通过
 
 ### Phase 2 - 独立 closure audit 与收口
@@ -80,15 +80,15 @@ Targets: 全部 + roadmap（owner 仓）
 
 - Item Types: `Proof`
 
-- [x] 独立子代理 closure audit：D1 协议形状对账（envelope/方法名/事件映射）、D2 续期与重连语义对账、transport 接口实现完整性（9/9）、单测真实性抽查、Anti-Hollow（client→store applier 链连通）
-- [x] 修复审计发现
-- [x] flux docs/logs 更新；roadmap item 17 → done（owner 仓）；提交
+- [x] 独立子代理 closure audit：D1 协议形状对账（envelope/方法名/事件映射）、D2 续期与重连语义对账、transport 接口实现完整性（9/9）、单测真实性抽查、Anti-Hollow（client→store applier 链连通）——R1 **issues**（agent_39fdf056：B1 typecheck 红 TS2554/B2 过渡会话 id 自赋值/M1 退避未作用于运行 interval/M2 预打勾与失实声明/m1-m4）
+- [x] 修复审计发现（B1 toHaveLength 多参 TS2554 修复；B2 rebuild 采纳过渡会话 id+sessionId 断言；M1 退避重启运行 interval+用例；m1 可见性恢复相位重置；m2 死探针清理；m3 4400/4403/sessionClosed/RATE_LIMITED 用例补齐）
+- [ ] flux docs/logs 更新；roadmap item 17 → done（owner 仓）；提交（待复审 approved）
 
 Exit Criteria:
 
-- [x] audit 发现全修复
-- [x] `pnpm typecheck/lint/test/check` 全绿（或仅既有红——stash 验证）
-- [x] roadmap item 17 `done`
+- [ ] audit 发现全修复（复审 approved）
+- [ ] `pnpm typecheck/lint/test/check` 全绿（修复后实测：typecheck 0/test 22/lint 0/check 0）
+- [ ] roadmap item 17 `done`（待复审）
 
 ## Draft Review Record
 
