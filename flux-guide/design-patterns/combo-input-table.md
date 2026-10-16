@@ -198,7 +198,6 @@
 | ----------------------------------- | ----------------------- | ------------------------------------ |
 | `columns`                           | `InputTableColumn[]`    | 列定义（label/width）                |
 | `item`                              | `SchemaInput`           | 每行模板（region，参数 index/value） |
-| `rowKey`                            | `string`                | 稳定 React key                       |
 | `addable`/`removable`/`reorderable` | `boolean`               | 行操作按钮                           |
 | `minItems`/`maxItems`               | `number`                | 数量限制                             |
 | `readOnly`                          | `boolean`               | 只读模式                             |

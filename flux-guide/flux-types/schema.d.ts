@@ -1471,7 +1471,7 @@ export interface InputTableSchema extends BoundFieldSchemaBase {
   requiredWhen?: SchemaValue;
   requiredUnless?: SchemaValue;
   columns?: SchemaValue;
-  rowKey?: SchemaValue;
+  itemKey?: SchemaValue;
   addable?: boolean;
   removable?: boolean;
   reorderable?: boolean;

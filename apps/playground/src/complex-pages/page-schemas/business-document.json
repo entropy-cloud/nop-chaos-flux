@@ -91,7 +91,7 @@
           "name": "items",
           "testid": "order-items-table",
           "label": "采购明细",
-          "rowKey": "name",
+          "itemKey": "name",
           "addable": true,
           "removable": true,
           "columns": [

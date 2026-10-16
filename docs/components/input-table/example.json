@@ -2,7 +2,7 @@
   "type": "input-table",
   "name": "lineItems",
   "label": "明细行",
-  "rowKey": "id",
+  "itemKey": "id",
   "columns": [
     {
       "name": "product",

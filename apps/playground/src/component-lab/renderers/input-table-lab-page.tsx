@@ -18,7 +18,7 @@ const skuTable = {
           name: 'rows',
           label: 'Line items',
           columns: [{ label: 'SKU' }, { label: 'Amount' }],
-          rowKey: 'sku',
+          itemKey: 'sku',
           addable: true,
           removable: true,
           reorderable: true,
@@ -52,7 +52,7 @@ const tableSubmit = {
           name: 'rows',
           label: 'Line items',
           columns: [{ label: 'SKU' }, { label: 'Amount' }],
-          rowKey: 'sku',
+          itemKey: 'sku',
           item: [
             { type: 'input-text', name: 'sku', placeholder: 'TSKU' },
             { type: 'input-number', name: 'amount', placeholder: 'TAmount' },
@@ -113,7 +113,7 @@ export function InputTableLabPage() {
         {
           title: 'SKU + amount table',
           description:
-            'Each row edits sku + amount. Rows are addable, removable, and reorderable; rowKey keeps item identity stable.',
+            'Each row edits sku + amount. Rows are addable, removable, and reorderable; itemKey keeps item identity stable.',
           schema: skuTable,
         },
         {

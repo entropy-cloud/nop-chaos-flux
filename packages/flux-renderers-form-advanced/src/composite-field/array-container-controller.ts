@@ -65,7 +65,7 @@ interface ArrayContainerEvents {
 interface ArrayContainerIdentity<TEntry> {
   /** 'object-key' (combo / input-table) vs 'entry-id' (array-editor / key-value). */
   mode: ArrayContainerIdentityMode;
-  /** Preferred data-derived key field for object-kind items ('itemKey' / 'rowKey'). */
+  /** Preferred data-derived key field for object-kind items ('itemKey'). */
   keyProp?: string | undefined;
   /** Compatibility id prefix ('combo-' | 'row-' | 'item-' | 'pair-'). */
   compatPrefix: string;

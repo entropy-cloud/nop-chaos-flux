@@ -72,8 +72,8 @@ export function InputTableRenderer(props: RendererComponentProps<InputTableSchem
   const parentInstancePath = useRenderInstancePath();
   const name = String(props.props.name ?? '');
   const itemKeyField =
-    typeof props.props.rowKey === 'string' && props.props.rowKey.trim().length > 0
-      ? props.props.rowKey.trim()
+    typeof props.props.itemKey === 'string' && props.props.itemKey.trim().length > 0
+      ? props.props.itemKey.trim()
       : undefined;
   const addable = props.props.addable !== false;
   const removable = props.props.removable !== false;
@@ -99,7 +99,7 @@ export function InputTableRenderer(props: RendererComponentProps<InputTableSchem
   const duplicateKeyWarn = React.useCallback(
     (duplicates: string[]) => {
       console.warn(
-        `[InputTableRenderer] Duplicate rowKey values detected for "${name}": ${duplicates.join(', ')}. Falling back to compatibility identity for conflicting rows.`,
+        `[InputTableRenderer] Duplicate itemKey values detected for "${name}": ${duplicates.join(', ')}. Falling back to compatibility identity for conflicting rows.`,
       );
     },
     [name],
@@ -302,7 +302,7 @@ export const inputTableRendererDefinition: RegisteredRendererDefinition = {
     { key: 'name', kind: 'prop' },
     ...formFieldRules,
     { key: 'columns', kind: 'prop' },
-    { key: 'rowKey', kind: 'prop' },
+    { key: 'itemKey', kind: 'prop' },
     { key: 'addable', kind: 'prop', valueType: 'boolean' },
     { key: 'removable', kind: 'prop', valueType: 'boolean' },
     { key: 'reorderable', kind: 'prop', valueType: 'boolean' },

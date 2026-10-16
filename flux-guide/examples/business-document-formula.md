@@ -65,7 +65,7 @@ formulaRegistry.registerNamespace('$Arr', {
           "type": "input-table",
           "name": "items",
           "label": "采购明细",
-          "rowKey": "name",
+          "itemKey": "name",
           "addable": true,
           "removable": true,
           "columns": [

@@ -93,7 +93,7 @@ export function W4cCompositeFormFamilyDemoPage({ onBack }: W4cCompositeFormFamil
                   name: 'rows',
                   label: 'Line items (input-table)',
                   columns: [{ label: 'SKU' }, { label: 'Amount' }],
-                  rowKey: 'sku',
+                  itemKey: 'sku',
                   addable: true,
                   removable: true,
                   reorderable: true,

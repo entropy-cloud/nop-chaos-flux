@@ -1,6 +1,6 @@
 # 614 RM-12 数组容器行键统一 `itemKey`（input-table `rowKey` 改名 + 生成物/示例同步）
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-10-16
 > Source: `docs/backlog/renderer-metamodel-roadmap.md` RM-12；`docs/analysis/2026-10-15-renderer-vocabulary-consistency-analysis.md` §债三（owner 事实源，含收口 rg 口径）
 > Related: roadmap Cross-Cutting 7（单标准零兼容分叉，用户显式指令 2026-10-15）；`docs/references/naming-conventions.md` §4.9（itemKey 唯一字段名已入库）
@@ -82,53 +82,53 @@
 
 ### Phase 1 - schema 属性与渲染器读取面改名
 
-Status: planned
+Status: completed
 Targets: `composite-schemas.ts`、`input-table-renderer.tsx`、`array-container-controller.ts`
 
 - Item Types: `Fix`、`Proof`
 
-- [ ] `InputTableSchema.rowKey` → `itemKey`（`composite-schemas.ts:116`）。
-- [ ] `input-table-renderer.tsx` 三处同步：`:75-76` 读 `props.props.itemKey`、`:102` 警告文案 `itemKey`、`:305` prop 覆盖声明 `{ key: 'itemKey', kind: 'prop' }`。
-- [ ] `array-container-controller.ts:68` 注释去 `'rowKey'` 并列。
-- [ ] Proof：`pnpm --filter @nop-chaos/flux-renderers-form-advanced typecheck` 绿；`rg -n "rowKey" packages/flux-renderers-form-advanced/src --glob '!*.test.*'` 中 input-table 相关归零（data 族无命中）。
+- [x] `InputTableSchema.rowKey` → `itemKey`（`composite-schemas.ts:116`）。
+- [x] `input-table-renderer.tsx` 三处同步：`:75-76` 读 `props.props.itemKey`、`:102` 警告文案 `itemKey`、`:305` prop 覆盖声明 `{ key: 'itemKey', kind: 'prop' }`。
+- [x] `array-container-controller.ts:68` 注释去 `'rowKey'` 并列（改为 `('itemKey')`）。
+- [x] Proof：`pnpm --filter @nop-chaos/flux-renderers-form-advanced typecheck` 绿；input-table 相关归零后该包仅余 `composite-item-keys.ts` 的 `item.__rowKey`（**显式排除的数据行兼容键**，非 schema 属性）。
 
 Exit Criteria:
 
-- [ ] 源码面 input-table `rowKey` 归零（`composite-schemas.ts`/`input-table-renderer.tsx`/`array-container-controller.ts`）；form-advanced typecheck 绿。
+- [x] 源码面 input-table `rowKey` 归零（`composite-schemas.ts`/`input-table-renderer.tsx`/`array-container-controller.ts`）；form-advanced typecheck 绿。【`rg -n "\browKey" packages/flux-renderers-form-advanced/src --glob '!*.test.*'` = 0；无词边界的宽命令余 2 命中，均为 `__rowKey`——见 Deferred 节口径修正】
 
 ### Phase 2 - 生成物/文档/示例/apps 同步
 
-Status: planned
+Status: completed
 Targets: `flux-guide/flux-types/schema.d.ts`、`flux-guide/{design-patterns/combo-input-table.md,examples/business-document-formula.md}`、`docs/components/input-table/{example.json,design.md}`、apps/playground 3 文件
 
 - Item Types: `Fix`、`Proof`
 
-- [ ] 先 `pnpm build` 后经 css-stub loader 再生成 `flux-types/schema.d.ts`（InputTableSchema `rowKey` → `itemKey`；**data 族 `:1560/:1804` 的 `rowKey` 保持**——改名只回落 schema 定义）。
-- [ ] `combo-input-table.md:201` 删 `rowKey` 属性表行（`:191` `itemKey` 已存在）；`business-document-formula.md:68` 与 `docs/components/input-table/example.json:5` 改 `itemKey`。
-- [ ] apps/playground 三文件：`w4c-composite-form-family-demo.tsx:96`、`business-document.json:94`、`input-table-lab-page.tsx:21/55/116` 改 `itemKey`（含描述文案）。
-- [ ] `docs/components/input-table/design.md:21`（§4 正式字段清单）与 `:27`（§5 字段分类）改 `itemKey`。
-- [ ] Proof（**机器可复现口径**，R2 修订：只保留确定可为空的定向命令）：
-      `rg -n "rowKey" packages/flux-renderers-form-advanced/src --glob '!*.test.*'`（该包无 data 族，应空）
-      `rg -n "rowKey" flux-guide/design-patterns/combo-input-table.md flux-guide/examples/business-document-formula.md`（应空）
-      `rg -n "rowKey" docs/components/input-table apps/playground/src/pages/w4c-composite-form-family-demo.tsx apps/playground/src/complex-pages/page-schemas/business-document.json apps/playground/src/component-lab/renderers/input-table-lab-page.tsx`（应空）
+- [x] 先 `pnpm build` 后经 css-stub loader 再生成 `flux-types/schema.d.ts`（InputTableSchema `rowKey` → `itemKey`；**data 族 `:1560/:1804` 的 `rowKey` 保持**——改名只回落 schema 定义）。
+- [x] `combo-input-table.md:201` 删 `rowKey` 属性表行（`:191` `itemKey` 已存在）；`business-document-formula.md:68` 与 `docs/components/input-table/example.json:5` 改 `itemKey`。
+- [x] apps/playground 三文件：`w4c-composite-form-family-demo.tsx:96`、`business-document.json:94`、`input-table-lab-page.tsx:21/55/116` 改 `itemKey`（含描述文案）。
+- [x] `docs/components/input-table/design.md:21`（§4 正式字段清单）与 `:27`（§5 字段分类）改 `itemKey`。
+- [x] Proof（**机器可复现口径**，R2 修订：只保留确定可为空的定向命令）：
+      `rg -n "\browKey" packages/flux-renderers-form-advanced/src --glob '!*.test.*'`（**须用词边界形式**——无边界 `"rowKey"` 会命中 `__rowKey`（该包 `composite-item-keys.ts:10/:21`，显式排除的数据行兼容键）；故：应空）
+      `rg -n "\browKey" flux-guide/design-patterns/combo-input-table.md flux-guide/examples/business-document-formula.md`（应空）
+      `rg -n "\browKey" docs/components/input-table apps/playground/src/pages/w4c-composite-form-family-demo.tsx apps/playground/src/complex-pages/page-schemas/business-document.json apps/playground/src/component-lab/renderers/input-table-lab-page.tsx`（应空）
       `rg -n "rowKey" flux-guide/flux-types/schema.d.ts`（**定向校验，非「应空」**：改名后命中集应恰为 data 族两行 `TableSchema`/`CrudSchema`，`InputTableSchema` 段零命中；宽口径 `flux-guide --glob '*.md'` **预期非空**——data 族 7 个 md 文件保留，不列为「应空」断言）
 
 Exit Criteria:
 
-- [ ] 生成物与 live 一致（data 族 `rowKey` 保留）；文档/示例/apps 无 input-table `rowKey` 残留。
+- [x] 生成物与 live 一致（data 族 `rowKey` 保留）；文档/示例/apps 无 input-table `rowKey` 残留。【实测：应空②=0、应空③=0；`schema.d.ts` 定向校验 = 仅 `:1560`(TableSchema)/`:1804`(CrudSchema) 两行，`InputTableSchema` 段（:1466 起）含 `itemKey?: SchemaValue` 且零 `rowKey`】
 
 ### Phase 3 - data 族人工裁决请求落字 + 收口验证
 
-Status: planned
+Status: completed
 
 - Item Types: `Decision`、`Proof`
 
-- [ ] data 族裁决请求落 `## Human Adjudication Request`（live 枚举清单 + 两方案 + 建议），并在 daily log 与会话总结中显式提出；裁决前维持现状（roadmap 要求"不静默并入、不静默排除"）。
-- [ ] 判别钉（`KnownKeys` 类型面 + registry 元数据面）+ 收口 rg 口径复跑（**三条应空命令 + 一条定向校验（命中集恰为 data 族两行）**，口径定义见 Closure Gates）。
+- [x] data 族裁决请求落 `## Human Adjudication Request`（live 枚举清单 + 两方案 + 建议），并在 daily log 与会话总结中显式提出；裁决前维持现状（roadmap 要求"不静默并入、不静默排除"）。
+- [x] 判别钉（`KnownKeys` 类型面 + registry 元数据面）+ 收口 rg 口径复跑（**三条应空命令 + 一条定向校验（命中集恰为 data 族两行）**，口径定义见 Closure Gates）。【**判别变异自证一轮**：变异回旧实现（`InputTableSchema.rowKey` + fields `key: 'rowKey'`）→ 类型钉 typecheck 红（`input-table-itemkey.test.ts:30` TS2344 + `:31` TS2554）、元数据钉 vitest 红（`1 failed`）→ 外科恢复 → `shasum` 两文件与变异前逐字节一致（`44c5165b…` / `c1c965ec…`）→ typecheck 绿 + `1215/1215` 绿。**执行期口径修正**：`KnownKeys` 的朴素形式 `{ [K in keyof T]: string extends K ? never : K }[keyof T]` 在带索引签名的 `T` 上退化为**值类型**（`[keyof T]` 取到 `SchemaValue` 而非字面量键联合），改用 key 重映射形式 `keyof { [K in keyof T as string extends K ? never : number extends K ? never : K]: never }`；两形式差异已 live 验证（朴素形式下负向钉根本不过编译=判别面失效）】
 
 Exit Criteria:
 
-- [ ] 裁决请求在案且被显式提出（非静默）；判别钉绿；收口 rg 口径满足（**三条应空命令 + 一条定向校验（命中集恰为 data 族两行）**，口径定义见 Closure Gates）（全量五门禁属 Closure Gates，不入本 Phase——Minimum Rule 18）。
+- [x] 裁决请求在案且被显式提出（非静默）；判别钉绿；收口 rg 口径满足（**三条应空命令 + 一条定向校验（命中集恰为 data 族两行）**，口径定义见 Closure Gates）（全量五门禁属 Closure Gates，不入本 Phase——Minimum Rule 18）。
 
 ## Human Adjudication Request（data 族行标识 `rowKey` 归属）
 
@@ -167,30 +167,40 @@ Exit Criteria:
 
 ## Closure Gates
 
-- [ ] `InputTableSchema.rowKey` → `itemKey` 且读取路径/警告文案/prop 覆盖声明/注释四处同步
-- [ ] 收口 rg 口径（机器可复现，非人工判别）——**三条「应空」命令 + 一条定向校验**（R2 修订：不得把确定非空的命令写成「应空」）：
-      应空 ①：`rg -n "rowKey" packages/flux-renderers-form-advanced/src --glob '!*.test.*'`
-      应空 ②：`rg -n "rowKey" flux-guide/design-patterns/combo-input-table.md flux-guide/examples/business-document-formula.md`
-      应空 ③：`rg -n "rowKey" docs/components/input-table apps/playground/src/pages/w4c-composite-form-family-demo.tsx apps/playground/src/complex-pages/page-schemas/business-document.json apps/playground/src/component-lab/renderers/input-table-lab-page.tsx`
+- [x] `InputTableSchema.rowKey` → `itemKey` 且读取路径/警告文案/prop 覆盖声明/注释四处同步
+- [x] 收口 rg 口径（机器可复现，非人工判别）——**三条「应空」命令 + 一条定向校验**（R2 修订：不得把确定非空的命令写成「应空」）：
+      应空 ①：`rg -n "\browKey" packages/flux-renderers-form-advanced/src --glob '!*.test.*'`（**词边界形式为执行判据**——无边界 `"rowKey"` 因 `__rowKey` 得 2 命中，见 Deferred 节）
+      应空 ②：`rg -n "\browKey" flux-guide/design-patterns/combo-input-table.md flux-guide/examples/business-document-formula.md`
+      应空 ③：`rg -n "\browKey" docs/components/input-table apps/playground/src/pages/w4c-composite-form-family-demo.tsx apps/playground/src/complex-pages/page-schemas/business-document.json apps/playground/src/component-lab/renderers/input-table-lab-page.tsx`
       定向校验 ④：`rg -n "rowKey" flux-guide/flux-types/schema.d.ts` 命中集恰为 `{TableSchema, CrudSchema}` 两行（data 族，预期保留），且 `InputTableSchema` 段（生成物中自其 interface 起至下一 interface 止）零命中
       预期保留（显式排除清单）：data 族 `packages/flux-renderers-data/src`（TableSchema/CrudSchema + `TableRowEntry.rowKey` 内部成员）、`composite-item-keys.ts` 的 `item.__rowKey`、data 族文档示例（`flux-guide/{design-patterns,examples}/*` 中 table/crud/list 示例 + `01-quickstart.md`）、历史 docs（`docs/logs`、`docs/audits`）
-- [ ] 生成物 `flux-types/schema.d.ts` 与 live 一致（data 族 `rowKey` 保留）
-- [ ] 无兼容分叉（不留 `rowKey` 别名/双读层）
-- [ ] 类型面判别钉（`InputTableSchema` 具 `itemKey`、不具 `rowKey`）在案
-- [ ] data 族裁决请求已落字并显式提出（非静默）
-- [ ] 全仓 typecheck/build/lint/test 全绿 + check 零新增红（含 RM-9 残余扫描零未裁决命中）
-- [ ] roadmap RM-12 状态流转 + daily log 条目
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
-- [ ] `pnpm check`
-- [ ] e2e 意图声明与披露义务落字
+- [x] 生成物 `flux-types/schema.d.ts` 与 live 一致（data 族 `rowKey` 保留）
+- [x] 无兼容分叉（不留 `rowKey` 别名/双读层）
+- [x] 类型面判别钉（`InputTableSchema` 具 `itemKey`、不具 `rowKey`）在案【`KnownKeys` key 重映射形式 + registry 元数据面双钉；判别变异自证一轮（旧实现下 typecheck 红 + vitest 红，恢复后 sha256 逐字节还原）】
+- [x] data 族裁决请求已落字并显式提出（非静默）
+- [x] 全仓 typecheck/build/lint/test 全绿 + check 零新增红（含 RM-9 残余扫描零未裁决命中）【最终树：typecheck 直跑 42/42 exit 0、build exit 0、lint exit 0、test **16,557 passed/1,802 文件/0 FAIL**、check exit 0】
+- [x] roadmap RM-12 状态流转 + daily log 条目
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
+- [x] `pnpm check`
+- [x] e2e 意图声明与披露义务落字【e2e 未重跑——纯 schema 属性改名零运行时行为变化（读取路径与声明同步改、派生逻辑不变），判别由判别钉 + 收口口径 + 全量回归承载；已在 plan、日志与提交信息披露】
 
 ## Deferred But Adjudicated
 
-（无——执行中如有推翻/改判，当场落本节）
+### 收口口径修正：应空① 必须用词边界形式（`\browKey`）
+
+- Classification: `out-of-scope improvement`（执行期口径修正）
+- Why Not Blocking Closure: plan 原文的应空① 写作 `rg -n "rowKey" packages/flux-renderers-form-advanced/src --glob '!*.test.*'` 并注"该包无 data 族，应空"——**该口径不可满足**：该包含 `composite-item-keys.ts` 的 `item.__rowKey`（数据行运行时兼容键，词汇报告 §债三显式排除、非 schema 属性），无词边界命令必命中 2 行。实际执行采用词边界形式 `rg -n "\browKey"`（`\b` 在 `__rowKey` 的 `_` 与 `r` 之间不成立边界，故排除该键）→ 输出 0，满足归零语义。三条应空命令与定向校验④ 均按词边界形式执行并在收口记录落字。
+- Successor Required: `no`
+
+### 判别钉落点为包内新增测试文件（不新增公开导出）
+
+- Classification: `out-of-scope improvement`
+- Why Not Blocking Closure: `InputTableSchema` 未经 `src/index.tsx` 公开导出，钉文件经包内相对路径 `../composite-field/composite-schemas.js` 导入；元数据钉经 `registerFormAdvancedRenderers(registry)` + `registry.get('input-table').fields` 断言。两钉各自经判别变异证实有效（元数据钉在旧实现下 vitest 红；类型钉在旧实现下 typecheck 红 TS2554）。
+- Successor Required: `no`
 
 ## Non-Blocking Follow-ups
 
@@ -199,13 +209,13 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: （收口时填写）
+Status Note: 数组容器行键 schema 属性统一为 `itemKey` 落地——`InputTableSchema.rowKey` 改名 + 渲染器读取路径/警告文案/prop 覆盖声明/注释四处同步 + 生成物与 flux-guide/docs 示例/apps 三处同步；无兼容分叉（Cross-Cutting 7）；三条应空口径 + 一条定向校验全部满足；判别钉双面（类型 + registry 元数据）经判别变异自证有效；data 族行标识 `rowKey` 归属按 roadmap 显式要求落人工裁决请求（本 plan 未自行裁定，data 族零改动）。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: （独立 fresh 子 agent）
-- Evidence: （task id / 核对摘要）
+- Auditor / Agent: agent_d3aef789-9503-4d76-9074-8eb8d867e712（独立 fresh session closure auditor）
+- Evidence: `approved`（零 Blocker / 零 Major；3 条非阻塞 Minor 均为收口期动作，已随本批落字）。审计员独立复现：四条收口口径（词边界形式）逐条亲跑——应空①=0、②=0、③=0，定向校验④ `schema.d.ts` 命中集仅 `:1560`(TableSchema)/`:1804`(CrudSchema) 且 `InputTableSchema` 段（`:1466` 起）含 `itemKey?: SchemaValue` 零 `rowKey`；源码抽验（`composite-schemas.ts:116`、renderer `:75-76`/`:102`/`:305`、controller `:68`、`design.md:21/:27`）逐处吻合、无别名/双读层；**判别钉独立变异复现**——变异回旧实现后类型钉 typecheck 红（`:30` TS2344 + `:31` TS2554，`--noErrorTruncation` 全量错误含 `Expected: literal string: rowKey` 且零 `SchemaValue` 提及 → 证明 key 重映射 `KnownKeys` 确剥离索引签名、为字面量键联合，负向钉有真实判别力）+ 元数据钉 vitest 红，外科恢复后 sha256 `44c5165b…`/`c1c965ec…` 与声称值逐字节一致、绿；**Deferred 口径修正诚实性核验**——无边界 `rg "rowKey"` 于 form-advanced src 确 2 命中且均为 `__rowKey`、词边界形式 0，判为"口径如实修正非弱化断言"；**data 族裁决门核验**——`packages/flux-renderers-data` 零改动、执行者未自行裁定；回归 form-advanced 173 文件/1215 tests 全绿 + 全仓 typecheck exit 0；日志 16,557/1,802 = RM-11 基线 16,555/1,801 + 新钉文件 2 用例，自洽。
 
 Follow-up:
 
-- （收口时填写或写 no remaining plan-owned work）
+- no remaining plan-owned work（Deferred But Adjudicated 2 条均为 out-of-scope improvement 口径修正，Successor Required 全部 `no`；data 族 `rowKey` 归属待人工裁决——裁决请求见 `## Human Adjudication Request`，裁决前维持现状）
