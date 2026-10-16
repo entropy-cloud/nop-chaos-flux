@@ -17,11 +17,11 @@
     "@codemirror/state": "^6.5.2",
     "@lezer/common": "^1.2.0",
     "@lezer/highlight": "^1.2.1",
-    "@lezer/lr": "^1.4.8"
+    "@lezer/lr": "^1.4.8",
+    "@nop-chaos/flux-code-editor": "workspace:*"
   },
   "devDependencies": {
     "@lezer/generator": "^1.8.1",
-    "@nop-chaos/flux-code-editor": "workspace:*",
     "react": "^19.0.0"
   },
   "scripts": {
