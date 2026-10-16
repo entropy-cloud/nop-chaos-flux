@@ -23,3 +23,10 @@ export {
 } from './extension/effects.js';
 export { sourcePathFacet } from './extension/source-path.js';
 export { syncStoreToExtensions, type SyncStoreToExtensionsOptions } from './extension/sync.js';
+export {
+  createDebugClient,
+  type CreateDebugClientOptions,
+  type DebugClient,
+  type LeasePolicy,
+  type SessionCloseReason,
+} from './client/debug-client.js';

@@ -23,7 +23,7 @@
 - `src/extension/source-path.ts`：`sourcePathFacet`（F3 修订：CM 文档无内建元数据，锚点默认实现 = 包内导出 Facet，装配层 item 19 经 extensions 提供值）。
 - `src/extension/suspended-line.ts`：挂起行 Effect（family: suspended-line）→ StateField → Decoration.line 高亮。
 - `src/extension/exception-squiggle.ts`：异常 Effect（family: exception）→ StateField → Decoration.mark 波浪线。
-- `src/extension/sync.ts`：`syncStoreToExtensions({ store, view, getSourcePath })`（F3 修订：dispatch 需 view、过滤需与 gutter 同源锚点）——store.subscribe → 按 schema 变更派发三族 Effect；返回 dispose；**清理双保险**：sync 桥 dispose + ViewPlugin.destroy（Compartment reconfigure 移除扩展时销毁 ViewPlugin；EditorView.destroy 全量——F3 钉死，替代初版悬置）。**Effect 三族（F1 修订——回归 D5 §3.4 权威：suspended-line/exception/breakpoint 三族 + 命名常量一次定死；初版的 gutter 直连 store 不走 Effect 系对权威的失实引用且技术上不自洽——CM gutter 重绘仅由事务驱动，store 变化无 dispatch 则陈旧）。**
+- `src/extension/sync.ts`：`syncStoreToExtensions({ store, view, getSourcePath })`（F3 修订：dispatch 需 view、过滤需与 gutter 同源锚点）——store.subscribe → 按 schema 变更派发三族 Effect；返回 dispose——清理 = dispose 单层 + apply 内 dom.isConnected 守卫（EditorView 6.x 无 isDestroyed 属性；Compartment reconfigure 场景守卫不生效，泄漏边界 = dispose 必须被调用——B2 勘正：包内无 ViewPlugin）。**Effect 三族（F1 修订——回归 D5 §3.4 权威：suspended-line/exception/breakpoint 三族 + 命名常量一次定死；初版的 gutter 直连 store 不走 Effect 系对权威的失实引用且技术上不自洽——CM gutter 重绘仅由事务驱动，store 变化无 dispatch 则陈旧）。**
 - 测试：store 动作语义（toggle 幂等/transport 调用参数/applier 语义）、gutter 点击→上行动作、suspended-line/exception 装饰随 store 变化（`view.dispatch({effects})` 后 `state.field(...)` 断言——EditorState 无 dispatch，F7 API 形状修正）、Effect 三族命名常量。
 
 ## Non-Goals
@@ -81,7 +81,7 @@ Targets: `packages/flux-xlang-debug/src/extension/`
 - Item Types: `Feature`
 
 - [x] `breakpoint-gutter.ts`：gutter 工厂 `createBreakpointGutter(store)`（审计 m2 签名同步；锚点经 sourcePathFacet）——断点 Effect→StateField→GutterMarker + gutter 自带 domEventHandlers 点击 toggle（B1 修复：EditorView.domEventHandlers 注册在 contentDOM，gutter 事件不可达）；泄漏面=dispose+isConnected 守卫（B2 勘正：无 ViewPlugin，reconfigure 场景守卫不生效）
-- [x] `suspended-line.ts` + `exception-squiggle.ts` + `breakpoint-gutter.ts` 的 Effect 三族（Effect 类型/命名常量导出，供 item 17/19 派发）；`syncStoreToExtensions({ store, view, getSourcePath })` 桥（subscribe→dispatch，返回 dispose；ViewPlugin.destroy 双保险）
+- [x] `suspended-line.ts` + `exception-squiggle.ts` + `breakpoint-gutter.ts` 的 Effect 三族（Effect 类型/命名常量导出，供 item 17/19 派发）；`syncStoreToExtensions({ store, view, getSourcePath })` 桥（subscribe→dispatch，返回 dispose；isConnected 守卫（单层））
 - [x] 扩展单测：gutter 点击→store.toggle（EditorView + happy-dom dispatchEvent）、装饰随 store 变化（`view.dispatch({effects})` 后 `state.field(...)` 断言——EditorState 无 dispatch，F7）、sourcePath 过滤（Facet 值不匹配不落地）、清理函数后无残留订阅
 
 Exit Criteria:
@@ -98,15 +98,15 @@ Targets: 全部
 - Item Types: `Proof`
 
 - [x] 独立子代理 closure audit：store 契约与 D5 §3.4 schema 逐字段对账、扩展行为单测真实性抽查、订阅清理（泄漏面）、knip 登记核实、Anti-Hollow——第一轮 **issues**（agent_9715023c：B1 Blocker gutter 点击上行链死代码/B2 文档失实/B3 预打勾 + m1-m3）
-- [ ] 修复审计发现（B1 改 gutter 自带 domEventHandlers + 补有 toggle 断言的真实测试；B2 勘正"ViewPlugin.destroy 双保险"失实文档→dispose+isConnected 守卫单层；m1 evalExpr 对象形参裁定注记；m2 plan 签名同步）
-- [ ] flux docs/logs 更新；roadmap item 16 → done（owner 仓，审计 approved 后）
-- [ ] 提交
+- [x] 修复审计发现（B1 改 gutter 自带 domEventHandlers + 抽出可测核心 handleGutterClick + 承重断言；B2 勘正"ViewPlugin.destroy 双保险"失实文档→dispose+isConnected 守卫单层（sync.ts docstring/plan L26/L84 三处）；m1 evalExpr 对象形参裁定注记；m2 plan 签名同步）
+- [x] flux docs/logs 更新；roadmap item 16 → done（owner 仓，复审 approved 后）
+- [x] 提交
 
 Exit Criteria:
 
-- [ ] audit 发现全修复（复审 approved）
-- [ ] `pnpm typecheck/build/lint/test/check` 全绿（或仅既有红——stash 验证）
-- [ ] roadmap item 16 `done`
+- [x] audit 发现全修复（复审 approved——agent_9715023c R2：B1 经 CM 源码+端到端 mousedown 探针实证 add/remove 全链连通；B3 回退到位；门禁 9/9+typecheck/lint/knip 干净 HEAD worktree 全绿；B2 残留 3 处文档行已勘正）
+- [x] `pnpm typecheck/build/lint/test/check` 全绿（debug 包 18/18 + check exit 0）
+- [x] roadmap item 16 `done`
 
 ## Draft Review Record
 
@@ -142,9 +142,20 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: （待收口后填写）
+Status Note: 调试扩展包全量落地并通过两轮独立审计（R1 issues：B1 gutter 点击上行链死代码/B2 文档失实/B3 预打勾；R2 approved：B1 修复经 CM 源码 + 端到端 mousedown 探针实证、B3 回退到位、B2 三处文档行勘正）。store 契约（四域 schema + 九上行 + 七下行 applier + transport 注入）与 D5 §3.4 逐字段一致。
+Completed: 2026-10-16
 
 Closure Audit Evidence:
 
-- Auditor / Agent: （待填）
-- Evidence: （待填）
+- Auditor / Agent: 独立子代理 agent_9715023c（fresh session 两轮）
+- Evidence:
+  - 落地核对 PASS（store/extension/index 逐文件对照 plan Goals）
+  - D5 §3.4 一致性 PASS（schema 四域逐字段/上行九动作/Effect 三族；m1 evalExpr 对象形参裁定注记）
+  - 变异探针 2/2 R1 实测（sync sourcePath 过滤→锚点断言红；toggle remove 分支→幂等双用例红）md5 恢复复绿；R2 端到端 mousedown 探针实证 B1 修复 add/remove 全链连通
+  - 门禁实跑 PASS（typecheck/test 9→18/lint/check exit 0；knip 零登记属实）
+  - B1/B2/B3 修复经 R2 复审 approved（3 处 B2 文档残留勘正后通过）
+  - Anti-Hollow：下行 store→sync→Effect→StateField→装饰/marker + 上行 gutter 点击→handleGutterClick→toggle 双向连通（探针+直测）
+
+Follow-up:
+
+- breakpointsField 行号不做 changes 映射（v1 简化，docstring 登记；sync 桥 store 变更重派收敛）

@@ -11,8 +11,9 @@ export interface SyncStoreToExtensionsOptions {
 
 /**
  * store→编辑器单向同步桥（plan 617 F3 签名）：store.subscribe → 按当前文档锚点
- * 过滤 → 派发三族 Effect。返回 dispose（清理双保险之一：ViewPlugin.destroy 由
- * Compartment reconfigure/EditorView.destroy 触发）。
+ * 过滤 → 派发三族 Effect。返回 dispose——清理 = dispose 单层 + apply 内
+ * dom.isConnected 守卫（EditorView 6.x 无 isDestroyed；Compartment reconfigure
+ * 场景下守卫不生效，泄漏边界 = dispose 必须被调用，plan 617 审计 B2 勘正）。
  */
 export function syncStoreToExtensions(options: SyncStoreToExtensionsOptions): () => void {
   const { store, view, getSourcePath } = options;
