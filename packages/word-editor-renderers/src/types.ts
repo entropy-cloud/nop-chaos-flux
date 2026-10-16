@@ -23,8 +23,8 @@ export interface WordEditorPageSchemaInput {
   statusPath?: string;
   config?: WordEditorConfig;
   readOnly?: boolean;
-  onBack?: ActionSchema;
-  onSave?: ActionSchema;
+  onBack?: ActionSchema | ActionSchema[];
+  onSave?: ActionSchema | ActionSchema[];
   initialDocument?: WordDocument;
   datasets?: Dataset[];
   /**

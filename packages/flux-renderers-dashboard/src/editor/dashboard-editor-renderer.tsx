@@ -48,10 +48,10 @@ export interface DashboardEditorSchema extends BaseSchema {
   commitPolicy?: 'manual' | 'auto';
   /** 宿主运行状态发布路径（P3.3 §2.4；未声明不发布）。 */
   statusPath?: string;
-  onSave?: ActionSchema;
-  onError?: ActionSchema;
-  onSessionChange?: ActionSchema;
-  onModeChange?: ActionSchema;
+  onSave?: ActionSchema | ActionSchema[];
+  onError?: ActionSchema | ActionSchema[];
+  onSessionChange?: ActionSchema | ActionSchema[];
+  onModeChange?: ActionSchema | ActionSchema[];
 }
 
 function asReactNode(value: RendererRenderOutput): React.ReactNode {

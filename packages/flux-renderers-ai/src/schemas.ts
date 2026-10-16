@@ -76,10 +76,10 @@ export interface AiChatSchema extends BaseSchema {
   afterMessages?: SchemaInput;
   emptyState?: SchemaInput;
 
-  onResponseComplete?: ActionSchema;
-  onError?: ActionSchema;
-  onAbort?: ActionSchema;
-  onConversationChange?: ActionSchema;
+  onResponseComplete?: ActionSchema | ActionSchema[];
+  onError?: ActionSchema | ActionSchema[];
+  onAbort?: ActionSchema | ActionSchema[];
+  onConversationChange?: ActionSchema | ActionSchema[];
   /**
    * A-16 message branches: host-managed branch set + active id, projected into
    * the `ai-chat` context so each `ai-bubble` can render a prev/next picker for
@@ -90,7 +90,7 @@ export interface AiChatSchema extends BaseSchema {
   branches?: SchemaValue;
   activeBranchId?: SchemaValue;
 
-  onBranchChange?: ActionSchema;
+  onBranchChange?: ActionSchema | ActionSchema[];
 
   /**
    * P2-4 (2026-08-10 multi-audit): HITL approval dispatch for the bubble path.
@@ -99,7 +99,7 @@ export interface AiChatSchema extends BaseSchema {
    * so a pending tool-call card rendered inside a bubble can approve/reject
    * (mirrors the `onBranchChange` chain).
    */
-  onApproval?: ActionSchema;
+  onApproval?: ActionSchema | ActionSchema[];
 }
 
 /**
@@ -145,7 +145,7 @@ export interface AiBubbleSchema extends BaseSchema {
   branches?: SchemaValue;
   activeBranchId?: SchemaValue;
 
-  onBranchChange?: ActionSchema;
+  onBranchChange?: ActionSchema | ActionSchema[];
 
   /**
    * P2-4 (2026-08-10 multi-audit): HITL approval dispatch for the standalone
@@ -153,7 +153,7 @@ export interface AiBubbleSchema extends BaseSchema {
    * subtree the context-wired callback wins; this event is the standalone
    * equivalent.
    */
-  onApproval?: ActionSchema;
+  onApproval?: ActionSchema | ActionSchema[];
 }
 
 export interface AiSenderSchema extends BaseSchema {
@@ -177,9 +177,9 @@ export interface AiSenderSchema extends BaseSchema {
    */
   senderExtensions?: SchemaValue;
 
-  onSubmit?: ActionSchema;
-  onCancel?: ActionSchema;
-  onChange?: ActionSchema;
+  onSubmit?: ActionSchema | ActionSchema[];
+  onCancel?: ActionSchema | ActionSchema[];
+  onChange?: ActionSchema | ActionSchema[];
 }
 
 /**
@@ -244,10 +244,10 @@ export interface AiConversationsSchema extends BaseSchema {
   activeId?: SchemaValue;
   showRenameControls?: boolean;
 
-  onItemClick?: ActionSchema;
-  onItemRename?: ActionSchema;
-  onItemDelete?: ActionSchema;
-  onCreate?: ActionSchema;
+  onItemClick?: ActionSchema | ActionSchema[];
+  onItemRename?: ActionSchema | ActionSchema[];
+  onItemDelete?: ActionSchema | ActionSchema[];
+  onCreate?: ActionSchema | ActionSchema[];
 }
 
 export interface AiWelcomeSchema extends BaseSchema {
@@ -284,7 +284,7 @@ export interface AiPromptsSchema extends BaseSchema {
   layout?: 'vertical' | 'horizontal' | 'wrap';
   size?: 'sm' | 'md' | 'lg';
 
-  onSelect?: ActionSchema;
+  onSelect?: ActionSchema | ActionSchema[];
 }
 
 export interface AiFeedbackSchema extends BaseSchema {
@@ -293,7 +293,7 @@ export interface AiFeedbackSchema extends BaseSchema {
   message?: SchemaValue;
   actions?: SchemaValue;
 
-  onAction?: ActionSchema;
+  onAction?: ActionSchema | ActionSchema[];
 }
 
 // ---- P2 renderers (A3) ----
@@ -312,7 +312,7 @@ export interface AiToolCallSchema extends BaseSchema {
    * holds `state.approval`; it does NOT mutate it — the host action handler
    * decides the workflow outcome.
    */
-  onApproval?: ActionSchema;
+  onApproval?: ActionSchema | ActionSchema[];
 }
 
 export interface AiAttachmentItem extends SchemaObject {
@@ -346,9 +346,9 @@ export interface AiAttachmentsSchema extends BaseSchema {
   /** Enable drag-and-drop + paste (default true). */
   enableDrop?: boolean;
 
-  onChange?: ActionSchema;
-  onError?: ActionSchema;
-  onUpload?: ActionSchema;
+  onChange?: ActionSchema | ActionSchema[];
+  onError?: ActionSchema | ActionSchema[];
+  onUpload?: ActionSchema | ActionSchema[];
 }
 
 // ---- P3 renderers (A4) ----
@@ -376,7 +376,7 @@ export interface AiCitationsSchema extends BaseSchema {
    */
   mode?: 'inline' | 'list';
 
-  onSourceClick?: ActionSchema;
+  onSourceClick?: ActionSchema | ActionSchema[];
 }
 
 // ---- P4 renderers (A5) ----
@@ -398,8 +398,8 @@ export interface AiVoiceInputSchema extends BaseSchema {
   /** Emit interim (non-final) results (default false). */
   interimResults?: boolean;
 
-  onResult?: ActionSchema;
-  onError?: ActionSchema;
+  onResult?: ActionSchema | ActionSchema[];
+  onError?: ActionSchema | ActionSchema[];
 }
 
 /**
@@ -423,7 +423,7 @@ export interface AiTokenUsageSchema extends BaseSchema {
   /** Render the cost field when present (default true). */
   showCost?: boolean;
 
-  onClick?: ActionSchema;
+  onClick?: ActionSchema | ActionSchema[];
 }
 
 /** OpenAI-compatible token usage shape (subset the widget renders). */
@@ -453,5 +453,5 @@ export interface AiSuggestionsSchema extends BaseSchema {
   /** Max visible pills before overflow kicks in (popover mode, default 3). */
   maxVisible?: number;
 
-  onSelect?: ActionSchema;
+  onSelect?: ActionSchema | ActionSchema[];
 }

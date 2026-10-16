@@ -55,10 +55,10 @@
 
 ## 字段参考
 
-| 字段         | 类型               | 说明                        |
-| ------------ | ------------------ | --------------------------- |
-| `loadAction` | `ActionSchemaLike` | 加载动态 schema 的动作      |
-| `body`       | `SchemaInput`      | 加载前的 fallback 内容      |
-| `autoLoad`   | `boolean`          | 挂载时自动触发（默认 true） |
+| 字段         | 类型           | 说明                        |
+| ------------ | -------------- | --------------------------- |
+| `loadAction` | `ActionSchema` | 加载动态 schema 的动作      |
+| `body`       | `SchemaInput`  | 加载前的 fallback 内容      |
+| `autoLoad`   | `boolean`      | 挂载时自动触发（默认 true） |
 
 组件能力：`refresh`（重新评估 loadAction 并重新加载）。

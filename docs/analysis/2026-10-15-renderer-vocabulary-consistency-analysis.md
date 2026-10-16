@@ -53,6 +53,7 @@ rg -n "itemKey\?:|rowKey\?:" packages/flux-renderers-form-advanced/src/composite
    # 期望 == 4 个显式排除文件：flux-code-editor/src/types.ts、flux-renderers-data/src/table-renderer/{table-editable-cell,table-quick-edit-cell,use-row-quick-edit-draft}.tsx
    ```
    在范围 174 中若 plan 逐处复核 `kind:'event'` 归属时新发现非事件位点，须显式追加入排除清单登记（附理由），不得静默留单值。
+   【勘误 2026-10-16，RM-10/plan 612 执行：改型面由 kind 分类枚举导出 = 在范围 **125** 处（本节 174 系减法口径，被证混入非事件通道位点）；排除合计 **55 处/20 文件**，六组：本节原排除 7 + reaction 8（编译器 `rawReactionPlans` 单值消费）+ **嵌套 events 对象成员 16**（3d `ThreeCanvasEvents`/industrial `ScadaCanvasEvents`/`ScadaEditorCanvasEvents`——`events` 对象整体注册为 prop、`helpers.dispatch(action: ActionSchema, ...)` 单值桥接派发，plan 执行新裁定）+ validate 嵌套 5 + prop 通道 action 配置 11 + hook 内部类型 8；收口实测：单值文件集 == 20 排除文件、联合型基数 **220**（81+125+12+2，含 `BaseSchema.onMount/onUnmount` 随 Like 并入改型）；`rawEventPlans` 行号实为 **:129**】
 2. **`ActionSchemaLike` 并入 `ActionSchema`**：删除 Like 对偶类型，`ActionSchema` 成为 action 形状的唯一类型。**两类型同为 `action: string` 必填，并入保持必填**（R1 勘误：原"取可选"方案基于错误前提，作废）。字段集差异取向=ActionSchema 的超集（仅多 preventDefault/stopPropagation/messages/confirmText 4 项可选附加字段，对 Like 消费位点是纯放宽；target 6 字段两接口均已存在，R2 勘误）；`ActionShapeLikeFields` 本体是否保留为窄化基接口由 plan 裁定（保留则链字段自指类型同步改 `ActionSchema`），上列 6 处消费位点全部随迁。
 3. flux-core 属保护区域（plan-first）；本项 plan 执行前落字授权链。
 

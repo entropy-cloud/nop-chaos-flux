@@ -49,9 +49,9 @@ export interface GraphSchema extends BaseSchema {
   maxZoom?: number;
   node?: SchemaInput;
   empty?: SchemaInput;
-  onNodeClick?: ActionSchema;
-  onNodeDoubleClick?: ActionSchema;
-  onSelectionChange?: ActionSchema;
+  onNodeClick?: ActionSchema | ActionSchema[];
+  onNodeDoubleClick?: ActionSchema | ActionSchema[];
+  onSelectionChange?: ActionSchema | ActionSchema[];
 }
 
 export const DEFAULT_LEVEL_MAP: Record<string, string> = {

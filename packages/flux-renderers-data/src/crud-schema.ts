@@ -291,14 +291,14 @@ export interface CrudSchema extends BaseSchema {
   quickSaveItemAction?: ActionSchema;
   /** Authoring-only migration metadata (AMIS import hints); not consumed at runtime. */
   migrationHints?: CrudMigrationHints;
-  onQuerySubmit?: ActionSchema;
-  onQueryReset?: ActionSchema;
-  onRowClick?: ActionSchema;
-  onSelectionChange?: ActionSchema;
-  onRefresh?: ActionSchema;
+  onQuerySubmit?: ActionSchema | ActionSchema[];
+  onQueryReset?: ActionSchema | ActionSchema[];
+  onRowClick?: ActionSchema | ActionSchema[];
+  onSelectionChange?: ActionSchema | ActionSchema[];
+  onRefresh?: ActionSchema | ActionSchema[];
   loadAction?: ReactiveActionSchema;
   loadAllData?: boolean;
-  onError?: ActionSchema;
+  onError?: ActionSchema | ActionSchema[];
   dataStatePath?: string;
   /** Scroll the table container to the top when the page changes. amis: autoJumpToTopOnPagerChange. */
   autoJumpToTopOnPagerChange?: boolean;

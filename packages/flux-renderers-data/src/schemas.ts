@@ -147,7 +147,7 @@ export interface TableSchema extends BaseSchema {
   /** Controlled filter input (filterOwnership: 'controlled'): column → { filters?, keyword? }. */
   filters?: Record<string, { filters?: string[]; keyword?: string }>;
   columns?: TableColumnSchema[];
-  onRowClick?: BaseSchema;
+  onRowClick?: ActionSchema | ActionSchema[];
   header?: SchemaInput | string;
   footer?: SchemaInput | string;
   empty?: BaseSchema | BaseSchema[] | string;
@@ -242,11 +242,11 @@ export interface TableSchema extends BaseSchema {
   quickSaveItemAction?: ActionSchema;
   /** Client-side grouping/aggregate declaration (D1 G-D). Inert without a valid `field`. */
   group?: TableGroupConfig;
-  onSortChange?: BaseSchema;
-  onFilterChange?: BaseSchema;
-  onPageChange?: BaseSchema;
-  onSelectionChange?: BaseSchema;
-  onRefresh?: BaseSchema;
+  onSortChange?: ActionSchema | ActionSchema[];
+  onFilterChange?: ActionSchema | ActionSchema[];
+  onPageChange?: ActionSchema | ActionSchema[];
+  onSelectionChange?: ActionSchema | ActionSchema[];
+  onRefresh?: ActionSchema | ActionSchema[];
 }
 
 export type TableSchemaProps = Omit<TableSchema, 'columns'> & {
@@ -336,12 +336,12 @@ export interface ListSchema extends BaseSchema {
   paginationStatePath?: string;
   /** Optional separate scope path for pageSize (scope ownership). */
   pageSizeStatePath?: string;
-  onItemClick?: BaseSchema;
-  onSelectionChange?: BaseSchema;
+  onItemClick?: ActionSchema | ActionSchema[];
+  onSelectionChange?: ActionSchema | ActionSchema[];
   /** Dispatched when the list's resolved current page changes. Payload: { currentPage, pageSize, totalPages, total }. */
-  onPageChange?: BaseSchema;
+  onPageChange?: ActionSchema | ActionSchema[];
   /** Dispatched when the infinite sentinel intersects (bottom reached). Payload: { currentPage, pageSize, total }. List never self-requests. */
-  onLoadMore?: BaseSchema;
+  onLoadMore?: ActionSchema | ActionSchema[];
 }
 
 // ───────────────────────────── W2a 数据组合组 ─────────────────────────────
@@ -400,8 +400,8 @@ export interface PaginationSchema extends BaseSchema {
   mode?: PaginationMode;
   /** 发布只读 summary 的 scope 路径 */
   statusPath?: string;
-  onChange?: BaseSchema;
-  onPageSizeChange?: BaseSchema;
+  onChange?: ActionSchema | ActionSchema[];
+  onPageSizeChange?: ActionSchema | ActionSchema[];
 }
 
 export interface StatisticsSchema extends BaseSchema {

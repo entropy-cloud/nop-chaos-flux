@@ -193,17 +193,17 @@ export interface GanttSchema extends BaseSchema {
   calendar?: string;
   showWeekends?: boolean;
   showToday?: boolean;
-  onTaskClick?: ActionSchema;
-  onTaskDoubleClick?: ActionSchema;
-  onTaskDragEnd?: ActionSchema;
+  onTaskClick?: ActionSchema | ActionSchema[];
+  onTaskDoubleClick?: ActionSchema | ActionSchema[];
+  onTaskDragEnd?: ActionSchema | ActionSchema[];
   /** 编辑型变更（编辑器保存 / 行内单元格提交 / 键盘 Delete）。payload：`{ _taskId, changes? }`（更新）或 `{ _taskId, deleted: true }`（删除）。 */
-  onTaskEdit?: ActionSchema;
-  onLinkClick?: ActionSchema;
-  onLinkDragEnd?: ActionSchema;
-  onEmptyCellClick?: ActionSchema;
-  onZoomChange?: ActionSchema;
+  onTaskEdit?: ActionSchema | ActionSchema[];
+  onLinkClick?: ActionSchema | ActionSchema[];
+  onLinkDragEnd?: ActionSchema | ActionSchema[];
+  onEmptyCellClick?: ActionSchema | ActionSchema[];
+  onZoomChange?: ActionSchema | ActionSchema[];
   /** Fires on scroll — fire-and-forget semantic. The action is dispatched on every scroll event; consumers should debounce or throttle in the action handler if needed. */
-  onScroll?: ActionSchema;
+  onScroll?: ActionSchema | ActionSchema[];
   zoomIn?: ActionSchema;
   zoomOut?: ActionSchema;
   scrollToToday?: ActionSchema;
@@ -215,8 +215,8 @@ export interface GanttSchema extends BaseSchema {
   taskBarClassName?: string;
   editorClassName?: string;
   emptyClassName?: string;
-  onMount?: ActionSchema;
-  onUnmount?: ActionSchema;
+  onMount?: ActionSchema | ActionSchema[];
+  onUnmount?: ActionSchema | ActionSchema[];
   empty?: SchemaInput;
   /** Boolean/expression (loading Skeleton) OR schema input (custom loading region). */
   loading?: SchemaInput | SchemaValue;

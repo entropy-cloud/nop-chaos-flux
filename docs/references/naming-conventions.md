@@ -110,7 +110,7 @@
 - **schema 侧**：declarative action 字段保留 `on*` 命名（`onClick`/`onChange`/`onSubmit`/`onFocus`/`onBlur`/...），进入 `events.*` 通道。
 - **renderer 句柄侧**：renderer 从 `props.events.onXxx` 读取（见 `integrating-third-party-components.md` "Native DOM-style events"）。
 - **不发明 `xxxEvent`/`onXxxHandler` 平行命名**：`onClick` 即可，不再造 `clickEvent`。
-- **声明类型单一形态（RM-10）**：schema 侧事件字段类型一律 `ActionSchema | ActionSchema[]`（单值可赋给联合；不写裸 `ActionSchema` 单值、更不得误写 `BaseSchema`）。事实源：编译器 `rawEventPlans`（`flux-compiler/src/schema-compiler/node-compiler.ts:127`）。action 形状类型唯一（`ActionSchema`，无 `ActionSchemaLike` 对偶）。见词汇报告 §债一。
+- **声明类型单一形态（RM-10）**：schema 侧事件字段类型一律 `ActionSchema | ActionSchema[]`（单值可赋给联合；不写裸 `ActionSchema` 单值、更不得误写 `BaseSchema`）。事实源：编译器 `rawEventPlans`（`flux-compiler/src/schema-compiler/node-compiler.ts:129`；初稿 :127 系行号快照漂移，RM-10/plan 612 R1 勘正）。action 形状类型唯一（`ActionSchema`，无 `ActionSchemaLike` 对偶）。见词汇报告 §债一。
 - **可阻止事件**：按 Flux 事件系统设计 preventDefault 语义（X2 已落地）。action 节点声明 `preventDefault?: boolean | string` / `stopPropagation?: boolean | string`，与 DOM API 同名（不发明新词），与既有 `when` 字段同形（boolean | 表达式 string）。runtime 在 dispatch 前 sync 求值并调用 native `event.preventDefault()`/`stopPropagation()`。不采纳 amis `rendererEvent` 兼容层（见 `docs/components/existing-components-improvement-analysis.md` §2.8 + `docs/architecture/renderer-runtime.md` "Schema-Driven Prevention"）。
 
 ### 4.5 region / fragment

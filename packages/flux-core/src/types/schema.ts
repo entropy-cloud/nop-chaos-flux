@@ -1,5 +1,6 @@
 import type {
   ActionSchema,
+  ActionShapeFields,
   CompiledActionProgram,
 } from './actions.js';
 import type {
@@ -10,7 +11,6 @@ import type {
 } from './compilation.js';
 import type { SchemaCompileDiagnosticsOptions } from './schema-diagnostics-types.js';
 import type {
-  OperationControlConfig,
   SchemaObject,
   SchemaPath,
   SchemaValue,
@@ -74,31 +74,6 @@ export type SchemaFieldKind =
   | 'ignored';
 export type FrameWrapMode = boolean | 'label' | 'group' | 'none';
 
-export interface ActionShapeLikeFields extends SchemaObject {
-  action?: string;
-  _targetCid?: number;
-  _targetTemplateId?: string;
-  targetId?: string;
-  componentId?: string;
-  dialogId?: string;
-  surfaceId?: string;
-  args?: Record<string, SchemaValue>;
-  control?: OperationControlConfig;
-  timeout?: number;
-  retry?: OperationControlConfig['retry'];
-  debounce?: number;
-  when?: boolean | string;
-  parallel?: ActionSchemaLike[];
-  continueOnError?: boolean;
-  then?: ActionSchemaLike | ActionSchemaLike[];
-  onError?: ActionSchemaLike | ActionSchemaLike[];
-  onSettled?: ActionSchemaLike | ActionSchemaLike[];
-}
-
-export interface ActionSchemaLike extends ActionShapeLikeFields {
-  action: string;
-}
-
 export interface BaseSchema extends SchemaObject {
   type: string;
   id?: string;
@@ -116,8 +91,8 @@ export interface BaseSchema extends SchemaObject {
   frameWrap?: FrameWrapMode;
   validateOn?: ValidationTrigger | ValidationTrigger[];
   showErrorOn?: ValidationVisibilityTrigger | ValidationVisibilityTrigger[];
-  onMount?: ActionSchemaLike | ActionSchemaLike[];
-  onUnmount?: ActionSchemaLike | ActionSchemaLike[];
+  onMount?: ActionSchema | ActionSchema[];
+  onUnmount?: ActionSchema | ActionSchema[];
   'xui:imports'?: XuiImportSpec[];
 }
 
@@ -309,7 +284,7 @@ export interface BaseDataSourceSchema extends BaseSchema {
   sendOn?: string;
 }
 
-export interface SourceActionSchema extends ActionShapeLikeFields {
+export interface SourceActionSchema extends ActionShapeFields {
   action?: string;
   formula?: SchemaValue;
 }
@@ -318,7 +293,7 @@ export interface SourceSchema extends SourceActionSchema {
   type: 'source';
 }
 
-export interface FormulaDataSourceSchema extends BaseDataSourceSchema, ActionShapeLikeFields {
+export interface FormulaDataSourceSchema extends BaseDataSourceSchema, ActionShapeFields {
   formula: SchemaValue;
   action?: never;
   api?: never;
@@ -359,7 +334,7 @@ export interface ReactionSchema extends BaseSchema {
   immediate?: boolean;
   debounce?: number;
   once?: boolean;
-  actions: ActionSchemaLike;
+  actions: ActionSchema;
 }
 
 /**
@@ -389,7 +364,7 @@ export interface ReactiveActionSchema extends ActionSchema {
 
 export interface DynamicRendererSchema extends BaseSchema {
   type: 'dynamic-renderer';
-  loadAction: ActionSchemaLike;
+  loadAction: ActionSchema;
   body?: SchemaInput;
   /**
    * Whether to automatically trigger `loadAction` on mount. Defaults to `true`

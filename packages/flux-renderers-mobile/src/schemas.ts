@@ -27,7 +27,7 @@ export interface PullRefreshSchema extends BaseSchema {
   animationDuration?: number;
   /** 禁用下拉刷新 */
   disabled?: boolean;
-  onRefresh?: ActionSchema;
+  onRefresh?: ActionSchema | ActionSchema[];
 }
 
 export interface InfiniteScrollSchema extends BaseSchema {
@@ -52,7 +52,7 @@ export interface InfiniteScrollSchema extends BaseSchema {
   loading?: boolean;
   /** host 错误状态（运行时受控值）。`true` 或错误字符串将暂停自动加载并显示重试 */
   error?: boolean | string;
-  onLoadMore?: ActionSchema;
+  onLoadMore?: ActionSchema | ActionSchema[];
 }
 
 export interface SwipeCellSchema extends BaseSchema {
@@ -71,9 +71,9 @@ export interface SwipeCellSchema extends BaseSchema {
   disabled?: boolean;
   /** 点击外部区域自动关闭，默认 true */
   closeOnOutside?: boolean;
-  onAction?: ActionSchema;
-  onOpen?: ActionSchema;
-  onClose?: ActionSchema;
+  onAction?: ActionSchema | ActionSchema[];
+  onOpen?: ActionSchema | ActionSchema[];
+  onClose?: ActionSchema | ActionSchema[];
 }
 
 export interface CountdownSchema extends BaseSchema {
@@ -87,7 +87,7 @@ export interface CountdownSchema extends BaseSchema {
   autoStart?: boolean;
   prefix?: string;
   suffix?: string;
-  onFinish?: ActionSchema;
+  onFinish?: ActionSchema | ActionSchema[];
 }
 
 export type NoticeBarVariant = 'info' | 'warning' | 'success' | 'error';
@@ -102,6 +102,6 @@ export interface NoticeBarSchema extends BaseSchema {
   closable?: boolean;
   icon?: string;
   variant?: NoticeBarVariant;
-  onClick?: ActionSchema;
-  onClose?: ActionSchema;
+  onClick?: ActionSchema | ActionSchema[];
+  onClose?: ActionSchema | ActionSchema[];
 }

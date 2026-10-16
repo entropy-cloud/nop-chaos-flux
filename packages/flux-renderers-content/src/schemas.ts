@@ -37,8 +37,8 @@ export interface DiffViewSchema extends BaseSchema {
   defaultCollapsedLines?: number;
   /** 是否自动换行 */
   wrapLines?: boolean;
-  onLineClick?: ActionSchema;
-  onHunkExpand?: ActionSchema;
+  onLineClick?: ActionSchema | ActionSchema[];
+  onHunkExpand?: ActionSchema | ActionSchema[];
 }
 
 export interface SeparatorSchema extends BaseSchema {
@@ -124,7 +124,7 @@ export interface CardSchema extends BaseSchema {
   imageClassName?: string;
   /** 视觉变体，默认 'default'（映射 ui Card size） */
   variant?: CardVariant;
-  onClick?: ActionSchema;
+  onClick?: ActionSchema | ActionSchema[];
 }
 
 // ───────────────────────────── W1a 内容展示组 ─────────────────────────────
@@ -144,7 +144,7 @@ export interface LinkSchema extends BaseSchema {
   download?: boolean | string;
   /** 禁用态（与 meta.disabled 语义一致） */
   disabled?: boolean | string;
-  onClick?: ActionSchema;
+  onClick?: ActionSchema | ActionSchema[];
 }
 
 export type ImageFit = 'contain' | 'cover' | 'fill' | 'none' | 'scale-down';
@@ -171,9 +171,9 @@ export interface ImageSchema extends BaseSchema {
    * is loaded by dispatching this action; the response is converted to a data URI
    * and used as the img src, enabling auth-protected access without exposing tokens. */
   fetcher?: ActionSchema;
-  onClick?: ActionSchema;
+  onClick?: ActionSchema | ActionSchema[];
   /** 加载失败回调（触发后显示回退占位） */
-  onLoadError?: ActionSchema;
+  onLoadError?: ActionSchema | ActionSchema[];
 }
 
 export interface JsonViewSchema extends BaseSchema {
@@ -242,8 +242,8 @@ export interface CardsSchema extends BaseSchema {
   keyField?: string;
   /** 选择模式：none 禁用、single 互斥、multiple 累积（选择为 local controlled state，renderer 自维护） */
   selectionMode?: CardsSelectionMode;
-  onItemClick?: ActionSchema;
-  onSelectionChange?: ActionSchema;
+  onItemClick?: ActionSchema | ActionSchema[];
+  onSelectionChange?: ActionSchema | ActionSchema[];
 }
 
 export type AlertLevel = 'info' | 'success' | 'warning' | 'error';
@@ -262,7 +262,7 @@ export interface AlertSchema extends BaseSchema {
   body?: SchemaInput;
   /** 可选操作区 region */
   actions?: SchemaInput;
-  onClose?: ActionSchema;
+  onClose?: ActionSchema | ActionSchema[];
 }
 
 // ───────────────────────────── W3c 值映射组 ─────────────────────────────
@@ -326,7 +326,7 @@ export interface AudioSchema extends BaseSchema {
   /** 文本替代轨（章节/描述；音频本体无字幕轨，但章节/元数据轨合法） */
   tracks?: MediaTrackSchema[];
   // `title` 继承 BaseSchema（string）；renderer definition 用 value-or-region 规则。
-  onLoadError?: ActionSchema;
+  onLoadError?: ActionSchema | ActionSchema[];
 }
 
 export interface VideoSchema extends BaseSchema {
@@ -350,7 +350,7 @@ export interface VideoSchema extends BaseSchema {
   /** 字幕/音轨（WCAG 1.2.2 captions 能力；渲染为 <track> 子元素） */
   tracks?: MediaTrackSchema[];
   // `title` 继承 BaseSchema（string）；renderer definition 用 value-or-region 规则。
-  onLoadError?: ActionSchema;
+  onLoadError?: ActionSchema | ActionSchema[];
 }
 
 export interface MediaTrackSchema extends SchemaObject {
@@ -389,7 +389,7 @@ export interface CarouselSchema extends BaseSchema {
   controls?: boolean;
   /** 显示底部指示点，默认 true */
   indicators?: boolean;
-  onChange?: ActionSchema;
+  onChange?: ActionSchema | ActionSchema[];
 }
 
 export type QrCodeLevel = 'L' | 'M' | 'Q' | 'H';
@@ -407,6 +407,6 @@ export interface QrCodeSchema extends BaseSchema {
   /** 背景色（浅色模块），默认 #fff */
   background?: string;
   /** 加载/生成失败回调（与 image/audio/video 家族一致，触发后显示失败占位） */
-  onLoadError?: ActionSchema;
+  onLoadError?: ActionSchema | ActionSchema[];
   // `label` 继承 BaseSchema（string）；renderer definition 用 value-or-region 规则。
 }

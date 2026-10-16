@@ -1,6 +1,6 @@
 # 612 RM-10 事件字段类型单源化（三态归一 `ActionSchema | ActionSchema[]` + ActionSchemaLike 对偶删除）
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-10-16
 > Source: `docs/backlog/renderer-metamodel-roadmap.md` RM-10；`docs/analysis/2026-10-15-renderer-vocabulary-consistency-analysis.md` §债一（owner 事实源，含 literal closure 命令）
 > Related: roadmap Cross-Cutting 7（单标准零兼容分叉，用户显式指令 2026-10-15）；RM-9（残余扫描已入库）
@@ -21,6 +21,9 @@
 - **对偶类型（live）**：`ActionSchemaLike extends ActionShapeLikeFields`（`flux-core/src/types/schema.ts:98-101`）与 `ActionSchema extends ActionShapeFields`（`flux-core/src/types/actions.ts:280-282`）平行；两类型 `action: string` **均必填**；字段集差异 = ActionShapeFields 多且仅多 4 项可选附加（`preventDefault`/`stopPropagation`/`messages`/`confirmText`），6 个 target 字段两接口均已存在。`ActionShapeLikeFields` live 消费位 6 处（`schema.ts:77` 本体 + `:312 SourceActionSchema` + `:321 FormulaDataSourceSchema` + `flux-renderers-form/src/schemas.ts:35 TreeSourceConfig` + 经 `ActionSchemaLike` 的 `BaseSchema.onMount/onUnmount`（`:119-120`）、`ReactionSchema.actions`（`:362`，R1 m1 勘正）、`loadAction`（`:392`，R1 m1 勘正））。
 - **迁移后基数复核口径（报告 literal closure；R2 勘误：期望值以 Phase 0 分类导出集为准，报告减法口径作废）**：标准形态 81 → **81 + Phase 0 分类导出事件位点数 + 12 误型**（报告原 267=81+174+12 系减法口径，174 已证含非事件位点）；收口命令 `rg -l '\?: ActionSchema;' packages --glob '*.ts' --glob '*.tsx' --glob '!*.test.*' | sort` 期望 == **5 个排除文件**（code-editor types.ts + data 包 4 文件，R1 M2 勘正后）。
 - 基线验证：HEAD 9a89aa26d 五门禁全绿（RM-9 收口提交）；R2 复核（HEAD 5d638a022）：并行 hunks（roadmap RM-10~12 行、docs/index.md、naming-conventions 等）已随 5d638a022 入库，两 HEAD 间 packages 漂移仅 structure-source.test.tsx（测试文件，不在 rg 口径内），81/180/29 文件/12 误型四计数在现 HEAD 复核精确成立。
+- **Phase 0 分类表（2026-10-16 执行，脚本 `_tmp/rm10-classify.mjs` + 36 处 needs-eyes 逐处读 definitions/消费侧裁定；在范围 125 / 排除 55）**：
+  - **在范围（改型 125 处）**：gen 判定 EVENT 118 处（生成物该键已为联合型=元模型面已认事件，手写声明为滞后窄化——ai 26/upload-schemas 12/kanban.types 7[+KanbanEvents 7 defs]/calendar 13[+onMount 1 defs]/gantt 10[+onMount 1 defs]/mobile 8/layout 5/crud 6/content 13/barcode 2[+onMount 1 defs]/dashboard-editor 3[+onError 1 defs]/word-editor 2/graph 3/map onClick 1 defs/industrial 0）+ AMBIG→EVENT 7 处（kanban onColumnAdd[41]+onUnmount[88]、calendar onUnmount[139]、gantt onUnmount[219]、barcode onUnmount[38]——均 defs `kind:'event'` 实证[scheduling-renderer-definitions.ts:79-80/245-253/384-385]；dashboard onError[52] defs :115；map onClick[80] map-renderer-definitions.ts:223）。KanbanEvents 接口 7 处纳入：镜像 KanbanSchema 已注册事件键、导出但无嵌套消费（live grep 仅声明/导出 3 位点）。
+  - **排除（55 处，六组）**：①报告原排除 7 处/5 文件（code-editor executeAction + data 包 save/quickSave 6：use-row-quick-edit-draft:63/quick-edit-cell:65,66/editable-cell:168,169/controller:120——内部组件 prop 单值正确）；②reaction 8 处（calendar print/exportPNG/importICal/exportToICal[:140-143]+gantt zoomIn/zoomOut/scrollToToday/scrollToTask[:207-210]，defs kind:'reaction' 实证 :85-88/387-390，编译器 rawReactionPlans 单值消费 node-compiler.ts:130——放宽即声明通道不接受的形状）；③**嵌套 events 对象成员 16 处排除（Phase 0 新裁定）**：3d ThreeCanvasEvents 4[:14-20]+industrial ScadaCanvasEvents 5[:31-37]+industrial editor ScadaEditorCanvasEvents 7[:75-87]——`events?` 整体注册为 prop（in-source 注释 D-1/D3 裁定：classifyField 仅顶层键、无点号路径，probe 实测 eventPlans 为空），运行时经 `helpers.dispatch(action: ActionSchema, ...)` 单值桥接派发（renderer-helpers.ts:274、runtime-action-helpers.ts:46），scada 个别键 kind:'event' 注册为工具链契约元数据非通道形状声明——放宽将使桥接调用点 typecheck 红且声明派发桥不接受的形状；④validate 嵌套 action 5 处（form/schemas.ts:69/332/460/474/488 `validate:{action?:...}` 配置对象）；⑤prop 通道 action 配置 11 处（form searchSource:165、data schemas childrenSource:191+quickSave×2:241-242、crud-schema quickSave×2:290-291、content fetcher:173、map geojsonSource:64、form schemas-org sourceChildren/Search/Resolve:36-40——gen 判定 unknown/SchemaValue=prop 通道）；⑥hook/内部类型位点 8 处（form use-org-data:16-18、use-org-source:95/237/352 请求上下文、map use-map-geojson:25、data use-table-lazy-children:32——非 schema 声明面）。**收口期望值（Phase 0 导出）**：改型后 `?: ActionSchema;` 存留文件集 == 20 文件：`flux-code-editor/src/types.ts`；data 包 7 文件（`schemas.ts`、`crud-schema.ts`、`table-renderer/{table-editable-cell,table-quick-edit-cell,use-row-quick-edit-draft,table-quick-edit-controller,use-table-lazy-children}`）；scheduling 2 文件（`calendar/calendar.types.ts`、`gantt/gantt.types.ts`，reaction 存留）；form 包 4 文件（`schemas.ts`、`schemas-org.ts`、`renderers/org/{use-org-data,use-org-source}.ts`）；content `schemas.ts`；map 包 2 文件（`schemas.ts`、`use-map-geojson.ts`）；3d `schemas.ts`；industrial 2 文件（`schemas.ts`、`editor/schemas.ts`）；联合型基数 == 81 + 125 + 12 + 2（Phase 1 `BaseSchema.onMount/onUnmount` 随 Like 并入由 `Like | Like[]` 改联合型）= **220**；`\?: BaseSchema;` 事件误型归零。
 
 ## Goals
 
@@ -43,7 +46,7 @@
 
 ### Out Of Scope
 
-- RM-11/12；排除清单 6 处；运行时/编译器逻辑改动；e2e。
+- RM-11/12；排除清单（报告原排除 7 处/5 文件 + Phase 0 分类新增排除 48 处，合计 55 处/20 文件六组——见 Baseline 分类表）；运行时/编译器逻辑改动；e2e。
 
 ## Failure Paths
 
@@ -59,62 +62,62 @@
 
 ### Phase 0 - kind 分类枚举（R1 M1 裁定：改型面以分类为准，非减法口径）
 
-Status: planned
+Status: completed
 Targets: 全仓 `?: ActionSchema;` 位点的注册 kind 判定
 
 - Item Types: `Decision`、`Proof`
 
-- [ ] 对 `rg '\?: ActionSchema;'` 的 180 个位点逐个 join 注册 kind（判别式：生成物 `flux-guide/flux-types/schema.d.ts` 中该键为 `ActionSchema | ActionSchema[]` ⇒ event、为 `unknown`/`SchemaValue` ⇒ prop/reaction；或直接读各 `*-definitions.ts` 的 kind 声明），产出分类表（event N 处 / 非 event M 处，逐项 `文件:行`）落进 Current Baseline。
-- [ ] 按分类结果裁定「在范围」集合与收口期望值（文件集/基数）；对 `kind:'reaction'` 字段单独裁定（编译器 `rawReactionPlans` 按**单值**读 `dependsOn`——放宽为数组是声明了通道不接受的形状，契约诚实性要求不纳入或显式说明）。
-- [ ] Proof：分类表逐项可复现（分类命令 + 判定记录）；R1 已 live 指出 ≥32 处在范围位点非 `kind:'event'`（8 reaction / 16 prop / 5 validate 嵌套），分类须逐条落定。
+- [x] 对 `rg '\?: ActionSchema;'` 的 180 个位点逐个 join 注册 kind（判别式：生成物 `flux-guide/flux-types/schema.d.ts` 中该键为 `ActionSchema | ActionSchema[]` ⇒ event、为 `unknown`/`SchemaValue` ⇒ prop/reaction；或直接读各 `*-definitions.ts` 的 kind 声明），产出分类表（event N 处 / 非 event M 处，逐项 `文件:行`）落进 Current Baseline。
+- [x] 按分类结果裁定「在范围」集合与收口期望值（文件集/基数）；对 `kind:'reaction'` 字段单独裁定（编译器 `rawReactionPlans` 按**单值**读 `dependsOn`——放宽为数组是声明了通道不接受的形状，契约诚实性要求不纳入或显式说明）。【裁定：reaction 8 处排除；新增裁定：嵌套 events 对象成员 16 处排除（`helpers.dispatch(action: ActionSchema, ...)` 单值签名，see renderer-helpers.ts:274/runtime-action-helpers.ts:46）；hook/内部类型位点 8 处排除】
+- [x] Proof：分类表逐项可复现（分类命令 + 判定记录）；R1 已 live 指出 ≥32 处在范围位点非 `kind:'event'`（8 reaction / 16 prop / 5 validate 嵌套），分类须逐条落定。【分类脚本 `_tmp/rm10-classify.mjs`：129 gen/defs 自动判定 + 36 处 needs-eyes 逐处读 definitions/消费侧裁定；判定记录见 Current Baseline 分类表】
 
 Exit Criteria:
 
-- [ ] 分类表落盘且「在范围」集合由其导出（非减法）；reaction 族裁定落字（纳入或排除，附依据）。
+- [x] 分类表落盘且「在范围」集合由其导出（非减法）；reaction 族裁定落字（纳入或排除，附依据）。【在范围 125 / 排除 55（六组），见 Baseline 分类表】
 
 ### Phase 1 - flux-core 类型面（对偶并入 + 字段改型）
 
-Status: planned
+Status: completed
 Targets: `packages/flux-core/src/types/{schema,actions}.ts`
 
 - Item Types: `Fix`、`Decision`、`Proof`
 
-- [ ] `ActionShapeLikeFields` 去留裁定并落字（默认删除、并入 `ActionShapeFields`；逐字段对照确认 4 项附加为纯放宽）。
-- [ ] 6 处 Like 消费位点改 `ActionSchema`；链字段自指（`parallel/then/onError/onSettled`）同步；`ActionSchemaLike` 类型删除。
-- [ ] `BaseSchema.onMount/onUnmount`、`ReactionSchema.actions`、`loadAction`、`SourceActionSchema`、`FormulaDataSourceSchema`、`TreeSourceConfig` 随迁。
-- [ ] Proof：类型钉（单值/数组/链式形态赋给事件字段类型；`ActionSchemaLike` 已删的负向 import 探针）。
+- [x] `ActionShapeLikeFields` 去留裁定并落字（默认删除、并入 `ActionShapeFields`；逐字段对照确认 4 项附加为纯放宽）。【裁定=删除：live 无独立语义需求（仅 SourceActionSchema/FormulaDataSourceSchema/TreeSourceConfig 三基类消费，4 项附加对三者均纯放宽）】
+- [x] 6 处 Like 消费位点改 `ActionSchema`；链字段自指（`parallel/then/onError/onSettled`）同步；`ActionSchemaLike` 类型删除。【schema.ts 两接口删除；actions.ts:168-172 链字段自指本就为 ActionSchema、无 Like 引用；执行中附带修复：schema.ts `OperationControlConfig` 死导入删除（仅被已删 Like 字段使用，lint 首轮 1 红）】
+- [x] `BaseSchema.onMount/onUnmount`、`ReactionSchema.actions`、`loadAction`、`SourceActionSchema`、`FormulaDataSourceSchema`、`TreeSourceConfig` 随迁。【onMount/onUnmount 由 `Like | Like[]` 改 `ActionSchema | ActionSchema[]`（联合型基数 +2 来源）；其余单值换型】
+- [x] Proof：类型钉（单值/数组/链式形态赋给事件字段类型；`ActionSchemaLike` 已删的负向 import 探针）。【`packages/flux-core/src/types/event-field-type.test.ts` 4 用例：联合面 toEqualTypeOf/链字段自指/负向导出探针[toEqualTypeOf<false>]/Source+Reaction 单值换型——focused 4/4 绿（closure audit agent_9a598ead 复跑亲证）】
 
 Exit Criteria:
 
-- [ ] flux-core focused typecheck 绿；6 处消费位点随迁且无 Like 符号残留（grep）。
+- [x] flux-core focused typecheck 绿；6 处消费位点随迁且无 Like 符号残留（grep）。【typecheck 绿；`rg "ActionSchemaLike|ActionShapeLikeFields" packages --glob '!node_modules'` 仅剩判别测试负向探针字符串与 docs 勘误/史录引用（audit 复核亲证）】
 
 ### Phase 2 - 全仓事件字段改型（Phase 0 分类导出事件位点 + 12 误型）
 
-Status: planned
-Targets: 29 个单值文件（迁移前集合，含 5 个排除文件 → 在范围文件 24）+ data/schemas.ts 12 处误型（同文件不同位点，不新增文件）
+Status: completed
+Targets: 14 个在范围事件字段文件（Phase 0 分类导出）+ data/schemas.ts 12 处误型（同文件不同位点）
 
 - Item Types: `Fix`、`Proof`
 
-- [ ] 逐处复核 `kind:'event'` 归属后改型（报告口径；新发现非事件位点追加排除清单登记，不静默留单值）。
-- [ ] `pnpm -r typecheck` 枚举兜底归零。
-- [ ] Proof：literal closure 命令四条复跑（文件集 == 5 排除文件/误型归零/基数 == 81 + Phase 0 分类导出事件位点数 + 12）。
+- [x] 逐处复核 `kind:'event'` 归属后改型（Phase 0 分类表逐位点改型；新发现非事件位点已在 Phase 0 追加排除登记[嵌套 events 对象 16+hook 内部 8]，不静默留单值）。【125 位点/14 文件改型脚本 + data/schemas.ts 12 误型转换】
+- [x] `pnpm -r typecheck` 枚举兜底归零。【直跑 42/42 exit 0——首轮 1 红为判别钉测试自身 toEqualTypeOf 漏 undefined，NonNullable 修正后归零】
+- [x] Proof：literal closure 命令四条复跑（单值文件集 == 20 Phase 0 排除文件、误型归零 0、联合型基数 == 81+125+12+2[Phase 1 onMount/onUnmount 随迁] = 220）。
 
 Exit Criteria:
 
-- [ ] 单值文件集 == Phase 0 分类导出的排除集（5 文件）；`BaseSchema` 误型归零；联合型基数 == 81 + Phase 0 分类导出事件位点数 + 12（误型改型位点计入基数）；全仓 typecheck exit 0（属 Minimum Rule 18 例外：本 Phase 改公共契约且后续 Phase 依赖，故列入 Phase Exit）。
+- [x] 单值文件集 == Phase 0 分类导出的排除集（20 文件，live 复核逐一命中）；`BaseSchema` 误型归零；联合型基数 == 81 + 125 + 12 + 2 = 220；全仓 typecheck exit 0（属 Minimum Rule 18 例外：本 Phase 改公共契约且后续 Phase 依赖，故列入 Phase Exit）。
 
 ### Phase 3 - 生成物与 docs 同步 + 收口验证
 
-Status: planned
+Status: completed
 
 - Item Types: `Fix`
 
-- [ ] flux-guide `schema.d.ts` 重生成（如事件字段类型外观变化）+ naming-conventions 相关节核对。
-- [ ] 全量五门禁（Closure Gates）。
+- [x] flux-guide `schema.d.ts` 重生成（如事件字段类型外观变化）+ naming-conventions 相关节核对。【`pnpm build` 后经 css-stub loader 重生成：`schema.d.ts`/`index.ts` 与已提交版逐字节零 diff——生成面本就以联合型产出事件字段、Like 不见于生成物；naming-conventions §4.4 行号锚 :127→:129 就地勘误（附 plan 612 出处）；flux-guide/design-patterns/dynamic-renderer.md `loadAction` 类型表 Like→ActionSchema；roadmap RM-10 Details 与词汇报告 §债一 裁决 1 就地勘误（125/55/20 文件/220/:129）随收口回写】
+- [x] 全量五门禁（Closure Gates）。【typecheck 直跑 42/42 exit 0；build exit 0（5 cached/42 total）；lint exit 0[首轮 1 红=Like 删除遗留 OperationControlConfig 死导入，已修]；test exit 0（16,542 passed/1,801 文件/42 任务/0 FAIL）；check exit 0（含 RM-9 残余扫描 zero unadjudicated hits）】
 
 Exit Criteria:
 
-- [ ] 生成物与 docs 与 live 一致；五门禁全绿。
+- [x] 生成物与 docs 与 live 一致；五门禁全绿。
 
 ## Draft Review Record
 
@@ -127,18 +130,18 @@ Exit Criteria:
 
 ## Closure Gates
 
-- [ ] 事件字段三态归一到联合型（在范围 = Phase 0 分类导出集，减法参考口径 173 + 误型 12）且 literal closure 四条命令复跑在案
-- [ ] `ActionSchemaLike` 删除、6 处消费位点随迁、无兼容分叉（Cross-Cutting 7）
-- [ ] 全仓 typecheck/build/lint/test 全绿 + check 零新增红（含 RM-9 残余扫描零未裁决命中）
-- [ ] flux-guide 生成物与 docs 同步
-- [ ] roadmap RM-10 状态流转 + daily log 条目
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
-- [ ] `pnpm check`
-- [ ] e2e 意图声明与披露义务落字
+- [x] 事件字段三态归一到联合型（在范围 = Phase 0 分类导出集 125 + 误型 12）且 literal closure 四条命令复跑在案
+- [x] `ActionSchemaLike` 删除、6 处消费位点随迁、无兼容分叉（Cross-Cutting 7）
+- [x] 全仓 typecheck/build/lint/test 全绿 + check 零新增红（含 RM-9 残余扫描零未裁决命中）
+- [x] flux-guide 生成物与 docs 同步
+- [x] roadmap RM-10 状态流转 + daily log 条目
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
+- [x] `pnpm check`
+- [x] e2e 意图声明与披露义务落字【e2e 未重跑——纯类型层改型零运行时行为变化，判别由判别钉 4 用例 + literal closure 三命令 + typecheck 全量枚举承载；已在 plan、本节与提交信息披露】
 
 ## Deferred But Adjudicated
 
@@ -150,13 +153,13 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: （收口时填写）
+Status Note: 事件字段声明类型单源化落地——在范围 125 处单值放宽为 `ActionSchema | ActionSchema[]`（Phase 0 kind 分类枚举导出，非减法口径）、12 处 `BaseSchema` 误型改联合型、`ActionSchemaLike`/`ActionShapeLikeFields` 对偶删除并入 `ActionSchema`/`ActionShapeFields`（6 消费位点随迁、链字段自指恒等）；排除 55 处/20 文件六组逐条登记裁定依据；literal closure 三命令闭合（单值文件集==20 排除文件、误型归零、联合型基数 220）；五门禁全绿；无兼容分叉（Cross-Cutting 7）。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: （独立 fresh 子 agent）
-- Evidence: （task id / 核对摘要）
+- Auditor / Agent: agent_9a598ead-b83b-459a-bcda-64cac1feebbd（独立 fresh 子 agent）
+- Evidence: 首轮 issues 0B/1M/2m → M1[Phase 1 状态漏勾，纯文档态]+m1[Out Of Scope 排除口径]+m2[收口动作清单]全部修复 → 复核确认 approved（audit 报告：closure 三命令复跑 20 文件/0/220 逐一命中；diff 基数闭合 +139 联合=125+12+2；排除位点未触碰实核；排除裁定依据抽验属实；残符号扫描仅剩负向探针与勘误/史录引用；typecheck 独立复跑 exit 0）。
 
 Follow-up:
 
-- （收口时填写或写 no remaining plan-owned work）
+- no remaining plan-owned work（排除清单 55 处如需统一形状属报告登记的显式排除，Non-Blocking Follow-ups 在案）

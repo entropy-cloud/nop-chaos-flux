@@ -56,7 +56,7 @@ export interface WizardSchema extends BaseSchema {
   actionNextLabel?: string;
   /** Label for the previous action button. amis actionPrevLabel. */
   actionPrevLabel?: string;
-  onChange?: ActionSchema;
+  onChange?: ActionSchema | ActionSchema[];
   onStepCommit?: ActionSchema | ActionSchema[];
   onComplete?: ActionSchema | ActionSchema[];
   onStepError?: ActionSchema | ActionSchema[];
@@ -167,7 +167,7 @@ export interface CollapseSchema extends BaseSchema {
   multiple?: boolean;
   /** Whether each panel can re-collapse itself (default true) */
   collapsible?: boolean;
-  onChange?: ActionSchema;
+  onChange?: ActionSchema | ActionSchema[];
 }
 
 // ───────────────────────────── W3b Button Group ─────────────────────────────
@@ -201,7 +201,7 @@ export interface ButtonGroupSchema extends BaseSchema {
   value?: string | number | (string | number)[];
   /** Initial selected value when `value` is not provided (seed only, non-reactive) */
   defaultValue?: string | number | (string | number)[];
-  onChange?: ActionSchema;
+  onChange?: ActionSchema | ActionSchema[];
 }
 
 // ───────────────────────────── W3b Dropdown Button ─────────────────────────────
@@ -287,7 +287,7 @@ export interface StepsSchema extends BaseSchema {
   valueStatePath?: string;
   /** Layout orientation (default horizontal). */
   orientation?: 'horizontal' | 'vertical';
-  onChange?: ActionSchema;
+  onChange?: ActionSchema | ActionSchema[];
 }
 
 // ───────────────────────────── W4b Timeline ─────────────────────────────
@@ -336,7 +336,7 @@ export interface TimelineSchema extends BaseSchema {
   /** Scope path publishing the writable current-event value. v2: scope-mode read/write path. */
   valueStatePath?: string;
   /** Click-seek event (v2; items become clickable only when declared). */
-  onChange?: ActionSchema;
+  onChange?: ActionSchema | ActionSchema[];
 }
 
 // ───────────────────────────── Responsive ─────────────────────────────

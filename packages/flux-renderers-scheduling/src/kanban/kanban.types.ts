@@ -32,13 +32,13 @@ export interface KanbanCardConfig {
 }
 
 export interface KanbanEvents {
-  onCardMove?: ActionSchema;
-  onCardClick?: ActionSchema;
-  onColumnReorder?: ActionSchema;
-  onColumnClick?: ActionSchema;
-  onCardAdd?: ActionSchema;
-  onCardRemove?: ActionSchema;
-  onColumnAdd?: ActionSchema;
+  onCardMove?: ActionSchema | ActionSchema[];
+  onCardClick?: ActionSchema | ActionSchema[];
+  onColumnReorder?: ActionSchema | ActionSchema[];
+  onColumnClick?: ActionSchema | ActionSchema[];
+  onCardAdd?: ActionSchema | ActionSchema[];
+  onCardRemove?: ActionSchema | ActionSchema[];
+  onColumnAdd?: ActionSchema | ActionSchema[];
 }
 
 export interface KanbanSchema extends BaseSchema {
@@ -84,13 +84,13 @@ export interface KanbanSchema extends BaseSchema {
   kanbanOwnership?: string;
   kanbanStatePath?: string;
   statusPath?: string;
-  onMount?: ActionSchema;
-  onUnmount?: ActionSchema;
-  onCardMove?: ActionSchema;
-  onCardClick?: ActionSchema;
-  onColumnReorder?: ActionSchema;
-  onColumnClick?: ActionSchema;
-  onCardAdd?: ActionSchema;
-  onCardRemove?: ActionSchema;
-  onColumnAdd?: ActionSchema;
+  onMount?: ActionSchema | ActionSchema[];
+  onUnmount?: ActionSchema | ActionSchema[];
+  onCardMove?: ActionSchema | ActionSchema[];
+  onCardClick?: ActionSchema | ActionSchema[];
+  onColumnReorder?: ActionSchema | ActionSchema[];
+  onColumnClick?: ActionSchema | ActionSchema[];
+  onCardAdd?: ActionSchema | ActionSchema[];
+  onCardRemove?: ActionSchema | ActionSchema[];
+  onColumnAdd?: ActionSchema | ActionSchema[];
 }

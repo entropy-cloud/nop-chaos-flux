@@ -1,6 +1,6 @@
 import type {
   ActionSchema,
-  ActionShapeLikeFields,
+  ActionShapeFields,
   BaseSchema,
   BoundFieldSchemaBase,
   HiddenFieldPolicy,
@@ -32,7 +32,7 @@ export interface FormCrossFieldRule extends SchemaObject {
  * runtime (X3 §1/§3 — no component-level api shortcut) while preserving the
  * descriptor for on-demand, parameterised invocation.
  */
-export interface TreeSourceConfig extends ActionShapeLikeFields {
+export interface TreeSourceConfig extends ActionShapeFields {
   formula?: SchemaValue;
 }
 

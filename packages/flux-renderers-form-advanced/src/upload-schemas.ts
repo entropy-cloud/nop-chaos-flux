@@ -61,17 +61,17 @@ export interface InputFileSchema extends BoundFieldSchemaBase {
   valueMode?: UploadValueMode;
   buttonText?: string;
   /** Action triggered when a file is rejected (e.g. exceeds maxSize). Receives rejection reason in payload. */
-  onReject?: ActionSchema;
+  onReject?: ActionSchema | ActionSchema[];
   /** Action triggered when the user removes an existing file from the list. */
-  onDelete?: ActionSchema;
+  onDelete?: ActionSchema | ActionSchema[];
   /** Action triggered after a server-side delete succeeds. */
-  onDeleteSuccess?: ActionSchema;
+  onDeleteSuccess?: ActionSchema | ActionSchema[];
   /** Action triggered after a server-side delete fails. */
-  onDeleteFail?: ActionSchema;
+  onDeleteFail?: ActionSchema | ActionSchema[];
   /** Action triggered after a file upload succeeds. */
-  onUploadSuccess?: ActionSchema;
+  onUploadSuccess?: ActionSchema | ActionSchema[];
   /** Action triggered after a file upload fails. */
-  onUploadError?: ActionSchema;
+  onUploadError?: ActionSchema | ActionSchema[];
 }
 
 export interface InputImageSchema extends BoundFieldSchemaBase {
@@ -94,17 +94,17 @@ export interface InputImageSchema extends BoundFieldSchemaBase {
   crop?: SchemaObject;
   buttonText?: string;
   /** Action triggered when a file is rejected (e.g. exceeds maxSize). */
-  onReject?: ActionSchema;
+  onReject?: ActionSchema | ActionSchema[];
   /** Action triggered when the user removes an existing file from the list. */
-  onDelete?: ActionSchema;
+  onDelete?: ActionSchema | ActionSchema[];
   /** Action triggered after a server-side delete succeeds. */
-  onDeleteSuccess?: ActionSchema;
+  onDeleteSuccess?: ActionSchema | ActionSchema[];
   /** Action triggered after a server-side delete fails. */
-  onDeleteFail?: ActionSchema;
+  onDeleteFail?: ActionSchema | ActionSchema[];
   /** Action triggered after a file upload succeeds. */
-  onUploadSuccess?: ActionSchema;
+  onUploadSuccess?: ActionSchema | ActionSchema[];
   /** Action triggered after a file upload fails. */
-  onUploadError?: ActionSchema;
+  onUploadError?: ActionSchema | ActionSchema[];
 }
 
 export const uploadFieldRules: SchemaFieldRule[] = [

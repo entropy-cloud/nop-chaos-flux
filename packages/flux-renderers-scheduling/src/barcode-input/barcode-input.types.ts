@@ -34,10 +34,10 @@ export interface BarcodeInputSchema extends BaseSchema {
   autoSubmit?: boolean;
   scanOnFocus?: boolean;
 
-  onMount?: ActionSchema;
-  onUnmount?: ActionSchema;
-  onScan?: ActionSchema;
-  onScanError?: ActionSchema;
+  onMount?: ActionSchema | ActionSchema[];
+  onUnmount?: ActionSchema | ActionSchema[];
+  onScan?: ActionSchema | ActionSchema[];
+  onScanError?: ActionSchema | ActionSchema[];
 }
 
 export interface BarcodeDetectResult {
