@@ -160,7 +160,7 @@ export function createDebugClient(options: CreateDebugClientOptions): DebugClien
 
   function renewNow(): void {
     if (renewInFlight || state !== 'connected') {
-      return;
+        return;
     }
     renewInFlight = true;
     sendRequest('lease.renew', {})
@@ -175,7 +175,11 @@ export function createDebugClient(options: CreateDebugClientOptions): DebugClien
         .catch((error: Error & { errorCode?: string }) => {
           renewInFlight = false;
           if (error.errorCode === 'nop.err.xlang.debugger.rate-limited') {
+            // M1 修复：退避作用于运行中 interval——重排下个排程点（D2 §3.1）
             renewBackoff = Math.min(renewBackoff * 2, 3);
+            if (state === 'connected') {
+              startRenewHeartbeat(currentRenewIntervalMs);
+            }
           }
         });
   }
@@ -198,7 +202,10 @@ export function createDebugClient(options: CreateDebugClientOptions): DebugClien
 
   function onVisibilityChange(): void {
     if (document.visibilityState === 'visible') {
-      // D2 §3.1：恢复可见立即 renew 一次（隐藏期零 renew，租约自然到期放行）
+      // D2 §3.1：恢复可见立即 renew 一次（隐藏期零 renew，租约自然到期放行）；
+      // m1：重置 interval 相位，避免旧相位紧随二次 renew
+      renewNow();
+      startRenewHeartbeat(currentRenewIntervalMs);
       renewNow();
     }
   }
@@ -316,9 +323,9 @@ export function createDebugClient(options: CreateDebugClientOptions): DebugClien
   }
 
   /** F4：rebind 被拒 → 按新会话重建（采纳过渡会话 + 恢复心跳 + 重发断点），非终态。 */
-  function rebuildOnNewSession(): void {
-    currentSessionId = sessionId();
-    startRenewHeartbeatAfterConnect();
+  function rebuildOnNewSession(transitionalSessionId: string): void {
+    currentSessionId = transitionalSessionId;
+    startRenewHeartbeatAfterConnect(); // F5：重建租约时钟（立即 renew + 心跳）
     const breakpoints = [...store.getState().breakpoints];
     if (breakpoints.length > 0) {
       void sendRequest('debugger.setBreakpoints', { bps: breakpoints }).catch(() => {});
@@ -369,7 +376,7 @@ export function createDebugClient(options: CreateDebugClientOptions): DebugClien
                   })
                   .catch((error: Error & { errorCode?: string }) => {
                     if (error.errorCode === 'nop.err.xlang.debugger.session-bound-elsewhere') {
-                      rebuildOnNewSession(); // F4：按新会话重建（采纳过渡会话），非终态
+                      rebuildOnNewSession(open.sessionId); // F4：按新会话重建（采纳过渡会话），非终态
                       return;
                     }
                     scheduleReconnect();

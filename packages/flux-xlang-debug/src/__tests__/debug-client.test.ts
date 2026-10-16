@@ -258,13 +258,16 @@ describe('debug client', () => {
       error: { message: 'not rebindable', errorCode: 'nop.err.xlang.debugger.session-bound-elsewhere' },
     }));
     await flushMicrotasks();
-    // F4：按新会话重建——重发断点 + 恢复心跳（非终态）
+    // F4：按新会话重建——重发断点 + 恢复心跳（非终态）+ 采纳过渡会话 id（B2）
     const setBp = secondConn.sent.find((f) => f.includes('debugger.setBreakpoints'));
     expect(setBp).toBeTruthy();
     expect(parseFrame(setBp!).params).toEqual({
       bps: [{ sourcePath: 'keep.xpl', line: 2 }],
     });
-    expect(secondConn.sent.some((f) => f.includes('lease.renew'))).toBe(true);
+    expect(env.client.sessionId()).toBe('u1:conn-2');
+    const methods = secondConn.sent.map((f) => { try { return JSON.parse(f).method ?? 'resp'; } catch { return '?'; } });
+    console.log('[P4] methods =', methods.join(','), '| sessionId =', String(env.client.sessionId()), '| conns =', env.connections.length, '| secondConn.sent =', secondConn.sent.map((f) => { try { const j = JSON.parse(f); return j.method ?? 'resp:' + JSON.stringify(j.error ?? j.result); } catch { return '?'; } }).join(','));
+    expect(methods).toContain('lease.renew');
     env.client.dispose();
     const __methods = secondConn.sent.map((f) => { try { return (JSON.parse(f).method ?? 'resp'); } catch { return '?'; } }).join(',');
     if (!secondConn.sent.some((f) => f.includes('debugger.setBreakpoints'))) {
@@ -298,7 +301,7 @@ describe('debug client', () => {
     await connectPromise;
     connections[0].closeFromServer(4401);
     await vi.advanceTimersByTimeAsync(20000);
-    expect(connections).toHaveLength(1, '4401 终态不得重连');
+    expect(connections).toHaveLength(1); // 4401 终态不得重连
     expect(onSessionClosed).toHaveBeenCalledWith(expect.objectContaining({ reason: 'authFailed' }));
     client.dispose();
   });
@@ -315,5 +318,96 @@ describe('debug client', () => {
     const count = conn.sent.length;
     env.store.getState().resume();
     expect(conn.sent.length).toBe(count);
+  });
+});
+
+describe('debug client terminal codes and edge paths (audit m3)', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('4400/4403 closes are terminal too', async () => {
+    for (const code of [4400, 4403]) {
+      const store = createDebugStore();
+      const connections: MockConnection[] = [];
+      const client = createDebugClient({
+        store,
+        openSocket: ((_url: string) => {
+          const conn = new MockConnection();
+          connections.push(conn);
+          return conn;
+        }) as WebSocketOpener,
+        serverUrl: '/ws/xlang-debugger',
+        getToken: () => 't',
+      });
+      client.connect();
+      connections[0].open();
+      await Promise.resolve();
+      connections[0].closeFromServer(code);
+      await vi.advanceTimersByTimeAsync(20000);
+      expect(connections).toHaveLength(1);
+      client.dispose();
+    }
+  });
+
+  it('evt.sessionClosed triggers onSessionClosed callback', async () => {
+    const onSessionClosed = vi.fn();
+    const store = createDebugStore();
+    const connections: MockConnection[] = [];
+    const client = createDebugClient({
+      store,
+      openSocket: ((_url: string) => {
+        const conn = new MockConnection();
+        connections.push(conn);
+        return conn;
+      }) as WebSocketOpener,
+      serverUrl: '/ws/xlang-debugger',
+      getToken: () => 't',
+      onSessionClosed,
+    });
+    client.connect();
+    connections[0].open();
+    await Promise.resolve();
+    connections[0].receive(JSON.stringify({
+      jsonrpc: '2.0',
+      id: parseFrame(connections[0].sent.find((f) => f.includes('session.open'))!).id,
+      result: { sessionId: 'u1:c1', protoVersion: '1.0', lease: { ttlMs: 30000, renewIntervalMs: 100 } },
+    }));
+    connections[0].receive(JSON.stringify({ jsonrpc: '2.0', method: 'evt.sessionClosed', params: { reason: 'graceExpired' } }));
+    expect(onSessionClosed).toHaveBeenCalledWith(expect.objectContaining({ reason: 'closed' }));
+    client.dispose();
+  });
+
+  it('openSocket-missing fails connect explicitly', async () => {
+    const store = createDebugStore();
+    const client = createDebugClient({
+      store,
+      openSocket: undefined as unknown as WebSocketOpener,
+      serverUrl: '/ws/xlang-debugger',
+      getToken: () => 't',
+    });
+    await expect(client.connect()).rejects.toThrow();
+  });
+
+
+  it('RATE_LIMITED backoff delays subsequent renew (M1)', async () => {
+    const env = createEnv();
+    await openSession(env);
+    const conn = env.connections[0];
+    const renewFrames = () => conn.sent.filter((f) => f.includes('lease.renew'));
+    // 首 renew（openSession 时发出）回 RATE_LIMITED → 退避重启 interval（200ms→400ms）
+    const frame = parseFrame(renewFrames()[0]);
+    conn.receive(JSON.stringify({ jsonrpc: '2.0', id: frame.id, error: { message: 'rate', errorCode: 'nop.err.xlang.debugger.rate-limited' } }));
+    await Promise.resolve();
+    await Promise.resolve(); // 冲刷两级微任务链（P.reject → 传播 → onError 退避重启）
+    const countAfterLimited = renewFrames().length;
+    vi.advanceTimersByTime(399);
+    expect(renewFrames().length).toBe(countAfterLimited); // 退避窗口内不 renew
+    vi.advanceTimersByTime(1);
+    expect(renewFrames().length).toBeGreaterThan(countAfterLimited); // 400ms 到点重试
+    env.client.dispose();
   });
 });
