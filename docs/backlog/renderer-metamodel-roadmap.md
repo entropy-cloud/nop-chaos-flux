@@ -1,6 +1,7 @@
 # Renderer 注册元模型与编译结构收口路线图（Renderer Metamodel & Compile-Structure Roadmap）
 
-> 最后更新：2026-10-16（**轨道收口**：RM-0~RM-12 全部 `done`，终态定义六条逐条实证达成；RM-10~12 词汇三债单标准落地）
+> 最后更新：2026-10-16（RM-13 增补：RM-12 裁决请求经人工裁定为「统一」→ 新增 RM-13 承接 data 族作者面属性改名；RM-0~RM-12 保持 `done`，轨道终态六条不受影响）
+> **RM-13 授权 provenance**：RM-12 plan `## Human Adjudication Request` 的两方案（A 分族两名 / B 并入单标准）经 2026-10-16 用户显式裁定为**统一**（原话："不考虑修改成本，你认为是否统一更好？如果是，则拟制计划完成修改。"）——该裁定同时构成 roadmap Rule 6「工作项增删先报人工确认」所要求的人工确认（工作项增删属人类职权，guide §Roadmap Role）。RM-13 拟制依据另有 live 实现对照：容器族 `resolvePreferredObjectKey` 与 data 族 `normalizeRowKey` 为同一函数形状（同 fallback 链 `显式字段 ?? __rowKey ?? id`、同 `__rowKey` 兼容键、平行形参名），故"语义不同族"（RM-12 倾向方案 A 的理由）被否证；内部行身份结构命名保留 `rowKey` 词的理由与分工规则见 plan 615 与 naming-conventions §4.9。
 > 按 `docs/skills/roadmap-and-mission-authoring-with-consensus-review.md` 流程产出；配套 mission：`missions/renderer-metamodel.json`
 > 共识审查记录：R1 `issues`（1B/2M/5m，独立 fresh 审查员，propSchema 迁移面枚举失实/预写审查通过/改名无主等）→ 修订；R2 `issues`（1B/2M/3m，独立 fresh 审查员，计数口径不可复现[66/33→66/41 勘误]/mission 字段缺口等）→ 修订；R3 `pass`（独立 fresh 审查员，25+ 点 live 抽查全命中，附 4 条非阻塞 Minor，其建议修法已逐字采纳：RM-6 补 $page 随迁注、Phases 表状态列同步注、分析报告 #7 计数口径括注、本记录即 m4 落点）。
 > R4 `approved`（RM-9 增补修订，两轮独立 fresh 审查员）：R4 `revised`（1B/3M/8m——A1~A8 悬空章节引用[报告实无 A6/A7]/scanner-baselines 计数级被误标逐条白名单/增补授权与审查记录未落字等）→ 修订（族枚举改 A1~A5、A8、B6~B7、C；白名单载体改为"RM-9 新建、形态仿 jsdom-pragma-whitelist"；Rule 增"工作项增删先报人工"条款；RM-9 预置拆分判据/排除清单括注/RM-8 承接句/mission prompts+check 字段同步）→ R5 `approved`（12/12 修正属实，零 Blocker，2 条非阻塞 Minor 其一已随落字同步）。**授权 provenance**：RM-9 增补系 2026-10-15 用户显式指令（工作项增删属人类职权，guide §Roadmap Role），RM-9 plan 拟制时授权链须引用该指令；**同 hunk 披露**：本次工作区 roadmap diff 另含并行会话在途的 RM-1 `todo→planned` 状态同步（plan 603 draft review R2 pass），非本修订所为。
@@ -28,7 +29,7 @@
 3. "编译期静态模板 ↔ 运行时实例"分层由类型钉住：`TemplateNode` 只读、模板零运行时写入从纪律升级为编译约束；框架内部 raw schema 读迁清或按政策钉面。
 4. runtime schema-retention policy 有 owner 文档，12 条 raw 通道逐条裁决（契约保留钉面 / 迁移编译产物 / 删除），无未裁决通道。
 5. 收口判定工具化：分析报告全部问题族编码为可执行启发式规则族，全仓扫描零"未裁决命中"（每命中只能是已修复或登记裁决白名单，白名单只减不增），"重构是否全部完成"由机器可复现的报告与 exit code 判定，不依赖人工记忆。
-6. **schema 词汇单源**（RM-10~12）：事件字段类型单一形态（`ActionSchema | ActionSchema[]`——单值文件集==词汇报告 §债一显式排除的 4 文件、零 `BaseSchema` 事件误型）、ownership 单一类型/词表/hook 原语（三态字面量文件集==`OwnershipMode` 定义文件、别名类型 `ListPaginationOwnership` 删除、`kanbanOwnership` 松型与组件名前缀清零、三态解析实现集==原语文件）、数组容器行键单一命名（`itemKey`——input-table 相关 `rowKey` 归零）——各债以词汇报告裁决节的 literal closure 口径 rg 验证 + 全绿为达成证据；无兼容分叉（不留别名/双读过渡层）。
+6. **schema 词汇单源**（RM-10~12）：事件字段类型单一形态（`ActionSchema | ActionSchema[]`——单值文件集==词汇报告 §债一显式排除的 4 文件、零 `BaseSchema` 事件误型）、ownership 单一类型/词表/hook 原语（三态字面量文件集==`OwnershipMode` 定义文件、别名类型 `ListPaginationOwnership` 删除、`kanbanOwnership` 松型与组件名前缀清零、三态解析实现集==原语文件）、行键单一命名（`itemKey`——input-table 与 data 族作者面 `rowKey` 均归零；渲染器内部行身份结构命名保留 `rowKey` 词属成文分工，见 naming-conventions §4.9）——各债以词汇报告裁决节的 literal closure 口径 rg 验证 + 全绿为达成证据；无兼容分叉（不留别名/双读过渡层）。
 
 ## Phase Status
 
@@ -48,8 +49,9 @@
 - RM-10. 事件字段类型单源化（三态归一 `ActionSchema | ActionSchema[]` + ActionSchemaLike 对偶删除）: `done`（plan `docs/plans/612-rm10-event-field-type-plan.md`，closure audit agent_9a598ead approved 2026-10-16；改型面由 Phase 0 kind 分类枚举导出[在范围 125+误型 12，排除 55 处/20 文件六组——含嵌套 events 对象成员 16 新裁定]、Like/ActionShapeLikeFields 对偶删除并入、literal closure 单值文件集==20 排除文件/误型归零/联合型基数 220）
 - RM-11. ownership 词表与实现单源化（OwnershipMode 单类型 + `<axis>Ownership` 词表 + hook 原语合一）: `done`（plan `docs/plans/613-rm11-ownership-unification-plan.md`，closure audit agent_0ea176f4 approved 2026-10-16；OwnershipMode 单源导出+26 行字面量口径收口+别名 `ListPaginationOwnership` 删除+`kanban*`→`board*` 52 处无兼容改名+12 处解析实现收敛 flux-react 单原语[两候选副本删除、三套订阅门禁契约测试重锚原语边界+真实零订阅计数判别钉]；三条 literal closure 口径单点闭合、判别变异自证逐字节还原；执行中行为差/边界如实登记 Deferred 7 条）
 - RM-12. 数组容器行键统一 `itemKey`（input-table `rowKey` 改名 + flux-guide 同步）: `done`（plan `docs/plans/614-rm12-itemkey-plan.md`，closure audit agent_d3aef789 approved 2026-10-16；`InputTableSchema.rowKey`→`itemKey`+渲染器四处同步+生成物/docs/apps 同步、无兼容分叉；三条应空口径+定向校验全满足、判别钉双面经变异自证；**data 族行标识 `rowKey` 归属待人工裁决**（plan `## Human Adjudication Request` 六类 live 枚举+两方案+建议，本 plan 未自行裁定、data 族零改动）
+- RM-13. data 族行标识 `rowKey` 并入单标准 `itemKey`（作者面 schema 属性统一 + 内部分工文档化）: `todo`
 
-> **轨道收口（2026-10-16）**：13 个工作项（RM-0~RM-12）全部 `done`；终态定义**六条逐条实证达成**——①`RendererDefinitionShape` 无死字段/无平行声明通道（`propSchema`/`propContracts:`/`eventContracts:`/`scopeExportContracts:` 声明形式全仓 src 归零，余量为注释/历史叙述）②类型层零手抄副本（RM-1）③编译期静态模板↔运行时实例分层由类型钉住（RM-7：`TemplateNode` 30 成员 readonly；`NodeState` 只读不可落地已就地勘误）④retention policy owner 文档 + 12 条通道逐条裁决（RM-0/RM-8：裁决表 + Retained channel register 钉面 + scanner 守卫）⑤收口判定工具化（RM-9：规则族 16 条 + 双段基线，`check:audit-renderer-metamodel-residue` 挂 `pnpm check` 链；全仓扫描 `zero unadjudicated hits`）⑥schema 词汇单源（RM-10~12：事件字段联合型单形态、ownership `OwnershipMode`+`<axis>Ownership`+flux-react 单原语、数组容器 `itemKey`——各债 literal closure 口径单点闭合；⑥ 括注「零 `BaseSchema` 事件误型」限指事件通道字段，非事件 schema 载体（如 `composite-schemas.ts:215 pickerSchema?: BaseSchema` 便属合法用法）不在该口径内，轨道收口终审 m-1 澄清）。**唯一遗留待人工裁决**：data 族行标识 `rowKey` 归属（RM-12 plan `## Human Adjudication Request`，六类 live 枚举 + 两方案 + 建议；裁决前维持现状，本轨道不自行裁定）。轨道收口提交基线：五门禁全绿（typecheck 42/42、build、lint、test 16,557 passed/1,802 文件/0 FAIL、check 含 RM-9 零未裁决命中）。
+> **轨道收口（2026-10-16）**：13 个工作项（RM-0~RM-12）全部 `done`；终态定义**六条逐条实证达成**——①`RendererDefinitionShape` 无死字段/无平行声明通道（`propSchema`/`propContracts:`/`eventContracts:`/`scopeExportContracts:` 声明形式全仓 src 归零，余量为注释/历史叙述）②类型层零手抄副本（RM-1）③编译期静态模板↔运行时实例分层由类型钉住（RM-7：`TemplateNode` 30 成员 readonly；`NodeState` 只读不可落地已就地勘误）④retention policy owner 文档 + 12 条通道逐条裁决（RM-0/RM-8：裁决表 + Retained channel register 钉面 + scanner 守卫）⑤收口判定工具化（RM-9：规则族 16 条 + 双段基线，`check:audit-renderer-metamodel-residue` 挂 `pnpm check` 链；全仓扫描 `zero unadjudicated hits`）⑥schema 词汇单源（RM-10~12：事件字段联合型单形态、ownership `OwnershipMode`+`<axis>Ownership`+flux-react 单原语、数组容器 `itemKey`——各债 literal closure 口径单点闭合；⑥ 括注「零 `BaseSchema` 事件误型」限指事件通道字段，非事件 schema 载体（如 `composite-schemas.ts:215 pickerSchema?: BaseSchema` 便属合法用法）不在该口径内，轨道收口终审 m-1 澄清）。**原唯一遗留待人工裁决项已裁定**：data 族行标识 `rowKey` 归属于 2026-10-16 经人工裁定为「并入单标准」→ 新增 **RM-13** 承接（作者面 schema 属性统一为 `itemKey`；内部行身份结构命名保留 `rowKey` 词并落 naming-conventions §4.9 成文分工）。故轨道**终态六条仍需 RM-13 完成后才完全成立**（⑥ 的 data 族作者面归零项），本注所述「六条达成」以 RM-0~RM-12 范围为准、RM-13 为终态⑥的补完项。轨道收口提交基线：五门禁全绿（typecheck 42/42、build、lint、test 16,557 passed/1,802 文件/0 FAIL、check 含 RM-9 零未裁决命中）。
 
 ## 框架/平台复用
 
@@ -87,6 +89,7 @@
 | RM-10 事件字段类型单源化        | `done` | 词汇报告 §债一（rawEventPlans 联合型事实源）       | RM-1       | typecheck 全量枚举、rg 零命中口径                 | [612](../plans/612-rm10-event-field-type-plan.md)        |
 | RM-11 ownership 词表+实现单源化 | `done` | 词汇报告 §债二（26 字面量+1 别名类型+12 解析实现） | RM-1       | WA-layout-001 收敛先例、rg/typecheck 枚举         | [613](../plans/613-rm11-ownership-unification-plan.md)   |
 | RM-12 行键统一 `itemKey`        | `done` | 词汇报告 §债三（composite-schemas 行键分叉）       | RM-1       | 三渲染器内部已 item 命名、flux-guide 同步         | [614](../plans/614-rm12-itemkey-plan.md)                 |
+| RM-13 data 族行键并入 `itemKey` | `todo` | RM-12 裁决请求（人工裁定统一）+ live 实现对照      | RM-12      | 生成物再生成、rg 零命中口径                       | [615](../plans/615-rm13-data-itemkey-plan.md)            |
 
 ## Phase Details（交付范围，无实现步骤）
 
@@ -128,9 +131,10 @@ graph TD
     RM1 --> RM10[RM-10 事件字段类型单源化]
     RM1 --> RM11[RM-11 ownership词表+实现单源化]
     RM1 --> RM12[RM-12 行键统一itemKey]
+    RM12 --> RM13[RM-13 data族并入itemKey]
 ```
 
-执行顺序 = Phase Status 列表顺序（RM-0 → RM-12）；依赖图与列表冲突时以列表为准。RM-9 的扫描范围限分析报告问题族（终态条件 5）；RM-10~12 为第二事实源（词汇报告）三族，自持 rg 零命中验证（终态条件 6），不并入 RM-9 白名单体系。
+执行顺序 = Phase Status 列表顺序（RM-0 → RM-13）；依赖图与列表冲突时以列表为准。RM-9 的扫描范围限分析报告问题族（终态条件 5）；RM-10~12 为第二事实源（词汇报告）三族，自持 rg 零命中验证（终态条件 6），不并入 RM-9 白名单体系。
 
 ## Cross-Cutting（全程约束）
 
@@ -146,7 +150,7 @@ graph TD
 
 分析报告 C 表以下小项**不在本轨道收口范围**，理由：纯外观/低风险类型松动，与单源化主线无行为耦合——`events` 通道 `| undefined` 值类型、`defineRendererFamily` 双重断言、Shape 28 字段分组注释。`RendererResolvedProps` Omit 清单 frameWrap 漏项已并入 RM-0 钉面（不单独立项）。后续如需处理，单独立 plan，不顺手搭车。
 
-词汇报告显式排除清单（§债一~三末节）同为本轨道范围外：非事件单 action 字段 6 处（RM-10 排除文件 4 个：code-editor `SQLExecutionConfig.executeAction` + data 包 5 处内部 save prop）、scheduling onMount 双通道派发（正确性缺陷非命名债）、数据行 `__rowKey` 兼容键（数据形状非 schema 命名）、`effectiveOwnership` 局部变量、ownership 各 axis 的语义合并（只统一词形不改行为）、variant/disabled/value 等其他词汇漂移（未点名，需处理单独立项）。**均不静默并入 RM-10~12。** 另：data 族行标识 `rowKey`（TableSchema/CrudSchema/list）不默认在 RM-12 范围内也不默认排除——plan live 枚举全部位点后报人工裁决是否并入单标准，裁决前维持现状。
+词汇报告显式排除清单（§债一~三末节）同为本轨道范围外：非事件单 action 字段 6 处（RM-10 排除文件 4 个：code-editor `SQLExecutionConfig.executeAction` + data 包 5 处内部 save prop）、scheduling onMount 双通道派发（正确性缺陷非命名债）、数据行 `__rowKey` 兼容键（数据形状非 schema 命名）、`effectiveOwnership` 局部变量、ownership 各 axis 的语义合并（只统一词形不改行为）、variant/disabled/value 等其他词汇漂移（未点名，需处理单独立项）。**均不静默并入 RM-10~12。** 另：data 族行标识 `rowKey`（TableSchema/CrudSchema——**`ListSchema` 实无此字段**，RM-12 plan R1 m3 勘误）原「不默认在 RM-12 范围内也不默认排除、待人工裁决」的悬置状态**已于 2026-10-16 经人工裁定为「并入单标准」**，由 RM-13 承接（作者面 schema 属性改名 + 内部分工文档化）。
 
 ## Rule
 
