@@ -1315,6 +1315,9 @@ importers:
         specifier: ^5.0.12
         version: 5.0.12(@types/react@19.3.0)(immer@11.1.4)(react@19.2.4)(use-sync-external-store@1.6.0(react@19.2.4))
     devDependencies:
+      '@nop-chaos/flux-core':
+        specifier: workspace:*
+        version: link:../flux-core
       vitest:
         specifier: ^3.0.0
         version: 3.2.7(@types/debug@4.1.13)(@types/node@25.5.0)(happy-dom@15.11.7)(jiti@2.7.0)(jsdom@29.1.1)(lightningcss@1.33.0)(yaml@2.8.3)
