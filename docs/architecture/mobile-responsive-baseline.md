@@ -281,22 +281,23 @@ safe-area-inset-right
 #### 契约
 
 ```css
-/* 契约定义，归属 @nop-chaos/ui 或 tailwind-preset。
- * 实现状态：todo（M0.1b），当前代码库尚未实现。 */
+/* 契约定义，归属 @nop-chaos/ui；已实现于 packages/ui/src/styles/mobile.css
+ * （plan 622 A5 勘误：原契约草稿为 `nop-hairline--*` BEM 形态且标注"尚未实现"——
+ * 实际落地形态为单横线 `nop-hairline-top` 等，2026-06 已实现）。 */
 .nop-hairline {
   position: relative;
 }
-.nop-hairline--top::after,
-.nop-hairline--right::after,
-.nop-hairline--bottom::after,
-.nop-hairline--left::after {
+.nop-hairline-top::after,
+.nop-hairline-right::after,
+.nop-hairline-bottom::after,
+.nop-hairline-left::after {
   content: '';
   position: absolute;
   pointer-events: none;
   background-color: var(--nop-hairline-color, currentColor);
 }
 /* 单边示例：bottom */
-.nop-hairline--bottom::after {
+.nop-hairline-bottom::after {
   left: 0;
   right: 0;
   bottom: 0;
@@ -309,7 +310,7 @@ safe-area-inset-right
 
 #### 使用约定
 
-- 移动端列表分隔线、卡片边框、表单 hairline-bottom 用 `nop-hairline--*` 替代 `border-*`。
+- 移动端列表分隔线、卡片边框、表单 hairline-bottom 用 `nop-hairline-top/right/bottom/left`（单横线，不用 `--modifier` 形态）替代 `border-*`。
 - 颜色通过 `--nop-hairline-color` CSS 变量主题化，默认 `currentColor` 或主题 border 色。
 
 ### 10.3 haptics 触感反馈（M0.1c）

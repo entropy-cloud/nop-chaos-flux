@@ -285,7 +285,7 @@ M1b 评估现有 `responsive.mode: 'expand'` 在移动端的 card 布局：**裁
 ### M1b mobile 视觉增强（已落地）
 
 - expand detail row 容器加 `nop-safe-bottom`（M0.1a）适配 notch；mobile 额外加 `p-2` padding（`sm:p-1` 收窄）。
-- 每个 hidden 列 card（`table-responsive-expanded-item`）加 `nop-hairline nop-hairline--bottom`（M0.1b）做 0.5px 分隔线；mobile padding 提升到 `py-3`（`sm:py-2`）适配触摸目标（baseline §3）。
+- 每个 hidden 列 card（`table-responsive-expanded-item`）加 `nop-hairline nop-hairline-bottom`（M0.1b）做 0.5px 分隔线；mobile padding 提升到 `py-3`（`sm:py-2`）适配触摸目标（baseline §3）。
 - 表格根节点发布 `data-responsive-expand="true"` marker（仅 mobile + `mode: 'expand'` 激活时），便于 e2e / 调试识别当前在 mobile card 布局。
 
 ### schema 字段

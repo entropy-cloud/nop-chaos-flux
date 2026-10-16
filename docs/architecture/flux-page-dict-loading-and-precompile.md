@@ -1,7 +1,7 @@
 # flux Page/Dict Loading
 
 > Status: active design doc
-> Last Reviewed: 2026-07-08
+> Last Reviewed: 2026-10-17（plan 622 A9：对照 live 抽查——`useDictOptions`/`loadDictShared` 共享加载去重（`use-dict-options.ts`）与 §"When `dict` is set" 段描述一致；`RendererEnv.loadDict`/`loadPage` 签名与 `renderer-api.ts` 一致）
 > Owner: flux-core / flux-renderers-form
 > Related: `renderer-runtime.md`, `flux-runtime-module-boundaries.md`
 

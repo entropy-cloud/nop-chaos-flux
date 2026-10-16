@@ -134,7 +134,7 @@
 
 - **schema 透明**：无新 `type`、无 `mobileUI` 标志位、无 `*-mobile` 组件。mobile 分支完全在 renderer 内部，由 `useIsMobile()`（断点 768）决定。
 - **trigger**：mobile 触发器是普通 `Button`（`variant="outline"`），右侧带 `ChevronDownIcon`；显示当前选中 label（多选为逗号拼接），无选中时显示 placeholder。
-- **Sheet 内容**：`SheetContent side="bottom"` + `nop-safe-bottom`（M0.1a）+ `nop-hairline--bottom`（M0.1b）分隔 header。可选 search input（`searchable: true`）+ 滚动 option 列表（每行 `min-h-touch` 满足触摸目标）。
+- **Sheet 内容**：`SheetContent side="bottom"` + `nop-safe-bottom`（M0.1a）+ `nop-hairline-bottom`（M0.1b，单横线形态——plan 622 A5 勘误）分隔 header。可选 search input（`searchable: true`）+ 滚动 option 列表（每行 `min-h-touch` 满足触摸目标）。
 - **选择行为**：单选点击 option 后立即 `handlers.onChange` + 关闭 Sheet；多选点击 option 切换选中态但保持 Sheet 打开。
 - **clearable**：mobile 触发器右侧额外渲染清除按钮（`select-mobile-clear` slot），与 desktop `ComboboxClear` 对齐。
 - **optionTemplate region**：mobile 列表项复用 `optionTemplate` region 渲染逻辑（与 desktop `ComboboxItem` 一致），region 失败回退 `option.label`。

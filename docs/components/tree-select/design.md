@@ -144,7 +144,7 @@ interface TreeSelectSchema extends InputSchema {
 
 - **schema 透明**：无新 `type`、无 `mobileUI` 标志位。mobile 分支完全在 renderer 内部，由 `useIsMobile()`（断点 768）决定。
 - **trigger**：mobile 触发器是 `Button`（`variant="outline"`，`data-slot="tree-select-mobile-trigger"`），与 desktop 共享 `tree-select-value` / `tree-select-icons` 子 marker。
-- **Sheet 内容**：`SheetContent side="bottom"` + `nop-safe-bottom`（M0.1a）+ `nop-hairline--bottom`（M0.1b）；Sheet 内 `TreeOptionList` 完整保留 expand/collapse、search、lazy children、remote search、虚拟滚动语义。
+- **Sheet 内容**：`SheetContent side="bottom"` + `nop-safe-bottom`（M0.1a）+ `nop-hairline-bottom`（M0.1b，单横线形态——plan 622 A5 勘误）；Sheet 内 `TreeOptionList` 完整保留 expand/collapse、search、lazy children、remote search、虚拟滚动语义。
 - **选择行为**：与 desktop 一致（单选/多选由 `treeMode` 决定）；Sheet 不因选择自动关闭（树选择通常需多步浏览，保持打开更符合预期）。
 - **clearable**：trigger 右侧清除按钮在 mobile/desktop 下一致。
 - **z-index**：Sheet 经 `SheetContent` 内 `useGlobalZIndex()`（M0.1d）取值。

@@ -1,5 +1,8 @@
 # Performance Diagnostics And E2E Measurement Design
 
+> Status: active design doc
+> Last Reviewed: 2026-10-17（plan 622 A8：对照 `packages/nop-debugger/src` 现状抽查——`NopDebugEventKind` 12 kind、controller `decorateEnv`/`setRuntime`/`setComponentRegistry`/`setActionScope`/`onActionError`、`__NOP_DEBUGGER_API__`、`getRecentFailures`/`getLatestError`/`inspectByCid`/`inspectByElement`、`RendererRuntime.getFormStoreDiagnosticsBridge()` 均与文中声称一致；8 月以来该领域 10 commits 未引入文中所述 API 的漂移）
+
 ## Purpose
 
 本文档回答三个问题：
@@ -280,24 +283,15 @@ If this stricter target becomes required, `array-field` needs either keyed item-
 | Node inspect dependency paths  | `inspectByCid()` debug data on wired pages                                  | Explains broad vs narrow dependency reads                  |
 | Mounted identity probes        | `inspectByCid()` / `inspectByElement()` or target component-tree automation | Detects gross remount or missing-node behavior             |
 
-### Metrics Needed For Authoritative Locality Proofs
-
-| Metric                                            | Proposed source                                                                      | Gate example                                             |
-| ------------------------------------------------- | ------------------------------------------------------------------------------------ | -------------------------------------------------------- |
-| `scopePublishCountByScopeId`                      | gated scope/debug instrumentation                                                    | target row/item scope publishes once                     |
-| `scopePublishPathsByScopeId`                      | gated scope/debug instrumentation                                                    | table row publishes `record`, not whole collection       |
-| `affectedRowKeys` / `affectedItemKeys`            | collection owner diagnostic event                                                    | exactly one key for single-item update                   |
-| `renderCountByProbeKey`                           | diagnostic probe renderer                                                            | target row/item changed, siblings unchanged              |
-| `mountCountByProbeKey` / `unmountCountByProbeKey` | diagnostic probe renderer                                                            | no remount for unchanged keys                            |
-| `cidByInstancePath` before/after                  | `inspectByCid()` / `inspectByElement()` or future explicit component-tree automation | stable mounted identity for unchanged materialized nodes |
-| `subscriberWakeupCount`                           | temporary low-level instrumentation                                                  | optional, used only when optimizing subscription fanout  |
-| DOM mutation summary                              | optional MutationObserver                                                            | secondary sanity check, not primary proof                |
+### Form-Store Diagnostics Baseline
 
 Current form-store diagnostics baseline:
 
 - runtime-owned form-store diagnostics now provide an explicitly gated bounded session surface for `commitCount`, `changedPaths`, `changedKinds`, and `droppedCommitCount`
 - focused tests and future diagnostics pages should prefer that runtime-owned surface over ad-hoc store subscriptions when they need normalized commit truth
 - debugger integration is wired through the runtime-owned `FormStoreDiagnosticsBridge` exposed by `RendererRuntime.getFormStoreDiagnosticsBridge()`; the runtime diagnostics contract itself is owned by `docs/architecture/form-store-diagnostics.md`
+
+Authoritative-locality instrumentation（scope publish / probe / reconcile 计数器与有界事件）尚为开放提案，见 `docs/discussions/2026-10-16-bounded-diagnostic-events-proposal.md`。
 
 ### Metrics That Should Not Be Hard Gates
 
@@ -365,25 +359,9 @@ The debugger-wide event stream should continue to support the full event model f
 
 For performance diagnostics, existing `render:*` events remain `debuggerRenderHints`. They should not be renamed into benchmark counters.
 
-### Proposed Bounded Diagnostic Events
+### Diagnostic Event Extensions
 
-Future implementation can extend `NopDebugEventKind` or add a generic diagnostic event domain with these bounded payloads:
-
-| Event                  | Payload summary                                                       | Purpose                                  |
-| ---------------------- | --------------------------------------------------------------------- | ---------------------------------------- |
-| `perf:session:start`   | session id, scenario, mode                                            | bracket one diagnostic run               |
-| `perf:session:end`     | session id, summary counters                                          | stable E2E wait target                   |
-| `scope:publish`        | scope id, owner kind, paths, source scope id, reason                  | prove row/item-local publication         |
-| `collection:reconcile` | owner id, changed keys, created keys, disposed keys, republished keys | prove collection-to-row/item translation |
-| `component:probe`      | probe key, phase, render count, mount count, unmount count            | prove render/remount locality            |
-
-Rules:
-
-- all payloads must be shallow and capped
-- no raw deep scope snapshots in high-frequency events
-- events must be disabled unless the host enables performance diagnostics
-- session summaries may keep aggregate counts even if individual events are sampled
-- ordinary debugger enabled mode must not imply `scope:publish` or `component:probe` capture
+`NopDebugEventKind` 的扩展面（`perf:session` / `scope:publish` / `collection:reconcile` / `component:probe` 等有界事件）尚为开放提案，见 `docs/discussions/2026-10-16-bounded-diagnostic-events-proposal.md`；现状事件模型见 `docs/architecture/debugger-runtime.md`。
 
 ### Playground Probe Design
 

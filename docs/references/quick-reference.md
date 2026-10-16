@@ -84,7 +84,7 @@ interface RendererComponentProps<S = BaseSchema, P = RendererResolvedProps<S>> {
 }
 ```
 
-`SchemaFieldKind` = `'meta' | 'prop' | 'region' | 'value-or-region' | 'event' | 'reaction' | 'ignored'`. The `kind: 'reaction'` field compiles into `TemplateNode.reactionPlans[key]` (`CompiledReactionPlan`) and is surfaced as `props.reactions[key]` (`ReactionHandle`); it is both reactive (auto-fires on declared `dependsOn` root changes) and imperative (renderer calls `dispatch()`/`force()`), with renderer-owned timing via `ready()`/`pause()`/`resume()`. See `docs/plans/2026-07-07-loadAction-reaction-kind-plan.md`.
+`SchemaFieldKind` = `'meta' | 'prop' | 'value' | 'region' | 'value-or-region' | 'schema' | 'schema-array' | 'event' | 'action' | 'literal' | 'reaction' | 'ignored'`（nested-only kinds：`value`/`schema`/`schema-array`/`action`/`literal`，顶层语义仅 `meta`/`reaction`/`ignored`）。The `kind: 'reaction'` field compiles into `TemplateNode.reactionPlans[key]` (`CompiledReactionPlan`) and is surfaced as `props.reactions[key]` (`ReactionHandle`); it is both reactive (auto-fires on declared `dependsOn` root changes) and imperative (renderer calls `dispatch()`/`force()`), with renderer-owned timing via `ready()`/`pause()`/`resume()`. See `docs/plans/2026-07-07-loadAction-reaction-kind-plan.md`.
 
 ### How to read data from props
 
@@ -252,23 +252,23 @@ interface RendererRuntime {
 
 **`RendererEnv` 字段速查**（完整定义见 `docs/architecture/renderer-env.md`）：
 
-| 字段                                | 必填？   | 用途                                                                                                                                            |
-| ----------------------------------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
-| `fetcher`                           | ✅       | HTTP 一次性请求（`Promise<ApiResponse<T>>`）                                                                                                    |
-| `stream`                            | optional | HTTP 流式响应（SSE/NDJSON/text/raw 自动切分+解析，返回 `AsyncGenerator<T>`）；已落地（2026-07-23，INV-2 C 档；消费先例 plan 512 host channels） |
-| `openSocket`                        | optional | WebSocket 长连接（类浏览器接口）；已落地（2026-07-23，INV-2 C 档）                                                                              |
-| `print`                             | optional | 宿主打印管线（`print` action 派发；缺失时 warning toast）；plan 512 L3.1                                                                        |
-| `clipboard`                         | optional | 剪贴板写入（`copy` action 派发；`writeText` reject → 错误 toast）；plan 512 L3.2                                                                |
-| `location`                          | optional | host router 查询串读写（`getQuery`/`setQuery`；crud `syncLocation: true` 深链）；plan 512 L3.5                                                  |
-| `notify`                            | ✅       | Toast 通知                                                                                                                                      |
-| `confirm` / `alert`                 | optional | 确认/警告框                                                                                                                                     |
-| `navigate`                          | optional | 路由跳转                                                                                                                                        |
-| `loadPage` / `loadDict`             | optional | 资源加载                                                                                                                                        |
-| `hasRole`                           | optional | 权限检查                                                                                                                                        |
-| `importLoader` / `resolveImportUrl` | optional | `xui:imports` 解析                                                                                                                              |
-| `monitor`                           | optional | 监控钩子                                                                                                                                        |
-| `functions` / `filters`             | optional | 表达式扩展                                                                                                                                      |
-| `locale`                            | optional | i18n                                                                                                                                            |
+| 字段                                | 必填？   | 用途                                                                                                                                                                                                      |
+| ----------------------------------- | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `fetcher`                           | ✅       | HTTP 一次性请求（`Promise<ApiResponse<T>>`）                                                                                                                                                              |
+| `stream`                            | optional | HTTP 流式响应（SSE/NDJSON/text/raw 自动切分+解析，返回 `AsyncGenerator<T>`）；已落地（2026-07-23，INV-2 C 档；消费先例 plan 512 host channels）                                                           |
+| `openSocket`                        | optional | WebSocket 长连接（类浏览器接口）；已落地（2026-07-23，INV-2 C 档）                                                                                                                                        |
+| `print`                             | optional | 宿主打印管线（`print` action 派发；缺失时 warning toast）；plan 512 L3.1                                                                                                                                  |
+| `clipboard`                         | optional | 剪贴板写入（`copy` action 派发；`writeText` reject → 错误 toast）；plan 512 L3.2                                                                                                                          |
+| `location`                          | optional | host router 查询串读写（`getQuery`/`setQuery`；crud `syncLocation: true` 深链）；plan 512 L3.5                                                                                                            |
+| `notify`                            | ✅       | Toast 通知                                                                                                                                                                                                |
+| `confirm` / `alert`                 | optional | 确认/警告框                                                                                                                                                                                               |
+| `navigate`                          | optional | 路由跳转                                                                                                                                                                                                  |
+| `loadPage` / `loadDict`             | optional | 资源加载                                                                                                                                                                                                  |
+| `hasRole`                           | optional | 权限检查                                                                                                                                                                                                  |
+| `importLoader` / `resolveImportUrl` | optional | `xui:imports` 解析                                                                                                                                                                                        |
+| `reportSchemaDiagnostics`           | optional | strict-validation 开启时的 schema 诊断宿主汇点（逐条上报，宿主可接 debug 面板/遥测；缺失时回落 `console.error`）；使用前必须 capability check（`monitor` 移除裁定与字段全集见 `renderer-env.md` §2/§3.9） |
+| `functions` / `filters`             | optional | 表达式扩展                                                                                                                                                                                                |
+| `locale`                            | optional | i18n                                                                                                                                                                                                      |
 
 调用示例：
 
@@ -551,21 +551,21 @@ interface PageRuntime {
 
 ### Form hooks
 
-| Hook                                   | Returns                               | Purpose                                        |
-| -------------------------------------- | ------------------------------------- | ---------------------------------------------- |
-| `useCurrentForm()`                     | `FormRuntime \| undefined`            | Get current form                               |
-| `useCurrentValidationScope()`          | `ValidationScopeRuntime \| undefined` | Get validation scope                           |
-| `useCurrentFormState(selector)`        | `T`                                   | Reactive selector over form store state        |
-| `useCurrentValidationValues(selector)` | `T`                                   | Reactive selector over validation scope values |
-| `useCurrentFormErrors()`               | `ValidationError[]`                   | All current form errors                        |
-| `useCurrentFormError(path)`            | `ValidationError \| undefined`        | Error for specific path                        |
-| `useCurrentFormFieldState(path)`       | `FormFieldPresentationSnapshot`       | Field state + presentation                     |
-| `useFieldError(path)`                  | `ValidationError \| undefined`        | Error for a field                              |
-| `useOwnedFieldState(path)`             | field state                           | Owned field state                              |
-| `useChildFieldState(path)`             | field state                           | Child field state                              |
-| `useAggregateError(path)`              | aggregated error                      | Aggregated error for a path                    |
-| `useValidationNodeState(node)`         | validation state                      | Validation state for a node                    |
-| `useCurrentFormModelGeneration()`      | `number`                              | Reactive model generation counter              |
+| Hook                                   | Returns                               | Purpose                                                                                               |
+| -------------------------------------- | ------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| `useCurrentForm()`                     | `FormRuntime \| undefined`            | Get current form                                                                                      |
+| `useCurrentValidationScope()`          | `ValidationScopeRuntime \| undefined` | Get validation scope                                                                                  |
+| `useCurrentFormState(selector)`        | `T`                                   | Reactive selector over form store state                                                               |
+| `useCurrentValidationValues(selector)` | `T`                                   | Reactive selector over validation scope values                                                        |
+| `useCurrentFormErrors()`               | `ValidationError[]`                   | All current form errors                                                                               |
+| `useCurrentFormError(path)`            | `ValidationError \| undefined`        | Error for specific path                                                                               |
+| `useCurrentFormFieldState(path)`       | `FormFieldStateSnapshot`              | Field state + presentation（presentation snapshot 由 `form-state.ts` presentation selector 单独产出） |
+| `useFieldError(path)`                  | `ValidationError \| undefined`        | Error for a field                                                                                     |
+| `useOwnedFieldState(path)`             | field state                           | Owned field state                                                                                     |
+| `useChildFieldState(path)`             | field state                           | Child field state                                                                                     |
+| `useAggregateError(path)`              | aggregated error                      | Aggregated error for a path                                                                           |
+| `useValidationNodeState(node)`         | validation state                      | Validation state for a node                                                                           |
+| `useCurrentFormModelGeneration()`      | `number`                              | Reactive model generation counter                                                                     |
 
 ### Context hooks
 
@@ -573,7 +573,7 @@ interface PageRuntime {
 | ------------------------------- | --------------------------------------- | -------------------------------- |
 | `useCurrentPage()`              | `PageRuntime \| undefined`              | Get current page                 |
 | `useCurrentSurfaceRuntime()`    | `SurfaceRuntime`                        | Get surface runtime              |
-| `useCurrentNodeMeta()`          | `ResolvedNodeMeta`                      | Get current node metadata        |
+| `useCurrentNodeMeta()`          | `RenderNodeMeta`                        | Get current node metadata        |
 | `useCurrentNodeInstance()`      | `NodeInstance`                          | Get current node instance        |
 | `useCurrentActionScope()`       | `ActionScope`                           | Get action scope                 |
 | `useCurrentComponentRegistry()` | `ComponentHandleRegistry`               | Get component handle registry    |

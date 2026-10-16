@@ -13,7 +13,7 @@
 
 ## 2. env 字段全集
 
-> **状态声明**：以下展示**目标态全集**。当前 `master` 分支 `packages/flux-core/src/types/renderer-api.ts` 的 `RendererEnv` 接口（live 锚点随字段追加下移，2026-09-26 位于 :193 起；QA.1-L3 Minor-4 刷新）已实施字段为：`fetcher / notify / navigate / confirm / alert / functions / filters / importLoader / resolveImportUrl / loadPage / loadDict / hasRole / locale`。（`monitor` 已从 env 移除，改用 `<SchemaRenderer monitor>` prop，详见 `docs/architecture/flux-monitor.md`。）
+> **状态声明**：以下展示**目标态全集**。当前 `master` 分支 `packages/flux-core/src/types/renderer-api.ts` 的 `RendererEnv` 接口（live 锚点随字段追加下移，2026-10-17 位于 :219 起；QA.1-L3 Minor-4 刷新）已实施字段为：`fetcher / notify / navigate / confirm / alert / functions / filters / importLoader / resolveImportUrl / loadPage / loadDict / hasRole / locale / reportSchemaDiagnostics`。（`monitor` 已从 env 移除，改用 `<SchemaRenderer monitor>` prop，详见 `docs/architecture/flux-monitor.md`。）
 >
 > `stream` 与 `openSocket` 已于 2026-07-21 经 INV-2 评审通过，并于 2026-07-23 **落地实施**（接口 + playground 默认实现 + decorator hooks，见 §4.3 历史记录）。两个字段均 optional，向后兼容。使用方应 capability check（`if (env.stream) ...`）。
 
@@ -321,7 +321,7 @@ locale?: string;
 
 ## 8. env 装饰器（decorator）
 
-`decorateRendererEnv(env, hooks)`（`packages/flux-core/src/utils/renderer-env.ts:26`）允许在不替换 env 的情况下包装 `fetcher` / `notify` / `navigate` / `stream` / `openSocket`：
+`decorateRendererEnv(env, hooks)`（`packages/flux-core/src/utils/renderer-env.ts:52`，hooks 契约 `RendererEnvDecoratorHooks` 同文件 :12）允许在不替换 env 的情况下包装 `fetcher` / `notify` / `navigate` / `stream` / `openSocket`：
 
 ```ts
 const decorated = decorateRendererEnv(env, {

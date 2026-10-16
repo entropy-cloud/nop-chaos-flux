@@ -704,11 +704,13 @@ Schema is not reparsed during validation.
 
 ### Live Rule Kind Set And Numeric-Range Gap (V10 adjudication)
 
-The live `ValidationRule` discriminated union (`flux-core/src/types/validation.ts`) supports exactly these `kind` values: `required`, `requiredRange`, `minLength`, `maxLength`, `minItems`, `maxItems`, `atLeastOneFilled`, `allOrNone`, `uniqueBy`, `atLeastOneOf`, `pattern`, `email`, `equalsField`, `notEqualsField`, `requiredWhen`, `requiredUnless`, `async`.
+The live `ValidationRule` discriminated union (`flux-core/src/types/validation.ts`) supports exactly these `kind` values: `required`, `requiredRange`, `minLength`, `maxLength`, `minItems`, `maxItems`, `atLeastOneFilled`, `allOrNone`, `uniqueBy`, `atLeastOneOf`, `pattern`, `email`, `url`, `integer`, `format`, `equalsField`, `notEqualsField`, `requiredWhen`, `requiredUnless`, `async`.
 
 `requiredRange` is a range-aware variant of `required` for delimited composite values (e.g. date-range): it fails only when the value is **partially** filled (one bound filled, the other empty); a fully empty value is left to the generic `required` rule, and a fully filled value passes. Its message uses the dedicated `validation.requiredRange` i18n key (distinct from `validation.required`) so a partial range does not read as the generic "is required" prompt.
 
-There is **no** numeric-range rule kind. `min` / `max` / `isInt` / `minimum` / `maximum` / `isLength` amis-parity numeric-range semantics are **not modeled** in Flux (exhaustive repo grep returns zero matches). This is an adjudicated feature gap, not an untested property: Flux does not pretend to test numeric-range rules it does not implement.
+The numeric-range family — `min` / `max` / `minimum` / `maximum` / `isLength` — amis-parity semantics are **not modeled**: there is no numeric-range rule kind. This is an adjudicated feature gap, not an untested property: Flux does not pretend to test numeric-range rules it does not implement.
+
+> 勘误（2026-10-17，plan 622 A2）：本节原裁决称 amis `isInt` parity 亦 "not modeled（全仓 grep 零命中）"——该半边已失效：commit 646d16ba4（2026-09-02）落地 `integer` kind，`integer()` validator（`/^-?\d+$/`，见 `flux-runtime/src/validation/validators.ts`）即 isInt parity，配 `validation.integer` i18n key；同批落地 `url`（`/^https?:\/\/.+/`）与注册表驱动的 `format` kind。仍未建模的是数值范围族 `min` / `max` / `minimum` / `maximum` / `isLength`。
 
 The underlying V10 concern — _a non-numeric input must not produce contradictory validation results_ — is mapped onto the **existing** length/items rules that Flux does implement:
 

@@ -80,7 +80,7 @@
 
 > 实现落地于「新落地 renderer 响应式 successor」plan（`docs/plans/2026-06-24-2358-1-newly-landed-renderer-responsive-followups-plan.md`）。引用 M0 移动端基线（`docs/architecture/mobile-responsive-baseline.md`，断点 768px）与 M0.1 hairline 工具（`nop-hairline`，baseline §10.2）。
 
-- **分隔线迁移（M0.1 successor）**：根节点 `divide-y divide-border`（1px border 分隔）已迁移到逐项 `nop-hairline nop-hairline--bottom`（M0.1b `::after` 伪元素 + transform scale 0.5px 高 DPI 细线）。最后一个条目不输出底边（与 `divide-y` 的「条目之间」语义等价）。根节点保留外层 `rounded-md border border-border` 圆角边框。颜色经 `--nop-hairline-color`（默认 `hsl(var(--border))`）主题化，桌面/移动一致。
+- **分隔线迁移（M0.1 successor）**：根节点 `divide-y divide-border`（1px border 分隔）已迁移到逐项 `nop-hairline nop-hairline-bottom`（M0.1b `::after` 伪元素 + transform scale 0.5px 高 DPI 细线）。最后一个条目不输出底边（与 `divide-y` 的「条目之间」语义等价）。根节点保留外层 `rounded-md border border-border` 圆角边框。颜色经 `--nop-hairline-color`（默认 `hsl(var(--border))`）主题化，桌面/移动一致。
 - **小屏触摸滚动**：`list` 消费 `useIsMobile()`（阈值 768px）。小屏（< 768px）下：
   - 根容器补 `touch-pan-y`（Tailwind，`touch-action: pan-y`），保证纵向触摸滚动流畅；
   - 条目纵向 padding 从桌面 `py-2` 提升到 `py-3`，增强触摸目标高度。
