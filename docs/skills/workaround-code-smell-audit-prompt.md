@@ -174,7 +174,7 @@
 
 **裁定规则**：
 
-- 存量坐实（双通道/手抄/死声明）：P1 起评，ROI 裁定**不允许 watch-only 结案**——必须升格 CX-n 工作项或挂接既有收口轨道（现状：`docs/backlog/renderer-metamodel-roadmap.md` RM-0~RM-8）。
+- 存量坐实（双通道/手抄/死声明）：P1 起评，ROI 裁定**不允许 watch-only 结案**——必须升格 CX-n 工作项或挂接既有收口轨道（现状：`docs/backlog/renderer-metamodel-roadmap.md` RM-0~RM-12；词汇层三债挂 RM-10~12）。
 - 新增（原则 7 生效后新合入的分裂/漂移）：P0/P1，直接立案修复或回滚，不接受"以后再收"。
 - 死声明字段：删除优先于补声明（方向：删字段 + 删防御读取分支）。
 

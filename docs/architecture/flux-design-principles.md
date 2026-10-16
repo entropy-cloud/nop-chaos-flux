@@ -362,12 +362,12 @@ Flux 核心维持一个小的、稳定的抽象层。它的目标不是吞掉所
 | 死声明字段   | `RendererDefinitionShape.propSchema`（零生产声明）                                                                  | 规则 3   |
 | 双声明通道   | `fields` vs `propContracts`、`eventContracts` vs `fields(kind:'event')`、`scopeExportContracts` vs `injectedLocals` | 规则 1   |
 | 类型手抄副本 | `CompiledRendererContract` 重抄 `ValidationContributor`/`RendererValidationDefaults`                                | 规则 2   |
-| 无出口过渡态 | 收口轨道（`docs/backlog/renderer-metamodel-roadmap.md` RM-0~RM-8）之外新增的双读双写                                | 规则 4   |
+| 无出口过渡态 | 收口轨道（`docs/backlog/renderer-metamodel-roadmap.md` RM-0~RM-12）之外新增的双读双写                               | 规则 4   |
 
 ### 执行钩子
 
 - 审计：`docs/skills/workaround-code-smell-audit-prompt.md` J 类（声明分裂与漂移），含全仓 declarator 计数取证法。
-- 收口轨道：`docs/backlog/renderer-metamodel-roadmap.md`（RM-0~RM-8）。
+- 收口轨道：`docs/backlog/renderer-metamodel-roadmap.md`（RM-0~RM-12，含词汇层 RM-10~12 单标准零兼容分叉条款）。
 - 门禁棘轮：本轨道沉淀的声明单源校验、retention scanner 等新门禁入 CI 后只增不减。
 
 ---

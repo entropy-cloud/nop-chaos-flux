@@ -1,9 +1,11 @@
 # Renderer 注册元模型与编译结构收口路线图（Renderer Metamodel & Compile-Structure Roadmap）
 
-> 最后更新：2026-10-15（共识审查通过）
+> 最后更新：2026-10-15（R6 修订：增补 RM-10~RM-12 schema 词汇三债收口，共识审查 R6→R7 approved）
 > 按 `docs/skills/roadmap-and-mission-authoring-with-consensus-review.md` 流程产出；配套 mission：`missions/renderer-metamodel.json`
 > 共识审查记录：R1 `issues`（1B/2M/5m，独立 fresh 审查员，propSchema 迁移面枚举失实/预写审查通过/改名无主等）→ 修订；R2 `issues`（1B/2M/3m，独立 fresh 审查员，计数口径不可复现[66/33→66/41 勘误]/mission 字段缺口等）→ 修订；R3 `pass`（独立 fresh 审查员，25+ 点 live 抽查全命中，附 4 条非阻塞 Minor，其建议修法已逐字采纳：RM-6 补 $page 随迁注、Phases 表状态列同步注、分析报告 #7 计数口径括注、本记录即 m4 落点）。
-> 事实源：`docs/analysis/2026-10-15-renderer-definition-metamodel-review.md`（元模型冗余分析 + 静态模板/运行时实例分层核实 + raw-schema 通道盘点，下称"分析报告"）
+> R4 `approved`（RM-9 增补修订，两轮独立 fresh 审查员）：R4 `revised`（1B/3M/8m——A1~A8 悬空章节引用[报告实无 A6/A7]/scanner-baselines 计数级被误标逐条白名单/增补授权与审查记录未落字等）→ 修订（族枚举改 A1~A5、A8、B6~B7、C；白名单载体改为"RM-9 新建、形态仿 jsdom-pragma-whitelist"；Rule 增"工作项增删先报人工"条款；RM-9 预置拆分判据/排除清单括注/RM-8 承接句/mission prompts+check 字段同步）→ R5 `approved`（12/12 修正属实，零 Blocker，2 条非阻塞 Minor 其一已随落字同步）。**授权 provenance**：RM-9 增补系 2026-10-15 用户显式指令（工作项增删属人类职权，guide §Roadmap Role），RM-9 plan 拟制时授权链须引用该指令；**同 hunk 披露**：本次工作区 roadmap diff 另含并行会话在途的 RM-1 `todo→planned` 状态同步（plan 603 draft review R2 pass），非本修订所为。
+> R6 `revised` → R7 `approved`（RM-10~RM-12 增补修订，两轮独立 fresh 审查员）：R6 `revised`（4B/1M/5m——A `ActionSchema.action` 误标可选型[live 实为必填，与 Like 同为 `action: string`]/B ownership 基线漏计[26 字面量口径+12 解析实现，`crud-renderer-ownership.ts` 非三态副本]/C 事件漏枚举[全口径 180 在范围 174+dashboard .tsx 4+word-editor .ts 2]/D flux-guide 清单混 data 族[input-table 仅 3 位点]；M1 RM-11 粒度）→ 修订（事实源勘误+literal closure rg 口径入三债裁决+R1 补漏位点/排除清单收字+预置拆分判据）→ R7 `approved`（零 Blocker；12/12 修正属实，附 P1 字段清单过计[target 6 字段两接口均已有、真实差异仅 4 项]及 P2~P4 Minor，已随 R7 同批修正落字；M1 以预置拆分判据承载，审查员认可不预拆）。**授权 provenance**：RM-10~RM-12 增补系 2026-10-15 用户显式指令（"补充新的工作项用于统一 ownership 前缀分裂、itemKey/rowKey 分叉、事件类型三态"，并裁定**不考虑兼容性、只采用一个标准方案**——工作项增删属人类职权，guide §Roadmap Role）；三债的"单一标准"裁决与无兼容分叉原则即以该指令为授权链，各 plan 拟制时须引用。**同 hunk 披露**：同上（并行会话 RM-1 状态同步在途），非本修订所为。
+> 事实源：`docs/analysis/2026-10-15-renderer-definition-metamodel-review.md`（元模型冗余分析 + 静态模板/运行时实例分层核实 + raw-schema 通道盘点，下称"分析报告"）；`docs/analysis/2026-10-15-renderer-vocabulary-consistency-analysis.md`（schema 词汇三债：事件类型三态/ownership 分裂/itemKey-rowKey 分叉，下称"词汇报告"，RM-10~RM-12 的 Owner 事实源）
 > 先例：`docs/backlog/component-audit-roadmap.md`（工作项=plan、successor 拆分）、`docs/backlog/workaround-code-smell-audit-roadmap.md`（WA 台账、判别变异纪律）、CX-16~18（共性重构的 full-green + 判别验证基线）
 
 ## 授权边界（本项目）
@@ -12,19 +14,21 @@
 
 ## 选型裁定（skill 步骤 0/1）
 
-- **诊断**：本轨道不是"反复审/修仍复发"型——分析报告是首次对注册元模型做全字段消费方追踪，发现的是**结构性多通道与类型层手抄**（A1~A8/B6~B7/C 类），根因类别属"机制并行生长、缺单源收口"，非"修实例不修类别"或"门禁缺失"（contract-honesty / schema-prop-coverage / hardcoded-type-dispatch 三门禁已在位）。
-- **选型**：**线性 roadmap**（覆盖面/结构收口型）。不选持续闭环：终态有明确边界（死字段清零、双声明通道单源化、类型副本消灭、raw-schema 政策落字），不需要自驱动飞轮。门禁棘轮以 Cross-Cutting"只增不减"条款承载。
+- **诊断**：本轨道不是"反复审/修仍复发"型——分析报告是首次对注册元模型做全字段消费方追踪，发现的是**结构性多通道与类型层手抄**（A1~A5、A8、B6~B7、C 类），根因类别属"机制并行生长、缺单源收口"，非"修实例不修类别"或"门禁缺失"（contract-honesty 门禁测试、schema-prop-coverage 入 `pnpm check` 聚合链、hardcoded-type-dispatch 独立命令在位未入聚合链——三门禁已存在）。词汇报告所钉三债（RM-10~12）与之**同根因类别**：同一语义的多词表/多类型形态/多 hook 副本并行生长，缺单源收口。
+- **选型**：**线性 roadmap**（覆盖面/结构收口型）。不选持续闭环：终态有明确边界（死字段清零、双声明通道单源化、类型副本消灭、raw-schema 政策落字、收口判定工具化），不需要自驱动飞轮。门禁棘轮以 Cross-Cutting"只增不减"条款承载。
 
 ## 目的
 
-本文件是"Renderer 注册元模型 + 编译结构收口"轨道的阶段索引与状态面，按 `docs/backlog/00-roadmap-authoring-guide.md` 拟制：AI 或维护者读完 Phase Status 即知哪些工作项未开始（`todo`）、已立 plan（`planned`）、已完成（`done`）。本文是编排层，**不是 execution plan、不是设计文档**；事实与论证看分析报告，执行纪律看 plan guide。
+本文件是"Renderer 注册元模型 + 编译结构收口"轨道的阶段索引与状态面，按 `docs/backlog/00-roadmap-authoring-guide.md` 拟制：AI 或维护者读完 Phase Status 即知哪些工作项未开始（`todo`）、已立 plan（`planned`）、已完成（`done`）。本文是编排层，**不是 execution plan、不是设计文档**；事实与论证看事实源报告（声明结构层=分析报告、词汇层=词汇报告），执行纪律看 plan guide。轨道于 2026-10-15 经用户显式指令扩展纳入 schema **词汇层**三债收口（RM-10~RM-12，事实源为词汇报告），与原声明结构/编译结构主线同轨编排（同根因类别、同验证纪律）。
 
-终态定义（四条，全部达成即轨道收口）：
+终态定义（六条，全部达成即轨道收口）：
 
 1. `RendererDefinitionShape` 无死字段、无平行声明通道：每个 schema prop 的事实（分类 kind、值形状、tooling 元数据）**单源声明**；scope 符号（注入/导出契约）单源声明。
 2. 类型层零手抄副本：`CompiledRendererContract` 等编译面类型全部派生自声明层子集，新增字段编译期必现漂移错误。
 3. "编译期静态模板 ↔ 运行时实例"分层由类型钉住：`TemplateNode` 只读、模板零运行时写入从纪律升级为编译约束；框架内部 raw schema 读迁清或按政策钉面。
 4. runtime schema-retention policy 有 owner 文档，12 条 raw 通道逐条裁决（契约保留钉面 / 迁移编译产物 / 删除），无未裁决通道。
+5. 收口判定工具化：分析报告全部问题族编码为可执行启发式规则族，全仓扫描零"未裁决命中"（每命中只能是已修复或登记裁决白名单，白名单只减不增），"重构是否全部完成"由机器可复现的报告与 exit code 判定，不依赖人工记忆。
+6. **schema 词汇单源**（RM-10~12）：事件字段类型单一形态（`ActionSchema | ActionSchema[]`——单值文件集==词汇报告 §债一显式排除的 4 文件、零 `BaseSchema` 事件误型）、ownership 单一类型/词表/hook 原语（三态字面量文件集==`OwnershipMode` 定义文件、别名类型 `ListPaginationOwnership` 删除、`kanbanOwnership` 松型与组件名前缀清零、三态解析实现集==原语文件）、数组容器行键单一命名（`itemKey`——input-table 相关 `rowKey` 归零）——各债以词汇报告裁决节的 literal closure 口径 rg 验证 + 全绿为达成证据；无兼容分叉（不留别名/双读过渡层）。
 
 ## Phase Status
 
@@ -40,6 +44,10 @@
 - RM-6. scope 符号单源化（scopeExportContracts+injectedLocals 合并）: `done`（plan `docs/plans/608-rm6-scope-symbol-plan.md`，closure audit agent_444d83fc approved 2026-10-16；injectedLocals 条目单载体[Omit<SymbolInfo,'name'> & {shape?}]、crud+form 双写迁移、scopeExportContracts 通道删除、authoring scopeExports 切 helper[恒等探针 deepStrictEqual]；pushInjectedLocalSymbols 读法零变更）
 - RM-7. 编译结构只读硬化 + 框架内部 raw schema 读迁移（name/modalContainer）: `done`（plan `docs/plans/609-rm7-readonly-raw-read-plan.md`，closure audit agent_8ca6c622 approved 2026-10-16；TemplateNode 30 成员 readonly+node-compiler 构造期折叠、#2 name 迁 resolved 通道[表达式 name 行为差钉]、#3 modalContainer 迁 compiled root canonical schema copy[行值再裁决]、owner-doc 前提勘误两处）。【scope 勘误 2026-10-16,plan 609 R1 M4:`schema/NodeState` 只读补全不可落地——NodeState 被 node-runtime 六处运行时写（解析缓存/依赖集），schema 顶层已由规范化拷贝提供 compile-once 语义；本项实际交付=TemplateNode 30 成员 readonly 补全】
 - RM-8. renderer 契约面 raw-schema 通道按政策收口（公开 API 六通道）: `done`（plan `docs/plans/610-rm8-raw-channel-guard-plan.md`，closure audit agent_f461dc8b approved 2026-10-16；六通道全契约保留的落地形态=Retained channel register 钉面[#1/#6/#7/#12 实标+覆盖边界]+scanner 守卫[enforcement exit 语义/include 扩框架包/12 处 retained(#N) 标记/入 check 链]）
+- RM-9. 启发式残余扫描 + 收口判定工具（规则族编码→全仓扫描→零未裁决命中判定）: `done`（plan `docs/plans/611-rm9-residue-scan-plan.md`，closure audit agent_851591a3 approved 2026-10-16；16 条规则族+双段基线[suppressions 12/registry 4]+enforcement 扫描器入 check 链；终态条件 5 达成=零未裁决命中机器判定；Deferred：§5.3 机器化待人工确认、A8 零消费载体 successor）
+- RM-10. 事件字段类型单源化（三态归一 `ActionSchema | ActionSchema[]` + ActionSchemaLike 对偶删除）: `todo`
+- RM-11. ownership 词表与实现单源化（OwnershipMode 单类型 + `<axis>Ownership` 词表 + hook 原语合一）: `todo`
+- RM-12. 数组容器行键统一 `itemKey`（input-table `rowKey` 改名 + flux-guide 同步）: `todo`
 
 ## 框架/平台复用
 
@@ -50,6 +58,7 @@
 - **判别变异纪律**（CX-17/18 先例）：行为面改动的"先红后绿 + 外科手术式恢复"验证法。
 - **`defineRendererFamily` builder**：RM-3/4 迁移 66 个声明文件时的批量改写辅助。
 - **roadmap/mission 运行机制**：mission runner + plan guide 的 draft review / closure audit 链。
+- **启发式 scanner 族与登记制**：`scripts/audit/` 18 个 `find-*.mjs` 扫描器（含 `find-runtime-raw-schema-reads`、`find-hardcoded-type-dispatch`）、`check:scanner-baselines` 计数级数值基线（`scripts/baselines/scanner-baselines.json`，只比计数不比条目、超基线即红）、逐条白名单先例 `scripts/baselines/jsdom-pragma-whitelist.json`（`entries` + `_header.adjudication`，新增条目即红、`--update-baselines` 收窄）、`contract-honesty.ts`（flux-core）、`check:schema-prop-coverage`——RM-9 的规则族基座；逐条裁决白名单是 RM-9 须新建的载体（形态仿 jsdom 白名单），不重建扫描器本体。
 
 ## 当前基线（与分析报告对齐，2026-10-15）
 
@@ -57,20 +66,25 @@
 - `CompiledRendererContract` 手抄 `ValidationContributor`/`RendererValidationDefaults`/`ScopePolicy`（compiled-renderer-contract.ts:12-24）；registry `component` 必填仅运行时 throw、类型 optional；`RendererDefinition` 重复声明 `type`。
 - 帧族 4 层（wrap/frameRootTag/frameWrap + schema 覆盖 + meta 解析），`FrameWrapMode` boolean 双词表，definition.frameWrap 走 metaProgram 间接、wrap 直读。【勘误 2026-10-15,RM-2/plan 604 live 重枚举:definition.frameWrap 实为零消费死声明(无 metaProgram 种子注入、无运行时读取点,B3 语义从未生效),plan 604 以 resolver 第三入参使其单路径生效】
 - 模板零运行时写入（grep 证），但无 freeze、`Readonly<>` 不完整；框架内部 raw schema 读 4 处（name/modalContainer/\_schema 死变量/getNodeSchemaFrameWrap 死函数），公开 API raw 通道 6 条，无 retention policy owner 文档；plan 132（归档）仅收口 data-source/reaction 两条。
+- **词汇层三债**（词汇报告 §债一~三，rg 口径见该报告"统一口径"节，2026-10-15 实测、共识审查 R1 勘误后口径——全 packages、.ts+.tsx、全键名）：事件字段类型三态——`ActionSchema | ActionSchema[]` 81 成员/14 文件（标准形态）、`ActionSchema` 单值 180 成员/29 文件（在范围 174 = flux-renderers-\* 168 + dashboard .tsx 4 + word-editor .ts 2，`kind:'event'` 已核；显式排除 6 处非事件单 action 字段）、`BaseSchema` 误型 12 处（data/schemas.ts）；ownership——三态字面量 26 处/10 文件 + 别名类型 `ListPaginationOwnership` 1 处、字段前缀 12 种、`kanbanOwnership?: string` 松型 1 处、三态解析实现 12 处（`useScopeSelector`∧`'controlled'` 11 + use-row-drag-sort 变体；原"3+1 份 hook"口径作废）；行键——`itemKey`（array-field+combo）与 `rowKey`（input-table 唯一孤例）分叉于同一 `composite-schemas.ts`。
 
 ## Phases 表
 
-| 工作项                     | 状态   | Owner 事实源                          | 依赖       | 复用                                       | Plan                                                     |
-| -------------------------- | ------ | ------------------------------------- | ---------- | ------------------------------------------ | -------------------------------------------------------- |
-| RM-0 政策与基线            | `done` | 分析报告 §5.4 + `renderer-runtime.md` | 无         | 既有文档骨架                               | [602](../plans/602-rm0-retention-policy-plan.md)         |
-| RM-1 类型层收口            | `done` | 分析报告 A1/B6/B7/C                   | RM-0       | contract 门禁                              | [603](../plans/603-rm1-type-layer-plan.md)               |
-| RM-2 帧族收敛              | `done` | 分析报告 A5；plan 460 B3 语义         | RM-1       | strict validation 语料、判别变异           | [604](../plans/604-rm2-frame-family-plan.md)             |
-| RM-3 双声明合并·一         | `done` | 分析报告 A2/A3                        | RM-1       | schema-prop-coverage、defineRendererFamily | [605](../plans/605-rm3-field-contract-dual-read-plan.md) |
-| RM-4 双声明合并·二         | `done` | 同上                                  | RM-3       | contract-honesty、validate-pages --strict  | [606](../plans/606-rm4-propcontracts-removal-plan.md)    |
-| RM-5 事件契约单源化        | `done` | 分析报告 A3                           | RM-4       | contract-honesty                           | [607](../plans/607-rm5-event-contract-plan.md)           |
-| RM-6 scope 符号单源化      | `done` | 分析报告 A4                           | RM-3       | symbol-helpers 测试                        | [608](../plans/608-rm6-scope-symbol-plan.md)             |
-| RM-7 只读硬化+raw 读迁移   | `done` | 分析报告 §5.2/5.4 #2#3                | RM-0       | node-runtime 解析缓存管线                  | [609](../plans/609-rm7-readonly-raw-read-plan.md)        |
-| RM-8 公开 API raw 通道收口 | `done` | RM-0 裁决表 §5.4 #7~#12               | RM-0、RM-7 | plan 132 先例                              | [610](../plans/610-rm8-raw-channel-guard-plan.md)        |
+| 工作项                          | 状态   | Owner 事实源                                       | 依赖       | 复用                                              | Plan                                                     |
+| ------------------------------- | ------ | -------------------------------------------------- | ---------- | ------------------------------------------------- | -------------------------------------------------------- |
+| RM-0 政策与基线                 | `done` | 分析报告 §5.4 + `renderer-runtime.md`              | 无         | 既有文档骨架                                      | [602](../plans/602-rm0-retention-policy-plan.md)         |
+| RM-1 类型层收口                 | `done` | 分析报告 A1/B6/B7/C                                | RM-0       | contract 门禁                                     | [603](../plans/603-rm1-type-layer-plan.md)               |
+| RM-2 帧族收敛                   | `done` | 分析报告 A5；plan 460 B3 语义                      | RM-1       | strict validation 语料、判别变异                  | [604](../plans/604-rm2-frame-family-plan.md)             |
+| RM-3 双声明合并·一              | `done` | 分析报告 A2/A3                                     | RM-1       | schema-prop-coverage、defineRendererFamily        | [605](../plans/605-rm3-field-contract-dual-read-plan.md) |
+| RM-4 双声明合并·二              | `done` | 同上                                               | RM-3       | contract-honesty、validate-pages --strict         | [606](../plans/606-rm4-propcontracts-removal-plan.md)    |
+| RM-5 事件契约单源化             | `done` | 分析报告 A3                                        | RM-4       | contract-honesty                                  | —                                                        |
+| RM-6 scope 符号单源化           | `done` | 分析报告 A4                                        | RM-3       | symbol-helpers 测试                               | —                                                        |
+| RM-7 只读硬化+raw 读迁移        | `done` | 分析报告 §5.2/5.4 #2#3                             | RM-0       | node-runtime 解析缓存管线                         | —                                                        |
+| RM-8 公开 API raw 通道收口      | `done` | RM-0 裁决表 §5.4 #7~#12                            | RM-0、RM-7 | plan 132 先例                                     | —                                                        |
+| RM-9 启发式残余扫描+收口判定    | `done` | 分析报告全族（A1~A5、A8、B6~B7、C、§5.2/5.4）      | RM-1~RM-8  | scanner 族、计数基线/白名单先例、contract-honesty | [611](../plans/611-rm9-residue-scan-plan.md)             |
+| RM-10 事件字段类型单源化        | `todo` | 词汇报告 §债一（rawEventPlans 联合型事实源）       | RM-1       | typecheck 全量枚举、rg 零命中口径                 | —                                                        |
+| RM-11 ownership 词表+实现单源化 | `todo` | 词汇报告 §债二（26 字面量+1 别名类型+12 解析实现） | RM-1       | WA-layout-001 收敛先例、rg/typecheck 枚举         | —                                                        |
+| RM-12 行键统一 `itemKey`        | `todo` | 词汇报告 §债三（composite-schemas 行键分叉）       | RM-1       | 三渲染器内部已 item 命名、flux-guide 同步         | —                                                        |
 
 ## Phase Details（交付范围，无实现步骤）
 
@@ -83,6 +97,10 @@
 - **RM-6 scope 符号单源化**：`scopeExportContracts`+`injectedLocals` 合并为单条目（符号 kind + FluxValueShape 同载体）；`pushInjectedLocalSymbols` 与 `resolveRendererAuthoringContract` 适配；crud/form 两处声明迁移；若 plan 裁定删除 injectedLocals 方向，`page` 的 `$page` injectedLocals 位点（`basic-renderer-definitions.ts`，非双写但属同通道）必须随合并迁移（以 live 枚举为准，R3 m1）。
 - **RM-7 只读硬化+raw 读迁移**：`TemplateNode`/`schema`/`NodeState` 只读类型补全（类型层，零深拷贝、零运行时成本）；`node-renderer-resolved.tsx:410` 的 raw `schema.name` 读迁移到 resolved 通道；`schema-renderer.tsx` modalContainer 读迁移到编译产物（root plan 或 metaProgram，plan 内定）。
 - **RM-8 公开 API raw 通道收口**：按 RM-0 裁决表执行 #7~#12 六通道（`RendererComponentProps.schema`、renderFragment SchemaInput 分支、dispatch/executeSource raw 重载、evaluate raw、imports raw spec）——每通道落地其裁决值：契约保留则钉文档+守卫（禁止新增 raw 读的 scanner 级门禁），迁移则设计编译产物替代物。**预置拆分判据（R1 m2）：裁决为"迁移/删除"的通道 ≥2 时，默认按通道组预拆 successor plan（经人工确认），不等待执行中证实超宽。**
+- **RM-9 启发式残余扫描 + 收口判定**：把分析报告问题族（A1~A5、A8、B6~B7、C、§5.2/5.4 偏差、RM-0 裁决表结果；显式排除清单所列 C 表 3 小项按裁决白名单登记，不计未裁决）编码为可声明扩展的启发式规则族（规则与豁免分离），全仓扫描产出"可能仍有问题"清单（逐条 `文件:行` + 规则族标签）；每命中二值处置——已修复，或登记裁决白名单（附理由，白名单只减不增）；"零未裁决命中"即轨道收口判定（终态条件 5），报告与 exit code 机器可复现，判定入口入 `pnpm check` 链。规则族可向同族兄弟位点模式外推；外推发现的分析报告未枚举新族不得静默并入，按 Rule 报人工追加 successor。既有 scanner 规则（contract-honesty、raw-schema、schema-prop-coverage）与 RM-8 交付的 scanner 级门禁一并纳入规则清单，不重建、不重复定义。**预置拆分判据（镜像 R1 m2）：凡不能从分析报告直接转写、须先补独立分析或新设计的规则族，默认按族预拆 successor plan（经人工确认），不在执行中静默缩水。**
+- **RM-10 事件字段类型单源化**：全部事件通道字段声明类型统一为 `ActionSchema | ActionSchema[]`（词汇报告 §债一裁决 1：以 `node-compiler.ts:127` `rawEventPlans` 联合型为事实源）——在范围 174 处单值放宽（全口径 `\?: ActionSchema;` 180 处 − 显式排除 6 处非事件单 action 字段[flux-code-editor `SQLExecutionConfig.executeAction` + data 包 5 处内部 save prop，排除文件 4 个]；174 含 dashboard .tsx 4、word-editor .ts 2 两组 R1 补漏位点，`kind:'event'` 注册已核）+ data/schemas.ts 12 处 `BaseSchema` 误型改联合型（逐处复核 `kind:'event'` 归属，新发现非事件位点须显式登记排除，不得静默留单值）；删除 `ActionSchemaLike` 对偶（`flux-core/types/schema.ts`）并入 `ActionSchema`——**两类型同为 `action: string` 必填、并入保持必填**（R1 勘误：原"取可选"方案作废），字段集差异取 ActionSchema 超集（仅多 preventDefault/stopPropagation/messages/confirmText 4 项可选附加；target 6 字段两接口均已有——R2 勘误），6 处消费位点（`BaseSchema.onMount/onUnmount`、`ReactionSchema.actions`、`loadAction`、`SourceActionSchema`、`FormulaDataSourceSchema`、form 包 `TreeSourceConfig`）随迁，`ActionShapeLikeFields` 是否保留窄化基接口由 plan 裁定。类型层改型，零运行时影响。收口验证：词汇报告 §债一裁决 1 的 literal closure command（单值文件集 == 4 个排除文件）+ `\?: BaseSchema;` 事件误型归零 + 联合型基数 81→267 复核 + typecheck 全量枚举 + 全绿。**flux-core 属保护区域，plan 执行前落字授权链。**
+- **RM-11 ownership 词表与实现单源化**：（1）共享类型 `OwnershipMode = 'local'|'controlled'|'scope'` 单源导出（落点 flux-core `types/`，plan 裁定并报授权）→ 全部 26 处三态字面量改引用（R1 勘误口径：全键名含小写形参，原 19 处为子集），**别名类型 `ListPaginationOwnership`（data/schemas.ts:284）删除并入**；`kanbanOwnership?: string` 收窄为 `OwnershipMode`。（2）词表唯一模式 `<axis>Ownership` + `<axis>StatePath`，`kanbanOwnership/kanbanStatePath` 无兼容改名 `boardOwnership/boardStatePath`；axis 词表入 naming-conventions §4.8。（3）**12 处三态解析实现**（R1 勘误：原"3+1 份 hook"作废——`crud-renderer-ownership.ts` 实为零三态解析的管线代码；解析副本=calendar/kanban/list-pagination 域特化 + `use-table-*`×4/`use-column-resize`/`use-row-drag-sort`/`tabs.tsx` axis 内联 + value-ownership/interaction-owner 候选原语）收敛为**一个共享 ownership 原语**（含 `resolveOwnershipMode` scope 降级 + 泛型轴值读写语义），落点 flux-react（plan 裁定），全部迁移为原语消费方、解析副本删除（WA-layout-001 跨包化）。收口验证：词汇报告 §债二裁决 1/2/3 三条 literal closure 口径（三态字面量文件集==`OwnershipMode` 定义文件；`useScopeSelector`∧`'controlled'` 实现集==原语文件，plan 内豁免须逐条报人工；`kanbanOwnership|kanbanStatePath` 全命中改名——`packages flux-guide` 全命中含注释/type test 均在范围，仅 docs 叙述位点豁免）+ 全绿。**预置拆分判据（镜像 R1 m2）：类型词表组（裁决 1/2）与实现合一组（裁决 3）若证实超一个 plan 宽度，按族预拆 successor（经人工确认），不静默缩水。公开导出增补（flux-core/flux-react）属结构性重构，plan 执行前落字授权链。**
+- **RM-12 数组容器行键统一 `itemKey`**：`InputTableSchema.rowKey`（composite-schemas.ts:116）→ `itemKey`；`input-table-renderer.tsx` 读取路径（`:74-76`）、prop 覆盖声明（`:305` key `'rowKey'`）与 `:102` 警告文案随改；`array-container-controller.ts:68` 注释去除 `'rowKey'` 并列；flux-guide 同步**仅 input-table 相关 3 位点**（R1 勘误后清单：`flux-types/schema.d.ts` InputTableSchema.rowKey（2026-10-15 快照 :1474，regenerate 后以 live 为准）再生成、`design-patterns/combo-input-table.md:201`、`examples/business-document-formula.md:68`；`table.md`/`crud.md`/`list.md`/`master-detail.md` 等为 data 族行标识 `rowKey`，不在范围）；测试 fixtures/断言以 typecheck+test 全量枚举为准。三渲染器内部已用 `itemKeyField` 局部命名，本项是 schema 面收敛，非行为改动。收口验证：词汇报告 §债三收口口径（`rg rowKey` 于 form-advanced src + flux-guide 中 input-table 相关命中归零；data 族行标识与 `__rowKey` 为预期保留）+ 全绿。**data 族行标识 `rowKey`（TableSchema/CrudSchema/list，语义=记录身份、非列字段）是否并入同一单标准，plan 内 live 枚举全部位点后报人工裁决，不静默并入、不静默排除。**
 
 ## 依赖图
 
@@ -97,9 +115,20 @@ graph TD
     RM4 --> RM5[RM-5 事件契约单源化]
     RM3 --> RM6[RM-6 scope符号单源化]
     RM7 --> RM8
+    RM1 --> RM9[RM-9 启发式残余扫描+收口判定]
+    RM2 --> RM9
+    RM3 --> RM9
+    RM4 --> RM9
+    RM5 --> RM9
+    RM6 --> RM9
+    RM7 --> RM9
+    RM8 --> RM9
+    RM1 --> RM10[RM-10 事件字段类型单源化]
+    RM1 --> RM11[RM-11 ownership词表+实现单源化]
+    RM1 --> RM12[RM-12 行键统一itemKey]
 ```
 
-执行顺序 = Phase Status 列表顺序（RM-0 → RM-8）；依赖图与列表冲突时以列表为准。
+执行顺序 = Phase Status 列表顺序（RM-0 → RM-12）；依赖图与列表冲突时以列表为准。RM-9 的扫描范围限分析报告问题族（终态条件 5）；RM-10~12 为第二事实源（词汇报告）三族，自持 rg 零命中验证（终态条件 6），不并入 RM-9 白名单体系。
 
 ## Cross-Cutting（全程约束）
 
@@ -107,16 +136,20 @@ graph TD
 2. **静态快照体积不增**：`CompiledRendererContract` 改造与字段条目合并均不得增加每节点编译快照的存储面（编译期展开后模板只存结果）。
 3. **双写禁止**：RM-3~RM-6 过渡期允许编译器/门禁双**读**，声明面禁止长期双写——每个合并项的阶段二收口后旧形态必须删除，不允许"事实上转正"。
 4. **保护区域与授权**：flux-core/src、renderer definition fields、schema validation 均为 plan-first；公开导出增删在 plan 执行前落字人工授权链（CX-18 先例）。
-5. **验证基线**：每个工作项收口 = `pnpm typecheck`/`build`/`lint`/`test` 全绿 + `pnpm check` 零新增红（登记制，披露继承红）+ 契约门禁零豁免新增；行为面项（RM-2/4/5/7）加判别变异；e2e 未重跑须在 plan 与提交信息中披露。提交格式与 mission 逐字符一致：`refactor(renderer-metamodel): <description>`。
-6. **门禁棘轮**：本轨道沉淀的新门禁（retention scanner、单源声明校验）入 CI 后只增不减，弱化需人工确认。
+5. **验证基线**：每个工作项收口 = `pnpm typecheck`/`build`/`lint`/`test` 全绿 + `pnpm check` 零新增红（登记制，披露继承红）+ 契约门禁零豁免新增；行为面项（RM-2/4/5/7）加判别变异；e2e 未重跑须在 plan 与提交信息中披露。RM-9 收口另以"零未裁决命中"判定报告为证据（终态条件 5）。提交格式与 mission 逐字符一致：`refactor(renderer-metamodel): <description>`。
+6. **门禁棘轮**：本轨道沉淀的新门禁（retention scanner、单源声明校验、RM-9 残余扫描规则族）入 CI 后只增不减，弱化需人工确认；RM-9 白名单登记条目只减不增，新增豁免需人工确认。
+7. **单标准、零兼容分叉（RM-10~12）**：三债只采用一个标准方案——不设别名导出、不设双读过渡层、不保留旧字段名（用户显式指令 2026-10-15）；迁移为直接改型/改名。与本条冲突的"渐进兼容"提案须报人工推翻本条方可实施。
 
 ## 显式排除清单（R1 m5：防"静默遗漏"误读）
 
 分析报告 C 表以下小项**不在本轨道收口范围**，理由：纯外观/低风险类型松动，与单源化主线无行为耦合——`events` 通道 `| undefined` 值类型、`defineRendererFamily` 双重断言、Shape 28 字段分组注释。`RendererResolvedProps` Omit 清单 frameWrap 漏项已并入 RM-0 钉面（不单独立项）。后续如需处理，单独立 plan，不顺手搭车。
 
+词汇报告显式排除清单（§债一~三末节）同为本轨道范围外：非事件单 action 字段 6 处（RM-10 排除文件 4 个：code-editor `SQLExecutionConfig.executeAction` + data 包 5 处内部 save prop）、scheduling onMount 双通道派发（正确性缺陷非命名债）、数据行 `__rowKey` 兼容键（数据形状非 schema 命名）、`effectiveOwnership` 局部变量、ownership 各 axis 的语义合并（只统一词形不改行为）、variant/disabled/value 等其他词汇漂移（未点名，需处理单独立项）。**均不静默并入 RM-10~12。** 另：data 族行标识 `rowKey`（TableSchema/CrudSchema/list）不默认在 RM-12 范围内也不默认排除——plan live 枚举全部位点后报人工裁决是否并入单标准，裁决前维持现状。
+
 ## Rule
 
 - 拟制与更新依 `docs/backlog/00-roadmap-authoring-guide.md`；本文件的任何修订（工作项增删/重排/范围变更）必须经独立 fresh 子 agent 共识审查至通过（skill 常设纪律），审查记录追加至 Header。
 - 状态只改 Phase Status；先例与状态语义以 guide 为准。
-- 事实论证不在本文重复——引用分析报告章节号；分析报告勘误时本文同步核对受影响工作项。
+- 事实论证不在本文重复——引用事实源报告章节号（分析报告=声明结构层、词汇报告=词汇层，见 Header 事实源行）；任一报告勘误时本文同步核对受影响工作项。
 - 本文行号锚点（如 `contract-honesty.ts:438-450`）为拟制时点快照，各工作项 plan 拟制时必须对 live code 重新枚举，不得照抄（R2 m6）。
+- AI 不得发明或重排工作项：工作项增删先报人工确认，随后按共识审查纪律（本文件首条 Rule）审查至通过（`docs/backlog/00-roadmap-authoring-guide.md` §Roadmap Role）。

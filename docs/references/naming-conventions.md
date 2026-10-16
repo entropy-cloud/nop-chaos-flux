@@ -3,7 +3,7 @@
 > Status: active
 > Owner: components-improvement mission / X3
 > Source: `docs/components/existing-components-improvement-roadmap.md`（X3）、`docs/components/existing-components-improvement-analysis.md` §0.2 / §5
-> Related: `docs/architecture/field-binding-and-renderer-contract.md`（Rule 10 / Frozen Contract Matrix）、`docs/architecture/styling-system.md`（CSS 类名，与本基线职责区分）
+> Related: `docs/architecture/field-binding-and-renderer-contract.md`（Rule 10 / Frozen Contract Matrix）、`docs/architecture/styling-system.md`（CSS 类名，与本基线职责区分）、`docs/backlog/renderer-metamodel-roadmap.md` RM-10~RM-12 + `docs/analysis/2026-10-15-renderer-vocabulary-consistency-analysis.md`（词汇报告，三债单一标准裁决的 Owner 事实源）
 
 ## Purpose
 
@@ -110,6 +110,7 @@
 - **schema 侧**：declarative action 字段保留 `on*` 命名（`onClick`/`onChange`/`onSubmit`/`onFocus`/`onBlur`/...），进入 `events.*` 通道。
 - **renderer 句柄侧**：renderer 从 `props.events.onXxx` 读取（见 `integrating-third-party-components.md` "Native DOM-style events"）。
 - **不发明 `xxxEvent`/`onXxxHandler` 平行命名**：`onClick` 即可，不再造 `clickEvent`。
+- **声明类型单一形态（RM-10）**：schema 侧事件字段类型一律 `ActionSchema | ActionSchema[]`（单值可赋给联合；不写裸 `ActionSchema` 单值、更不得误写 `BaseSchema`）。事实源：编译器 `rawEventPlans`（`flux-compiler/src/schema-compiler/node-compiler.ts:127`）。action 形状类型唯一（`ActionSchema`，无 `ActionSchemaLike` 对偶）。见词汇报告 §债一。
 - **可阻止事件**：按 Flux 事件系统设计 preventDefault 语义（X2 已落地）。action 节点声明 `preventDefault?: boolean | string` / `stopPropagation?: boolean | string`，与 DOM API 同名（不发明新词），与既有 `when` 字段同形（boolean | 表达式 string）。runtime 在 dispatch 前 sync 求值并调用 native `event.preventDefault()`/`stopPropagation()`。不采纳 amis `rendererEvent` 兼容层（见 `docs/components/existing-components-improvement-analysis.md` §2.8 + `docs/architecture/renderer-runtime.md` "Schema-Driven Prevention"）。
 
 ### 4.5 region / fragment
@@ -129,11 +130,26 @@
 - **唯一例外**：用户交互驱动的按需加载（如 tree `childrenSource` 在点击展开时触发）是合法的——数据加载由用户行为触发，非组件挂载自动发起。
 - 相关分析：`docs/bugs/15b-component-level-initfetch-analysis-and-fix.md`
 
+### 4.8 值归属（ownership）字段
+
+- **唯一模式**：`<axis>Ownership?: 'local' | 'controlled' | 'scope'` + 配套 `<axis>StatePath?: string`（scope 归属的绑定路径）。axis = 被拥有的能力名词，不写组件名前缀。
+- **受控词表**：`value` / `items` / `pagination` / `selection` / `sort` / `filter` / `order` / `columnWidths` / `collapsed` / `view` / `date`（既有 axis）/ `board`（RM-11 改名 `kanbanOwnership` 后生效的新 axis）。词表只增不改名。
+- **共享类型**：三态联合不内联书写，引用单一导出类型 `OwnershipMode`（落点与导出面以 RM-11 plan 为准）。
+- **实现单源**：ownership 读写走共享 hook 原语（RM-11 收敛后唯一），各包不得再留本地副本。`scope` 无 `statePath` 降级 `local` + dev warn 语义随原语携带。
+- 禁止违例（词汇报告 §债二）：`kanbanOwnership`（组件名前缀，应为 `boardOwnership`）、`Ownership?: string`（松型未收窄）。
+- 例外：`effectiveOwnership` 为 hook 内局部变量，不属 schema 词汇，不受本节约束。
+
+### 4.9 数组容器行键（itemKey）
+
+- **唯一字段名**：`itemKey?: string`——数组容器族（array-field / combo / input-table）声明行数据键字段一律 `itemKey`，**不引入 `rowKey` schema 字段**（词汇报告 §债三）。
+- 读取侧局部变量惯例同步为 `itemKeyField`（三渲染器已如此）。
+- 数据行运行时兼容键 `__rowKey`（数组元素属性）与 data 族（crud/table/list）的行标识 `rowKey`（记录身份字段，语义不同族）不属于数组容器行键字段命名，不适用本节；**data 族 `rowKey` 是否并入 `itemKey` 单标准由 RM-12 plan live 枚举后报人工裁决**（不静默并入），裁决前维持现状。
+
 ---
 
 ## 5. 新增字段审查 Checklist
 
-后续 X5/E1/E2 新增字段时，逐项过审（5–8 条）：
+后续 X5/E1/E2 新增字段时，逐项过审（5–10 条）：
 
 - [ ] **shadcn 对齐**：当语义与 `@nop-chaos/ui` prop 完全等价时，是否用了同一组词汇（而非另造 amis 风格名）？
 - [ ] **受控词表**：枚举值是否落在已有 shadcn 词表（`variant`/`size`）？如新增枚举值，是否记入本基线 §2？
@@ -143,6 +159,7 @@
 - [ ] **通道归属**：字段是否进了正确通道（`props`/`meta`/`regions`/`events`，见 `field-binding-and-renderer-contract.md` Frozen Matrix）？是否避免了散落条件属性（用 `when` 统一）？
 - [ ] **无平行词汇表**：是否避免了 `xxxExpr`/`xxxFormula`/`xxxHandler` 平行命名？是否避免了组件级 `api`/`initFetch`/`interval` 短路径（请求下沉 data-source）？
 - [ ] **出处可查**：新增映射是否能在 `packages/ui/src/index.ts` 导出或现有 design.md 找到出处（不臆造组件或 prop）？
+- [ ] **词汇三单源**：事件字段是否 `ActionSchema | ActionSchema[]` 单形态（§4.4）？ownership 字段是否 `<axis>Ownership` + `OwnershipMode` 模式（§4.8）？数组容器键字段是否 `itemKey`（§4.9，无 `rowKey`）？
 
 ---
 

@@ -141,10 +141,12 @@ describe('JsonSourceView', () => {
         type: 'page',
         defaultSchema: { type: 'page', body: [] },
         fields: [{ key: 'body', kind: 'region', regionKey: 'body' },
-        { key: 'breadcrumb', kind: 'prop', contract: { shape: { kind: 'array', item: { kind: 'unknown' } }, displayName: 'Breadcrumb' } },],
-        eventContracts: {
-          onClick: { displayName: 'Click', description: 'Root activated.' },
-        },
+        { key: 'breadcrumb', kind: 'prop', contract: { shape: { kind: 'array', item: { kind: 'unknown' } }, displayName: 'Breadcrumb' } },
+        {
+          key: 'onClick',
+          kind: 'event',
+          contract: { displayName: 'Click', description: 'Root activated.' },
+        }],
       }),
     );
     const definition = registry.get('page')!;
