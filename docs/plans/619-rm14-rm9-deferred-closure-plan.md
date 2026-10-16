@@ -1,6 +1,6 @@
 # 619 RM-14 RM-9 Deferred 收尾：A8 类型载体语义文档化（保留 `type`）+ §5.3 快照体积机器化
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-10-16
 > Source: `docs/plans/611-rm9-residue-scan-plan.md` `## Deferred But Adjudicated`（A8 类型载体收敛 + §5.3 静态快照体积机器化两条遗留）；roadmap Phase Status RM-13 行的轨道收口注（终态六条含 RM-13 补完项，均已成立）
 > Related: roadmap Cross-Cutting 2（静态快照体积不增）/ Rule 6（工作项增删人工确认）；RM-13 plan 615（`type`/`rendererType` 分叉的发现出处）
@@ -68,47 +68,47 @@ RM-9 收口时登记的两条 Deferred，经 2026-10-16 用户指令「按照你
 
 ### Phase 1 - A8 语义文档化 + RM-9 Deferred 结案
 
-Status: planned
+Status: completed
 Targets: `docs/architecture/template-instantiation-and-node-identity.md`、`docs/plans/611-rm9-residue-scan-plan.md`
 
 - Item Types: `Fix`、`Decision`、`Proof`
 
-- [ ] `template-instantiation-and-node-identity.md` 的 `TemplateNode` 成员表（`type: string` / `rendererType: string` 行）落字分叉语义注：`type` = 作者声明类型（编译失败路径保留原值，`node-compiler-helpers.ts:55/59` vs `rendererType: compileFailureRenderer.type`）；`rendererType` = 生效渲染器类型（诊断/调试工具链消费）；`component.type` 为 `rendererType` 的同值副本（RM-9/A8 裁定保留，见 RM-9 plan Deferred）；内部行身份等其余成员不受影响。
-- [ ] RM-9 plan 的 A8 Deferred 条目就地更新：保留裁定 + 文档化落点 + successor 结案（「RM-13 候选」编号已顺延为 RM-14 即本 plan）。**改写带日期与指向注**（「2026-10-16 由 RM-14/plan 619 结案」），使历史条目自洽可读（R1 m6）。
-- [ ] Proof：文档分叉描述与 live 代码逐点对应（行号引用可核）；RM-9 Deferred 更新后与 roadmap 状态一致。
+- [x] `template-instantiation-and-node-identity.md` 的 `TemplateNode` 成员表（`type: string` / `rendererType: string` 行）落字分叉语义注：`type` = 作者声明类型（编译失败路径保留原值，`node-compiler-helpers.ts:55/59` vs `rendererType: compileFailureRenderer.type`）；`rendererType` = 生效渲染器类型（诊断/调试工具链消费）；`component.type` 为 `rendererType` 的同值副本（RM-9/A8 裁定保留，见 RM-9 plan Deferred）；内部行身份等其余成员不受影响。
+- [x] RM-9 plan 的 A8 Deferred 条目就地更新：保留裁定 + 文档化落点 + successor 结案（「RM-13 候选」编号已顺延为 RM-14 即本 plan）。**改写带日期与指向注**（「2026-10-16 由 RM-14/plan 619 结案」），使历史条目自洽可读（R1 m6）。
+- [x] Proof：文档分叉描述与 live 代码逐点对应（行号引用可核）；RM-9 Deferred 更新后与 roadmap 状态一致。
 
 Exit Criteria:
 
-- [ ] 分叉语义注在案且行号可核；RM-9 A8 条目结案落字。
+- [x] 分叉语义注在案且行号可核；RM-9 A8 条目结案落字。
 
 ### Phase 2 - §5.3 快照体积机器门禁
 
-Status: planned
+Status: completed
 Targets: `packages/flux-compiler/src/compiled-snapshot-size.test.ts`（新）
 
 - Item Types: `Fix`、`Proof`
 
-- [ ] 固定代表性 fixture：合成 registry（含 fields contracts：prop/event/region/validation 条目）+ 多节点 schema（page → 容器 → 叶子，含 events/regions/validation），经 `createSchemaCompiler().compileNode` 编译。
-- [ ] 体积度量：`JSON.stringify(node, replacer省略函数值).length`（确定性、无时间/随机因素）；断言 ≤ 基线常量（基线 = 当前树实测值，写死于测试内 + 注明棘轮协议：合法增长须有意上调并在提交信息说明理由）。
-- [ ] 判别变异自证：向 fixture 注入一个使产物增长的条目 → 门禁红 → 恢复 → 绿（实录）。
-- [ ] Proof：门禁测试绿；变异自证实录在案。
+- [x] 固定代表性 fixture：合成 registry（含 fields contracts：prop/event/region/validation 条目）+ 多节点 schema（page → 容器 → 叶子，含 events/regions/validation），经 `createSchemaCompiler().compileNode` 编译。
+- [x] 体积度量：`JSON.stringify(node, replacer省略函数值).length`（确定性、无时间/随机因素）；断言 ≤ 基线常量（基线 = 当前树实测值，写死于测试内 + 注明棘轮协议：合法增长须有意上调并在提交信息说明理由）。
+- [x] 判别变异自证：向 fixture 注入两个增长节点 → 门禁红（实测 `grew to 6822 bytes (budget 5000)`）→ 恢复 → `shasum` 前 16 位与变异前一致（`5836c24d17c3d546`）→ 572/572 绿（实录）。【sha 时点勘误（audit m1）：`5836c24d…` 录取于门禁初版；终版文件经棘轮注释润色后为 `f4a81efa30001cc4`】
+- [x] Proof：门禁测试绿；变异自证实录在案。【基线实测：当前树 4,928 字节，预算定 5,000；执行中发现：①union shape 正确形态为 `anyOf` 非 `value`（对齐 crud-renderer-definition 先例）②合成 definition 需 `as unknown as` 双段断言（`FluxSchemaDefinitionShape` 无充分重叠）】
 
 Exit Criteria:
 
-- [ ] 门禁测试在 flux-compiler 套件内绿；变异自证（红→恢复→绿）实录在案。
+- [x] 门禁测试在 flux-compiler 套件内绿；变异自证（红→恢复→绿）实录在案。
 
 ### Phase 3 - RM-9 Deferred 结案 + 验证
 
-Status: planned
+Status: completed
 
 - Item Types: `Fix`、`Proof`
 
-- [ ] RM-9 plan §5.3 Deferred 条目就地更新：已机器化，指向 `compiled-snapshot-size.test.ts`（棘轮协议注明）。
-- [ ] flux-compiler 包测试全绿（focused 套件）。
+- [x] RM-9 plan §5.3 Deferred 条目就地更新：已机器化，指向 `compiled-snapshot-size.test.ts`（棘轮协议注明；带「2026-10-16 由 RM-14/plan 619 结案」日期指向注——R2 残留 Minor 同款落法）。
+- [x] flux-compiler 包测试全绿（focused 套件）。【43 文件/572 测试全绿，含新门禁 2 用例】
 
 Exit Criteria:
 
-- [ ] RM-9 §5.3 条目结案落字；flux-compiler focused 套件绿（全量五门禁属 Closure Gates，不入本 Phase——Minimum Rule 18）。
+- [x] RM-9 §5.3 条目结案落字；flux-compiler focused 套件绿（全量五门禁属 Closure Gates，不入本 Phase——Minimum Rule 18）。
 
 ## Draft Review Record
 
@@ -121,17 +121,17 @@ Exit Criteria:
 
 ## Closure Gates
 
-- [ ] A8 分叉语义注在案（owner doc + RM-9 Deferred 结案，行号可核）
-- [ ] §5.3 机器门禁在案（fixture 字节预算 + 棘轮协议 + 判别变异自证实录）
-- [ ] flux-compiler 套件全绿 + 全仓五门禁范围口径（含并行归因披露）
-- [ ] roadmap RM-14 状态流转 + daily log 条目
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据
-- [ ] `pnpm typecheck`（范围口径：flux-compiler 等 615 范围包 exit 0；全仓红=并行回归，归因披露）
-- [ ] `pnpm build`（范围口径）
-- [ ] `pnpm lint`
-- [ ] `pnpm test`（范围口径）
-- [ ] `pnpm check`
-- [ ] e2e 意图声明与披露义务落字【e2e 不适用——纯文档 + 编译期测试，无渲染行为变更】
+- [x] A8 分叉语义注在案（owner doc + RM-9 Deferred 结案，行号可核）【owner doc 成员表处分叉注（Happy path 同值/失败路径分叉/诊断消费 rendererType/勿合并）；RM-9 A8 条目结案】
+- [x] §5.3 机器门禁在案（fixture 字节预算 + 棘轮协议 + 判别变异自证实录）【基线 5,000（实测 4,928）；变异实录 grew to 6822 → 恢复 → shasum 一致 → 绿】
+- [x] flux-compiler 套件全绿 + 全仓五门禁范围口径（含并行归因披露）【43 文件/572 测试绿；typecheck/build 范围口径绿；lint 0；test 排除并行包 78/78 任务 16,568/0 FAIL；check exit 0；code-editor-handles 负载超时红=非本 plan 引入（该包零改动、单跑全绿），见括注归因】
+- [x] roadmap RM-14 状态流转 + daily log 条目【daily log 已落；roadmap planned→done + 本审计证据随收口提交同批落（audit m2 时序勘正）】
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据
+- [x] `pnpm typecheck`【范围口径：615/619 范围包联跑 exit 0；全仓 exit 1 唯一红=playground vite.config 栈深（并行 616/617 引入，审计员 stash 实验在无 615 改动 HEAD 复现；本 plan 两次最小修复尝试证明根因在 rolldown-babel 插件类型组合非单行可解，触碰已回退）】
+- [x] `pnpm build`【范围口径：615/619 范围包逐一 OK；全仓 exit 2 唯一红=并行已提交 xlang-debug 2 处 TS 错误（非本 plan）】
+- [x] `pnpm lint`【exit 0】
+- [x] `pnpm test`【范围口径：排除并行 xlang 包 78/78 任务全绿 = 16,568 passed/1,804 文件/0 FAIL；本批唯一负载红=code-editor-handles 1 用例 5000ms 超时（该包本 plan 零改动[仅并行 617 改过 extensions/base.ts]、单跑 111/111 绿 1692ms——负载型超时非本 plan 引入）】
+- [x] `pnpm check`【exit 0（整链，含 RM-9 零未裁决命中）】
+- [x] e2e 意图声明与披露义务落字【e2e 不适用（纯文档 + 编译期测试）；已在 plan、日志与提交信息披露】
 
 ## Deferred But Adjudicated
 
@@ -144,7 +144,16 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: （收口时填写）
+Status Note: RM-9 两条 Deferred 按用户授权（「按照你认为最合适的方式执行」）收尾落地——A8 改判「保留 `type` + owner doc 分叉语义文档化」（RM-13 发现 `type`/`rendererType` 编译失败路径分叉否证纯冗余前提，删除丢失第一 class 便利访问点），RM-9 plan A8 条目就地结案（successor 结案）；§5.3 以 `compiled-snapshot-size.test.ts` fixture 字节预算门禁机器化（基线 5,000/实测 4,928，棘轮协议 + 判别变异自证实录），RM-9 plan §5.3 条目就地结案（`landed`）。至此 RM-9 的两条 Deferred 全部结案，roadmap 遗留登记清零。
+
+Closure Audit Evidence:
+
+- Auditor / Agent: agent_e822a78c-fb57-49db-9a18-667c8a3904f3（独立 fresh session closure auditor）
+- Evidence: `approved`（零 Blocker/零 Major/3m 收口落字项）。审计员独立复现：判别变异（注入两节点 → 门禁红 `grew to 6622 bytes`）→ 恢复 → sha 复原 → 2/2 绿；七条收口口径 + 作用域 block 独立复跑满足；A8 改判诚实性核验（分叉实锤逐行 + 零读取双证 + 授权链在案）；范围口径诚实性核验（flux-compiler 572 绿、范围包 typecheck 0、code-editor 111/111 单跑绿[负载超时归因如实]）。3m：m1 sha 时点勘误（已补终版 sha 注）、m2 Gate 措辞时序（已改）、m3 提交禁 full-green（已用 [范围口径] 限定）。
+
+Follow-up:
+
+- no remaining plan-owned work（`component.type` 收缩与多语料基线扩展为 Non-Blocking Follow-ups，非本 plan 范围）
 
 Closure Audit Evidence:
 

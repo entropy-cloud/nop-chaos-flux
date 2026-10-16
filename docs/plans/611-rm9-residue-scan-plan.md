@@ -156,16 +156,15 @@ Exit Criteria:
 
 ### A8 类型三载体的零消费载体收敛（`component.type` / `templateNode.type`）
 
-- Classification: `moved to explicit successor ownership`（live 实测 `component.type` 全仓零读取、`templateNode.type` 仅测试 2 处 = 已确认的公开类型面冗余）
-- Why Not Blocking Closure: 删除属**公开 API 收缩**（`CompiledRendererContract.type`、`TemplateNode.type` 均在 flux-core 导出面上），依 roadmap 授权边界"公开导出增删属结构性重构，各 plan 执行前人工确认授权链落字"，超出本 plan「只加门禁不改源码」的授权范围。本 plan 以 `suppressions` 记录三载体位点（含 `文件:行` 锚），并以 successor 具名承载。
-- Successor Required: `yes`
-- Successor Path: 报人工追加 successor 工作项（RM-13 候选，具名载体=「TemplateNode/CompiledRendererContract 类型载体收敛」）；roadmap Rule 6/授权边界要求人工确认后立案。
+- Classification: `adjudicated as keep + documented`（**2026-10-16 由 RM-14/plan 619 结案**——原「收敛删除」改判为「保留」）
+- Why Not Blocking Closure: RM-13/plan 615 拟制期 live 发现否证了「纯冗余」前提——`TemplateNode.type`（作者声明类型）与 `rendererType`（生效渲染器类型）在编译失败路径**分叉**（`node-compiler-helpers.ts` `type: input.schema.type` vs `rendererType: compileFailureRenderer.type`），删除 `type` 丢失第一 class 便利访问点与并列对照。2026-10-16 用户授权按 AI 判断执行，AI 裁定**保留**全部载体并以 owner doc 分叉语义注结案（`docs/architecture/template-instantiation-and-node-identity.md` `TemplateNode` 成员表）。本 plan 的 `suppressions` 位点锚保持有效（记录的是「零读取」事实，非待删清单）。
+- Successor Required: `no`（原 successor「收敛删除」随改判结案）
 
 ### §5.3 静态快照体积不增（机器化）
 
-- Classification: `watch-only residual`
-- Why Not Blocking Closure: 约束而非可检测 finding；机器化需先设计快照体积基线（新设计，非分析报告可直接转写）。评审期由 Cross-Cutting 2 强制；本 plan 以 `registry` 条目承载并列为 Phase 2 待人工确认项。
-- Successor Required: `no`（若人工裁定需机器化，按 Rule 追加 successor）
+- Classification: `landed`（**2026-10-16 由 RM-14/plan 619 结案**——已机器化）
+- Why Not Blocking Closure: 机器化已落地：`packages/flux-compiler/src/compiled-snapshot-size.test.ts` 以代表性 fixture 编译产物序列化字节预算为 Cross-Cutting 2 的机器门禁（棘轮协议：合法增长须有意上调并说明）。原「需先设计基线」的新设计顾虑由「固定 fixture + 确定性序列化」方案解决。
+- Successor Required: `no`
 
 ## Non-Blocking Follow-ups
 

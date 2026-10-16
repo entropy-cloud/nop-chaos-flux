@@ -86,6 +86,14 @@ interface TemplateNode {
   schema: BaseSchema;
   templatePath: string;
   rendererType: string;
+  // ^ `type` is the *authored* schema type; `rendererType` is the *effective*
+  // renderer type. They are identical on the happy path but DIVERGE when compile
+  // fails and the node is taken over by `compileFailureRenderer`
+  // (node-compiler-helpers.ts: `type: input.schema.type` vs
+  // `rendererType: compileFailureRenderer.type`). Diagnostics/tooling consume
+  // `rendererType`; `type` preserves what the author wrote. Do not collapse them.
+  // (RM-14 / plan 619: both members are retained — see naming-conventions and
+  // RM-9 A8 adjudication.)
   component: RendererDefinition; // resolved at compile time; no runtime registry lookup needed
   propsProgram: CompiledRuntimeValue<Record<string, unknown>>;
   metaProgram: NodeMetaProgram; // canonical compiled meta program for this template node
