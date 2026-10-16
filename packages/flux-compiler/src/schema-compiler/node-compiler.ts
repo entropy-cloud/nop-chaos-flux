@@ -560,7 +560,7 @@ export function createCompileSingleNode(
         )
       : undefined;
 
-    const node: TemplateNode = {
+    const baseNode = {
       templateNodeId: 0,
       id: createNodeId(path, schema),
       type: schema.type,
@@ -608,12 +608,14 @@ export function createCompileSingleNode(
       ...(namedActionPlans && Object.keys(namedActionPlans).length > 0 ? { namedActionPlans } : {}),
     };
 
-    node.staticAnalysis = computeStaticAnalysis(node, schema);
+    const staticAnalysis = computeStaticAnalysis(baseNode as TemplateNode, schema);
 
+    let compiledSources: TemplateNode['compiledSources'];
+    let compiledReactions: TemplateNode['compiledReactions'];
     for (const artifact of renderer.compilation?.artifacts ?? []) {
       if (artifact === 'data-source') {
-        node.compiledSources = [
-          compileDataSource(node.id, schema as DataSourceSchema, expressionCompiler, {
+        compiledSources = [
+          compileDataSource(baseNode.id, schema as DataSourceSchema, expressionCompiler, {
             ...compileOptions,
             basePath: path,
           }),
@@ -622,8 +624,8 @@ export function createCompileSingleNode(
       }
 
       if (artifact === 'reaction') {
-        node.compiledReactions = [
-          compileReaction(node.id, schema as ReactionSchema, expressionCompiler, {
+        compiledReactions = [
+          compileReaction(baseNode.id, schema as ReactionSchema, expressionCompiler, {
             ...compileOptions,
             basePath: path,
           }),
@@ -631,6 +633,14 @@ export function createCompileSingleNode(
       }
     }
 
+    // RM-7 (plan 609): TemplateNode members are readonly — constructor-phase
+    // artifacts are folded into the single literal instead of assigned after.
+    const node: TemplateNode = {
+      ...baseNode,
+      staticAnalysis,
+      ...(compiledSources ? { compiledSources } : {}),
+      ...(compiledReactions ? { compiledReactions } : {}),
+    };
     return node;
   };
 }

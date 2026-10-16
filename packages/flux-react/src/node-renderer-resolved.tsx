@@ -407,7 +407,11 @@ export const NodeRendererResolved = memo(function NodeRendererResolved(props: {
     enabled: finalResolvedMeta.when !== false && finalResolvedMeta.visible && !finalResolvedMeta.hidden,
   });
 
-  const fieldName = typeof props.node.schema.name === 'string' ? props.node.schema.name : undefined;
+  // RM-7 (plan 609): read the field name from the resolved props bag (same
+  // channel as the frame) instead of the raw retained schema. Expression-form
+  // names now contribute their evaluated result rather than the raw string.
+  const resolvedName = resolvedComponentProps.name;
+  const fieldName = typeof resolvedName === 'string' ? resolvedName : undefined;
   const isFieldHidden = Boolean(!finalResolvedMeta.visible || finalResolvedMeta.hidden);
   const hiddenOwner = currentForm ?? currentValidationScope;
 

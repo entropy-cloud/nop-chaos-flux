@@ -151,6 +151,17 @@ function CompiledSchemaTree(props: {
     props.page.validationOwner?.refreshCompiledModel(rootNode?.validationPlan);
   }, [compiledRoot, props.page]);
 
+  // RM-7 (plan 609): modalContainer is read from the compiled root node's
+  // canonical schema copy (compile-once snapshot) instead of the host-live
+  // `props.schema` input. Compile failure assigns `undefined` (observed-
+  // equivalent to unset on a fresh page; a same-page recompile failure
+  // clears any prior value).
+  useEffect(() => {
+    const rootNode = getSingleRootNode(compiledRoot);
+    const rootSchema = rootNode?.schema as BaseSchema & { modalContainer?: string } | undefined;
+    props.page.modalContainer = rootSchema?.modalContainer;
+  }, [compiledRoot, props.page]);
+
   if (!compiledRoot) {
     return <SchemaRootStatus message="Schema is preparing." />;
   }
@@ -266,17 +277,6 @@ export function createSchemaRenderer(registryDefinitions: RegisteredRendererDefi
 
       return attachExternalPageStoreSync();
     }, [page]);
-
-    useEffect(() => {
-      if (creationErrorRef.current || !page) {
-        return;
-      }
-      const schemaInput = props.schema;
-      const rootSchema = Array.isArray(schemaInput) ? schemaInput[0] : schemaInput;
-      page.modalContainer = (
-        rootSchema as BaseSchema & { modalContainer?: string }
-      )?.modalContainer;
-    }, [props.schema, page]);
 
     useEffect(() => {
       if (creationErrorRef.current || !page) {

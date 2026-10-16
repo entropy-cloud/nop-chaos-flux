@@ -133,19 +133,19 @@ export interface TemplateClassAliasesPlan {
 }
 
 export interface TemplateNode<S extends BaseSchema = BaseSchema> {
-  templateNodeId: TemplateNodeId;
-  id: string;
-  type: S['type'];
-  schema: S;
-  templatePath: SchemaPath;
-  schemaUrl?: string;
-  rendererType: string;
-  component: CompiledRendererContract<S>;
-  propsProgram: CompiledRuntimeValue<Record<string, unknown>>;
-  metaProgram: NodeMetaProgram;
-  structuralWhen?: CompiledRuntimeValue<boolean | unknown>;
-  structuralFields?: Readonly<Record<string, CompiledRuntimeValue<unknown>>>;
-  eventPlans: Readonly<Record<string, TemplateCompiledActionProgram>>;
+  readonly templateNodeId: TemplateNodeId;
+  readonly id: string;
+  readonly type: S['type'];
+  readonly schema: S;
+  readonly templatePath: SchemaPath;
+  readonly schemaUrl?: string;
+  readonly rendererType: string;
+  readonly component: CompiledRendererContract<S>;
+  readonly propsProgram: CompiledRuntimeValue<Record<string, unknown>>;
+  readonly metaProgram: NodeMetaProgram;
+  readonly structuralWhen?: CompiledRuntimeValue<boolean | unknown>;
+  readonly structuralFields?: Readonly<Record<string, CompiledRuntimeValue<unknown>>>;
+  readonly eventPlans: Readonly<Record<string, TemplateCompiledActionProgram>>;
   /**
    * Compiled plans for `kind: 'reaction'` fields (e.g. CRUD `loadAction`).
    * Parallel to `eventPlans`; each entry pairs a compiled action program with
@@ -154,22 +154,22 @@ export interface TemplateNode<S extends BaseSchema = BaseSchema> {
    *
    * @see docs/plans/2026-07-07-loadAction-reaction-kind-plan.md
    */
-  reactionPlans?: Readonly<Record<string, CompiledReactionPlan>>;
-  lifecycleActions?: Readonly<{
+  readonly reactionPlans?: Readonly<Record<string, CompiledReactionPlan>>;
+  readonly lifecycleActions?: Readonly<{
     onMount?: TemplateCompiledActionProgram;
     onUnmount?: TemplateCompiledActionProgram;
   }>;
-  regions: Readonly<Record<string, TemplateRegion>>;
-  providerPlan?: TemplateProviderPlan;
-  providerWrap?: WrapProvidersFn;
-  classAliasesPlan?: TemplateClassAliasesPlan;
-  importsPlan?: TemplateImportsPlan;
-  scopePlan: ScopePlan;
-  registryPlan?: RegistryPlan;
-  validationPlan?: ValidationPlan;
-  validationOwnerPlan?: import('./validation.js').ValidationOwnerPlan;
-  sourcePropKeys: readonly string[];
-  sourceStatePropKeys: Readonly<Record<string, string>>;
+  readonly regions: Readonly<Record<string, TemplateRegion>>;
+  readonly providerPlan?: TemplateProviderPlan;
+  readonly providerWrap?: WrapProvidersFn;
+  readonly classAliasesPlan?: TemplateClassAliasesPlan;
+  readonly importsPlan?: TemplateImportsPlan;
+  readonly scopePlan: ScopePlan;
+  readonly registryPlan?: RegistryPlan;
+  readonly validationPlan?: ValidationPlan;
+  readonly validationOwnerPlan?: import('./validation.js').ValidationOwnerPlan;
+  readonly sourcePropKeys: readonly string[];
+  readonly sourceStatePropKeys: Readonly<Record<string, string>>;
   /**
    * Compiler-computed static analysis results.
    * Used by framework adapters for optimization decisions.
@@ -177,7 +177,7 @@ export interface TemplateNode<S extends BaseSchema = BaseSchema> {
    *
    * @see docs/plans/131-static-analysis-optimization-plan.md
    */
-  staticAnalysis?: StaticAnalysisResult;
+  readonly staticAnalysis?: StaticAnalysisResult;
 
   /**
    * Compiled data sources - all expressions pre-compiled.
@@ -185,7 +185,7 @@ export interface TemplateNode<S extends BaseSchema = BaseSchema> {
    *
    * @see docs/plans/132-runtime-schema-dependency-elimination-plan.md
    */
-  compiledSources?: readonly CompiledDataSource[];
+  readonly compiledSources?: readonly CompiledDataSource[];
 
   /**
    * Compiled reactions - all expressions pre-compiled.
@@ -193,8 +193,8 @@ export interface TemplateNode<S extends BaseSchema = BaseSchema> {
    *
    * @see docs/plans/132-runtime-schema-dependency-elimination-plan.md
    */
-  compiledReactions?: readonly CompiledReaction[];
-  namedActionPlans?: Readonly<Record<string, TemplateCompiledActionProgram>>;
+  readonly compiledReactions?: readonly CompiledReaction[];
+  readonly namedActionPlans?: Readonly<Record<string, TemplateCompiledActionProgram>>;
 }
 
 export interface CompiledTemplate {

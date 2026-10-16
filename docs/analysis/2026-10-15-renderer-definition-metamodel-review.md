@@ -116,7 +116,7 @@ flux-core 的 `component?: BivariantCallback<[RendererComponentProps]>` 与 flux
 
 ### 5.2 偏差与注意点
 
-1. **不可变是约定,不是机制**:编译链无 `Object.freeze`/`deepFreeze`。`TemplateNode.schema` 是对输入 schema 的**引用别名**(编译不深拷贝;authoringTransform 产新对象不受影响,但未 transform 的节点与宿主输入共享引用)——宿主在编译后修改输入 JSON,模板会"看到"变化。同时 renderer 可经 `props.schema` 读到原始 authored 树(8 处使用),这条通道读的是"静态输入"而非"静态编译产物"。
+1. **不可变是约定,不是机制**:编译链无 `Object.freeze`/`deepFreeze`。`TemplateNode.schema` 是对输入 schema 的**引用别名**(编译不深拷贝;authoringTransform 产新对象不受影响,但未 transform 的节点与宿主输入共享引用)——宿主在编译后修改输入 JSON,模板会"看到"变化。同时 renderer 可经 `props.schema` 读到原始 authored 树(8 处使用),这条通道读的是"静态输入"而非"静态编译产物"。【勘误 2026-10-16,RM-7/plan 609:顶层节点对象实为 authoring-transform 无条件规范化浅拷贝(authoring-transform.ts:83)——非宿主共享引用;嵌套值共享;TemplateNode 30 成员 readonly 已落地】
 2. **静态信息并非字面"只有一份"**:`CompiledRendererContract` 在**每个模板节点**上物化一份定义子集快照,而注册表里同时保留完整 `RendererDefinition` 原件(component、全部契约面,tooling 消费)。即"一份逻辑事实、两份静态载体 + 一个 tooling 适配视图"。这与第二节 B6/B7(手抄副本、双通道)是同一件事的运行时切面——本报告的 P1 建议(`Pick` 泛型化)只动类型层,不新增运行时拷贝,不破坏"静态单份"性质。
 3. **可增加内容的家在 scope,不在 NodeInstance**:`NodeState` 是**固定形状**(metaState/propsState/两个依赖集/解析缓存/mounted),不是开放容器。真正"可增"的动态内容——数据源(`registerDataSource({scope})`)、反应(`registerReaction({scope})`)、component handle 注册表、子作用域、dialog(SurfaceRuntime/owned page)——全部挂在 `ScopeRef`/runtime 侧,实例与静态节点的关联仅靠 templateNode 共享引用 + instancePath 帧。若预期"实例信息可动态增字段",当前模型的回答是:增到 scope,不增到实例。
 4. **无防写机制**:"模板零写入"目前靠纪律维持,没有任何机制阻止未来代码写模板(例如在 `TemplateNode` 上挂 memo cache 的诱惑)。`TemplateNode` 字段的 `Readonly<>` 标注也不完整(`schema: S`、`state: NodeState` 等未锁)。
