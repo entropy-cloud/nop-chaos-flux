@@ -31,7 +31,7 @@ export function useNodeDebugData(
 
     const debugEntryId = nextDebugEntryId++;
 
-    const schema = nodeInstance.templateNode.schema as Record<string, unknown>;
+    const schema = nodeInstance.templateNode.schema as Record<string, unknown>; // raw-schema: retained(#6)
     const fieldName =
       typeof resolvedPropsValue.name === 'string'
         ? resolvedPropsValue.name

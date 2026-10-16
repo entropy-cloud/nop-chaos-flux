@@ -1543,6 +1543,28 @@ Adjudication table (live anchors verified 2026-10-15 at HEAD 6c27d1dc8):
 | 11  | `evaluate(target: unknown)` raw-target evaluation                                 | `renderer-core.ts:250`                                                                                                              | Retained (contract)                             | Compile+evaluate at the helper boundary is the documented semantics of this entry; policy now pinned here.                                                                                                                                                                                                                                                                                                                                                                                                                                         |
 | 12  | Imports chain receives raw `XuiImportSpec[]`                                      | `renderer-core.ts:277` (`resolvePreparedImports`); root collection `flux-react/src/schema-renderer.tsx:394-397`, preparation `:426` | Retained (contract)                             | The imports chain is an authoring-boundary input by design; policy now pinned here.                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
 
+### Retained channel register (RM-8, plan 610)
+
+The #7~#12 channels adjudicated "Retained (contract)" in the table above are
+registered here so the guard can distinguish deliberate reads from new drift.
+The gate `check:audit-runtime-raw-schema-reads` (in `pnpm check`) scans renderer
+packages **and framework packages** (`flux-react/src`, `flux-runtime/src`) for
+raw-schema reads; a read is exempt only when its line carries the marker
+`// raw-schema: retained(#N)` naming the register row.
+
+| #   | Channel                                                                    | Live sites                                                                                                                                                               | Marker                                           |
+| --- | -------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------ |
+| 1   | `TemplateNode.schema` retained tree (compile input + props assembly)       | `flux-react/src/schema-renderer.tsx` (:92,:125 compile input; :481 pass-through), `flux-react/src/node-renderer-resolved.tsx:384`                                        | `retained(#1)` (props-assembly row carries `#7`) |
+| 6   | Debug channel reads `templateNode.schema`                                  | `flux-react/src/use-node-debug-data.ts:34`                                                                                                                               | `retained(#6)`                                   |
+| 7   | `RendererComponentProps.schema` (raw schema node)                          | `flux-react/src/node-renderer-resolved.tsx:384`, `flux-renderers-data/src/echarts-renderer.tsx:76-77`, `flux-renderers-industrial/src/editor/scada-editor-canvas.tsx:79` | `retained(#7)`                                   |
+| 12  | Imports chain receives raw `XuiImportSpec[]` (root collection/preparation) | `flux-react/src/schema-renderer.tsx` (:394-395 collect, :425 prepare, :460 deps)                                                                                         | `retained(#12)`                                  |
+
+Guard coverage boundary: the four scanner patterns cover schema **read** shapes
+only (#1/#6/#7/#12 faces). The #8/#9/#10/#11 raw **argument** call sites
+(`helpers.render` schema input, `dispatch` raw `ActionSchema`, `executeSource`
+raw `SourceSchema`, `evaluate` raw target) are not visible to this scanner;
+whole-family coverage is RM-9's scope.
+
 ## Related Documents
 
 - `docs/references/terminology.md`

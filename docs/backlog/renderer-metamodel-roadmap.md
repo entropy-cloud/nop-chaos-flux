@@ -39,7 +39,7 @@
 - RM-5. 事件契约单源化（eventContracts 收敛至字段条目）: `done`（plan `docs/plans/607-rm5-event-contract-plan.md`，closure audit agent_dc0c3b14 有条件批准→M1 editor-designer-standard 五处 MUST 清残+4m 修复→批准；21+1 文件迁移[RendererEventFieldContract union 裁定]、harness 语义改写 discoveryBaseline 4 包同步、authoring/honesty 单源化、conformance 重锚、flux-guide 零差；events 视图快照 155 renderer 零差异）
 - RM-6. scope 符号单源化（scopeExportContracts+injectedLocals 合并）: `done`（plan `docs/plans/608-rm6-scope-symbol-plan.md`，closure audit agent_444d83fc approved 2026-10-16；injectedLocals 条目单载体[Omit<SymbolInfo,'name'> & {shape?}]、crud+form 双写迁移、scopeExportContracts 通道删除、authoring scopeExports 切 helper[恒等探针 deepStrictEqual]；pushInjectedLocalSymbols 读法零变更）
 - RM-7. 编译结构只读硬化 + 框架内部 raw schema 读迁移（name/modalContainer）: `done`（plan `docs/plans/609-rm7-readonly-raw-read-plan.md`，closure audit agent_8ca6c622 approved 2026-10-16；TemplateNode 30 成员 readonly+node-compiler 构造期折叠、#2 name 迁 resolved 通道[表达式 name 行为差钉]、#3 modalContainer 迁 compiled root canonical schema copy[行值再裁决]、owner-doc 前提勘误两处）。【scope 勘误 2026-10-16,plan 609 R1 M4:`schema/NodeState` 只读补全不可落地——NodeState 被 node-runtime 六处运行时写（解析缓存/依赖集），schema 顶层已由规范化拷贝提供 compile-once 语义；本项实际交付=TemplateNode 30 成员 readonly 补全】
-- RM-8. renderer 契约面 raw-schema 通道按政策收口（公开 API 六通道）: `todo`
+- RM-8. renderer 契约面 raw-schema 通道按政策收口（公开 API 六通道）: `done`（plan `docs/plans/610-rm8-raw-channel-guard-plan.md`，closure audit agent_f461dc8b approved 2026-10-16；六通道全契约保留的落地形态=Retained channel register 钉面[#1/#6/#7/#12 实标+覆盖边界]+scanner 守卫[enforcement exit 语义/include 扩框架包/12 处 retained(#N) 标记/入 check 链]）
 
 ## 框架/平台复用
 
@@ -70,7 +70,7 @@
 | RM-5 事件契约单源化        | `done` | 分析报告 A3                           | RM-4       | contract-honesty                           | [607](../plans/607-rm5-event-contract-plan.md)           |
 | RM-6 scope 符号单源化      | `done` | 分析报告 A4                           | RM-3       | symbol-helpers 测试                        | [608](../plans/608-rm6-scope-symbol-plan.md)             |
 | RM-7 只读硬化+raw 读迁移   | `done` | 分析报告 §5.2/5.4 #2#3                | RM-0       | node-runtime 解析缓存管线                  | [609](../plans/609-rm7-readonly-raw-read-plan.md)        |
-| RM-8 公开 API raw 通道收口 | `todo` | RM-0 裁决表 §5.4 #7~#12               | RM-0、RM-7 | plan 132 先例                              | —                                                        |
+| RM-8 公开 API raw 通道收口 | `done` | RM-0 裁决表 §5.4 #7~#12               | RM-0、RM-7 | plan 132 先例                              | [610](../plans/610-rm8-raw-channel-guard-plan.md)        |
 
 ## Phase Details（交付范围，无实现步骤）
 

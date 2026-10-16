@@ -76,7 +76,7 @@ export function ScadaEditorCanvasRenderer(props: RendererComponentProps<ScadaEdi
   // raw schema 优先；props 通道兜底（单测直构 props.props.events 的既有用法不受影响）。
   // plan 522 / L5.4/L5.5：templateStorage/stationStorage（函数成员对象，D-1 同型 'ignored'）与
   // previewMock 沿用同一 raw-schema 优先 + props 通道兜底读取纪律。
-  const schemaRaw = props.schema as ScadaEditorCanvasSchema;
+  const schemaRaw = props.schema as ScadaEditorCanvasSchema; // raw-schema: retained(#7)
   const events = schemaRaw.events ?? (props.props.events as ScadaEditorCanvasEvents | undefined);
   const templateStorage =
     schemaRaw.templateStorage ?? (props.props.templateStorage as import('./template/template-model.js').ScadaTemplateStorage | undefined);

@@ -381,7 +381,7 @@ export const NodeRendererResolved = memo(function NodeRendererResolved(props: {
   const componentProps: RendererComponentProps = {
     id: templateNode.id,
     path: templateNode.templatePath,
-    schema: templateNode.schema,
+    schema: templateNode.schema, // raw-schema: retained(#7)
     templateNode,
     node: nodeInstance,
     props: resolvedComponentProps,

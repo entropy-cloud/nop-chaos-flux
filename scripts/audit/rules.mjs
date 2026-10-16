@@ -516,7 +516,9 @@ export const runtimeRawSchemaReadRules = [
           filePath.includes('/spreadsheet-renderers/') ||
           filePath.includes('/report-designer-renderers/') ||
           filePath.includes('/flux-code-editor/') ||
-          filePath.includes('/nop-debugger/'))
+          filePath.includes('/nop-debugger/') ||
+          filePath.includes('/flux-react/src/') ||
+          filePath.includes('/flux-runtime/src/'))
       );
     },
     patterns: [
@@ -526,6 +528,12 @@ export const runtimeRawSchemaReadRules = [
       /\bas\s+BaseSchema\)\.schema\b/g,
     ],
     filterMatch: ({ lineText, content, relativePath, line }) => {
+      // RM-8 (plan 610): retained-channel marker exempts the line. The
+      // register lives in docs/architecture/renderer-runtime.md
+      // (Runtime Schema-Retention Policy → Retained channel register).
+      if (lineText.includes('raw-schema: retained(#')) {
+        return false;
+      }
       const codeText = getCodeTextForLine(content, line);
       const hasSchemaRead =
         codeText.includes('templateNode.schema') ||

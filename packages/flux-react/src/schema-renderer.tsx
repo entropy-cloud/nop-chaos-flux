@@ -89,7 +89,7 @@ function CompiledSchemaTree(props: {
             continueOnError: true,
           };
     try {
-      const template = props.runtime.schemaCompiler.compile(props.schema, {
+      const template = props.runtime.schemaCompiler.compile(props.schema, { // raw-schema: retained(#1)
         schemaUrl: props.schemaUrl,
         importLoader: props.env.importLoader,
         resolveImportUrl: props.env.resolveImportUrl,
@@ -122,7 +122,7 @@ function CompiledSchemaTree(props: {
     }
   }, [
     props.runtime,
-    props.schema,
+    props.schema, // raw-schema: retained(#1)
     props.schemaUrl,
     props.env.importLoader,
     props.env.resolveImportUrl,
@@ -391,8 +391,8 @@ export function createSchemaRenderer(registryDefinitions: RegisteredRendererDefi
     }, [onActionScopeChange, rootActionScope]);
     const renderScope = rootScope;
     const hasSchemaImports = useMemo(
-      () => collectSchemaImports(props.schema).length > 0,
-      [props.schema],
+      () => collectSchemaImports(props.schema).length > 0, // raw-schema: retained(#12)
+      [props.schema], // raw-schema: retained(#12)
     );
     const [preparedImports, setPreparedImports] = useState<ReadonlyMap<
       string,
@@ -422,7 +422,7 @@ export function createSchemaRenderer(registryDefinitions: RegisteredRendererDefi
 
       const { signal } = controller;
 
-      void prepare(props.schema, {
+      void prepare(props.schema, { // raw-schema: retained(#12)
         schemaUrl: props.schemaUrl,
         signal,
       })
@@ -457,7 +457,7 @@ export function createSchemaRenderer(registryDefinitions: RegisteredRendererDefi
       return () => {
         controller.abort();
       };
-    }, [runtime, props.schema, props.schemaUrl, props.env, hasSchemaImports]);
+    }, [runtime, props.schema, props.schemaUrl, props.env, hasSchemaImports]); // raw-schema: retained(#12)
 
     const strictMode = isStrictValidationEnabled(props.strictValidation);
 
@@ -478,7 +478,7 @@ export function createSchemaRenderer(registryDefinitions: RegisteredRendererDefi
         <SchemaRootErrorBoundary>
           <CompiledSchemaTree
             runtime={runtime}
-            schema={props.schema}
+            schema={props.schema} // raw-schema: retained(#1)
             schemaUrl={props.schemaUrl}
             env={props.env}
             preparedImports={preparedImports}

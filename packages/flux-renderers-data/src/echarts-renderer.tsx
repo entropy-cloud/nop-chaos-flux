@@ -73,8 +73,8 @@ export function EChartsRenderer(props: RendererComponentProps<EChartsSchema>) {
 
   // events 读 raw schema（definition 中为 ignored 字段）：args 模板在 dispatch 期
   // 结合 normalized event 求值，不经编译期深求值。
-  const eventsMap = isPlainObject(props.schema?.events)
-    ? (props.schema.events as Record<string, unknown>)
+  const eventsMap = isPlainObject(props.schema?.events) // raw-schema: retained(#7)
+    ? (props.schema.events as Record<string, unknown>) // raw-schema: retained(#7)
     : undefined;
 
   const option = props.props.option;
