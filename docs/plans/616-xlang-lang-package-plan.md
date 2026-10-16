@@ -67,7 +67,7 @@ Targets: `packages/flux-xlang-lang/`（骨架/generated/脚本）+ 根配置（a
 - [x] **dist copy 步骤（F3 修订）**：build script 在 tsc 后复制 `generated/`（parser/terms/tokens/d.ts）入 `dist/generated/`（照 copy-build-assets.mjs 先例扩展包内 script）——tsconfig.build `rootDir: src` 下源码 import "../generated/xlang.parser.js" 的产物指向 dist 外，dev 态被 vite alias 掩盖、静默坏 dist；无此步骤 build gate 零防护
 - [x] grammar 落点（F1 修订）：`xlang.grammar` 落 `src/`（.grammar 非禁列扩展名）；**`tokens.js` 落 `generated/tokens.js`**（外部 tokenizer 必须是 .js，src 下 .js 被 verify 门禁红 + `pnpm lint` 的 clean-src-artifacts 无条件删除；与手写 d.ts shim 同为 generated/ 内人工维护文件先例；grammar 内 `@external tokens` 引 `../generated/tokens.js` 相对包根，生成器对生成物 `from "./tokens.js"` 同目录解析）。spike 起点生产化：06 §四 11 坑逐条对照——行注释 `![\n]*`、@skip 多规则 `|`、@tokens @precedence 排序、外部 tokenizer 导出 `.js` 后缀、EOF 兜底不 acceptToken）
 - [x] `gen:grammar` script（lezer-generator → `generated/xlang.parser.js` + terms，落包根 src 外）+ 生成物入库 + 手写 `generated/xlang.parser.d.ts` shim（lezer-generator 不产 d.ts）
-- [x] 门禁配套（F2 修订，写死形态）：①src-artifacts 对 generated/ 免登记（域外）；②`check-oversized-code-files.mjs` 的 `OVERSIZED_EXEMPTIONS` 加 `{path: 'packages/flux-xlang-lang/generated/xlang.parser.js', reason: 'plan 616 lezer 生成产物入库（D5 §3.3），参照 nop-xlang ANTLR 生成物入库同构'}`；③knip unused-exports 新 hit（registerXlangLanguage/createXlangLinter 仓内暂无消费者）→ `check:knip-baseline --update-baselines` 登记；④`.jscpd.json` ignore 加 `**/generated/**`；⑤eslint 包级只扫 src 天然逃逸
+- [x] 门禁配套（F2 修订，写死形态）：①src-artifacts 对 generated/ 免登记（域外）；②`check-oversized-code-files.mjs` 的 `OVERSIZED_EXEMPTIONS` 加 `{path: 'packages/flux-xlang-lang/generated/xlang.parser.js', reason: 'plan 616 lezer 生成产物入库（D5 §3.3），参照 nop-xlang ANTLR 生成物入库同构'}`；③knip：终态以移除未用 devDep（@testing-library/react）消 hit（closure audit 勘误：实际路径非 baseline 登记），baseline 零登记；④`.jscpd.json` ignore 加 `**/generated/**`；⑤eslint 包级只扫 src 天然逃逸
 - [x] grammar 解析测试：sample.xlang 全构造逐项结构断言 + 防吞体量断言（05 §3.3 验收锚点：0 错误）
 
 Exit Criteria:
@@ -83,7 +83,7 @@ Targets: `packages/flux-xlang-lang/src/`（language/diagnostics 模块）
 
 - Item Types: `Feature`
 
-- [x] `xlang()` 装配：parser + `@lezer/highlight` 样式映射（关键字/字符串/模板串/宏/注释/操作符——对照 g4 token 族与 idea-plugin 高亮先例）+ foldable（块语句 nodeProp）+ 缩进服务 + bracketMatching；closeBrackets 不进包（全局基础扩展已有）
+- [x] `xlang()` 装配：parser + `@lezer/highlight` 样式映射（关键字/字符串/模板串/宏/注释/操作符——对照 g4 token 族与 idea-plugin 高亮先例）+ foldable（块语句 nodeProp）+ 缩进服务 + bracketMatching（closure audit minor ①补落地——LanguageSupport 第二参）；closeBrackets 不进包（全局基础扩展已有）
 - [x] `createXlangLinter({ compile, debounceMs })` 工厂：compile 注入（`(sourcePath, source) => Promise<diagnostics>`）；行号/severity 映射 → CodeMirror `Diagnostic[]`；compile 抛错/超时 → 空诊断 + console.warn
 - [x] `registerXlangLanguage()` 便捷函数（内部调 flux-code-editor `registerLanguage('xlang', entry)`）；**entry 只含 extension/parser（F9 修订）**——高亮/折叠/缩进随 extension，诊断 linter 不进 registry（CreateBaseExtensionsOptions 无 compile 载体，由宿主经 extensions 注入点独立组合，D5 §3.5 装配语义）
 - [x] 测试：linter 工厂 fake-compile（诊断映射/错误兜底/debounce）；xlang() 装配返回扩展可被 EditorState 消费
@@ -127,9 +127,9 @@ Exit Criteria:
 - [x] 所有 in-scope 行为实现且有测试（grammar 4 + language/linter 4 + characterization 6）
 - [x] Anti-Hollow：'xlang' 注册→registry 分发→parser 消费→高亮/诊断运行时连通（链路测试 + EditorState 冒烟）
 - [x] 既有 12 语言零回归（flux-code-editor 既有 vitest 全绿 110/110）
-- [x] 无被静默降级的 in-scope live defect（follow-up #1-#5 为 D5 §三 既有裁定，非本 plan 降级）
+- [x] 无被静默降级的 in-scope live defect（follow-up #1-#5 为 06-grammar-spike.md §三 既有裁定，非本 plan 降级）
 - [x] owner docs：D5 §3.2/§3.3 与实现一致（两处实现偏差——tokens.js 落 generated/、linter 不进 registry——均为 plan 616 评审修订已回写 plan；flux docs/logs 已更新）
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据
 - [x] `pnpm typecheck`
 - [x] `pnpm build`
 - [x] `pnpm lint`

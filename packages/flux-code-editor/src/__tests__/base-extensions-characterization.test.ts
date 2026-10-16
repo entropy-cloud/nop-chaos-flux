@@ -94,6 +94,19 @@ describe('createBaseExtensions characterization', () => {
     expect(mocks.createExpressionLinter).toHaveBeenCalledTimes(1);
   });
 
+  it('expression template mode does not run the expression linter (plan 616 behavior refinement)', () => {
+    // 开放化前：template 分支替换 extension 后 linter 分支无 mode 守卫仍会追加；
+    // 开放化后 entry.linter 对 template 模式返回 null（不对模板文本跑表达式 linter，
+    // arguably 更正确）。616 closure audit 披露的行为裁定，此处钉住新语义。
+    createBaseExtensions({
+      language: 'expression',
+      mode: 'template',
+      lintConfig: { enabled: true } as never,
+      completionConfig: { variables: [{ label: 'a' } as never], functions: [] },
+    });
+    expect(mocks.createExpressionLinter).not.toHaveBeenCalled();
+  });
+
   it('friendly names require variables and showFriendlyNames', () => {
     const variables = [{ label: 'a' } as never];
     createBaseExtensions({

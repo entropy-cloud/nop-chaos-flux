@@ -1,4 +1,4 @@
-import { LRLanguage, LanguageSupport, foldNodeProp, indentNodeProp } from '@codemirror/language';
+import { bracketMatching, LRLanguage, LanguageSupport, foldNodeProp, indentNodeProp } from '@codemirror/language';
 import { styleTags, tags as t } from '@lezer/highlight';
 import type { LRParser } from '@lezer/lr';
 import { parser } from '../generated/xlang.parser.js';
@@ -63,7 +63,7 @@ const xlangLanguage = LRLanguage.define({
  * 缩进 + 注释 token。closeBrackets 属 flux-code-editor 全局基础扩展，不在此重复。
  */
 export function xlang(): LanguageSupport {
-  return new LanguageSupport(xlangLanguage);
+  return new LanguageSupport(xlangLanguage, bracketMatching());
 }
 
 export { xlangLanguage };
