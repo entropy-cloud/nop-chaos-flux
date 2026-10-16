@@ -1,6 +1,6 @@
 # 615 RM-13 data 族行标识 `rowKey` 并入单标准 `itemKey`（作者面 schema 属性统一）
 
-> Plan Status: draft
+> Plan Status: active
 > Last Reviewed: 2026-10-16
 > Source: `docs/backlog/renderer-metamodel-roadmap.md` RM-13（新增，provenance 见授权链）；`docs/plans/614-rm12-itemkey-plan.md` `## Human Adjudication Request`（裁决请求本体，本 plan 即其裁决落地）
 > Related: roadmap Cross-Cutting 7（单标准零兼容分叉）；`docs/references/naming-conventions.md` §4.9（`itemKey` 唯一字段名）
@@ -165,9 +165,9 @@ Exit Criteria:
 > 起草后、执行前的独立审查证据。由独立 fresh 子 agent 填写。
 
 - Reviewer / Agent: agent_2ba14dbf（R1，独立 fresh 子 agent，全仓独立扫描 + 行号逐条核对 + 两族实现对照 + roadmap 8 处同步核验）
-- Verdict: `fail`（R1 0B/5M/6m → 已修订，待 R2 复核）
-- Rounds: 1（R1 已回填；R2 待跑）
-- Findings addressed: M1=漏作者面读取 `crud-renderer.tsx:511`（`rowKey: normalizedSchema.rowKey`）→ 补入 Baseline/Goals（读取 4→5 处）/Phase 1 Targets+checklist+Exit/应空①文件清单；M2=应空① 对 `crud-renderer-schema-builders.ts`「整文件应空」不可满足（`:161/:171/:188` 为内部 carrier 形参）→ 该文件改**定向校验②**（按作者面形态锚定 `schema.rowKey` 归零，carrier 保留）；M3=apps 口径「整目录应空」不可满足（`performance-table` 局部形参）→ 改**定向文件集⑤**（排除该文件局部面，其 `:463` schema 用法单独核验）；M4=漏 canonical owner doc `docs/architecture/table-row-identity-and-scope-performance.md`（65 命中，Authoring Contract 节明写 schema 字段）+ `docs/components/{crud,table,dashboard-filter}` 示例未列、收口无 docs 定向命令 → 补入 Baseline/Goals/Scope/Phase 2 Targets+checklist，并增**应空⑥（docs 组件 schema 字面量）+ 定向校验⑦（owner doc 节内）**；M5=flux-guide 计数双计（7 md 实为 20 作者面命中；25 系目录合计含生成物 2）→ 勘正。m1=「同一函数形状」加限定并披露缺失/重复键处置差异（内部面，不影响作者面裁定）；m2=测试面补全枚举（flux-compiler 2 文件/form-advanced 2 test/e2e testid 标预期保留）；m6=provenance 措辞补「用户将 A/B 选择权交由 AI 判断并授权拟制」。m3/m4/m5 属 roadmap 结构与措辞，随 roadmap 同批修订处置。
+- Verdict: `pass`（R3 零 Blocker/零 Major，达成共识 → 升 active；R3 附 6 条非阻塞 Minor 已同批处置）
+- Rounds: 3（R1 fail 0B/5M/6m → 修订；R2 fail 0B/1M/6m[修订引入口径串用 + 新发现作者面作用域符号漏枚举] → 修订；R3 pass 0B/0M/6m → Minor 全部处置）
+- Findings addressed: M1=漏作者面读取 `crud-renderer.tsx:511`（`rowKey: normalizedSchema.rowKey`）→ 补入 Baseline/Goals（读取 4→5 处）/Phase 1 Targets+checklist+Exit/应空①文件清单；M2=应空① 对 `crud-renderer-schema-builders.ts`「整文件应空」不可满足（`:161/:171/:188` 为内部 carrier 形参）→ 该文件改**定向校验②**（按作者面形态锚定 `schema.rowKey` 归零，carrier 保留）；M3=apps 口径「整目录应空」不可满足（`performance-table` 局部形参）→ 改**定向文件集⑤**（排除该文件局部面，其 `:463` schema 用法单独核验）；M4=漏 canonical owner doc `docs/architecture/table-row-identity-and-scope-performance.md`（65 命中，Authoring Contract 节明写 schema 字段）+ `docs/components/{crud,table,dashboard-filter}` 示例未列、收口无 docs 定向命令 → 补入 Baseline/Goals/Scope/Phase 2 Targets+checklist，并增**应空⑥（docs 组件 schema 字面量）+ 定向校验⑦（owner doc 节内）**；M5=flux-guide 计数双计（7 md 实为 20 作者面命中；25 系目录合计含生成物 2）→ 勘正。m1=「同一函数形状」加限定并披露缺失/重复键处置差异（内部面，不影响作者面裁定）；m2=测试面补全枚举（flux-compiler 2 文件/form-advanced 2 test/e2e testid 标预期保留）；m6=provenance 措辞补「用户将 A/B 选择权交由 AI 判断并授权拟制」。m3/m4/m5 属 roadmap 结构与措辞，随 roadmap 同批修订处置。**R2 轮 Major=作者面作用域符号漏枚举**（`childrenSource` action scope 注入 `rowKey`——`use-table-lazy-children.ts:60` + 文档 3 处 + 编译器测试 1 处，既非 schema 属性也非内部命名）→ 采纳修法 (a) **纳入改名面**：新增 Baseline 第三类 + Goals/Phase 1/2 + Non-Goal 例外（作者表达式契约变更）+ 逐点定向 Closure Gate（注入文件与 design.md 为混合文件故不得整文件应空）；R2 m1-m6=授权链措辞同批（A/B 选择权交 AI）/Phase3 四条→七条/docs/discussions 补 append-only/test-support:312 勘正为 crud 定义/apps 计数勘正/定向⑦ 写实命令。**R3 轮 Minor 处置**：m1 apps split 勘正（58=作者面 54+非作者面 4）；m2（实质）Non-Goal 例外同步到 Failure Paths（新增 `childrenSource-scope` 场景表）与 Test Strategy（作用域符号属行为面，判别钉升为**必做 Proof**：`table-t11-lazy-children.test.tsx` 增用例断言派发 scope 含 `itemKey` 不含 `rowKey`，旧实现下必挂）；m3 作用域 gate block markdown 重排；m4 Phase 2 Proof/Phase 3 补作用域 block 五项复跑；m5 授权链补「作用域符号不在 RM-12 六类枚举内、属授权扩张解释」披露 + 回退方案（若人工不认可则登记为预期保留，不影响主体交付）；m6 roadmap RM-13 题域补「作者面作用域符号统一」。
 
 ## Closure Gates
 
