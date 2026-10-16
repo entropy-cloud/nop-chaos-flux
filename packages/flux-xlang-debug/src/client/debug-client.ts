@@ -1,6 +1,24 @@
 import type { WebSocketConnection, WebSocketOpener } from '@nop-chaos/flux-core';
 import type { DebugStore, DebugTransport, StepKind } from '../state/debug-store.js';
 
+/** D1 §3.5 evt.log 行（plan 620 F7 载荷类型）。 */
+export interface XlangLogEntry {
+  level: string;
+  message: string;
+  logger?: string;
+  timestamp?: number;
+  sourcePath?: string;
+  line?: number;
+  threadId?: number;
+}
+
+/** D1 §3.5 evt.completed（脚本执行完成——非日志行，UI 独立状态呈现）。 */
+export interface XlangCompleted {
+  ok: boolean;
+  result?: string;
+  error?: { message: string; errorCode?: string };
+}
+
 const PROTO_VERSION = '1.0';
 const REQUEST_TIMEOUT_MS = 30_000;
 const MAX_EXECUTE_RENEW_INTERVAL = 60_000;
@@ -39,6 +57,9 @@ export interface DebugClient {
   dispose(): void;
   sessionId(): string | null;
   connectionState(): 'disconnected' | 'connecting' | 'connected';
+  query<T>(method: string, params: Record<string, unknown>): Promise<T>;
+  onLog(cb: (entry: XlangLogEntry) => void): () => void;
+  onCompleted(cb: (result: XlangCompleted) => void): () => void;
 }
 
 /**
@@ -58,6 +79,8 @@ export function createDebugClient(options: CreateDebugClientOptions): DebugClien
   let renewTimer: ReturnType<typeof setInterval> | null = null;
   let renewInFlight = false;
   let renewBackoff = 1;
+  const logSubscribers = new Set<(entry: XlangLogEntry) => void>();
+  const completedSubscribers = new Set<(result: XlangCompleted) => void>();
   let reconnectAttempt = 0;
   let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
   let stopped = false;
@@ -116,12 +139,32 @@ export function createDebugClient(options: CreateDebugClientOptions): DebugClien
       case 'evt.sessionClosed':
         onSessionClosed?.({ reason: 'closed', detail: JSON.stringify(p) });
         return;
+      case 'evt.log': {
+        const entry: XlangLogEntry = {
+          level: String(p.level ?? 'info'),
+          message: String(p.message ?? ''),
+          logger: p.logger as string | undefined,
+          timestamp: p.timestamp as number | undefined,
+          sourcePath: p.sourcePath as string | undefined,
+          line: p.line as number | undefined,
+          threadId: p.threadId as number | undefined,
+        };
+        logSubscribers.forEach((cb) => cb(entry));
+        return;
+      }
+      case 'evt.logs': {
+        const entries = (p.entries as XlangLogEntry[] | undefined) ?? [];
+        entries.forEach((entry) => logSubscribers.forEach((cb) => cb(entry)));
+        return;
+      }
+      case 'evt.completed': {
+        const completed = p as unknown as XlangCompleted;
+        completedSubscribers.forEach((cb) => cb(completed));
+        return;
+      }
       case 'ping':
       case 'pong':
-      case 'evt.log':
-      case 'evt.logs':
-      case 'evt.completed':
-        return; // 保留名/显式忽略（M2/M6）
+        return; // 保留名（M6：静默协议安全）
       default:
         return; // 未知事件忽略（D1 §3.6）
     }
@@ -472,5 +515,19 @@ export function createDebugClient(options: CreateDebugClientOptions): DebugClien
     dispose,
     sessionId,
     connectionState,
+    /** 公共 request 出口（plan 620 F8 兑现）：面板按 D1 §3.3 直查 getStackInfo/getFrameVariables/expandExprValue/getExprValue。 */
+    query<T>(method: string, params: Record<string, unknown>): Promise<T> {
+      return sendRequest(method, params) as Promise<T>;
+    },
+    /** evt.log/evt.logs 订阅（日志面板）；返回退订函数。 */
+    onLog(cb: (entry: XlangLogEntry) => void): () => void {
+      logSubscribers.add(cb);
+      return () => logSubscribers.delete(cb);
+    },
+    /** evt.completed 订阅（脚本执行完成状态行）。 */
+    onCompleted(cb: (result: XlangCompleted) => void): () => void {
+      completedSubscribers.add(cb);
+      return () => completedSubscribers.delete(cb);
+    },
   };
 }

@@ -301,9 +301,41 @@ describe('debug client', () => {
     await connectPromise;
     connections[0].closeFromServer(4401);
     await vi.advanceTimersByTimeAsync(20000);
-    expect(connections).toHaveLength(1); // 4401 终态不得重连
+    expect(connections).toHaveLength(1);
     expect(onSessionClosed).toHaveBeenCalledWith(expect.objectContaining({ reason: 'authFailed' }));
     client.dispose();
+  });
+
+  it('query public surface and onLog/onCompleted subscriptions (plan 620 F8/F7)', async () => {
+    const env = createEnv();
+    const logs: Array<{ message: string }> = [];
+    const completed: Array<{ ok: boolean }> = [];
+    const unLog = env.client.onLog((e) => logs.push(e));
+    const unCompleted = env.client.onCompleted((r) => completed.push(r));
+    await openSession(env);
+    const conn = env.connections[0];
+
+    // query 直查 getStackInfo
+    const queryPromise = env.client.query<{ stackInfo: unknown }>('debugger.getStackInfo', { threadId: 17 });
+    const queryFrame = parseFrame(conn.sent.find((f) => f.includes('debugger.getStackInfo'))!);
+    conn.receive(JSON.stringify({ jsonrpc: '2.0', id: queryFrame.id, result: { stackInfo: { stackTrace: [] } } }));
+    expect((await queryPromise).stackInfo).toBeTruthy();
+
+    // evt.log 单条 → onLog
+    conn.receive(JSON.stringify({ jsonrpc: '2.0', method: 'evt.log', params: { level: 'info', message: 'hello', timestamp: 1 } }));
+    expect(logs.map((l) => l.message)).toContain('hello');
+    // evt.logs 批量拆帧 → onLog
+    conn.receive(JSON.stringify({ jsonrpc: '2.0', method: 'evt.logs', params: { entries: [{ level: 'warn', message: 'w1' }, { level: 'info', message: 'w2' }] } }));
+    expect(logs.map((l) => l.message)).toEqual(expect.arrayContaining(['w1', 'w2']));
+    // evt.completed → onCompleted
+    conn.receive(JSON.stringify({ jsonrpc: '2.0', method: 'evt.completed', params: { ok: true, result: 'done' } }));
+    expect(completed).toHaveLength(1);
+    // 退订后不再接收
+    unLog();
+    unCompleted();
+    conn.receive(JSON.stringify({ jsonrpc: '2.0', method: 'evt.log', params: { level: 'info', message: 'after-unsub' } }));
+    expect(logs.map((l) => l.message)).not.toContain('after-unsub');
+    env.client.dispose();
   });
 
   it('dispose sends session.close, clears transport and pending', async () => {
