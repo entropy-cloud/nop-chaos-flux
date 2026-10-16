@@ -54,9 +54,7 @@ describe('ControlButtons', () => {
     });
     // re-render 后 DOM 节点可能被替换——重新查询
     const resumeBtn = screen.getByText('继续') as HTMLButtonElement;
-    console.log('[P-CTRL] resume disabled=', resumeBtn.disabled, 'suspended=', JSON.stringify(store.getState().suspended));
     fireEvent.click(resumeBtn);
-    console.log('[P-CTRL] after click, resume calls=', vi.mocked(transport.resume).mock.calls.length);
     expect(transport.resume).toHaveBeenCalledTimes(1);
   });
 });
@@ -111,6 +109,44 @@ describe('EvalInput', () => {
         expr: '21 * 2',
       });
       expect(screen.getByText('42')).toBeTruthy();
+    });
+  });
+});
+
+describe('VariablesTree lazy expansion', () => {
+  it('expands a node via expandExprValue (F6/620 audit Major 4)', async () => {
+    const store = createDebugStore();
+    store.getState().addSuspended({ threadId: 17, sourcePath: 'a.xpl', line: 1 });
+    const query = vi.fn()
+      .mockResolvedValueOnce({ vars: [{ name: 'order' }] })
+      .mockResolvedValueOnce({ vars: [{ name: 'id' }, { name: 'items' }] });
+    const client = makeClient({ query });
+    render(<VariablesTree store={store} client={client} threadId={17} frameIndex={0} />);
+    // 根节点加载
+    await waitFor(() => expect(screen.getByText('order')).toBeTruthy());
+    // 点击展开 → expandExprValue
+    fireEvent.click(screen.getByText('order'));
+    await waitFor(() => {
+      expect(query).toHaveBeenLastCalledWith('debugger.expandExprValue', {
+        threadId: 17,
+        frameIndex: 0,
+        expr: 'order',
+        keys: [{ name: 'order' }],
+      });
+      expect(screen.getByText('id')).toBeTruthy();
+      expect(screen.getByText('items')).toBeTruthy();
+    });
+  });
+
+  it('shows truncated hint when result truncated (F6)', async () => {
+    const store = createDebugStore();
+    store.getState().addSuspended({ threadId: 17, sourcePath: 'a.xpl', line: 1 });
+    const client = makeClient({
+      query: vi.fn().mockResolvedValue({ vars: [{ name: 'x' }], truncated: true }),
+    });
+    render(<VariablesTree store={store} client={client} threadId={17} frameIndex={0} />);
+    await waitFor(() => {
+      expect(screen.getByTestId('xlang-debug-truncated')).toBeTruthy();
     });
   });
 });

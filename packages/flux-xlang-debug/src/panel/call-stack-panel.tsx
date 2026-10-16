@@ -53,7 +53,7 @@ export function CallStackPanel({ client, threadId, frameIndex, onFrameSelect }: 
   return (
     <ul className="xlang-debug-stack" data-testid="xlang-debug-stack">
       {stack.map((frame, index) => (
-        <li key={JSON.stringify(frame)}>"
+        <li key={JSON.stringify(frame)}>
           <button
             type="button"
             className={index === frameIndex ? 'xlang-debug-frame active' : 'xlang-debug-frame'}

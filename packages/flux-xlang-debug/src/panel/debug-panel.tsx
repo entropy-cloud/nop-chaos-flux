@@ -28,13 +28,14 @@ export function DebugPanel({ store, client }: DebugPanelProps) {
   const suspended = useStore(store, (s) => s.suspended);
   const [tab, setTab] = useState<TabKey>('variables');
   const [frameIndex, setFrameIndex] = useState(0);
+  const [muted, setMuted] = useState(false);
 
   const threadId = suspended[0]?.threadId ?? 0;
   const notSuspended = suspended.length === 0;
 
   return (
     <div className="xlang-debug-panel" data-testid="xlang-debug-panel">
-      <ControlButtons store={store} />
+      <ControlButtons store={store} muted={muted} onToggleMute={() => setMuted((m) => !m)} />
       <div className="xlang-debug-tabs" role="tablist">
         {(
           [

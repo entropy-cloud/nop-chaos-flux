@@ -89,25 +89,25 @@ Targets: `packages/flux-xlang-debug/src/panel/` + `packages/flux-i18n/src/locale
 
 Exit Criteria:
 
-- [x] 组件测试绿（渲染/交互/错误态三类）——panel.test 7 用例（ControlButtons 禁用语义+act 挂起切换/VariablesTree getFrameVariables 查询+错误态/EvalInput 禁用+提交/LogPanel 订阅+exceptions）
+- [x] 组件测试绿（渲染/交互/错误态三类）——panel.test 9 用例（ControlButtons 禁用语义+act 挂起切换+runToPosition/VariablesTree getFrameVariables 查询+错误态+展开+截断/EvalInput 禁用+提交/LogPanel 订阅+exceptions）
 - [x] 包内 typecheck/lint/test 通过
 
 ### Phase 3 - 独立 closure audit 与收口
 
-Status: planned
+Status: in progress
 Targets: 全部 + roadmap（owner 仓）
 
 - Item Types: `Proof`
 
-- [x] 独立子代理 closure audit：D5 §3.4 面板消费模式对账（数据不进 store/直查）、618 F8 兑现（query 面）、组件测试真实性、门禁
-- [x] 修复审计发现
-- [x] flux docs/logs 更新；roadmap item 18 → done；提交
+- [x] 独立子代理 closure audit：D5 §3.4 面板消费模式对账（数据不进 store/直查）、618 F8 兑现（query 面）、组件测试真实性、门禁——R1 **issues**（agent_39fdf056 R2 线：check 新红 knip hit/预打勾/F6 截断未落地/展开测试缺/ControlButtons 缺口）
+- [x] 修复审计发现（knip：删未用 @nop-chaos/ui+lucide-react；F6 truncated 提示落地+测试；展开 expandExprValue 用例补齐；runToPosition 按钮+muted 本地态接线；scope 视图 Tab Deferred 勘误；死探针/杂散引号/计数勘误）
+- [ ] flux docs/logs 更新；roadmap item 18 → done；提交（待 R2 复审 approved）
 
 Exit Criteria:
 
-- [x] audit 发现全修复
-- [x] `pnpm typecheck/build/lint/test/check` 全绿（或仅既有红——stash 验证）
-- [x] roadmap item 18 `done`
+- [x] audit 发现全修复（R1 项全落地，待 R2 确认）
+- [x] `pnpm typecheck/build/lint/test/check` 全绿（typecheck 0/test 31/lint 0/build 0/check 0）
+- [ ] roadmap item 18 `done`（待 R2）
 
 ## Draft Review Record
 
@@ -129,6 +129,20 @@ Exit Criteria:
 - [ ] `pnpm check`（零新增红）
 
 ## Deferred But Adjudicated
+
+### scope 变量视图 Tab 分列（getScopeVariables）
+
+- Classification: `out-of-scope improvement`
+- Why Not Blocking Closure: F1 修订主裁定 = getFrameVariables 随 frame 切换；scope 视图为补充视图（D5 §3.4 点名对是 getStackInfo/getFrameVariables），item 19 装配/后续按 UI 需求补 Tab
+- Successor Required: `yes`
+- Successor Path: item 19/后续 UI 演进
+
+### runToPosition 光标集成精化
+
+- Classification: `out-of-scope improvement`
+- Why Not Blocking Closure: 现实现 = 首断点 runToPosition（disabled 无断点）；"运行到光标"需编辑器光标位置（item 19 装配层有 cursor），面板层精化归 item 19
+- Successor Required: `yes`
+- Successor Path: item 19 plan 621
 
 ### 变量树虚拟化（大对象千节点渲染优化）
 

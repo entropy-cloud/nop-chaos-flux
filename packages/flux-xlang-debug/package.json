@@ -15,7 +15,6 @@
     "@codemirror/state": "^6.5.2",
     "@codemirror/view": "^6.41.0",
     "zustand": "^5.0.12",
-    "@nop-chaos/ui": "workspace:*",
     "@nop-chaos/flux-i18n": "workspace:*"
   },
   "devDependencies": {
@@ -23,8 +22,7 @@
     "@nop-chaos/flux-core": "workspace:*",
     "react": "^19.0.0",
     "@types/react": "^19.0.0",
-    "@testing-library/react": "^16.3.0",
-    "lucide-react": "^1.17.0"
+    "@testing-library/react": "^16.3.0"
   },
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
@@ -34,7 +32,6 @@
   },
   "description": "XLang debug extensions and store for CodeMirror (breakpoint gutter, suspended line, exception squiggle, debug store)",
   "peerDependencies": {
-    "react": "^19.0.0",
-    "lucide-react": "^1.17.0"
+    "react": "^19.0.0"
   }
 }

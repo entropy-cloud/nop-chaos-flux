@@ -34,16 +34,18 @@ export interface VariablesTreeProps {
 export function VariablesTree({ store, client, threadId, frameIndex }: VariablesTreeProps) {
   const suspended = useStore(store, (s) => s.suspended);
   const [roots, setRoots] = useState<VarRow[] | null>(null);
+  const [truncated, setTruncated] = useState(false);
   const [expanded, setExpanded] = useState<Record<string, TreeNode[]>>({});
   const [loadFailed, setLoadFailed] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
     const load = client
-      .query<{ vars: VarRow[] | null }>('debugger.getFrameVariables', { threadId, frameIndex })
+      .query<{ vars: VarRow[] | null; truncated?: boolean }>('debugger.getFrameVariables', { threadId, frameIndex })
       .then((result) => {
         if (cancelled) return;
         setRoots(result?.vars ?? []);
+        setTruncated(result?.truncated === true);
         setLoadFailed(false);
       })
       .catch(() => {
@@ -73,7 +75,7 @@ export function VariablesTree({ store, client, threadId, frameIndex }: Variables
       return;
     }
     const result = await client
-      .query<{ vars: Array<{ name?: string }> | null }>(
+      .query<{ vars: Array<{ name?: string }> | null; truncated?: boolean }>(
         'debugger.expandExprValue',
         { threadId, frameIndex, expr: node.expr, keys: [{ name: node.name }] },
       )
@@ -82,6 +84,9 @@ export function VariablesTree({ store, client, threadId, frameIndex }: Variables
       const childName = String(child.name ?? '');
       return { name: childName, expr: buildChildrenExpr(node.expr, childName) };
     });
+    if (result?.truncated) {
+      setTruncated(true); // F6：子节点超限截断提示
+    }
     setExpanded((prev) => ({ ...prev, [key]: children }));
   };
 
@@ -102,6 +107,7 @@ export function VariablesTree({ store, client, threadId, frameIndex }: Variables
   return (
     <div className="xlang-debug-vars" data-testid="xlang-debug-vars">
       {(roots ?? []).map((row) => renderNode({ name: row.name ?? '', expr: row.name ?? '' }, 0))}
+      {truncated && <div className="xlang-debug-truncated" data-testid="xlang-debug-truncated">{t('flux.xlangDebug.truncated')}</div>}
       {(roots ?? []).length === 0 && <div>{t('flux.xlangDebug.emptyVariables')}</div>}
     </div>
   );
