@@ -120,8 +120,7 @@ export interface RendererDefinitionShape<S extends BaseSchema = BaseSchema> {
   rendererClass?: RendererClass;
   rendererTraits?: readonly string[];
   componentCapabilityContracts?: readonly RendererCapabilityContract[];
-  scopeExportContracts?: Readonly<Record<string, FluxValueShape>>;
-  injectedLocals?: Readonly<Record<string, Omit<SymbolInfo, 'name'>>>;
+  injectedLocals?: Readonly<Record<string, Omit<SymbolInfo, 'name'> & { shape?: FluxValueShape }>>;
   sourcePackage?: string;
   fields?: readonly SchemaFieldRule[];
   authoringTransform?: (context: RendererAuthoringTransformContextLike<S>) => S;

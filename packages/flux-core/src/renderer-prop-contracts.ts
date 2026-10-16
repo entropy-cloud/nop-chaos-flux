@@ -1,4 +1,5 @@
 import type { RendererDefinition } from './types/renderer-core.js';
+import type { FluxValueShape } from './schema-diagnostics/index.js';
 import type {
   RendererEventContract,
   RendererPropContract,
@@ -64,4 +65,24 @@ export function resolveRendererEventContracts(
   }
 
   return events;
+}
+
+/**
+ * Scope-export view over a renderer's `injectedLocals` entries (RM-6, plan
+ * 608): entries that carry a `shape` surface it for tooling. Entries without
+ * a shape (pure compiler symbols like `$page`) do not appear — matching the
+ * former `scopeExportContracts` channel's key set exactly.
+ */
+export function resolveRendererScopeExports(
+  renderer: RendererDefinition,
+): Readonly<Record<string, FluxValueShape>> {
+  const exports: Record<string, FluxValueShape> = {};
+
+  for (const [name, info] of Object.entries(renderer.injectedLocals ?? {})) {
+    if (info.shape) {
+      exports[name] = info.shape;
+    }
+  }
+
+  return exports;
 }

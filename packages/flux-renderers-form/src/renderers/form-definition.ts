@@ -172,8 +172,10 @@ export const formRendererDefinition: RegisteredRendererDefinition = {
       },
     },
   ],
-  scopeExportContracts: {
+  injectedLocals: {
     $form: {
+      kind: 'injected-local',
+      shape: {
       kind: 'object',
       fields: {
         id: { kind: 'string' },
@@ -190,10 +192,6 @@ export const formRendererDefinition: RegisteredRendererDefinition = {
       },
       optional: ['id', 'name'],
     },
-  },
-  injectedLocals: {
-    $form: {
-      kind: 'injected-local',
     },
   },
   component: FormRenderer,

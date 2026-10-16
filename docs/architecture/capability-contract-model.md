@@ -131,7 +131,6 @@ interface RendererDefinition {
 
   propContracts?: Record<string, RendererPropContract>;
   componentCapabilityContracts?: readonly RendererCapabilityContract[];
-  scopeExportContracts?: Record<string, FluxValueShape>;
 
   hostContract?: RendererHostContract;
 }
@@ -185,7 +184,7 @@ Authoring/runtime split:
 Current assembly order for `ResolvedAuthoringContract`:
 
 1. start from `RendererDefinition.rendererClass` and `rendererTraits`
-2. project ordinary renderer metadata from the `fields` inline contracts, `componentCapabilityContracts`, and `scopeExportContracts`
+2. project ordinary renderer metadata from the `fields` inline contracts, `componentCapabilityContracts`, and `injectedLocals` shapes
 3. if `hostContract` exists, resolve the default manifest and derive `hostProjection`, `hostActions`, and `hostManifest`
 4. if `hostContract` does not exist, host-only fields stay absent
 
@@ -250,7 +249,6 @@ interface RendererDefinition {
   component: ComponentType<any>;
   propContracts?: Record<string, RendererPropContract>;
   componentCapabilityContracts?: readonly RendererCapabilityContract[];
-  scopeExportContracts?: Record<string, FluxValueShape>;
   hostContract?: RendererHostContract;
 }
 ```

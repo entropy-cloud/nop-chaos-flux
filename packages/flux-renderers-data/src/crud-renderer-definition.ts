@@ -61,8 +61,10 @@ export const crudRendererDefinition: RegisteredRendererDefinition = {
         'Load the next page of data when the CRUD pagination mode is "infinite". Triggers the loadAction or source refresh.',
     },
   ],
-  scopeExportContracts: {
+  injectedLocals: {
     $crud: {
+      kind: 'injected-local',
+      shape: {
       kind: 'object',
       fields: {
         loading: { kind: 'boolean' },
@@ -80,10 +82,6 @@ export const crudRendererDefinition: RegisteredRendererDefinition = {
       },
       optional: ['total', 'query', 'pagination', 'sort', 'filters', 'visibleColumnNames'],
     },
-  },
-  injectedLocals: {
-    $crud: {
-      kind: 'injected-local',
     },
   },
   component: CrudRenderer,

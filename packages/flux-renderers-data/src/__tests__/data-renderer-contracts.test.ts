@@ -8,7 +8,8 @@ describe('data renderer static contracts', () => {
 
     expect(crud?.rendererClass).toBe('flux-owner-renderer');
     expect(crud?.rendererTraits).toContain('composite');
-    expect(crud?.scopeExportContracts?.$crud?.kind).toBe('object');
+    // RM-6: scope exports derive from the injectedLocals entry's inline shape
+    expect(crud?.injectedLocals?.$crud?.shape?.kind).toBe('object');
     expect(crud?.componentCapabilityContracts?.map((item) => item.handle)).toEqual([
       'refresh',
       'querySubmit',

@@ -92,7 +92,8 @@ describe('data renderer definition contracts', () => {
   });
 
   it('crud has scope exports for $crud', () => {
-    expect(crudRendererDefinition.scopeExportContracts?.$crud?.kind).toBe('object');
+    // RM-6: scope exports derive from the injectedLocals entry's inline shape
+    expect(crudRendererDefinition.injectedLocals?.$crud?.shape?.kind).toBe('object');
   });
 
   it('crud has component capabilities: refresh, getSelection, clearSelection', () => {

@@ -22,7 +22,8 @@ describe('form renderer definition contracts', () => {
 
   it('form has scope export for $form', () => {
     const form = formRendererDefinitions.find((d) => d.type === 'form');
-    expect(form?.scopeExportContracts?.$form?.kind).toBe('object');
+    // RM-6: scope exports derive from the injectedLocals entry's inline shape
+    expect(form?.injectedLocals?.$form?.shape?.kind).toBe('object');
   });
 
   it('form has event contract for submitAction', () => {

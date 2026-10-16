@@ -129,7 +129,7 @@ Stable field groups:
 - Runtime registration: `type`, `component`, `fields`, `scopePolicy`, `actionScopePolicy`, `componentRegistryPolicy`, `wrap`, `schemaValidator`, `validation`, `compilation`, `validationDefaults`, `frameRootTag`, `staticCapable`
 - Discovery metadata: `displayName`, `icon`, `category`, `sourcePackage`, `defaultSchema`
 - Renderer classification: `rendererClass`, `rendererTraits`, `injectedLocals`
-- Ordinary renderer authoring contracts: inline `fields[].contract` (prop shapes and event payloads — single source since RM-4/RM-5), `componentCapabilityContracts`, `scopeExportContracts`
+- Ordinary renderer authoring contracts: inline `fields[].contract` (prop shapes and event payloads — single source since RM-4/RM-5), `componentCapabilityContracts`, `injectedLocals[].shape` (scope exports — single source since RM-6)
 - Authoring adaptation: inline `fields[].contract` (single source since RM-4; read through `resolveRendererPropContracts`), `authoringTransform`
 - Host-only contract: `hostContract`
 
@@ -168,7 +168,7 @@ Inline event contracts on `fields` entries (single source since RM-5/plan 607; r
 - Runtime relationship: methods resolve through `ComponentHandleRegistry`, not through `ActionScope`
 - Shared contract language: methods reuse the same `CapabilityMethodContract` language as host manifest methods, but not the same envelope
 
-`scopeExportContracts`
+`injectedLocals[].shape` (scope exports, single source since RM-6/plan 608; read through `resolveRendererScopeExports`)
 
 - Responsibility: narrow readonly Flux-native exports such as `$form`, `$crud`, or owner summaries
 - Consumers: tooling, docs, diagnostics fixtures, future autocomplete
@@ -196,7 +196,7 @@ Current adapter baseline:
 - `ResolvedAuthoringContract.editableProps` comes from the renderer's `fields` contracts (via `resolveRendererPropContracts`)
 - `ResolvedAuthoringContract.events` comes from the renderer's `fields` event contracts (via `resolveRendererEventContracts`)
 - `ResolvedAuthoringContract.componentCapabilityContracts` comes from `RendererDefinition.componentCapabilityContracts`
-- `ResolvedAuthoringContract.scopeExports` comes from `RendererDefinition.scopeExportContracts`
+- `ResolvedAuthoringContract.scopeExports` comes from the renderer's `injectedLocals` shapes (via `resolveRendererScopeExports`)
 - `ResolvedAuthoringContract.hostProjection` and `hostActions` are present only when `RendererDefinition.hostContract` resolves a manifest
 
 ## Render-Time React Contracts

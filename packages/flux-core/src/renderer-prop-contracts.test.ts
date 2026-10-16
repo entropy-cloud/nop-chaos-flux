@@ -3,6 +3,7 @@ import type { RendererFieldContract } from './index.js';
 import {
   resolveRendererEventContracts,
   resolveRendererPropContracts,
+  resolveRendererScopeExports,
 } from './renderer-prop-contracts.js';
 import type { RegisteredRendererDefinition } from './index.js';
 
@@ -130,5 +131,38 @@ describe('resolveRendererEventContracts (RM-5 single source)', () => {
     });
 
     expect(resolveRendererEventContracts(renderer).onRowClick?.displayName).toBe('onRowClick');
+  });
+});
+
+describe('resolveRendererScopeExports (RM-6 single source)', () => {
+  it('surfaces injectedLocals entries that carry a shape (crud/form dual-site parity)', () => {
+    const renderer = makeRenderer({
+      type: 'scope-probe',
+      component: () => null,
+      injectedLocals: {
+        $crud: {
+          kind: 'injected-local',
+          shape: { kind: 'object', fields: { loading: { kind: 'boolean' } } },
+        },
+        $page: { kind: 'injected-local' },
+      },
+    });
+
+    expect(resolveRendererScopeExports(renderer)).toEqual({
+      $crud: { kind: 'object', fields: { loading: { kind: 'boolean' } } },
+    });
+  });
+
+  it('returns an empty map when no injectedLocals entry carries a shape', () => {
+    expect(
+      resolveRendererScopeExports(
+        makeRenderer({
+          type: 'page-probe',
+          component: () => null,
+          injectedLocals: { $page: { kind: 'injected-local' } },
+        }),
+      ),
+    ).toEqual({});
+    expect(resolveRendererScopeExports(makeRenderer({ type: 'bare', component: () => null }))).toEqual({});
   });
 });
