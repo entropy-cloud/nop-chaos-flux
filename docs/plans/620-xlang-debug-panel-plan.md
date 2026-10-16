@@ -89,7 +89,7 @@ Targets: `packages/flux-xlang-debug/src/panel/` + `packages/flux-i18n/src/locale
 
 Exit Criteria:
 
-- [x] 组件测试绿（渲染/交互/错误态三类）——panel.test 9 用例（ControlButtons 禁用语义+act 挂起切换+runToPosition/VariablesTree getFrameVariables 查询+错误态+展开+截断/EvalInput 禁用+提交/LogPanel 订阅+exceptions）
+- [x] 组件测试绿（渲染/交互/错误态三类）——panel.test 8 用例（ControlButtons 禁用语义+act 挂起切换+runToPosition/VariablesTree getFrameVariables 查询+错误态+展开+截断/EvalInput 禁用+提交/LogPanel 订阅+exceptions）【R-1 计数勘正：audit R2 线】
 - [x] 包内 typecheck/lint/test 通过
 
 ### Phase 3 - 独立 closure audit 与收口

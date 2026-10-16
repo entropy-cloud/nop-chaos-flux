@@ -19,6 +19,10 @@ const mockCreateLanguageExtension = vi.fn((language: string) => [`xlang-language
 
 vi.mock('@nop-chaos/flux-code-editor', () => ({
   createLanguageExtension: (language: string) => mockCreateLanguageExtension(language),
+  createBaseExtensions: (opts: { language: string }) => {
+    mockCreateLanguageExtension(opts.language);
+    return [`xlang-base-marker:${opts.language}`];
+  },
   useCodeMirror: (options: { extensions?: unknown[]; initialValue?: string }) => {
     // 记录注入的 extensions（Wiring Verification：装配层确实传入调试扩展）
     (globalThis as unknown as { __injected?: unknown[] }).__injected = options.extensions;
@@ -62,6 +66,8 @@ describe('XlangDebugEditor assembly', () => {
     const injected = (globalThis as unknown as { __injected?: unknown[] }).__injected ?? [];
     // xlang 语言扩展 + gutter + suspended + exception + facet + linter
     expect(injected.length).toBeGreaterThanOrEqual(5);
+    // m2 强化：判别性断言——基础能力与语言分支 marker 均在（而非仅计数）
+    expect(injected).toContain('xlang-base-marker:xlang');
     expect(mockCreateLanguageExtension).toHaveBeenCalledWith('xlang');
   });
 

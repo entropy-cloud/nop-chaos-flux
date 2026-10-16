@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { WebSocketConnection, WebSocketOpener } from '@nop-chaos/flux-core';
-import { createLanguageExtension, useCodeMirror } from '@nop-chaos/flux-code-editor';
+import { createBaseExtensions, useCodeMirror } from '@nop-chaos/flux-code-editor';
 import {
   createXlangLinter,
   registerXlangLanguage,
@@ -29,7 +29,7 @@ export interface XlangDebugEditorProps {
   /** 调试文档锚点（gutter/sync/诊断编译共用）。单实例单 sourcePath 假设（plan 621 m8）。 */
   sourcePath: string;
   serverUrl: string;
-  /** 宿主 env.openSocket（D5 §3.1 XD→FC 边兑现；capability check 在 connect 内）。 */
+  /** 宿主 env.openSocket（D5 §3.1 XD→FC 边兑现；capability check 在 effect 内）。 */
   openSocket: WebSocketOpener;
   /** 诊断编译服务（620 M3：sourcePath 参数化；宿主包装 /r/nop-xlang-debug/compile）。 */
   compile: XlangCompileService;
@@ -78,15 +78,20 @@ export function XlangDebugEditor(props: XlangDebugEditorProps) {
         openSocket,
         serverUrl,
         getToken: () => latestRef.current.getToken(),
-        onSessionClosed: (p) => latestRef.current.onSessionClosed?.(p),
+        onSessionClosed: (p) => {
+          // M3：会话关闭/连接失败 → 错误条呈现 + 装配层回调
+          setConnectError(`${p.reason}${p.detail ? `: ${p.detail}` : ''}`);
+          latestRef.current.onSessionClosed?.(p);
+        },
       }),
     [store, openSocket, serverUrl],
   );
 
   const extensions = useMemo(
     () => [
-      // registry 查找（xlang 已注册）——与 CE createBaseExtensions 的 language 分支同源
-      createLanguageExtension('xlang'),
+      // 完整基础能力（行号/折叠/history/search/主题）+ registry 的 xlang 语言分支
+      // （m1 勘正：原 createLanguageExtension 仅语言扩展，缺行号/折叠等基础能力）
+      ...createBaseExtensions({ language: 'xlang', lineNumbers: true, folding: true }),
       createBreakpointGutter(store),
       suspendedLinesField,
       exceptionLinesField,
@@ -110,16 +115,28 @@ export function XlangDebugEditor(props: XlangDebugEditorProps) {
     return syncStoreToExtensions({ store, view, getSourcePath: () => sourcePath });
   }, [store, view, sourcePath]);
 
+  // 连接失败呈现（plan 621 M3：Failure Path openSocket-missing/connect-fail）
+  const [connectError, setConnectError] = useState<string | null>(null);
+
   // client 生命周期：mount connect / unmount dispose（StrictMode 双挂载安全——cleanup 完整）
   useEffect(() => {
+    if (!openSocket) {
+      setConnectError('env.openSocket 不可用（宿主未提供 WebSocket 能力）');
+      return;
+    }
     void client.connect();
     return () => {
       client.dispose();
     };
-  }, [client]);
+  }, [client, openSocket]);
 
   return (
     <div className={className} data-testid="xlang-debug-editor">
+      {connectError && (
+        <div className="xlang-debug-connect-error" data-testid="xlang-debug-connect-error">
+          {connectError}
+        </div>
+      )}
       <div className="xlang-debug-editor-main">
         <div ref={editorRef} />
       </div>
@@ -195,7 +212,6 @@ export function createCompileService(adapter: CompileFetcherAdapterOptions): Xla
         },
       ];
     }
-    const diagnostics = (response.data?.diagnostics ?? []) as XlangDiagnostic[];
-    return diagnostics;
+    return (response.data?.diagnostics ?? []) as XlangDiagnostic[];
   };
 }

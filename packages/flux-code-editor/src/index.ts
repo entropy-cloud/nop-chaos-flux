@@ -56,7 +56,7 @@ export {
 export { useCodeMirror } from './use-code-mirror.js';
 export type { UseCodeMirrorOptions, UseCodeMirrorResult } from './use-code-mirror.js';
 
-export { getLanguageParser, createLanguageExtension } from './extensions/base.js';
+export { getLanguageParser, createLanguageExtension, createBaseExtensions } from './extensions/base.js';
 export type { CreateBaseExtensionsOptions, CompletionConfig } from './extensions/base.js';
 export {
   registerLanguage,

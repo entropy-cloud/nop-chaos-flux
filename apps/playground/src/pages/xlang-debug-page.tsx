@@ -1,9 +1,32 @@
 import { useState } from 'react';
-import { XlangDebugEditor } from '@nop-chaos/flux-xlang-debug';
+import { createFormulaCompiler } from '@nop-chaos/flux-formula';
+import { createSchemaRenderer, createDefaultRegistry } from '@nop-chaos/flux-react';
+import type { RendererEnv } from '@nop-chaos/flux-core';
+import { registerXlangDebugEditorRenderers } from '@nop-chaos/flux-xlang-debug';
 import { createDefaultOpenSocket } from '../env/socket-impl';
 
-/** xlang 在线调试演示页（plan 621 Phase 2）：token/后端地址为演示态手工注入
- * （playground 无登录流与 dev proxy——真实后端联调归 item 21/22）。 */
+/** xlang 在线调试演示页（plan 621 Phase 2，M4：经 schema+registry+SchemaRenderer
+ * 路径渲染——renderer definition 获得 live 消费方）。token/后端地址为演示态手工
+ * 注入（playground 无登录流与 dev proxy——真实后端联调归 item 21/22）。 */
+const registry = createDefaultRegistry();
+registerXlangDebugEditorRenderers(registry);
+const formulaCompiler = createFormulaCompiler();
+const SchemaRenderer = createSchemaRenderer();
+
+const schema = {
+  type: 'page',
+  body: [
+    {
+      type: 'xlang-debug-editor',
+      name: 'xlangDebugEditor',
+      sourcePath: 'demo.xpl',
+      serverUrl: '/ws/xlang-debugger',
+      initialSource:
+        'function greet(name) {\n  return "hello, " + name;\n}\n\nreturn greet("xlang");\n',
+    },
+  ],
+};
+
 export default function XlangDebugPage() {
   const [token, setToken] = useState('');
   const [connected, setConnected] = useState(false);
@@ -28,28 +51,35 @@ export default function XlangDebugPage() {
     );
   }
 
+  // token 注入 WS URL（playground 无登录流——演示态手工 token）
+  const env = {
+    fetcher: async (
+      api: { url: string; method?: string; headers?: Record<string, string>; data?: unknown },
+      _ctx?: unknown,
+    ) => {
+      const response = await fetch(api.url, {
+        method: api.method ?? 'POST',
+        headers: { ...api.headers, Authorization: `Bearer ${token}` },
+        body: api.data == null ? undefined : JSON.stringify(api.data),
+      });
+      const data = (await response.json().catch(() => null)) as unknown;
+      return { status: response.ok ? 0 : response.status, data };
+    },
+    notify: () => undefined,
+    openSocket: (url: string) => {
+      const separator = url.includes('?') ? '&' : '?';
+      return openSocket(`${url}${separator}nopDebugToken=${encodeURIComponent(token)}`);
+    },
+  } as RendererEnv;
+
   return (
     <div style={{ padding: 24, height: '100%' }}>
-      <XlangDebugEditor
-        sourcePath="demo.xpl"
-        serverUrl="/ws/xlang-debugger"
-        openSocket={openSocket}
-        compile={async (sourcePath: string, source: string) => {
-          const response = await fetch('/r/nop-xlang-debug/compile', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-            body: JSON.stringify({ sourcePath, source }),
-          });
-          if (!response.ok) {
-            return [{ line: 1, severity: 'error' as const, message: `compile failed: ${response.status}` }];
-          }
-          const data = (await response.json()) as {
-            diagnostics?: Array<{ line: number; severity: 'error' | 'warning'; message: string; errorCode?: string }>;
-          };
-          return data.diagnostics ?? [];
-        }}
-        getToken={() => token}
-        initialSource={'function greet(name) {\n  return "hello, " + name;\n}\n\nreturn greet("xlang");\n'}
+      <SchemaRenderer
+        schemaUrl="playground://pages/xlang-debug"
+        schema={schema}
+        env={env}
+        registry={registry}
+        formulaCompiler={formulaCompiler}
       />
     </div>
   );

@@ -57,22 +57,22 @@
 
 ### Phase 1 - XlangDebugEditor 装配组件 + renderer definition
 
-Status: planned
+Status: completed
 Targets: `packages/flux-xlang-debug/src/assembly/`
 
 - Item Types: `Feature`
 
-- [ ] deps：+ `@nop-chaos/flux-code-editor`（deps）、`@nop-chaos/flux-xlang-lang`（deps）、`@nop-chaos/flux-react`（**prod dep**——renderer definition 与 useRendererRuntime 运行时 import，m5 钉死）、`@nop-chaos/flux-core`（type-only 则 devDep，m5）
-- [ ] **落位裁定（M1）**：装配放 `packages/flux-xlang-debug/src/assembly/`（不移动）——XD→XL 生产依赖为对 D5 §3.1"两新包互不依赖"的**显式修订**（装配层归 XD 的理由：renderer definition 须可被 item 20 生产宿主 import，放 playground 会 app 私有化；另立第三包过度设计）；Phase 3 owner-doc 更新项含 **D5 §3.1 依赖图修订（增 XD→XL 边 + 装配归 XD 说明）**
-- [ ] `xlang-debug-editor.tsx`（M2 修订）：extensions 组合 = **`createBaseExtensions({ language: 'xlang', lineNumbers, folding, ... })`（经 registry 取 xlang()——组件 mount 前须已 registerXlangLanguage()，miss = 静默无高亮）** ∪ [createBreakpointGutter(store), suspendedLinesField, exceptionLinesField, sourcePathFacet.of(sourcePath), createXlangLinter({ compile })]（useMemo，key 含 sourcePath——m8：单实例单 sourcePath 假设 JSDoc 注明）；**sync 桥不是 Extension**——`useEffect` 内等 view 就绪后 `syncStoreToExtensions({ store, view, getSourcePath })` 并在 cleanup dispose（B2 泄漏边界：dispose 必须被调）；client connect/dispose 同 effect（生命周期：StrictMode 双挂载安全——cleanup 完整）
-- [ ] `renderer.ts`：xlangDebugEditorRendererDefinition + registerXlangDebugEditorRenderers（照 CE 先例）
-- [ ] index.ts 导出扩充；knip 处置
-- [ ] 测试：组件渲染（mock client/store/editor extensions 注入断言——useCodeMirror 收到的 extensions 含 gutter/装饰/linter）、renderer definition schema 解析
+- [x] deps：+ `@nop-chaos/flux-code-editor`（deps）、`@nop-chaos/flux-xlang-lang`（deps）、`@nop-chaos/flux-react`（**prod dep**——renderer definition 与 useRendererRuntime 运行时 import，m5 钉死）、`@nop-chaos/flux-core`（type-only 则 devDep，m5）
+- [x] **落位裁定（M1）**：装配放 `packages/flux-xlang-debug/src/assembly/`（不移动）——XD→XL 生产依赖为对 D5 §3.1"两新包互不依赖"的**显式修订**（装配层归 XD 的理由：renderer definition 须可被 item 20 生产宿主 import，放 playground 会 app 私有化；另立第三包过度设计）；Phase 3 owner-doc 更新项含 **D5 §3.1 依赖图修订（增 XD→XL 边 + 装配归 XD 说明）**
+- [x] `xlang-debug-editor.tsx`（M2 修订）：extensions 组合 = **`createBaseExtensions({ language: 'xlang', lineNumbers, folding, ... })`（经 registry 取 xlang()——组件 mount 前须已 registerXlangLanguage()，miss = 静默无高亮）** ∪ [createBreakpointGutter(store), suspendedLinesField, exceptionLinesField, sourcePathFacet.of(sourcePath), createXlangLinter({ compile })]（useMemo，key 含 sourcePath——m8：单实例单 sourcePath 假设 JSDoc 注明）；**sync 桥不是 Extension**——`useEffect` 内等 view 就绪后 `syncStoreToExtensions({ store, view, getSourcePath })` 并在 cleanup dispose（B2 泄漏边界：dispose 必须被调）；client connect/dispose 同 effect（生命周期：StrictMode 双挂载安全——cleanup 完整）
+- [x] `renderer.ts`：xlangDebugEditorRendererDefinition + registerXlangDebugEditorRenderers（照 CE 先例）
+- [x] index.ts 导出扩充；knip 处置
+- [x] 测试：组件渲染（mock client/store/editor extensions 注入断言——useCodeMirror 收到的 extensions 含 gutter/装饰/linter）、renderer definition schema 解析
 
 Exit Criteria:
 
-- [ ] 装配组件测试绿（extensions 注入断言 = Wiring Verification）
-- [ ] 包内 typecheck/lint/test 通过
+- [x] 装配组件测试绿（extensions 注入断言 = Wiring Verification）——assembly.test 3 用例（vi.mock CE 捕获 extensions ≥5 含语言/gutter/装饰/facet/linter + 幂等注册 + DOM 结构；良性假连接消未处理拒绝）
+- [x] 包内 typecheck/lint/test 通过
 
 ### Phase 2 - playground 演示页
 
