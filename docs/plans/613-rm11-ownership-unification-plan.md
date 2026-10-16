@@ -17,24 +17,24 @@
 
 - **三态字面量 rg 口径 26 行/10 文件**（`rg "'local' \| 'controlled' \| 'scope'" packages --glob '!*.test.*'`，与词汇报告 §债二闭合）——逐行清单：`interaction-owner.ts:8`、`crud-schema.ts:248/251/254/257`、basic `schemas.ts:177/205`、`kanban.types.ts:80`（collapsedOwnership）、data `schemas.ts:130-133/184/192` + **`:284` 别名类型 `ListPaginationOwnership`**、`value-ownership.ts:24/35/59`、layout `schemas.ts:163/285/335`、`use-row-drag-sort.ts:33`、`use-column-resize.ts:71` + `:112`（`effectiveOwnership` 局部变量注解）、calendar `calendar.types.ts:120/122`。其中 `:284`（别名本体）与 `:112`（局部变量）按报告口径计入 26 但处置不同：别名删除并入；`effectiveOwnership` 为局部变量注解（排除清单豁免的是**词表约束**而非字面量收口——注解须换型 `OwnershipMode` 否则 literal closure 命令不闭合，变量名不改）。
 - **别名类型消费面**：`data/schemas.ts:334`（`paginationOwnership?: ListPaginationOwnership`）、`list-pagination.ts`（import + `resolveListPaginationOwnership` 归一函数 :8 + `:48/:70` 类型位）、`list-renderer.tsx:21/187`。
-- **松型**：`kanban.types.ts:80`（`kanbanOwnership?: string`——见下行改名面；另 `:81 kanbanStatePath?: string`）。
-- **改名面（`kanbanOwnership|kanbanStatePath` 全命中，报告裁决 2 范围=packages+flux-guide 全命中含注释/type test，docs 叙述豁免）**：`kanban.types.ts`（2）、`use-kanban-board-state.ts`（18）、`scheduling-renderer-definitions.ts`（5）、`kanban-board.tsx`（4）、basic `schemas.ts`（1——import/引用位）、`scheduling-boundary-narrowing.test.ts`、`kanban-ownership-gating.test.tsx`、`kanban-renderer.test.tsx`、`kanban-handle.test.tsx`、flux-guide `design-patterns/kanban.md`（3）、生成物 `flux-types/schema.d.ts`（2，regenerate 后以 live 为准）。
-- **12 处三态解析实现**（`comm -12 <(rg -l useScopeSelector …) <(rg -l "'controlled'" …)` = 11 文件 + `use-row-drag-sort.ts` 变体[内联三态+scope 写回、无 useScopeSelector]）：候选原语 2（layout `value-ownership.ts` 87 行[resolveOwnershipMode 降级 warn + useOwnershipScopeValue + useScopeWrite + useValueOwnershipValue]；basic `interaction-owner.ts` 58 行[useOwnedAxisValue<T> 泛型轴值读写]——两者 sentinel/startTransition 语义逐字同构）；域特化 4（calendar `use-calendar-ownership.ts` 67 行、kanban `use-kanban-board-state.ts` 184 行、data `list-pagination.ts` 202 行[含别名归一函数]）；axis 内联 6（`use-table-{filter,pagination,selection,sort}.ts`[215/167/494/310 行]、`use-column-resize.ts`[438 行]、basic `tabs.tsx`[value+items 双轴]）。`crud-renderer-ownership.ts` 非副本（报告 R1 勘误，零三态解析）。axis 业务逻辑与解析逻辑在同一文件交织（如 use-table-sort 438 行中 118-179 为 scope 订阅+三态分支）——收敛=替换解析分支为原语消费，axis 业务逻辑保留。
-- **原语义事实**：`UNUSED` sentinel 订阅跳过、`startTransition` scope 写回、controlled 不写值、scope 无 statePath 降级 local + dev warn（仅 layout 版携带）——两候选逐字同构（live 对照确认），无语义分歧需要裁决。
+- **松型**：`kanban.types.ts:84`（`kanbanOwnership?: string`）+ 同族 `:85`（`kanbanStatePath?: string`）；收窄与改名同批落 Phase 2。字面量清单中 `kanban.types.ts:80` 为 `collapsedOwnership`（另一字段，Phase 1 换型）。
+- **改名面（`kanbanOwnership|kanbanStatePath` 全命中，报告裁决 2 范围=packages+flux-guide 全命中含注释/type test，docs 叙述豁免）**：`kanban.types.ts`（2）、`use-kanban-board-state.ts`（18）、`scheduling-renderer-definitions.ts`（5）、`kanban-board.tsx`（4）、basic `schemas.ts`（1——`:200` 注释提及 kanbanOwnership 先例[裁决 2 注释在范围]）、`scheduling-boundary-narrowing.test.ts`、`kanban-ownership-gating.test.tsx`、`kanban-renderer.test.tsx`、`kanban-handle.test.tsx`、flux-guide `design-patterns/kanban.md`（3）、生成物 `flux-types/schema.d.ts`（2，regenerate 后以 live 为准）。
+- **12 处三态解析实现**（`comm -12 <(rg -l useScopeSelector …) <(rg -l "'controlled'" …)` = 11 文件 + `use-row-drag-sort.ts` 变体[内联三态+scope 写回、无 useScopeSelector；:107-118 已自带 scope 无 statePath dev warn]）：候选原语 2（layout `value-ownership.ts` 136 行[resolveOwnershipMode 降级 warn + useOwnershipScopeValue + useScopeWrite + useValueOwnershipValue]；basic `interaction-owner.ts` 59 行[useOwnedAxisValue<T> 泛型轴值读写]）；域特化 3（calendar `use-calendar-ownership.ts` 67 行、kanban `use-kanban-board-state.ts` 184 行、data `list-pagination.ts` 202 行[含别名归一函数 :8]）；axis 内联 7（`use-table-{filter,pagination,selection,sort}.ts`[215/167/494/310 行]、`use-column-resize.ts`[438 行]、basic `tabs.tsx`[value+items 双轴]、use-row-drag-sort 变体）。`crud-renderer-ownership.ts` 非副本（报告 R1 勘误，零三态解析）。axis 业务逻辑与解析逻辑在同一文件交织（如 use-table-sort 310 行中 :118-:188 为 scope 订阅+三态分支）——收敛=替换解析分支为原语消费，axis 业务逻辑保留。
+- **两候选语义对照（R1 M1 勘误：非逐字同构）**——同构面：`UNUSED` sentinel 订阅跳过、`startTransition` scope 写回、controlled 不写值。**分歧四处（迁移须逐消费方保行为，落迁移对照表）**：(a) scope 写回归一——layout `next ?? null`（value-ownership.ts:80）vs basic 写原值（interaction-owner.ts:51）；(b) local 初始优先序——layout `value ?? defaultValue`（:109）vs basic `defaultValue ?? value ?? fallbackValue`（:33）；(c) scope 链末端 fallback——layout `?? localValue`（:120）vs basic `?? defaultValue ?? fallbackValue`（:42）；(d) scope 写回镜像——layout 同步 setLocalValue（:130）、basic 不镜像。另：降级 dev warn 现为 layout 版 + use-row-drag-sort 变体自带（:107-118），basic 候选与 5 个 use-table-\*/tabs 消费方无——原语统一携带后属**补齐**，layout 3 处既有测试断言 warn **存在**（保行为），无断言依赖"无 warn"（live rg 核验）。
 - **词表现状**：12 种字段前缀（value/items/pagination/selection/sort/filter/order/columnWidths/collapsed/view/date/kanban）；`docs/references/naming-conventions.md` §4.8 已入库（唯一模式 `<axis>Ownership`+`<axis>StatePath`、受控词表 12 axis[board 为 RM-11 改名后新增]、禁例两条）。
 - 基线验证：HEAD 3a9d1724e = RM-10 收口提交，五门禁全绿（16,542 passed）。
 
 ## Goals
 
-- **类型单源**：`OwnershipMode = 'local' | 'controlled' | 'scope'` 于 flux-core `types/schema-base-types.ts` 单源导出（plan 裁定落点，经 types/index barrel 公开）；全部 schema 字段/hook 形参/局部注解的三态字面量改引用（24 处，26 行 rg 口径中别名本体 1 行随删除消失、`effectiveOwnership` 注解 1 行换型不改名）。
+- **类型单源**：`OwnershipMode = 'local' | 'controlled' | 'scope'` 于 flux-core `types/schema-base-types.ts` 单源导出（plan 裁定落点，经 types/index barrel 公开）；26 行 rg 口径逐行记账——schema 字段 18 + hook 形参 3 + value-ownership 3（Phase 3 随文件删除核销）+ `effectiveOwnership` 注解 1（换型不改名）+ 别名本体 1（随删除消失）；Phase 1 落地 22 处换型 + 别名删除，Phase 3 核销余 3 处+2 副本文件。
 - **别名与松型消亡**：`ListPaginationOwnership` 删除并入（`resolveListPaginationOwnership` 归一函数随迁评估——若原语提供等价归一则删除，否则内联并附理由）；`kanbanOwnership?: string` 收窄为 `OwnershipMode`。
 - **词表唯一**：`kanbanOwnership/kanbanStatePath` 无兼容改名 `boardOwnership/boardStatePath`（schema 类型、definitions、hooks、渲染器、测试、flux-guide 全命中改名；Cross-Cutting 7 不留别名）。
-- **实现单源**：flux-react 新增共享 ownership 原语（`resolveOwnershipMode` 泛型轴判定含 scope 降级+dev warn、`useOwnershipScopeValue` 订阅读、`useScopeWrite` 写回、`useOwnedAxisValue<T>` 泛型轴值读写——合并两候选语义）；12 处解析实现全部迁移为原语消费方，layout `value-ownership.ts` 与 basic `interaction-owner.ts` 副本删除。
+- **实现单源**：flux-react 新增共享 ownership 原语（`resolveOwnershipMode` 泛型轴判定含 scope 降级+dev warn、`useOwnershipScopeValue` 订阅读[**读法参数化**：select/equality 可入参，默认 getIn+Object.is——承载 5 个消费方的自定义 equality/transform 订阅，R1 M2 显式扩展]、`useScopeWrite` 写回、`useOwnedAxisValue<T>` 泛型轴值读写[合成语义=basic 版链序为默认，分歧消费方以building blocks 本地薄组合保行为]）；12 处解析实现全部迁移为原语消费方，layout `value-ownership.ts` 与 basic `interaction-owner.ts` 副本删除；**迁移对照表逐消费方钉住现行为**（写回归一/回退链/镜像四处分歧逐行裁决：原语承载或本地薄组合）。
 - **收口验证**：词汇报告 §债二三条 literal closure 口径复跑 + 五门禁全绿。
 
 ## Non-Goals
 
-- 不改 ownership 运行时语义（收敛保持行为等价：降级 warn 语义随原语携带到此前无 warn 的消费方属**补齐已知缺口**，须在 plan 内披露并验证无测试断言依赖"无 warn"）；不做 axis 语义合并（selection/order 是否同一轴等，报告显式排除）；不动 `effectiveOwnership` 局部变量名；不动 data 族行标识/其他词汇漂移（RM-12 或单独立项）；e2e。
+- 不改 ownership 运行时语义（收敛保持行为等价：四处分歧逐消费方保行为；降级 warn 语义随原语携带到此前无 warn 的消费方属**补齐已知缺口**——layout 3 处既有断言 warn 存在须继续通过、use-row-drag-sort 既有 warn 与原语 warn 去重[迁移后单点 warn 不重复]）；不做 axis 语义合并（selection/order 是否同一轴等，报告显式排除）；不动 `effectiveOwnership` 局部变量名；不动 data 族行标识/其他词汇漂移（RM-12 或单独立项）；e2e。
 
 ## Scope
 
@@ -58,7 +58,7 @@
 
 档位选择：`必须自动化` / `建议有测` / `不适用：理由`
 
-本档选择：**必须自动化**——实现合一组触及 12 个渲染器的值归属运行时路径（scope 订阅/写回/降级），属核心回归路径。Proof 先行：①**判别钉**——新增原语测试（flux-react）：scope 无 statePath 降级+dev warn 一次性、controlled 不写值、scope 写回走 startTransition、UNUSED 订阅跳过（`useScopeSelector` enabled=false）；②**既有测试族回归**——kanban-ownership-gating/kanban-renderer/kanban-handle/scheduling-boundary-narrowing（改名随迁）、layout steps/timeline/collapse ownership 测试、tabs/table 系列 ownership 测试全量绿；③行为等价判别：迁移前对 `useValueOwnershipValue`/`useOwnedAxisValue` 的消费方快照（如 steps 当前值序列）迁移后零差异（判别变异自证：在旧副本上注入受控值丢失变异→红→外科恢复→绿）。
+本档选择：**必须自动化**——实现合一组触及 12 个渲染器的值归属运行时路径（scope 订阅/写回/降级），属核心回归路径。Proof 先行（Phase 3 第 1 项=原语+判别钉落地勾验后再迁移消费方）：①**判别钉**——新增原语测试（flux-react）：scope 无 statePath 降级+dev warn 一次性、controlled 不写值、scope 写回走 startTransition、UNUSED 订阅跳过（`useScopeSelector` enabled=false）、自定义 equality/select 读法参数透传；②**既有测试族回归**——kanban-ownership-gating/kanban-renderer/kanban-handle/scheduling-boundary-narrowing（改名随迁）、layout steps/timeline/collapse ownership 测试、tabs/table 系列 ownership 测试全量绿；③行为等价判别：迁移前对 `useValueOwnershipValue`/`useOwnedAxisValue` 的消费方快照（如 steps 当前值序列）迁移后零差异（判别变异自证：在旧副本上注入受控值丢失变异→红→外科恢复→绿）。
 
 ## Execution Plan
 
@@ -70,8 +70,8 @@ Targets: `flux-core/src/types/schema-base-types.ts`；10 文件 26 行字面量�
 - Item Types: `Fix`、`Decision`、`Proof`
 
 - [ ] flux-core `schema-base-types.ts` 增 `export type OwnershipMode = 'local' | 'controlled' | 'scope';`（barrel 已 `export *`，公开导出生效）。
-- [ ] 24 处三态字面量改 `OwnershipMode` 引用（schema 字段 17 处[hooks 形参 3 处含 use-row-drag-sort/interaction-owner/use-column-resize:71]、`value-ownership.ts` 3 处[随 Phase 3 文件删除则该 3 处随消失，须在本 Phase 记账避免漏改——若 Phase 3 先行删除则此处核销]、`effectiveOwnership` 注解 1 处换型不改名、其余按 live 清单）；新发现位点显式登记，不静默留字面量。
-- [ ] `ListPaginationOwnership` 删除并入（`:284` 类型、`:334` 字段、`list-pagination.ts` 3 类型位、`list-renderer.tsx` import）；`resolveListPaginationOwnership` 处置落字（原语等价则删，否则内联+理由）；`kanbanOwnership?: string` 收窄随 Phase 2 改名一并落地。
+- [ ] 22 处三态字面量改 `OwnershipMode` 引用（schema 字段 18：basic 2+crud 4+data schemas 6+layout 3+kanban.types.ts:80 collapsedOwnership+calendar 2；hook 形参 3：interaction-owner.ts:8/use-row-drag-sort.ts:33/use-column-resize.ts:71；`effectiveOwnership` 注解 1 换型不改名）+ 别名本体 1 行随删除消失；余 3 处（value-ownership.ts:24/35/59）随 Phase 3 文件删除核销——本 Phase 记账不改动。新发现位点显式登记，不静默留字面量。
+- [ ] `ListPaginationOwnership` 删除并入（`:284` 类型、`:334` 字段、`list-pagination.ts` 3 类型位、`list-renderer.tsx` import）；`resolveListPaginationOwnership` 处置落字（**等价性判据含垃圾输入归一**：现语义为任意 unknown→'local' 无 warn，而原语 resolveOwnershipMode 为 undefined→'local'、仅 scope 无 statePath 降级——不等价则内联保留+理由，R1 m3）；`kanbanOwnership?: string`（kanban.types.ts:84）收窄随 Phase 2 改名一并落地。
 - [ ] Proof：`rg -l "'local' \| 'controlled' \| 'scope'" packages --glob '!*.test.*'` 输出仅剩（a）Phase 3 待删副本文件与（b）OwnershipMode 定义文件；`pnpm --filter @nop-chaos/flux-core typecheck` 绿。
 
 Exit Criteria:
@@ -85,7 +85,7 @@ Targets: scheduling kanban 族 + basic 引用位 + flux-guide
 
 - Item Types: `Fix`、`Proof`
 
-- [ ] `kanbanOwnership/kanbanStatePath` → `boardOwnership/boardStatePath` 全命中改名：`kanban.types.ts`（含 `:80` 松型收窄 `boardOwnership?: OwnershipMode`）、`use-kanban-board-state.ts`（18 命中）、`scheduling-renderer-definitions.ts`（5 命中，fields key 与 contract 同步）、`kanban-board.tsx`（4）、basic `schemas.ts`（1）、4 个测试文件（fixtures/断言/type test）、flux-guide `kanban.md`（3）、`flux-types/schema.d.ts` 再生成。
+- [ ] `kanbanOwnership/kanbanStatePath` → `boardOwnership/boardStatePath` 全命中改名：`kanban.types.ts`（含 `:80` 松型收窄 `boardOwnership?: OwnershipMode`）、`use-kanban-board-state.ts`（18 命中）、`scheduling-renderer-definitions.ts`（5 命中，fields key 与 contract 同步）、`kanban-board.tsx`（4）、basic `schemas.ts`（:200 注释）、4 个测试文件（fixtures/断言/type test）、flux-guide `kanban.md`（3）、`flux-types/schema.d.ts` 再生成。
 - [ ] Proof：`rg -n "kanbanOwnership|kanbanStatePath" packages flux-guide` 全命中归零（docs 叙述位点豁免——词汇报告/roadmap/本 plan/naming-conventions §4.8 禁例行引用为前态记载）；scheduling focused test 全绿（kanban-ownership-gating/kanban-renderer/kanban-handle/boundary-narrowing）。
 
 Exit Criteria:
@@ -99,10 +99,10 @@ Targets: `flux-react/src/ownership.ts`（新）；layout `value-ownership.ts`、
 
 - Item Types: `Fix`、`Decision`、`Proof`
 
-- [ ] 新原语 `packages/flux-react/src/ownership.ts`：`resolveOwnershipMode`（泛型轴入参 `{ ownership?: unknown; statePath?: unknown; warnPrefix?: string }`，scope 无 statePath 降级 local + dev warn 一次性）+ `useOwnershipScopeValue`（UNUSED sentinel 订阅跳过）+ `useScopeWrite`（startTransition 写回）+ `useOwnedAxisValue<T>`（泛型轴值读写：local useState/controlled 透传/scope 读+写回链）；barrel 导出（公开导出增补，授权链见上）。
-- [ ] 两候选副本迁移后删除：layout `value-ownership.ts`（steps/timeline/collapse 经 step-index.ts 消费面切原语，`useValueOwnershipValue` 语义由原语 `useOwnedAxisValue`+消费方特化承载——scalar 链 value??defaultValue 与消费方 fallback 逐字段对照迁移）；basic `interaction-owner.ts`（消费方切原语）。
-- [ ] 域特化 3 迁移：calendar `use-calendar-ownership.ts`（view/date 双轴）、kanban `use-kanban-board-state.ts`（board+collapsed 双轴，Phase 2 后为 board 命名）、data `list-pagination.ts`（pagination 轴 + resolveListPaginationOwnership 归一删除）——三态解析分支替换为原语调用，axis 业务逻辑保留。
-- [ ] axis 内联 7 迁移：`use-table-{filter,pagination,selection,sort}.ts`、`use-column-resize.ts`、`use-row-drag-sort.ts`（变体：内联三态+scope 写回，无 useScopeSelector——写回切 `useScopeWrite` 或等价原语出口，附迁移记录）、basic `tabs.tsx`（value+items 双轴内联）。
+- [ ] **Proof 先行（R1 m2）**：新原语 `packages/flux-react/src/ownership.ts` 落地+判别钉单测先行勾验——`resolveOwnershipMode`（泛型轴入参 `{ ownership?: unknown; statePath?: unknown; warnPrefix?: string }`，scope 无 statePath 降级 local + dev warn 一次性）+ `useOwnershipScopeValue`（UNUSED sentinel 订阅跳过；**读法参数化 `{ select?, equality? }` 默认 getIn+Object.is**——承载 use-table-sort 双订阅/use-table-filter/use-table-selection Set 相等+transform/use-table-pagination shallowEqual/use-column-resize 五处自定义订阅，R1 M2）+ `useScopeWrite`（startTransition 写回）+ `useOwnedAxisValue<T>`（合成语义=basic 版链序为默认）；barrel 导出（公开导出增补，授权链见上）。四处分歧（Baseline 对照 (a)~(d)）由**迁移对照表**逐消费方裁决：原语参数承载或消费方以 building blocks 本地薄组合（`ownership === 'controlled'` 比较不触发 comm 口径——该口径只钉 useScopeSelector∧'controlled' 同文件）。
+- [ ] 两候选副本迁移后删除：layout `value-ownership.ts`（steps/timeline/collapse 经 step-index.ts 消费面切原语/薄组合，layout 版写回归一 `next ?? null`+镜像 setLocalValue+`?? localValue` 链序在对照表逐行钉住）；basic `interaction-owner.ts`（消费方切原语，链序为默认）。
+- [ ] 域特化 3 迁移：calendar `use-calendar-ownership.ts`（view/date 双轴）、kanban `use-kanban-board-state.ts`（board+collapsed 双轴，Phase 2 后为 board 命名）、data `list-pagination.ts`（pagination 轴 + resolveListPaginationOwnership 按 Phase 1 裁定处置）——三态解析分支替换为原语调用，axis 业务逻辑保留。
+- [ ] axis 内联 7 迁移：`use-table-{filter,pagination,selection,sort}.ts`（自定义 equality/transform 经原语读法参数承载）、`use-column-resize.ts`、`use-row-drag-sort.ts`（变体：内联三态+scope 写回，无 useScopeSelector——写回切原语出口，既有 :107-118 warn 与原语 warn 单点去重）、basic `tabs.tsx`（value+items 双轴内联）。
 - [ ] 行为等价判别（Test Strategy ③）：迁移前快照 → 迁移后零差异；判别变异自证一轮。
 - [ ] Proof：closure 口径 2 `comm -12 <(rg -l useScopeSelector packages --glob '!*.test.*' | sort) <(rg -l "'controlled'" packages --glob '!*.test.*' | sort)` == {`packages/flux-react/src/ownership.ts`}；若个别域特化须保留豁免，逐条附理由落本 plan（不得静默保留）。
 
@@ -127,10 +127,10 @@ Exit Criteria:
 
 > 起草后、执行前的独立审查证据。由独立 fresh 子 agent 填写。
 
-- Reviewer / Agent: （待 draft review）
-- Verdict: `draft`
-- Rounds: 0
-- Findings addressed: —
+- Reviewer / Agent: agent_927c80cf（R1，独立 fresh 子 agent，26 行/comm/改名面全量复现 + 12 消费方抽样核验）
+- Verdict: `fail`（R1 0B/4M/3m → 已修订，待 R2 复核）
+- Rounds: 1（R1 已回填；R2 待跑）
+- Findings addressed: M1=两候选"逐字同构"不成立（live 四处分歧：scope 写回归一 next??null vs 原值/local 初始序/scope 链末端 fallback/写回镜像；且 use-row-drag-sort:107-118 自带 warn 非"仅 layout 版"）→ Baseline 改语义对照表+分歧逐消费方保行为落迁移对照表+Non-Goals warn 去重披露；M2=5 消费方自定义 equality/transform 订阅原语承载缺口 → 原语 useOwnershipScopeValue 读法参数化 {select?,equality?}（授权链内显式扩展）；M3=账目两个"24"不可对账/schema 字段 17≠live 18/kanban.types.ts:80 归属不明 → 重列 18+3+3+1+1=26、:80 归 Phase 1、:84 松型归 Phase 2、统一 22+1+3 记账；M4=行数/行号漂移（value-ownership 87→136、use-table-sort 438→310 且分支 :118-188、interaction-owner 58→59、松型 :80/81→:84/85）→ 全部 live 重标；m1=basic schemas.ts 命中定性改注释位；m2=Phase 3 首项改"原语+判别钉先行勾验"；m3=resolveListPaginationOwnership 等价性判据点名垃圾输入归一。
 
 ## Closure Gates
 
