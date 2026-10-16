@@ -2,6 +2,7 @@ import React, { lazy } from 'react';
 import type { NopDebuggerController } from '@nop-chaos/nop-debugger';
 import { BooleanControlValueContractDemoPage } from './pages/boolean-control-value-contract-demo';
 import { CodeEditorPage } from './pages/code-editor-page';
+import XlangDebugPage from './pages/xlang-debug-page';
 import { ComponentHandlesDemoPage } from './pages/component-handles-demo';
 import { EventPreventionDemoPage } from './pages/event-prevention-demo';
 import { FlowDesignerPage } from './pages/flow-designer-page';
@@ -210,6 +211,7 @@ export const DOMAIN_ROUTE_PAGES: Record<string, (ctx: DomainPageContext) => Reac
   'condition-builder': (ctx) => <LazyConditionBuilderPage onBack={ctx.goHome} />,
   'condition-builder-formula': (ctx) => <LazyConditionBuilderFormulaPage onBack={ctx.goHome} />,
   'code-editor': (ctx) => <CodeEditorPage onBack={ctx.goHome} />,
+  'xlang-debug': () => <XlangDebugPage />,
   'word-editor': (ctx) => <LazyWordEditorPage onBack={ctx.goHome} />,
   'performance-table': (ctx) => (
     <PerformanceTablePage

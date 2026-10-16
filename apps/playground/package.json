@@ -51,7 +51,9 @@
     "lucide-react": "^1.17.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "three": "0.186.0"
+    "three": "0.186.0",
+    "@nop-chaos/flux-xlang-debug": "workspace:*",
+    "@nop-chaos/flux-xlang-lang": "workspace:*"
   },
   "devDependencies": {
     "@nop-chaos/flux-renderers-dashboard": "workspace:*",

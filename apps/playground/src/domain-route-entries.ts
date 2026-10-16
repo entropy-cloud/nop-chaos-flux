@@ -131,6 +131,13 @@ export const DOMAIN_RENDERER_ROUTES: DomainRouteEntry[] = [
       'E3 condition-builder formula integration: formulas.enabled expression value slots, formula seed defaults, formulaForIf group if markers.',
   },
   {
+    id: 'xlang-debug',
+    title: 'XLang Debug',
+    eyebrow: 'Online Debugger',
+    description:
+      'XLang 在线调试编辑器演示：语法高亮、断点 gutter、挂起行高亮、变量/调用栈/求值/日志面板与 WS 调试网关连接。',
+  },
+  {
     id: 'code-editor',
     title: 'Code Editor',
     eyebrow: 'CodeMirror 6',
