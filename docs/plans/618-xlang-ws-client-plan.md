@@ -82,13 +82,14 @@ Targets: 全部 + roadmap（owner 仓）
 
 - [x] 独立子代理 closure audit：D1 协议形状对账（envelope/方法名/事件映射）、D2 续期与重连语义对账、transport 接口实现完整性（9/9）、单测真实性抽查、Anti-Hollow（client→store applier 链连通）——R1 **issues**（agent_39fdf056：B1 typecheck 红 TS2554/B2 过渡会话 id 自赋值/M1 退避未作用于运行 interval/M2 预打勾与失实声明/m1-m4）
 - [x] 修复审计发现（B1 toHaveLength 多参 TS2554 修复；B2 rebuild 采纳过渡会话 id+sessionId 断言；M1 退避重启运行 interval+用例；m1 可见性恢复相位重置；m2 死探针清理；m3 4400/4403/sessionClosed/RATE_LIMITED 用例补齐）
-- [ ] flux docs/logs 更新；roadmap item 17 → done（owner 仓）；提交（待复审 approved）
+- [x] flux docs/logs 更新；roadmap item 17 → done（owner 仓）；提交（R2 approved 后）
+- [x] 独立子代理 closure audit：D1/D2 对账、transport 9/9、探针 3/3、Anti-Hollow 抽查、门禁实测——R2 **approved**（agent_39fdf056：B1/B2/M1/m1/m3 修复确认 + 第三探针证明承重；门禁于 HEAD 实测 typecheck 0/test 全绿/knip 无新 hit）
 
 Exit Criteria:
 
-- [ ] audit 发现全修复（复审 approved）
-- [ ] `pnpm typecheck/lint/test/check` 全绿（修复后实测：typecheck 0/test 22/lint 0/check 0）
-- [ ] roadmap item 17 `done`（待复审）
+- [x] audit 发现全修复（R2 approved）
+- [x] `pnpm typecheck/lint/test/check` 全绿（typecheck 0/lint 0/check 0/test 29 全绿；pnpm typecheck 仓库级红 = playground 既有 + flux-compiler 既有，stash 验证非本 plan）
+- [x] roadmap item 17 `done`
 
 ## Draft Review Record
 
@@ -131,9 +132,14 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: （待收口后填写）
+Status Note: WS 调试客户端全量落地并通过两轮独立审计（R1 issues：B1 typecheck 红/B2 过渡会话 id 自赋值/M1 退避未作用/M2 预打勾失实；R2 approved：B1/B2/M1/m1/m3 修复确认 + 第三探针证明 M1 承重 + 门禁于干净 HEAD 隔离实测）。D1/D2 对账全绿。
+Completed: 2026-10-16
 
 Closure Audit Evidence:
 
-- Auditor / Agent: （待填）
-- Evidence: （待填）
+- Auditor / Agent: 独立子代理 agent_39fdf056（fresh session 两轮 R1/R2）
+- Evidence: R1 六项发现全部于 HEAD 核实修复（B1 typecheck 0/B2 rebuild 采纳过渡会话 id + F4 sessionId 断言/M1 RATE_LIMITED 重启 interval + 判别用例/m1 相位重置无冗余/m2 死探针删/m3 用例齐/M2 预打勾回退）；探针 3/3 红→md5 恢复→绿；Anti-Hollow 4 用例抽查 PASS（重连快照/4401 终态/上行链/事件→applier）；R2 复审 approved（一行结论："B1/B2/M1/m1/m3 修复全部属实且经第三个变异探针证明承重……完成后可自证收口"）——R2 遗留 3 项收尾（getStackInfo follow-up 登记/logs 回写/m4 记录）已于收口提交补齐
+
+Follow-up:
+
+- getStackInfo 位置补取的显式断言（重连用例覆盖路径但未显式断言位置字段）
