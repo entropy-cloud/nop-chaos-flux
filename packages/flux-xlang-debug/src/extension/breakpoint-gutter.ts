@@ -1,5 +1,6 @@
 import type { Extension } from '@codemirror/state';
-import { EditorView, GutterMarker, gutter } from '@codemirror/view';
+import { EditorView } from '@codemirror/view';
+import { GutterMarker, gutter } from '@codemirror/view';
 import { sourcePathFacet } from './source-path.js';
 import { breakpointsField } from './fields.js';
 import type { DebugStore } from '../state/debug-store.js';
@@ -21,8 +22,26 @@ const breakpointMarker = new BreakpointMarker();
  * （sync 桥派发）；gutter 点击读 state.field + 调 store.toggleBreakpoint（点击是
  * 无状态 DOM 事件，不消费 store 下行）。
  */
+/**
+ * gutter 点击→toggle 的核心处理（导出供单测——行块→doc 行的解析在
+ * happy-dom 零布局下不可行，B1 修复的可测形态）：lineBlock 为 CM gutter
+ * 回调给的 BlockInfo（有 from/to 无 number）。
+ */
+export function handleGutterClick(store: DebugStore, view: EditorView, lineBlock: { from: number } | undefined | null): boolean {
+  if (!lineBlock || !Number.isFinite(lineBlock.from)) {
+    return false; // 行无法解析（真实浏览器中不发生；happy-dom 零布局产物）
+  }
+  const sourcePath = view.state.facet(sourcePathFacet);
+  const line = view.state.doc.lineAt(lineBlock.from).number;
+  store.getState().toggleBreakpoint(sourcePath, line);
+  return true;
+}
+
 export function createBreakpointGutter(store: DebugStore): Extension {
-  const markerGutter = gutter({
+  // B1 修复（plan 617 审计）：gutter 事件必须走 gutter 自带 domEventHandlers——
+  // EditorView.domEventHandlers 注册在 contentDOM 上，而 cm-gutters 是其兄弟
+  // 子树，事件不冒泡经过 contentDOM（上行链死代码）。
+  return gutter({
     class: 'xlang-debug-breakpoint-gutter',
     lineMarker: (view, line) => {
       const field = view.state.field(breakpointsField, false);
@@ -32,34 +51,15 @@ export function createBreakpointGutter(store: DebugStore): Extension {
       return null;
     },
     initialSpacer: () => breakpointMarker,
-  });
-
-  const clickHandler = EditorView.domEventHandlers({
-    mousedown(event, view) {
-      const target = event.target as HTMLElement | null;
-      if (!target || !target.closest('.xlang-debug-breakpoint-gutter')) {
+    domEventHandlers: {
+      mousedown(view, lineBlock, event) {
+        if (handleGutterClick(store, view, lineBlock)) {
+          event.preventDefault();
+          return true;
+        }
         return false;
-      }
-      const pos = view.posAtCoords({ x: event.clientX, y: event.clientY });
-      if (pos == null) {
-        return false;
-      }
-      const line = view.state.doc.lineAt(pos).number;
-      const sourcePath = view.state.facet(sourcePathFacet);
-      store.getState().toggleBreakpoint(sourcePath, line);
-      event.preventDefault();
-      return true;
+      },
     },
   });
-
-  return [
-    breakpointsField,
-    markerGutter,
-    clickHandler,
-    EditorView.theme({
-      '.xlang-debug-breakpoint-marker': { color: '#e11d48', cursor: 'pointer' },
-      '.xlang-debug-breakpoint-gutter': { width: '18px', cursor: 'pointer' },
-    }),
-  ];
 }
 

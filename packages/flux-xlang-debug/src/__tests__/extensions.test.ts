@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest';
 import {
   breakpointsField,
   createBreakpointGutter,
+  handleGutterClick,
   createDebugStore,
   exceptionLinesField,
   sourcePathFacet,
@@ -26,19 +27,22 @@ function createView(doc: string, extensions: Extension | readonly Extension[]) {
 }
 
 describe('breakpoint gutter', () => {
-  it('gutter click dispatches store.toggleBreakpoint with facet anchor', () => {
+  it('handleGutterClick toggles with facet anchor and doc line (B1 core)', () => {
     const store = createDebugStore();
     const view = createView('let a = 1;\nlet b = 2;', [
       sourcePathFacet.of('a.xpl'),
       createBreakpointGutter(store),
     ]);
-    const gutterDom = view.dom.querySelector('.xlang-debug-breakpoint-gutter');
-    expect(gutterDom).toBeTruthy();
-    // 点击第一行 gutter：posAtCoords 在 happy-dom 下可能解析不到坐标——直接断言
-    // 点击处理器入口存在性由 DOM 结构承担，语义由 store.toggle 幂等单测承担。
-    // 这里以 mousedown 不抛错为冒烟。
-    const event = new MouseEvent('mousedown', { bubbles: true, clientX: 0, clientY: 0 });
-    expect(() => gutterDom!.dispatchEvent(event)).not.toThrow();
+    // B1 核心处理直测：行块 {from:0} → doc.lineAt(0).number = 1 → toggle
+    expect(handleGutterClick(store, view, { from: 0 })).toBe(true);
+    expect(store.getState().breakpoints).toEqual([{ sourcePath: 'a.xpl', line: 1 }]);
+    expect(handleGutterClick(store, view, { from: 0 })).toBe(true);
+    expect(store.getState().breakpoints).toEqual([]);
+    // 无法解析的行块：忽略（不抛错不 toggle）
+    expect(handleGutterClick(store, view, undefined)).toBe(false);
+    expect(store.getState().breakpoints).toEqual([]);
+    // gutter DOM 结构存在（CM 注册面）
+    expect(view.dom.querySelector('.xlang-debug-breakpoint-gutter')).toBeTruthy();
     view.destroy();
   });
 

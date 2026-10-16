@@ -64,7 +64,7 @@ Targets: `packages/flux-xlang-debug/`（骨架 + src/state/debug-store.ts）
 - Item Types: `Feature`
 
 - [x] 包骨架（照 616 模板：package.json（deps zustand/@codemirror/state/@codemirror/view/@codemirror/language；devDeps flux-code-editor **仅在确有 import 时声明**（616 曾因未用 devDep 吃 knip hit，F4）+ vitest；**src/index.ts 公共入口**（F8：导出 store 工厂/三扩展工厂/sync 桥/sourcePathFacet/Effect 常量——item 17/19 消费面）/tsconfig×2/vitest.config/根 alias + project reference；knip 新 hit 处置在 Phase 1 内即消（移除未用声明）或 --update-baselines 登记，不留 Phase 3）
-- [x] `src/state/debug-store.ts`：类型（Breakpoint/SuspendedState/ExceptionItem/LeaseState）+ zustand vanilla **工厂函数**（仓内先例一律 `createStore` from 'zustand/vanilla' 工厂形态，非 module 单例——多实例 + 单测隔离）+ 上行动作九个（与 D5 §3.4 上行动作清单逐项一致：toggleBreakpoint/addBreakpoint/removeBreakpoint/step/resume/suspend/runToPosition/muteBreakpoints/evalExpr——evalExpr 映射 getExprValue 异名，F6 措辞修正）+ **下行 applier（F2 修订补齐契约下半边）**：setBreakpoints(bps)（rebind 全量镜像）/setSuspended(states)（rebind 重建）/addSuspended(state)（evt.suspended）/removeSuspended(threadIds)（evt.resumed/evt.leaseExpired）/addException(e)（evt.exception）/clearExceptions()/setLease(expiresAtMs|null)（lease.renew 回执/rebind）——item 17 收到事件即调 applier 无 API 空档 + `setTransport(transport)`（接口九方法与上行动作同名同参；无 transport 时动作只改本地状态）
+- [x] `src/state/debug-store.ts`：类型（Breakpoint/SuspendedState/ExceptionItem/LeaseState）+ zustand vanilla **工厂函数**（仓内先例一律 `createStore` from 'zustand/vanilla' 工厂形态，非 module 单例——多实例 + 单测隔离）+ 上行动作九个（与 D5 §3.4 上行动作清单逐项一致：toggleBreakpoint/addBreakpoint/removeBreakpoint/step/resume/suspend/runToPosition/muteBreakpoints/evalExpr——evalExpr 映射 getExprValue 异名，F6 措辞修正）+ **下行 applier（F2 修订补齐契约下半边）**：setBreakpoints(bps)（rebind 全量镜像）/setSuspended(states)（rebind 重建）/addSuspended(state)（evt.suspended）/removeSuspended(threadIds)（evt.resumed/evt.leaseExpired）/addException(e)（evt.exception）/clearExceptions()/setLease(expiresAtMs|null)（lease.renew 回执/rebind）——item 17 收到事件即调 applier 无 API 空档 + `setTransport(transport)`（接口九方法与上行动作同名同参；无 transport 时动作只改本地状态）。形状裁定（审计 m1）：evalExpr 为对象形参 `(args:{threadId,frameIndex,expr})`，D5 记法为位置参数——以实现为准。
 - [x] 根配置：alias + project reference
 - [x] store 单测：动作语义（toggle 幂等/断点表镜像/transport 注入后调用参数与次数/无 transport 跳过）
 
@@ -80,7 +80,7 @@ Targets: `packages/flux-xlang-debug/src/extension/`
 
 - Item Types: `Feature`
 
-- [x] `breakpoint-gutter.ts`：gutter 工厂 `createBreakpointGutter({ getSourcePath })`——行标渲染消费 store.breakpoints + 点击 dispatch toggle；store 订阅随扩展销毁清理（Compartment/销毁回调，防泄漏——D6 前端集成审计预登记点）
+- [x] `breakpoint-gutter.ts`：gutter 工厂 `createBreakpointGutter(store)`（审计 m2 签名同步；锚点经 sourcePathFacet）——断点 Effect→StateField→GutterMarker + gutter 自带 domEventHandlers 点击 toggle（B1 修复：EditorView.domEventHandlers 注册在 contentDOM，gutter 事件不可达）；泄漏面=dispose+isConnected 守卫（B2 勘正：无 ViewPlugin，reconfigure 场景守卫不生效）
 - [x] `suspended-line.ts` + `exception-squiggle.ts` + `breakpoint-gutter.ts` 的 Effect 三族（Effect 类型/命名常量导出，供 item 17/19 派发）；`syncStoreToExtensions({ store, view, getSourcePath })` 桥（subscribe→dispatch，返回 dispose；ViewPlugin.destroy 双保险）
 - [x] 扩展单测：gutter 点击→store.toggle（EditorView + happy-dom dispatchEvent）、装饰随 store 变化（`view.dispatch({effects})` 后 `state.field(...)` 断言——EditorState 无 dispatch，F7）、sourcePath 过滤（Facet 值不匹配不落地）、清理函数后无残留订阅
 
@@ -97,16 +97,16 @@ Targets: 全部
 
 - Item Types: `Proof`
 
-- [x] 独立子代理 closure audit：store 契约与 D5 §3.4 schema 逐字段对账、扩展行为单测真实性抽查、订阅清理（泄漏面）、knip 登记核实、Anti-Hollow
-- [x] 修复审计发现
-- [x] flux docs/logs 更新；roadmap item 16 → done（owner 仓）
-- [x] 提交
+- [x] 独立子代理 closure audit：store 契约与 D5 §3.4 schema 逐字段对账、扩展行为单测真实性抽查、订阅清理（泄漏面）、knip 登记核实、Anti-Hollow——第一轮 **issues**（agent_9715023c：B1 Blocker gutter 点击上行链死代码/B2 文档失实/B3 预打勾 + m1-m3）
+- [ ] 修复审计发现（B1 改 gutter 自带 domEventHandlers + 补有 toggle 断言的真实测试；B2 勘正"ViewPlugin.destroy 双保险"失实文档→dispose+isConnected 守卫单层；m1 evalExpr 对象形参裁定注记；m2 plan 签名同步）
+- [ ] flux docs/logs 更新；roadmap item 16 → done（owner 仓，审计 approved 后）
+- [ ] 提交
 
 Exit Criteria:
 
-- [x] audit 发现全修复
-- [x] `pnpm typecheck/build/lint/test/check` 全绿（或仅既有红——stash 验证）
-- [x] roadmap item 16 `done`
+- [ ] audit 发现全修复（复审 approved）
+- [ ] `pnpm typecheck/build/lint/test/check` 全绿（或仅既有红——stash 验证）
+- [ ] roadmap item 16 `done`
 
 ## Draft Review Record
 

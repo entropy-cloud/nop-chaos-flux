@@ -11,7 +11,7 @@ export {
   type DebugStoreActions,
   type DebugStore,
 } from './state/debug-store.js';
-export { createBreakpointGutter, BreakpointMarker } from './extension/breakpoint-gutter.js';
+export { createBreakpointGutter, handleGutterClick, BreakpointMarker } from './extension/breakpoint-gutter.js';
 export { breakpointsField } from './extension/fields.js';
 export { createSuspendedLineExtension, suspendedLinesField, setSuspendedLines } from './extension/decorations.js';
 export { createExceptionSquiggleExtension, exceptionLinesField, setExceptionLines } from './extension/decorations.js';
