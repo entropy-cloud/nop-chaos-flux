@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
 import { getIn, isRecord, toRecord, toPositiveNumber, type ScopeRef } from '@nop-chaos/flux-core';
-import { useScopeSelector } from '@nop-chaos/flux-react';
-import type { ListPaginationConfig, ListPaginationMode, ListPaginationOwnership } from './schemas.js';
+import { useOwnershipScopeValue } from '@nop-chaos/flux-react';
+import type { OwnershipMode } from '@nop-chaos/flux-core';
+import type { ListPaginationConfig, ListPaginationMode } from './schemas.js';
 
 export const DEFAULT_LIST_PAGE_SIZE = 10;
 
-export function resolveListPaginationOwnership(value: unknown): ListPaginationOwnership {
+export function resolveListPaginationOwnership(value: unknown): OwnershipMode {
   return value === 'controlled' || value === 'scope' ? value : 'local';
 }
 
@@ -45,7 +46,7 @@ function resolveSeedPage(config: ListPaginationConfig | undefined): number {
 export interface ResolvedListPagination {
   enabled: boolean;
   mode: ListPaginationMode;
-  ownership: ListPaginationOwnership;
+  ownership: OwnershipMode;
   currentPage: number;
   pageSize: number;
   total: number;
@@ -67,7 +68,7 @@ interface ScopePaginationRead {
 
 export interface UseListPaginationArgs {
   config: ListPaginationConfig | undefined;
-  ownership: ListPaginationOwnership;
+  ownership: OwnershipMode;
   paginationStatePath: string | undefined;
   pageSizeStatePath: string | undefined;
   scope: ScopeRef | undefined;
@@ -90,26 +91,30 @@ export function useListPagination(args: UseListPaginationArgs): ResolvedListPagi
     (p): p is string => typeof p === 'string' && p.length > 0,
   );
 
-  const scopeRead = useScopeSelector<ScopePaginationRead>(
-    (scopeData) => {
-      if (!paginationStatePath) {
-        return { currentPage: undefined, pageSize: fallbackPageSize };
-      }
-      const pagRecord = toRecord(getIn(scopeData, paginationStatePath));
-      const rawPage = toPositiveNumber(pagRecord.currentPage, Number.NaN);
-      const psSource = pageSizeStatePath
-        ? toRecord(getIn(scopeData, pageSizeStatePath))
-        : pagRecord;
-      const ps = toPositiveNumber(psSource.pageSize, fallbackPageSize);
-      return {
-        currentPage: Number.isFinite(rawPage) ? rawPage : undefined,
-        pageSize: ps >= 1 ? ps : fallbackPageSize,
-      };
+  const scopeRead = useOwnershipScopeValue<ScopePaginationRead>(
+    ownership === 'scope' ? 'scope' : 'local',
+    paginationStatePath,
+    {
+      select: (scopeData) => {
+        if (!paginationStatePath) {
+          return { currentPage: undefined, pageSize: fallbackPageSize };
+        }
+        const pagRecord = toRecord(getIn(scopeData, paginationStatePath));
+        const rawPage = toPositiveNumber(pagRecord.currentPage, Number.NaN);
+        const psSource = pageSizeStatePath
+          ? toRecord(getIn(scopeData, pageSizeStatePath))
+          : pagRecord;
+        const ps = toPositiveNumber(psSource.pageSize, fallbackPageSize);
+        return {
+          currentPage: Number.isFinite(rawPage) ? rawPage : undefined,
+          pageSize: ps >= 1 ? ps : fallbackPageSize,
+        };
+      },
+      equality: (a, b) =>
+        (a === b) ||
+        (!!a && !!b && a.currentPage === b.currentPage && a.pageSize === b.pageSize),
+      paths: scopePaths,
     },
-    (a, b) =>
-      (a === b) ||
-      (!!a && !!b && a.currentPage === b.currentPage && a.pageSize === b.pageSize),
-    { enabled: ownership === 'scope', paths: scopePaths },
   );
 
   useEffect(() => {
@@ -144,8 +149,8 @@ export function useListPagination(args: UseListPaginationArgs): ResolvedListPagi
   let resolvedPageSize: number;
 
   if (ownership === 'scope') {
-    resolvedPage = scopeRead.currentPage ?? seedPage;
-    resolvedPageSize = scopeRead.pageSize;
+    resolvedPage = scopeRead?.currentPage ?? seedPage;
+    resolvedPageSize = scopeRead?.pageSize ?? fallbackPageSize;
   } else if (ownership === 'controlled') {
     resolvedPage = seedPage;
     resolvedPageSize = fallbackPageSize;

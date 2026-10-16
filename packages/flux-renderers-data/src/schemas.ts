@@ -1,4 +1,11 @@
-import type { ActionSchema, BaseSchema, SchemaInput, SchemaObject, SchemaValue } from '@nop-chaos/flux-core';
+import type {
+  ActionSchema,
+  BaseSchema,
+  OwnershipMode,
+  SchemaInput,
+  SchemaObject,
+  SchemaValue,
+} from '@nop-chaos/flux-core';
 import type {
   TableCellEditableConfig,
   TableGroupConfig,
@@ -127,10 +134,10 @@ export interface TableSchema extends BaseSchema {
   type: 'table';
   source?: SchemaValue;
   rowKey?: string;
-  paginationOwnership?: 'local' | 'controlled' | 'scope';
-  selectionOwnership?: 'local' | 'controlled' | 'scope';
-  sortOwnership?: 'local' | 'controlled' | 'scope';
-  filterOwnership?: 'local' | 'controlled' | 'scope';
+  paginationOwnership?: OwnershipMode;
+  selectionOwnership?: OwnershipMode;
+  sortOwnership?: OwnershipMode;
+  filterOwnership?: OwnershipMode;
   paginationStatePath?: string;
   selectionStatePath?: string;
   sortStatePath?: string;
@@ -181,7 +188,7 @@ export interface TableSchema extends BaseSchema {
   combineFromIndex?: number;
   draggable?: boolean;
   orderField?: string;
-  orderOwnership?: 'local' | 'controlled' | 'scope';
+  orderOwnership?: OwnershipMode;
   orderStatePath?: string;
   rowChildrenField?: string;
   /** On-demand action schema for lazy child loading in tree mode. When a tree
@@ -189,7 +196,7 @@ export interface TableSchema extends BaseSchema {
    * action is dispatched with the row record available in scope. Results are
    * cached per node and reused on subsequent collapse/expand. */
   childrenSource?: ActionSchema;
-  columnWidthsOwnership?: 'local' | 'controlled' | 'scope';
+  columnWidthsOwnership?: OwnershipMode;
   columnWidthsStatePath?: string;
   multiSort?: boolean;
   pagination?: {
@@ -281,7 +288,6 @@ export interface TreeSchema extends BaseSchema {
 
 export type ListSelectionMode = 'single' | 'multiple' | 'none';
 
-export type ListPaginationOwnership = 'local' | 'controlled' | 'scope';
 
 export type ListPaginationMode = 'page' | 'infinite';
 
@@ -331,7 +337,7 @@ export interface ListSchema extends BaseSchema {
   /** Pagination / infinite-scroll configuration. Opt-in via `pagination.enabled`. */
   pagination?: ListPaginationConfig;
   /** Where pagination interaction state lives. Defaults to 'local'. */
-  paginationOwnership?: ListPaginationOwnership;
+  paginationOwnership?: OwnershipMode;
   /** Scope path holding `{ currentPage, pageSize }` (scope ownership). */
   paginationStatePath?: string;
   /** Optional separate scope path for pageSize (scope ownership). */

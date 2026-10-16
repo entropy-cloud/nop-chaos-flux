@@ -2,6 +2,7 @@ import type {
   ActionSchema,
   BaseSchema,
   DynamicRendererSchema,
+  OwnershipMode,
   ResponsiveBreakpoint,
   SchemaInput,
   SchemaObject,
@@ -174,7 +175,7 @@ export interface TabsSchema extends BaseSchema {
   items?: TabsItemSchema[];
   value?: string | number;
   defaultValue?: string | number;
-  valueOwnership?: 'local' | 'controlled' | 'scope';
+  valueOwnership?: OwnershipMode;
   valueStatePath?: string;
   statusPath?: string;
   toolbar?: BaseSchema | BaseSchema[];
@@ -197,12 +198,12 @@ export interface TabsSchema extends BaseSchema {
    */
   addable?: boolean;
   /**
-   * Collection ownership axis for view management (kanbanOwnership precedent).
+   * Collection ownership axis for view management (boardOwnership precedent).
    * 'local' (default): first management mutation seeds a component-session
    * collection (no re-seed from later schema items). 'scope': mutations write
    * back to `itemsStatePath`. 'controlled': mutations are refused.
    */
-  itemsOwnership?: 'local' | 'controlled' | 'scope';
+  itemsOwnership?: OwnershipMode;
   /** Scope read/write path for the collection under `itemsOwnership: 'scope'`. */
   itemsStatePath?: string;
   contentClassName?: string;

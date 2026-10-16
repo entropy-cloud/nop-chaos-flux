@@ -70,6 +70,17 @@ export {
   useStrictMode,
 } from './hooks.js';
 export {
+  resolveOwnershipMode,
+  useWarnScopeDegraded,
+  useOwnershipScopeValue,
+  useScopeWrite,
+  useOwnedAxisValue,
+  type OwnershipAxisInput,
+  type OwnershipScopeRead,
+  type OwnedAxisValueInput,
+  type ResolvedOwnershipMode,
+} from './ownership.js';
+export {
   createPrivateEvalScope,
   extractExpressionDepsViaProbe,
   probeExpressionPaths,

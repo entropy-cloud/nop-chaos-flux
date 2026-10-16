@@ -4,8 +4,9 @@ import { cleanup, render } from '@testing-library/react';
 import { KanbanBoard } from './kanban-board.js';
 import type { BoardData } from './kanban.types.js';
 
-const { scopeSelectorSpy } = vi.hoisted(() => ({
+const { scopeSelectorSpy, ownershipScopeValueSpy } = vi.hoisted(() => ({
   scopeSelectorSpy: vi.fn((..._args: unknown[]) => undefined),
+  ownershipScopeValueSpy: vi.fn((..._args: unknown[]) => undefined),
 }));
 
 vi.mock('@nop-chaos/flux-react', async (importOriginal) => ({
@@ -22,6 +23,7 @@ vi.mock('@nop-chaos/flux-react', async (importOriginal) => ({
     dispose: vi.fn(),
   }),
   useScopeSelector: scopeSelectorSpy,
+  useOwnershipScopeValue: ownershipScopeValueSpy,
   useCurrentComponentRegistry: () => undefined,
 }));
 
@@ -68,6 +70,7 @@ vi.mock('./hooks/use-kanban-virtualizer.js', () => ({
 afterEach(() => {
   cleanup();
   scopeSelectorSpy.mockClear();
+  ownershipScopeValueSpy.mockClear();
 });
 
 const singleColumnBoard: BoardData = {
@@ -97,44 +100,40 @@ function makeProps(overrides: Record<string, unknown> = {}) {
   } as any;
 }
 
-function getCallOptions(call: unknown[]) {
-  return call[2] as { enabled?: boolean; paths?: readonly string[] } | undefined;
-}
-
 describe('Kanban useScopeSelector ownership gating (05-01)', () => {
   it('local ownership: both board and collapsed subscriptions are disabled', () => {
     render(React.createElement(KanbanBoard, makeProps()));
-    expect(scopeSelectorSpy).toHaveBeenCalledTimes(2);
-    const [boardCall, collapsedCall] = scopeSelectorSpy.mock.calls;
-    expect(getCallOptions(boardCall)?.enabled).toBe(false);
-    expect(getCallOptions(collapsedCall)?.enabled).toBe(false);
+    expect(ownershipScopeValueSpy).toHaveBeenCalledTimes(2);
+    const [boardCall, collapsedCall] = ownershipScopeValueSpy.mock.calls;
+    expect(boardCall![0]).not.toBe('scope');
+    expect(collapsedCall![0]).not.toBe('scope');
   });
 
   it('local ownership with state paths configured still subscribes nothing', () => {
     render(React.createElement(KanbanBoard, makeProps({
       props: {
         data: singleColumnBoard,
-        kanbanStatePath: 'state.board',
+        boardStatePath: 'state.board',
         collapsedStatePath: 'state.collapsed',
       },
     })));
-    const [boardCall, collapsedCall] = scopeSelectorSpy.mock.calls;
-    expect(getCallOptions(boardCall)?.enabled).toBe(false);
-    expect(getCallOptions(collapsedCall)?.enabled).toBe(false);
+    const [boardCall, collapsedCall] = ownershipScopeValueSpy.mock.calls;
+    expect(boardCall![0]).not.toBe('scope');
+    expect(collapsedCall![0]).not.toBe('scope');
   });
 
   it('scope ownership: board subscribes with its own path; collapsed stays local', () => {
     render(React.createElement(KanbanBoard, makeProps({
       props: {
         data: singleColumnBoard,
-        kanbanOwnership: 'scope',
-        kanbanStatePath: 'state.board',
+        boardOwnership: 'scope',
+        boardStatePath: 'state.board',
       },
     })));
-    const [boardCall, collapsedCall] = scopeSelectorSpy.mock.calls;
-    expect(getCallOptions(boardCall)?.enabled).not.toBe(false);
-    expect(getCallOptions(boardCall)?.paths).toEqual(['state.board']);
-    expect(getCallOptions(collapsedCall)?.enabled).toBe(false);
+    const [boardCall, collapsedCall] = ownershipScopeValueSpy.mock.calls;
+    expect(boardCall![0]).toBe('scope');
+    expect(boardCall![1]).toBe('state.board');
+    expect(collapsedCall![0]).not.toBe('scope');
   });
 
   it('collapsed scope ownership: collapsed subscribes with its own path; board stays local', () => {
@@ -145,22 +144,22 @@ describe('Kanban useScopeSelector ownership gating (05-01)', () => {
         collapsedStatePath: 'state.collapsed',
       },
     })));
-    const [boardCall, collapsedCall] = scopeSelectorSpy.mock.calls;
-    expect(getCallOptions(boardCall)?.enabled).toBe(false);
-    expect(getCallOptions(collapsedCall)?.enabled).not.toBe(false);
-    expect(getCallOptions(collapsedCall)?.paths).toEqual(['state.collapsed']);
+    const [boardCall, collapsedCall] = ownershipScopeValueSpy.mock.calls;
+    expect(boardCall![0]).not.toBe('scope');
+    expect(collapsedCall![0]).toBe('scope');
+    expect(collapsedCall![1]).toBe('state.collapsed');
   });
 
   it('scope ownership without a state path subscribes nothing (no path to read)', () => {
     render(React.createElement(KanbanBoard, makeProps({
       props: {
         data: singleColumnBoard,
-        kanbanOwnership: 'scope',
+        boardOwnership: 'scope',
         collapsedOwnership: 'scope',
       },
     })));
-    const [boardCall, collapsedCall] = scopeSelectorSpy.mock.calls;
-    expect(getCallOptions(boardCall)?.enabled).toBe(false);
-    expect(getCallOptions(collapsedCall)?.enabled).toBe(false);
+    const [boardCall, collapsedCall] = ownershipScopeValueSpy.mock.calls;
+    expect(boardCall![0]).not.toBe('scope');
+    expect(collapsedCall![0]).not.toBe('scope');
   });
 });

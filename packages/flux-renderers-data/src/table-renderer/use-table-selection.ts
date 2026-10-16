@@ -1,6 +1,6 @@
 import { startTransition, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { getIn, type RendererComponentProps, type ScopeRef } from '@nop-chaos/flux-core';
-import { useRenderScope, useScopeSelector } from '@nop-chaos/flux-react';
+import { useOwnershipScopeValue, useRenderScope } from '@nop-chaos/flux-react';
 import type { TableSchema } from '../schemas.js';
 import { toStringArray } from './table-data.js';
 import { createTableEventContext } from './table-event-context.js';
@@ -83,23 +83,20 @@ export function useTableSelection(
     [rowSelection?.selectedRowKeys],
   );
 
-  const scopeSelectedRowKeys = useScopeSelector(
-    (scopeData) =>
-      selectionOwnership === 'scope' && selectionStatePath
-        ? new Set(toStringArray(getIn(scopeData, selectionStatePath)))
-        : undefined,
-    (a, b) => {
-      if (a === b) return true;
-      if (!a || !b) return a === b;
-      if (a.size !== b.size) return false;
-      for (const key of a) {
-        if (!b.has(key)) return false;
-      }
-      return true;
-    },
+  const scopeSelectedRowKeys = useOwnershipScopeValue<Set<string> | undefined>(
+    selectionOwnership === 'scope' && selectionStatePath ? 'scope' : 'local',
+    selectionStatePath,
     {
-      enabled: selectionOwnership === 'scope' && !!selectionStatePath,
-      paths: selectionStatePath ? [selectionStatePath] : undefined,
+      select: (scopeData) => new Set(toStringArray(getIn(scopeData, selectionStatePath as string))),
+      equality: (a, b) => {
+        if (a === b) return true;
+        if (!a || !b) return a === b;
+        if (a.size !== b.size) return false;
+        for (const key of a) {
+          if (!b.has(key)) return false;
+        }
+        return true;
+      },
     },
   );
 

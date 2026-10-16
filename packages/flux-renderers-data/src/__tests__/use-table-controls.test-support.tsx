@@ -1,3 +1,4 @@
+import { getIn } from '@nop-chaos/flux-core';
 import React from 'react';
 import { vi } from 'vitest';
 import {
@@ -18,6 +19,19 @@ vi.mock('@nop-chaos/flux-react', () => ({
   useRenderScope: () => ({ update: renderScopeUpdate }),
   useScopeSelector: (selector: (value: Record<string, unknown>) => unknown) =>
     selector(mockScopeState.data),
+  // RM-11 plan 613: ownership hooks delegate to the shared primitive —
+  // emulate the primitive read (custom select, default getIn(statePath)) via
+  // the same scope-state mock.
+  useOwnershipScopeValue: (
+    ownership: string,
+    statePath: string | undefined,
+    read?: { select?: (data: unknown) => unknown },
+  ) =>
+    ownership === 'scope' && statePath
+      ? read?.select
+        ? read.select(mockScopeState.data)
+        : getIn(mockScopeState.data, statePath)
+      : undefined,
 }));
 
 export function resetTableControlTestState() {

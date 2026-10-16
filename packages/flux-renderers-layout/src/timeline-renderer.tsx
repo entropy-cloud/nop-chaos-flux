@@ -9,7 +9,7 @@ import type {
   TimelineMode,
   TimelineSchema,
 } from './schemas.js';
-import { useValueOwnershipValue } from './value-ownership.js';
+import { useValueOwnershipValue } from './value-axis.js';
 
 const LEVEL_DOT_CLASS: Record<TimelineItemLevel, string> = {
   default: 'bg-muted-foreground',

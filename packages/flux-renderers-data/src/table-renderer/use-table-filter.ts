@@ -1,6 +1,6 @@
 import { startTransition, useCallback, useMemo, useState } from 'react';
 import { getIn, type RendererComponentProps } from '@nop-chaos/flux-core';
-import { useRenderScope, useScopeSelector } from '@nop-chaos/flux-react';
+import { useOwnershipScopeValue, useRenderScope } from '@nop-chaos/flux-react';
 import type { TableSchema } from '../schemas.js';
 import { createTableEventContext } from './table-event-context.js';
 import type { FilterState } from './types.js';
@@ -35,34 +35,28 @@ export function useTableFilter(
     [schemaProps, toFilterState],
   );
 
-  const scopeFilterState = useScopeSelector(
-    (scopeData) => {
-      if (filterOwnership !== 'scope' || !filterStatePath) {
-        return undefined;
-      }
-
-      return toFilterState(getIn(scopeData, filterStatePath));
-    },
-    (a, b) => {
-      if (a === b) return true;
-      const aKeys = Object.keys(a ?? {});
-      const bKeys = Object.keys(b ?? {});
-      if (aKeys.length !== bKeys.length) return false;
-      return aKeys.every((key) => {
-        const left = a?.[key];
-        const right = b?.[key];
-        if (!left || !right) return left === right;
-        if (left.keyword !== right.keyword) return false;
-        if (left.values.size !== right.values.size) return false;
-        for (const value of left.values) {
-          if (!right.values.has(value)) return false;
-        }
-        return true;
-      });
-    },
+  const scopeFilterState = useOwnershipScopeValue<FilterState | undefined>(
+    filterOwnership === 'scope' && filterStatePath ? 'scope' : 'local',
+    filterStatePath,
     {
-      enabled: filterOwnership === 'scope' && !!filterStatePath,
-      paths: filterStatePath ? [filterStatePath] : undefined,
+      select: (scopeData) => toFilterState(getIn(scopeData, filterStatePath as string)),
+      equality: (a, b) => {
+        if (a === b) return true;
+        const aKeys = Object.keys(a ?? {});
+        const bKeys = Object.keys(b ?? {});
+        if (aKeys.length !== bKeys.length) return false;
+        return aKeys.every((key) => {
+          const left = a?.[key];
+          const right = b?.[key];
+          if (!left || !right) return left === right;
+          if (left.keyword !== right.keyword) return false;
+          if (left.values.size !== right.values.size) return false;
+          for (const value of left.values) {
+            if (!right.values.has(value)) return false;
+          }
+          return true;
+        });
+      },
     },
   );
 

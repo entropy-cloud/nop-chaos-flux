@@ -2238,8 +2238,8 @@ export interface KanbanSchema extends BaseSchema {
   columnHeaderClassName?: SchemaValue;
   cardClassName?: SchemaValue;
   columnFooterClassName?: SchemaValue;
-  kanbanOwnership?: "local" | "controlled" | "scope";
-  kanbanStatePath?: SchemaValue;
+  boardOwnership?: "local" | "controlled" | "scope";
+  boardStatePath?: SchemaValue;
   statusPath?: SchemaValue;
   onCardMove?: ActionSchema | ActionSchema[];
   onCardClick?: ActionSchema | ActionSchema[];

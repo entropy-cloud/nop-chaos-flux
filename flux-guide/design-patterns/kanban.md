@@ -109,7 +109,7 @@
 
 - `collapsedOwnership`：`'local' | 'controlled' | 'scope'`，折叠状态所有权
 - `collapsedStatePath`：scope 模式下列折叠状态的存储路径
-- `kanbanOwnership` / `kanbanStatePath`：整板数据所有权（local/controlled/scope），受控模式需宿主经 `data` 驱动
+- `boardOwnership` / `boardStatePath`：整板数据所有权（local/controlled/scope），受控模式需宿主经 `data` 驱动
 - `statusPath`：业务状态字段路径（已注册，未接线）
 
 ## 字段参考
@@ -128,8 +128,8 @@
 | `wipStrict`             | `boolean`                            | 全局 WIP 严格模式（超限禁入；列级可覆盖）                                                    |
 | `collapsedOwnership`    | `'local' \| 'controlled' \| 'scope'` | 折叠状态所有权                                                                               |
 | `collapsedStatePath`    | `string`                             | 折叠状态存储路径                                                                             |
-| `kanbanOwnership`       | `'local' \| 'controlled' \| 'scope'` | 整板数据所有权                                                                               |
-| `kanbanStatePath`       | `string`                             | 整板数据存储路径                                                                             |
+| `boardOwnership`        | `'local' \| 'controlled' \| 'scope'` | 整板数据所有权                                                                               |
+| `boardStatePath`        | `string`                             | 整板数据存储路径                                                                             |
 | `columnAggregate`       | `{ fn, field?, label? }`             | 列头聚合（板级声明，每列各自聚合自身可见卡片；fn = sum/avg/min/max/count，count 忽略 field） |
 | `statusPath`            | `string`                             | 业务状态字段路径（已注册，未接线）                                                           |
 | `columnHeaderClassName` | `string`                             | 列头类名                                                                                     |

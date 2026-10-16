@@ -1,4 +1,4 @@
-import type { BaseSchema, SchemaInput, SchemaObject, ActionSchema } from '@nop-chaos/flux-core';
+import type { BaseSchema, SchemaInput, SchemaObject, ActionSchema, OwnershipMode } from '@nop-chaos/flux-core';
 
 export interface CalendarDateRange {
   start: Date;
@@ -117,9 +117,9 @@ export interface CalendarSchema extends BaseSchema {
   empty?: SchemaInput;
   body?: SchemaInput;
   loadAction?: ActionSchema | ActionSchema[];
-  viewOwnership?: 'local' | 'controlled' | 'scope';
+  viewOwnership?: OwnershipMode;
   viewStatePath?: string;
-  dateOwnership?: 'local' | 'controlled' | 'scope';
+  dateOwnership?: OwnershipMode;
   dateStatePath?: string;
   statusPath?: string;
   onEventClick?: ActionSchema | ActionSchema[];

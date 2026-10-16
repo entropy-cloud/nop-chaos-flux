@@ -9,11 +9,19 @@ import type { CalendarEvent, CalendarResource } from '../schemas.js';
  * Space 武装会话 → 方向键实时派发移动 → Enter 只终结会话。修复前 Enter 会把
  * 已移动的事件按会话起点（原日期/原资源）再派发一次，宿主据此把事件弹回原位。
  */
-vi.mock('@nop-chaos/flux-react', () => ({
+vi.mock('@nop-chaos/flux-react', async (importOriginal) => ({
+    ...(await importOriginal<Record<string, unknown>>()),
+
   useRendererRuntime: () => ({ dispatch: vi.fn() }),
   useRenderScope: () => ({ id: 'mock-scope', path: '/mock', readVisible: () => ({}), readOwn: () => ({}), update: vi.fn(), merge: vi.fn(), replace: vi.fn(), dispose: vi.fn() }),
   useScopeSelector: () => undefined,
+  // RM-11 plan 613: ownership hooks delegate to the shared primitive — emulate its
+  // inactive read as undefined (matches this file's scope emulation).
+  useOwnershipScopeValue: () => undefined,
   useCurrentComponentRegistry: () => undefined,
+  // RM-11 plan 613: ownership hooks delegate to the shared primitive — emulate its
+  // inactive read as undefined (matches this file's scope emulation); pure helpers
+  // (resolveOwnershipMode/useWarnScopeDegraded) come from the actual module.
 }));
 
 vi.mock('./hooks/use-calendar-state.js', () => ({

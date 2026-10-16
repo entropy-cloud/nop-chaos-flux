@@ -8,6 +8,9 @@ vi.mock('@nop-chaos/flux-react', async (importOriginal) => ({
   useRendererRuntime: () => ({ dispatch: vi.fn() }),
   useRenderScope: () => ({ id: 'mock-scope', path: '/mock', readVisible: () => ({}), readOwn: () => ({}), update: vi.fn(), merge: vi.fn(), replace: vi.fn(), dispose: vi.fn() }),
   useScopeSelector: () => undefined,
+  // RM-11 plan 613: ownership hooks delegate to the shared primitive — emulate its
+  // inactive read as undefined (matches this file's scope emulation).
+  useOwnershipScopeValue: () => undefined,
   useCurrentComponentRegistry: () => undefined,
 }));
 
@@ -423,7 +426,7 @@ describe('KanbanBoard CR P2-3 / P2-4 (controlled gating + card payload)', () => 
     const { container } = render(
       <KanbanBoard
         {...defaultProps}
-        props={{ ...defaultProps.props, kanbanOwnership: 'controlled' } as any}
+        props={{ ...defaultProps.props, boardOwnership: 'controlled' } as any}
         events={{ onCardAdd, onCardClick } as any}
       />,
     );
@@ -486,7 +489,7 @@ describe('KanbanBoard CR P2-3 / P2-4 (controlled gating + card payload)', () => 
     const { container } = render(
       <KanbanBoard
         {...defaultProps}
-        props={{ ...defaultProps.props, kanbanOwnership: 'controlled' } as any}
+        props={{ ...defaultProps.props, boardOwnership: 'controlled' } as any}
         events={{ onColumnAdd: controlledOnColumnAdd } as any}
       />,
     );

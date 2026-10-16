@@ -1,4 +1,10 @@
-import type { BaseSchema, SchemaInput, SchemaObject, ActionSchema } from '@nop-chaos/flux-core';
+import type {
+  ActionSchema,
+  BaseSchema,
+  OwnershipMode,
+  SchemaInput,
+  SchemaObject,
+} from '@nop-chaos/flux-core';
 import type { KanbanColumnAggregateConfig } from './kanban-aggregate.js';
 
 export interface BoardItem extends SchemaObject {
@@ -77,12 +83,12 @@ export interface KanbanSchema extends BaseSchema {
    */
   keyboardReorder?: boolean | { enabled?: boolean; keys?: { prev?: string; next?: string } };
   collapsedStatePath?: string;
-  collapsedOwnership?: 'local' | 'controlled' | 'scope';
+  collapsedOwnership?: OwnershipMode;
   columnHeaderClassName?: string;
   cardClassName?: string;
   columnFooterClassName?: string;
-  kanbanOwnership?: string;
-  kanbanStatePath?: string;
+  boardOwnership?: OwnershipMode;
+  boardStatePath?: string;
   statusPath?: string;
   onMount?: ActionSchema | ActionSchema[];
   onUnmount?: ActionSchema | ActionSchema[];

@@ -1,6 +1,6 @@
 import { startTransition, useCallback, useState } from 'react';
-import { getIn, shallowEqual, type FluxActionEvent, type RendererComponentProps, type ScopeRef } from '@nop-chaos/flux-core';
-import { useRenderScope, useScopeSelector } from '@nop-chaos/flux-react';
+import { shallowEqual, type FluxActionEvent, type RendererComponentProps, type ScopeRef } from '@nop-chaos/flux-core';
+import { useOwnershipScopeValue, useRenderScope } from '@nop-chaos/flux-react';
 import type { TableSchema } from '../schemas.js';
 import { toPositiveNumber } from './table-data.js';
 import { createTableEventContext } from './table-event-context.js';
@@ -43,16 +43,10 @@ export function useTablePagination(
   const [localCurrentPage, setLocalCurrentPage] = useState(1);
   const [localPageSize, setLocalPageSize] = useState(schemaProps.pagination?.pageSize ?? 10);
 
-  const scopePaginationState = useScopeSelector(
-    (scopeData) =>
-      paginationOwnership === 'scope' && paginationStatePath
-        ? (getIn(scopeData, paginationStatePath) as Record<string, unknown> | undefined)
-        : undefined,
-    shallowEqual,
-    {
-      enabled: paginationOwnership === 'scope' && !!paginationStatePath,
-      paths: paginationStatePath ? [paginationStatePath] : undefined,
-    },
+  const scopePaginationState = useOwnershipScopeValue<Record<string, unknown> | undefined>(
+    paginationOwnership === 'scope' && paginationStatePath ? 'scope' : 'local',
+    paginationStatePath,
+    { equality: shallowEqual as (a: Record<string, unknown> | undefined, b: Record<string, unknown> | undefined) => boolean },
   );
 
   const currentPage =

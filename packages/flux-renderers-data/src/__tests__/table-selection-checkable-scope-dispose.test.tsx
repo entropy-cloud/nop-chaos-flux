@@ -7,6 +7,10 @@ import { buildTableRowEntries } from '../table-renderer/table-data.js';
 vi.mock('@nop-chaos/flux-react', () => ({
   useRenderScope: () => ({ update: vi.fn() }),
   useScopeSelector: () => undefined,
+
+  // RM-11 plan 613: ownership hooks delegate to the shared primitive —
+  // emulate its inactive/local read as undefined (matches this file's scope emulation).
+  useOwnershipScopeValue: () => undefined,
 }));
 
 function createSpyHelpers() {

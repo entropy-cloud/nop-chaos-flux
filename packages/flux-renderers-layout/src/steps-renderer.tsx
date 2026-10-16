@@ -5,7 +5,7 @@ import { CheckIcon, XIcon } from 'lucide-react';
 import { Button, cn } from '@nop-chaos/ui';
 import type { StepsItemSchema, StepsItemStatus, StepsSchema } from './schemas.js';
 import { compiledItems } from './compiled-items.js';
-import { useValueOwnershipValue } from './value-ownership.js';
+import { useValueOwnershipValue } from './value-axis.js';
 
 function isItemDisabled(item: StepsItemSchema): boolean {
   return item.disabled === true;

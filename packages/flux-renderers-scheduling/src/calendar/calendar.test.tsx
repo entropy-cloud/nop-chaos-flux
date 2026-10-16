@@ -5,11 +5,19 @@ import { Calendar } from './calendar.js';
 
 const mockNotify = vi.hoisted(() => vi.fn());
 
-vi.mock('@nop-chaos/flux-react', () => ({
+vi.mock('@nop-chaos/flux-react', async (importOriginal) => ({
+    ...(await importOriginal<Record<string, unknown>>()),
+
   useRendererRuntime: () => ({ dispatch: vi.fn(), env: { notify: mockNotify } }),
   useRenderScope: () => ({ id: 'mock-scope', path: '/mock', readVisible: () => ({}), readOwn: () => ({}), update: vi.fn(), merge: vi.fn(), replace: vi.fn(), dispose: vi.fn() }),
   useScopeSelector: () => undefined,
+  // RM-11 plan 613: ownership hooks delegate to the shared primitive — emulate its
+  // inactive read as undefined (matches this file's scope emulation).
+  useOwnershipScopeValue: () => undefined,
   useCurrentComponentRegistry: () => undefined,
+  // RM-11 plan 613: ownership hooks delegate to the shared primitive — emulate its
+  // inactive read as undefined (matches this file's scope emulation); pure helpers
+  // (resolveOwnershipMode/useWarnScopeDegraded) come from the actual module.
 }));
 
 const mockDragCreate = vi.hoisted(() => ({

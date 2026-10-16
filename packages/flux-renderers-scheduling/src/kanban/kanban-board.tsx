@@ -57,8 +57,8 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
   const columnWidthMode = resolved.columnWidth;
   const wipStrictGlobal = resolved.wipStrict === true;
 
-  const kanbanOwnership = (resolved.kanbanOwnership as string) || 'local';
-  const kanbanStatePath = resolved.kanbanStatePath as string | undefined;
+  const boardOwnership = (resolved.boardOwnership as string) || 'local';
+  const boardStatePath = resolved.boardStatePath as string | undefined;
   const collapsedOwnership = (resolved.collapsedOwnership as string) || 'local';
   const collapsedStatePath = resolved.collapsedStatePath as string | undefined;
   // CR P2-3: in controlled mode board mutations are dropped (setBoardData
@@ -82,8 +82,8 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
     handleRedo,
     rootScope,
   } = useKanbanBoardState({
-    kanbanOwnership,
-    kanbanStatePath,
+    boardOwnership,
+    boardStatePath,
     collapsedOwnership,
     collapsedStatePath,
     rawData,

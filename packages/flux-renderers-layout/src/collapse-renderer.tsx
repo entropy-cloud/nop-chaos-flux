@@ -10,7 +10,7 @@ import {
   useOwnershipScopeValue,
   useScopeWrite,
   useWarnScopeDegraded,
-} from './value-ownership.js';
+} from '@nop-chaos/flux-react';
 
 type CompiledCollapseItem = CollapseItemSchema & {
   titleRegionKey?: string;
@@ -45,11 +45,17 @@ function toKeyArray(value: unknown): string[] {
 
 function useCollapseValue(props: RendererComponentProps<CollapseSchema>) {
   const schemaProps = props.props;
-  const { ownership, statePath, scopeDegraded } = resolveOwnershipMode(schemaProps);
+  const { ownership, statePath, scopeDegraded } = resolveOwnershipMode({
+    ownership: schemaProps.valueOwnership,
+    statePath: schemaProps.valueStatePath,
+  });
   // Scope without valueStatePath degrades to local controlled (+ dev warning),
   // matching the steps renderer (C5.1 P1-1) — a silent no-op click target
   // would be an un-recoverable control.
-  useWarnScopeDegraded(scopeDegraded, 'nop-collapse');
+  useWarnScopeDegraded(
+    scopeDegraded,
+    '[nop-collapse] valueOwnership=scope requires valueStatePath; falling back to local controlled.',
+  );
 
   const multiple = schemaProps.multiple !== false;
 

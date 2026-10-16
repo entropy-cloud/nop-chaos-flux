@@ -29,6 +29,9 @@ vi.mock('@nop-chaos/flux-react', async (importOriginal) => ({
     dispose: vi.fn(),
   }),
   useScopeSelector: () => undefined,
+  // RM-11 plan 613: ownership hooks delegate to the shared primitive — emulate its
+  // inactive read as undefined (matches this file's scope emulation).
+  useOwnershipScopeValue: () => undefined,
   useCurrentComponentRegistry: () => registryMock as unknown as ComponentHandleRegistry,
 }));
 
@@ -309,7 +312,7 @@ describe('KanbanBoard component handle registration (22-12)', () => {
     render(
       <KanbanBoard
         {...defaultProps}
-        props={{ ...defaultProps.props, kanbanOwnership: 'controlled' } as any}
+        props={{ ...defaultProps.props, boardOwnership: 'controlled' } as any}
         events={{ onCardAdd } as any}
       />,
     );

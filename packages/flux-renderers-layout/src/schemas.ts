@@ -1,4 +1,12 @@
-import type { ActionSchema, BaseSchema, ResponsiveVariantSchema, SchemaInput, SchemaObject, SchemaValue } from '@nop-chaos/flux-core';
+import type {
+  ActionSchema,
+  BaseSchema,
+  OwnershipMode,
+  ResponsiveVariantSchema,
+  SchemaInput,
+  SchemaObject,
+  SchemaValue,
+} from '@nop-chaos/flux-core';
 
 // ───────────────────────────── W2a Wizard ─────────────────────────────
 
@@ -160,7 +168,7 @@ export interface CollapseSchema extends BaseSchema {
   /** Initial expanded value when `value` is not provided */
   defaultValue?: string | number | (string | number)[];
   /** Expand-state ownership: local (renderer state) / controlled (parent drives) / scope (valueStatePath) */
-  valueOwnership?: 'local' | 'controlled' | 'scope';
+  valueOwnership?: OwnershipMode;
   /** Scope path publishing the writable expand-state value */
   valueStatePath?: string;
   /** Allow multiple panels open simultaneously (default true) */
@@ -282,7 +290,7 @@ export interface StepsSchema extends BaseSchema {
   /** Initial current step value when `value` is not provided. */
   defaultValue?: string | number;
   /** Current-step ownership: local / controlled / scope (scope requires `valueStatePath`). */
-  valueOwnership?: 'local' | 'controlled' | 'scope';
+  valueOwnership?: OwnershipMode;
   /** Scope path publishing the writable current-step value. */
   valueStatePath?: string;
   /** Layout orientation (default horizontal). */
@@ -332,7 +340,7 @@ export interface TimelineSchema extends BaseSchema {
   /** Initial current event value when `value` is not provided. v2: participates in the resolve chain every render, not seed-only. */
   defaultValue?: string | number;
   /** Current-event ownership: local / controlled / scope (scope requires `valueStatePath`). v2, default local. */
-  valueOwnership?: 'local' | 'controlled' | 'scope';
+  valueOwnership?: OwnershipMode;
   /** Scope path publishing the writable current-event value. v2: scope-mode read/write path. */
   valueStatePath?: string;
   /** Click-seek event (v2; items become clickable only when declared). */

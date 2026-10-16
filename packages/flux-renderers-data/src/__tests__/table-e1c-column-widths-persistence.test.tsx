@@ -11,6 +11,12 @@ vi.mock('@nop-chaos/flux-react', () => ({
   useRenderScope: () => ({ update: renderScopeUpdate }),
   useScopeSelector: (selector: (value: Record<string, unknown>) => unknown) =>
     selector(mockScopeState.data),
+  // RM-11 plan 613: emulate the primitive read via the same scope-state mock.
+  useOwnershipScopeValue: (
+    _ownership: string,
+    _statePath: string | undefined,
+    read?: { select?: (data: unknown) => unknown },
+  ) => (read?.select ? read.select(mockScopeState.data) : undefined),
 }));
 
 afterEach(cleanup);

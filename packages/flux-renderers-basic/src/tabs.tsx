@@ -7,14 +7,13 @@ import type {
   RendererComponentProps,
   TabsStatusSummary,
 } from '@nop-chaos/flux-core';
-import { getIn } from '@nop-chaos/flux-core';
 import {
   resolveRendererSlotContent,
   unwrapBooleanLiteral,
   useCurrentComponentRegistry,
+  useOwnershipScopeValue,
   useRenderScope,
   useSchemaProps,
-  useScopeSelector,
 } from '@nop-chaos/flux-react';
 import {
   Tabs,
@@ -26,7 +25,7 @@ import {
 } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
 import type { TabsItemSchema, TabsSchema } from './schemas.js';
-import { useOwnedAxisValue } from './interaction-owner.js';
+import { useOwnedAxisValue } from '@nop-chaos/flux-react';
 import { useStatusPathPublication } from './status-hooks.js';
 import { asReactNode } from './utils.js';
 import {
@@ -87,16 +86,9 @@ export function TabsRenderer(props: RendererComponentProps<TabsSchema>) {
   const scopeItemsActive = itemsOwnership === 'scope' && typeof itemsStatePath === 'string' && itemsStatePath.length > 0;
   const isControlledItems = itemsOwnership === 'controlled';
 
-  const scopeItems = useScopeSelector<TabsItemSchema[] | undefined, TabsItemSchema[] | undefined>(
-    scopeItemsActive && itemsStatePath
-      ? (scopeData) => getIn(scopeData, itemsStatePath) as TabsItemSchema[] | undefined
-      : () => undefined,
-    Object.is,
-    {
-      enabled: scopeItemsActive,
-      fallback: undefined,
-      paths: scopeItemsActive && itemsStatePath ? [itemsStatePath] : undefined,
-    },
+  const scopeItems = useOwnershipScopeValue<TabsItemSchema[] | undefined>(
+    scopeItemsActive ? 'scope' : 'local',
+    scopeItemsActive ? (itemsStatePath as string) : undefined,
   );
 
   const [managedItems, setManagedItems] = useState<TabsItemSchema[] | null>(null);

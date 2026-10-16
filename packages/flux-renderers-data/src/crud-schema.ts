@@ -1,6 +1,7 @@
 import type {
   ActionSchema,
   BaseSchema,
+  OwnershipMode,
   ReactiveActionSchema,
   SchemaInput,
   SchemaObject,
@@ -245,16 +246,16 @@ export interface CrudSchema extends BaseSchema {
    * `selectionStatePath`); `'local'`/`'controlled'` values are accepted for
    * schema compatibility but behave as scope-owned (docs/components/crud/design.md §4).
    */
-  selectionOwnership?: 'local' | 'controlled' | 'scope';
+  selectionOwnership?: OwnershipMode;
   selectionStatePath?: string;
   /** Ownership mode for the pagination slice — see `selectionOwnership` (scope-owned composition). */
-  paginationOwnership?: 'local' | 'controlled' | 'scope';
+  paginationOwnership?: OwnershipMode;
   paginationStatePath?: string;
   /** Ownership mode for the sort slice — see `selectionOwnership` (scope-owned composition). */
-  sortOwnership?: 'local' | 'controlled' | 'scope';
+  sortOwnership?: OwnershipMode;
   sortStatePath?: string;
   /** Ownership mode for the filter slice — see `selectionOwnership` (scope-owned composition). */
-  filterOwnership?: 'local' | 'controlled' | 'scope';
+  filterOwnership?: OwnershipMode;
   filterStatePath?: string;
   rowKey?: string;
   autoClearSelectionOnRefresh?: boolean;

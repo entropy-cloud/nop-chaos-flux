@@ -34,8 +34,11 @@ const checks = [
   },
   {
     file: 'packages/flux-renderers-data/src/schemas.ts',
+    // RM-11 (plan 613): ownership fields reference the single-source OwnershipMode
+    // union instead of inline literals — the finite-vocabulary intent is preserved
+    // (and strengthened: one named type, no per-field literal drift).
     schemaPattern:
-      /export interface TableSchema[\s\S]*?paginationOwnership\?:\s*'local'\s*\|\s*'controlled'\s*\|\s*'scope'[\s\S]*?selectionOwnership\?:\s*'local'\s*\|\s*'controlled'\s*\|\s*'scope'[\s\S]*?sortOwnership\?:\s*'local'\s*\|\s*'controlled'\s*\|\s*'scope'[\s\S]*?filterOwnership\?:\s*'local'\s*\|\s*'controlled'\s*\|\s*'scope'/,
+      /export interface TableSchema[\s\S]*?paginationOwnership\?:\s*OwnershipMode[\s\S]*?selectionOwnership\?:\s*OwnershipMode[\s\S]*?sortOwnership\?:\s*OwnershipMode[\s\S]*?filterOwnership\?:\s*OwnershipMode/,
     contractFile: 'packages/flux-renderers-data/src/data-renderer-definitions.ts',
     contractPattern:
       /type:\s*'table'[\s\S]*?key:\s*'paginationOwnership'[\s\S]*?editorType:\s*'select'[\s\S]*?key:\s*'selectionOwnership'[\s\S]*?editorType:\s*'select'[\s\S]*?key:\s*'sortOwnership'[\s\S]*?editorType:\s*'select'[\s\S]*?key:\s*'filterOwnership'[\s\S]*?editorType:\s*'select'/,
@@ -43,7 +46,8 @@ const checks = [
   },
   {
     file: 'packages/flux-renderers-data/src/crud-schema.ts',
-    schemaPattern: /export interface CrudSchema[\s\S]*?selectionOwnership\?:\s*'local'\s*\|\s*'controlled'\s*\|\s*'scope'[\s\S]*?filterOwnership\?:\s*'local'\s*\|\s*'controlled'\s*\|\s*'scope'/,
+    // RM-11 (plan 613): same OwnershipMode single-source reference as TableSchema.
+    schemaPattern: /export interface CrudSchema[\s\S]*?selectionOwnership\?:\s*OwnershipMode[\s\S]*?filterOwnership\?:\s*OwnershipMode/,
     contractFile: 'packages/flux-renderers-data/src/crud-renderer-definition.ts',
     contractPattern: /key:\s*'selectionOwnership'[\s\S]*?editorType:\s*'select'[\s\S]*?key:\s*'filterOwnership'[\s\S]*?editorType:\s*'select'/,
     label: 'crud ownership finite fields',

@@ -16,6 +16,7 @@ vi.mock('@nop-chaos/flux-react', async (importOriginal) => ({
     ...(await importOriginal<Record<string, unknown>>()),
   useRenderScope: () => ({ update: vi.fn() }),
   useScopeSelector: () => undefined,
+  useOwnershipScopeValue: () => undefined,
 }));
 
 afterEach(cleanup);

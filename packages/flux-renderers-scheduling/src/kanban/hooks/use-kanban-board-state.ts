@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { shallowEqual } from '@nop-chaos/flux-core';
-import { useRenderScope, useScopeSelector } from '@nop-chaos/flux-react';
+import { useOwnershipScopeValue, useRenderScope } from '@nop-chaos/flux-react';
 import type { BoardData, KanbanCardConfig } from '../kanban.types.js';
 import { getColumns } from '../kanban-helpers.js';
 import { createUndoStack, pushCommand as pushUndoCommand, undo as undoStackOp, redo as redoStackOp } from '../utils/kanban-undo-stack.js';
@@ -15,8 +15,8 @@ const EMPTY_BOARD = { root: { id: 'root', type: 'root', children: [], data: {}, 
  * deterministic undo read — are unchanged.
  */
 export function useKanbanBoardState(options: {
-  kanbanOwnership: string;
-  kanbanStatePath: string | undefined;
+  boardOwnership: string;
+  boardStatePath: string | undefined;
   collapsedOwnership: string;
   collapsedStatePath: string | undefined;
   rawData: BoardData | undefined;
@@ -24,8 +24,8 @@ export function useKanbanBoardState(options: {
 }) {
   const rootScope = useRenderScope();
   const {
-    kanbanOwnership,
-    kanbanStatePath,
+    boardOwnership,
+    boardStatePath,
     collapsedOwnership,
     collapsedStatePath,
     rawData,
@@ -33,47 +33,28 @@ export function useKanbanBoardState(options: {
   } = options;
   const fallbackBoard = EMPTY_BOARD;
 
-  const isControlled = kanbanOwnership === 'controlled';
+  const isControlled = boardOwnership === 'controlled';
 
 
-  // 05-01: 订阅门控——非 scope ownership 不订阅 scope（enabled:false 时
-  // useScopeSelector 走 fallback，零订阅渲染），scope 模式收窄到 state path。
-  const scopeBoardData = useScopeSelector(
-    (data: Record<string, unknown>) => {
-      if (!kanbanStatePath) return undefined;
-      const parts = kanbanStatePath.split('.');
-      let val: unknown = data;
-      for (const p of parts) val = (val as Record<string, unknown>)?.[p];
-      return val as BoardData | undefined;
-    },
-     shallowEqual,
-     {
-       enabled: kanbanOwnership === 'scope' && !!kanbanStatePath,
-       paths: kanbanStatePath ? [kanbanStatePath] : undefined,
-     },
+  // 05-01: 订阅门控——非 scope ownership 不订阅 scope（原语 useOwnershipScopeValue
+  // 走 UNUSED sentinel，零订阅渲染），scope 模式收窄到 state path。
+  const scopeBoardData = useOwnershipScopeValue<BoardData | undefined>(
+    boardOwnership === 'scope' && boardStatePath ? 'scope' : 'local',
+    boardStatePath,
+    { equality: shallowEqual as (a: BoardData | undefined, b: BoardData | undefined) => boolean },
   );
 
-  const scopeCollapsedValue = useScopeSelector(
-    (data: Record<string, unknown>) => {
-      if (!collapsedStatePath) return undefined;
-      const parts = collapsedStatePath.split('.');
-      let val: unknown = data;
-      for (const p of parts) val = (val as Record<string, unknown>)?.[p];
-      return val as Record<string, boolean> | undefined;
-    },
-    Object.is,
-    {
-      enabled: collapsedOwnership === 'scope' && !!collapsedStatePath,
-      paths: collapsedStatePath ? [collapsedStatePath] : undefined,
-    },
+  const scopeCollapsedValue = useOwnershipScopeValue<Record<string, boolean> | undefined>(
+    collapsedOwnership === 'scope' && collapsedStatePath ? 'scope' : 'local',
+    collapsedStatePath,
   );
 
   const [localBoardData, setLocalBoardData] = useState<BoardData>(rawData ?? fallbackBoard);
   const [localCollapsedData, setLocalCollapsedData] = useState<Record<string, boolean>>({});
 
-  const boardData = (kanbanOwnership === 'controlled')
+  const boardData = (boardOwnership === 'controlled')
     ? (rawData ?? fallbackBoard)
-    : (kanbanOwnership === 'scope' && scopeBoardData ? scopeBoardData : localBoardData);
+    : (boardOwnership === 'scope' && scopeBoardData ? scopeBoardData : localBoardData);
 
   const boardDataRef = useRef(boardData);
   useEffect(() => { boardDataRef.current = boardData; }, [boardData]);
@@ -86,7 +67,7 @@ export function useKanbanBoardState(options: {
   // React's adjust-state-during-render pattern: an effect+setState here would
   // cascade (react-hooks/set-state-in-effect).
   const [lastRawData, setLastRawData] = useState(rawData);
-  if (kanbanOwnership === 'local' && lastRawData !== rawData) {
+  if (boardOwnership === 'local' && lastRawData !== rawData) {
     setLastRawData(rawData);
     setLocalBoardData(rawData ?? EMPTY_BOARD);
   }
@@ -120,13 +101,13 @@ export function useKanbanBoardState(options: {
   }, [collapsedOwnership, collapsedStatePath, rootScope, scopeCollapsedValue, localCollapsedData]);
 
   const setBoardData = useCallback((newBoard: BoardData) => {
-    if (kanbanOwnership === 'controlled') return;
-    if (kanbanOwnership === 'scope' && kanbanStatePath) {
-      rootScope.update(kanbanStatePath, newBoard);
+    if (boardOwnership === 'controlled') return;
+    if (boardOwnership === 'scope' && boardStatePath) {
+      rootScope.update(boardStatePath, newBoard);
       return;
     }
     setLocalBoardData(newBoard);
-  }, [kanbanOwnership, kanbanStatePath, rootScope, setLocalBoardData]);
+  }, [boardOwnership, boardStatePath, rootScope, setLocalBoardData]);
 
   const setBoardDataRef = useRef(setBoardData);
   useEffect(() => { setBoardDataRef.current = setBoardData; }, [setBoardData]);
@@ -137,7 +118,7 @@ export function useKanbanBoardState(options: {
   const lastCommandTypeRef = useRef<UndoCommandType>('moveCard');
 
   const handleSetBoardData = useCallback((newBoard: BoardData, commandType?: UndoCommandType, extraParams?: Record<string, any>) => {
-    if (kanbanOwnership === 'controlled') return;
+    if (boardOwnership === 'controlled') return;
     const ct = commandType ?? lastCommandTypeRef.current;
     lastCommandTypeRef.current = 'moveCard';
     setBoardData(newBoard);
@@ -146,7 +127,7 @@ export function useKanbanBoardState(options: {
       timestamp: Date.now(),
       params: extraParams ?? {},
     }));
-  }, [kanbanOwnership, setBoardData]);
+  }, [boardOwnership, setBoardData]);
 
   const handleUndo = useCallback(() => {
     // 1-5: undo 确定性执行——旧实现经 setUndoStackState updater 副作用捕获

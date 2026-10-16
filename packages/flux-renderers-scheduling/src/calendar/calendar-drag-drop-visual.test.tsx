@@ -17,11 +17,19 @@ import type { PositionedEvent } from './calendar.types.js';
 //
 // 先红记录：②（规则缺失）与 ③（inline backgroundColor 存在）修复前为红。
 
-vi.mock('@nop-chaos/flux-react', () => ({
+vi.mock('@nop-chaos/flux-react', async (importOriginal) => ({
+    ...(await importOriginal<Record<string, unknown>>()),
+
   useRendererRuntime: () => ({ dispatch: vi.fn() }),
   useRenderScope: () => ({ id: 'mock-scope', path: '/mock', readVisible: () => ({}), readOwn: () => ({}), update: vi.fn(), merge: vi.fn(), replace: vi.fn(), dispose: vi.fn() }),
   useScopeSelector: () => undefined,
+  // RM-11 plan 613: ownership hooks delegate to the shared primitive — emulate its
+  // inactive read as undefined (matches this file's scope emulation).
+  useOwnershipScopeValue: () => undefined,
   useCurrentComponentRegistry: () => undefined,
+  // RM-11 plan 613: ownership hooks delegate to the shared primitive — emulate its
+  // inactive read as undefined (matches this file's scope emulation); pure helpers
+  // (resolveOwnershipMode/useWarnScopeDegraded) come from the actual module.
 }));
 
 // happy-dom 无可测量视口，@tanstack/react-virtual 产不出虚拟行 → 月视图 0 行。

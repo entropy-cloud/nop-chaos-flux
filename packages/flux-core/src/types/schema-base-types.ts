@@ -8,6 +8,14 @@ export interface SchemaObject {
 
 export type SchemaPath = string;
 
+/**
+ * Value-ownership mode shared by all `<axis>Ownership` schema fields
+ * (naming-conventions §4.8): `local` = component-local state, `controlled` =
+ * parent-driven value (pure view), `scope` = bind to a scope path via
+ * `<axis>StatePath`.
+ */
+export type OwnershipMode = 'local' | 'controlled' | 'scope';
+
 export type RequestDedupStrategy = 'cancel-previous' | 'parallel' | 'ignore-new';
 
 export interface OperationControlConfig extends SchemaObject {

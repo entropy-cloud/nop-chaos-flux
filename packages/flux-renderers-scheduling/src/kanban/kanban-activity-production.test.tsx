@@ -26,6 +26,10 @@ vi.mock('@nop-chaos/flux-react', async (importOriginal) => ({
   }),
   useScopeSelector: () => undefined,
   useCurrentComponentRegistry: () => undefined,
+
+  // RM-11 plan 613: ownership hooks delegate to the shared primitive — emulate its
+  // inactive read as undefined (matches this file's scope emulation).
+  useOwnershipScopeValue: () => undefined,
 }));
 
 vi.mock('@nop-chaos/flux-i18n', () => ({

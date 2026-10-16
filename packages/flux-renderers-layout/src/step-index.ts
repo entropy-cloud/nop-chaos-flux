@@ -3,7 +3,7 @@
  * across steps-renderer/timeline-renderer. `keyOf` absorbs the one semantic
  * difference: steps matches `item.value ?? item.key`, timeline matches
  * `item.value` only. (WA-layout-001, plan 567: the ownership hooks are no
- * longer per-renderer — they share value-ownership.ts; the diverging fallback
+ * longer per-renderer — they share the value-axis/ownership primitive; the diverging fallback
  * chains this comment used to justify live in the renderer bodies'
  * resolveFinalIndex layers, not in the hooks.)
  */

@@ -1,7 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { getIn } from '@nop-chaos/flux-core';
+import {
+  OwnershipMode,
+  getIn,
+} from '@nop-chaos/flux-core';
 import { parseColumnWidth } from './parse-column-width.js';
-import { useRenderScope, useScopeSelector } from '@nop-chaos/flux-react';
+import { useOwnershipScopeValue, useRenderScope } from '@nop-chaos/flux-react';
 import { t } from '@nop-chaos/flux-i18n';
 import type { TableColumnSchema } from '../schemas.js';
 
@@ -68,7 +71,7 @@ interface ActiveResize {
 }
 
 export interface UseColumnResizeOptions {
-  columnWidthsOwnership?: 'local' | 'controlled' | 'scope';
+  columnWidthsOwnership?: OwnershipMode;
   columnWidthsStatePath?: string;
   // Controlled write-back channel (mirrors use-row-drag-sort's `onReorder`).
   onWidthsChange?: (next: Record<string, number>) => void;
@@ -109,7 +112,7 @@ export function useColumnResize(
     );
   }
 
-  const effectiveOwnership: 'local' | 'controlled' | 'scope' =
+  const effectiveOwnership: OwnershipMode =
     ownership === 'scope' && !statePath ? 'local' : ownership;
 
   // G10 parity (mirrors use-row-drag-sort): controlled ownership without an
@@ -155,23 +158,18 @@ export function useColumnResize(
   // touch-scroll takeover never leaks listeners or leaves activeResizeRef stuck.
   const listenerCleanupRef = useRef<(() => void) | null>(null);
 
-  const scopeWidths = useScopeSelector(
-    (scopeData) => {
-      if (effectiveOwnership !== 'scope' || !statePath) {
-        return undefined;
-      }
-      return normalizeWidthsRecord(getIn(scopeData, statePath));
-    },
-    (a, b) => {
-      if (!a || !b) return a === b;
-      const aKeys = Object.keys(a);
-      const bKeys = Object.keys(b);
-      if (aKeys.length !== bKeys.length) return false;
-      return aKeys.every((key) => a[key] === b[key]);
-    },
+  const scopeWidths = useOwnershipScopeValue<Record<string, number> | undefined>(
+    effectiveOwnership === 'scope' && statePath ? 'scope' : 'local',
+    statePath,
     {
-      enabled: effectiveOwnership === 'scope' && !!statePath,
-      paths: statePath && effectiveOwnership === 'scope' ? [statePath] : undefined,
+      select: (scopeData) => normalizeWidthsRecord(getIn(scopeData, statePath as string)),
+      equality: (a, b) => {
+        if (!a || !b) return a === b;
+        const aKeys = Object.keys(a);
+        const bKeys = Object.keys(b);
+        if (aKeys.length !== bKeys.length) return false;
+        return aKeys.every((key) => a[key] === b[key]);
+      },
     },
   );
 

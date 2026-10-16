@@ -1,6 +1,6 @@
 import { startTransition, useCallback, useMemo, useState } from 'react';
 import { getIn, type RendererComponentProps } from '@nop-chaos/flux-core';
-import { useRenderScope, useScopeSelector } from '@nop-chaos/flux-react';
+import { useOwnershipScopeValue, useRenderScope } from '@nop-chaos/flux-react';
 import type { TableSchema } from '../schemas.js';
 import { createTableEventContext } from './table-event-context.js';
 import type { MultiSortState, SortEntry, SortState } from './types.js';
@@ -115,31 +115,22 @@ export function useTableSort(
     [controlledSortInput.sort, controlledSortInput.sortEntries, controlledSingleSort, multiSortEnabled],
   );
 
-  const scopeSingleSort = useScopeSelector(
-    (scopeData) => {
-      if (sortOwnership !== 'scope' || !sortStatePath || multiSortEnabled) {
-        return undefined;
-      }
-      return toSingleSortState(getIn(scopeData, sortStatePath));
-    },
-    (a, b) => a?.column === b?.column && a?.direction === b?.direction,
+  const scopeSortActive = sortOwnership === 'scope' && !!sortStatePath;
+  const scopeSingleSort = useOwnershipScopeValue<SortState | undefined>(
+    scopeSortActive && !multiSortEnabled ? 'scope' : 'local',
+    sortStatePath,
     {
-      enabled: sortOwnership === 'scope' && !!sortStatePath && !multiSortEnabled,
-      paths: sortStatePath && !multiSortEnabled ? [sortStatePath] : undefined,
+      select: (scopeData) => toSingleSortState(getIn(scopeData, sortStatePath as string)),
+      equality: (a, b) => a?.column === b?.column && a?.direction === b?.direction,
     },
   );
 
-  const scopeMultiEntries = useScopeSelector(
-    (scopeData) => {
-      if (sortOwnership !== 'scope' || !sortStatePath || !multiSortEnabled) {
-        return undefined;
-      }
-      return toMultiSortState(getIn(scopeData, sortStatePath));
-    },
-    (a, b) => (a && b ? entriesEqual(a, b) : a === b),
+  const scopeMultiEntries = useOwnershipScopeValue<MultiSortState | undefined>(
+    scopeSortActive && multiSortEnabled ? 'scope' : 'local',
+    sortStatePath,
     {
-      enabled: sortOwnership === 'scope' && !!sortStatePath && multiSortEnabled,
-      paths: sortStatePath && multiSortEnabled ? [sortStatePath] : undefined,
+      select: (scopeData) => toMultiSortState(getIn(scopeData, sortStatePath as string)),
+      equality: (a, b) => (a && b ? entriesEqual(a, b) : a === b),
     },
   );
 

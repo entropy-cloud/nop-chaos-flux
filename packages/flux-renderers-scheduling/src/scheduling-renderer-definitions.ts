@@ -223,10 +223,10 @@ export const schedulingRendererDefinitions: RegisteredRendererDefinition[] = [
       { key: 'columnHeaderClassName', kind: 'prop' },
       { key: 'cardClassName', kind: 'prop' },
       { key: 'columnFooterClassName', kind: 'prop' },
-      // consumed: kanbanOwnership/kanbanStatePath gate board ownership
-      // (controlled -> rawData read-only; scope -> kanbanStatePath writes)
+      // consumed: boardOwnership/boardStatePath gate board ownership
+      // (controlled -> rawData read-only; scope -> boardStatePath writes)
       {
-        key: 'kanbanOwnership',
+        key: 'boardOwnership',
         kind: 'prop',
         contract: {
           displayName: 'Kanban Ownership',
@@ -238,9 +238,9 @@ export const schedulingRendererDefinitions: RegisteredRendererDefinition[] = [
           defaultValue: 'local',
         },
       },
-      { key: 'kanbanStatePath', kind: 'prop' },
+      { key: 'boardStatePath', kind: 'prop' },
       // legacy: declared for schema compatibility (design §7); board
-      // ownership reads kanbanStatePath only (CR P2-4 sync)
+      // ownership reads boardStatePath only (CR P2-4 sync)
       { key: 'statusPath', kind: 'prop' },
       { key: 'onMount', kind: 'event' },
       { key: 'onUnmount', kind: 'event' },

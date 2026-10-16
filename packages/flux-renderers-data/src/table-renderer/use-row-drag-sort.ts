@@ -1,3 +1,4 @@
+import type { OwnershipMode } from '@nop-chaos/flux-core';
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { useRenderScope } from '@nop-chaos/flux-react';
 import { t } from '@nop-chaos/flux-i18n';
@@ -30,7 +31,7 @@ export interface UseRowDragSortOptions {
   enabled: boolean;
   orderField?: string;
   statePath?: string;
-  ownership?: 'local' | 'controlled' | 'scope';
+  ownership?: OwnershipMode;
   rows: ReorderableRow[];
   onReorder?: (nextOrder: string[]) => void;
 }

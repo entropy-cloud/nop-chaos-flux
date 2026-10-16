@@ -62,8 +62,8 @@ describe('Phase 1: RendererComponentProps cross-package generic narrowing', () =
     expectTypeOf<Props>().toHaveProperty('columnWidth');
     expectTypeOf<Props>().toHaveProperty('columnDraggable');
     expectTypeOf<Props>().toHaveProperty('draggable');
-    expectTypeOf<Props>().toHaveProperty('kanbanOwnership');
-    expectTypeOf<Props>().toHaveProperty('kanbanStatePath');
+    expectTypeOf<Props>().toHaveProperty('boardOwnership');
+    expectTypeOf<Props>().toHaveProperty('boardStatePath');
   });
 
   it('RendererComponentProps<CalendarSchema> schema is CalendarSchema', () => {
