@@ -1,0 +1,48 @@
+{
+  "_header": {
+    "description": "RM-9 (plan 611) metamodel residue adjudication baseline. suppressions[] = point hits (ruleId::path:line) that participate in the gate diff; registry[] = adjudicated range/by-design items with no point location (never produce hits). Unregistered hits fail check:audit-renderer-metamodel-residue. Shrink-only: --update-baselines may remove vanished suppressions but never adds entries (roadmap Cross-Cutting 6; new exemptions require human confirmation).",
+    "lastUpdated": "2026-10-16",
+    "count": 12,
+    "adjudication": "suppressions 12: A5-frame-wrap (6) — the frame family's deliberate path members after RM-2 (compiled-contract pass-through, resolver input, wiring, consumer, meta resolution); B7 (3) — base-definition optional component widened by RegisteredRendererDefinition plus the opaque compiled face; A8 (3) — the TemplateNode renderer-type triad carrier declarations (rendererType=living, TemplateNode.type=test-only, component.type=consumer-less; dead-carrier contraction owned by successor). registry 4: roadmap explicit-exclusion trio + the §5.3 snapshot-volume constraint (awaiting human confirmation on machine-ization)."
+  },
+  "suppressions": [
+    "rm-a5-frame-wrap-dual-path::packages/flux-core/src/types/compiled-renderer-contract.ts:77",
+    "rm-a5-frame-wrap-dual-path::packages/flux-react/src/node-frame-wrapper.tsx:21",
+    "rm-a5-frame-wrap-dual-path::packages/flux-react/src/node-renderer-resolved.tsx:440",
+    "rm-a5-frame-wrap-dual-path::packages/flux-renderers-form-advanced/src/variant-field/variant-field-view.tsx:98",
+    "rm-a5-frame-wrap-dual-path::packages/flux-runtime/src/node-runtime.ts:254",
+    "rm-a5-frame-wrap-dual-path::packages/flux-runtime/src/node-runtime.ts:258",
+    "rm-a8-renderer-type-triad::packages/flux-core/src/types/node-identity.ts:138",
+    "rm-a8-renderer-type-triad::packages/flux-core/src/types/node-identity.ts:142",
+    "rm-a8-renderer-type-triad::packages/flux-core/src/types/node-identity.ts:143",
+    "rm-b7-component-optional::packages/flux-core/src/types/compiled-renderer-contract.ts:43",
+    "rm-b7-component-optional::packages/flux-core/src/types/compiled-renderer-contract.ts:49",
+    "rm-b7-component-optional::packages/flux-core/src/types/renderer-core.ts:220"
+  ],
+  "registry": [
+    {
+      "id": "rm-reg-c1-events-undefined",
+      "family": "C",
+      "reason": "`events` channel `| undefined` value type — roadmap explicit-exclusion list (pure appearance / low-risk loosening, no behavioural coupling with the single-source main line).",
+      "ref": "renderer-core.ts:204"
+    },
+    {
+      "id": "rm-reg-c2-family-assertion",
+      "family": "C",
+      "reason": "defineRendererFamily assertion — roadmap explicit-exclusion list; live form is a single `as RegisteredRendererDefinition` (renderer-definition-builder.ts:37), the report's 'double assertion' wording is superseded by RM-1 registry typing.",
+      "ref": "renderer-definition-builder.ts:37"
+    },
+    {
+      "id": "rm-reg-c3-shape-group-comments",
+      "family": "C",
+      "reason": "RendererDefinitionShape 28-field grouping comments — roadmap explicit-exclusion list; live interface carries 24 top-level members (renderer-definition-types.ts:114-146), the 28→24 delta being the four channels removed by RM-1/4/5/6. Absence-type item, no point location.",
+      "ref": "renderer-definition-types.ts:114-146"
+    },
+    {
+      "id": "rm-reg-s53-snapshot-volume",
+      "family": "S5.3",
+      "reason": "Static snapshot volume must not grow — a constraint, not a detectable finding; machine-ization needs a snapshot-size baseline design first. Enforced at review time by Cross-Cutting 2. Human confirmation on whether to machine-ize is pending (plan 611 Phase 2).",
+      "ref": "docs/backlog/renderer-metamodel-roadmap.md (Cross-Cutting 2)"
+    }
+  ]
+}

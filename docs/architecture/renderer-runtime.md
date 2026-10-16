@@ -1565,6 +1565,37 @@ only (#1/#6/#7/#12 faces). The #8/#9/#10/#11 raw **argument** call sites
 raw `SourceSchema`, `evaluate` raw target) are not visible to this scanner;
 whole-family coverage is RM-9's scope.
 
+### Metamodel residue adjudication (RM-9, plan 611)
+
+The renderer-metamodel track's own findings are encoded as an executable rule
+family so "is the refactor complete?" is machine-decidable rather than
+remembered. Gate: `check:audit-renderer-metamodel-residue` (in `pnpm check`);
+runner: `node scripts/audit/find-renderer-metamodel-residue.mjs`.
+
+Rule family (`scripts/audit/renderer-metamodel-residue-rules.mjs`, 16 rules —
+one per analysis-report family, each with a `closureNote` stating its end
+state). Fixed families assert zero hits: A1 `propSchema`, A2 `propContracts`,
+A3 `eventContracts`, A4 `scopeExportContracts`, A5 normalizer copies, B6
+compiled-contract hand-copies, §5.2.1 template writes, §5.2.4 readonly gaps,
+§5.2.3 node open containers. Public channels kept by decision plus delegated
+gates are recorded instead of asserted:
+
+| Segment          | Entry kind                  | Meaning                                                                                                                                          |
+| ---------------- | --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `suppressions[]` | `ruleId::path:line`         | Adjudicated point hit; participates in the diff. An unregistered hit fails the gate.                                                             |
+| `registry[]`     | `{id, family, reason, ref}` | Adjudicated range/by-design item with no point location (roadmap explicit-exclusion trio, §5.3 snapshot-volume constraint). Never produces hits. |
+
+Shrink-only discipline (Cross-Cutting 6): the gate reports suppressions whose
+hits vanished, and `--update-baselines` may only _remove_ them — it refuses to
+add entries (a new exemption is a human decision). A test asserts the committed
+suppression set equals the live hit set, so the whitelist cannot silently
+linger.
+
+Delegated rules (`rm-ref-*`) record the gate name and its last known state
+rather than re-executing: `contract-honesty` is a vitest suite (runs in
+`pnpm test`), and `check:audit-hardcoded-type-dispatch` is a standalone advisory
+command (always exit 0; not part of the `pnpm check` aggregate).
+
 ## Related Documents
 
 - `docs/references/terminology.md`
