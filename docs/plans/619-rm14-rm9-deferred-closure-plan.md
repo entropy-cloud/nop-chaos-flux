@@ -1,6 +1,6 @@
 # 619 RM-14 RM-9 Deferred 收尾：A8 类型载体语义文档化（保留 `type`）+ §5.3 快照体积机器化
 
-> Plan Status: draft
+> Plan Status: active
 > Last Reviewed: 2026-10-16
 > Source: `docs/plans/611-rm9-residue-scan-plan.md` `## Deferred But Adjudicated`（A8 类型载体收敛 + §5.3 静态快照体积机器化两条遗留）；roadmap Phase Status RM-13 行的轨道收口注（终态六条含 RM-13 补完项，均已成立）
 > Related: roadmap Cross-Cutting 2（静态快照体积不增）/ Rule 6（工作项增删人工确认）；RM-13 plan 615（`type`/`rendererType` 分叉的发现出处）
@@ -114,10 +114,10 @@ Exit Criteria:
 
 > 起草后、执行前的独立审查证据。由独立 fresh 子 agent 填写。
 
-- Reviewer / Agent: （待 draft review）
-- Verdict: （待审）
-- Rounds: 0
-- Findings addressed: —
+- Reviewer / Agent: agent_e8cd3848（R1~R2，独立 fresh 子 agent，分叉实锤核验 + JSON.stringify 可行性核验 + roadmap 六处同步核验）
+- Verdict: `pass`（R2 零 Blocker/零 Major，达成共识 → 升 active；1 条非阻塞 Minor：§5.3 日期指向注在执行 Phase 3 时按 Phase 1 同款格式落）
+- Rounds: 2（R1 fail 0B/1M/5m → 修订；R2 pass）
+- Findings addressed: M1=Phase 3 全量门禁撤出（Minimum Rule 18，改 focused 套件）；m1=Purpose 收紧（删 `type` 丢第一 class 便利访问点与并列对照，非信息本体丢失）；m2=Verdict 占位回词表；m3=roadmap Phase Details 补 RM-14 bullet；m4=Header 补共识审查记录指引（R2 通过后回填 Verdict/轮次）；m6=RM-9 Deferred 改写带日期指向注。
 
 ## Closure Gates
 
