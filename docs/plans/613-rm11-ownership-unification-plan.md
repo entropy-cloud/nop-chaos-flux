@@ -34,7 +34,7 @@
 
 ## Non-Goals
 
-- 不改 ownership 运行时语义（收敛保持行为等价：四处分歧逐消费方保行为；降级 warn 语义随原语携带到此前无 warn 的消费方属**补齐已知缺口**——layout 3 处既有断言 warn 存在须继续通过、use-row-drag-sort 既有 warn 与原语 warn 去重[迁移后单点 warn 不重复]）；不做 axis 语义合并（selection/order 是否同一轴等，报告显式排除）；不动 `effectiveOwnership` 局部变量名；不动 data 族行标识/其他词汇漂移（RM-12 或单独立项）；e2e。
+- 不改 ownership 运行时语义（收敛保持行为等价：四处分歧逐消费方保行为；降级 warn 语义随原语携带到此前无 warn 的消费方属**补齐已知缺口**——layout 3 处既有断言 warn 存在须继续通过、use-row-drag-sort:107-118/use-column-resize:106-110/list-pagination:124-128 既有 warn 与原语 warn 单点去重[迁移后不双发不丢失，list-pagination-infinite warn 断言随迁钉住]）；不做 axis 语义合并（selection/order 是否同一轴等，报告显式排除）；不动 `effectiveOwnership` 局部变量名；不动 data 族行标识/其他词汇漂移（RM-12 或单独立项）；e2e。
 
 ## Scope
 
@@ -58,7 +58,7 @@
 
 档位选择：`必须自动化` / `建议有测` / `不适用：理由`
 
-本档选择：**必须自动化**——实现合一组触及 12 个渲染器的值归属运行时路径（scope 订阅/写回/降级），属核心回归路径。Proof 先行（Phase 3 第 1 项=原语+判别钉落地勾验后再迁移消费方）：①**判别钉**——新增原语测试（flux-react）：scope 无 statePath 降级+dev warn 一次性、controlled 不写值、scope 写回走 startTransition、UNUSED 订阅跳过（`useScopeSelector` enabled=false）、自定义 equality/select 读法参数透传；②**既有测试族回归**——kanban-ownership-gating/kanban-renderer/kanban-handle/scheduling-boundary-narrowing（改名随迁）、layout steps/timeline/collapse ownership 测试、tabs/table 系列 ownership 测试全量绿；③行为等价判别：迁移前对 `useValueOwnershipValue`/`useOwnedAxisValue` 的消费方快照（如 steps 当前值序列）迁移后零差异（判别变异自证：在旧副本上注入受控值丢失变异→红→外科恢复→绿）。
+本档选择：**必须自动化**——实现合一组触及 12 个渲染器的值归属运行时路径（scope 订阅/写回/降级），属核心回归路径。Proof 先行（Phase 3 第 1 项=原语+判别钉落地勾验后再迁移消费方）：①**判别钉**——新增原语测试（flux-react）：scope 无 statePath 降级+dev warn 一次性、controlled 不写值、scope 写回走 startTransition、UNUSED 订阅跳过（`useScopeSelector` enabled=false）、自定义 equality/select 读法参数透传；②**既有测试族回归**——kanban-ownership-gating/kanban-renderer/kanban-handle/scheduling-boundary-narrowing（改名随迁）、layout steps/timeline/collapse ownership 测试（warn 存在断言）、tabs/table 系列 ownership 测试、**list-pagination-infinite warn 存在断言（:134）随迁钉住**全量绿；③行为等价判别：迁移前对 `useValueOwnershipValue`/`useOwnedAxisValue` 的消费方快照（如 steps 当前值序列）迁移后零差异（判别变异自证：在旧副本上注入受控值丢失变异→红→外科恢复→绿）。
 
 ## Execution Plan
 
@@ -85,7 +85,7 @@ Targets: scheduling kanban 族 + basic 引用位 + flux-guide
 
 - Item Types: `Fix`、`Proof`
 
-- [ ] `kanbanOwnership/kanbanStatePath` → `boardOwnership/boardStatePath` 全命中改名：`kanban.types.ts`（含 `:80` 松型收窄 `boardOwnership?: OwnershipMode`）、`use-kanban-board-state.ts`（18 命中）、`scheduling-renderer-definitions.ts`（5 命中，fields key 与 contract 同步）、`kanban-board.tsx`（4）、basic `schemas.ts`（:200 注释）、4 个测试文件（fixtures/断言/type test）、flux-guide `kanban.md`（3）、`flux-types/schema.d.ts` 再生成。
+- [ ] `kanbanOwnership/kanbanStatePath` → `boardOwnership/boardStatePath` 全命中改名：`kanban.types.ts`（含 `:84` 松型收窄 `boardOwnership?: OwnershipMode`）、`use-kanban-board-state.ts`（18 命中）、`scheduling-renderer-definitions.ts`（5 命中，fields key 与 contract 同步）、`kanban-board.tsx`（4）、basic `schemas.ts`（:200 注释）、4 个测试文件（fixtures/断言/type test）、flux-guide `kanban.md`（3）、`flux-types/schema.d.ts` 再生成。
 - [ ] Proof：`rg -n "kanbanOwnership|kanbanStatePath" packages flux-guide` 全命中归零（docs 叙述位点豁免——词汇报告/roadmap/本 plan/naming-conventions §4.8 禁例行引用为前态记载）；scheduling focused test 全绿（kanban-ownership-gating/kanban-renderer/kanban-handle/boundary-narrowing）。
 
 Exit Criteria:
@@ -151,7 +151,7 @@ Exit Criteria:
 
 ## 预置拆分判据裁定（roadmap RM-11 镜像 R1 m2）
 
-类型词表组（裁决 1/2 = Phase 1/2）与实现合一组（裁决 3 = Phase 3）同属"ownership 单源化"单一结果面、收口口径同源（词汇报告 §债二三条命令彼此引用），且实现合一的语义等价性依赖类型单源先行——**裁定为一个 plan 内 4 Phase 承载，不预拆**（plan guide Rule 22/24：共享 owner 与 proof 面优先合并）。执行中若 Phase 3 证实需引入两候选之外的全新语义设计（非合并既有同构语义），当场落 Deferred But Adjudicated 并报人工裁定是否拆分 successor，不静默缩水。
+类型词表组（裁决 1/2 = Phase 1/2）与实现合一组（裁决 3 = Phase 3）同属"ownership 单源化"单一结果面、收口口径同源（词汇报告 §债二三条命令彼此引用），且实现合一的语义等价性依赖类型单源先行——**裁定为一个 plan 内 4 Phase 承载，不预拆**（plan guide Rule 22/24：共享 owner 与 proof 面优先合并）。执行中若 Phase 3 证实需引入两候选之外的全新语义设计（非合并既有副本语义），当场落 Deferred But Adjudicated 并报人工裁定是否拆分 successor，不静默缩水。
 
 ## Deferred But Adjudicated
 
