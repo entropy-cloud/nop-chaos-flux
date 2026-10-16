@@ -29,4 +29,12 @@ export {
   type DebugClient,
   type LeasePolicy,
   type SessionCloseReason,
+  type XlangLogEntry,
+  type XlangCompleted,
 } from './client/debug-client.js';
+export { DebugPanel, type DebugPanelProps } from './panel/debug-panel.js';
+export { ControlButtons, type ControlButtonsProps } from './panel/control-buttons.js';
+export { CallStackPanel, CallStackPanelGuarded, type CallStackPanelProps } from './panel/call-stack-panel.js';
+export { VariablesTree, type VariablesTreeProps } from './panel/variables-tree.js';
+export { EvalInput, type EvalInputProps } from './panel/eval-input.js';
+export { LogPanel, type LogPanelProps } from './panel/log-panel.js';

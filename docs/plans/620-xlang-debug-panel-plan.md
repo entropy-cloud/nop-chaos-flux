@@ -61,36 +61,36 @@
 
 ### Phase 1 - client query/onLog 面 + store exceptions 已有
 
-Status: planned
+Status: completed
 Targets: `packages/flux-xlang-debug/src/client/`
 
 - Item Types: `Feature`
 
-- [ ] **修复既有 typecheck 红（619 审查 F4 披露）**：debug-client.test.ts:301 `toHaveLength(1, 'msg')` TS2554（vitest toHaveLength 仅 1 参）——一行修复
-- [ ] `DebugClient` 增 `query<T>(method, params): Promise<T>`（公共 request 出口）+ `onLog(cb): () => void`（evt.log 单条/evt.logs 拆帧/evt.completed → 订阅者）
-- [ ] 测试：query 直查（mock 帧）、onLog 三形态（单条/批量/completed）
+- [x] **修复既有 typecheck 红（619 审查 F4 披露）**：debug-client.test.ts:301 `toHaveLength(1, 'msg')` TS2554（vitest toHaveLength 仅 1 参）——一行修复
+- [x] `DebugClient` 增 `query<T>(method, params): Promise<T>`（公共 request 出口）+ `onLog(cb): () => void`（evt.log 单条/evt.logs 拆帧/evt.completed → 订阅者）
+- [x] 测试：query 直查（mock 帧）、onLog 三形态（单条/批量/completed）
 
 Exit Criteria:
 
-- [ ] query/onLog 单测绿
-- [ ] 包内 typecheck/lint 通过
+- [x] query/onLog 单测绿（debug-client.test "query public surface" 用例：getStackInfo 直查/evt.log 单条/evt.logs 拆帧/evt.completed/退订五断言）
+- [x] 包内 typecheck/lint 通过
 
 ### Phase 2 - 面板组件 + i18n
 
-Status: planned
+Status: completed
 Targets: `packages/flux-xlang-debug/src/panel/` + `packages/flux-i18n/src/locales/`
 
 - Item Types: `Feature`
 
-- [ ] deps 接入（F3 点名）：dependencies += `@nop-chaos/ui`、`@nop-chaos/flux-i18n`；peerDependencies += `react ^19`、`lucide-react`；devDependencies += `react`、`@types/react`、`@testing-library/react`（react-dom 经 ui peer auto-install）
-- [ ] ControlButtons/CallStackPanel/VariablesTree（懒展开）/EvalInput/LogPanel/DebugPanel 装配
-- [ ] i18n 键族注册（zh-CN/en-US）
-- [ ] 组件测试：渲染+交互（按钮→store 动作/展开→query/求值提交/query 拒绝错误态）；**测试内 initFluxI18n 显式初始化（F8）**，断言用渲染文案
+- [x] deps 接入（F3 点名）：dependencies += `@nop-chaos/ui`、`@nop-chaos/flux-i18n`；peerDependencies += `react ^19`、`lucide-react`；devDependencies += `react`、`@types/react`、`@testing-library/react`（react-dom 经 ui peer auto-install）
+- [x] ControlButtons/CallStackPanel/VariablesTree（懒展开）/EvalInput/LogPanel/DebugPanel 装配
+- [x] i18n 键族注册（zh-CN/en-US）
+- [x] 组件测试：渲染+交互（按钮→store 动作/展开→query/求值提交/query 拒绝错误态）；**测试内 initFluxI18n 显式初始化（F8）**，断言用渲染文案
 
 Exit Criteria:
 
-- [ ] 组件测试绿（渲染/交互/错误态三类）
-- [ ] 包内 typecheck/lint/test 通过
+- [x] 组件测试绿（渲染/交互/错误态三类）——panel.test 7 用例（ControlButtons 禁用语义+act 挂起切换/VariablesTree getFrameVariables 查询+错误态/EvalInput 禁用+提交/LogPanel 订阅+exceptions）
+- [x] 包内 typecheck/lint/test 通过
 
 ### Phase 3 - 独立 closure audit 与收口
 
@@ -99,15 +99,15 @@ Targets: 全部 + roadmap（owner 仓）
 
 - Item Types: `Proof`
 
-- [ ] 独立子代理 closure audit：D5 §3.4 面板消费模式对账（数据不进 store/直查）、618 F8 兑现（query 面）、组件测试真实性、门禁
-- [ ] 修复审计发现
-- [ ] flux docs/logs 更新；roadmap item 18 → done；提交
+- [x] 独立子代理 closure audit：D5 §3.4 面板消费模式对账（数据不进 store/直查）、618 F8 兑现（query 面）、组件测试真实性、门禁
+- [x] 修复审计发现
+- [x] flux docs/logs 更新；roadmap item 18 → done；提交
 
 Exit Criteria:
 
-- [ ] audit 发现全修复
-- [ ] `pnpm typecheck/build/lint/test/check` 全绿（或仅既有红——stash 验证）
-- [ ] roadmap item 18 `done`
+- [x] audit 发现全修复
+- [x] `pnpm typecheck/build/lint/test/check` 全绿（或仅既有红——stash 验证）
+- [x] roadmap item 18 `done`
 
 ## Draft Review Record
 

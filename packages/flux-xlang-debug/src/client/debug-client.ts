@@ -249,7 +249,6 @@ export function createDebugClient(options: CreateDebugClientOptions): DebugClien
       // m1：重置 interval 相位，避免旧相位紧随二次 renew
       renewNow();
       startRenewHeartbeat(currentRenewIntervalMs);
-      renewNow();
     }
   }
 

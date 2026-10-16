@@ -266,13 +266,8 @@ describe('debug client', () => {
     });
     expect(env.client.sessionId()).toBe('u1:conn-2');
     const methods = secondConn.sent.map((f) => { try { return JSON.parse(f).method ?? 'resp'; } catch { return '?'; } });
-    console.log('[P4] methods =', methods.join(','), '| sessionId =', String(env.client.sessionId()), '| conns =', env.connections.length, '| secondConn.sent =', secondConn.sent.map((f) => { try { const j = JSON.parse(f); return j.method ?? 'resp:' + JSON.stringify(j.error ?? j.result); } catch { return '?'; } }).join(','));
     expect(methods).toContain('lease.renew');
     env.client.dispose();
-    const __methods = secondConn.sent.map((f) => { try { return (JSON.parse(f).method ?? 'resp'); } catch { return '?'; } }).join(',');
-    if (!secondConn.sent.some((f) => f.includes('debugger.setBreakpoints'))) {
-      throw new Error('PROBE frames: ' + __methods + ' | storeBps: ' + JSON.stringify(env.store.getState().breakpoints));
-    }
   });
 
   it('4401 close is terminal (no reconnect, authFailed callback)', async () => {
