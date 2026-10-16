@@ -11,7 +11,7 @@ RM-12 已把数组容器族（array-field / combo / input-table）的 schema 属
 
 ## 授权链（保护区 + 工作项新增）
 
-触及 `renderer definition fields`（table/crud 的 prop 注册改名）与公开 schema 属性改名，属 plan-first / 结构性重构。授权链落字：①**2026-10-16 用户显式指令**（本次会话原话："不考虑修改成本，你认为是否统一更好？如果是，则拟制计划完成修改。"）——**该指令即 RM-12 裁决请求的人工裁定结果（裁定 = 统一）**，同时构成 roadmap Rule 6「工作项增删先报人工确认」所要求的**人工确认**（新增 RM-13）；②roadmap Cross-Cutting 7（单标准零兼容分叉，2026-10-15 用户指令）；③RM-12 plan 的 `## Human Adjudication Request` 节（六类 live 枚举 + 两方案 A/B + 建议 A）——本 plan 采纳**方案 B**（并入单标准），与 RM-12 建议不同，差异理由见下「裁定依据」；④`docs/references/naming-conventions.md` §4.9 已入库（`itemKey` 唯一字段名、不引入 `rowKey` schema 字段）。
+触及 `renderer definition fields`（table/crud 的 prop 注册改名）与公开 schema 属性改名，属 plan-first / 结构性重构。授权链落字：①**2026-10-16 用户显式指令**（本次会话原话："不考虑修改成本，你认为是否统一更好？如果是，则拟制计划完成修改。"）——**用户将 A/B 选择权交由 AI 判断并授权拟制，AI 判定「统一」**；该指令构成 roadmap Rule 6「工作项增删先报人工确认」所要求的**人工确认**（确认的是「新增 RM-13 并执行」这一动作）；②roadmap Cross-Cutting 7（单标准零兼容分叉，2026-10-15 用户指令）；③RM-12 plan 的 `## Human Adjudication Request` 节（六类 live 枚举 + 两方案 A/B + 建议 A）——本 plan 采纳**方案 B**（并入单标准），与 RM-12 建议不同，差异理由见下「裁定依据」；④`docs/references/naming-conventions.md` §4.9 已入库（`itemKey` 唯一字段名、不引入 `rowKey` schema 字段）。
 
 ## 裁定依据（为何选 B，以及为何内部命名不并入）
 
@@ -38,14 +38,15 @@ const compatibilityValue = explicitValue ?? record.__rowKey ?? record.id;
 - **schema 属性声明**：`data/schemas.ts:136`（`TableSchema.rowKey?: string`）、`crud-schema.ts:260`（`CrudSchema.rowKey?: string`）。
 - **属性读取（5 处）**：`table-renderer.tsx:155`（`buildTableRowEntries(source, schemaProps.rowKey, …)`）、`:184`（同上另一处）、`:188`（deps 数组）；`crud-renderer-schema-builders.ts:69`（`rowKey: schema.rowKey`）；`table-renderer/table-row-option-state.ts:75`（`schemaProps.rowKey ?? 'id'`）；**`crud-renderer.tsx:511`（`rowKey: normalizedSchema.rowKey`——`normalizeCrudSchema` 产出的直接消费方，R1 M1 补漏）**。
 - **缺省归一**：`crud-schema.ts:342`（`normalizeCrudSchema` 内 `rowKey: schema.rowKey ?? 'id'`）。
+- **作者面作用域符号（R2 Major 补漏——既非 schema 属性也非内部命名，第三类）**：树表 `childrenSource` 懒加载 action 的 scope 注入 `{ record, rowKey }`——`use-table-lazy-children.ts:60`（`helpers.createScope({ record, rowKey })`），**作者在 `childrenSource` 里写 `${rowKey}` 取该行身份**。文档将其作为作者面写明：`flux-guide/design-patterns/table.md:265`（行记录以顶层 `record`（及 `rowKey`）暴露在 action scope 中）、`docs/components/table/design.md:87` 与 `:179`（scope 含 `record`/`rowKey`）。编译器测试守护该模板：`packages/flux-compiler/src/schema-compiler-schema-definition-compile.test.ts:356`（`data: { key: '${rowKey}' }`，断言模板保持）。**处置裁定：纳入改名面**（`createScope({ record, itemKey })` + 三处文档改 `itemKey` + 测试同步）——理由：作者面既有 `itemKey` 属性、又写 `${rowKey}` 符号，正是本项要消灭的同语义双拼写；Cross-Cutting 7 零兼容分叉、项目未正式对外使用，故直接改名。**性质披露：该改名触及作者表达式契约（非纯属性改名），Non-Goals 相应修订**。
 - **definition fields 注册**：`data-renderer-definitions.ts:75`（`{ key: 'rowKey', kind: 'prop' }`，属 `type: 'table'` 定义）、`crud-renderer-definition.ts:188`。
 - **文案**：`data-schema-validation.ts:332`（`'crud.primaryField is no longer supported. Use canonical crud.rowKey.'`）、`data-renderer-definitions.ts:257`（`optionRow` 描述 "`valueField` compared item field (default rowKey)"）。
 - **生成物**：`flux-guide/flux-types/schema.d.ts` 的 `TableSchema`/`CrudSchema` 段 `rowKey?`（当前 `:1560`/`:1804`，regenerate 后以 live 为准）。
 - **flux-guide 文档/示例（7 文件，作者面 `\browKey` 计 20 命中 = 11+3+2+1+1+1+1；R1 M5 勘误：无词边界口径 23 含 3 处 `__rowKey` 数据键提及，勿混计）**：`design-patterns/table.md`（11）、`design-patterns/crud.md`（3）、`design-patterns/picker-transfer.md`（2）、`examples/master-detail.md`（1）、`examples/inline-quick-edit.md`（1）、`design-patterns/list.md`（1）、`01-quickstart.md`（1）。**目录合计 25 命中**含生成物 `flux-types/schema.d.ts` 的 2 处（同节已单列，R1 M5 指出的双计勘正）。
-- **apps/playground（27 文件 59 命中）**：`complex-pages/page-schemas/*.json` 多份（`linear-issues` / `inline-edit-table` / `airtable-grid` / `antdpro-dashboard` / `approval-tasks` / `dashboard` / `master-detail` / `detail-subtables` 等）、`pages/performance-table/schema.ts:463`、`pages/m4-data-display-demo.tsx:60`、`component-lab/renderers/*`（crud-lab-page 系列 / dashboard-filter / data-c5c2-host）等。
+- **apps/playground（27 文件，`\browKey` **58** 命中；无词边界 59——R2 m5 勘正：R1 前的 59 为无边界口径）**：`complex-pages/page-schemas/*.json` 多份（`linear-issues` / `inline-edit-table` / `airtable-grid` / `antdpro-dashboard` / `approval-tasks` / `dashboard` / `master-detail` / `detail-subtables` 等）、`pages/performance-table/schema.ts:463`、`pages/m4-data-display-demo.tsx:60`、`component-lab/renderers/*`（crud-lab-page 系列 / dashboard-filter / data-c5c2-host）等。
 - **活跃 owner doc（canonical，R1 M4 补漏）**：`docs/architecture/table-row-identity-and-scope-performance.md`（`\browKey` **65 命中**，其 "Authoring Contract" 节明写 `rowKey?: string` schema 字段与 `rowKey: 'id'` / `rowKey: '__rowKey'` 示例）——**该字段的 canonical owner 文档**，改名后必须同步（且它正是记录「作者面 `itemKey` / 内部行身份 `rowKey`」分工的自然落点）。
-- **活跃 docs（其余，R1 M4 补漏，live 全清单）**：`docs/references/renderer-interfaces.md`(1)、`docs/references/naming-conventions.md`(3，§4.9 需扩为含 data 族 + 分工规则)、`docs/components/crud/design.md`(6)、`docs/components/crud/example.json`(1)、`docs/components/crud/migration-example.json`(2)、`docs/components/dashboard-filter/example.json`(1)、`docs/components/table/design.md`(4)、`docs/index.md`(1)、`docs/architecture/unified-runtime-indexing-and-path-binding.md`(4)、`docs/architecture/composite-value-owner-clean-slate.md`(15)、`docs/architecture/data-domain-owner.md`(7)、`docs/architecture/scope-ownership-and-isolation.md`(4)、`docs/architecture/performance-diagnostics-and-e2e-design.md`(5)、`docs/architecture/dependency-tracking.md`(1)、`docs/architecture/template-instantiation-and-node-identity.md`(1)、`docs/architecture/flow-designer/design.md`、`docs/architecture/array-field.md`（后二者命中为 0，列作核对面）、`docs/components/amis-bug-driven-improvement-roadmap.md`(2)、`docs/components/amis-bug-driven-improvements/02-table-and-crud.md`(8)、`docs/components/amis-bug-driven-improvements/_b7-triage.md`(2)、`docs/articles/flux-architecture-evolution.md`(1)。**处置原则**：指代**作者面 schema 属性**的位点改 `itemKey`；指代**渲染器内部行身份结构**的叙述保留 `rowKey` 并在 §4.9 分工规则下登记为预期保留（逐文件理由入收口记录）。历史面 `docs/archive`/`docs/logs`/`docs/audits`/`docs/experiments`/`docs/analysis`/`docs/plans`/`docs/backlog`/`docs/skills` 按 append-only 不动。
-- **测试面（R1 m2 补全枚举）**：data 包内 data 族 fixture/断言（`use-table-controls.test-support.tsx:78` 等，以全量枚举为准）；`packages/flux-compiler/src/schema-compiler-prop-coverage.test-support.ts:312`（合成 table 定义 `{ key: 'rowKey', kind: 'prop', … }`——**同步改 `itemKey`**）、`schema-compiler-prop-coverage-data-structures.test.ts:154/159/164/167`（crud `rowKey` 编译断言，含 `root.propsProgram.value.rowKey` ——**同步改**）；`packages/flux-renderers-form-advanced/src/__tests__/picker-schema-override.test.tsx:65` 与 `tag-list.test.tsx:245`（data 族 schema fixture `rowKey: 'id'`——**同步改**，二者为 `crud`/`table` fixture 非 input-table）；`packages/flux-bundle/src/crud-loadaction.test.tsx`、`packages/flux-renderers-basic/src/__tests__/basic-coverage-gaps.test.tsx`、`tests/e2e/convergence-n1-n2.spec.ts`（后者 `linear-issues-row-key` 为 **testid 字面量，非 schema 属性——预期保留**）。以 typecheck + test 全量枚举为准。
+- **活跃 docs（其余，R1 M4 补漏，live 全清单）**：`docs/references/renderer-interfaces.md`(1)、`docs/references/naming-conventions.md`(3，§4.9 需扩为含 data 族 + 分工规则)、`docs/components/crud/design.md`(6)、`docs/components/crud/example.json`(1)、`docs/components/crud/migration-example.json`(2)、`docs/components/dashboard-filter/example.json`(1)、`docs/components/table/design.md`(4)、`docs/index.md`(1)、`docs/architecture/unified-runtime-indexing-and-path-binding.md`(4)、`docs/architecture/composite-value-owner-clean-slate.md`(15)、`docs/architecture/data-domain-owner.md`(7)、`docs/architecture/scope-ownership-and-isolation.md`(4)、`docs/architecture/performance-diagnostics-and-e2e-design.md`(5)、`docs/architecture/dependency-tracking.md`(1)、`docs/architecture/template-instantiation-and-node-identity.md`(1)、`docs/architecture/flow-designer/design.md`、`docs/architecture/array-field.md`（后二者命中为 0，列作核对面）、`docs/components/amis-bug-driven-improvement-roadmap.md`(2)、`docs/components/amis-bug-driven-improvements/02-table-and-crud.md`(8)、`docs/components/amis-bug-driven-improvements/_b7-triage.md`(2)、`docs/articles/flux-architecture-evolution.md`(1)。**处置原则**：指代**作者面 schema 属性**的位点改 `itemKey`；指代**渲染器内部行身份结构**的叙述保留 `rowKey` 并在 §4.9 分工规则下登记为预期保留（逐文件理由入收口记录）。历史/讨论面 `docs/archive`/`docs/logs`/`docs/audits`/`docs/experiments`/`docs/analysis`/`docs/plans`/`docs/backlog`/`docs/skills`/**`docs/discussions`**（R2 m3 补入；实测 `docs/discussions/2026-04-22-{data-domain-compatibility-audit,staged-owner-draft-semantics}.md` 共 10 命中均为**内部行身份叙述**、非作者面）按 append-only 不动。
+- **测试面（R1 m2 补全枚举）**：data 包内 data 族 fixture/断言（`use-table-controls.test-support.tsx:78` 等，以全量枚举为准）；`packages/flux-compiler/src/schema-compiler-prop-coverage.test-support.ts:312`（合成 **crud** 定义内 `{ key: 'rowKey', kind: 'prop', … }`——R2 m4 勘正：该文件 `:265` 为 `crudRenderer`、`:189` 的 table 定义无 rowKey；**同步改 `itemKey`**）、`schema-compiler-prop-coverage-data-structures.test.ts:154/159/164/167`（crud `rowKey` 编译断言，含 `root.propsProgram.value.rowKey` ——**同步改**）；`packages/flux-renderers-form-advanced/src/__tests__/picker-schema-override.test.tsx:65` 与 `tag-list.test.tsx:245`（data 族 schema fixture `rowKey: 'id'`——**同步改**，二者为 `crud`/`table` fixture 非 input-table）；`packages/flux-bundle/src/crud-loadaction.test.tsx`、`packages/flux-renderers-basic/src/__tests__/basic-coverage-gaps.test.tsx`、`tests/e2e/convergence-n1-n2.spec.ts`（后者 `linear-issues-row-key` 为 **testid 字面量，非 schema 属性——预期保留**）。以 typecheck + test 全量枚举为准。
 
 **内部（本 plan **不改**，Non-Goal）**：`table-renderer/types.ts:8`（`TableRowEntry.rowKey: string`）、`table-data.ts`（`normalizeRowKey` / `buildTableRowEntries(source, rowKeyField)` / `warnOnDuplicateRowKeys`）、`use-table-selection.ts`（`selectedRowKeys` / `checkableRowKeys` / 局部 `rowKey` 参数）等——data 包生产码 `rowKey` 命中 **204 处**（口径：`rg -c "rowKey" packages/flux-renderers-data/src -g '!*.test.*'` 逐文件求和；含测试 489）。其中绝大多数为内部行身份结构与派生局部命名。
 
@@ -59,7 +60,7 @@ const compatibilityValue = explicitValue ?? record.__rowKey ?? record.id;
 
 ## Goals
 
-- **作者面 schema 属性统一**：`TableSchema.rowKey` / `CrudSchema.rowKey` → `itemKey`；属性读取（**5 处**，含 `crud-renderer.tsx:511`）、缺省归一（1 处）、definition fields 注册（2 处）、文案（2 处）同步。
+- **作者面统一**：`TableSchema.rowKey` / `CrudSchema.rowKey` → `itemKey`；属性读取（**5 处**，含 `crud-renderer.tsx:511`）、缺省归一（1 处）、definition fields 注册（2 处）、文案（2 处）同步；**作者面作用域符号** `childrenSource` action scope 的 `rowKey` → `itemKey`（注入 1 处 + 文档 3 处 + 编译器测试 1 处）。
 - **生成物/文档/示例/apps 同步**：`flux-guide/flux-types/schema.d.ts` 再生成；flux-guide 7 文件、apps/playground 27 文件、活跃 docs（**含 canonical owner doc `docs/architecture/table-row-identity-and-scope-performance.md` 的 Authoring Contract 节 + `docs/components/{crud,table,dashboard-filter}` 示例与设计文档** + naming-conventions §4.9 扩写）同步改名。
 - **内部命名分工文档化**：naming-conventions §4.9 落字「作者面 `itemKey` 单标准；渲染器内部行身份结构保留 `rowKey` 词」的分工规则（使内部保留成为**成文规则**而非漂移），并在 `TableRowEntry` 定义处附一行指向该规则的注释。
 - **无兼容分叉**：不留 `rowKey` 别名、不设双读过渡层（Cross-Cutting 7）。
@@ -70,7 +71,7 @@ const compatibilityValue = explicitValue ?? record.__rowKey ?? record.id;
 - **不改渲染器内部行身份结构命名**（`TableRowEntry.rowKey`、`normalizeRowKey`、`selectedRowKeys`、`rowKeyField` 形参等 204 处）——裁定依据见上「内部命名不并入的依据」；该分工写入 naming-conventions §4.9 成文规则。
 - 不改 `__rowKey` 数据行兼容键（数据形状契约，显式排除）。
 - 不改历史面 docs 记载；不动非 data 族 `rowKey`（taskflow/graph/AST/性能页局部变量）。
-- 不改任何运行时行为（纯作者面属性改名：属性名变、读取路径同步、值语义与派生逻辑零变化）。
+- **不改运行时语义**（属性改名：属性名变、读取路径同步、值语义与派生逻辑零变化）——**唯一例外为作者面作用域符号 `rowKey` → `itemKey` 改名**（`childrenSource` action scope 注入名；属作者表达式契约变更而非纯命名，依 Cross-Cutting 7 零兼容分叉 + 项目未正式对外使用直接改，不留双读/别名过渡）。
 - 不动 RM-10/11/12 已收口面；e2e 不新增。
 
 ## Scope
@@ -108,14 +109,15 @@ Targets: `schemas.ts`、`crud-schema.ts`、`data-renderer-definitions.ts`、`cru
 
 - [ ] schema 声明改名：`TableSchema.rowKey` → `itemKey`（`schemas.ts:136`）、`CrudSchema.rowKey` → `itemKey`（`crud-schema.ts:260`）。
 - [ ] 属性读取与归一改名（5 读取 + 1 归一）：`table-renderer.tsx:155/:184/:188`、`crud-renderer-schema-builders.ts:69`、`table-row-option-state.ts:75`、**`crud-renderer.tsx:511`**、`crud-schema.ts:342`（`itemKey: schema.itemKey ?? 'id'`）。
+- [ ] **作者面作用域符号改名**：`use-table-lazy-children.ts:60`（`helpers.createScope({ record, rowKey })` → `{ record, itemKey }`）；确认为唯一注入点（全仓 `createScope` 注入 `rowKey` 仅此一处）。
 - [ ] definition fields 注册改名：`data-renderer-definitions.ts:75`、`crud-renderer-definition.ts:188`。
 - [ ] 文案同步：`data-schema-validation.ts:332`（`Use canonical crud.itemKey.`）、`data-renderer-definitions.ts:257`（"default itemKey"）。
 - [ ] 测试/fixtures 同步（`use-table-controls.test-support.tsx:78` 等，以全量枚举为准）。
-- [ ] Proof：`pnpm --filter @nop-chaos/flux-renderers-data typecheck` 绿；**作者面定向文件集**（`schemas.ts`/`crud-schema.ts`/`data-renderer-definitions.ts`/`crud-renderer-definition.ts`/`crud-renderer.tsx`/`table-renderer.tsx`/`table-renderer/table-row-option-state.ts`/`data-schema-validation.ts`）`\browKey` 归零；`crud-renderer-schema-builders.ts` 定向校验（仅作者面行 `schema.rowKey`→`schema.itemKey`，文件内其余 `\browKey` 为内部 carrier 形参、预期保留）。
+- [ ] Proof：`pnpm --filter @nop-chaos/flux-renderers-data typecheck` 绿；作用域符号注入面核验（`rg -n "createScope\(\{ record" .../use-table-lazy-children.ts` 命中 1 且含 `itemKey`）；**作者面定向文件集**（`schemas.ts`/`crud-schema.ts`/`data-renderer-definitions.ts`/`crud-renderer-definition.ts`/`crud-renderer.tsx`/`table-renderer.tsx`/`table-renderer/table-row-option-state.ts`/`data-schema-validation.ts`）`\browKey` 归零；`crud-renderer-schema-builders.ts` 定向校验（仅作者面行 `schema.rowKey`→`schema.itemKey`，文件内其余 `\browKey` 为内部 carrier 形参、预期保留）。
 
 Exit Criteria:
 
-- [ ] 作者面声明/读取（5 处，含 `crud-renderer.tsx:511`）/归一/注册/文案全部改名；data 包 typecheck 绿；内部行身份命名零改动（`TableRowEntry.rowKey`、`crud-renderer-schema-builders.ts` 的 carrier 形参等仍在）。
+- [ ] 作者面声明/读取（5 处，含 `crud-renderer.tsx:511`）/归一/注册/文案/**作用域符号注入**全部改名；data 包 typecheck 绿；内部行身份命名零改动（`TableRowEntry.rowKey`、`crud-renderer-schema-builders.ts` 的 carrier 形参等仍在）。
 
 ### Phase 2 - 生成物 / flux-guide / apps / 活跃 docs 同步
 
@@ -125,8 +127,10 @@ Targets: `flux-guide/flux-types/schema.d.ts` + 7 md；`apps/playground` 27 文�
 - Item Types: `Fix`、`Decision`、`Proof`
 
 - [ ] `pnpm build` 后经 css-stub loader 再生成 `flux-types/schema.d.ts`（`TableSchema`/`CrudSchema` 段 `rowKey` → `itemKey`）。
+- [ ] `flux-guide/design-patterns/table.md:265` 的 scope 叙述改 `itemKey`；`docs/components/table/design.md:87/:179` 的 scope 含 `record`/`rowKey` 改 `itemKey`。
+- [ ] 编译器测试同步：`packages/flux-compiler/src/schema-compiler-schema-definition-compile.test.ts:356`（`data: { key: '${rowKey}' }` → `'${itemKey}'`，模板断言语义保持）。
 - [ ] flux-guide 7 文件改名（`table.md`/`crud.md`/`picker-transfer.md`/`master-detail.md`/`inline-quick-edit.md`/`list.md`/`01-quickstart.md`）。
-- [ ] apps/playground 27 文件改名（`complex-pages/page-schemas/*.json` 多份 + `performance-table/schema.ts:463` + `m4-data-display-demo.tsx` + `component-lab/renderers/*` 等）；**`performance-table/{runtime.tsx, schema.ts}` 的局部形参 `rowKey`（`schema.ts:27/:28`、`runtime.tsx:239/:241`）为内部命名、不改**。
+- [ ] `apps/playground` 改名（**作者面命中 53 处**；`complex-pages/page-schemas/*.json` 多份 + `performance-table/schema.ts:463` + `m4-data-display-demo.tsx` + `component-lab/renderers/*` 等）；**`performance-table/{runtime.tsx,schema.ts}` 的局部形参 `rowKey`（`schema.ts:27/:28`、`runtime.tsx:239/:241`，4 处）与 `table-lab-page.tsx:124` 的 `__rowKey`（1 处）为非作者面、不改**——故 apps 目录 `\browKey` 总命中中作者面 53、非作者面 5（R2 m5 精度勘正），核验以定向文件集⑤ 为准。
 - [ ] **canonical owner doc `docs/architecture/table-row-identity-and-scope-performance.md`**：Authoring Contract 节改 `itemKey`，并在此节落字「作者面 `itemKey` / 渲染器内部行身份结构 `rowKey`」的分工（该 doc 是分工规则的自然落点）。
 - [ ] 其余活跃 docs：`docs/references/renderer-interfaces.md`、`docs/components/{crud,table,dashboard-filter}/*`（design/example/migration-example）、`docs/index.md`、`docs/architecture/*`（逐文件区分作者面 vs 内部叙述：作者面改、内部保留并登记）、`docs/components/amis-bug-driven-improvements/*`、`docs/articles/*` 等（Baseline docs 清单）。
 - [ ] **naming-conventions §4.9 扩写**：`itemKey` 为作者面唯一字段名（含 data 族），并落字「渲染器内部行身份结构保留 `rowKey` 词」的分工规则；`TableRowEntry` 定义处附一行指向该规则的注释。
@@ -144,7 +148,7 @@ Status: planned
 - Item Types: `Proof`
 
 - [ ] 判别钉（`KnownKeys` 类型面 + registry 元数据面，覆盖 `table`/`crud` 两类型）+ 判别变异自证一轮（变异回旧实现 → 两钉红 → 外科恢复 → sha256 逐字节还原 → 绿）。
-- [ ] 收口口径四条（见 Closure Gates）复跑；全量五门禁（Closure Gates）。
+- [ ] 收口口径**七条**（应空 ①③⑤⑥ + 定向校验 ②④⑦，见 Closure Gates）复跑；全量五门禁（Closure Gates）。
 
 Exit Criteria:
 
@@ -161,7 +165,12 @@ Exit Criteria:
 
 ## Closure Gates
 
-- [ ] `TableSchema`/`CrudSchema` 的 schema 属性、读取、归一、definition 注册、文案全部改名
+- [ ] `TableSchema`/`CrudSchema` 的 schema 属性、读取（5 处）、归一、definition 注册、文案全部改名
+- [ ] **作者面作用域符号** `childrenSource` action scope 的 `rowKey` → `itemKey`（注入 1 处 + 文档 3 处 + 编译器测试 1 处）。核验口径（**逐点定向**，因注入文件与 docs/components/table/design.md 均为"内部命名 + 作者面"混合文件）：
+      注入点：`rg -n "createScope\(\{ record, rowKey" packages/flux-renderers-data/src/table-renderer/use-table-lazy-children.ts` 应空（实测现命中 `60: … createScope({ record, rowKey });`）；正向 `rg -n "createScope\(\{ record, itemKey" …/use-table-lazy-children.ts` 应命中 1
+      `docs/components/table/design.md`（混合文件，R2 Major 勘正）：`rg -n 'record`/`rowKey`' docs/components/table/design.md`应空（scope 叙述 :87/:179 改`itemKey`）；该文件 :144/:209 的**内部行身份叙述**保留 `rowKey`
+    `flux-guide/design-patterns/table.md`：由应空③ 整体覆盖（:265 scope 叙述随之改 `itemKey`；`\_\_rowKey`提及不匹配`\browKey`）
+    编译器测试：`rg -n '\$\{rowKey\}' packages/flux-compiler/src`应空（实测现命中`schema-compiler-schema-definition-compile.test.ts:356`）
 - [ ] 收口 rg 口径（机器可复现，**R1 M2/M3/M4 勘正：口径须逐文件定向，不得写成"整目录应空"**——文件/目录内混有内部命名与 testid，宽口径永不为空）：
       **应空 ①（data 包纯作者面文件）**：`rg -n "\browKey" packages/flux-renderers-data/src/schemas.ts packages/flux-renderers-data/src/crud-schema.ts packages/flux-renderers-data/src/data-renderer-definitions.ts packages/flux-renderers-data/src/crud-renderer-definition.ts packages/flux-renderers-data/src/crud-renderer.tsx packages/flux-renderers-data/src/table-renderer.tsx packages/flux-renderers-data/src/table-renderer/table-row-option-state.ts packages/flux-renderers-data/src/data-schema-validation.ts`（这 8 文件不含内部行身份结构，改名后应全空）
       **定向校验 ②（混合文件）**：`crud-renderer-schema-builders.ts` —— 作者面 `schema.rowKey` 归零（`:69` 处改 `schema.itemKey`），文件内其余 `\browKey`（`:161/:171/:188` 的 `rowKey: string | undefined` / `rowKey,` / `keyField: rowKey`）为**内部 carrier 形参、预期保留**；核验命令按"作者面形态"锚定：`rg -n "schema\.rowKey|rowKey: schema\." packages/flux-renderers-data/src/crud-renderer-schema-builders.ts` 应空
@@ -169,7 +178,7 @@ Exit Criteria:
       **定向校验 ④（生成物）**：`rg -n "\browKey" flux-guide/flux-types/schema.d.ts` 应空（data 族两段改名后该文件不应再有作者面 `rowKey`；R1 已核 live 仅有 `:1560`/`:1804` 两处 data 族来源）
       **应空 ⑤（apps 作者面定向文件集，非整目录）**：`rg -n "\browKey" apps/playground/src/complex-pages/page-schemas/ apps/playground/src/pages/m4-data-display-demo.tsx apps/playground/src/component-lab/renderers/` 应空（**注**：`apps/playground/src/pages/performance-table/{runtime.tsx,schema.ts}` 的 `rowKey` 为局部形参名（`:27/:28/:239/:241`）、非 schema 属性，**预期保留**，故 apps 口径不含该文件；其 `:463` schema 用法已由 `performance-table/schema.ts` 单独纳入改名并核验：`rg -n "itemKey: 'id'" apps/playground/src/pages/performance-table/schema.ts` 命中 1）
       **应空 ⑥（docs 组件 schema 字面量）**：`rg -n '"rowKey"|rowKey: ' docs/components/ --glob '*.json' --glob '*.md'` 应空（示例/迁移示例的 schema 字面量）
-      **定向校验 ⑦（docs canonical owner doc）**：`docs/architecture/table-row-identity-and-scope-performance.md` 的 "Authoring Contract" 节含 `itemKey` 且该节内 `\browKey` 归零（节内定向命令）；该文件其余节指代**内部行身份结构**的叙述保留 `rowKey` 并登记为预期保留
+      **定向校验 ⑦（docs canonical owner doc）**：`docs/architecture/table-row-identity-and-scope-performance.md` 的 "Authoring Contract" 节（`:244` 起至下一 `### ` 标题止）含 `itemKey` 且该节内 `\browKey` 归零——可复制命令：`sed -n '244,260p' docs/architecture/table-row-identity-and-scope-performance.md | rg -n "\browKey"` 应空（R2 m6 写实；节边界 `:244`→`:261` 已实测）；该文件其余节指代**内部行身份结构**的叙述（含 `row:${rowKey}` 形式的内部 scope/cache key 格式）保留 `rowKey` 并登记为预期保留
       **预期保留（显式排除清单）**：内部行身份结构（`table-renderer/types.ts` 的 `TableRowEntry.rowKey`、`table-data.ts` 的 `normalizeRowKey`/`rowKeyField`、`use-table-selection.ts` 的 `selectedRowKeys`、`crud-renderer-schema-builders.ts` 的 carrier 形参等）；`__rowKey` 数据行兼容键；`tests/e2e/convergence-n1-n2.spec.ts` 的 `linear-issues-row-key` testid；`docs/**` 中内部行身份叙述；历史面 docs；非 data 族 `rowKey`（taskflow/graph/AST）
 - [ ] naming-conventions §4.9 分工规则落字（作者面 `itemKey` / 内部行身份 `rowKey`）+ `TableRowEntry` 定义处指引注释
 - [ ] 无兼容分叉（不留 `rowKey` 别名/双读层）
