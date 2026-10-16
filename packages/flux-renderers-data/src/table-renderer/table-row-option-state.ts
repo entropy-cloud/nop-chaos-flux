@@ -72,7 +72,7 @@ export function resolveTableRowOptionState(input: {
   const valueField =
     typeof optionRow.valueField === 'string' && optionRow.valueField
       ? optionRow.valueField
-      : (schemaProps.rowKey ?? 'id');
+      : (schemaProps.itemKey ?? 'id');
   const selected = hasBinding
     ? optionRowValueMatches(getIn(record as Record<string, unknown>, valueField), binding)
     : isSelected;

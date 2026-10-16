@@ -57,7 +57,7 @@ export function useTableLazyChildren(input: {
       inFlightRef.current.add(rowKey);
       setNodeState(rowKey, { loading: true, error: undefined, children: undefined });
 
-      const scope = helpers.createScope({ record, rowKey });
+      const scope = helpers.createScope({ record, itemKey: rowKey });
       const actionInput = childrenSource as ActionSchema;
       void helpers
         .dispatch(actionInput, { scope })

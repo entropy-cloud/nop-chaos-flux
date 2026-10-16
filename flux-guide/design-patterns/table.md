@@ -104,7 +104,7 @@
 {
   "type": "table",
   "source": "${users}",
-  "rowKey": "id",
+  "itemKey": "id",
   "rowSelection": { "type": "checkbox" },
   "selectionOwnership": "local",
   "columns": [{ "name": "name", "label": "姓名" }],
@@ -131,10 +131,10 @@
 {
   "type": "table",
   "source": "${rows}",
-  "rowKey": "id",
+  "itemKey": "id",
   "optionRow": {
     "value": "${activeId}", // 选中值绑定（owner scope 表达式，数组 = 命中任意一项）
-    "valueField": "id", // 可选：参与比对的记录字段，默认 rowKey
+    "valueField": "id", // 可选：参与比对的记录字段，默认 itemKey
     "selectedClass": "row-on", // 可选：选中行追加的 schema 类
   },
   "columns": [{ "name": "name", "label": "姓名" }],
@@ -239,7 +239,7 @@ host/复刻页 CSS 通过标准 marker 消费：`[data-option-row][data-state~='
 {
   "type": "table",
   "source": "${projects}",
-  "rowKey": "id",
+  "itemKey": "id",
   "rowChildrenField": "tasks", // 树模式开关：子行数组所在字段
   "columns": [
     { "name": "name", "label": "项目/任务" },
@@ -262,13 +262,13 @@ host/复刻页 CSS 通过标准 marker 消费：`[data-option-row][data-state~='
 }
 ```
 
-**懒加载子节点**：子数据不在行记录内、需按节点按需拉取时用 `childrenSource`（`ActionSchema`）。节点首次展开且无缓存子节点时派发该 action（行记录以顶层 `record`（及 `rowKey`）暴露在 action scope 中，例如 `${record.id}`），结果按节点缓存，折叠再展开直接复用；加载失败可在开关上重试。
+**懒加载子节点**：子数据不在行记录内、需按节点按需拉取时用 `childrenSource`（`ActionSchema`）。节点首次展开且无缓存子节点时派发该 action（行记录以顶层 `record`（及 `itemKey`）暴露在 action scope 中，例如 `${record.id}`），结果按节点缓存，折叠再展开直接复用；加载失败可在开关上重试。
 
 ```jsonc
 {
   "type": "table",
   "source": "${projects}",
-  "rowKey": "id",
+  "itemKey": "id",
   "rowChildrenField": "tasks",
   "childrenSource": {
     "action": "ajax",
@@ -341,7 +341,7 @@ host/复刻页 CSS 通过标准 marker 消费：`[data-option-row][data-state~='
 {
   "type": "table",
   "source": "${timesheets}",
-  "rowKey": "id",
+  "itemKey": "id",
   "quickSaveItemAction": {
     "action": "ajax",
     "args": { "url": "/api/timesheets/save", "method": "post", "includeScope": "*" },
@@ -364,7 +364,7 @@ host/复刻页 CSS 通过标准 marker 消费：`[data-option-row][data-state~='
 {
   "type": "table",
   "source": "${timesheets}",
-  "rowKey": "id",
+  "itemKey": "id",
   "columns": [
     {
       "name": "remark",
@@ -392,7 +392,7 @@ host/复刻页 CSS 通过标准 marker 消费：`[data-option-row][data-state~='
 {
   "type": "table",
   "source": "${timesheets}",
-  "rowKey": "id",
+  "itemKey": "id",
   "columns": [
     { "name": "employee", "label": "员工" },
     { "name": "mon", "label": "周一" },
@@ -423,7 +423,7 @@ host/复刻页 CSS 通过标准 marker 消费：`[data-option-row][data-state~='
 {
   "type": "table",
   "source": "${orders}",
-  "rowKey": "id",
+  "itemKey": "id",
   "group": {
     "field": "category",
     "aggregates": [{ "fn": "sum", "field": "amount", "label": "金额合计" }, { "fn": "count" }],
@@ -449,7 +449,7 @@ host/复刻页 CSS 通过标准 marker 消费：`[data-option-row][data-state~='
 {
   "type": "table",
   "source": "${tasks}",
-  "rowKey": "id",
+  "itemKey": "id",
   "quickSaveItemAction": { "action": "ajax", "args": { "url": "/api/task/${id}" } },
   "columns": [
     { "name": "title", "label": "标题", "editable": true },

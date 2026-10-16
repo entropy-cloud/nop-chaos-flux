@@ -1013,7 +1013,7 @@
                   "testid": "stripe-table",
                   "className": "st-table",
                   "source": "${stripeData?.items}",
-                  "rowKey": "id",
+                  "itemKey": "id",
                   "pagination": {
                     "enabled": true,
                     "pageSize": 10

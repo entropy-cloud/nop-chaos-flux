@@ -99,7 +99,7 @@
 
 ### 4.3 优先支持“简单迁移”，不是“字段原样克隆”
 
-- Flux 正式字段使用 `queryForm`、`toolbar`、`footerToolbar`、`rowKey`、`pageSizeField`、`columnSettings` 等命名。
+- Flux 正式字段使用 `queryForm`、`toolbar`、`footerToolbar`、`itemKey`、`pageSizeField`、`columnSettings` 等命名。
 - 对应 AMIS 的 `filter`、`headerToolbar`、`footerToolbar`、`primaryField`、`perPageField`、`columns-toggler` 能稳定映射过来。
 - 迁移示例里允许通过 `migrationHints` 记录原始 AMIS 来源，方便工具链和人工核对，但它不是运行时依赖。
 
@@ -151,7 +151,7 @@
 - `empty`
 - `listMode`（`'table' | 'cards' | 'list'`，缺省 `'table'`；cards/list 模式分别消费 `card`/`item` 模板，见 §4.1.1）
 - `card` / `item`（cards/list 模式的行模板 region，`item`/`index` 参数）
-- `rowKey`
+- `itemKey`
 - `selectionOwnership` / `selectionStatePath`
 - `paginationOwnership` / `paginationStatePath`
 - `sortOwnership` / `sortStatePath`
@@ -386,7 +386,7 @@ interface CrudStatusSummary {
 | `headerToolbar`                        | `toolbar`                                                                      | 顶部工具栏 region                                                                                                                                                                                                                                             |
 | `footerToolbar`                        | `footerToolbar`                                                                | 底部工具栏 region                                                                                                                                                                                                                                             |
 | `bulkActions`                          | `listActions`                                                                  | 批量动作降级为列表级动作中的 selection-aware 普通 action                                                                                                                                                                                                      |
-| `primaryField`                         | `rowKey`                                                                       | 行唯一键                                                                                                                                                                                                                                                      |
+| `primaryField`                         | `itemKey`                                                                      | 行唯一键                                                                                                                                                                                                                                                      |
 | `pageField`                            | `pageField`                                                                    | 分页页码参数名                                                                                                                                                                                                                                                |
 | `perPageField`                         | `pageSizeField`                                                                | 每页数量参数名                                                                                                                                                                                                                                                |
 | `columnsTogglable` / `columns-toggler` | `columnSettings`                                                               | 列选择/列排序入口                                                                                                                                                                                                                                             |
@@ -439,7 +439,7 @@ interface CrudStatusSummary {
 2. 将 `api` 转成 `source`。
 3. 将 `filter` / `autoGenerateFilter` 转成 `queryForm` / `autoGenerateQueryForm`。
 4. 将 `headerToolbar` / `footerToolbar` 转成 `toolbar` / `footerToolbar`，并把动作类块归并到 `listActions`。
-5. 将 `primaryField` 转成 `rowKey`。
+5. 将 `primaryField` 转成 `itemKey`。
 6. 将 `columns-toggler`、`columnsTogglable` 提炼到 `columnSettings`。
 7. 将 `loadDataOnce` 相关字段提炼到 `clientMode`。
 8. 将 `quickSaveApi` / `quickSaveItemApi` 转成 action 形式。
@@ -449,7 +449,7 @@ interface CrudStatusSummary {
 ```json
 {
   "type": "crud",
-  "rowKey": "id",
+  "itemKey": "id",
   "source": "${users}",
   "columns": [
     { "name": "name", "label": "姓名" },

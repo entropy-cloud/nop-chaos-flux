@@ -25,7 +25,7 @@ function renderTable(schemaProps: Record<string, unknown>) {
               testid: 'virtual-autofill-table',
               source: makeRows(60),
               columns: [{ name: 'name', label: 'Name' }],
-              rowKey: 'id',
+              itemKey: 'id',
               virtualThreshold: 10,
               autoFillHeight: true,
               ...schemaProps,

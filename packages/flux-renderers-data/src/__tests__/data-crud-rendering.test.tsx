@@ -18,7 +18,7 @@ describe('CRUD renderer', () => {
               id: 'users-crud',
               name: 'usersCrud',
               statusPath: 'crudStatus',
-              rowKey: 'id',
+              itemKey: 'id',
               source: [
                 { id: '1', name: 'Alice' },
                 { id: '2', name: 'Bob' },

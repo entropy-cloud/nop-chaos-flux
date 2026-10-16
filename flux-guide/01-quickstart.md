@@ -43,7 +43,7 @@
       "type": "crud",
       "id": "users-crud",
       "source": "${pagedUsers}",
-      "rowKey": "id",
+      "itemKey": "id",
       "onRefresh": { "action": "refreshSource", "targetId": "pagedUsers" },
       "columns": [
         { "name": "id", "label": "ID" },

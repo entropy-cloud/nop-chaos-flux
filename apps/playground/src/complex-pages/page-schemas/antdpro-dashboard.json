@@ -219,7 +219,7 @@
           "type": "table",
           "testid": "antdpro-dashboard-top-table",
           "source": "${dashboard?.topProducts}",
-          "rowKey": "rank",
+          "itemKey": "rank",
           "pagination": { "enabled": false },
           "empty": { "type": "text", "text": "暂无排行数据" },
           "columns": [

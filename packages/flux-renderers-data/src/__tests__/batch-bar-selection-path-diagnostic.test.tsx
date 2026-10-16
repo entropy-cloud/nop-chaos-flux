@@ -28,7 +28,7 @@ function renderTableHostWithBar(overrides: {
           {
             type: 'table',
             id: 'diag-table',
-            rowKey: 'id',
+            itemKey: 'id',
             source: [
               { id: 'a', name: 'Issue A' },
               { id: 'b', name: 'Issue B' },

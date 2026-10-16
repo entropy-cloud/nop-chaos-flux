@@ -18,7 +18,7 @@ describe('CRUD selection drift — renderer-level DOM verification', () => {
             {
               type: 'crud',
               id: 'max-selection-renderer-crud',
-              rowKey: 'id',
+              itemKey: 'id',
               selection: { type: 'checkbox', maxSelectionLength: 1 },
               source: [
                 { id: '1', name: 'Alice' },
@@ -68,7 +68,7 @@ describe('CRUD selection drift — renderer-level DOM verification', () => {
             {
               type: 'crud',
               id: 'checkable-when-renderer-crud',
-              rowKey: 'id',
+              itemKey: 'id',
               selection: {
                 type: 'checkbox',
                 checkableWhen: "status === 'active'",
@@ -119,7 +119,7 @@ describe('CRUD selection drift — renderer-level DOM verification', () => {
             {
               type: 'crud',
               id: 'no-drift-renderer-crud',
-              rowKey: 'id',
+              itemKey: 'id',
               selection: { type: 'checkbox' },
               source: [
                 { id: '1', name: 'Alice' },
@@ -164,7 +164,7 @@ describe('CRUD selection drift — renderer-level DOM verification', () => {
             {
               type: 'crud',
               id: 'max-keep-ignored-crud',
-              rowKey: 'id',
+              itemKey: 'id',
               selection: {
                 type: 'checkbox',
                 maxKeepSelectionLength: 999,

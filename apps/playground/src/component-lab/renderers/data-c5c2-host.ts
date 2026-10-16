@@ -191,7 +191,7 @@ export const c5c2CrudRowDropdownSchema = {
     {
       type: 'crud',
       id: 'c5c2-row-dropdown-crud',
-      rowKey: 'id',
+      itemKey: 'id',
       source: [
         { id: '1', userName: 'RowOne', nickName: 'RowOneNick' },
         { id: '2', userName: 'RowTwo', nickName: 'RowTwoNick' },

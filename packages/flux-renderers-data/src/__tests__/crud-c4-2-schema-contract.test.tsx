@@ -30,7 +30,7 @@ describe('CRUD schema contract (c4-2)', () => {
               totalField: 'rowCount',
               loadAction: { action: 'probe:load', dependsOn: ['__init_load__'] },
               columns: [{ name: 'name', label: 'Name' }],
-              rowKey: 'id',
+              itemKey: 'id',
               footerToolbar: [{ type: 'text', text: 'Total: ${$crud.total}' }],
             },
           ],
@@ -92,7 +92,7 @@ describe('CRUD schema contract (c4-2)', () => {
               autoJumpToTopOnPagerChange: true,
               source: rows,
               columns: [{ name: 'name', label: 'Name' }],
-              rowKey: 'id',
+              itemKey: 'id',
             },
           ],
         }}
@@ -174,7 +174,7 @@ describe('CRUD schema contract (c4-2)', () => {
               id: 'loading-crud',
               loadAction: { action: 'probe:load', dependsOn: ['__init_load__'] },
               columns: [{ name: 'name', label: 'Name' }],
-              rowKey: 'id',
+              itemKey: 'id',
             },
           ],
         }}

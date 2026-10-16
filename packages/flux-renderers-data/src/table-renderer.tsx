@@ -152,7 +152,7 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
 
       const nextFilteredRows = processTableData(
         source,
-        schemaProps.rowKey,
+        schemaProps.itemKey,
         sortState,
         nextFilterState,
       );
@@ -181,11 +181,11 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
     () =>
       processTableData(
         source,
-        schemaProps.rowKey,
+        schemaProps.itemKey,
         sortEntries.length > 0 ? sortEntries : sortState,
         filterState,
       ),
-    [source, schemaProps.rowKey, sortState, sortEntries, filterState],
+    [source, schemaProps.itemKey, sortState, sortEntries, filterState],
   );
   const {
     treeMode,

@@ -25,7 +25,7 @@ function renderTable(schemaProps: Record<string, unknown>) {
             {
               type: 'table',
               testid: 'keyboard-toggle-table',
-              rowKey: 'id',
+              itemKey: 'id',
               source: [
                 { id: '1', name: 'Alice' },
                 { id: '2', name: 'Bob' },

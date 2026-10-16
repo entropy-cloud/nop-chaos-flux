@@ -151,20 +151,20 @@ describe('schema property coverage - crud', () => {
   it('compiles crud with selection config', () => {
     const root = compileNode(compiler, {
       type: 'crud',
-      selection: { mode: 'multiple', rowKey: 'id' },
+      selection: { mode: 'multiple', itemKey: 'id' },
     });
     expect(root.propsProgram.value.selection.mode).toBe('multiple');
   });
 
-  it('compiles crud with shape (columns, source, rowKey, etc.)', () => {
+  it('compiles crud with shape (columns, source, itemKey, etc.)', () => {
     const root = compileNode(compiler, {
       type: 'crud',
       source: { formula: '[]' },
       columns: [{ label: 'Name', name: 'name' }],
-      rowKey: 'id',
+      itemKey: 'id',
     });
     expect(root.propsProgram.value.columns).toHaveLength(1);
-    expect(root.propsProgram.value.rowKey).toBe('id');
+    expect(root.propsProgram.value.itemKey).toBe('id');
   });
 });
 

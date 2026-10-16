@@ -89,7 +89,7 @@ describe('table dotted/nested column path resolution (B3.1 / T6)', () => {
               type: 'table',
               columns: [{ label: 'Updated', name: 'meta.updatedAt' }],
               source: NESTED_ROWS,
-              rowKey: 'id',
+              itemKey: 'id',
             },
           ],
         }}
@@ -118,7 +118,7 @@ describe('table dotted/nested column path resolution (B3.1 / T6)', () => {
                 { id: 1, name: 'Alice' },
                 { id: 2, name: 'Bob' },
               ],
-              rowKey: 'id',
+              itemKey: 'id',
             },
           ],
         }}

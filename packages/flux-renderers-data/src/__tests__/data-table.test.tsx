@@ -232,7 +232,7 @@ describe('dataRendererDefinitions table behavior', () => {
               body: [
                 {
                   type: 'table',
-                  rowKey: 'id',
+                  itemKey: 'id',
                   columns: [
                     {
                       label: 'Summary',
@@ -362,7 +362,7 @@ describe('dataRendererDefinitions table behavior', () => {
           body: [
             {
               type: 'table',
-              rowKey: 'id',
+              itemKey: 'id',
               columns: [{ type: 'operation', buttons: [{ type: 'button', label: 'Inspect' }] }],
               source: [
                 { id: 1, name: 'Alice' },
@@ -412,7 +412,7 @@ describe('dataRendererDefinitions table behavior', () => {
             body: [
               {
                 type: 'table',
-                rowKey: 'id',
+                itemKey: 'id',
                 source: [
                   { id: 'user-1', name: 'Alice', children: [{ label: 'Primary', value: 'admin' }] },
                   { id: 'user-2', name: 'Bob', children: [{ label: 'Primary', value: 'editor' }] },
@@ -534,7 +534,7 @@ describe('dataRendererDefinitions table behavior', () => {
           body: [
             {
               type: 'table',
-              rowKey: 'id',
+              itemKey: 'id',
               columns: [
                 {
                   label: 'Probe',

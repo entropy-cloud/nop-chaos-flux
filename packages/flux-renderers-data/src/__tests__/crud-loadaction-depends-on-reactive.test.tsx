@@ -50,7 +50,7 @@ describe('CRUD loadAction dependsOn reactive refetch', () => {
                 args: { deptId: '${deptId}' },
               },
               columns: [{ name: 'name', label: 'Name' }],
-              rowKey: 'id',
+              itemKey: 'id',
             },
             { type: 'scope-writer' },
           ],

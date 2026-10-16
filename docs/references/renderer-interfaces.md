@@ -374,7 +374,7 @@ Role summary:
 
 - `optionRow.value` is a `SchemaValue` binding (e.g. `"${selectedId}"`) evaluated by the
   compiled props program against the owner scope; a row is marked selected when its
-  `valueField` value (list default `keyField`, table default `rowKey`; array binding =
+  `valueField` value (list default `keyField`, table default `itemKey`; array binding =
   any-match) equals the resolved binding. A failed or empty binding resolution degrades
   to the declared state source — the internal selection when one is co-declared,
   otherwise no selection — and never crashes.

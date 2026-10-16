@@ -296,7 +296,7 @@
                   "type": "table",
                   "testid": "antdpro-detail-timeline-table",
                   "source": "${detail?.timeline}",
-                  "rowKey": "time",
+                  "itemKey": "time",
                   "pagination": { "enabled": false },
                   "empty": { "type": "text", "text": "暂无流转记录" },
                   "columns": [

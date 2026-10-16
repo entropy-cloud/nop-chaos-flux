@@ -64,7 +64,7 @@ describe('[G3-R3-视角4-02] tree-table header select-all checked state', () => 
           body: [
             {
               type: 'table',
-              rowKey: 'id',
+              itemKey: 'id',
               rowChildrenField: 'children',
               rowSelection: { type: 'checkbox' },
               columns: [{ label: 'Name', name: 'name' }],
@@ -124,7 +124,7 @@ describe('[G3-R2-视角4-01] selection cap feedback', () => {
           body: [
             {
               type: 'table',
-              rowKey: 'id',
+              itemKey: 'id',
               rowSelection: { type: 'checkbox', maxSelectionLength: 1 },
               columns: [{ label: 'Name', name: 'name' }],
               source: [
@@ -225,7 +225,7 @@ describe('[G3-R2-视角6-01] column-settings move keeps the menu open', () => {
           body: [
             {
               type: 'table',
-              rowKey: 'id',
+              itemKey: 'id',
               columnSettings: { enabled: true, overlay: true },
               columns: [
                 { label: 'A', name: 'a' },

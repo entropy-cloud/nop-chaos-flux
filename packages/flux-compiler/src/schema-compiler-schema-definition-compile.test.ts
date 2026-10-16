@@ -353,7 +353,7 @@ describe('P0 action-value props are never props-expression polluted', () => {
       propKey: 'childrenSource',
       authored: {
         action: 'ajax',
-        args: { url: '/r/children?parent=${record.id}', data: { key: '${rowKey}' } },
+        args: { url: '/r/children?parent=${record.id}', data: { key: '${itemKey}' } },
       },
     },
     {

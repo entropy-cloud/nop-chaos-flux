@@ -109,7 +109,7 @@ const dashboardFilterSchema = {
       type: 'table',
       title: '销售明细',
       source: '${sales}',
-      rowKey: 'id',
+      itemKey: 'id',
       columns: [
         { name: 'region', label: '区域' },
         { name: 'month', label: '月份' },

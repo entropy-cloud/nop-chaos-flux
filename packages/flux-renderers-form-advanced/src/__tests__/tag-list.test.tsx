@@ -242,7 +242,7 @@ describe('tag-list renderer', () => {
           body: [
             {
               type: 'table',
-              rowKey: 'id',
+              itemKey: 'id',
               source: [
                 { id: 1, tags: ['alpha'] },
                 { id: 2, tags: ['alpha'] },

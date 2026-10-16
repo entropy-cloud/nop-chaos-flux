@@ -29,7 +29,7 @@
       "id": "users-crud",
       "name": "users-crud",
       "source": "${pagedUsers}",
-      "rowKey": "id",
+      "itemKey": "id",
       "onRefresh": { "action": "refreshSource", "targetId": "pagedUsers" },
       "queryForm": {
         "body": [{ "type": "input-text", "name": "keyword", "label": "关键字" }],
@@ -380,7 +380,7 @@ CRUD 把只读摘要发布到 scope 的 `$crud`，可在任意子节点表达式
   "id": "list-crud",
   "listMode": "list",
   "source": "${records}",
-  "rowKey": "id",
+  "itemKey": "id",
   "item": [{ "type": "text", "text": "${$slot.item.name} — ${$slot.item.status}" }],
   "columns": [{ "name": "name", "label": "姓名" }],
 }
@@ -399,7 +399,7 @@ CRUD 把只读摘要发布到 scope 的 `$crud`，可在任意子节点表达式
 {
   "type": "crud",
   "id": "budget-crud",
-  "rowKey": "id",
+  "itemKey": "id",
   "loadAllData": true,
   "loadAction": {
     "action": "ajax",

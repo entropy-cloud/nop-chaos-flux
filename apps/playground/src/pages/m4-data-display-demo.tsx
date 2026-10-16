@@ -57,7 +57,7 @@ const CRUD_SCHEMA = {
       id: 'm4-crud',
       testid: 'm4-crud-widget',
       source: ROWS,
-      rowKey: 'id',
+      itemKey: 'id',
       filterTogglable: { defaultCollapsed: false },
       queryForm: {
         body: [

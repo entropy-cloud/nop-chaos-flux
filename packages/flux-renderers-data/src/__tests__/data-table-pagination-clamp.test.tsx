@@ -38,7 +38,7 @@ describe('table pagination render-time clamp (B3.1 / T5)', () => {
               type: 'table',
               columns: [{ label: 'Name', name: 'name' }],
               source: '${rows}',
-              rowKey: 'id',
+              itemKey: 'id',
               pagination: { currentPage: 1, pageSize: 10 },
             },
             {
@@ -81,7 +81,7 @@ describe('table pagination render-time clamp (B3.1 / T5)', () => {
               type: 'table',
               columns: [{ label: 'Name', name: 'name' }],
               source: '${rows}',
-              rowKey: 'id',
+              itemKey: 'id',
               pagination: { currentPage: 1, pageSize: 5 },
             },
             {
@@ -122,7 +122,7 @@ describe('table pagination render-time clamp (B3.1 / T5)', () => {
               type: 'table',
               columns: [{ label: 'Name', name: 'name' }],
               source: '${rows}',
-              rowKey: 'id',
+              itemKey: 'id',
               pagination: { currentPage: 1, pageSize: 10 },
             },
             {
@@ -160,7 +160,7 @@ describe('table pagination render-time clamp (B3.1 / T5)', () => {
             {
               type: 'crud',
               source: '${rows}',
-              rowKey: 'id',
+              itemKey: 'id',
               paginationOwnership: 'scope',
               paginationStatePath: 'crudState.pagination',
               columns: [{ name: 'name', label: 'Name' }],

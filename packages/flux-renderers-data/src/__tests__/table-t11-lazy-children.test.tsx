@@ -99,6 +99,40 @@ describe('T11 tree-table lazy children', () => {
     });
   });
 
+  it('RM-13: child `childrenSource` action scope exposes the row identity as `${itemKey}`', async () => {
+    // Behaviour pin for the author-facing scope symbol rename (`rowKey` -> `itemKey`).
+    // Old implementation injected `rowKey` into the dispatch scope, so `${itemKey}`
+    // resolved to nothing and the resolved URL below would not match.
+    const fetcher = vi.fn(async (_request: unknown) => ({ status: 0, data: [] }));
+    const env = { ...testEnv, fetcher };
+    const SchemaRenderer = createSchemaRenderer(dataRendererDefinitions);
+    render(
+      <SchemaRenderer
+        schemaUrl="test://table/lazy-children-itemkey-scope"
+        schema={
+          {
+            type: 'table',
+            rowChildrenField: 'items',
+            source: [{ id: 'parent-7', name: 'Parent' }],
+            columns: [{ name: 'name', label: 'Name' }],
+            childrenSource: { action: 'ajax', args: { url: '/api/children/${itemKey}' } },
+          } as any
+        }
+        env={env}
+        formulaCompiler={createFormulaCompiler()}
+      />,
+    );
+
+    const toggle = document.querySelector('[data-slot="table-tree-toggle"]');
+    expect(toggle).not.toBeNull();
+    fireEvent.click(toggle!);
+
+    await vi.waitFor(() => {
+      expect(fetcher).toHaveBeenCalled();
+    });
+    expect(fetcher.mock.calls[0][0]).toMatchObject({ url: '/api/children/parent-7' });
+  });
+
   it('shows spinner while lazy loading', async () => {
     let resolveFetch: (value: unknown) => void;
     const fetcher = vi.fn(async () => {

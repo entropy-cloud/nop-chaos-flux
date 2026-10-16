@@ -72,7 +72,7 @@ describe('CRUD toolbar from real backend schema', () => {
               type: 'crud',
               id: 'crud-grid',
               name: 'crud-grid',
-              rowKey: 'id',
+              itemKey: 'id',
               source: [{ id: '1', name: 'Alice' }],
               toolbar: realToolbar,
               columns: [{ name: 'name', label: '姓名' }],

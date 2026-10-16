@@ -125,7 +125,7 @@ describe('CRUD listMode carrier selection', () => {
       type: 'crud',
       id: 'table-crud',
       source: '${records}',
-      rowKey: 'id',
+      itemKey: 'id',
       columns: [{ name: 'name', label: 'Name' }],
     });
 
@@ -142,7 +142,7 @@ describe('CRUD listMode carrier selection', () => {
       id: 'list-crud',
       listMode: 'list',
       source: '${records}',
-      rowKey: 'id',
+      itemKey: 'id',
       item: [{ type: 'text', text: '${$slot.item.name}' }],
       columns: [{ name: 'name', label: 'Name' }],
     });
@@ -179,7 +179,7 @@ describe('CRUD listMode carrier selection', () => {
         id: 'cards-crud',
         listMode: 'cards',
         source: '${records}',
-        rowKey: 'id',
+        itemKey: 'id',
         card: [{ type: 'text', text: '${$slot.item.name}' }],
         columns: [{ name: 'name', label: 'Name' }],
       },
@@ -219,7 +219,7 @@ describe('CRUD listMode carrier selection', () => {
         id: 'sel-list-crud',
         listMode: 'list',
         source: '${records}',
-        rowKey: 'id',
+        itemKey: 'id',
         selection: {},
         selectionStatePath: '$sel',
         item: [
@@ -269,7 +269,7 @@ describe('CRUD listMode carrier selection', () => {
         id: 'sel-cards-crud',
         listMode: 'cards',
         source: '${records}',
-        rowKey: 'id',
+        itemKey: 'id',
         selection: {},
         selectionStatePath: '$sel',
         card: [
@@ -307,7 +307,7 @@ describe('CRUD listMode carrier selection', () => {
       type: 'crud',
       id: 'sel-table-crud',
       source: '${records}',
-      rowKey: 'id',
+      itemKey: 'id',
       selection: {},
       footerToolbar: [{ type: 'text', text: 'Count: ${$crud.selectionCount}' }],
       columns: [{ name: 'name', label: 'Name' }],
@@ -333,7 +333,7 @@ describe('CRUD listMode carrier selection', () => {
         id: 'compile-once-crud',
         listMode: 'list',
         source: '${records}',
-        rowKey: 'id',
+        itemKey: 'id',
         item: [{ type: 'text', text: '${$slot.item.name}' }],
         columns: [{ name: 'name', label: 'Name' }],
       },
@@ -364,7 +364,7 @@ describe('CRUD listMode carrier selection', () => {
         id: 'audit02-cards-crud',
         listMode: 'cards',
         source: '${records}',
-        rowKey: 'id',
+        itemKey: 'id',
         selection: {},
         selectionStatePath: '$sel',
         card: [

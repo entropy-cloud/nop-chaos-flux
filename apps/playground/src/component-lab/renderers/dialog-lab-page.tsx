@@ -296,7 +296,7 @@ const crudRowEditDialog = {
       type: 'crud',
       id: 'row-edit-crud',
       name: 'rowEditCrud',
-      rowKey: 'id',
+      itemKey: 'id',
       // 行数据 7 列（模拟 CRUD 列表 selection）
       source: [
         { id: '1', userName: 'RowUser', status: 1, nickName: 'RowNick', deptId: null, userType: 1, gender: 1, phone: '999' },

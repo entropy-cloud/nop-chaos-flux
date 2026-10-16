@@ -56,7 +56,7 @@ describe('CRUD loadAction kind:reaction regression (Phase 6)', () => {
               id: 'regression-crud',
               loadAction: { action: 'probe:load', dependsOn: ['__selection_test__'] },
               columns: [{ name: 'name', label: 'Name' }],
-              rowKey: 'id',
+              itemKey: 'id',
               // NOTE: must be `selection: {}` — `selectable` is NOT a CRUD
               // schema field, and without a real selection config the checkbox
               // column is never rendered (the old `selectable: true` here made
@@ -143,7 +143,7 @@ describe('CRUD loadAction kind:reaction regression (Phase 6)', () => {
               id: 'regression-crud',
               loadAction: { action: 'probe:load', dependsOn: ['deptId'] },
               columns: [{ name: 'name', label: 'Name' }],
-              rowKey: 'id',
+              itemKey: 'id',
             },
           ],
         }}
@@ -194,7 +194,7 @@ describe('CRUD loadAction kind:reaction regression (Phase 6)', () => {
               id: 'regression-crud',
               loadAction: { action: 'probe:load', dependsOn: ['__refresh_test__'] },
               columns: [{ name: 'name', label: 'Name' }],
-              rowKey: 'id',
+              itemKey: 'id',
             },
           ],
         }}
@@ -232,7 +232,7 @@ describe('CRUD loadAction kind:reaction regression (Phase 6)', () => {
               id: 'regression-crud',
               loadAction: { action: 'probe:load', dependsOn: ['__abort_test__'] },
               columns: [{ name: 'name', label: 'Name' }],
-              rowKey: 'id',
+              itemKey: 'id',
             },
           ],
         }}
@@ -281,7 +281,7 @@ describe('CRUD loadAction kind:reaction regression (Phase 6)', () => {
               paginationOwnership: 'scope',
               paginationStatePath: 'myPages.pagination',
               columns: [{ name: 'name', label: 'Name' }],
-              rowKey: 'id',
+              itemKey: 'id',
             },
           ],
         }}

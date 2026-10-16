@@ -28,7 +28,7 @@ function renderEditTable(options: {
           {
             type: 'table',
             id: 'edit-table',
-            rowKey: 'id',
+            itemKey: 'id',
             source: ROWS,
             rowSelection: options.rowSelection as never,
             selectionStatePath: options.selectionStatePath,

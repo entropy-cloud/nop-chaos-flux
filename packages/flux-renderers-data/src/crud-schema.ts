@@ -257,7 +257,7 @@ export interface CrudSchema extends BaseSchema {
   /** Ownership mode for the filter slice — see `selectionOwnership` (scope-owned composition). */
   filterOwnership?: OwnershipMode;
   filterStatePath?: string;
-  rowKey?: string;
+  itemKey?: string;
   autoClearSelectionOnRefresh?: boolean;
   pageField?: string;
   pageSizeField?: string;
@@ -339,7 +339,7 @@ export interface CrudStatusSummary {
 export function normalizeCrudSchema(schema: CrudSchema): CrudSchema {
   return {
     ...schema,
-    rowKey: schema.rowKey ?? 'id',
+    itemKey: schema.itemKey ?? 'id',
     listMode: schema.listMode ?? 'table',
     autoClearSelectionOnRefresh: schema.autoClearSelectionOnRefresh ?? true,
     selectionOwnership: schema.selection ? (schema.selectionOwnership ?? 'local') : undefined,

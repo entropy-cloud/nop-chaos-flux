@@ -64,7 +64,7 @@ export const c4c2HostSchemas = {
         type: 'crud',
         id: 'c4c2-quick-edit',
         source: '${records}',
-        rowKey: 'id',
+        itemKey: 'id',
         quickSaveItemAction: {
           action: 'ajax',
           args: {
@@ -152,7 +152,7 @@ export const c4c2HostSchemas = {
         type: 'crud',
         id: 'c4c2-paging',
         source: '${pagedRecords}',
-        rowKey: 'id',
+        itemKey: 'id',
         selection: { keepOnPageChange: true },
         pagination: { mode: 'pages' },
         footerToolbar: [

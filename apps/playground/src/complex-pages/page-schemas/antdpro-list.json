@@ -182,7 +182,7 @@
           "type": "crud",
           "id": "antdpro-list-crud",
           "testid": "antdpro-list-crud",
-          "rowKey": "id",
+          "itemKey": "id",
           "loadAction": {
             "dependsOn": ["__init_load__"],
             "action": "ajax",

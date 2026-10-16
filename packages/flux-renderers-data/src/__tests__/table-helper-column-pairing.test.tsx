@@ -24,7 +24,7 @@ function renderTable(schemaProps: Record<string, unknown>) {
                 { id: '1', name: 'Alice', age: 30 },
                 { id: '2', name: 'Bob', age: 40 },
               ],
-              rowKey: 'id',
+              itemKey: 'id',
               columns: [{ name: 'name', label: 'Name' }],
               ...schemaProps,
             },

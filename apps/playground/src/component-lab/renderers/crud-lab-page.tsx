@@ -70,7 +70,7 @@ const cardsModeCrud = {
       id: 'cards-mode-crud',
       listMode: 'cards',
       source: '${modeRecords}',
-      rowKey: 'id',
+      itemKey: 'id',
       selection: {},
       selectionStatePath: '$selCards',
       card: [
@@ -103,7 +103,7 @@ const listModeCrud = {
       id: 'list-mode-crud',
       listMode: 'list',
       source: '${modeRecords}',
-      rowKey: 'id',
+      itemKey: 'id',
       selection: {},
       selectionStatePath: '$selList',
       item: [
@@ -134,7 +134,7 @@ const basicCrud = {
     {
       type: 'crud',
       source: '${records}',
-      rowKey: 'id',
+      itemKey: 'id',
       columns: [
         { label: 'ID', name: 'id' },
         { label: 'Name', name: 'name', fixed: 'left', width: 160 },
@@ -151,7 +151,7 @@ const queryCrud = {
     {
       type: 'crud',
       source: '${records}',
-      rowKey: 'id',
+      itemKey: 'id',
       selection: {},
       queryForm: {
         body: [{ type: 'input-text', name: 'keyword', label: 'Keyword' }],
@@ -201,7 +201,7 @@ const responsiveCrud = {
     {
       type: 'crud',
       source: '${records}',
-      rowKey: 'id',
+      itemKey: 'id',
       responsive: {
         mode: 'expand',
         breakpoint: 1400,
@@ -223,7 +223,7 @@ const sourceResultCrud = {
     {
       type: 'crud',
       source: '${pagedRecords}',
-      rowKey: 'id',
+      itemKey: 'id',
       queryForm: {
         body: [{ type: 'input-text', name: 'keyword', label: 'Keyword' }],
       },
@@ -291,7 +291,7 @@ const quickEditCrud = {
     {
       type: 'crud',
       source: '${records}',
-      rowKey: 'id',
+      itemKey: 'id',
       quickSaveItemAction: {
         action: 'showToast',
         args: {
@@ -333,7 +333,7 @@ const selectionRefreshCrud = {
       type: 'crud',
       id: 'selection-refresh-crud',
       source: '${records}',
-      rowKey: 'id',
+      itemKey: 'id',
       autoClearSelectionOnRefresh: true,
       selection: {},
       toolbar: [
@@ -370,7 +370,7 @@ const radioSelectionCrud = {
       type: 'crud',
       id: 'radio-selection-crud',
       source: '${records}',
-      rowKey: 'id',
+      itemKey: 'id',
       selection: { type: 'radio' },
       listActions: [
         {
@@ -400,7 +400,7 @@ const clientModeCrud = {
     {
       type: 'crud',
       source: '${pagedRecords}',
-      rowKey: 'id',
+      itemKey: 'id',
       clientMode: {
         loadDataOnce: true,
         fetchOnFilter: false,

@@ -32,7 +32,7 @@ function renderGroupTable(options: {
           {
             type: 'table',
             id: 'group-table',
-            rowKey: 'id',
+            itemKey: 'id',
             source: (options.rows ?? GRID_ROWS) as never,
             group: options.group as never,
             rowSelection: options.rowSelection as never,
@@ -150,7 +150,7 @@ describe('table group — collapse semantics (gd-group-collapse-persist)', () =>
             {
               type: 'table',
               id: 'group-table',
-              rowKey: 'id',
+              itemKey: 'id',
               source: '${gridRows}',
               group: { field: 'category' },
               columns: [{ name: 'category', label: 'Category' }],
@@ -249,7 +249,7 @@ describe('table group — coexistence matrix', () => {
             {
               type: 'table',
               id: 'group-table',
-              rowKey: 'id',
+              itemKey: 'id',
               source: GRID_ROWS,
               group: { field: 'category' },
               rowSelection: { type: 'checkbox', selectAllMode: 'page' },
@@ -333,7 +333,7 @@ describe('table group — coexistence matrix', () => {
             {
               type: 'table',
               id: 'group-table',
-              rowKey: 'id',
+              itemKey: 'id',
               source: [
                 { id: '1', category: 'A', amount: 30 },
                 { id: '2', category: 'B', amount: 10 },
@@ -378,7 +378,7 @@ describe('table group — coexistence matrix', () => {
             {
               type: 'table',
               id: 'group-table',
-              rowKey: 'id',
+              itemKey: 'id',
               source: GRID_ROWS,
               group: { field: 'category' },
               optionRow: { value: '${activeId}' },

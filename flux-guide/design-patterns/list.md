@@ -57,7 +57,7 @@
   "type": "list",
   "source": "${users}",
   "selectionMode": "checkbox",
-  "rowKey": "id",
+  "itemKey": "id",
   "item": [{ "type": "text", "text": "${$slot.item.name}" }],
 }
 ```

@@ -80,7 +80,7 @@ describe('batch-bar table host (P4b linear bulk bar equivalence)', () => {
             {
               type: 'table',
               id: 'host-table',
-              rowKey: 'id',
+              itemKey: 'id',
               source: [
                 { id: 'a', name: 'Issue A' },
                 { id: 'b', name: 'Issue B' },

@@ -17,7 +17,7 @@ function renderTable(schemaProps: Record<string, unknown>) {
             {
               type: 'table',
               testid: 'expand-table',
-              rowKey: 'id',
+              itemKey: 'id',
               source: [
                 { id: '1', name: 'Alice', expandable: true },
                 { id: '2', name: 'Bob', expandable: false },

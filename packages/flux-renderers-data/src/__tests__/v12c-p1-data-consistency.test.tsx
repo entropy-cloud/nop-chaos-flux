@@ -82,7 +82,7 @@ describe('[G3-视角3-01] column-resize handle focus-visible ring', () => {
   it('keeps the keyboard tab stop and adds the focus-visible ring classes', () => {
     renderSchema({
       type: 'table',
-      rowKey: 'id',
+      itemKey: 'id',
       columnResize: true,
       columns: [{ label: 'Name', name: 'name', width: 120 }],
       source: [{ id: 1, name: 'Alice' }],
@@ -104,7 +104,7 @@ describe('[G3-视角3-02] row drag handle focus-visible ring', () => {
   it('keeps the keyboard tab stop and adds the focus-visible ring classes', () => {
     renderSchema({
       type: 'table',
-      rowKey: 'id',
+      itemKey: 'id',
       draggable: true,
       orderField: 'order',
       columns: [{ label: 'Name', name: 'name' }],
@@ -140,7 +140,7 @@ describe('[G3-R2-视角10-02] tree-table lazy-load spinner uses the ui Spinner b
       renderSchema(
         {
           type: 'table',
-          rowKey: 'id',
+          itemKey: 'id',
           rowChildrenField: 'items',
           childrenSource: { action: 'ajax', args: { url: '/api/children' } },
           columns: [{ label: 'Name', name: 'name' }],

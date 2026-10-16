@@ -83,7 +83,7 @@
               "type": "crud",
               "id": "view-crud-table",
               "testid": "view-crud-table",
-              "rowKey": "id",
+              "itemKey": "id",
               "loadAllData": true,
               "loadAction": {
                 "dependsOn": ["__init_load__"],
@@ -142,7 +142,7 @@
               "type": "crud",
               "id": "view-crud-cards",
               "testid": "view-crud-cards",
-              "rowKey": "id",
+              "itemKey": "id",
               "listMode": "cards",
               "loadAllData": true,
               "loadAction": {

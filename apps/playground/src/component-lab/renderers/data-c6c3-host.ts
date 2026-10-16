@@ -181,7 +181,7 @@ export const c6c3StatusDialogSchema = {
       type: 'crud',
       id: 'c6c3-status-crud',
       testid: 'c6c3-status-crud',
-      rowKey: 'id',
+      itemKey: 'id',
       source: [
         { id: '1', label: 'Alpha', status: 'active' },
         { id: '2', label: 'Beta', status: 'idle' },

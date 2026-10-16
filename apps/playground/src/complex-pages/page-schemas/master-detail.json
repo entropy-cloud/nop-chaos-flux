@@ -137,7 +137,7 @@
                       "type": "crud",
                       "id": "md-items-crud",
                       "testid": "md-items-table",
-                      "rowKey": "id",
+                      "itemKey": "id",
                       "loadAction": {
                         "action": "ajax",
                         "dependsOn": ["mdFilter"],
@@ -326,7 +326,7 @@
                       "type": "table",
                       "testid": "md-logs-table",
                       "source": "${orderLogs?.items}",
-                      "rowKey": "id",
+                      "itemKey": "id",
                       "empty": { "type": "text", "text": "暂无日志" },
                       "columns": [
                         { "name": "time", "label": "时间", "width": 180 },
@@ -347,7 +347,7 @@
                   "type": "table",
                   "testid": "md-addresses-table",
                   "source": "${orderAddresses?.items}",
-                  "rowKey": "id",
+                  "itemKey": "id",
                   "empty": { "type": "text", "text": "暂无收货地址" },
                   "columns": [
                     { "name": "recipient", "label": "收件人", "width": 120 },

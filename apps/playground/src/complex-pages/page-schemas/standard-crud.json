@@ -6,7 +6,7 @@
       "type": "crud",
       "id": "user-crud",
       "testid": "user-crud",
-      "rowKey": "id",
+      "itemKey": "id",
       "loadAction": {
         "dependsOn": ["__init_load__"],
         "action": "ajax",

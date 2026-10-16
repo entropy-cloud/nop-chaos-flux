@@ -155,7 +155,7 @@
         }
       }
     ],
-    "rowKey": "id",
+    "itemKey": "id",
     "pageField": "pageNo",
     "pageSizeField": "pageSize",
     "selection": {
@@ -208,7 +208,7 @@
       "notes": [
         "headerToolbar 中的动作块被拆分为 toolbar region 与 toolbarLayout 标准块，bulkActions 降为 listActions",
         "columns-toggler / columnsTogglable 迁移为 columnSettings；当前 live baseline 已支持列显隐和最小上下移动顺序调整",
-        "primaryField 迁移为 rowKey",
+        "primaryField 迁移为 itemKey",
         "perPageField 迁移为 pageSizeField",
         "filter 迁移为 queryForm",
         "actionType/dialog 迁移为 Flux action/openDialog",

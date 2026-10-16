@@ -1861,7 +1861,7 @@
               "testid": "linear-issues-table",
               "className": "ln-issues-table flex-1",
               "source": "${issues?.items}",
-              "rowKey": "id",
+              "itemKey": "id",
               "pagination": {
                 "enabled": true,
                 "pageSize": 10

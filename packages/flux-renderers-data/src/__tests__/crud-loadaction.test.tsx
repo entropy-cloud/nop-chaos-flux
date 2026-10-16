@@ -58,7 +58,7 @@ describe('CRUD loadAction', () => {
               id: 'load-crud',
               loadAction: { action: 'probe:load', dependsOn: ['__crud_test__'] },
               columns: [{ name: 'name', label: 'Name' }],
-              rowKey: 'id',
+              itemKey: 'id',
             },
           ],
         }}
@@ -102,7 +102,7 @@ describe('CRUD loadAction', () => {
               id: 'load-crud',
               loadAction: { action: 'probe:load', dependsOn: ['__crud_test__'] },
               columns: [{ name: 'name', label: 'Name' }],
-              rowKey: 'id',
+              itemKey: 'id',
             },
           ],
         }}
@@ -152,7 +152,7 @@ describe('CRUD loadAction', () => {
               id: 'load-crud',
               loadAction: { action: 'probe:load', dependsOn: ['__crud_test__'] },
               columns: [{ name: 'name', label: 'Name' }],
-              rowKey: 'id',
+              itemKey: 'id',
               footerToolbar: [
                 {
                   type: 'text',
@@ -199,7 +199,7 @@ describe('CRUD loadAction', () => {
               loadAction: { action: 'probe:load', dependsOn: ['__crud_test__'] },
               loadAllData: true,
               columns: [{ name: 'name', label: 'Name' }],
-              rowKey: 'id',
+              itemKey: 'id',
             },
           ],
         }}
@@ -248,7 +248,7 @@ describe('CRUD loadAction', () => {
               id: 'load-crud',
               loadAction: { action: 'probe:load', dependsOn: ['__crud_test__'] },
               columns: [{ name: 'name', label: 'Name' }],
-              rowKey: 'id',
+              itemKey: 'id',
             },
           ],
         }}
@@ -300,7 +300,7 @@ describe('CRUD loadAction', () => {
               loadAction: { action: 'probe:load', dependsOn: ['__crud_test__'] },
               onError: { action: 'probe:recordError', args: { msg: 'custom-error' } },
               columns: [{ name: 'name', label: 'Name' }],
-              rowKey: 'id',
+              itemKey: 'id',
             },
           ],
         }}
@@ -356,7 +356,7 @@ describe('CRUD loadAction', () => {
                 { type: 'text', text: 'Refreshing: ${$crud.refreshing ? "yes" : "no"}' },
               ],
               columns: [{ name: 'name', label: 'Name' }],
-              rowKey: 'id',
+              itemKey: 'id',
             },
           ],
         }}

@@ -193,7 +193,7 @@ ERP 编辑表单核心需求：已选 value（`customerId: 'cust-123'`）必须�
 4. 用户点击行（toggleOnRowClick: true）或操作列按钮（pick action）选中一项
 5. CRUD 自动更新 selectionStatePath 中的选中状态
 6. 用户点击 picker 的「确认」按钮
-7. picker 从 selectionStatePath 读取选中项 rowKey（单值）
+7. picker 从 selectionStatePath 读取选中项 itemKey（单值）
 8. picker 通过 valueField/labelField 映射
 9. picker 写回表单字段、关闭 popup
 10. picker 触发 onPick action
@@ -205,7 +205,7 @@ ERP 编辑表单核心需求：已选 value（`customerId: 'cust-123'`）必须�
 1-5 同上（CRUD 处理多选累积、跨页保留）
 6. 用户多次点击/勾选/全选/取消选中，CRUD 自动维护 selectionStatePath 中的数组
 7. 用户点击 picker 的「确认」按钮
-8. picker 从 selectionStatePath 读取选中项 rowKey 数组
+8. picker 从 selectionStatePath 读取选中项 itemKey 数组
 9. picker 通过 valueField/labelField 映射每个值
 10. picker 写回表单字段（数组）、关闭 popup
 ```

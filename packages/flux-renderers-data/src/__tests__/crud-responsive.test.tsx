@@ -38,7 +38,7 @@ function renderCrud(schemaOverrides: Record<string, unknown> = {}) {
               { id: '1', name: 'Alice' },
               { id: '2', name: 'Bob' },
             ],
-            rowKey: 'id',
+            itemKey: 'id',
             filterTogglable: { defaultCollapsed: false },
             queryForm: {
               body: [{ type: 'input-text', name: 'keyword', label: 'Keyword' }],

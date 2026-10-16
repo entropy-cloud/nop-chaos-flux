@@ -1557,7 +1557,7 @@ export interface IconPickerSchema extends BoundFieldSchemaBase {
 export interface TableSchema extends BaseSchema {
   type: 'table';
   source?: unknown;
-  rowKey?: SchemaValue;
+  itemKey?: SchemaValue;
   columns?: unknown[];
   paginationOwnership?: "local" | "controlled" | "scope";
   selectionOwnership?: "local" | "controlled" | "scope";
@@ -1801,7 +1801,7 @@ export interface CrudSchema extends BaseSchema {
   listMode?: "table" | "cards" | "list";
   card?: SchemaInput;
   item?: SchemaInput;
-  rowKey?: string;
+  itemKey?: string;
   selection?: unknown;
   selectionField?: string;
   selectionOwnership?: "local" | "controlled" | "scope";

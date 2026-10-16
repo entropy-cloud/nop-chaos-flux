@@ -125,7 +125,7 @@ interface TableRowScopeData {
     record: Record<string, unknown>;
     index: number;
     viewIndex?: number;
-    rowKey?: string;
+    itemKey?: string;
   };
 }
 ```
@@ -243,9 +243,11 @@ This keeps row invalidation aligned with the same root-based dependency model us
 
 ### Authoring Contract
 
-Table renderers should expose an explicit `rowKey?: string` schema field that names the record field or field path used as the stable row identity.
+Table renderers should expose an explicit `itemKey?: string` schema field that names the record field or field path used as the stable row identity.
 
-Editable tables, or any table that must preserve row-local continuity across save/remap, must specify `schema.rowKey`. Compatibility fallbacks are not the normative editable baseline for those tables.
+> **Vocabulary split (RM-13)**: the author-facing schema field is `itemKey`. Throughout the internal sections below, the _resolved_ row-identity value is still called `rowKey` (e.g. `normalizeRowKey`, `TableRowEntry.rowKey`, `row:${rowKey}` cache/scope keys) — internal row-identity structures deliberately keep the domain word "row". See naming-conventions §4.9.
+
+Editable tables, or any table that must preserve row-local continuity across save/remap, must specify `schema.itemKey`. Compatibility fallbacks are not the normative editable baseline for those tables.
 
 Recommended editable baseline:
 
@@ -255,14 +257,14 @@ Recommended editable baseline:
 
 Examples:
 
-- `rowKey: 'id'`
-- `rowKey: '__rowKey'`
+- `itemKey: 'id'`
+- `itemKey: '__rowKey'`
 
 ### Resolution Rules
 
 Normative editable baseline:
 
-1. explicit `schema.rowKey`
+1. explicit `schema.itemKey`
 2. development warning plus compatibility fallback only for legacy or read-only tables
 
 Compatibility fallback order:
@@ -273,15 +275,15 @@ Compatibility fallback order:
 
 The compatibility fallback is not the normative editable architecture.
 
-Live resolution (`normalizeRowKey`, `table-data.ts`) honors a single dotted field path via the shared path binder: `rowKey: 'a.b'` resolves `getIn(record, 'a.b')` (nested), then falls back to `record.__rowKey` / `record.id`, then the legacy source-index token. The dotted single-path resolution is part of the supported baseline, not a compatibility fallback.
+Live resolution (`normalizeRowKey`, `table-data.ts`) honors a single dotted field path via the shared path binder: `itemKey: 'a.b'` resolves `getIn(record, 'a.b')` (nested), then falls back to `record.__rowKey` / `record.id`, then the legacy source-index token. The dotted single-path resolution is part of the supported baseline, not a compatibility fallback.
 
 ### Composite / Computed Row Key (B3.1 裁定)
 
-Composite (multi-field, e.g. `ip + port`) or expression-derived row keys are **not** supported as a built-in `rowKey` form. The Flux-idiomatic path for a composite identity is the **synthetic `__rowKey` hydrate pattern**: the data owner projects a composite field into a single `__rowKey` (string) before the source enters the table owner, and the table reads it via the documented `record.__rowKey` fallback (or `rowKey: '__rowKey'`). This keeps row identity a single stable string token — preserving React `key`, `instanceKey`, row-scope cache, and row-following UI state continuity — without inventing an expression engine inside the row-key resolver.
+Composite (multi-field, e.g. `ip + port`) or expression-derived row keys are **not** supported as a built-in `itemKey` form. The Flux-idiomatic path for a composite identity is the **synthetic `__rowKey` hydrate pattern**: the data owner projects a composite field into a single `__rowKey` (string) before the source enters the table owner, and the table reads it via the documented `record.__rowKey` fallback (or `itemKey: '__rowKey'`). This keeps row identity a single stable string token — preserving React `key`, `instanceKey`, row-scope cache, and row-following UI state continuity — without inventing an expression engine inside the row-key resolver.
 
-- `rowKey: 'a.b'` (single dotted path) and `rowKey: '__rowKey'` / `__rowKey` hydrate fallback: **supported baseline**.
+- `itemKey: 'a.b'` (single dotted path) and `itemKey: '__rowKey'` / `__rowKey` hydrate fallback: **supported baseline**.
 - Composite projection via owner-side hydrate into `__rowKey`: **supported baseline** (owner responsibility, resolved before table render).
-- Expression `rowKey` (e.g. `rowKey: '${ip}:${port}'` resolved inside the table): **candidate future feature** (successor), not in the current baseline. Owners needing it today must hydrate `__rowKey` upstream.
+- Expression `itemKey` (e.g. `itemKey: '${ip}:${port}'` resolved inside the table): **candidate future feature** (successor), not in the current baseline. Owners needing it today must hydrate `__rowKey` upstream.
 
 Save-time continuity rule:
 
@@ -743,7 +745,7 @@ The architecture does not require one exported `ArrayIndexMap` type today, but i
 Before a table row implementation is considered aligned with this document, verify all of the following:
 
 - rows have stable `rowKey` values that do not depend on index
-- editable tables that require continuity use explicit `schema.rowKey` or an equivalent retained generated key field; later server `id` arrival does not silently switch active live row identity
+- editable tables that require continuity use explicit `schema.itemKey` or an equivalent retained generated key field; later server `id` arrival does not silently switch active live row identity
 - the row repeated boundary uses a unique compiled `repeatedTemplateId`, not a hardcoded renderer literal
 - nested repeated parents preserve the full absolute `instancePath` for table rows
 - React row keys, repeated `instanceKey`, row-scope cache keys, and row-following table UI state all use the same `rowKey` with owner qualification where needed

@@ -16,7 +16,7 @@ function buildSchema() {
         type: 'crud',
         id: 'confirm-gate-crud',
         source: RECORDS,
-        rowKey: 'id',
+        itemKey: 'id',
         columns: [
           { name: 'name', label: 'Name' },
           {

@@ -134,7 +134,7 @@
                           "testid": "notion-table",
                           "className": "nt-table flex-1",
                           "source": "${tableData?.items}",
-                          "rowKey": "id",
+                          "itemKey": "id",
                           "pagination": {
                             "enabled": true,
                             "pageSize": 10

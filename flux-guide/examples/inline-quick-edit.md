@@ -15,7 +15,7 @@
     {
       "type": "crud",
       "id": "budget-crud",
-      "rowKey": "id",
+      "itemKey": "id",
       "loadAllData": true,
 
       // 1) 挂载即触发一次：dependsOn 塞个永不写入的私有 marker

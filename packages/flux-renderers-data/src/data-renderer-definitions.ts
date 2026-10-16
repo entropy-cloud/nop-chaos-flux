@@ -72,7 +72,7 @@ export const dataRendererDefinitions: RegisteredRendererDefinition[] = [
           editorType: 'expression',
         },
       },
-      { key: 'rowKey', kind: 'prop' },
+      { key: 'itemKey', kind: 'prop' },
       {
         key: 'columns',
         kind: 'prop',
@@ -254,7 +254,7 @@ export const dataRendererDefinitions: RegisteredRendererDefinition[] = [
           shape: { kind: 'object', fields: {} },
           displayName: 'Option Row',
           description:
-            'Interaction-state channel for rows: `value` selected-value binding (owner scope, array = any-match), `valueField` compared item field (default rowKey), `selectedClass` schema class for the selected state. Emits data-option-row / data-state / data-selected / aria-selected markers on the row; absent optionRow keeps legacy output.',
+            'Interaction-state channel for rows: `value` selected-value binding (owner scope, array = any-match), `valueField` compared item field (default itemKey), `selectedClass` schema class for the selected state. Emits data-option-row / data-state / data-selected / aria-selected markers on the row; absent optionRow keeps legacy output.',
           editorType: 'object',
         },
       },

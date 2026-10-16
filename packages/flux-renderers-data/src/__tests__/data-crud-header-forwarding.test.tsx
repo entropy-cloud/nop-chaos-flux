@@ -16,7 +16,7 @@ describe('CRUD renderer header forwarding', () => {
           body: [
             {
               type: 'crud',
-              rowKey: 'id',
+              itemKey: 'id',
               source: [
                 { id: '1', name: 'Alpha', owner: 'Alice' },
                 { id: '2', name: 'Beta', owner: 'Bob' },
@@ -84,7 +84,7 @@ describe('CRUD renderer header forwarding', () => {
           body: [
             {
               type: 'crud',
-              rowKey: 'id',
+              itemKey: 'id',
               source: [
                 { id: '1', name: 'Alpha', owner: 'Alice' },
                 { id: '2', name: 'Beta', owner: 'Bob' },

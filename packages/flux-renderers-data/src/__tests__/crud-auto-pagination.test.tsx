@@ -45,7 +45,7 @@ describe('CRUD __autoPagination injection', () => {
             id: 'crud1',
             loadAction: { action: 'probe:load', dependsOn: ['__test__'] },
             columns: [{ name: 'name', label: 'Name' }],
-            rowKey: 'id',
+            itemKey: 'id',
           }],
         }}
         env={env}
@@ -83,7 +83,7 @@ describe('CRUD __autoPagination injection', () => {
             pageSizeField: 'limit',
             loadAction: { action: 'probe:load', dependsOn: ['__test__'] },
             columns: [{ name: 'name', label: 'Name' }],
-            rowKey: 'id',
+            itemKey: 'id',
           }],
         }}
         env={env}
@@ -118,7 +118,7 @@ describe('CRUD __autoPagination injection', () => {
             loadAllData: true,
             loadAction: { action: 'probe:load', dependsOn: ['__test__'] },
             columns: [{ name: 'name', label: 'Name' }],
-            rowKey: 'id',
+            itemKey: 'id',
           }],
         }}
         env={env}

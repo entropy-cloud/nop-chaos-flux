@@ -58,7 +58,7 @@ describe('data table row scope identity', () => {
           body: [
             {
               type: 'table',
-              rowKey: '__rowKey',
+              itemKey: '__rowKey',
               columns: [{ label: 'Probe', cell: { type: 'node-instance-probe' } }],
               source: [{ id: 99, __rowKey: 'client-a', name: 'Alice' }],
             },
@@ -82,7 +82,7 @@ describe('data table row scope identity', () => {
           body: [
             {
               type: 'table',
-              rowKey: 'id',
+              itemKey: 'id',
               columns: [{ label: 'Scope', cell: { type: 'row-scope-id-probe' } }],
               source: [{ id: 1, name: 'Alice' }],
             },
@@ -101,7 +101,7 @@ describe('data table row scope identity', () => {
           body: [
             {
               type: 'table',
-              rowKey: 'id',
+              itemKey: 'id',
               columns: [{ label: 'Scope', cell: { type: 'row-scope-id-probe' } }],
               source: [{ id: 1, name: 'Alice updated' }],
             },
@@ -122,7 +122,7 @@ describe('data table row scope identity', () => {
       body: [
         {
           type: 'table' as const,
-          rowKey: 'id',
+          itemKey: 'id',
           columns: [
             { label: 'Scope', cell: { type: 'row-scope-id-probe' } },
             { label: 'Name', cell: { type: 'row-record-name-probe' } },
@@ -175,7 +175,7 @@ describe('data table row scope identity', () => {
           body: [
             {
               type: 'table',
-              rowKey: 'id',
+              itemKey: 'id',
               columns: [
                 { label: 'Scope', cell: { type: 'row-scope-id-probe' } },
                 { label: 'Name', cell: { type: 'row-record-name-probe' } },
@@ -200,7 +200,7 @@ describe('data table row scope identity', () => {
           body: [
             {
               type: 'table',
-              rowKey: 'id',
+              itemKey: 'id',
               columns: [
                 { label: 'Scope', cell: { type: 'row-scope-id-probe' } },
                 { label: 'Name', cell: { type: 'row-record-name-probe' } },

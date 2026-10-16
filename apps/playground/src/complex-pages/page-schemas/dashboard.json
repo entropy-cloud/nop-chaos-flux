@@ -523,7 +523,7 @@
               "type": "table",
               "testid": "dash-recent-table",
               "source": "${recentOrders?.items}",
-              "rowKey": "id",
+              "itemKey": "id",
               "pagination": {
                 "enabled": false
               },
@@ -579,7 +579,7 @@
               "type": "table",
               "testid": "dash-approvals-table",
               "source": "${approvals?.items}",
-              "rowKey": "id",
+              "itemKey": "id",
               "pagination": {
                 "enabled": false
               },

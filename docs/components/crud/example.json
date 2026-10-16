@@ -3,7 +3,7 @@
   "id": "users-crud",
   "name": "usersCrud",
   "statusPath": "usersCrudStatus",
-  "rowKey": "id",
+  "itemKey": "id",
   "selectionOwnership": "scope",
   "selectionStatePath": "usersCrud.selection",
   "paginationOwnership": "scope",

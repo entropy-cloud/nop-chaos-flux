@@ -45,7 +45,7 @@ const tableHost = {
     {
       type: 'table',
       id: 'labBatchBarTable',
-      rowKey: 'id',
+      itemKey: 'id',
       source: [
         { id: 'a', name: 'Issue A', priority: 'high' },
         { id: 'b', name: 'Issue B', priority: 'medium' },
@@ -84,7 +84,7 @@ const defaultCount = {
     {
       type: 'table',
       id: 'labBatchBarDefault',
-      rowKey: 'id',
+      itemKey: 'id',
       source: [
         { id: 'x', name: 'Item X' },
         { id: 'y', name: 'Item Y' },

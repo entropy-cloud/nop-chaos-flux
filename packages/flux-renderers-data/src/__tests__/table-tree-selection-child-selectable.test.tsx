@@ -23,7 +23,7 @@ describe('table tree selection — nested child is selectable and persists (G2)'
           body: [
             {
               type: 'table',
-              rowKey: 'id',
+              itemKey: 'id',
               rowChildrenField: 'children',
               rowSelection: { type: 'checkbox' },
               columns: [{ label: 'Name', name: 'name' }],

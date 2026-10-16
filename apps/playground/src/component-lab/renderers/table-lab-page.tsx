@@ -6,7 +6,7 @@ const sortableTextTable = {
     {
       type: 'table',
       source: '${users}',
-      rowKey: 'id',
+      itemKey: 'id',
       columns: [
         { label: 'ID', name: 'id', sortable: true },
         { label: 'Username', name: 'username', sortable: true },
@@ -24,7 +24,7 @@ const emptyTable = {
     {
       type: 'table',
       source: '${users}',
-      rowKey: 'id',
+      itemKey: 'id',
       columns: [
         { label: 'ID', name: 'id' },
         { label: 'Username', name: 'username' },
@@ -42,7 +42,7 @@ const searchableFilterableTable = {
     {
       type: 'table',
       source: '${users}',
-      rowKey: 'id',
+      itemKey: 'id',
       columns: [
         { label: 'Username', name: 'username', searchable: true },
         {
@@ -68,7 +68,7 @@ const responsiveExpandTable = {
     {
       type: 'table',
       source: '${users}',
-      rowKey: 'id',
+      itemKey: 'id',
       responsive: {
         mode: 'expand',
         breakpoint: 1400,
@@ -134,7 +134,7 @@ const quickEditTable = {
     {
       type: 'table',
       source: '${users}',
-      rowKey: 'id',
+      itemKey: 'id',
       quickSaveItemAction: {
         action: 'ajax',
         args: { url: '/api/c4/quick-save', data: { username: '${$slot.record.username}', id: '${$slot.record.id}' } },
@@ -154,7 +154,7 @@ const lazyTreeTable = {
     {
       type: 'table',
       source: '${treeUsers}',
-      rowKey: 'id',
+      itemKey: 'id',
       rowChildrenField: 'children',
       childrenSource: {
         action: 'ajax',
@@ -171,7 +171,7 @@ const selectionPaginationTable = {
     {
       type: 'table',
       source: '${pagedUsers}',
-      rowKey: 'id',
+      itemKey: 'id',
       pagination: { enabled: true, pageSize: 2 },
       rowSelection: { type: 'checkbox' },
       onSelectionChange: {
@@ -188,7 +188,7 @@ const densityTiersTable = {
     {
       type: 'table',
       source: '${users}',
-      rowKey: 'id',
+      itemKey: 'id',
       density: 'compact',
       testid: 'density-compact',
       columns: [
@@ -199,7 +199,7 @@ const densityTiersTable = {
     {
       type: 'table',
       source: '${users}',
-      rowKey: 'id',
+      itemKey: 'id',
       testid: 'density-default',
       columns: [
         { label: 'ID', name: 'id', width: 80 },
@@ -209,7 +209,7 @@ const densityTiersTable = {
     {
       type: 'table',
       source: '${users}',
-      rowKey: 'id',
+      itemKey: 'id',
       density: 'relaxed',
       testid: 'density-relaxed',
       columns: [

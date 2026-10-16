@@ -25,7 +25,7 @@ describe('CRUD selectionField (ids) binding for batch actions', () => {
             {
               type: 'crud',
               id: 'ids-crud',
-              rowKey: 'id',
+              itemKey: 'id',
               selection: { type: 'checkbox' },
               source: [
                 { id: '1', name: 'Alice' },
@@ -95,7 +95,7 @@ describe('CRUD selectionField (ids) binding for batch actions', () => {
             {
               type: 'crud',
               id: 'ids-crud-custom',
-              rowKey: 'id',
+              itemKey: 'id',
               selection: { type: 'checkbox' },
               selectionField: 'selectedPositionIds',
               source: [

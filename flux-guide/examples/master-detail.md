@@ -88,7 +88,7 @@
             {
               "type": "table",
               "source": "${orderLogs?.items}",
-              "rowKey": "id",
+              "itemKey": "id",
               "empty": { "type": "text", "text": "暂无日志" },
               "columns": [
                 { "name": "time", "label": "时间" },

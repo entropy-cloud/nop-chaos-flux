@@ -66,7 +66,7 @@ export function buildCrudTableSchema(input: {
     id: `${id}-table`,
     source,
     columns: schema.columns ?? [],
-    rowKey: schema.rowKey,
+    itemKey: schema.itemKey,
     selectionOwnership: 'scope',
     selectionStatePath,
     paginationOwnership: 'scope',
@@ -158,7 +158,7 @@ export function buildCrudCarrierSchema(input: {
   listMode: 'cards' | 'list';
   filteredRows: unknown[];
   paginationState: { currentPage: number; pageSize: number };
-  rowKey: string | undefined;
+  itemKey: string | undefined;
   empty: unknown;
   itemRegion?: { templateNode: unknown };
   cardRegion?: { templateNode: unknown };
@@ -168,7 +168,7 @@ export function buildCrudCarrierSchema(input: {
     listMode,
     filteredRows,
     paginationState,
-    rowKey,
+    itemKey,
     empty,
     itemRegion,
     cardRegion,
@@ -185,7 +185,7 @@ export function buildCrudCarrierSchema(input: {
   const base: Record<string, unknown> = {
     items: carrierRows as BaseSchema['data'],
     selectionMode: 'none' as const,
-    keyField: rowKey,
+    keyField: itemKey,
     empty,
   };
   if (listMode === 'list') {

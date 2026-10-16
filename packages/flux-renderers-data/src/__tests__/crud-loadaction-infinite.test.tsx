@@ -82,7 +82,7 @@ describe('CRUD loadAction × infinite accumulate (1-2)', () => {
               loadAction: { action: 'probe:load', dependsOn: ['__crud_test__'] },
               pagination: { mode: 'infinite' },
               columns: [{ name: 'name', label: 'Name' }],
-              rowKey: 'id',
+              itemKey: 'id',
             },
           ],
         }}
@@ -133,7 +133,7 @@ describe('CRUD loadAction × infinite accumulate (1-2)', () => {
               loadAction: { action: 'probe:load', dependsOn: ['__crud_test__'] },
               pagination: { mode: 'infinite' },
               columns: [{ name: 'name', label: 'Name' }],
-              rowKey: 'id',
+              itemKey: 'id',
             },
           ],
         }}
@@ -198,7 +198,7 @@ describe('CRUD loadAction × infinite accumulate (1-2)', () => {
               loadAction: { action: 'probe:load', dependsOn: ['__crud_test__'] },
               pagination: { mode: 'infinite' },
               columns: [{ name: 'name', label: 'Name' }],
-              rowKey: 'id',
+              itemKey: 'id',
             },
           ],
         }}
@@ -271,7 +271,7 @@ describe('CRUD loadAction × infinite accumulate (1-2)', () => {
               loadAction: { action: 'probe:load', dependsOn: ['__crud_test__'] },
               pagination: { mode: 'infinite' },
               columns: [{ name: 'name', label: 'Name' }],
-              rowKey: 'id',
+              itemKey: 'id',
             },
           ],
         }}

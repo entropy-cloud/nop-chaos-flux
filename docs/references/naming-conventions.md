@@ -141,9 +141,11 @@
 
 ### 4.9 数组容器行键（itemKey）
 
-- **唯一字段名**：`itemKey?: string`——数组容器族（array-field / combo / input-table）声明行数据键字段一律 `itemKey`，**不引入 `rowKey` schema 字段**（词汇报告 §债三）。
+- **作者面唯一字段名**：`itemKey?: string`——**所有**行/项容器的 schema 属性一律 `itemKey`（数组容器族 array-field / combo / input-table；data 族 table / crud），**作者面不引入 `rowKey` schema 字段**（词汇报告 §债三 + RM-13 裁定：data 族 `rowKey` 并入单标准）。
 - 读取侧局部变量惯例同步为 `itemKeyField`（三渲染器已如此）。
-- 数据行运行时兼容键 `__rowKey`（数组元素属性）与 data 族（crud/table/list）的行标识 `rowKey`（记录身份字段，语义不同族）不属于数组容器行键字段命名，不适用本节；**data 族 `rowKey` 是否并入 `itemKey` 单标准由 RM-12 plan live 枚举后报人工裁决**（不静默并入），裁决前维持现状。
+- **作者面作用域符号**：树表 `childrenSource` 懒加载 action 的 scope 以 `itemKey` 暴露该行身份（`use-table-lazy-children.ts`），作者在 action 表达式里写 `${itemKey}`。
+- **分工（成文规则）**：**作者面 = `itemKey`**（schema 属性、definition 注册、文档示例、action scope 符号）；**渲染器内部行身份结构 = 保留 `rowKey` 词**（`TableRowEntry.rowKey`、`normalizeRowKey`、`selectedRowKeys`、内部 `row:`-prefixed 缓存/scope key 格式等）——理由是表格内部说的领域词就是「行」，改成 `item` 词域会波及 `selectedRowKeys` 等语义名列名、制造新错配。该分工非漂移，而是本节确立的**双层词汇约定**。
+- **数据形状契约**：数据行运行时兼容键 `__rowKey`（数组元素属性）属**数据形状**而非 schema 词汇，不受本节约束（作者数据里怎么写就怎么读；清理需单独立项）。
 
 ---
 
@@ -159,7 +161,7 @@
 - [ ] **通道归属**：字段是否进了正确通道（`props`/`meta`/`regions`/`events`，见 `field-binding-and-renderer-contract.md` Frozen Matrix）？是否避免了散落条件属性（用 `when` 统一）？
 - [ ] **无平行词汇表**：是否避免了 `xxxExpr`/`xxxFormula`/`xxxHandler` 平行命名？是否避免了组件级 `api`/`initFetch`/`interval` 短路径（请求下沉 data-source）？
 - [ ] **出处可查**：新增映射是否能在 `packages/ui/src/index.ts` 导出或现有 design.md 找到出处（不臆造组件或 prop）？
-- [ ] **词汇三单源**：事件字段是否 `ActionSchema | ActionSchema[]` 单形态（§4.4）？ownership 字段是否 `<axis>Ownership` + `OwnershipMode` 模式（§4.8）？数组容器键字段是否 `itemKey`（§4.9，无 `rowKey`）？
+- [ ] **词汇三单源**：事件字段是否 `ActionSchema | ActionSchema[]` 单形态（§4.4）？ownership 字段是否 `<axis>Ownership` + `OwnershipMode` 模式（§4.8）？行/项容器键字段是否 `itemKey`（§4.9，作者面无 `rowKey`；内部行身份结构按 §4.9 分工保留 `rowKey` 词）？
 
 ---
 

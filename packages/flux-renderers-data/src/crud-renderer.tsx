@@ -508,7 +508,7 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
         listMode: listMode as 'cards' | 'list',
         filteredRows,
         paginationState,
-        rowKey: normalizedSchema.rowKey,
+        itemKey: normalizedSchema.itemKey,
         empty: tableEmptyContent,
         itemRegion: props.regions.item as { templateNode: unknown } | undefined,
         cardRegion: props.regions.card as { templateNode: unknown } | undefined,

@@ -329,7 +329,7 @@ export function transformCrudAuthoringSchema(
     context.emit({
       code: 'invalid-property-shape',
       path: toJsonPointer(context.path, 'primaryField'),
-      message: 'crud.primaryField is no longer supported. Use canonical crud.rowKey.',
+      message: 'crud.primaryField is no longer supported. Use canonical crud.itemKey.',
     });
   }
 

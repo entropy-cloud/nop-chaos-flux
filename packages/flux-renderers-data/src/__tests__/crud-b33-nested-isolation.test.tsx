@@ -53,7 +53,7 @@ describe('B3.3 T24 — sibling cruds with distinct ids keep independent state (r
         {
           type: 'crud',
           id: 'crudA',
-          rowKey: 'id',
+          itemKey: 'id',
           selection: { type: 'checkbox' },
           footerToolbar: [{ type: 'text', text: 'A selected: ${$crud.selectionCount}' }],
           columns: [{ name: 'name', label: 'A-Name' }],
@@ -65,7 +65,7 @@ describe('B3.3 T24 — sibling cruds with distinct ids keep independent state (r
         {
           type: 'crud',
           id: 'crudB',
-          rowKey: 'id',
+          itemKey: 'id',
           selection: { type: 'checkbox' },
           footerToolbar: [{ type: 'text', text: 'B selected: ${$crud.selectionCount}' }],
           columns: [{ name: 'name', label: 'B-Name' }],
@@ -116,7 +116,7 @@ describe('B3.3 T24 — sibling cruds with distinct ids keep independent state (r
         {
           type: 'crud',
           id: 'crudA',
-          rowKey: 'id',
+          itemKey: 'id',
           paginationOwnership: 'scope',
           paginationStatePath: 'pgA',
           footerToolbar: [{ type: 'text', text: 'A page: ${$crud.pagination.currentPage}' }],
@@ -131,7 +131,7 @@ describe('B3.3 T24 — sibling cruds with distinct ids keep independent state (r
         {
           type: 'crud',
           id: 'crudB',
-          rowKey: 'id',
+          itemKey: 'id',
           paginationOwnership: 'scope',
           paginationStatePath: 'pgB',
           footerToolbar: [{ type: 'text', text: 'B page: ${$crud.pagination.currentPage}' }],

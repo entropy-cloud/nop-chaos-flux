@@ -6,7 +6,7 @@
       "type": "crud",
       "id": "adv-query-crud",
       "testid": "adv-query-crud",
-      "rowKey": "id",
+      "itemKey": "id",
       "loadAllData": true,
       "loadAction": {
         "action": "ajax",

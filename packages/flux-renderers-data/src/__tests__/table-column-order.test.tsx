@@ -28,7 +28,7 @@ describe('CRUD table column order', () => {
               { type: 'operation', label: '操作', buttons: [{ type: 'button', label: '查看' }] },
             ],
             source: [{ id: 1, userName: 'alice', nickName: 'Alice', status: 1 }],
-            rowKey: 'id',
+            itemKey: 'id',
           }],
         }}
         env={env}
@@ -71,7 +71,7 @@ describe('CRUD table column order', () => {
               { type: 'operation', label: '操作', buttons: [{ type: 'button', label: '查看' }] },
             ],
             source: [{ id: 1, userName: 'alice', nickName: 'Alice' }],
-            rowKey: 'id',
+            itemKey: 'id',
           }],
         }}
         env={env}
@@ -113,7 +113,7 @@ describe('CRUD table column order', () => {
               { type: 'operation', label: '操作', buttons: [{ type: 'button', label: '查看' }] },
             ],
             source: [{ id: 1, userName: 'alice', nickName: 'Alice' }],
-            rowKey: 'id',
+            itemKey: 'id',
           }],
         }}
         env={env}

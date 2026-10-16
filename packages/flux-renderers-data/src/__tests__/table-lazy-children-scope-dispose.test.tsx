@@ -7,7 +7,7 @@ afterEach(() => {
 });
 
 describe('useTableLazyChildren — dispatch-time scope pairing (09-02)', () => {
-  it('dispatches with a record/rowKey scope and disposes it once the action settles', async () => {
+  it('dispatches with a record/itemKey scope and disposes it once the action settles', async () => {
     let resolveDispatch: (value: unknown) => void;
     const createScope = vi.fn((patch: Record<string, unknown>) => ({
       id: 'lazy-scope-0',
@@ -36,7 +36,7 @@ describe('useTableLazyChildren — dispatch-time scope pairing (09-02)', () => {
       expect(dispatch).toHaveBeenCalled();
     });
 
-    expect(createScope).toHaveBeenCalledWith({ record: { id: '1' }, rowKey: 'r1' });
+    expect(createScope).toHaveBeenCalledWith({ record: { id: '1' }, itemKey: 'r1' });
     expect(dispatch).toHaveBeenCalledWith(
       expect.anything(),
       expect.objectContaining({ scope: expect.objectContaining({ id: 'lazy-scope-0' }) }),

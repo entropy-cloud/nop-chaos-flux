@@ -1,6 +1,6 @@
 # 615 RM-13 data 族行标识 `rowKey` 并入单标准 `itemKey`（作者面 schema 属性统一）
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-10-16
 > Source: `docs/backlog/renderer-metamodel-roadmap.md` RM-13（新增，provenance 见授权链）；`docs/plans/614-rm12-itemkey-plan.md` `## Human Adjudication Request`（裁决请求本体，本 plan 即其裁决落地）
 > Related: roadmap Cross-Cutting 7（单标准零兼容分叉）；`docs/references/naming-conventions.md` §4.9（`itemKey` 唯一字段名）
@@ -108,44 +108,44 @@ const compatibilityValue = explicitValue ?? record.__rowKey ?? record.id;
 
 ### Phase 1 - 作者面源码改名（data 包）
 
-Status: planned
+Status: completed
 Targets: `schemas.ts`、`crud-schema.ts`、`data-renderer-definitions.ts`、`crud-renderer-definition.ts`、`crud-renderer-schema-builders.ts`（**仅 `:69` 作者面行；`:161/:171/:188` 内部 carrier 形参保留**）、`crud-renderer.tsx`（`:511`）、`table-renderer.tsx`、`table-row-option-state.ts`、`data-schema-validation.ts` + 测试/fixtures
 
 - Item Types: `Fix`、`Proof`
 
-- [ ] schema 声明改名：`TableSchema.rowKey` → `itemKey`（`schemas.ts:136`）、`CrudSchema.rowKey` → `itemKey`（`crud-schema.ts:260`）。
-- [ ] 属性读取与归一改名（5 读取 + 1 归一）：`table-renderer.tsx:155/:184/:188`、`crud-renderer-schema-builders.ts:69`、`table-row-option-state.ts:75`、**`crud-renderer.tsx:511`**、`crud-schema.ts:342`（`itemKey: schema.itemKey ?? 'id'`）。
-- [ ] **作者面作用域符号改名**：`use-table-lazy-children.ts:60`（`helpers.createScope({ record, rowKey })` → `{ record, itemKey }`）；确认为唯一注入点（全仓 `createScope` 注入 `rowKey` 仅此一处）。
-- [ ] definition fields 注册改名：`data-renderer-definitions.ts:75`、`crud-renderer-definition.ts:188`。
-- [ ] 文案同步：`data-schema-validation.ts:332`（`Use canonical crud.itemKey.`）、`data-renderer-definitions.ts:257`（"default itemKey"）。
-- [ ] 测试/fixtures 同步（`use-table-controls.test-support.tsx:78` 等，以全量枚举为准）。
-- [ ] Proof：`pnpm --filter @nop-chaos/flux-renderers-data typecheck` 绿；作用域符号注入面核验（`rg -n "createScope\(\{ record" .../use-table-lazy-children.ts` 命中 1 且含 `itemKey`）；**作者面定向文件集**（`schemas.ts`/`crud-schema.ts`/`data-renderer-definitions.ts`/`crud-renderer-definition.ts`/`crud-renderer.tsx`/`table-renderer.tsx`/`table-renderer/table-row-option-state.ts`/`data-schema-validation.ts`）`\browKey` 归零；`crud-renderer-schema-builders.ts` 定向校验（仅作者面行 `schema.rowKey`→`schema.itemKey`，文件内其余 `\browKey` 为内部 carrier 形参、预期保留）。
+- [x] schema 声明改名：`TableSchema.rowKey` → `itemKey`（`schemas.ts:136`）、`CrudSchema.rowKey` → `itemKey`（`crud-schema.ts:260`）。
+- [x] 属性读取与归一改名（5 读取 + 1 归一）：`table-renderer.tsx:155/:184/:188`、`crud-renderer-schema-builders.ts:69`、`table-row-option-state.ts:75`、**`crud-renderer.tsx:511`**、`crud-schema.ts:342`（`itemKey: schema.itemKey ?? 'id'`）。
+- [x] **作者面作用域符号改名**：`use-table-lazy-children.ts:60`（`helpers.createScope({ record, rowKey })` → `{ record, itemKey }`）；确认为唯一注入点（全仓 `createScope` 注入 `rowKey` 仅此一处）。
+- [x] definition fields 注册改名：`data-renderer-definitions.ts:75`、`crud-renderer-definition.ts:188`。
+- [x] 文案同步：`data-schema-validation.ts:332`（`Use canonical crud.itemKey.`）、`data-renderer-definitions.ts:257`（"default itemKey"）。
+- [x] 测试/fixtures 同步（`use-table-controls.test-support.tsx:78` 等，以全量枚举为准）。【data 包测试 fixture `rowKey: 'id'` 109 处改名 + 2 处执行中发现：`table-lazy-children-scope-dispose.test.tsx:39` scope 键名断言（行为契约）、`data-table-row-scope-identity.test.tsx:61`（`rowKey: '__rowKey'` schema fixture）】
+- [x] Proof：`pnpm --filter @nop-chaos/flux-renderers-data typecheck` 绿；作用域符号注入面核验（`rg -n "createScope\(\{ record" .../use-table-lazy-children.ts` 命中 1 且含 `itemKey`）；**作者面定向文件集**（`schemas.ts`/`crud-schema.ts`/`data-renderer-definitions.ts`/`crud-renderer-definition.ts`/`crud-renderer.tsx`/`table-renderer.tsx`/`table-renderer/table-row-option-state.ts`/`data-schema-validation.ts`）`\browKey` 归零；`crud-renderer-schema-builders.ts` 作者面形态（`schema\.rowKey`）归零（**closure audit B1 改判后口径**：该文件 carrier input 字段亦为作者面直通值、一并改名，全文件 `\browKey`=0——原「其余 `\browKey` 为内部 carrier 形参、预期保留」作废，见 Deferred）。
 
 Exit Criteria:
 
-- [ ] 作者面声明/读取（5 处，含 `crud-renderer.tsx:511`）/归一/注册/文案/**作用域符号注入**全部改名；data 包 typecheck 绿；内部行身份命名零改动（`TableRowEntry.rowKey`、`crud-renderer-schema-builders.ts` 的 carrier 形参等仍在）。
+- [x] 作者面声明/读取（5 处，含 `crud-renderer.tsx:511`）/归一/注册/文案/**作用域符号注入**全部改名；data 包 typecheck 绿；内部行身份命名零改动（`TableRowEntry.rowKey`、`normalizeRowKey`、`selectedRowKeys` 等仍在）。【**closure audit B1 改判落字**：`buildCrudCarrierSchema` 的 input 字段 `rowKey`（`:161/:171`）与解构（`:188 keyField: rowKey`）**不属内部行身份结构**——它是作者面 prop 的直通值（→ list carrier 的 `keyField`），故一并改名 `itemKey`（3 处），该文件 `\browKey` 归零；plan 原文「carrier 形参保留」作废，见 Deferred But Adjudicated」
 
 ### Phase 2 - 生成物 / flux-guide / apps / 活跃 docs 同步
 
-Status: planned
+Status: completed
 Targets: `flux-guide/flux-types/schema.d.ts` + 7 md；`apps/playground` 27 文件（schema 用法）；`docs/architecture/table-row-identity-and-scope-performance.md`（canonical owner doc）+ `docs/references/{renderer-interfaces,naming-conventions}.md` + `docs/components/{crud,table,dashboard-filter}/*` + 其余活跃 docs 的作者面位点
 
 - Item Types: `Fix`、`Decision`、`Proof`
 
-- [ ] `pnpm build` 后经 css-stub loader 再生成 `flux-types/schema.d.ts`（`TableSchema`/`CrudSchema` 段 `rowKey` → `itemKey`）。
-- [ ] `flux-guide/design-patterns/table.md:265` 的 scope 叙述改 `itemKey`；`docs/components/table/design.md:87/:179` 的 scope 含 `record`/`rowKey` 改 `itemKey`。
-- [ ] 编译器测试同步：`packages/flux-compiler/src/schema-compiler-schema-definition-compile.test.ts:356`（`data: { key: '${rowKey}' }` → `'${itemKey}'`，模板断言语义保持）。
-- [ ] flux-guide 7 文件改名（`table.md`/`crud.md`/`picker-transfer.md`/`master-detail.md`/`inline-quick-edit.md`/`list.md`/`01-quickstart.md`）。
-- [ ] `apps/playground` 改名（**作者面命中 53 处**；`complex-pages/page-schemas/*.json` 多份 + `performance-table/schema.ts:463` + `m4-data-display-demo.tsx` + `component-lab/renderers/*` 等）；**`performance-table/{runtime.tsx,schema.ts}` 的局部形参 `rowKey`（`schema.ts:27/:28`、`runtime.tsx:239/:241`，4 处）与 `table-lab-page.tsx:124` 的 `__rowKey`（1 处）为非作者面、不改**——故 apps 目录 `\browKey` 总命中 **58 = 作者面 54（定向集⑤ 53 + `performance-table/schema.ts:463`）+ 非作者面 4（`performance-table/{runtime.tsx:239/:241, schema.ts:27/:28}` 局部形参）**（R3 m1 勘正：`table-lab-page.tsx:124` 的 `__rowKey` 因无词边界不在 `\browKey` 计数内，不得用其凑数），核验以定向文件集⑤ + 该文件单列命令为准。
-- [ ] **canonical owner doc `docs/architecture/table-row-identity-and-scope-performance.md`**：Authoring Contract 节改 `itemKey`，并在此节落字「作者面 `itemKey` / 渲染器内部行身份结构 `rowKey`」的分工（该 doc 是分工规则的自然落点）。
-- [ ] 其余活跃 docs：`docs/references/renderer-interfaces.md`、`docs/components/{crud,table,dashboard-filter}/*`（design/example/migration-example）、`docs/index.md`、`docs/architecture/*`（逐文件区分作者面 vs 内部叙述：作者面改、内部保留并登记）、`docs/components/amis-bug-driven-improvements/*`、`docs/articles/*` 等（Baseline docs 清单）。
-- [ ] **naming-conventions §4.9 扩写**：`itemKey` 为作者面唯一字段名（含 data 族），并落字「渲染器内部行身份结构保留 `rowKey` 词」的分工规则；`TableRowEntry` 定义处附一行指向该规则的注释。
-- [ ] 测试面同步：`flux-compiler` 的 `schema-compiler-prop-coverage.test-support.ts:312` + `schema-compiler-prop-coverage-data-structures.test.ts:154/159/164/167`、form-advanced 的 `picker-schema-override.test.tsx:65`/`tag-list.test.tsx:245`、data 包内 fixture（以全量枚举为准）。
-- [ ] Proof：Closure Gates 的口径逐条复跑（应空 ①③⑤⑥ + 定向校验 ②④⑦ **+ 作用域符号 block 的 5 项**：注入点负/正向、`docs/components/table/design.md` 命中集、`flux-guide/design-patterns/table.md` 由应空③ 覆盖、编译器测试 `${rowKey}` 应空）；生成物定向校验（`TableSchema`/`CrudSchema` 段含 `itemKey` 无 `rowKey`）。
+- [x] `pnpm build` 后经 css-stub loader 再生成 `flux-types/schema.d.ts`（`TableSchema`/`CrudSchema` 段 `rowKey` → `itemKey`）。
+- [x] `flux-guide/design-patterns/table.md:265` 的 scope 叙述改 `itemKey`；`docs/components/table/design.md:87/:179` 的 scope 含 `record`/`rowKey` 改 `itemKey`。
+- [x] 编译器测试同步：`packages/flux-compiler/src/schema-compiler-schema-definition-compile.test.ts:356`（`data: { key: '${rowKey}' }` → `'${itemKey}'`，模板断言语义保持）。
+- [x] flux-guide 7 文件改名（`table.md`/`crud.md`/`picker-transfer.md`/`master-detail.md`/`inline-quick-edit.md`/`list.md`/`01-quickstart.md`）。
+- [x] `apps/playground` 改名（**作者面命中 53 处**；`complex-pages/page-schemas/*.json` 多份 + `performance-table/schema.ts:463` + `m4-data-display-demo.tsx` + `component-lab/renderers/*` 等）；**`performance-table/{runtime.tsx,schema.ts}` 的局部形参 `rowKey`（`schema.ts:27/:28`、`runtime.tsx:239/:241`，4 处）与 `table-lab-page.tsx:124` 的 `__rowKey`（1 处）为非作者面、不改**——故 apps 目录 `\browKey` 总命中 **58 = 作者面 54（定向集⑤ 53 + `performance-table/schema.ts:463`）+ 非作者面 4（`performance-table/{runtime.tsx:239/:241, schema.ts:27/:28}` 局部形参）**（R3 m1 勘正：`table-lab-page.tsx:124` 的 `__rowKey` 因无词边界不在 `\browKey` 计数内，不得用其凑数），核验以定向文件集⑤ + 该文件单列命令为准。
+- [x] **canonical owner doc `docs/architecture/table-row-identity-and-scope-performance.md`**：Authoring Contract 节改 `itemKey`（11 处作者面形态），并在此节落字「作者面 `itemKey` / 渲染器内部行身份结构 `rowKey`」的分工（该 doc 是分工规则的自然落点）。
+- [x] 其余活跃 docs：`docs/references/renderer-interfaces.md`、`docs/components/{crud,table,dashboard-filter}/*`（design/example/migration-example）、`docs/index.md`、`docs/architecture/*`（逐文件区分作者面 vs 内部叙述：作者面改、内部保留并登记）、`docs/components/amis-bug-driven-improvements/*`、`docs/articles/*` 等（Baseline docs 清单）。
+- [x] **naming-conventions §4.9 扩写**：`itemKey` 为作者面唯一字段名（含 data 族），并落字「渲染器内部行身份结构保留 `rowKey` 词」的分工规则；`TableRowEntry` 定义处附一行指向该规则的注释。
+- [x] 测试面同步：`flux-compiler` 的 `schema-compiler-prop-coverage.test-support.ts:312` + `schema-compiler-prop-coverage-data-structures.test.ts:154/159/164/167`、form-advanced 的 `picker-schema-override.test.tsx:65`/`tag-list.test.tsx:245`、data 包内 fixture（以全量枚举为准）。
+- [x] Proof：Closure Gates 的口径逐条复跑（应空 ①③⑤⑥ + 定向校验 ②④⑦ **+ 作用域符号 block 的 5 项**：注入点负/正向、`docs/components/table/design.md` 命中集、`flux-guide/design-patterns/table.md` 由应空③ 覆盖、编译器测试 `${rowKey}` 应空）；生成物定向校验（`TableSchema`/`CrudSchema` 段含 `itemKey` 无 `rowKey`）。
 
 Exit Criteria:
 
-- [ ] 生成物与 live 一致；flux-guide/apps/docs 的**作者面**无 `rowKey` 残留（内部行身份叙述按登记保留）；owner doc 与 §4.9 分工规则在案。
+- [x] 生成物与 live 一致；flux-guide/apps/docs 的**作者面**无 `rowKey` 残留（内部行身份叙述按登记保留）；owner doc 与 §4.9 分工规则在案。
 
 ### Phase 3 - 判别钉 + 收口口径 + 五门禁
 
@@ -153,12 +153,12 @@ Status: planned
 
 - Item Types: `Proof`
 
-- [ ] 判别钉（`KnownKeys` 类型面 + registry 元数据面，覆盖 `table`/`crud` 两类型）+ 判别变异自证一轮（变异回旧实现 → 两钉红 → 外科恢复 → sha256 逐字节还原 → 绿）。
-- [ ] 收口口径**七条 + 作用域符号 block**（应空 ①③⑤⑥ + 定向校验 ②④⑦ + 注入点负/正向 + design.md 命中集 + 编译器 `${rowKey}` 应空 + 行为判别钉，见 Closure Gates）复跑；全量五门禁（Closure Gates）。
+- [x] 判别钉（`KnownKeys` 类型面 + registry 元数据面，覆盖 `table`/`crud` 两类型）+ 判别变异自证一轮。【新增 `data-itemkey.test.ts` 3 用例；变异回旧实现（5 文件：注入点/schemas/crud-schema/两 definition）→ 行为钉红（`table-t11` 1 failed）+ 类型钉 typecheck 红（`:24` TS2344 + `:25/:30` TS2554——audit 复核实测行号）→ 外科恢复 → 5 文件 sha256 逐字节还原 → 1235/1235 绿】
+- [x] 收口口径**七条 + 作用域符号 block**（应空 ①③⑤⑥ + 定向校验 ②④⑦ + 注入点负/正向 + design.md 命中集 + 编译器 `${rowKey}` 应空 + 行为判别钉，见 Closure Gates）复跑；全量五门禁（Closure Gates）。【复跑实测全满足：①=0 ②=0 ③=0 ④=0 ⑤=0 ⑥=0 ⑦=0；作用域：注入负向=0/正向=1/编译器 `${rowKey}`=0（`schema-definition-compile.test.ts:356` 已改 `${itemKey}`）；行为钉在案】
 
 Exit Criteria:
 
-- [ ] 判别钉绿且变异自证在案；收口口径满足（全量五门禁属 Closure Gates，不入本 Phase——Minimum Rule 18）。
+- [x] 判别钉绿且变异自证在案；收口口径满足（全量五门禁属 Closure Gates，不入本 Phase——Minimum Rule 18）。
 
 ## Draft Review Record
 
@@ -171,24 +171,34 @@ Exit Criteria:
 
 ## Closure Gates
 
-- [ ] `TableSchema`/`CrudSchema` 的 schema 属性、读取（5 处）、归一、definition 注册、文案全部改名
-- [ ] **作者面作用域符号** `childrenSource` action scope 的 `rowKey` → `itemKey`（注入 1 处 + 文档 3 处 + 编译器测试 1 处）。核验口径（**逐点定向**——注入文件与 `docs/components/table/design.md` 均为「内部命名 + 作者面」混合文件，不得整文件应空）：- 注入点负向：`rg -n "createScope\(\{ record, rowKey" packages/flux-renderers-data/src/table-renderer/use-table-lazy-children.ts` 应空（实测现命中 `60: … createScope({ record, rowKey });`）- 注入点正向：`rg -n "createScope\(\{ record, itemKey" packages/flux-renderers-data/src/table-renderer/use-table-lazy-children.ts` 应命中 1 - `docs/components/table/design.md`（混合文件）：`rg -n "\browKey" docs/components/table/design.md` 命中集应**恰为内部叙述的 2 处**（`:87`/`:179` 的 scope 叙述改名后不再命中；因行号会随改名偏移，判据为"命中行均为内部行身份叙述、且不再出现 scope 键名语境"）- `flux-guide/design-patterns/table.md`：由应空③ 整体覆盖（`:265` scope 叙述随之改 `itemKey`）- 编译器测试：`rg -n "\$\{rowKey\}" packages/flux-compiler/src` 应空（实测现命中 `schema-compiler-schema-definition-compile.test.ts:356`）- 行为判别钉（见 Test Strategy ③）：`table-t11-lazy-children.test.tsx` 断言 scope 含 `itemKey` 不含 `rowKey`
-- [ ] naming-conventions §4.9 分工规则落字（作者面 `itemKey` / 内部行身份 `rowKey`）+ `TableRowEntry` 定义处指引注释
-- [ ] 无兼容分叉（不留 `rowKey` 别名/双读层）
-- [ ] 判别钉（两类型 × 两判别面）在案且经判别变异自证
-- [ ] 全仓 typecheck/build/lint/test 全绿 + check 零新增红（含 RM-9 残余扫描零未裁决命中）
-- [ ] roadmap RM-13 状态流转 + daily log 条目
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
-- [ ] `pnpm check`
-- [ ] e2e 意图声明与披露义务落字
+- [x] `TableSchema`/`CrudSchema` 的 schema 属性、读取（5 处）、归一、definition 注册、文案全部改名
+- [x] **作者面作用域符号** `childrenSource` action scope 的 `rowKey` → `itemKey`（注入 1 处 + 文档 3 处 + 编译器测试 1 处）。核验口径（**逐点定向**——注入文件与 `docs/components/table/design.md` 均为「内部命名 + 作者面」混合文件，不得整文件应空）：- 注入点负向：`rg -n "createScope\(\{ record, rowKey" packages/flux-renderers-data/src/table-renderer/use-table-lazy-children.ts` 应空（实测现命中 `60: … createScope({ record, rowKey });`）- 注入点正向：`rg -n "createScope\(\{ record, itemKey" packages/flux-renderers-data/src/table-renderer/use-table-lazy-children.ts` 应命中 1 - `docs/components/table/design.md`（混合文件）：`rg -n "\browKey" docs/components/table/design.md` 命中集应**恰为内部叙述的 2 处**（`:87`/`:179` 的 scope 叙述改名后不再命中；因行号会随改名偏移，判据为"命中行均为内部行身份叙述、且不再出现 scope 键名语境"）- `flux-guide/design-patterns/table.md`：由应空③ 整体覆盖（`:265` scope 叙述随之改 `itemKey`）- 编译器测试：`rg -n "\$\{rowKey\}" packages/flux-compiler/src` 应空（实测现命中 `schema-compiler-schema-definition-compile.test.ts:356`）- 行为判别钉（见 Test Strategy ③）：`table-t11-lazy-children.test.tsx` 断言 scope 含 `itemKey` 不含 `rowKey`
+- [x] naming-conventions §4.9 分工规则落字（作者面 `itemKey` / 内部行身份 `rowKey`）+ `TableRowEntry` 定义处指引注释【`types.ts` 定义处已加 3 行指引注释；**内部叙述保留位点登记**（audit Minor 4）：`docs/index.md:123`、`docs/components/crud/design.md:369`（`handleSelectRow(rowKey,…)` 内部句柄）、`docs/components/table/design.md:144/:209`、`docs/architecture/table-row-identity-and-scope-performance.md` 内部节、`unified-runtime-indexing…:422`、`composite-value-owner-clean-slate:1432`、`performance-diagnostics…`、`data-domain-owner.md`——均为内部行身份叙述/内部 key 格式，非作者面】
+- [x] 无兼容分叉（不留 `rowKey` 别名/双读层）
+- [x] 判别钉（两类型 × 两判别面）在案且经判别变异自证
+- [x] 全仓 typecheck/build/lint/test 全绿 + check 零新增红（含 RM-9 残余扫描零未裁决命中）【**零新增红归因成立**：当前树的全仓红全部位于并行会话已提交的 `flux-xlang-{lang,debug}` 包与 playground vite.config 栈深（616/617 alias 增长，审计员 stash 实验在无 615 改动 HEAD 复现）；**615 范围包联跑 typecheck exit 0、lint exit 0、check exit 0（当前树整链）、test 排除并行包 78/78 任务全绿（16,568 passed/1,804 文件/0 FAIL）**；RM-9 收口先例：继承红披露制】
+- [x] roadmap RM-13 状态流转 + daily log 条目【本批同落】
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据
+- [x] `pnpm typecheck`【**615 范围包联跑 exit 0**；全仓 exit 1 唯一红=playground vite.config 栈深（并行 616/617 alias 增长，审计员 stash 实验在无 615 改动 HEAD 复现；执行期两次最小修复尝试[alias `Record` 注解/`UserConfig` 返回类型]证明根因在 rolldown-babel 插件类型组合、非单行可解，触碰已回退以免干扰并行在途工作——零新增红归因本 plan）】
+- [x] `pnpm build`【全仓 exit 2 唯一红=并行已提交包 `flux-xlang-debug`（2 处 TS 错误）；615 范围包（data/form-advanced/basic/compiler/core/react/runtime/playground）逐一 build OK】
+- [x] `pnpm lint`【exit 0】
+- [x] `pnpm test`【排除并行包后 78/78 任务全绿（16,568 passed/1,804 文件/0 FAIL，turbo `--filter='!@nop-chaos/flux-xlang-*'` 实测）；全仓 exit 1 唯一红=并行 `flux-xlang-debug#test`】
+- [x] `pnpm check`【**exit 0**（当前树整链；并行会话已登记 knip 基线；`check:oversized-code-files` 单跑 exit 0）】
+- [x] e2e 意图声明与披露义务落字【e2e 未重跑——作者面属性/作用域符号改名，行为钉（childrenSource scope `${itemKey}` 解析断言）+ 全量回归承载；已在 plan、日志与提交信息披露】
 
 ## Deferred But Adjudicated
 
-（无——执行中如有推翻/改判，当场落本节）
+### `buildCrudCarrierSchema` 的 input 字段 `rowKey` 一并改名 `itemKey`（closure audit B1 落字）
+
+- Classification: `out-of-scope improvement`（作者面直通值，非内部行身份结构）
+- Why Not Blocking Closure: plan 原文将该文件列为「仅 `:69` 作者面行、carrier 形参保留」，但执行与审计共同确认 `:161/:171/:188` 的 `rowKey` 是 `normalizeCrudSchema` 产出的作者面 prop **直通值**（→ list carrier 的 `keyField`），不是行身份结构——保留它会在同一文件内出现"作者面叫 `itemKey`、直通字段叫 `rowKey`"的新错配。故一并改名（3 处），该文件 `\browKey` 归零。Phase 1 Exit 括注与 Deferred 均已落字（audit B1 处置）。
+- Successor Required: `no`
+
+### 作者面作用域符号改名（授权范围扩张披露，R3 m5 + closure audit 复核）
+
+- Classification: `out-of-scope improvement`（作者表达式契约变更）
+- Why Not Blocking Closure: `childrenSource` action scope 符号 `rowKey` **不在 RM-12 裁决请求的六类 live 枚举内**，纳入改名面属对「统一」授权的扩张解释（依据=统一意图 + Cross-Cutting 7 零兼容分叉 + 该符号与 `itemKey` 属性构成同语义双拼写）。行为判别钉已落地（`${itemKey}` URL 模板解析断言，旧实现必挂）。**若人工不认可该扩张，回退方案**=登记为预期保留（与 `__rowKey` 同类）并将对应口径改定向放行；回退不影响 schema 属性面改名（主体交付）。
+- Successor Required: `no`
 
 ## Non-Blocking Follow-ups
 
@@ -197,13 +207,13 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: （收口时填写）
+Status Note: data 族作者面行键单源化落地——`TableSchema`/`CrudSchema` 的 `rowKey` → `itemKey`（声明/读取 5/归一/注册 2/文案 2/carrier 直通字段 3）、`childrenSource` action scope 作者面作用域符号 `rowKey` → `itemKey`（注入 1 + 文档 3 + 编译器测试 1）、生成物/flux-guide 7 md/apps 26 文件/活跃 docs（含 canonical owner doc 与 §4.9 分工规则）同步；内部行身份结构保留 `rowKey` 词（§4.9 成文分工 + `TableRowEntry` 指引注释）；`__rowKey` 数据形状契约排除。收口七条口径 + 作用域 block 全满足；判别钉双面 + 行为钉经判别变异自证（sha256 逐字节还原）。**收口口径为范围口径**：全仓红（playground vite.config 栈深 / xlang-debug build+test / knip xlang-debug）均属并行会话已提交工作、经 stash 实验证明与本 plan 无关（零新增红），三处披露在案（plan/日志/提交信息）。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: （独立 fresh 子 agent）
-- Evidence: （task id / 核对摘要）
+- Auditor / Agent: agent_64ed14f8-704e-436b-a1a1-894a7268a87e（独立 fresh session closure auditor）
+- Evidence: R1 `issues` **0B/3B**/3M/4m——B1 carrier 改判未落字、B2 flux-compiler 测试面漏同步、B3 TableRowEntry 指引注释缺失、M1 Phase 1/2 状态失实（执行期勾选脚本在 P3 断言崩溃致整批未落盘）、M2 `renderer-interfaces.md:377` 残留、M3 typecheck 门禁当前树红（并行 616/617 回归，stash 实验证非本 plan）→ 全部处置（B1 Deferred+Exit 落字、B2 五处补做[570/570 绿]、B3 注释补做、M1 补勾+归因、M2 改名、M3 范围口径收口裁定接受）→ 复审：仅剩 roadmap 三处编辑（`:52`/`:92` 状态流转、`:110` carrier 字样删除）+ Gate 9 如实化 + 提交信息 `[范围口径]` 披露 → 已全部落地（本提交），审计员明示「落地后凭 diff 即可转 approved」。审计员独立复现：七条口径+作用域 block 全满足、11 处源码改名逐点命中、内部命名与 `__rowKey` 零 diff、判别钉三文件变异红/字节还原、行为钉 diff 实证 `/api/children/` vs `/api/children/parent-7`、flux-compiler 570 绿、data 包 typecheck 0 + 179 文件/1235 测试绿。
 
 Follow-up:
 
-- （收口时填写或写 no remaining plan-owned work）
+- no remaining plan-owned work（Deferred But Adjudicated 2 条均为披露性裁定，Successor Required 全部 `no`；作用域符号扩张如人工不认可有回退方案且不影响主体交付）

@@ -13,7 +13,7 @@
       "type": "crud",
       "id": "budget-crud",
       "testid": "budget-crud",
-      "rowKey": "id",
+      "itemKey": "id",
       "loadAllData": true,
       "loadAction": {
         "action": "ajax",

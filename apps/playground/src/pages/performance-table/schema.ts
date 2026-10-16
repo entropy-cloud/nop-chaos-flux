@@ -460,7 +460,7 @@ export function createPerformanceSchema(
       type: 'table',
       id: 'perf-mixed-table',
       source: '${perfRows}',
-      rowKey: 'id',
+      itemKey: 'id',
       bordered: true,
       stripe: true,
       selectionOwnership: 'scope',

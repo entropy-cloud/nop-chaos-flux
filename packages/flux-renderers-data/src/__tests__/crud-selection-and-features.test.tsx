@@ -172,7 +172,7 @@ describe('CRUD selection and features', () => {
           body: [
             {
               type: 'crud',
-              rowKey: 'id',
+              itemKey: 'id',
               responsive: {
                 mode: 'expand',
                 breakpoint: 1400,
@@ -324,7 +324,7 @@ describe('CRUD selection and features', () => {
               {
                 type: 'crud',
                 source: records,
-                rowKey: 'id',
+                itemKey: 'id',
                 columns: [
                   { label: 'ID', name: 'id' },
                   { label: 'Name', name: 'name' },
@@ -364,7 +364,7 @@ describe('CRUD selection and features', () => {
               {
                 type: 'crud',
                 source: '${records}',
-                rowKey: 'id',
+                itemKey: 'id',
                 toolbar: [{ type: 'button', label: 'Create' }],
                 columns: [
                   { label: 'ID', name: 'id' },
@@ -421,7 +421,7 @@ describe('CRUD selection and features', () => {
               {
                 type: 'crud',
                 source: records,
-                rowKey: 'id',
+                itemKey: 'id',
                 columns: [
                   { label: 'ID', name: 'id' },
                   { label: 'Name', name: 'name' },
@@ -458,7 +458,7 @@ describe('CRUD selection and features', () => {
               {
                 type: 'crud',
                 source: records,
-                rowKey: 'id',
+                itemKey: 'id',
                 toolbar: [{ type: 'button', label: 'Create' }],
                 toolbarLayout: {
                   header: ['listActions', 'pagination'],
@@ -502,7 +502,7 @@ describe('CRUD selection and features', () => {
               {
                 type: 'crud',
                 source: records,
-                rowKey: 'id',
+                itemKey: 'id',
                 toolbar: [{ type: 'button', label: 'Create' }],
                 toolbarLayout: {
                   header: ['listActions', 'pagination'],
@@ -538,7 +538,7 @@ describe('CRUD selection and features', () => {
               {
                 type: 'crud',
                 source: records,
-                rowKey: 'id',
+                itemKey: 'id',
                 selection: { type: 'checkbox' },
                 columns: [
                   { label: 'ID', name: 'id' },
@@ -598,7 +598,7 @@ describe('CRUD selection shorthand forms', () => {
             {
               type: 'crud',
               source: records,
-              rowKey: 'id',
+              itemKey: 'id',
               selection: selection as never,
               columns: [
                 { label: 'ID', name: 'id' },

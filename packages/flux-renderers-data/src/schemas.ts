@@ -133,7 +133,7 @@ export type SortInputEntry = { column: string; direction: 'asc' | 'desc' };
 export interface TableSchema extends BaseSchema {
   type: 'table';
   source?: SchemaValue;
-  rowKey?: string;
+  itemKey?: string;
   paginationOwnership?: OwnershipMode;
   selectionOwnership?: OwnershipMode;
   sortOwnership?: OwnershipMode;

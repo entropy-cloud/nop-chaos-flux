@@ -34,7 +34,7 @@ describe('CRUD loadAction via ajax + env.fetcher', () => {
               id: 'load-crud',
               loadAction: { action: 'ajax', args: { url: '/r/Test__findPage' }, dependsOn: ['__init_load__'] },
               columns: [{ name: 'name', label: 'Name' }],
-              rowKey: 'id',
+              itemKey: 'id',
             },
           ],
         }}
@@ -124,7 +124,7 @@ describe('CRUD loadAction via ajax + env.fetcher', () => {
               // 故意不写 dependsOn，复现 nop-entropy grid_crud.xpl 的 loadAction 输出
               loadAction: { action: 'ajax', args: { url: '/r/NopAuthUser__findPage' } },
               columns: [{ name: 'name', label: 'Name' }],
-              rowKey: 'id',
+              itemKey: 'id',
             },
           ],
         }}

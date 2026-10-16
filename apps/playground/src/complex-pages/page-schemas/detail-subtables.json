@@ -150,7 +150,7 @@
               "type": "table",
               "testid": "ds-items-table",
               "source": "${orderItems?.items}",
-              "rowKey": "id",
+              "itemKey": "id",
               "empty": { "type": "text", "text": "暂无明细" },
               "columns": [
                 { "name": "sku", "label": "SKU", "width": 140 },
@@ -169,7 +169,7 @@
               "type": "table",
               "testid": "ds-logs-table",
               "source": "${orderLogs?.items}",
-              "rowKey": "id",
+              "itemKey": "id",
               "empty": { "type": "text", "text": "暂无日志" },
               "columns": [
                 { "name": "time", "label": "时间", "width": 180 },
@@ -187,7 +187,7 @@
               "type": "table",
               "testid": "ds-addresses-table",
               "source": "${orderAddresses?.items}",
-              "rowKey": "id",
+              "itemKey": "id",
               "empty": { "type": "text", "text": "暂无收货地址" },
               "columns": [
                 { "name": "recipient", "label": "收件人", "width": 120 },
@@ -208,7 +208,7 @@
           "type": "table",
           "testid": "ds-payments-table",
           "source": "${orderPayments?.items}",
-          "rowKey": "id",
+          "itemKey": "id",
           "empty": { "type": "text", "text": "暂无付款记录" },
           "columns": [
             { "name": "time", "label": "时间", "width": 180 },
@@ -228,7 +228,7 @@
           "type": "table",
           "testid": "ds-shipments-table",
           "source": "${orderShipments?.items}",
-          "rowKey": "id",
+          "itemKey": "id",
           "empty": { "type": "text", "text": "暂无物流信息" },
           "columns": [
             { "name": "time", "label": "时间", "width": 180 },

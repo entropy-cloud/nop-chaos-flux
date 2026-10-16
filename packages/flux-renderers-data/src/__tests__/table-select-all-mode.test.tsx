@@ -24,7 +24,7 @@ function renderSelectAllTable(rowSelection: Record<string, unknown> = {}) {
           {
             type: 'table',
             id: 'mode-table',
-            rowKey: 'id',
+            itemKey: 'id',
             source: FIVE_ROWS,
             rowSelection: { type: 'checkbox', ...rowSelection },
             selectionOwnership: 'scope',
@@ -137,7 +137,7 @@ describe('table rowSelection.selectAllMode: "page"', () => {
             {
               type: 'table',
               id: 'mode-server-table',
-              rowKey: 'id',
+              itemKey: 'id',
               source: FIVE_ROWS,
               rowSelection: { type: 'checkbox', selectAllMode: 'page' },
               selectionOwnership: 'scope',
@@ -187,7 +187,7 @@ describe('table rowSelection.selectAllMode: "page"', () => {
             {
               type: 'table',
               id: 'mode-checkable-table',
-              rowKey: 'id',
+              itemKey: 'id',
               source: rows,
               rowSelection: {
                 type: 'checkbox',

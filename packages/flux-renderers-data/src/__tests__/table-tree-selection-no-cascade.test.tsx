@@ -31,7 +31,7 @@ describe('table tree selection does NOT cascade to children (B7 / T13)', () => {
 
     render(
       <SelectionProbe
-        schemaProps={{ rowKey: 'id', rowSelection: { selectedRowKeys: [] } }}
+        schemaProps={{ itemKey: 'id', rowSelection: { selectedRowKeys: [] } }}
         source={source}
         helpers={helpers}
         onReady={(value) => {
@@ -61,7 +61,7 @@ describe('table tree selection does NOT cascade to children (B7 / T13)', () => {
 
     render(
       <SelectionProbe
-        schemaProps={{ rowKey: 'id', rowSelection: { selectedRowKeys: [] } }}
+        schemaProps={{ itemKey: 'id', rowSelection: { selectedRowKeys: [] } }}
         source={source}
         helpers={helpers}
         onReady={(value) => {

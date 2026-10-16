@@ -16,7 +16,7 @@ function renderTable(schemaProps: Record<string, unknown>, rows?: Array<Record<s
             {
               type: 'table',
               testid: 'modifier-table',
-              rowKey: 'id',
+              itemKey: 'id',
               source: rows ?? [
                 { id: '1', name: 'One' },
                 { id: '2', name: 'Two' },

@@ -62,7 +62,7 @@ const crudPickerSchema = {
   // plan 595: reaction-kind loadAction requires dependsOn; `__init_load__`
   // is the guide mount-fire convention (zero behavior change).
   loadAction: { action: 'ajax', args: { url: '/api/owners' }, dependsOn: ['__init_load__'] },
-  rowKey: 'id',
+  itemKey: 'id',
   columns: [{ name: 'title', label: 'Title' }],
   selection: { type: 'radio' },
   selectionOwnership: 'scope',

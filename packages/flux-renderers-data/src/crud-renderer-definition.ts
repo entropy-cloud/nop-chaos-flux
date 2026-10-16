@@ -185,7 +185,7 @@ export const crudRendererDefinition: RegisteredRendererDefinition = {
     { key: 'card', kind: 'region', params: ['item', 'index'], isolate: false },
     { key: 'item', kind: 'region', params: ['item', 'index'], isolate: false },
     {
-      key: 'rowKey',
+      key: 'itemKey',
       kind: 'prop',
       contract: {
         shape: { kind: 'string' },

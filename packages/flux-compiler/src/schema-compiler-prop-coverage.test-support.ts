@@ -309,7 +309,7 @@ export const crudRenderer: RegisteredRendererDefinition = {
       },
       displayName: 'Columns',
     } },
-    { key: 'rowKey', kind: 'prop', contract: { shape: { kind: 'string' }, displayName: 'Row Key' } },
+    { key: 'itemKey', kind: 'prop', contract: { shape: { kind: 'string' }, displayName: 'Row Key' } },
     { key: 'pageField', kind: 'prop', contract: { shape: { kind: 'string' }, displayName: 'Page Field' } },
     { key: 'pageSizeField', kind: 'prop', contract: { shape: { kind: 'string' }, displayName: 'Page Size Field' } },
     { key: 'defaultParams', kind: 'prop', contract: { shape: { kind: 'object', fields: {} }, displayName: 'Default Params' } },
