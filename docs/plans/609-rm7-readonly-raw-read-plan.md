@@ -1,6 +1,6 @@
 # 609 RM-7 编译结构只读硬化 + 框架内部 raw schema 读迁移（name/modalContainer）
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-10-16
 > Source: `docs/backlog/renderer-metamodel-roadmap.md` RM-7；`docs/analysis/2026-10-15-renderer-definition-metamodel-review.md` §5.2；plan 602 裁决表 #1/#2/#3（renderer-runtime.md Runtime Schema-Retention Policy）
 > Related: RM-0 裁决表（#2/#3=迁移 RM-7，本 plan 即其执行）
@@ -122,6 +122,8 @@ Exit Criteria:
 - Successor Path: —
 
 ## Closure
+
+> 【状态勘误 2026-10-16，renderer-metamodel 轨道收口终审 agent_98d93a27 M-1】本 plan 收口时（提交 33c25e9e3）Closure Gates 已全勾、Closure Audit Evidence 已回填（agent_8ca6c622 approved），但 `Plan Status` 字段漏翻 `active`→`completed`；轨道收口终审对照 13 个 plan 时发现并就地补正，实体工作与 live 终态不受影响（roadmap RM-7 行在其收口提交时即已 `done`）。
 
 Status Note: RM-7 三件交付全部落地——①TemplateNode 30 成员 readonly（node-compiler 构造期三处后置赋值折叠为单字面量展开，构造期写非运行时变更；全仓 typecheck 零破坏预测证实）；②#2 name raw 读迁 resolved 通道（表达式 name 行为差钉红绿实录：变异红→sha256 c8397ab3 恢复绿；现网无表达式 name 使用，行为差为披露面）；③#3 modalContainer 读迁 compiled root canonical schema copy（effect 搬入 CompiledSchemaTree；行值再裁决落裁决表 #3 行；源级机制钉+行为等价既有测试承载；编译失败设 undefined 语义披露）。readonly 判别 TS2540 红/恢复零错实录。owner-doc 前提勘误两处（Policy 1 + 分析报告 §5.2.1 规范化浅拷贝）。全链 exit 0（flux-react 604 passed 含新判别钉 2 用例）；e2e 未重跑（提交披露）。
 

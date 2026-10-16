@@ -1,6 +1,6 @@
 # Renderer 注册元模型与编译结构收口路线图（Renderer Metamodel & Compile-Structure Roadmap）
 
-> 最后更新：2026-10-15（R6 修订：增补 RM-10~RM-12 schema 词汇三债收口，共识审查 R6→R7 approved）
+> 最后更新：2026-10-16（**轨道收口**：RM-0~RM-12 全部 `done`，终态定义六条逐条实证达成；RM-10~12 词汇三债单标准落地）
 > 按 `docs/skills/roadmap-and-mission-authoring-with-consensus-review.md` 流程产出；配套 mission：`missions/renderer-metamodel.json`
 > 共识审查记录：R1 `issues`（1B/2M/5m，独立 fresh 审查员，propSchema 迁移面枚举失实/预写审查通过/改名无主等）→ 修订；R2 `issues`（1B/2M/3m，独立 fresh 审查员，计数口径不可复现[66/33→66/41 勘误]/mission 字段缺口等）→ 修订；R3 `pass`（独立 fresh 审查员，25+ 点 live 抽查全命中，附 4 条非阻塞 Minor，其建议修法已逐字采纳：RM-6 补 $page 随迁注、Phases 表状态列同步注、分析报告 #7 计数口径括注、本记录即 m4 落点）。
 > R4 `approved`（RM-9 增补修订，两轮独立 fresh 审查员）：R4 `revised`（1B/3M/8m——A1~A8 悬空章节引用[报告实无 A6/A7]/scanner-baselines 计数级被误标逐条白名单/增补授权与审查记录未落字等）→ 修订（族枚举改 A1~A5、A8、B6~B7、C；白名单载体改为"RM-9 新建、形态仿 jsdom-pragma-whitelist"；Rule 增"工作项增删先报人工"条款；RM-9 预置拆分判据/排除清单括注/RM-8 承接句/mission prompts+check 字段同步）→ R5 `approved`（12/12 修正属实，零 Blocker，2 条非阻塞 Minor 其一已随落字同步）。**授权 provenance**：RM-9 增补系 2026-10-15 用户显式指令（工作项增删属人类职权，guide §Roadmap Role），RM-9 plan 拟制时授权链须引用该指令；**同 hunk 披露**：本次工作区 roadmap diff 另含并行会话在途的 RM-1 `todo→planned` 状态同步（plan 603 draft review R2 pass），非本修订所为。
@@ -48,6 +48,8 @@
 - RM-10. 事件字段类型单源化（三态归一 `ActionSchema | ActionSchema[]` + ActionSchemaLike 对偶删除）: `done`（plan `docs/plans/612-rm10-event-field-type-plan.md`，closure audit agent_9a598ead approved 2026-10-16；改型面由 Phase 0 kind 分类枚举导出[在范围 125+误型 12，排除 55 处/20 文件六组——含嵌套 events 对象成员 16 新裁定]、Like/ActionShapeLikeFields 对偶删除并入、literal closure 单值文件集==20 排除文件/误型归零/联合型基数 220）
 - RM-11. ownership 词表与实现单源化（OwnershipMode 单类型 + `<axis>Ownership` 词表 + hook 原语合一）: `done`（plan `docs/plans/613-rm11-ownership-unification-plan.md`，closure audit agent_0ea176f4 approved 2026-10-16；OwnershipMode 单源导出+26 行字面量口径收口+别名 `ListPaginationOwnership` 删除+`kanban*`→`board*` 52 处无兼容改名+12 处解析实现收敛 flux-react 单原语[两候选副本删除、三套订阅门禁契约测试重锚原语边界+真实零订阅计数判别钉]；三条 literal closure 口径单点闭合、判别变异自证逐字节还原；执行中行为差/边界如实登记 Deferred 7 条）
 - RM-12. 数组容器行键统一 `itemKey`（input-table `rowKey` 改名 + flux-guide 同步）: `done`（plan `docs/plans/614-rm12-itemkey-plan.md`，closure audit agent_d3aef789 approved 2026-10-16；`InputTableSchema.rowKey`→`itemKey`+渲染器四处同步+生成物/docs/apps 同步、无兼容分叉；三条应空口径+定向校验全满足、判别钉双面经变异自证；**data 族行标识 `rowKey` 归属待人工裁决**（plan `## Human Adjudication Request` 六类 live 枚举+两方案+建议，本 plan 未自行裁定、data 族零改动）
+
+> **轨道收口（2026-10-16）**：13 个工作项（RM-0~RM-12）全部 `done`；终态定义**六条逐条实证达成**——①`RendererDefinitionShape` 无死字段/无平行声明通道（`propSchema`/`propContracts:`/`eventContracts:`/`scopeExportContracts:` 声明形式全仓 src 归零，余量为注释/历史叙述）②类型层零手抄副本（RM-1）③编译期静态模板↔运行时实例分层由类型钉住（RM-7：`TemplateNode` 30 成员 readonly；`NodeState` 只读不可落地已就地勘误）④retention policy owner 文档 + 12 条通道逐条裁决（RM-0/RM-8：裁决表 + Retained channel register 钉面 + scanner 守卫）⑤收口判定工具化（RM-9：规则族 16 条 + 双段基线，`check:audit-renderer-metamodel-residue` 挂 `pnpm check` 链；全仓扫描 `zero unadjudicated hits`）⑥schema 词汇单源（RM-10~12：事件字段联合型单形态、ownership `OwnershipMode`+`<axis>Ownership`+flux-react 单原语、数组容器 `itemKey`——各债 literal closure 口径单点闭合；⑥ 括注「零 `BaseSchema` 事件误型」限指事件通道字段，非事件 schema 载体（如 `composite-schemas.ts:215 pickerSchema?: BaseSchema` 便属合法用法）不在该口径内，轨道收口终审 m-1 澄清）。**唯一遗留待人工裁决**：data 族行标识 `rowKey` 归属（RM-12 plan `## Human Adjudication Request`，六类 live 枚举 + 两方案 + 建议；裁决前维持现状，本轨道不自行裁定）。轨道收口提交基线：五门禁全绿（typecheck 42/42、build、lint、test 16,557 passed/1,802 文件/0 FAIL、check 含 RM-9 零未裁决命中）。
 
 ## 框架/平台复用
 
