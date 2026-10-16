@@ -2,6 +2,7 @@ import type { ActionSchema, BaseSchema, SchemaObject, SchemaValue, SourceSchema 
 
 export type EditorLanguage =
   | 'expression'
+  | 'xlang'
   | 'sql'
   | 'json'
   | 'javascript'

@@ -1,0 +1,36 @@
+// XLang representative sample — spike parse target (line comment)
+/* block comment
+   spanning lines */
+import 'nop/core/xlib';
+import my.pkg.Other;
+
+let total = 0;
+let items = [{name: 'a', price: 1.5}, {name: "b", price: 2}];
+
+function calc(items, rate) {
+  let sum = 0;
+  let i = 0;
+  for (i = 0; i < items.size(); i = i + 1) {
+    sum = sum + items[i].price * rate;
+  }
+  for (let it of items) {
+    sum = sum - -1;
+  }
+  return sum;
+}
+
+let msg = `total=${total + calc(items, 0.9)} rate='ok'`;
+let tagged = filter(items, it => { return it.price > 1; }).size();
+let macro = #{someMacro(1 + 2)};
+let cond = total > 0 ? 'pos' : (total < 0 ? 'neg' : 'zero');
+let inv = ~0;
+if (cond == 'pos' && total != null) {
+  total?.toString();
+} else {
+  total = !cond;
+}
+while (total > 100) {
+  total = total - 100;
+}
+let n = new Date();
+return [total, msg, tagged, macro, cond, inv, n];

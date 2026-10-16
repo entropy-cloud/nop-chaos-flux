@@ -11,7 +11,8 @@
     "**/__tests__/**",
     "**/coverage/**",
     "**/.turbo/**",
-    "**/test-results/**"
+    "**/test-results/**",
+    "**/generated/**"
   ],
   "threshold": 0,
   "reporters": ["console"],

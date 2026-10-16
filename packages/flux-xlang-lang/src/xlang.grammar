@@ -1,0 +1,108 @@
+// XLang script-layer Lezer grammar — D5 spike (minimal representative subset)
+// Scope: script layer only (xpl XML shell composed at a higher layer, like IDEA's dual-track)
+// v1 simplifications (see 06-grammar-spike.md): template strings are whole tokens; arrow bodies
+// are blocks only; statements require trailing ";"; object literals are non-empty.
+
+@top Program { statement* }
+
+@skip { spaces | LineComment | BlockComment }
+
+statement {
+  ImportStatement |
+  LetStatement |
+  FunctionDeclaration |
+  IfStatement |
+  ForStatement |
+  WhileStatement |
+  ReturnStatement |
+  Block |
+  expressionStatement
+}
+
+ImportStatement { KwImport (StringLiteral | Identifier ("." Identifier)*) terminator }
+LetStatement { KwLet Identifier ("," Identifier)* ( "=" expression )? terminator }
+FunctionDeclaration {
+  KwFunction Identifier LParen paramList? RParen FunctionBody
+}
+paramList { param ("," param)* }
+param { Identifier }
+FunctionBody { Block }
+
+IfStatement { KwIf LParen expression RParen Block (KwElse Block)? }
+ForStatement { KwFor LParen statement expression ";" expression? RParen Block | KwFor LParen KwLet Identifier KwOf expression RParen Block }
+WhileStatement { KwWhile LParen expression RParen Block }
+ReturnStatement { KwReturn expression? terminator }
+
+Block { "{" statement* "}" }
+expressionStatement { expression terminator }
+
+expression {
+  KwNew expression |
+  TemplateString | MacroExpr |
+  AssignExpression
+}
+
+AssignExpression { BinaryExpression AssignOp AssignExpression | TernaryExpression | BinaryExpression }
+TernaryExpression { BinaryExpression "?" AssignExpression ":" AssignExpression }
+BinaryExpression { UnaryExpression (BinaryOp UnaryExpression)* }
+UnaryExpression { (UnaryOp | UpdateOp | BinaryOp)? PostfixExpression | KwAwait PostfixExpression }
+PostfixExpression {
+  PostfixExpression LParen argList RParen |
+  PostfixExpression LParen RParen |
+  PostfixExpression MemberExpr |
+  PrimaryExpression
+}
+argList { expression ("," expression)* }
+MemberExpr { "." Identifier | "[" expression "]" | "?." Identifier }
+PrimaryExpression {
+  Identifier | Number | StringLiteral | KwTrue | KwFalse | KwNull |
+  ArrowFunction |
+  LParen expression RParen |
+  ArrayLiteral | ObjectLiteral
+}
+ArrayLiteral { "[" (expression ("," expression)* ","?)? "]" }
+ObjectLiteral { "{" Property ("," Property)* ","? "}" }
+Property { propertyName ":" expression | Identifier }
+propertyName { Identifier | StringLiteral | Number }
+ArrowFunction {
+  Identifier "=>" Block
+}
+
+@tokens {
+  spaces { " " | "\t" | "\r" | "\n" }
+  terminator { ";" }
+  LineComment { "//" ![\n]* }
+  BlockComment { "/*" (![*/] | "*" ![/] | "/" ![*/])* "*/" }
+
+  LParen { "(" }
+  RParen { ")" }
+
+  KwImport { "import" }
+  KwLet { "let" }
+  KwFunction { "function" }
+  KwIf { "if" }
+  KwElse { "else" }
+  KwFor { "for" }
+  KwWhile { "while" }
+  KwReturn { "return" }
+  KwNew { "new" }
+  KwTrue { "true" }
+  KwFalse { "false" }
+  KwNull { "null" }
+  KwAwait { "await" }
+  KwOf { "of" }
+
+  Identifier { $[a-zA-Z_$] $[a-zA-Z0-9_$]* }
+
+  Number { ("0x" $[0-9a-fA-F]+ | $[0-9]+ ("." $[0-9]*)? (("e"|"E") $[+\-]? $[0-9]+)?) ("l"|"L"|"d"|"D"|"f"|"F")? }
+  StringLiteral { '"' (!["\\] | '\\' _)* '"' | "'" (!['\\] | '\\' _)* "'" }
+
+  BinaryOp { "&&" | "||" | "??" | "===" | "!==" | "==" | "!=" | "<=" | ">=" | "<" | ">" | "+" | "-" | "*" | "/" | "%" | "&" | "|" | "^" }
+  AssignOp { "+=" | "-=" | "*=" | "/=" | "%=" | "=" }
+  UpdateOp { "++" | "--" }
+  UnaryOp { "!" | "~" }
+
+  @precedence { LineComment, BlockComment, BinaryOp, AssignOp, UpdateOp, KwAwait, KwNull, KwFalse, KwTrue, KwNew, KwReturn, KwWhile, KwFor, KwElse, KwIf, KwFunction, KwLet, KwImport, Identifier }
+}
+
+@external tokens xlangExt from "../generated/tokens" { TemplateString, MacroExpr }

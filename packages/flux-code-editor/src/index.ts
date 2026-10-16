@@ -56,7 +56,12 @@ export {
 export { useCodeMirror } from './use-code-mirror.js';
 export type { UseCodeMirrorOptions, UseCodeMirrorResult } from './use-code-mirror.js';
 
-export { getLanguageParser } from './extensions/base.js';
+export { getLanguageParser, createLanguageExtension } from './extensions/base.js';
+export type { CreateBaseExtensionsOptions, CompletionConfig } from './extensions/base.js';
+export {
+  registerLanguage,
+  type LanguageRegistryEntry,
+} from './extensions/base.js';
 export { ColorizeView } from './code-editor-renderer/colorize.js';
 export type { ColorizeViewProps } from './code-editor-renderer/colorize.js';
 

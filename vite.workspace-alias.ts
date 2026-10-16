@@ -156,6 +156,9 @@ export const workspacePackageAliases = {
   '@nop-chaos/flux-code-editor/code-editor-styles.css': fileURLToPath(
     new URL('./packages/flux-code-editor/src/code-editor-styles.css', import.meta.url),
   ),
+  '@nop-chaos/flux-xlang-lang': fileURLToPath(
+    new URL('./packages/flux-xlang-lang/src/index.ts', import.meta.url),
+  ),
   '@nop-chaos/ui/styles.css': fileURLToPath(
     new URL('./packages/ui/src/styles/index.css', import.meta.url),
   ),

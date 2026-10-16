@@ -24,6 +24,7 @@
     { "path": "./packages/flux-renderers-industrial" },
     { "path": "./packages/flux-renderers-pivot" },
     { "path": "./packages/flux-code-editor" },
+    { "path": "./packages/flux-xlang-lang" },
     { "path": "./packages/tailwind-preset" },
     { "path": "./packages/theme-tokens" },
     { "path": "./packages/ui" },

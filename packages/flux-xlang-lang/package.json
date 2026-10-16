@@ -1,0 +1,35 @@
+{
+  "name": "@nop-chaos/flux-xlang-lang",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "dependencies": {
+    "@codemirror/language": "^6.11.0",
+    "@codemirror/lint": "^6.8.5",
+    "@codemirror/state": "^6.5.2",
+    "@lezer/common": "^1.2.0",
+    "@lezer/highlight": "^1.2.1",
+    "@lezer/lr": "^1.4.8"
+  },
+  "devDependencies": {
+    "@lezer/generator": "^1.8.1",
+    "@nop-chaos/flux-code-editor": "workspace:*",
+    "react": "^19.0.0"
+  },
+  "scripts": {
+    "gen:grammar": "lezer-generator src/xlang.grammar -o generated/xlang.parser.js",
+    "build": "tsc -p tsconfig.build.json && node scripts/copy-generated.mjs",
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "vitest run",
+    "lint": "eslint src --ext .ts,.tsx --cache --cache-location node_modules/.cache/eslint"
+  },
+  "description": "XLang language support for CodeMirror (Lezer grammar, highlighting, folding, indentation, diagnostics bridge)"
+}
