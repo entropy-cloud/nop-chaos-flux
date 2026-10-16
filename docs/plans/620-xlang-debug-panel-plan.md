@@ -94,20 +94,21 @@ Exit Criteria:
 
 ### Phase 3 - 独立 closure audit 与收口
 
-Status: in progress
+Status: completed
 Targets: 全部 + roadmap（owner 仓）
 
 - Item Types: `Proof`
 
 - [x] 独立子代理 closure audit：D5 §3.4 面板消费模式对账（数据不进 store/直查）、618 F8 兑现（query 面）、组件测试真实性、门禁——R1 **issues**（agent_39fdf056 R2 线：check 新红 knip hit/预打勾/F6 截断未落地/展开测试缺/ControlButtons 缺口）
 - [x] 修复审计发现（knip：删未用 @nop-chaos/ui+lucide-react；F6 truncated 提示落地+测试；展开 expandExprValue 用例补齐；runToPosition 按钮+muted 本地态接线；scope 视图 Tab Deferred 勘误；死探针/杂散引号/计数勘误）
-- [ ] flux docs/logs 更新；roadmap item 18 → done；提交（待 R2 复审 approved）
+- [x] flux docs/logs 更新；roadmap item 18 → done；提交（R2 approved 后）
+- [x] 独立子代理 closure audit：R2 **approved**（agent_39fdf056：R1 六项修复全落位 + knip exit 0 + 31/31 实测 + truncated 双路径核实 + Deferred 勘误确认；R-1 计数一行勘正 + R-2 死语句清理随收口）
 
 Exit Criteria:
 
-- [x] audit 发现全修复（R1 项全落地，待 R2 确认）
+- [x] audit 发现全修复（R2 approved）
 - [x] `pnpm typecheck/build/lint/test/check` 全绿（typecheck 0/test 31/lint 0/build 0/check 0）
-- [ ] roadmap item 18 `done`（待 R2）
+- [x] roadmap item 18 `done`
 
 ## Draft Review Record
 
@@ -156,9 +157,10 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: （待收口后填写）
+Status Note: 调试面板全量落地并通过两轮独立审计（R1 issues：Blocker knip 新红/预打勾/F6 截断未落地/展开用例缺/ControlButtons 缺口；R2 approved：六项修复全落位、truncated 双路径核实、31/31 实测、Deferred 勘误确认）。query/onLog/onCompleted 公共面兑现 618 F8。
+Completed: 2026-10-16
 
 Closure Audit Evidence:
 
-- Auditor / Agent: （待填）
-- Evidence: （待填）
+- Auditor / Agent: 独立子代理 agent_39fdf056（fresh session 两轮 R1/R2）
+- Evidence: R1 六项发现逐一于 HEAD 核实修复（删依赖消 knip exit 0/预打勾回退/truncated 根查询+懒展开双路径/展开+截断用例/runToPosition+muted+Deferred 勘误）；门禁 typecheck 0/test 31/31/build 0/check 0；R-1（计数一行）随收口勘正、R-2（死语句）清理

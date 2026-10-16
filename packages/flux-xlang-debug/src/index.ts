@@ -38,3 +38,17 @@ export { CallStackPanel, CallStackPanelGuarded, type CallStackPanelProps } from 
 export { VariablesTree, type VariablesTreeProps } from './panel/variables-tree.js';
 export { EvalInput, type EvalInputProps } from './panel/eval-input.js';
 export { LogPanel, type LogPanelProps } from './panel/log-panel.js';
+export {
+  XlangDebugEditor,
+  type XlangDebugEditorProps,
+  browserOpenSocket,
+  createCompileService,
+  type CompileFetcherAdapterOptions,
+} from './assembly/xlang-debug-editor.js';
+export {
+  XlangDebugEditorRenderer,
+  xlangDebugEditorRendererDefinition,
+  xlangDebugEditorFieldRules,
+  registerXlangDebugEditorRenderers,
+  type XlangDebugEditorSchema,
+} from './assembly/renderer.js';
