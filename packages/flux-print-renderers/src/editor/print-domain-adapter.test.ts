@@ -120,3 +120,67 @@ describe('createPrintDomainAdapter', () => {
     expect(adapter.serialize(template([element('a')]))).toContain('"a"');
   });
 });
+
+// plan 626 B3：jsonOrderSensitiveEquals 判别锚（语义契约 = 旧 stringify 比较，
+// JSON-safe 值域内逐例一致；偏差登记册见 print-domain-adapter.ts 头注）
+describe('printValuesEquivalent semantics via diffPrintDocuments (plan 626 B3)', () => {
+  const adapter = createPrintDomainAdapter();
+
+  function docWithTestData(testData: unknown): ReturnType<typeof createEmptyPrintTemplate> {
+    const doc = createEmptyPrintTemplate();
+    (doc as unknown as { testData: unknown }).testData = testData;
+    return doc;
+  }
+
+  it('deep-equal clone (fresh references, same key order) → null diff', () => {
+    const doc = docWithTestData({ a: 1, nested: { b: [1, 2, { c: 'x' }] } });
+    const clone = JSON.parse(JSON.stringify(doc));
+    expect(adapter.diff(doc, clone)).toBeNull();
+  });
+
+  it('key-order divergence is UNEQUAL (order-sensitive — same verdict as stringify)', () => {
+    const doc = docWithTestData({ a: 1, b: 2 });
+    const diverged = docWithTestData({ b: 2, a: 1 });
+    expect(adapter.diff(doc, diverged)).not.toBeNull();
+  });
+
+  it('nested value change → non-null diff', () => {
+    const doc = docWithTestData({ a: 1, nested: { b: 1 } });
+    const changed = docWithTestData({ a: 1, nested: { b: 2 } });
+    expect(adapter.diff(doc, changed)).not.toBeNull();
+  });
+
+  it('array length change → non-null diff', () => {
+    const doc = docWithTestData({ list: [1, 2] });
+    const changed = docWithTestData({ list: [1, 2, 3] });
+    expect(adapter.diff(doc, changed)).not.toBeNull();
+  });
+
+  it('undefined-valued object field compares as absent (stringify skip semantics)', () => {
+    const doc = docWithTestData({ a: 1, ghost: undefined });
+    // JSON round-trip preserves element ids while dropping the undefined key
+    const absent = JSON.parse(JSON.stringify(doc));
+    expect(absent.testData).toEqual({ a: 1 });
+    expect(adapter.diff(doc, absent)).toBeNull();
+  });
+
+  it('NaN/Infinity divergence registered: helper judges unequal where stringify was equal', () => {
+    // stringify(NaN) === "null" === stringify(null) → 旧实现判等；helper 按值判不等（登记偏差）
+    const doc = docWithTestData({ v: Number.NaN });
+    const other = docWithTestData({ v: null });
+    expect(adapter.diff(doc, other)).not.toBeNull();
+  });
+
+  it('circular reference: returns non-null diff instead of throwing (registered deviation)', () => {
+    const doc = docWithTestData({});
+    const other = JSON.parse(JSON.stringify(doc));
+    const circular: Record<string, unknown> = { a: 1 };
+    circular.self = circular;
+    (doc as unknown as { testData: unknown }).testData = circular;
+    const clone: Record<string, unknown> = { a: 1 };
+    clone.self = clone;
+    (other as unknown as { testData: unknown }).testData = clone;
+    expect(() => adapter.diff(doc, other)).not.toThrow();
+    expect(adapter.diff(doc, other)).not.toBeNull();
+  });
+});

@@ -119,12 +119,75 @@ export function createPrintDomainAdapter(): EditorDomainAdapter<PrintDocument, P
 
 // Equality helpers: the previous whole-object JSON.stringify comparisons ran
 // per editor update (plan 2026-09-29-4 R2-P20). Identity first; a shared
-// shallow/deep fallback only when references differ.
+// shallow/deep fallback only when references differ. The deep fallback is now
+// a recursive order-sensitive structural compare (plan 626 B3) — no string
+// allocation. Semantics contract vs JSON.stringify comparisons, pinned by
+// print-domain-adapter.test.ts: within the JSON-safe value domain the verdicts
+// match stringify byte-for-byte (key ORDER is significant; object fields with
+// undefined/function values compare as absent; NaN/Infinity diverge — they
+// stringify to null but compare unequal here; circular references return
+// false instead of throwing — print payloads contain no Dates/cycles; BigInt
+// diverge — stringify throws, the helper compares by value).
+function jsonOrderSensitiveEquals(a: unknown, b: unknown): boolean {
+  return jsonEqualsInner(a, b, new Map());
+}
+
+// `seen` holds in-flight (a, b) object pairs: re-entering a pair means both
+// payloads reference an equivalent cycle — judged unequal (conservative,
+// registered deviation from stringify which throws on cycles).
+function jsonEqualsInner(a: unknown, b: unknown, seen: Map<object, object>): boolean {
+  if (a === b) return true;
+  if (typeof a === 'number' && typeof b === 'number') {
+    return Number.isNaN(a) && Number.isNaN(b);
+  }
+  if (a === null || b === null || a === undefined || b === undefined) return false;
+  if (typeof a !== 'object' || typeof b !== 'object') return false;
+  if (seen.get(a as object) === (b as object)) return false;
+  seen.set(a as object, b as object);
+  const aIsArray = Array.isArray(a);
+  const bIsArray = Array.isArray(b);
+  if (aIsArray !== bIsArray) return false;
+  if (aIsArray && bIsArray) {
+    if (a.length !== b.length) return false;
+    for (let i = 0; i < a.length; i++) {
+      const av = a[i];
+      const bv = b[i];
+      // stringify renders holes/undefined/functions as null in arrays
+      const avNull = av === undefined || av === null || typeof av === 'function';
+      const bvNull = bv === undefined || bv === null || typeof bv === 'function';
+      if (avNull !== bvNull) return false;
+      if (!avNull && !jsonEqualsInner(av, bv, seen)) return false;
+    }
+    return true;
+  }
+  // stringify skips undefined/function-valued object fields at serialization,
+  // so the effective key list excludes them before count/order comparison
+  const aKeys = effectiveKeys(a as Record<string, unknown>);
+  const bKeys = effectiveKeys(b as Record<string, unknown>);
+  if (aKeys.length !== bKeys.length) return false;
+  for (let i = 0; i < aKeys.length; i++) {
+    const key = aKeys[i]!;
+    // key order is significant — stringify compares serialized text
+    if (key !== bKeys[i]) return false;
+    if (!jsonEqualsInner((a as Record<string, unknown>)[key], (b as Record<string, unknown>)[key], seen)) {
+      return false;
+    }
+  }
+  return true;
+}
+
+function effectiveKeys(obj: Record<string, unknown>): string[] {
+  return Object.keys(obj).filter((key) => {
+    const value = obj[key];
+    return value !== undefined && typeof value !== 'function';
+  });
+}
+
 function printValuesEquivalent(a: unknown, b: unknown): boolean {
   if (a === b) return true;
   if (a === null || b === null || a === undefined || b === undefined) return false;
   if (typeof a !== 'object' || typeof b !== 'object') return false;
-  return JSON.stringify(a) === JSON.stringify(b);
+  return jsonOrderSensitiveEquals(a, b);
 }
 
 function printElementsEquivalent(a: unknown, b: unknown): boolean {

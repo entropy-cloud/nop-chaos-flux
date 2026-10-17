@@ -11,7 +11,7 @@ const rootDir = path.join(__dirname, '..');
 const baselineFile = path.join(rootDir, 'scripts', 'baselines', 'scanner-baselines.json');
 const SCANNER_DIR = path.join(rootDir, 'scripts', 'audit');
 
-// The five high-risk advisory scanners promoted to numeric-baseline gating
+// The seven high-risk advisory scanners promoted to numeric-baseline gating (plan 626 added the async/react19 pair)
 // (cq-1 Phase 5; plan 601 WA-16 gate extension added find-todo-exitless and
 // find-as-any-casts). Counts only — per-entry identity is intentionally not
 // compared because scanner output ordering/format is not a stable contract.
@@ -21,6 +21,8 @@ const BASELINED_SCANNERS = [
   'find-test-global-leaks',
   'find-todo-exitless',
   'find-as-any-casts',
+  'find-async-without-failure-path',
+  'find-react19-optimization-candidates',
 ];
 
 function evaluateScannerCounts(currentCounts, baselineCounts) {
@@ -78,7 +80,7 @@ async function main() {
       `${JSON.stringify({
         _header: {
           description:
-            'Numeric baselines for the five high-risk advisory scanners. A count above the baseline fails check:scanner-baselines (new suspects must be fixed or the baseline consciously re-registered).',
+            'Numeric baselines for the seven high-risk advisory scanners. A count above the baseline fails check:scanner-baselines (new suspects must be fixed or the baseline consciously re-registered).',
           lastUpdated: new Date().toISOString().slice(0, 10),
         },
         scanners: counts,
