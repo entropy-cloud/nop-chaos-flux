@@ -331,6 +331,11 @@ export function createRendererReactionHandle(input: {
         return;
       }
       phase = 'disposed';
+      // Adjudication 06-10: the double abort here is intentional and idempotent —
+      // lifecycleController tears down the handle's own lifecycle span, while
+      // inFlightController cancels whatever request generation is in flight.
+      // Aborting an already-aborted controller is a no-op, so disposing twice
+      // (or disposing with no in-flight generation) stays safe.
       lifecycleController.abort();
       inFlightController?.abort();
       inFlightController = undefined;

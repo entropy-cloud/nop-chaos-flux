@@ -373,11 +373,11 @@ P2 findings from `docs/audits/2026-07-28-0814-multi-audit-audit-remediation.md` 
 
 ### From Multi-Audit (D06 — Async Safety)
 
-| ID    | File                                                          | Description                                          |
-| ----- | ------------------------------------------------------------- | ---------------------------------------------------- |
-| 06-05 | `flux-renderers-form/src/renderers/use-dict-options.ts:23-46` | Bare boolean cancelled, no AbortController           |
-| 06-09 | `flux-renderers-data/src/use-crud-polling.ts:106-136`         | handleRef overwrite race                             |
-| 06-10 | `flux-runtime/src/renderer-reaction-handle.ts:272-284`        | Redundant double-abort in dispose() (safe, doc only) |
+| ID    | File                                                          | Description                                                                                                                                                                                  |
+| ----- | ------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 06-05 | `flux-renderers-form/src/renderers/use-dict-options.ts:23-46` | Bare boolean cancelled, no AbortController — fixed — AbortController + generation guard (use-dict-options.ts:84/102-104; loadDictShared signal passthrough); verified 2026-10-17 (plan 635)  |
+| 06-09 | `flux-renderers-data/src/use-crud-polling.ts:106-136`         | handleRef overwrite race — fixed — lastActionRef gating (commit 299649c76, plan 2026-07-28-1800-1); regression tests crud-lifecycle + crud-polling-retry-cap; verified 2026-10-17 (plan 635) |
+| 06-10 | `flux-runtime/src/renderer-reaction-handle.ts:272-284`        | Redundant double-abort in dispose() (safe, doc only) — documented — dispose double-abort idempotency/safety note added at the site (plan 635, 2026-10-17)                                    |
 
 ### From Multi-Audit (D11 — UI Components)
 
@@ -389,14 +389,14 @@ P2 findings from `docs/audits/2026-07-28-0814-multi-audit-audit-remediation.md` 
 
 ### From Multi-Audit (D15 — Security & Performance)
 
-| ID     | File                                                                  | Description                                    |
-| ------ | --------------------------------------------------------------------- | ---------------------------------------------- |
-| 15-S1a | `flux-renderers-form/src/renderers/use-select-remote-search.ts:34-88` | Redundant cancelled+AbortController dual state |
-| 15-S1b | `form-advanced/src/tree-control-controllers.ts:107-153`               | Same dual cancellation                         |
-| 15-S1c | `form-advanced/src/condition-builder/value-input.tsx:174-192`         | Bare boolean, no AbortController               |
-| 15-S1d | `flux-renderers-form/src/renderers/use-dict-options.ts:23-46`         | Bare boolean, no AbortController               |
-| 15-S1e | `flux-renderers-data/src/crud-renderer-state.ts:608-672`              | Bare boolean, no AbortController               |
-| 15-S1f | `flux-renderers-content/src/markdown.tsx:35-56`                       | fetch with no AbortController                  |
+| ID     | File                                                                  | Description                                                                                                                                                                                                              |
+| ------ | --------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 15-S1a | `flux-renderers-form/src/renderers/use-select-remote-search.ts:34-88` | Redundant cancelled+AbortController dual state — fixed — pure AbortController (signal.aborted guards + cleanup); verified 2026-10-17 (plan 635)                                                                          |
+| 15-S1b | `form-advanced/src/tree-control-controllers.ts:107-153`               | Same dual cancellation — fixed — remote-search effect migrated to tree-control-sources.ts:99-158, pure AbortController; verified 2026-10-17 (plan 635)                                                                   |
+| 15-S1c | `form-advanced/src/condition-builder/value-input.tsx:174-192`         | Bare boolean, no AbortController — fixed — AbortController + cleanup (value-input.tsx:190-208); verified 2026-10-17 (plan 635)                                                                                           |
+| 15-S1d | `flux-renderers-form/src/renderers/use-dict-options.ts:23-46`         | Bare boolean, no AbortController — fixed — same finding as 06-05, same-file merged fix (use-dict-options.ts:84/102-104 AbortController + generation guard); verified 2026-10-17 (plan 635)                               |
+| 15-S1e | `flux-renderers-data/src/crud-renderer-state.ts:608-672`              | Bare boolean, no AbortController — fixed — load logic migrated to crud-renderer-load.ts (AbortController :375, cancelled-settle no-projection semantics); registration coordinates stale; verified 2026-10-17 (plan 635) |
+| 15-S1f | `flux-renderers-content/src/markdown.tsx:35-56`                       | fetch with no AbortController — fixed — AbortController + env.fetcher signal passthrough (INV-1 comment); verified 2026-10-17 (plan 635)                                                                                 |
 
 ### From Multi-Audit (D19 — Error Propagation)
 
@@ -424,7 +424,7 @@ P2 findings from `docs/audits/2026-07-28-0814-multi-audit-audit-remediation.md` 
 | P2-B | `word-editor-renderers/package.json:30`                                | `recharts` peer dep likely copy-paste leftover — fixed — recharts moved to devDependencies (plan 624 backing)                                                                                                                                                                           |
 | P2-C | `flux-core/src/`                                                       | 34 test files colocated, zero in `__tests__/`                                                                                                                                                                                                                                           |
 | P2-D | Various                                                                | Low-assertion tests (1-4 expect calls each)                                                                                                                                                                                                                                             |
-| P2-E | `flux-runtime/src/reaction-runtime.ts:449-458`                         | Async evaluateWatchValue race on subscribe                                                                                                                                                                                                                                              |
+| P2-E | `flux-runtime/src/reaction-runtime.ts:449-458`                         | Async evaluateWatchValue race on subscribe — fixed — subscribed-flag gating, initialValue evaluation and subscribed=true in the same synchronous section (async-data/reaction-runtime.ts:413-432; registration path migrated); verified 2026-10-17 (plan 635)                           |
 | P2-F | `flux-react/src/node-renderer-resolved.tsx:377-389`                    | componentProps container object created fresh every render                                                                                                                                                                                                                              |
 | P2-G | `flux-renderers-basic/src/use-surface-renderer.ts:136-158`             | Effect syncing refs (adjudicated but distinct anti-pattern)                                                                                                                                                                                                                             |
 | P2-H | `flux-renderers-content/src/diff-view/components/diff-gutter.tsx:1-21` | `DiffGutterCell` deprecated but still exported                                                                                                                                                                                                                                          |
