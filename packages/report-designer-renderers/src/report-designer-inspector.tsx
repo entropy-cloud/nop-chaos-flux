@@ -64,12 +64,18 @@ export function ReportInspectorRenderer(props: RendererComponentProps<ReportInsp
       data-testid={props.meta.testid || undefined}
       data-cid={props.meta.cid != null ? String(props.meta.cid) : undefined}
     >
-      {authoredBody ??
-        (dynamicBody
-          ? (props.helpers.render(dynamicBody, {
+      {authoredBody ?? (
+        (dynamicBody ? (
+          <div
+            data-slot="report-designer-inspector-body"
+            className="rounded-lg border border-border bg-card p-3 text-sm"
+          >
+            {props.helpers.render(dynamicBody, {
               pathSuffix: 'inspector-body',
-            }) as React.ReactNode)
-          : null)}
+            }) as React.ReactNode}
+          </div>
+        ) : null)
+      )}
     </section>
   );
 }

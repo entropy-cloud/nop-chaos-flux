@@ -1081,6 +1081,8 @@ export const zhCN: Resource = {
       designer: '打印模板设计器',
       palette: {
         title: '插入元素',
+        collapse: '收起元素面板',
+        expand: '展开元素面板',
       },
       canvasRegion: '设计画布区域',
       element: {
@@ -1110,6 +1112,8 @@ export const zhCN: Resource = {
         locate: '定位并选中元素',
       },
       inspector: {
+        collapse: '收起属性面板',
+        expand: '展开属性面板',
         noneSelected: '未选中元素，点击画布中的元素进行编辑',
         templateSection: '页面设置',
         name: '模板名称',

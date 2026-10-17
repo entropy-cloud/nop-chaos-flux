@@ -130,7 +130,7 @@ export function ScadaEdgeDemoPage({ onBack }: ScadaEdgeDemoPageProps) {
           <h1 className="m-0 text-xl font-bold">scada 边界用例测试页（I15.1）</h1>
         </div>
         <div className="ml-auto text-sm text-[var(--nop-body-copy)]" data-testid="scada-edge-notify">
-          {notifyMessage ? `notify: ${notifyMessage}` : ''}
+          {notifyMessage ? `通知：${notifyMessage}` : ''}
         </div>
       </header>
       <div className="flex items-center gap-3 flex-wrap rounded-xl border border-[var(--nop-nav-border)] bg-[var(--nop-nav-surface)] p-3">
@@ -142,7 +142,7 @@ export function ScadaEdgeDemoPage({ onBack }: ScadaEdgeDemoPageProps) {
             data-testid="scada-edge-minimal"
             onClick={() => setScreen('minimal')}
           >
-            最小合法 config
+            最小合法配置
           </Button>
           <Button
             type="button"
@@ -169,7 +169,7 @@ export function ScadaEdgeDemoPage({ onBack }: ScadaEdgeDemoPageProps) {
             data-testid="scada-edge-line-poly"
             onClick={() => setScreen('line-polygon')}
           >
-            线/多边形 hover 验证
+            线/多边形悬停验证
           </Button>
           <Button
             type="button"
@@ -178,7 +178,7 @@ export function ScadaEdgeDemoPage({ onBack }: ScadaEdgeDemoPageProps) {
             data-testid="scada-edge-default-geom"
             onClick={() => setScreen('default-geometry-fit')}
           >
-            默认几何 fit 验证
+            默认几何适配验证
           </Button>
         </div>
         <div className="ml-auto text-sm text-[var(--nop-body-copy)]">

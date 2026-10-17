@@ -1086,6 +1086,8 @@ export const enUS: Resource = {
       designer: 'Print Template Designer',
       palette: {
         title: 'Insert Element',
+        collapse: 'Collapse palette',
+        expand: 'Expand palette',
       },
       canvasRegion: 'Design canvas area',
       element: {
@@ -1115,6 +1117,8 @@ export const enUS: Resource = {
         locate: 'Locate and select element',
       },
       inspector: {
+        collapse: 'Collapse inspector',
+        expand: 'Expand inspector',
         noneSelected: 'No element selected. Click an element on the canvas to edit it.',
         templateSection: 'Page Setup',
         name: 'Template Name',

@@ -1,5 +1,5 @@
 import { useFluxTranslation } from '@nop-chaos/flux-i18n';
-import { Button, Input } from '@nop-chaos/ui';
+import { Button, Input, cn, resolveLucideIcon } from '@nop-chaos/ui';
 import type { PrintDiagnostic, PrintTemplateSchema } from '@nop-chaos/flux-print-core';
 import React, { useRef, useState } from 'react';
 import { PrintDesignerCanvas } from './print-designer-canvas.js';
@@ -13,6 +13,9 @@ export interface PrintDesignerProps {
   onTemplateChange?: (template: PrintTemplateSchema, serialized: string) => void;
   className?: string;
 }
+
+const ChevronLeftIcon = resolveLucideIcon('chevron-left');
+const ChevronRightIcon = resolveLucideIcon('chevron-right');
 
 /**
  * 打印设计器壳（P2.4）：工具栏 + 组件面板 + 画布 + 属性面板 + 预览组合。
@@ -29,6 +32,8 @@ export function PrintDesigner({ template, onTemplateChange, className }: PrintDe
   const { state, zoom } = usePrintEditorSnapshot(controller);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [diagnostics, setDiagnostics] = useState<PrintDiagnostic[]>([]);
+  const [paletteCollapsed, setPaletteCollapsed] = useState(false);
+  const [inspectorCollapsed, setInspectorCollapsed] = useState(false);
   const errorCount = diagnostics.filter((diagnostic) => diagnostic.level === 'error').length;
   const shellRef = useRef<HTMLDivElement | null>(null);
 
@@ -224,7 +229,23 @@ export function PrintDesigner({ template, onTemplateChange, className }: PrintDe
         </div>
       ) : null}
       <div className="flex" style={{ minHeight: 320 }}>
-        <PrintPalette controller={controller} className="w-32 shrink-0 border-r border-border" />
+        <PrintPalette
+          controller={controller}
+          className={cn('w-32 shrink-0 border-r border-border', paletteCollapsed && 'hidden')}
+        />
+        <div className="flex flex-col items-center px-0.5 py-1">
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            aria-label={t(paletteCollapsed ? 'flux.print.palette.expand' : 'flux.print.palette.collapse')}
+            aria-expanded={!paletteCollapsed}
+            data-testid="toggle-print-palette"
+            onClick={() => setPaletteCollapsed((v) => !v)}
+          >
+            <ChevronRightIcon className={cn('w-4 h-4', !paletteCollapsed && 'rotate-180')} />
+          </Button>
+        </div>
         <div
           className="flex-1 overflow-auto bg-muted/40 p-6"
           role="region"
@@ -232,7 +253,23 @@ export function PrintDesigner({ template, onTemplateChange, className }: PrintDe
         >
           <PrintDesignerCanvas controller={controller} />
         </div>
-        <PrintInspector controller={controller} className="w-64 shrink-0 border-l border-border" />
+        <div className="flex flex-col items-center px-0.5 py-1">
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            aria-label={t(inspectorCollapsed ? 'flux.print.inspector.expand' : 'flux.print.inspector.collapse')}
+            aria-expanded={!inspectorCollapsed}
+            data-testid="toggle-print-inspector"
+            onClick={() => setInspectorCollapsed((v) => !v)}
+          >
+            <ChevronLeftIcon className={cn('w-4 h-4', !inspectorCollapsed && 'rotate-180')} />
+          </Button>
+        </div>
+        <PrintInspector
+          controller={controller}
+          className={cn('w-64 shrink-0 border-l border-border', inspectorCollapsed && 'hidden')}
+        />
       </div>
       <PrintPreview controller={controller} open={previewOpen} onOpenChange={setPreviewOpen} />
     </div>

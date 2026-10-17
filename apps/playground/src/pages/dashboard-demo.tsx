@@ -113,7 +113,7 @@ export function DashboardDemoPage({ onBack }: DashboardDemoPageProps) {
     scope.registerNamespace('dashboardDemo', {
       kind: 'host',
       listMethods() {
-        return ['persist', 'back'];
+        return ['persist'];
       },
       invoke(method, payload) {
         if (method === 'persist') {
@@ -127,15 +127,11 @@ export function DashboardDemoPage({ onBack }: DashboardDemoPageProps) {
           }
           return { ok: true };
         }
-        if (method === 'back') {
-          onBack();
-          return { ok: true };
-        }
         return { ok: false, error: new Error(`Unknown dashboardDemo method: ${method}`) };
       },
     });
     return scope;
-  }, [onBack]);
+  }, []);
 
   const schema = useMemo(
     () => ({
@@ -146,13 +142,6 @@ export function DashboardDemoPage({ onBack }: DashboardDemoPageProps) {
           direction: 'column',
           className: 'gap-3',
           body: [
-            {
-              type: 'button',
-              label: '← Back to Home',
-              testid: 'dashboard-back',
-              className: 'w-fit self-start',
-              onClick: { action: 'dashboardDemo:back' },
-            },
             {
               type: 'dashboard-editor',
               id: 'bi-dashboard',
@@ -187,10 +176,24 @@ export function DashboardDemoPage({ onBack }: DashboardDemoPageProps) {
   return (
     <main className="min-h-screen p-6">
       <section className="mx-auto w-full max-w-[1200px] rounded-3xl border border-[var(--nop-hero-border)] bg-[var(--nop-hero-bg)] p-8 shadow-[var(--nop-hero-shadow)]">
-        <p className="mb-3 text-xs uppercase tracking-[0.16em] text-[var(--nop-eyebrow)]">
-          BI Dashboard · editor-core
-        </p>
-        <h1 className="m-0 mb-2">dashboard-editor 演示页</h1>
+        <div className="mb-4 flex items-center gap-3 border-b border-[var(--nop-hero-border)] pb-4">
+          <Button
+            variant="outline"
+            data-testid="dashboard-back"
+            className="px-3.5 py-2.5 rounded-full border border-[var(--nop-nav-border)] bg-[var(--nop-nav-surface)] text-[var(--nop-text-strong)] font-sans text-[13px] font-bold cursor-pointer transition-[transform,box-shadow,border-color] duration-160 hover:-translate-y-px hover:shadow-[var(--nop-nav-shadow-active)] hover:border-[var(--nop-nav-hover-border)]"
+            onClick={onBack}
+          >
+            Back to Home
+          </Button>
+          <div className="min-w-0">
+            <p className="uppercase tracking-[0.16em] text-xs text-[var(--nop-eyebrow)]">
+              BI Dashboard · editor-core
+            </p>
+            <h1 className="text-[22px] font-semibold leading-tight text-[var(--nop-text-strong)]">
+              dashboard-editor 演示页
+            </h1>
+          </div>
+        </div>
         {/* ux-r10 DB-4/G-4：开发态说明收进折叠说明——打开即看板 */}
         <details className="mb-2 text-sm text-[var(--nop-body-copy)]">
           <summary className="cursor-pointer select-none text-[13px] font-medium opacity-80">
@@ -229,11 +232,6 @@ export function DashboardDemoPage({ onBack }: DashboardDemoPageProps) {
               ],
             }}
           />
-        </div>
-        <div className="mt-6">
-          <Button variant="outline" onClick={onBack}>
-            Back to Home
-          </Button>
         </div>
       </section>
     </main>

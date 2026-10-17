@@ -537,7 +537,7 @@ export const DOMAIN_RENDERER_ROUTES: DomainRouteEntry[] = [
     title: 'Scada Edge Cases',
     eyebrow: 'Industrial HMI',
     description:
-      'I15.1 边界用例测试页：最小合法 config / 空画面（symbols: []）/ 非法 JSON（empty region + onError）/ 线多边形 hover 覆盖物验证（m-C），e2e 程序化断言入口。',
+      'I15.1 边界用例测试页：最小合法配置 / 空画面（symbols: []）/ 非法 JSON（empty region + onError）/ 线多边形悬停覆盖物验证（m-C），e2e 程序化断言入口。',
   },
   {
     id: 'scada-editor-demo',

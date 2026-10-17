@@ -75,6 +75,29 @@ describe('PrintDesigner shell', () => {
     expect(screen.getByTestId('print-inspector')).toBeTruthy();
   });
 
+  it('provides collapse/expand affordances for palette and inspector', () => {
+    render(<PrintDesigner template={templateWith([])} />);
+
+    const togglePalette = () => screen.getByTestId('toggle-print-palette');
+    const toggleInspector = () => screen.getByTestId('toggle-print-inspector');
+    const palette = () => screen.getByTestId('print-palette');
+    const inspector = () => screen.getByTestId('print-inspector');
+
+    expect(togglePalette().getAttribute('aria-expanded')).toBe('true');
+    expect(toggleInspector().getAttribute('aria-expanded')).toBe('true');
+
+    fireEvent.click(togglePalette());
+    expect(palette().className).toContain('hidden');
+    expect(togglePalette().getAttribute('aria-expanded')).toBe('false');
+    fireEvent.click(togglePalette());
+    expect(palette().className).not.toContain('hidden');
+
+    fireEvent.click(toggleInspector());
+    expect(inspector().className).toContain('hidden');
+    fireEvent.click(toggleInspector());
+    expect(inspector().className).not.toContain('hidden');
+  });
+
   it('deletes the selected element with the Delete key and undoes with Ctrl+Z', () => {
     const changes: PrintTemplateSchema[] = [];
     render(

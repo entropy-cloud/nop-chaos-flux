@@ -63,6 +63,30 @@ describe('ReportInspectorRenderer', () => {
     expect(screen.getByText('Panel body')).toBeTruthy();
   });
 
+  it('wraps dynamic inspector body in a card container instead of rendering it bare', () => {
+    const registry = createDefaultRegistry([textRenderer]);
+    registerReportDesignerRenderers(registry);
+    const SchemaRenderer = createSchemaRenderer();
+
+    render(
+      <SchemaRenderer
+        schemaUrl="test://report/inspector-dynamic"
+        schema={{ type: 'report-inspector' }}
+        env={env}
+        registry={registry}
+        formulaCompiler={createFormulaCompiler()}
+        data={{
+          selectionTarget: { kind: 'cell' },
+          inspectorPanels: { type: 'text', text: 'Dynamic body' },
+        }}
+      />,
+    );
+
+    const dynamic = screen.getByText('Dynamic body');
+    const card = dynamic.closest('[data-slot="report-designer-inspector-body"]');
+    expect(card).not.toBeNull();
+  });
+
   it('renders the root class without injecting a default test id', () => {
     renderInspector({
       body: { type: 'text', text: 'x' },
