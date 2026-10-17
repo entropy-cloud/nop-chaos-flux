@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Button } from '@nop-chaos/ui';
+import { Button, Checkbox, Label, NativeSelect, NativeSelectOption } from '@nop-chaos/ui';
 import { createSchemaRenderer, createDefaultRegistry } from '@nop-chaos/flux-react';
 import { registerContentRenderers } from '@nop-chaos/flux-renderers-content';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
@@ -177,45 +177,43 @@ export function DiffDemoPage({ onBack }: DiffDemoPageProps) {
         <h1 className="text-lg font-semibold">Diff View Demo</h1>
       </div>
       <div className="flex items-center gap-4 px-4 py-2 border-b bg-gray-50 shrink-0">
-        <label className="flex items-center gap-2 text-sm">
+        <Label className="flex items-center gap-2 text-sm">
           Mode:
-          <select
-            className="border rounded px-2 py-1 text-sm"
+          <NativeSelect
+            className="text-sm"
             value={mode}
             onChange={(e) => setMode(e.target.value as typeof mode)}
           >
-            <option value="single">Single File</option>
-            <option value="three-column">Three-Column Compare</option>
-            <option value="cross-file">Cross-File</option>
-          </select>
-        </label>
-        <label className="flex items-center gap-2 text-sm">
+            <NativeSelectOption value="single">Single File</NativeSelectOption>
+            <NativeSelectOption value="three-column">Three-Column Compare</NativeSelectOption>
+            <NativeSelectOption value="cross-file">Cross-File</NativeSelectOption>
+          </NativeSelect>
+        </Label>
+        <Label className="flex items-center gap-2 text-sm">
           View Type:
-          <select
-            className="border rounded px-2 py-1 text-sm"
+          <NativeSelect
+            className="text-sm"
             value={viewType}
             onChange={(e) => setViewType(e.target.value as 'split' | 'unified')}
           >
-            <option value="split">Split</option>
-            <option value="unified">Unified</option>
-          </select>
-        </label>
-        <label className="flex items-center gap-2 text-sm">
-          <input
-            type="checkbox"
+            <NativeSelectOption value="split">Split</NativeSelectOption>
+            <NativeSelectOption value="unified">Unified</NativeSelectOption>
+          </NativeSelect>
+        </Label>
+        <Label className="flex items-center gap-2 text-sm">
+          <Checkbox
             checked={showInlineDiff}
-            onChange={(e) => setShowInlineDiff(e.target.checked)}
+            onCheckedChange={(checked) => setShowInlineDiff(checked === true)}
           />
           Inline Diff
-        </label>
-        <label className="flex items-center gap-2 text-sm">
-          <input
-            type="checkbox"
+        </Label>
+        <Label className="flex items-center gap-2 text-sm">
+          <Checkbox
             checked={showLineNumbers}
-            onChange={(e) => setShowLineNumbers(e.target.checked)}
+            onCheckedChange={(checked) => setShowLineNumbers(checked === true)}
           />
           Line Numbers
-        </label>
+        </Label>
       </div>
       <div className="flex-1 min-h-0">
         <SchemaRenderer

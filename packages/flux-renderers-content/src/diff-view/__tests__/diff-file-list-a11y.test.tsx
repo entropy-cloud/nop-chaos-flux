@@ -28,3 +28,27 @@ describe('11-02 diff-view file search input uses ui Input', () => {
     expect(input.getAttribute('style')).toBeNull();
   });
 });
+
+describe('plan 638 P2-I no-inline-style sweep', () => {
+  afterEach(() => {
+    cleanup();
+  });
+
+  it('renders the DiffFileList subtree without any hand-written inline styles', () => {
+    const { container } = render(
+      <DiffFileList
+        files={[
+          { fileName: 'src/index.ts', oldContent: 'a', newContent: 'b', status: 'modified' },
+          { fileName: 'src/added.ts', status: 'added' },
+          { fileName: 'src/removed.ts', status: 'deleted' },
+        ]}
+        activeIndex={0}
+        onFileSelect={vi.fn() as (index: number) => void}
+      />,
+    );
+    const styled = Array.from(container.querySelectorAll('[style]'));
+    expect(
+      styled.map((el) => `${el.tagName.toLowerCase()}${el.className ? `.${el.className}` : ''}`),
+    ).toEqual([]);
+  });
+});

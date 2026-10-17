@@ -90,9 +90,8 @@ function SingleFileDiff({
       <div
         data-testid={testid}
         data-slot="diff-view"
-        className={cn('nop-diff-view nop-diff-view-three-column', className)}
+        className={cn('nop-diff-view nop-diff-view-three-column flex flex-col min-h-0 overflow-hidden', className)}
         data-view="three-column"
-        style={{ display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden' }}
       >
         <DiffHeader
           stats={stats}
@@ -147,9 +146,8 @@ function SingleFileDiff({
     <div
       data-slot="diff-view"
       data-testid={testid}
-      className={cn('nop-diff-view', className, wrapLines ? 'nop-diff-wrap' : '')}
+      className={cn('nop-diff-view flex flex-col min-h-0 overflow-hidden', className, wrapLines ? 'nop-diff-wrap' : '')}
       data-view={viewType}
-      style={{ display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden' }}
     >
       <DiffHeader
         stats={stats}
@@ -510,15 +508,14 @@ function CrossFileDiffView({
       data-slot="diff-view"
       data-testid={testid}
       data-shortcuts="diff-view"
-      className={cn('nop-diff-view nop-diff-view-cross-file', className)}
-      style={{ display: 'flex', flexDirection: 'row', minHeight: 0, overflow: 'hidden', height: '100%' }}
+      className={cn('nop-diff-view nop-diff-view-cross-file flex flex-row min-h-0 overflow-hidden h-full', className)}
     >
       <DiffFileList
         files={files}
         activeIndex={activeIndex}
         onFileSelect={handleFileSelect}
       />
-      <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden' }}>
+      <div className="flex-1 min-w-0 flex flex-col min-h-0 overflow-hidden">
         <SingleFileDiff
           oldContent={content.oldContent}
           newContent={content.newContent}

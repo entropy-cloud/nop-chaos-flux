@@ -4,7 +4,7 @@ import { createSchemaRenderer, createDefaultRegistry } from '@nop-chaos/flux-rea
 import type { RegisteredRendererDefinition, RendererEnv } from '@nop-chaos/flux-core';
 import { registerBasicRenderers } from '@nop-chaos/flux-renderers-basic';
 import { registerFormRenderers } from '@nop-chaos/flux-renderers-form';
-import { Button } from '@nop-chaos/ui';
+import { Button, Checkbox, Label } from '@nop-chaos/ui';
 
 const preventFormSubmitRenderer: RegisteredRendererDefinition = {
   type: 'native-submit-form',
@@ -69,17 +69,16 @@ function Toggle({
   onChange: (next: boolean) => void;
 }) {
   return (
-    <label className="inline-flex items-center gap-2 text-sm">
+    <Label className="inline-flex items-center gap-2 text-sm">
       <span>{label}</span>
-      <input
-        type="checkbox"
+      <Checkbox
         checked={value}
-        onChange={(event) => onChange(event.target.checked)}
+        onCheckedChange={(checked) => onChange(checked === true)}
       />
       <span className="font-mono text-xs">
         {value ? 'preventDefault: true' : 'preventDefault: false'}
       </span>
-    </label>
+    </Label>
   );
 }
 

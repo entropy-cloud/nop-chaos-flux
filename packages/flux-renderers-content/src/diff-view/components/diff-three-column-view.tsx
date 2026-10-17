@@ -213,14 +213,7 @@ export function DiffThreeColumnView({
       )}
       <div
         ref={containerRef}
-        className="nop-diff-three-col-grid"
-        style={{
-          display: 'grid',
-          gridTemplateColumns: '1fr 1fr 1fr',
-          overflow: 'auto',
-          minHeight: 0,
-          flex: 1,
-        }}
+        className="nop-diff-three-col-grid grid grid-cols-3 overflow-auto min-h-0 flex-1"
       >
         {THREE_COL_PANES.map((spec) => (
           <div key={spec.key} className={spec.paneClass}>

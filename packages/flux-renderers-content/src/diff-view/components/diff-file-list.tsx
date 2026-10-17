@@ -86,11 +86,10 @@ export function DiffFileList({ files, activeIndex, onFileSelect }: DiffFileListP
     // [G1-R2-视角8-02] the sidebar width is owned by `.nop-diff-file-list`
     // (container-relative clamp) instead of a fixed inline 240px.
     <div
-      className="nop-diff-file-list"
+      className="nop-diff-file-list flex flex-col overflow-hidden border-r border-[var(--nop-border)]"
       data-slot="diff-file-list"
-      style={{ display: 'flex', flexDirection: 'column', borderRight: '1px solid var(--nop-border)', overflow: 'hidden' }}
     >
-      <div style={{ padding: '8px', borderBottom: '1px solid var(--nop-border)' }}>
+      <div className="p-2 border-b border-[var(--nop-border)]">
         <Input
           type="search"
           aria-label={t('flux.diff.searchFiles')}
@@ -100,7 +99,7 @@ export function DiffFileList({ files, activeIndex, onFileSelect }: DiffFileListP
           className="h-8 w-full text-xs"
         />
       </div>
-      <div style={{ display: 'flex', borderBottom: '1px solid var(--nop-border)', fontSize: 12 }}>
+      <div className="flex border-b border-[var(--nop-border)] text-xs">
         {tabs.map((tab) => (
           <Button
             key={tab.key}
@@ -108,24 +107,15 @@ export function DiffFileList({ files, activeIndex, onFileSelect }: DiffFileListP
             onClick={() => setStatusTab(tab.key)}
             aria-pressed={statusTab === tab.key}
             data-active={statusTab === tab.key ? 'true' : undefined}
-            style={{
-              flex: 1,
-              padding: '6px 4px',
-              border: 'none',
-              background: statusTab === tab.key ? 'var(--nop-diff-active-bg)' : 'transparent',
-              cursor: 'pointer',
-              fontWeight: statusTab === tab.key ? 600 : 400,
-              fontSize: 12,
-              color: statusTab === tab.key ? 'var(--nop-diff-accent)' : 'var(--nop-diff-muted-text)',
-            }}
+            className="flex-1 py-1.5 px-1 border-0 bg-transparent cursor-pointer text-xs text-[var(--nop-diff-muted-text)] data-[active=true]:bg-[var(--nop-diff-active-bg)] data-[active=true]:font-semibold data-[active=true]:text-[var(--nop-diff-accent)]"
           >
             {tab.label}
           </Button>
         ))}
       </div>
-      <div style={{ flex: 1, overflowY: 'auto', minHeight: 0 }}>
+      <div className="flex-1 overflow-y-auto min-h-0">
         {filteredEntries.length === 0 ? (
-          <div style={{ padding: 16, textAlign: 'center', fontSize: 13, color: 'var(--nop-diff-muted-text)' }}>{t('flux.diff.noFilesMatch')}</div>
+          <div className="p-4 text-center text-[13px] text-[var(--nop-diff-muted-text)]">{t('flux.diff.noFilesMatch')}</div>
         ) : (
           filteredEntries.map((entry) => (
             <FileListItem
@@ -161,8 +151,18 @@ function statusLetter(status: string): string {
 }
 
 function FileListItem({ entry, isActive, onSelect }: FileListItemProps) {
-  const bg = isActive ? 'var(--nop-diff-active-bg)' : 'transparent';
-  const hoverBg = 'var(--nop-diff-hover-bg)';
+  const statusColorClass =
+    entry.status === 'added'
+      ? 'text-[var(--nop-diff-stat-added-text)]'
+      : entry.status === 'deleted'
+        ? 'text-[var(--nop-diff-stat-removed-text)]'
+        : 'text-[var(--nop-diff-stat-modified-text)]';
+  const statusBgClass =
+    entry.status === 'added'
+      ? 'bg-[var(--nop-diff-stat-added-bg)]'
+      : entry.status === 'deleted'
+        ? 'bg-[var(--nop-diff-stat-removed-bg)]'
+        : 'bg-[var(--nop-diff-stat-modified-bg)]';
 
   return (
     <div
@@ -171,53 +171,23 @@ function FileListItem({ entry, isActive, onSelect }: FileListItemProps) {
       aria-current={isActive ? 'true' : undefined}
       onClick={onSelect}
       onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') onSelect(); }}
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: 8,
-        padding: '8px 12px',
-        cursor: 'pointer',
-        background: bg,
-        transition: 'background 0.1s',
-        fontSize: 13,
-        userSelect: 'none',
-      }}
-      onMouseEnter={(e) => { if (!isActive) (e.currentTarget as HTMLElement).style.background = hoverBg; }}
-      onMouseLeave={(e) => { if (!isActive) (e.currentTarget as HTMLElement).style.background = 'transparent'; }}
+      className={[
+        'flex items-center gap-2 px-3 py-2 cursor-pointer text-[13px] select-none',
+        'transition-colors duration-100',
+        isActive ? 'bg-[var(--nop-diff-active-bg)]' : 'bg-transparent hover:bg-[var(--nop-diff-hover-bg)]',
+      ].join(' ')}
     >
-      {!entry.visited && <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--nop-diff-accent)', flexShrink: 0 }} />}
-      {entry.visited && <span style={{ width: 6, height: 6, flexShrink: 0 }} />}
-      <span style={{
-        display: 'inline-flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        width: 20,
-        height: 20,
-        borderRadius: 4,
-        fontSize: 11,
-        fontWeight: 600,
-        flexShrink: 0,
-        color:
-          entry.status === 'added'
-            ? 'var(--nop-diff-stat-added-text)'
-            : entry.status === 'deleted'
-              ? 'var(--nop-diff-stat-removed-text)'
-              : 'var(--nop-diff-stat-modified-text)',
-        background:
-          entry.status === 'added'
-            ? 'var(--nop-diff-stat-added-bg)'
-            : entry.status === 'deleted'
-              ? 'var(--nop-diff-stat-removed-bg)'
-              : 'var(--nop-diff-stat-modified-bg)',
-      }}>
+      {!entry.visited && <span className="w-1.5 h-1.5 rounded-full bg-[var(--nop-diff-accent)] shrink-0" />}
+      {entry.visited && <span className="w-1.5 h-1.5 shrink-0" />}
+      <span className={`inline-flex items-center justify-center w-5 h-5 rounded text-[11px] font-semibold shrink-0 ${statusColorClass} ${statusBgClass}`}>
         {statusLetter(entry.status)}
       </span>
-      <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+      <span className="flex-1 overflow-hidden text-ellipsis whitespace-nowrap">
         {entry.fileName}
       </span>
-      <span style={{ fontSize: 12, whiteSpace: 'nowrap', flexShrink: 0 }}>
-        <span style={{ color: 'var(--nop-diff-stat-added-text)' }}>+{entry.added}</span>
-        <span style={{ color: 'var(--nop-diff-stat-removed-text)', marginLeft: 4 }}>-{entry.removed}</span>
+      <span className="text-xs whitespace-nowrap shrink-0">
+        <span className="text-[var(--nop-diff-stat-added-text)]">+{entry.added}</span>
+        <span className="text-[var(--nop-diff-stat-removed-text)] ml-1">-{entry.removed}</span>
       </span>
     </div>
   );
