@@ -352,6 +352,10 @@ type LinearTestHooks = {
   lastMove?: Record<string, unknown>;
   /** last `Linear__bulkUpdate` body (opt-in e2e observation; production no-op) */
   lastBulkUpdate?: Record<string, unknown>;
+  /** one-shot: next `Linear__issues` read returns failure (opt-in e2e; production no-op) */
+  failNextIssuesRead?: boolean;
+  /** fail the next N `Linear__issues` reads (opt-in e2e; production no-op) */
+  failNextIssuesReads?: number;
 };
 
 const countLinearEndpointCall = createEndpointCounter({ countersKey: '__linearEndpointCalls', prefix: 'Linear__' });
@@ -420,6 +424,15 @@ export function createLinearFetcherBranch(db: LinearDatabase, clone: <T>(value: 
       return { status: 0, data: clone({ ok: true, id, url: `https://tracker.demo/issue/${id}` }) as T };
     }
     if (url.includes('/r/Linear__issues')) {
+      const hooks = readLinearTestHooks();
+      if (hooks?.failNextIssuesRead) {
+        hooks.failNextIssuesRead = false;
+        return { status: 1, data: clone({ ok: false, error: 'linear-issues read failed (opt-in e2e hook)' }) as T };
+      }
+      if (hooks && typeof hooks.failNextIssuesReads === 'number' && hooks.failNextIssuesReads > 0) {
+        hooks.failNextIssuesReads -= 1;
+        return { status: 1, data: clone({ ok: false, error: 'linear-issues read failed (opt-in e2e hook)' }) as T };
+      }
       if (read('view') === 'board') {
         const payload = buildLinearBoardData(filterLinearIssues(db.issues, {
           keyword: read('keyword'),

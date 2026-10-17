@@ -1,12 +1,11 @@
 import React, { useCallback } from 'react';
 import { t } from '@nop-chaos/flux-i18n';
-import { reportRuntimeHostIssue, shallowEqual } from '@nop-chaos/flux-core';
+import { shallowEqual } from '@nop-chaos/flux-core';
 import type { DesignerSnapshot } from '@nop-chaos/flow-designer-core';
 import { useDesignerContext, useDesignerSnapshotSelector } from './designer-context.js';
 import { DesignerIcon } from './designer-icon.js';
 import { useCurrentActionScope, useRendererRuntime, useRenderScope } from '@nop-chaos/flux-react';
 import { Badge, Button, Label, Switch, cn } from '@nop-chaos/ui';
-import { notifyCommandFailure } from './designer-context.js';
 
 type ToolbarSnapshot = Pick<
   DesignerSnapshot,
@@ -94,7 +93,6 @@ export function DesignerToolbarContent(props: {
   const runtime = useRendererRuntime();
   const renderScope = useRenderScope();
   const scope = designerScope ?? renderScope;
-  const env = runtime.env;
 
   const resolveToolbarValue = useCallback(
     <T,>(value: T): T => {
@@ -106,81 +104,27 @@ export function DesignerToolbarContent(props: {
     [runtime, scope],
   );
 
-  const invokeAction = useCallback(
-    async (action: string) => {
-      const resolved = actionScope?.resolve(action);
-      if (!resolved) {
-        return undefined;
-      }
-      return resolved.provider.invoke(resolved.method, undefined, {
-        runtime,
-        scope,
-        actionScope,
-      });
-    },
-    [actionScope, runtime, scope],
-  );
-
-  // plan 547 (taskflow-1): schema toolbar items declare `then` chains
-  // (e.g. taskflow:save → showToast 已保存) that the dispatch below never ran —
-  // success feedback promised by the schema never appeared. Execute the chain
-  // when the primary action resolves ok.
-  const runThenChain = useCallback(
-    (thenChain: unknown) => {
-      if (!Array.isArray(thenChain)) return;
-      for (const step of thenChain) {
-        const spec = step as { action?: string; args?: { message?: string; level?: string } };
-        if (!spec.action) continue;
-        if (spec.action === 'showToast') {
-          // showToast is a SchemaRenderer built-in — the designer actionScope
-          // cannot resolve it, so surface the message through env.notify.
-          const level = spec.args?.level === 'error' ? 'error' : 'success';
-          env.notify(level, spec.args?.message ?? '');
-          continue;
-        }
-        void invokeAction(spec.action);
-      }
-    },
-    [invokeAction, env],
-  );
-
-  const handleActionFailure = useCallback(
-    (action: string, error: unknown) => {
-      notifyCommandFailure({
-        notify: env.notify,
-        error: error instanceof Error ? error.message : undefined,
-      });
-      reportRuntimeHostIssue({
-        env,
-        error,
-        phase: 'action',
-        details: {
-          reason: 'designer-toolbar-action-failed',
-          action,
-        },
-      });
-    },
-    [env],
-  );
-
-  // WA-flowr-007 (plan 573): the invoke → ok-check → then-chain → catch pipeline
-  // was hand-written three times (button/switch/back); back intentionally skips
-  // the then-chain (no follow-up actions on navigation).
+  // plan 633 (UR-5): toolbar actions route through the shared ActionDispatcher
+  // pipeline instead of a direct provider.invoke — schema args are evaluated
+  // and passed, and `then` chains (e.g. taskflow:save → showToast 已保存) run
+  // with built-in showToast support. Failure surfacing is owned by the
+  // dispatcher (reportUnhandledFailureClass); the toolbar adds no second toast.
   const runToolbarAction = React.useCallback(
-    (action: string, thenChain?: unknown) => {
-      void invokeAction(action)
-        .then((result) => {
-          if (result && !result.ok) {
-            handleActionFailure(action, result.error ?? new Error('Action failed'));
-            return;
-          }
-          if (thenChain) {
-            runThenChain(thenChain);
-          }
+    (item: { action?: string; args?: unknown; then?: unknown }, fallbackAction?: string) => {
+      const action = item.action ?? fallbackAction;
+      if (!action) return;
+      const schema: { action: string; args?: unknown; then?: unknown } = { action };
+      if (item.args != null) schema.args = item.args;
+      if (Array.isArray(item.then)) schema.then = item.then;
+      void runtime
+        .dispatch(schema as Parameters<typeof runtime.dispatch>[0], {
+          runtime,
+          scope,
+          actionScope,
         })
-        .catch((error) => handleActionFailure(action, error));
+        .catch(() => {});
     },
-    [invokeAction, handleActionFailure, runThenChain],
+    [runtime, scope, actionScope],
   );
 
   const items = (() => {
@@ -297,7 +241,7 @@ export function DesignerToolbarContent(props: {
               aria-label={item.label ?? 'Back'}
               className="shrink-0"
               onClick={() => {
-                runToolbarAction(item.action ?? 'designer:navigate-back');
+                runToolbarAction(item, 'designer:navigate-back');
               }}
             >
               <DesignerIcon icon="arrow-left" />
@@ -343,7 +287,7 @@ export function DesignerToolbarContent(props: {
                 if (!action) {
                   return;
                 }
-                runToolbarAction(action, (item as { then?: unknown }).then);
+                runToolbarAction(item);
               }}
             >
               {item.icon ? <DesignerIcon icon={item.icon} /> : null}
@@ -374,7 +318,7 @@ export function DesignerToolbarContent(props: {
                   if (!action) {
                     return;
                   }
-                  runToolbarAction(action, (item as { then?: unknown }).then);
+                  runToolbarAction(item);
                 }}
               />
             </Label>

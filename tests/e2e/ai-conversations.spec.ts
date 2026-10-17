@@ -65,3 +65,39 @@ test.describe('AI conversations — P1 namespace + conversations + streaming', (
     await assertTrackedPageErrors(page);
   });
 });
+
+test.describe('AI conversations — delete/rename legs (plan 633 UR-4)', () => {
+  test('rename and delete keep the sidebar list live through the schema data channel', async ({
+    page,
+  }) => {
+    // 30s：本测常被单独 --grep 执行（吃该路由 vite 冷编译，15s helper 口径不够——
+    // 同页既有测试冷启动同样 flaky 的同因）。
+    await page.goto('/#/ai-conversations', { waitUntil: 'commit' });
+    await expect(page.locator('[data-slot="ai-chat-root"]')).toBeVisible({ timeout: 30_000 });
+
+    // Precondition: pin the create leg, then work on the new conversation.
+    const listItems = page.locator('[data-slot="ai-conversations-item"]');
+    const before = await listItems.count();
+    await page.locator('[data-slot="ai-conversations-create"]').click();
+    await expect(listItems).toHaveCount(before + 1, { timeout: 10_000 });
+    const item = listItems.last();
+
+    // Rename leg: pencil → autofocus input → type → Enter commits; the list
+    // re-renders with the new title through the same live data channel.
+    await item.locator('[data-slot="ai-conversations-rename"]').click();
+    const renameInput = item.locator('[data-slot="ai-conversations-rename-input"]');
+    await expect(renameInput).toBeVisible();
+    await renameInput.fill('UR-4 重命名会话');
+    await renameInput.press('Enter');
+    await expect(listItems.last()).toContainText('UR-4 重命名会话', { timeout: 10_000 });
+
+    // Delete leg: X → AlertDialog confirm → count returns to the baseline.
+    await item.locator('[data-slot="ai-conversations-delete"]').click();
+    const confirmDialog = page.locator('[data-slot="ai-conversations-delete-confirm"]');
+    await expect(confirmDialog).toBeVisible();
+    await confirmDialog.getByRole('button', { name: '删除会话' }).click();
+    await expect(listItems).toHaveCount(before, { timeout: 10_000 });
+
+    await assertTrackedPageErrors(page);
+  });
+});

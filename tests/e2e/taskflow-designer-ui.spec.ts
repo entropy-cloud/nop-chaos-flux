@@ -197,7 +197,12 @@ test('TaskFlow (Graph) toolbar buttons are functional (export + save)', async ({
   const saveBtn = toolbar.getByRole('button', { name: 'Save' });
   await expect(saveBtn).toBeVisible();
   await saveBtn.click();
-  await page.waitForTimeout(500);
+
+  // plan 633 UR-5: schema-declared then chain (taskflow:save → showToast
+  // 已保存) now runs through the shared dispatcher pipeline.
+  await expect(page.locator('[data-sonner-toast]').filter({ hasText: '已保存' })).toBeVisible({
+    timeout: 10_000,
+  });
 
   await assertTrackedPageErrors(page);
 });

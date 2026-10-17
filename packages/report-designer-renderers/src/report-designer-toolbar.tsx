@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { reportRuntimeHostIssue, type RendererComponentProps } from '@nop-chaos/flux-core';
+import { reportRuntimeHostIssue, type ActionSchema, type RendererComponentProps } from '@nop-chaos/flux-core';
 import { useOwnScopeSelector, useRendererRuntime } from '@nop-chaos/flux-react';
 import { t } from '@nop-chaos/flux-i18n';
 import { Badge, Button, Switch, cn } from '@nop-chaos/ui';
@@ -29,6 +29,9 @@ export function ReportToolbarRenderer(props: RendererComponentProps<ReportToolba
   async function handleButtonClick(item: ToolbarItem) {
     const command = toCommand(item.action);
     if (!command) return;
+    if (Array.isArray(item.then)) {
+      command.then = item.then as ActionSchema[];
+    }
 
     try {
       const result = await props.helpers.dispatch(command);

@@ -12,6 +12,7 @@
         "method": "get"
       },
       "id": "linear-issues-source",
+      "statusPath": "issuesStatus",
       "dependsOn": ["filterKeyword", "filterStatus", "filterPriority"]
     },
     {
@@ -1867,9 +1868,21 @@
                 "pageSize": 10
               },
               "empty": {
-                "type": "text",
-                "text": "当前筛选条件下没有问题",
-                "className": "ln-empty"
+                "type": "flex",
+                "direction": "column",
+                "className": "ln-empty items-center gap-2 py-6",
+                "items": [
+                  {
+                    "type": "text",
+                    "text": "${issuesStatus.hasError ? '数据加载失败，请重试' : '当前筛选条件下没有问题'}"
+                  },
+                  {
+                    "type": "button",
+                    "label": "重试",
+                    "visible": "${issuesStatus.hasError}",
+                    "onClick": { "action": "refreshSource", "targetId": "issues" }
+                  }
+                ]
               },
               "columns": [
                 {

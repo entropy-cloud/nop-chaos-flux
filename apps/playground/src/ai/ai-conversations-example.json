@@ -13,8 +13,8 @@
           "activeId": "${activeConversationId}",
           "className": "w-64 shrink-0 border rounded-md p-2",
           "onItemClick": {
-            "action": "setValue",
-            "args": { "path": "activeConversationId", "value": "${id}" }
+            "action": "conversationsDemo:setActive",
+            "args": { "id": "${id}" }
           },
           "onCreate": { "action": "ai:createConversation" },
           "onItemDelete": { "action": "ai:deleteConversation", "args": { "id": "${id}" } },

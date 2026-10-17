@@ -44,11 +44,13 @@ const mockState: {
   snapshot: any;
   resolve: ReturnType<typeof vi.fn>;
   notify: ReturnType<typeof vi.fn>;
+  dispatch: ReturnType<typeof vi.fn>;
 } = {
   context: undefined as unknown as MockContext,
   snapshot: undefined,
   resolve: vi.fn(),
   notify: vi.fn(),
+  dispatch: vi.fn(),
 };
 
 vi.mock('./designer-context', async () => {
@@ -75,6 +77,7 @@ vi.mock('@nop-chaos/flux-react', () => ({
   }),
   useRendererRuntime: () => ({
     env: { notify: mockState.notify },
+    dispatch: mockState.dispatch,
     evaluate: (target: string, scope: { materializeVisible?: () => Record<string, unknown> }) => {
       const data = scope?.materializeVisible?.() ?? {};
       const singleExpression = target.match(/^\$\{([^}]+)\}$/);
@@ -92,7 +95,7 @@ vi.mock('@nop-chaos/flux-react', () => ({
     },
   }),
   useRenderScope: () => ({}),
-}));
+}))
 
 function createSnapshot(overrides: Partial<any> = {}) {
   return {
@@ -120,6 +123,7 @@ describe('flow designer controls', () => {
     cleanup();
     mockState.resolve = vi.fn();
     mockState.notify = vi.fn();
+    mockState.dispatch = vi.fn().mockResolvedValue({ ok: true });
     mockState.snapshot = createSnapshot();
     mockState.context = {
       config: { toolbar: { items: [] }, palette: { groups: [] }, nodeTypes: [] },
@@ -136,9 +140,7 @@ describe('flow designer controls', () => {
     };
   });
 
-  it('routes built-in toolbar buttons through ActionScope for supported designer actions', async () => {
-    const invoke = vi.fn().mockResolvedValue({ ok: true });
-    mockState.resolve.mockReturnValue({ method: 'undo', provider: { invoke } });
+  it('routes built-in toolbar buttons through runtime.dispatch with full action schema', async () => {
     mockState.context.config = {
       ...mockState.context.config,
       toolbar: {
@@ -162,20 +164,52 @@ describe('flow designer controls', () => {
     );
 
     fireEvent.click(screen.getByRole('button', { name: 'Undo' }));
-    expect(mockState.resolve).toHaveBeenCalledWith('designer:undo');
-    expect(invoke).toHaveBeenCalledWith('undo', undefined, expect.any(Object));
+    expect(mockState.dispatch).toHaveBeenCalledTimes(1);
+    expect(mockState.dispatch).toHaveBeenCalledWith(
+      { action: 'designer:undo' },
+      expect.objectContaining({ actionScope: expect.anything() }),
+    );
 
     const redoButton = screen.getByRole('button', { name: 'Redo' });
     expect((redoButton as HTMLButtonElement).disabled).toBe(true);
     fireEvent.click(redoButton);
-    expect(invoke).toHaveBeenCalledTimes(1);
+    expect(mockState.dispatch).toHaveBeenCalledTimes(1);
 
     const gridButton = screen.getByRole('button', { name: 'Grid' });
     expect((gridButton as HTMLButtonElement).disabled).toBe(false);
     fireEvent.click(gridButton);
     await vi.waitFor(() => {
-      expect(mockState.resolve).toHaveBeenCalledWith('designer:toggle-grid');
+      expect(mockState.dispatch).toHaveBeenCalledWith(
+        { action: 'designer:toggle-grid' },
+        expect.objectContaining({ actionScope: expect.anything() }),
+      );
     });
+  });
+
+  it('passes toolbar item args and then chains into the dispatched schema', () => {
+    const thenChain = [{ action: 'showToast', args: { message: '已保存', level: 'success' } }];
+    mockState.context.config = {
+      ...mockState.context.config,
+      toolbar: {
+        items: [
+          {
+            type: 'button',
+            label: 'Save',
+            action: 'taskflow:save',
+            args: { surface: 'main' },
+            then: thenChain,
+          },
+        ],
+      },
+    };
+
+    render(<DesignerToolbarContent />);
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+
+    expect(mockState.dispatch).toHaveBeenCalledWith(
+      { action: 'taskflow:save', args: { surface: 'main' }, then: thenChain },
+      expect.objectContaining({ actionScope: expect.anything() }),
+    );
   });
 
   it('uses export toggle callback for JSON toolbar button', () => {
@@ -237,9 +271,7 @@ describe('flow designer controls', () => {
     expect((screen.getByRole('button', { name: 'Redo' }) as HTMLButtonElement).disabled).toBe(false);
   });
 
-  it('routes built-in toolbar switches through ActionScope', async () => {
-    const invoke = vi.fn().mockResolvedValue({ ok: true });
-    mockState.resolve.mockReturnValue({ method: 'toggleGrid', provider: { invoke } });
+  it('routes built-in toolbar switches through runtime.dispatch', async () => {
     mockState.context.config = {
       ...mockState.context.config,
       toolbar: {
@@ -253,14 +285,14 @@ describe('flow designer controls', () => {
     fireEvent.click(screen.getByRole('switch'));
 
     await vi.waitFor(() => {
-      expect(mockState.resolve).toHaveBeenCalledWith('designer:toggle-grid');
-      expect(invoke).toHaveBeenCalledWith('toggleGrid', undefined, expect.any(Object));
+      expect(mockState.dispatch).toHaveBeenCalledWith(
+        { action: 'designer:toggle-grid' },
+        expect.objectContaining({ actionScope: expect.anything() }),
+      );
     });
   });
 
-  it('invokes upstream action for back button', async () => {
-    const invoke = vi.fn().mockResolvedValue(undefined);
-    mockState.resolve.mockReturnValue({ method: 'goBack', provider: { invoke } });
+  it('dispatches upstream action for back button without then chain', async () => {
     mockState.context.config = {
       ...mockState.context.config,
       toolbar: {
@@ -271,31 +303,14 @@ describe('flow designer controls', () => {
     render(<DesignerToolbarContent />);
     fireEvent.click(screen.getByRole('button', { name: 'Back' }));
 
-    expect(mockState.resolve).toHaveBeenCalledWith('designer:navigate-back');
-    expect(invoke).toHaveBeenCalledWith('goBack', undefined, expect.any(Object));
+    expect(mockState.dispatch).toHaveBeenCalledWith(
+      { action: 'designer:navigate-back' },
+      expect.objectContaining({ actionScope: expect.anything() }),
+    );
   });
 
-  it('notifies when back action rejects', async () => {
-    const invoke = vi.fn().mockRejectedValue(new Error('Back failed'));
-    mockState.resolve.mockReturnValue({ method: 'goBack', provider: { invoke } });
-    mockState.context.config = {
-      ...mockState.context.config,
-      toolbar: {
-        items: [{ type: 'back', label: 'Back', action: 'designer:navigate-back' }],
-      },
-    };
-
-    render(<DesignerToolbarContent />);
-    fireEvent.click(screen.getByRole('button', { name: 'Back' }));
-
-    await vi.waitFor(() => {
-      expect(mockState.notify).toHaveBeenCalledWith('warning', 'Back failed');
-    });
-  });
-
-  it('notifies when back action resolves with ok:false', async () => {
-    const invoke = vi.fn().mockResolvedValue({ ok: false, error: new Error('Back failed softly') });
-    mockState.resolve.mockReturnValue({ method: 'goBack', provider: { invoke } });
+  it('leaves failure surfacing to the dispatcher pipeline (no second toolbar toast) on rejection', async () => {
+    mockState.dispatch = vi.fn().mockRejectedValue(new Error('Back failed'));
     mockState.context.config = {
       ...mockState.context.config,
       toolbar: {
@@ -307,8 +322,29 @@ describe('flow designer controls', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Back' }));
 
     await vi.waitFor(() => {
-      expect(mockState.notify).toHaveBeenCalledWith('warning', 'Back failed softly');
+      expect(mockState.dispatch).toHaveBeenCalled();
     });
+    // plan 633 UR-5: the dispatcher pipeline owns failure toasts
+    // (reportUnhandledFailureClass); the toolbar adds no second notify.
+    expect(mockState.notify).not.toHaveBeenCalled();
+  });
+
+  it('leaves ok:false failures to the dispatcher pipeline (no second toolbar toast)', async () => {
+    mockState.dispatch = vi.fn().mockResolvedValue({ ok: false, error: new Error('Back failed softly') });
+    mockState.context.config = {
+      ...mockState.context.config,
+      toolbar: {
+        items: [{ type: 'back', label: 'Back', action: 'designer:navigate-back' }],
+      },
+    };
+
+    render(<DesignerToolbarContent />);
+    fireEvent.click(screen.getByRole('button', { name: 'Back' }));
+
+    await vi.waitFor(() => {
+      expect(mockState.dispatch).toHaveBeenCalled();
+    });
+    expect(mockState.notify).not.toHaveBeenCalled();
   });
 
   it('dispatches addNode from palette item button click', () => {

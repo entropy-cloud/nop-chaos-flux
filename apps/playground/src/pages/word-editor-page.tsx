@@ -5,11 +5,12 @@ import {
   createDefaultEnv,
 } from '@nop-chaos/flux-react';
 import { createDesignerRegistry, WORD_EDITOR_PAGE_RECIPE } from '../designer-hosts/registry-factory.js';
+import { notifyWithToast } from './notify-toast.js';
 
 const registry = createDesignerRegistry(WORD_EDITOR_PAGE_RECIPE);
 
 const SchemaRenderer = createSchemaRenderer();
-const env = createDefaultEnv();
+const env = createDefaultEnv({ notify: notifyWithToast });
 const formulaCompiler = createFormulaCompiler();
 
 interface WordEditorPageProps {
@@ -63,6 +64,7 @@ export function WordEditorPage({ onBack }: WordEditorPageProps) {
             rightPanel: { generator: 'default' },
           },
           onBack: { action: 'navigate', args: { back: true } },
+          onSave: { action: 'showToast', args: { message: '文档已保存', level: 'success' } },
         } as any
       }
       registry={registry}

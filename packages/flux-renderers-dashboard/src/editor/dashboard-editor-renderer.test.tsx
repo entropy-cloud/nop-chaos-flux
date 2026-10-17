@@ -160,6 +160,35 @@ describe('DashboardEditorRenderer selection & editing flows', () => {
     expect(canvasPanels()[beforeDrop].getAttribute('data-panel-id')).toBe('panel-4');
   });
 
+  it('save surfaces schema onSave showToast through env.notify (plan 633 UR-5)', () => {
+    const notify = vi.fn();
+    const SchemaRenderer = createDashboardSchemaRenderer();
+    render(
+      <SchemaRenderer
+        schemaUrl="test://dashboard/editor-save-toast"
+        strictValidation={false}
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'dashboard-editor',
+              layout: initialLayout,
+              onSave: { action: 'showToast', args: { message: '布局已保存', level: 'success' } },
+            },
+          ],
+        }}
+        data={{}}
+        env={{ ...env, notify }}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+    fireEvent.click(screen.getByTestId('palette-chart'));
+    expect((screen.getByTestId('editor-save') as HTMLButtonElement).disabled).toBe(false);
+    fireEvent.click(screen.getByTestId('editor-save'));
+
+    expect(notify).toHaveBeenCalledWith('success', '布局已保存');
+  });
+
   it('save commits and dispatches dashboard-editor:save with the serialized layout', () => {
     const dispatch = vi.fn();
     const SchemaRenderer = createDashboardSchemaRenderer([], createSpiedEditorDefinition(dispatch));

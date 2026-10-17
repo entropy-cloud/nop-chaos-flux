@@ -82,7 +82,7 @@
   - OP-1（运营大屏渠道占比卡右缘溢出；首屏 loading 未复现）
   - DF-1（diff 新增行行号列空白；删除行已修复）
   - P3 nits：dashboard-demo KPI 轻微裁边 / code-editor SQL 上方灰条 / kanban 卡无日期 / page-designer 叶子字段带容器徽标语义 / debugger launcher 压 palette 底部
-  - N-2 linear-issues 首屏空面板竞态调查（负载下 mount/dispose 时序取证，复现优先；dependsOn 根未初始化机制主张已被运行时源码证伪——source-registry.ts:398 无条件 start）
+  - N-2 linear-issues 首屏空面板竞态调查（负载下 mount/dispose 时序取证，复现优先；dependsOn 根未初始化机制主张已被运行时源码证伪——source-registry.ts:398 无条件 start）【2026-10-17 取证结论（plan `docs/plans/633-cross-roadmap-wave-b-renderer-p2-plan.md` UR-6）：定向注入实验证实「单次读失败经 dependsOn 初始化 refresh 自愈」（解释竞态稀有性）；3 连败坐实失败不可见缺陷（误导性「当前筛选条件下没有问题」空态、零错误提示零重试）——已修复（statusPath + 错误态感知空槽 + refreshSource 重试，`linear-issues.json`；判别 e2e `linear-issues-fetch-failure.spec.ts` 先红后绿）；候选①③本轮注入路径未复现，失败可见化后后续发生即有用户可见信号】
 
 ## R13 全页面遍历 Roadmap 登记（2026-10-02，用户提出）
 

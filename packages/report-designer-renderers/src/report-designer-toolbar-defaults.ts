@@ -43,5 +43,11 @@ export const DEFAULT_TOOLBAR_ITEMS: ToolbarItem[] = [
   { id: 'spacer-1', type: 'spacer' },
   { id: TOOLBAR_FIELD_COUNT_ID, type: 'badge', text: '${fieldCount}', level: 'secondary' },
   { id: 'divider-info', type: 'divider' },
-  { id: 'save', type: 'button', label: 'flux.reportDesigner.save', action: 'report-designer:save' },
+  {
+    id: 'save',
+    type: 'button',
+    label: 'flux.reportDesigner.save',
+    action: 'report-designer:save',
+    then: [{ action: 'showToast', args: { message: '已保存', level: 'success' } }],
+  },
 ];

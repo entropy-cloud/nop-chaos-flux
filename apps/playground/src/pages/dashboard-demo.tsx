@@ -5,6 +5,7 @@ import { createActionScope } from '@nop-chaos/flux-runtime';
 import type { RendererEnv } from '@nop-chaos/flux-core';
 import { Button } from '@nop-chaos/ui';
 import { createDesignerRegistry, DASHBOARD_DEMO_RECIPE } from '../designer-hosts/registry-factory.js';
+import { notifyWithToast } from './notify-toast.js';
 
 /**
  * dashboard-demo 示例页（BI 看板：KPI 卡 + chart + table 面板，编辑态↔运行态切换，
@@ -96,7 +97,7 @@ const formulaCompiler = createFormulaCompiler();
 function makeDemoEnv(): RendererEnv {
   return {
     fetcher: async <T,>() => ({ status: 0, data: {} as T }),
-    notify: (_level, message) => console.log('[dashboard-demo]', message),
+    notify: (level, message) => notifyWithToast(level, message),
     navigate: () => undefined,
   };
 }
@@ -156,6 +157,10 @@ export function DashboardDemoPage({ onBack }: DashboardDemoPageProps) {
                 {
                   action: 'dashboardDemo:persist',
                   args: { serialized: '${event.serialized}' },
+                },
+                {
+                  action: 'showToast',
+                  args: { message: '布局已保存', level: 'success' },
                 },
               ],
             },

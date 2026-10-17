@@ -1,7 +1,8 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Button } from '@nop-chaos/ui';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createSchemaRenderer, createDefaultRegistry } from '@nop-chaos/flux-react';
+import { createActionScope } from '@nop-chaos/flux-runtime';
 import { registerBasicRenderers } from '@nop-chaos/flux-renderers-basic';
 import { registerContentRenderers } from '@nop-chaos/flux-renderers-content';
 import { registerLayoutRenderers } from '@nop-chaos/flux-renderers-layout';
@@ -66,6 +67,43 @@ export function AiConversationsDemoPage({ onBack }: Props) {
     [conversations.conversations, conversations.activeConversationId, conversations.controller, connector],
   );
 
+  // plan 633 UR-4 (replace-clobber 收敛): activeId 所有权归 host store——item 点击
+  // 经 host action 走 switchConversation，pageData.activeConversationId 随之更新；
+  // 旧的 schema setValue 只写 scope，下一次 pageData replace 会把高亮回退
+  // （2026-10-17 探针复现：afterClick aria-current=true → rename 后 null）。
+  // switchConversation 非稳定引用，但按 ref-mirror 设计（同步镜像读取，不依赖
+  // render 闭包新鲜度）——scope 经 useState 只建一次，捕获首 render 实例即可。
+  const [actionScope] = useState(() => {
+    const switchConversation = conversations.switchConversation;
+    const scope = createActionScope({ id: 'ai-conversations-demo-action-scope' });
+    scope.registerNamespace('conversationsDemo', {
+      kind: 'host',
+      listMethods() {
+        return ['setActive'];
+      },
+      async invoke(method: string, payload: unknown) {
+        if (method === 'setActive') {
+          const id = (payload as { id?: unknown } | undefined)?.id;
+          if (typeof id === 'string') {
+            try {
+              await switchConversation(id);
+              return { ok: true };
+            } catch (error) {
+              return {
+                ok: false,
+                error: error instanceof Error ? error : new Error(String(error), { cause: error }),
+                cause: error,
+              };
+            }
+          }
+          return { ok: false, error: new Error('setActive requires string id') };
+        }
+        return { ok: false, error: new Error(`Unknown conversationsDemo method: ${method}`) };
+      },
+    });
+    return scope;
+  });
+
   return (
     <div className="nop-theme-root min-h-screen flex flex-col">
       <header className="flex items-center gap-3 p-3 border-b bg-background">
@@ -83,6 +121,7 @@ export function AiConversationsDemoPage({ onBack }: Props) {
           registry={registry}
           env={decoratedEnv}
           formulaCompiler={formulaCompiler}
+          actionScope={actionScope}
           data={pageData}
         />
       </main>

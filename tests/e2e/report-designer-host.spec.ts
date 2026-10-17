@@ -93,6 +93,11 @@ test('save clears the aggregated dirty state', async ({ page }) => {
   await page.getByTestId('report-toolbar-save').click();
 
   await expect(dirtyProbe).toHaveAttribute('data-dirty', 'false', { timeout: 10000 });
+
+  // plan 633 UR-5: default save item then chain surfaces a success toast.
+  await expect(page.locator('[data-sonner-toast]').filter({ hasText: '已保存' })).toBeVisible({
+    timeout: 10_000,
+  });
 });
 
 test('preview runs the host preview adapter and exposes the stop control while running', async ({

@@ -254,11 +254,11 @@
 
 ### W-D 执行期新增登记（2026-10-03）
 
-- **P2（书面改判 → 渲染器/演示页数据流 follow-up）**：ai-conversations 页新建/删除/重命名会话后侧栏列表不渲染——`ai:createConversation` dispatch 成功（e2e `ai-conversations.spec.ts` 明示仅断言接线无错、可视循环未覆盖），`useConversation` store 循环有单测，但 store → pageData memo → schema `data` prop → ai-conversations 渲染器 `${conversations}` prop 的 live 传播链未闭合。修复方向：调试 page data 对象经 schema 通道到渲染器 prop 的传播（对照 ai-persistence 的 React 直连形态）。
+- **P2（书面改判 → 渲染器/演示页数据流 follow-up）**：ai-conversations 页新建/删除/重命名会话后侧栏列表不渲染——`ai:createConversation` dispatch 成功（e2e `ai-conversations.spec.ts` 明示仅断言接线无错、可视循环未覆盖），`useConversation` store 循环有单测，但 store → pageData memo → schema `data` prop → ai-conversations 渲染器 `${conversations}` prop 的 live 传播链未闭合。修复方向：调试 page data 对象经 schema 通道到渲染器 prop 的传播（对照 ai-persistence 的 React 直连形态）。【2026-10-17 已处置（plan `docs/plans/633-cross-roadmap-wave-b-renderer-p2-plan.md` UR-4）：create 腿经 plan 549（xui:imports 拆除）已通且 e2e 有全链判别断言；本批补 delete/rename 两腿判别 e2e（绿）；replace-clobber 探针复现（scope setValue 写 activeId 被 pageData replace 回退）并修复——activeId 所有权收敛 host store（`conversationsDemo:setActive` → switchConversation），修复后探针复验通过】
 
 ### W-B 执行期新增登记（2026-10-03）
 
-- **P2（书面改判 → 渲染器级 follow-up）**：设计器工具栏动作静默成功——taskflow Save/Export、word-editor/report-designer-host/dashboard-demo 保存均无用户反馈。根因：`flow-designer-renderers/src/designer-toolbar.tsx` 的 invokeAction 直连 `actionScope.resolve().provider.invoke()`，绕过通用 ActionDispatcher 的 then/messages 管线（schema 层 then 已加入 taskflow 双 schema，前向兼容但当前不生效）。修复面涉及工具栏动作管线设计（then 支持 or 内建成功反馈），登记渲染器级 plan-first，不在 W-B 当波修。
+- **P2（书面改判 → 渲染器级 follow-up）**：设计器工具栏动作静默成功——taskflow Save/Export、word-editor/report-designer-host/dashboard-demo 保存均无用户反馈。根因：`flow-designer-renderers/src/designer-toolbar.tsx` 的 invokeAction 直连 `actionScope.resolve().provider.invoke()`，绕过通用 ActionDispatcher 的 then/messages 管线（schema 层 then 已加入 taskflow 双 schema，前向兼容但当前不生效）。修复面涉及工具栏动作管线设计（then 支持 or 内建成功反馈），登记渲染器级 plan-first，不在 W-B 当波修。【2026-10-17 已修复（plan `docs/plans/633-cross-roadmap-wave-b-renderer-p2-plan.md` UR-5）：designer-toolbar 改走 runtime.dispatch 全管线（args 评估传递 + then 递归 + built-in showToast，手写 then 链删除）；taskflow save toast e2e 绿；word-editor（schema onSave + env notify 黑洞修复）/report-designer-host（defaults then + item.then 透传）/dashboard-demo（onSave showToast + notifyWithToast）三面补齐；dashboard e2e 断言因该页既有 panel 渲染红暂以 unit pin 承载（归并发 plan 628 领地）】
 - **验证口径说明**：格式类按钮（word-editor 加粗等）与画布缩放/工具选择类按钮（scada）反馈在 canvas/状态层，DOM 探针不可见，以 aria 翻转/零错误判定；网格单元格点击属选择机制，代表性验证（首个选择均产生大量 mutation）。
 
 ## 八、完成定义（DoD）——2026-10-03 收口核验

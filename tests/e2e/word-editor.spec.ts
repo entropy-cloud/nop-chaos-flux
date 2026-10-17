@@ -175,6 +175,11 @@ test.describe('Word Editor Page', () => {
 
     await expect(page.getByTestId('word-editor-save-status')).toContainText('已保存', { timeout: 5000 });
     await expect(savedPreview(page)).not.toContainText('无文档数据');
+
+    // plan 633 UR-5: schema onSave toast surfaces user-visible save feedback.
+    await expect(page.locator('[data-sonner-toast]').filter({ hasText: '文档已保存' })).toBeVisible({
+      timeout: 10_000,
+    });
   });
 
   test('search toolbar action opens the search panel', async ({ page }) => {
