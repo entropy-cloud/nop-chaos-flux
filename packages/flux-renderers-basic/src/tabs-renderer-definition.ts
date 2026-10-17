@@ -124,6 +124,8 @@ export const tabsRendererDefinition: RegisteredRendererDefinition = {
     { key: 'valueOwnership', kind: 'prop' },
     { key: 'valueStatePath', kind: 'prop' },
     { key: 'statusPath', kind: 'prop' },
+    { key: 'mountOnEnter', kind: 'prop' },
+    { key: 'unmountOnExit', kind: 'prop' },
     {
       key: 'orientation',
       kind: 'prop',

@@ -181,6 +181,19 @@ export interface TabsSchema extends BaseSchema {
   toolbar?: BaseSchema | BaseSchema[];
   orientation?: 'horizontal' | 'vertical';
   variant?: 'default' | 'line';
+  /**
+   * Container-level default for tab content mounting (amis `mountOnEnter`).
+   * Applies to every item that does not set its own `mountOnEnter`. When true,
+   * a tab's content is not mounted until it is first activated.
+   */
+  mountOnEnter?: boolean;
+  /**
+   * Container-level default for tab content unmounting (amis `unmountOnExit`).
+   * Applies to every item that does not set its own `unmountOnExit`. When true,
+   * an inactive tab's content is unmounted (so it remounts — and reloads its
+   * data — when re-activated).
+   */
+  unmountOnExit?: boolean;
   tabsMode?: TabsMode;
   sidePosition?: 'left' | 'right';
   /**

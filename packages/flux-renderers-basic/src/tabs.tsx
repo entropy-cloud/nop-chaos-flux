@@ -448,8 +448,8 @@ export function TabsRenderer(props: RendererComponentProps<TabsSchema>) {
         const isActive = ownedAxis.value === value;
         const activatedOnce = activated.has(value);
         const keepMounted = resolveTabKeepMounted({
-          mountOnEnter: item.mountOnEnter === true,
-          unmountOnExit: item.unmountOnExit === true,
+          mountOnEnter: item.mountOnEnter ?? schemaProps.mountOnEnter === true,
+          unmountOnExit: item.unmountOnExit ?? schemaProps.unmountOnExit === true,
           isActive,
           activatedOnce,
         });

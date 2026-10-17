@@ -53,6 +53,40 @@ describe('basicRendererDefinitions tabs behavior', () => {
     });
   });
 
+  it('honors container-level mountOnEnter/unmountOnExit (remount on reactivate)', async () => {
+    const SchemaRenderer = createBasicSchemaRenderer();
+    render(
+      <SchemaRenderer
+        schemaUrl="test://basic/tabs-container-mount"
+        schema={{
+          type: 'tabs',
+          mountOnEnter: true,
+          unmountOnExit: true,
+          items: [
+            { key: 'a', title: 'A', body: [{ type: 'text', text: 'BODY-A' }] },
+            { key: 'b', title: 'B', body: [{ type: 'text', text: 'BODY-B' }] },
+          ],
+        }}
+        env={env}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+
+    // 容器级 mountOnEnter+unmountOnExit：仅激活 tab 挂载
+    await waitFor(() => expect(screen.getByText('BODY-A')).toBeTruthy());
+    expect(screen.queryByText('BODY-B')).toBeNull();
+
+    // 切到 B → A 卸载、B 挂载
+    fireEvent.click(screen.getByText('B'));
+    await waitFor(() => expect(screen.getByText('BODY-B')).toBeTruthy());
+    expect(screen.queryByText('BODY-A')).toBeNull();
+
+    // 切回 A → B 卸载、A 重新挂载（remount → 重新加载）
+    fireEvent.click(screen.getByText('A'));
+    await waitFor(() => expect(screen.getByText('BODY-A')).toBeTruthy());
+    expect(screen.queryByText('BODY-B')).toBeNull();
+  });
+
   it('keeps disabled tabs non-interactive after compiler normalization', async () => {
     const SchemaRenderer = createBasicSchemaRenderer();
     render(
