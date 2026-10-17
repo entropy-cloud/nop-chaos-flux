@@ -544,4 +544,12 @@ function CrossFileDiffView({
       </div>
     </div>
   );
-}
+}// Adjudication 04-07: the four useDebouncedValue props->state mirrors are the
+// feature (debounced diff computation over potentially large texts; all four
+// timers batch in the same tick — see the cq-2 Phase 3 as-built note below),
+// not accidental state mirroring (plan 637).
+// Adjudication 04-07: the four useDebouncedValue props->state mirrors are the
+// feature (debounced diff computation over potentially large texts; all four
+// timers batch in the same tick — see the cq-2 Phase 3 as-built note above),
+// not accidental state mirroring (plan 637).
+

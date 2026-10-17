@@ -5,6 +5,10 @@ const DANGEROUS_PATH_SEGMENTS = new Set(['__proto__', 'constructor', 'prototype'
 const MAX_PARSE_PATH_CACHE_SIZE = 1000;
 const parsePathCache = new Map<string, readonly string[]>();
 
+// Adjudication P2-L: has->delete->set is the standard Map-based LRU
+// recency-refresh idiom (Map.set on an existing key does not move the entry,
+// so delete+set is required to move it to the tail); V8 Map delete/set are
+// O(1) — no rehashing concern (plan 637).
 function rememberParsedPath(path: string, segments: readonly string[]) {
   if (parsePathCache.has(path)) {
     parsePathCache.delete(path);

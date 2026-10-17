@@ -169,6 +169,11 @@ export function useSurfaceRenderer(
     declarativeScope,
   });
 
+  // Adjudication P2-G: effect-phase latest-ref sync is intentional — the
+  // unmount cleanup closures read cleanupRef.current and need the latest
+  // committed snapshot; render-phase ref writes would trip react-hooks/refs
+  // and risk polluting refs from discarded concurrent renders (plan 637;
+  // precedent docs/plans/2026-07-28-0900-2-code-quality-and-styling-compliance.md).
   React.useEffect(() => {
     declarativeScopeRef.current = declarativeScope;
   }, [declarativeScope]);

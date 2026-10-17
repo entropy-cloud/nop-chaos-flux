@@ -378,6 +378,12 @@ export const NodeRendererResolved = memo(function NodeRendererResolved(props: {
     };
   }, [reactionProxyEntries, reactionPlans, runtime, helpers, nodeInstance, templateNode.id]);
 
+  // Adjudication P2-F: this container literal is rebuilt every render by
+  // design — harmless micro-allocation. The only consumer spreads it
+  // field-by-field onto <Comp>, every field above is identity-stable
+  // (useMemo/selector), and downstream renderers are plain function
+  // components without props comparison, so memoizing the container would be
+  // an unobservable no-op (plan 637).
   const componentProps: RendererComponentProps = {
     id: templateNode.id,
     path: templateNode.templatePath,
