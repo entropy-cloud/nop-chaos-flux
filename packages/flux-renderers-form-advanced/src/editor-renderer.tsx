@@ -9,7 +9,7 @@ import { Placeholder } from '@tiptap/extensions';
 import type { Extensions } from '@tiptap/core';
 import type { BaseSchema, RendererComponentProps, RegisteredRendererDefinition } from '@nop-chaos/flux-core';
 import { sanitizeHtml } from '@nop-chaos/flux-renderers-content';
-/* Adjudication 01-04: form-advanced depends on content (sanitizeHtml), form (formFieldRules, useFormFieldController, etc.), and data (CrudColumnSchema/CrudSchema types). These are architecturally expected extension-package couplings. Accept-and-annotate: shared primitives live here by design; extraction would create an artificial shared package with no other consumers. */
+/* Adjudication 01-04: form-advanced depends on content (sanitizeHtml) and form (formFieldRules, useFormFieldController, etc.) — architecturally expected extension-package couplings. Accept-and-annotate: shared primitives live here by design; extraction would create an artificial shared package with no other consumers. The former data leg (CrudColumnSchema/CrudSchema types) moved to devDependencies in plan 634 — non-test sources no longer import data. */
 import { useInputComponentHandle } from '@nop-chaos/flux-react';
 import { Button, cn } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';

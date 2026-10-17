@@ -568,7 +568,7 @@ docs/analysis/{year}-{month}-{day}-deep-audit-{简短标识}/
 3. 对照以下规则逐条检查：
    a. flux-core 不能依赖任何其他 @nop-chaos/* 包
    b. flux-formula 只能依赖 flux-core
-   c. flux-runtime 只能依赖 flux-core 和 flux-formula
+   c. flux-runtime 只能依赖 flux-core 和 flux-formula（2026-10-17 勘误，plan 634 UR-7 01-01：现行 flux-runtime 依赖为 action-core/compiler/core/formula/i18n——action-core 与 compiler 同属分层链内层、i18n 为 peer-aware 叶子；此条历史表述已过时，以 flux-runtime/package.json 实况为准）
    d. flux-react 不能依赖任何 renderers 包
    e. renderers 包可以依赖 `flux-react` 以及 `flux-core` / `flux-formula` / `flux-runtime` 的稳定公开 API；应重点检查是否直接依赖这些包的内部模块、私有子路径或形成难以解释的边界耦合
    f. *-core 包不能依赖 *-renderers 包

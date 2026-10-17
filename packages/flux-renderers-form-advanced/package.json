@@ -2,7 +2,9 @@
   "name": "@nop-chaos/flux-renderers-form-advanced",
   "version": "0.1.0",
   "private": true,
-  "sideEffects": false,
+  "sideEffects": [
+    "*.css"
+  ],
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -22,15 +24,14 @@
     "@nop-chaos/flux-core": "workspace:*",
     "@nop-chaos/flux-i18n": "workspace:*",
     "@nop-chaos/flux-react": "workspace:*",
-    "@nop-chaos/flux-renderers-data": "workspace:*",
     "@nop-chaos/flux-renderers-content": "workspace:*",
     "@nop-chaos/flux-renderers-form": "workspace:*",
     "@nop-chaos/flux-runtime": "workspace:*",
     "@nop-chaos/ui": "workspace:*",
     "@tanstack/react-virtual": "^3.13.24",
-    "@tiptap/extensions": "^3.27.1",
-    "@tiptap/extension-image": "3.27.1",
     "@tiptap/extension-highlight": "3.27.1",
+    "@tiptap/extension-image": "3.27.1",
+    "@tiptap/extensions": "^3.27.1",
     "@tiptap/react": "^3.27.1",
     "@tiptap/starter-kit": "^3.27.1"
   },
@@ -47,9 +48,10 @@
   "devDependencies": {
     "@nop-chaos/flux-formula": "workspace:*",
     "@nop-chaos/flux-renderers-basic": "workspace:*",
+    "@nop-chaos/flux-renderers-data": "workspace:*",
+    "@tiptap/core": "^3.27.1",
     "lucide-react": "^1.17.0",
-    "react": "^19.0.0",
-    "@tiptap/core": "^3.27.1"
+    "react": "^19.0.0"
   },
   "description": "Advanced form renderers: condition builder, tag list, and detail views"
 }

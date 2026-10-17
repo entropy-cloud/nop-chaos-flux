@@ -5,6 +5,7 @@
 // metadata, so the visible document never changed while being marked dirty.
 // Aligned with the demo reference (report-designer-demo insertFieldAtCell:
 // setCellValue then dropFieldToTarget).
+/* Adjudication 01-09: report-designer imports spreadsheet-core primitives (cellAddress) for the embedded spreadsheet canvas — architecturally expected cross-domain coupling (report composes a spreadsheet). Accept-and-annotate: covered with report-spreadsheet-canvas.tsx / page-renderer.tsx; extraction to a shared geometry package rejected (single consumer family). */
 import { cellAddress, type SpreadsheetCommandResult } from '@nop-chaos/spreadsheet-core';
 import type { FieldDragPayload, ReportDesignerCore, ReportSelectionTarget } from '@nop-chaos/report-designer-core';
 

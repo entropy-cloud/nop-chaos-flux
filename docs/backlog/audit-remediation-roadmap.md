@@ -352,16 +352,16 @@ P2 findings from `docs/audits/2026-07-28-0814-multi-audit-audit-remediation.md` 
 
 ### From Multi-Audit (D01 — Dependency Graph)
 
-| ID    | File                                              | Description                                      |
-| ----- | ------------------------------------------------- | ------------------------------------------------ |
-| 01-01 | `flux-runtime/package.json:15-20`                 | Rule(c) text outdated vs actual deps             |
-| 01-02 | `flux-renderers-mobile/package.json:20-24`        | Missing flux-react dependency                    |
-| 01-03 | `flux-renderers-data/package.json:15-22`          | Cross-renderer coupling: data→basic              |
-| 01-04 | `flux-renderers-form-advanced/package.json:22-24` | Cross-renderer coupling: 3 renderer packages     |
-| 01-05 | `flux-renderers-ai/package.json:28`               | Cross-renderer coupling: ai→content              |
-| 01-06 | `flux-code-editor/package.json:43`                | Cross-renderer coupling: code-editor→form        |
-| 01-09 | `report-designer-renderers/package.json:20-23`    | Cross-domain coupling: report→spreadsheet        |
-| 01-11 | `flux-renderers-form-advanced/package.json:25`    | Runtime dependency needs public API verification |
+| ID    | File                                              | Description                                                                                                                                                                                                               |
+| ----- | ------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 01-01 | `flux-runtime/package.json:15-20`                 | Rule(c) text outdated vs actual deps — rule text survives only in historical audit analysis (no owner-doc carrier; 07-28 package-dependency-hygiene plan already handled) — resolved as stale registration (plan 634)     |
+| 01-02 | `flux-renderers-mobile/package.json:20-24`        | Missing flux-react dependency — fixed — explicit `@nop-chaos/flux-react` in dependencies (plan 624; test-support re-export + 14 test consumers)                                                                           |
+| 01-03 | `flux-renderers-data/package.json:15-22`          | Cross-renderer coupling: data→basic — adjudicated accept-and-annotate 2026-07-28 (table-cell-chrome.tsx annotation, commit 0f8ae307e; copyToClipboard reuse)                                                              |
+| 01-04 | `flux-renderers-form-advanced/package.json:22-24` | Cross-renderer coupling: 3 renderer packages — adjudicated accept-and-annotate 2026-07-28 (annotations in editor-renderer.tsx et al.); data leg downgraded to devDependencies in plan 634 (non-test sources zero imports) |
+| 01-05 | `flux-renderers-ai/package.json:28`               | Cross-renderer coupling: ai→content — adjudicated accept-and-annotate 2026-07-28 (ai-bubble markdown.tsx annotation; sanitizeHtml reuse)                                                                                  |
+| 01-06 | `flux-code-editor/package.json:43`                | Cross-renderer coupling: code-editor→form — adjudicated accept-and-annotate 2026-07-28 (code-editor-renderer.tsx annotation; formFieldChromeRules reuse)                                                                  |
+| 01-09 | `report-designer-renderers/package.json:20-23`    | Cross-domain coupling: report→spreadsheet — adjudicated accept-and-annotate 2026-07-28 (report-spreadsheet-canvas.tsx + page-renderer.tsx annotations); report-field-insert.ts annotation added in plan 634               |
+| 01-11 | `flux-renderers-form-advanced/package.json:25`    | Runtime dependency needs public API verification — resolved — projected-scope.ts Adjudication 01-11 annotation (public API only, accept-and-annotate clean)                                                               |
 
 ### From Multi-Audit (D04 — State Ownership)
 
@@ -418,20 +418,20 @@ P2 findings from `docs/audits/2026-07-28-0814-multi-audit-audit-remediation.md` 
 
 ### From Open Audit (General P2)
 
-| ID   | File                                                                   | Description                                                 |
-| ---- | ---------------------------------------------------------------------- | ----------------------------------------------------------- |
-| P2-A | `flux-bundle/package.json:25`                                          | `@nop-chaos/ui` peer dep is bare `"*"`                      |
-| P2-B | `word-editor-renderers/package.json:30`                                | `recharts` peer dep likely copy-paste leftover              |
-| P2-C | `flux-core/src/`                                                       | 34 test files colocated, zero in `__tests__/`               |
-| P2-D | Various                                                                | Low-assertion tests (1-4 expect calls each)                 |
-| P2-E | `flux-runtime/src/reaction-runtime.ts:449-458`                         | Async evaluateWatchValue race on subscribe                  |
-| P2-F | `flux-react/src/node-renderer-resolved.tsx:377-389`                    | componentProps container object created fresh every render  |
-| P2-G | `flux-renderers-basic/src/use-surface-renderer.ts:136-158`             | Effect syncing refs (adjudicated but distinct anti-pattern) |
-| P2-H | `flux-renderers-content/src/diff-view/components/diff-gutter.tsx:1-21` | `DiffGutterCell` deprecated but still exported              |
-| P2-I | `flux-renderers-content/src/diff-view/`                                | Inline style objects instead of Tailwind                    |
-| P2-J | `flux-renderers-mobile/package.json:20-24`                             | Missing explicit `@nop-chaos/flux-react` dependency         |
-| P2-K | Various `package.json`                                                 | Inconsistent CSS subpath export format                      |
-| P2-L | `flux-core/src/utils/path.ts:9-13`                                     | delete-then-set rehashing in rememberParsedPath             |
+| ID   | File                                                                   | Description                                                                                                                                                                                                                                                                             |
+| ---- | ---------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| P2-A | `flux-bundle/package.json:25`                                          | `@nop-chaos/ui` peer dep is bare `"*"` — fixed — `workspace:*` (plan 624: peer retained + devDep backing)                                                                                                                                                                               |
+| P2-B | `word-editor-renderers/package.json:30`                                | `recharts` peer dep likely copy-paste leftover — fixed — recharts moved to devDependencies (plan 624 backing)                                                                                                                                                                           |
+| P2-C | `flux-core/src/`                                                       | 34 test files colocated, zero in `__tests__/`                                                                                                                                                                                                                                           |
+| P2-D | Various                                                                | Low-assertion tests (1-4 expect calls each)                                                                                                                                                                                                                                             |
+| P2-E | `flux-runtime/src/reaction-runtime.ts:449-458`                         | Async evaluateWatchValue race on subscribe                                                                                                                                                                                                                                              |
+| P2-F | `flux-react/src/node-renderer-resolved.tsx:377-389`                    | componentProps container object created fresh every render                                                                                                                                                                                                                              |
+| P2-G | `flux-renderers-basic/src/use-surface-renderer.ts:136-158`             | Effect syncing refs (adjudicated but distinct anti-pattern)                                                                                                                                                                                                                             |
+| P2-H | `flux-renderers-content/src/diff-view/components/diff-gutter.tsx:1-21` | `DiffGutterCell` deprecated but still exported                                                                                                                                                                                                                                          |
+| P2-I | `flux-renderers-content/src/diff-view/`                                | Inline style objects instead of Tailwind                                                                                                                                                                                                                                                |
+| P2-J | `flux-renderers-mobile/package.json:20-24`                             | Missing explicit `@nop-chaos/flux-react` dependency — fixed — duplicate of 01-02 (plan 624)                                                                                                                                                                                             |
+| P2-K | Various `package.json`                                                 | Inconsistent CSS subpath export format — partially resolved in plan 634: sideEffects correctness fixed (form-advanced `["*.css"]`, data has no CSS products — noted); subpath naming adjudicated as consumer-facing per-package names, kept as-is (full inventory recorded in plan 634) |
+| P2-L | `flux-core/src/utils/path.ts:9-13`                                     | delete-then-set rehashing in rememberParsedPath                                                                                                                                                                                                                                         |
 
 ## 横切关注点
 

@@ -983,9 +983,6 @@ importers:
       '@nop-chaos/flux-renderers-content':
         specifier: workspace:*
         version: link:../flux-renderers-content
-      '@nop-chaos/flux-renderers-data':
-        specifier: workspace:*
-        version: link:../flux-renderers-data
       '@nop-chaos/flux-renderers-form':
         specifier: workspace:*
         version: link:../flux-renderers-form
@@ -1020,6 +1017,9 @@ importers:
       '@nop-chaos/flux-renderers-basic':
         specifier: workspace:*
         version: link:../flux-renderers-basic
+      '@nop-chaos/flux-renderers-data':
+        specifier: workspace:*
+        version: link:../flux-renderers-data
       '@tiptap/core':
         specifier: ^3.27.1
         version: 3.27.1(@tiptap/pm@3.27.1)
