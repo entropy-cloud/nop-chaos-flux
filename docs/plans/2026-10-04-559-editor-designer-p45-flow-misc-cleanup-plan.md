@@ -1,6 +1,6 @@
 # 559 flow-designer 杂项清理（P4.5）
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-10-04
 > Source: `docs/backlog/editor-designer-standardization-roadmap.md` §6 P4.5、§3 杂项清单；`docs/architecture/editor-designer-standard.md` §2.6/裁决①
 > Related: plan 544（裁决① flow history 豁免 + P4.5 清理义务）；plan 557/558（同族先例）
@@ -92,7 +92,7 @@ Status Note: 三项杂项（zustand 死 peerDep/杂散事件/测试通道声明�
 
 Closure Audit Evidence:
 
-- Auditor / Agent: 独立子 agent（fresh session）
+- Auditor / Agent: 独立子 agent（fresh session）【plan 627 翻转注记：10-04 时代审计无命名 agent id 属当时惯例；approved 记录 = daily log 2026-10-04 P4.5 节 + b8ef4a555 提交记录，在档】
 - Evidence: 见 daily log 2026-10-04 P4.5 节与 roadmap 回写记录；删除类清理以 flow-designer-core 192/192 + renderers 284/284 + 全仓五门禁回归为证明。
 
 Follow-up:

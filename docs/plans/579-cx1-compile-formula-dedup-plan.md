@@ -1,6 +1,6 @@
 # 579 CX-1 共性重构：编译公式层复制沉积收敛批（commitCompositeState 原语下沉 + value-adapter 三联骨架提取）
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-10-12
 > Source: `docs/backlog/workaround-code-smell-audit-roadmap.md` CX-1 条目（WA-1 批立案 WA-formula-001[P1]+WA-core-002[P2]，台账 72/73 行 successor-required→本批）；先例：plan 576/577/578 批内修模式
 > Related: `docs/audits/workaround-code-smell/ledger.md`；`docs/architecture/flux-core.md`
@@ -68,7 +68,7 @@ Exit Criteria:
 
 ### Phase 2 - 回写与收口
 
-Status: in_progress（2026-10-12：台账两行 found→fixed 完成[220=92+2+126——closure audit M1 修复台账断列后实跑读数]；dev log 落盘；隔离五门禁全绿；closure audit R1 issues[0B/1M/2m：M1 台账断列解析丢弃→已修+reconcile 复跑 220=92+2+126；m1 三处 closure 依赖门回退未勾/m2 fixed 行处置列清空→已修]；delta 复核进行中）
+Status: completed【plan 627 同步：本 slice Exit Criteria 全勾、Status Note 记 done、closure audit approved——此 in_progress 行为 Lesson-7 陈旧残留】
 Targets: ledger、roadmap、dev log
 
 - Item Types: `Proof | Decision`

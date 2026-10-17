@@ -1,6 +1,6 @@
 # 580 CX-2 共性重构：`CompiledTemplate.repeatedTemplates` 转正空壳契约字段移除
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-10-12
 > Source: `docs/backlog/workaround-code-smell-audit-roadmap.md` CX-2 条目（WA-1 批立案 WA-core-001，I 类转正）；流程依据：`docs/skills/deprecated-feature-cleanup.md`
 > Related: `docs/audits/workaround-code-smell/ledger.md`（WA-core-001 行）；`docs/architecture/flux-core.md`
@@ -68,7 +68,7 @@ Exit Criteria:
 
 ### Phase 2 - 回写与收口
 
-Status: in_progress（2026-10-12：台账 WA-core-001 found→fixed 完成[220=91+1+128，全文件零畸形行列检在案]；dev log 落盘；隔离五门禁与 closure audit 进行中）
+Status: completed【plan 627 同步：本 slice Exit Criteria 全勾、Status Note 记 done、closure audit approved——此 in_progress 行为 Lesson-7 陈旧残留】
 Targets: ledger、roadmap、dev log
 
 - Item Types: `Proof | Decision`

@@ -238,3 +238,5 @@ docs/index.md 12 处抽样链接零断链；注册红清单体系（scanner/knip
 | C5（薄覆盖）/C6（既有红收口跟踪）/async 330 与 react19 650 逐条裁决/three-perf script/D1 CQ-S17/479 stash 恢复 | 📋 已登记 follow-up（各 plan Deferred/Non-Blocking Follow-ups 节，均带 non-blocking 理由） | 后续治理轮                                     |
 
 **循环终止判定**：五个 owner plan 全部经独立 draft review + 独立 closure audit 收口并各自提交；剩余未决项全部满足以下之一——(a) 并发会话所有权（plan 621、playground db67dba02 红）；(b) 文档化既有红（playground vite.config）；(c) 显式登记的 non-blocking follow-up（带理由与 successor）。无可执行的新 findings。
+
+**【plan 627 completeness 对账补记（2026-10-17）】**五 plan 闭环后的全 findings 复核发现并修正 4 项漏网：3 个 F2 类残留（559/579/580 已完成仍 active——含纠正 625 遗留的"579/580 真活跃"误判）、flux-xlang-debug 清单漂移（vitest ^3 声明移除 + @types/react 对齐，vitest 5 首跑 34/34 绿）、F1 教训补录（见 daily log）、audit-suspects ratchet 再收紧（727→723）。**B6 处置结论（对账新增编号，原报告 §4 未载）**：`packages/flux-renderers-data/src/table-renderer/column-width-measure.ts:70` 的 digest stringify useMemo 为**文档化有意模式**（代码注释明示 useScopeSelector pathsKey 同款——内容不变则无需重测），非缺陷非不一致，豁免于"需修正"类。终态 active 集合 = {621（并发会话）, 627（收口即退出）}。
