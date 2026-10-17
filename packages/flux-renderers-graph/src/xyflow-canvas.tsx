@@ -3,6 +3,7 @@ import { ReactFlow, ReactFlowProvider, Background } from '@xyflow/react';
 import type { Edge, Node, ReactFlowInstance } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { GraphNodeView, type GraphNodeViewData } from './graph-node.js';
+import { GraphBundleEdge } from './graph-bundle-edge.js';
 import type { GraphViewport } from './graph-store.js';
 
 export type GraphCanvasNode = Node<GraphNodeViewData, 'graphNode'>;
@@ -52,7 +53,7 @@ export const XyflowCanvas = memo(function XyflowCanvas(props: XyflowCanvasProps)
   } = props;
 
   const nodeTypes = useMemo(() => NODE_TYPES, []);
-  const edgeTypes = useMemo(() => ({}), []);
+  const edgeTypes = useMemo(() => ({ graphBundle: GraphBundleEdge }), []);
   const { onNodeClick, onNodeDoubleClick, onSelectionChange, onPaneClick, onInstanceReady } = props;
 
   // ReactFlow 的 StoreUpdater/SelectionListener 依赖回调 identity：全部回调引用稳定，

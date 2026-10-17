@@ -504,17 +504,39 @@ export function GraphRenderer(props: RendererComponentProps<GraphSchema>) {
     });
   }, [rawNodes, projection, matchNodeIds, selectedNodeId, levelField, levelMap, props.regions]);
 
-  const canvasEdges: GraphCanvasEdge[] = useMemo(
-    () =>
-      projection.layoutedEdges.map((edge) => ({
+  // GR-2 (plan 640): edges sharing a source handle (fan-out) or a target
+  // handle (convergence) get a per-edge vertical bundle offset so adjacent
+  // edges no longer overlap into a small loop at the shared handle.
+  const canvasEdges: GraphCanvasEdge[] = useMemo(() => {
+    const sourceBuckets = new Map<string, number>();
+    const targetBuckets = new Map<string, number>();
+    return projection.layoutedEdges.map((edge) => {
+      const sourceKey = `${edge.source}::out`;
+      const targetKey = `${edge.target}::in`;
+      const sourceIdx = sourceBuckets.get(sourceKey) ?? 0;
+      sourceBuckets.set(sourceKey, sourceIdx + 1);
+      const targetIdx = targetBuckets.get(targetKey) ?? 0;
+      targetBuckets.set(targetKey, targetIdx + 1);
+      const sourceCount = sourceBuckets.get(sourceKey)!;
+      const targetCount = targetBuckets.get(targetKey)!;
+      const needsBundle = sourceCount > 1 || targetCount > 1;
+      const sourceOffset = needsBundle ? (sourceIdx - (sourceCount - 1) / 2) * 14 : 0;
+      const targetOffset = needsBundle ? (targetIdx - (targetCount - 1) / 2) * 14 : 0;
+      return {
         id: edge.id ?? `${edge.source}->${edge.target}`,
         source: edge.source,
         target: edge.target,
         label: edge.label,
         animated: edge.animated === true,
-      })),
-    [projection.layoutedEdges],
-  );
+        ...(needsBundle
+          ? {
+              type: 'graphBundle' as const,
+              data: { __bundle: { sourceOffset, targetOffset } },
+            }
+          : {}),
+      };
+    });
+  }, [projection.layoutedEdges]);
 
   if (empty) {
     const emptyContent = props.regions.empty

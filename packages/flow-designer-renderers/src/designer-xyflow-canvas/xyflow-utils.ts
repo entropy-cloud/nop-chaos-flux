@@ -17,7 +17,7 @@ function toFiniteNumber(value: unknown): number | undefined {
   return Number.isFinite(value) ? value : undefined;
 }
 
-function resolveNodeSize(
+export function resolveNodeSize(
   node: DesignerSnapshot['doc']['nodes'][number],
   nodeTypeSize: { minWidth?: number; minHeight?: number } | undefined,
   nodeType?: NodeTypeConfig,

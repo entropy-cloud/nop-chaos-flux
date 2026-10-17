@@ -71,14 +71,14 @@
 
 ## R7 补充登记（执行期，2026-10-01）
 
-- TF-1 整体（error/retry 环回线穿越节点本体）：偏移弧线机制经三种变体探针证伪不足；e6 源端口几何落在邻节点包围盒内使"采样零落入"判据构造性不可满足（布局/缩放跨加载漂移）。归**边路由引擎**（自动避障/端口感知路由）follow-up，见 plan `2026-10-01-ux-r7-flow-designer-visual-plan.md` Recorded Scope Change（经独立 reviewer 再裁定）。
+- TF-1 整体（error/retry 环回线穿越节点本体）：偏移弧线机制经三种变体探针证伪不足；e6 源端口几何落在邻节点包围盒内使"采样零落入"判据构造性不可满足（布局/缩放跨加载漂移）。归**边路由引擎**（自动避障/端口感知路由）follow-up，见 plan `2026-10-01-ux-r7-flow-designer-visual-plan.md` Recorded Scope Change（经独立 reviewer 再裁定）。【2026-10-17 已修复（plan `docs/plans/640-cross-roadmap-ur13-edge-router-plan.md`）：两级路由引擎（waypoint 化——smoothstep 注入经审查证实轴/极性相关不可用）——环回边走源侧 gap 列 + 底部回流 + 靶侧竖直走廊进场（几何断言逐线段-bbox 清空）】
 
 ## 收敛复审计登记（R10 后 fresh-eyes 19 路由重走，2026-10-01）
 
 - 复审计结论：**CONVERGENCE: not-reached**——R1-R10 全部 17 个修复面在 live 验证落地（含全部 P0），新发现 2 P1（N-1 Word 工作台爆宽 / N-2 linear-issues 偶发空面板）→ R11 plan（`docs/plans/2026-10-01-ux-r11-convergence-p1-plan.md`）修复/钉住。
 - Follow-up 登记（复审计确认未复现或未修复，非新 P0/P1）：
   - PR-1（print 样式区输入空无占位；Y 浮点未复现，疑拖拽期才现）
-  - GR-2（graph 邻接边小环——归边路由引擎 follow-up 家族）
+  - GR-2（graph 邻接边小环——归边路由引擎 follow-up 家族）【2026-10-17 已修复（plan 640）：共享把手扇出/汇入边按组垂直 bundle offset 分离（graph 本地 bundleEdge，避免跨包耦合）】
   - OP-1（运营大屏渠道占比卡右缘溢出；首屏 loading 未复现）
   - DF-1（diff 新增行行号列空白；删除行已修复）
   - P3 nits：dashboard-demo KPI 轻微裁边 / code-editor SQL 上方灰条 / kanban 卡无日期 / page-designer 叶子字段带容器徽标语义 / debugger launcher 压 palette 底部

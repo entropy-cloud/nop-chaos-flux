@@ -37,3 +37,4 @@ export {
 } from './tree-domain.js';
 export { createDesignerStoreAdapter } from './adapters/designer-store-adapter.js';
 export type { DesignerStoreAdapter } from './adapters/designer-store-adapter.js';
+export * from './edge-router.js';

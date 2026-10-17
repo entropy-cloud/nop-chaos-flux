@@ -1,5 +1,5 @@
 import React from 'react';
-import { BaseEdge, EdgeLabelRenderer, getBezierPath } from '@xyflow/react';
+import { BaseEdge, EdgeLabelRenderer, getBezierPath, getSmoothStepPath } from '@xyflow/react';
 import type { EdgeProps } from '@xyflow/react';
 import { isSchema } from '@nop-chaos/flux-core';
 import { RenderNodes } from '@nop-chaos/flux-react';
@@ -20,14 +20,55 @@ export function DesignerXyflowEdge(props: EdgeProps) {
   const edgeType = useEdgeTypeConfig(edgeData?.typeId ?? props.type ?? 'default');
   const { dispatch, core } = useDesignerContext();
 
-  const [edgePath, labelX, labelY] = getBezierPath({
-    sourceX: props.sourceX,
-    sourceY: props.sourceY,
-    targetX: props.targetX,
-    targetY: props.targetY,
-    sourcePosition: props.sourcePosition,
-    targetPosition: props.targetPosition,
-  });
+  // plan 640 UR-13: routed (loopback) edges render an explicit waypoint
+  // polyline around the node field; bundled edges shift their shared-handle
+  // lane; forward edges keep the original bezier byte-for-byte.
+  const route = (props.data as { __fdRoute?: { kind: string; waypoints?: Array<{ x: number; y: number }>; axis?: 'x' | 'y'; centerOffset?: number; offset?: number } } | undefined)?.__fdRoute;
+
+  const [edgePath, labelX, labelY] = (() => {
+    if (route?.kind === 'routed' && route.waypoints && route.waypoints.length >= 2) {
+      const pts = route.waypoints;
+      const r = 10;
+      let d = `M ${pts[0].x} ${pts[0].y}`;
+      for (let i = 1; i < pts.length - 1; i += 1) {
+        const prev = pts[i - 1];
+        const cur = pts[i];
+        const next = pts[i + 1];
+        const inLen = Math.hypot(cur.x - prev.x, cur.y - prev.y);
+        const outLen = Math.hypot(next.x - cur.x, next.y - cur.y);
+        const rr = Math.min(r, inLen / 2, outLen / 2);
+        d += ` L ${cur.x - (cur.x - prev.x) / (inLen || 1) * rr} ${cur.y - (cur.y - prev.y) / (inLen || 1) * rr}`;
+        d += ` Q ${cur.x} ${cur.y} ${cur.x + (next.x - cur.x) / (outLen || 1) * rr} ${cur.y + (next.y - cur.y) / (outLen || 1) * rr}`;
+      }
+      const last = pts[pts.length - 1];
+      d += ` L ${last.x} ${last.y}`;
+      const mid = pts[Math.floor(pts.length / 2)];
+      return [d, mid.x, mid.y] as const;
+    }
+    if (route?.kind === 'bundled') {
+      const [path, lx, ly] = getSmoothStepPath({
+        sourceX: props.sourceX,
+        sourceY: props.sourceY,
+        targetX: props.targetX,
+        targetY: props.targetY,
+        sourcePosition: props.sourcePosition,
+        targetPosition: props.targetPosition,
+        ...(route.axis === 'x'
+          ? { centerX: (props.sourceX + props.targetX) / 2 + (route.centerOffset ?? 0) }
+          : { centerY: (props.sourceY + props.targetY) / 2 + (route.centerOffset ?? 0) }),
+        offset: route.offset ?? 20,
+      });
+      return [path, lx, ly] as const;
+    }
+    return getBezierPath({
+      sourceX: props.sourceX,
+      sourceY: props.sourceY,
+      targetX: props.targetX,
+      targetY: props.targetY,
+      sourcePosition: props.sourcePosition,
+      targetPosition: props.targetPosition,
+    });
+  })();
 
   const edgeRenderData = React.useMemo(
     () => ({

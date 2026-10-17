@@ -19,7 +19,13 @@ import {
   DingFlowAddBranchOverlay,
   DingFlowMergeOverlay,
 } from '../dingflow/index.js';
-import { createXyflowNodes, createXyflowEdges, normalizeControlledViewport } from './xyflow-utils.js';
+import {
+  createXyflowNodes,
+  createXyflowEdges,
+  normalizeControlledViewport,
+  resolveNodeSize,
+} from './xyflow-utils.js';
+import { computeEdgeRoutes, type EdgeRouterSide } from '@nop-chaos/flow-designer-core';
 import type { XyflowViewportChange } from './types.js';
 import type { CanvasConfig, DesignerSnapshot } from '@nop-chaos/flow-designer-core';
 import { useMinimapNavigation } from './use-minimap-navigation.js';
@@ -211,6 +217,7 @@ export function DesignerXyflowCanvas(props: DesignerXyflowCanvasProps) {
     [props.snapshot.viewport, props.snapshot.doc.viewport],
   );
 
+
   const [hoveredEdgeId, setHoveredEdgeId] = useState<string | null>(null);
   const [reactFlowInstance, setReactFlowInstance] = useState<ReactFlowInstance | null>(null);
   const hoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -269,6 +276,54 @@ export function DesignerXyflowCanvas(props: DesignerXyflowCanvasProps) {
       hoveredEdgeId,
       onSelectionPushed: rfSelectionBridge.trackPushedSelection,
     });
+  // plan 640 UR-13: bounded edge routing — backward (loopback) edges route via
+  // explicit waypoints around the node field; shared-handle edges bundle with
+  // a center offset. Forward edges stay on the default bezier (no spec).
+  const edgeRoutes = useMemo(() => {
+    if (props.documentMode === 'tree')
+      return new Map<string, import('@nop-chaos/flow-designer-core').EdgeRouteSpec>();
+    const nodeInputs = snapshotDoc.nodes.map((n) => {
+      const nodeType = props.nodeTypeMap?.get(n.type);
+      const { width, height } = resolveNodeSize(n, props.nodeTypeSizeMap?.get(n.type), nodeType, false);
+      return { id: n.id, x: n.position.x, y: n.position.y, width, height };
+    });
+    const nodeTypeMap = props.nodeTypeMap;
+    const sideOf = (
+      nodeType: import('@nop-chaos/flow-designer-core').NodeTypeConfig | undefined,
+      portId: string | undefined,
+      fallback: EdgeRouterSide,
+    ): EdgeRouterSide => {
+      const port = nodeType?.ports?.find((p) => p.id === portId);
+      return (port?.position as EdgeRouterSide | undefined) ?? fallback;
+    };
+    const edgeInputs = snapshotDoc.edges.map((e) => {
+      const sourceNode = snapshotDoc.nodes.find((n) => n.id === e.source);
+      const targetNode = snapshotDoc.nodes.find((n) => n.id === e.target);
+      return {
+        id: e.id,
+        source: e.source,
+        target: e.target,
+        sourceSide: sideOf(sourceNode ? nodeTypeMap?.get(sourceNode.type) : undefined, e.sourcePort, 'bottom'),
+        targetSide: sideOf(targetNode ? nodeTypeMap?.get(targetNode.type) : undefined, e.targetPort, 'top'),
+      };
+    });
+    return computeEdgeRoutes(nodeInputs, edgeInputs) as Map<
+      string,
+      import('@nop-chaos/flow-designer-core').EdgeRouteSpec
+    >;
+  }, [snapshotDoc, props.nodeTypeMap, props.nodeTypeSizeMap, props.documentMode]);
+  const edgeRouteSpecs = edgeRoutes;
+
+  const renderedEdgesWithRoutes = useMemo(
+    () =>
+      renderedEdges.map((e) => {
+        const spec = edgeRouteSpecs.get(e.id);
+        if (!spec) return e;
+        return { ...e, data: { ...e.data, __fdRoute: spec.route } };
+      }),
+    [renderedEdges, edgeRouteSpecs],
+  );
+
 
   const interactions = useXyflowInteractions({
     viewport,
@@ -365,7 +420,7 @@ export function DesignerXyflowCanvas(props: DesignerXyflowCanvasProps) {
         >
           <ReactFlow
           nodes={localNodes}
-          edges={renderedEdges}
+          edges={renderedEdgesWithRoutes}
           nodeTypes={xyflowNodeTypes}
           edgeTypes={xyflowEdgeTypes}
           onInit={(instance) => {
