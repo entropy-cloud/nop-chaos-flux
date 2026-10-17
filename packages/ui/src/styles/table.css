@@ -2,6 +2,23 @@
   font-size: var(--table-body-font-size);
 }
 
+/* FM-0 plan 642 deterministic column layout: during a live resize session
+   (data-col-resizing) and once a resize has been committed (data-layout-fixed)
+   the renderer pins every colgroup col, so `table-layout: fixed` makes dragged
+   widths authoritative under content pressure. Tables whose user never resized
+   keep auto layout. Cells clip instead of re-inflating while pinned. */
+.nop-table[data-col-resizing],
+.nop-table[data-layout-fixed] {
+  table-layout: fixed;
+}
+
+.nop-table[data-col-resizing] thead th,
+.nop-table[data-col-resizing] tbody td,
+.nop-table[data-layout-fixed] thead th,
+.nop-table[data-layout-fixed] tbody td {
+  overflow: hidden;
+}
+
 .nop-table thead th {
   height: var(--table-row-height);
   padding: 0 var(--table-cell-padding-x);
@@ -51,6 +68,38 @@
 
 .nop-table tbody tr[data-striped]:not(:hover) {
   background: var(--table-striped-bg);
+}
+
+/* FM-0 plan 642: row-state passthrough onto sticky fixed cells. The state
+   tokens are semi-transparent (color-mix over transparent), so they land as a
+   background-image overlay on top of the opaque [data-fixed] base above —
+   never as background-color, which would reintroduce the see-through defect.
+   Source order pins precedence: striped < hover < selected. The striped rule
+   also excludes selected rows explicitly — :not(:hover) adds specificity that
+   would otherwise let striped beat the selected overlay on striped+selected
+   rows (closure audit R1 Major-1: a striped table's selected rows kept the
+   striped tint on their fixed cells). */
+.nop-table tbody tr[data-striped]:not(:hover):not([data-state='selected']) > [data-fixed] {
+  background-image: linear-gradient(var(--table-striped-bg), var(--table-striped-bg));
+}
+
+.nop-table tbody tr:hover > [data-fixed] {
+  background-image: linear-gradient(var(--table-hover-bg), var(--table-hover-bg));
+}
+
+.nop-table tbody tr[data-state='selected'] > [data-fixed] {
+  background-image: linear-gradient(var(--table-selected-bg), var(--table-selected-bg));
+}
+
+/* FM-0 plan 642 row drag-sort feedback: the rows already emit data-dragging /
+   data-drag-over markers; without these rules a row drag has zero visual
+   feedback (kanban has its own). Dim the dragged row, mark the drop target. */
+.nop-table tbody tr[data-dragging] {
+  opacity: 0.5;
+}
+
+.nop-table tbody tr[data-drag-over] {
+  box-shadow: inset 0 2px 0 0 hsl(var(--primary));
 }
 
 .nop-table [data-slot='table-actions'] button {

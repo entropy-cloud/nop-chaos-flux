@@ -55,16 +55,66 @@ const schema = {
             { label: 'Status', name: 'status' },
           ],
         },
+        {
+          type: 'text',
+          tag: 'h2',
+          text: 'Table 3 — fixed-left column + rowSelection + stripe + resize (FM-0 plan 642)',
+        },
+        {
+          type: 'table',
+          testid: 'width-fixed-resize',
+          source: '${rows}',
+          stripe: true,
+          rowSelection: { type: 'checkbox' },
+          columns: [
+            { label: 'Name', name: 'name', fixed: 'left', width: 120 },
+            { label: 'Email', name: 'email', width: 220 },
+            { label: 'Description', name: 'description' },
+            { label: 'Role', name: 'role', width: 100 },
+          ],
+        },
       ],
     },
   ],
 } as any;
 
 const rows = [
-  { id: 1, name: 'Alice', email: 'alice@example.com', role: 'admin', status: 'active' },
-  { id: 2, name: 'Bob', email: 'bob@example.com', role: 'user', status: 'pending' },
-  { id: 3, name: 'Carol', email: 'carol@example.com', role: 'user', status: 'active' },
-  { id: 4, name: 'Dave', email: 'dave@example.com', role: 'guest', status: 'inactive' },
+  {
+    id: 1,
+    name: 'Alice',
+    email: 'alice@example.com',
+    role: 'admin',
+    status: 'active',
+    description:
+      'Alice owns the billing platform migration and coordinates the quarterly compliance review across three regions with the finance operations team.',
+  },
+  {
+    id: 2,
+    name: 'Bob',
+    email: 'bob@example.com',
+    role: 'user',
+    status: 'pending',
+    description:
+      'Bob maintains the ingestion pipeline that normalizes upstream partner feeds before the nightly warehouse load window opens.',
+  },
+  {
+    id: 3,
+    name: 'Carol',
+    email: 'carol@example.com',
+    role: 'user',
+    status: 'active',
+    description:
+      'Carol runs the designer enablement program and reviews every new component proposal against the shared accessibility checklist.',
+  },
+  {
+    id: 4,
+    name: 'Dave',
+    email: 'dave@example.com',
+    role: 'guest',
+    status: 'inactive',
+    description:
+      'Dave archived the legacy reporting workspace but still responds to escalation threads about historical export formats.',
+  },
 ];
 
 const registry = createDefaultRegistry();

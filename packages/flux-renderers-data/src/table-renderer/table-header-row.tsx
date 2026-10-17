@@ -147,6 +147,7 @@ function renderLeafHeaderCell(
     index,
     resizable,
     resizeApi,
+    resizing: resizeApi?.resizingKey === (column.name ?? `column-${index}`),
   });
   const resolvedWidth = resizeApi?.getColumnWidth(column, index) ?? column.width;
   const cellProps = fixedColumnLayout.getColumnCellProps(column, index);

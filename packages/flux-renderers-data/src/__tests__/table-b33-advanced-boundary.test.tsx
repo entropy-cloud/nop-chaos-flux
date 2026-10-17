@@ -104,7 +104,7 @@ describe('B3.3 T15 — column resize supports repeated drags (re-resize) and is 
     }
   });
 
-  it('accumulates width across a second drag starting from the post-first-drag width', () => {
+  it('accumulates width across a second drag starting from the post-first-drag width', async () => {
     const columns = [
       { type: 'column', name: 'a', width: 100, minWidth: 40, maxWidth: 300 },
     ] as TableColumnSchema[];
@@ -130,9 +130,16 @@ describe('B3.3 T15 — column resize supports repeated drags (re-resize) and is 
     expect(widthA()).toBe('100');
 
     // First drag: startClientX=200 -> move to 280 (+80) => 180
-    act(() => {
+    // (FM-0 plan 642: mid-drag reflection is rAF-coalesced — flush a frame.)
+    const flushDragFrame = () =>
+      act(async () => {
+        await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+      });
+
+    await act(async () => {
       fireEvent.click(getByTestId('drag1'));
       window.dispatchEvent(new PointerEvent('pointermove', { clientX: 280 }));
+      await flushDragFrame();
     });
     expect(widthA()).toBe('180');
     act(() => {
@@ -141,9 +148,10 @@ describe('B3.3 T15 — column resize supports repeated drags (re-resize) and is 
 
     // Second drag MUST start from the current width (180), not the schema default (100).
     // startClientX=300 -> move to 360 (+60) => 240 (proves re-resize, not reset to default).
-    act(() => {
+    await act(async () => {
       fireEvent.click(getByTestId('drag2'));
       window.dispatchEvent(new PointerEvent('pointermove', { clientX: 360 }));
+      await flushDragFrame();
     });
     expect(widthA()).toBe('240');
     act(() => {
@@ -151,7 +159,7 @@ describe('B3.3 T15 — column resize supports repeated drags (re-resize) and is 
     });
   });
 
-  it('delta math is client-absolute, so dragging works identically when the table overflows (scrolled)', () => {
+  it('delta math is client-absolute, so dragging works identically when the table overflows (scrolled)', async () => {
     // The resize handler computes `delta = event.clientX - active.startClientX`, which is
     // independent of container scrollLeft. Overshooting far beyond the viewport still
     // clamps to maxWidth (the same clamp path that fires under overflow scroll).
@@ -175,14 +183,22 @@ describe('B3.3 T15 — column resize supports repeated drags (re-resize) and is 
     const widthA = () => getByTestId('width-a').textContent;
     expect(widthA()).toBe('100');
 
-    act(() => {
+    // (FM-0 plan 642: mid-drag reflection is rAF-coalesced — flush a frame.)
+    const flushDragFrame = () =>
+      act(async () => {
+        await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+      });
+
+    await act(async () => {
       fireEvent.click(getByTestId('drag'));
       // clientX far beyond any viewport still clamps to maxWidth (overflow-safe).
       window.dispatchEvent(new PointerEvent('pointermove', { clientX: 5000 }));
+      await flushDragFrame();
     });
     expect(widthA()).toBe('200');
-    act(() => {
+    await act(async () => {
       window.dispatchEvent(new PointerEvent('pointermove', { clientX: -5000 }));
+      await flushDragFrame();
     });
     expect(widthA()).toBe('40');
     act(() => {

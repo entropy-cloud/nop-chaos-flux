@@ -4,6 +4,7 @@ import {
   getIn,
 } from '@nop-chaos/flux-core';
 import { parseColumnWidth } from './parse-column-width.js';
+import { measureColumnWidthsFromTable } from './column-width-measure.js';
 import { useOwnershipScopeValue, useRenderScope } from '@nop-chaos/flux-react';
 import { t } from '@nop-chaos/flux-i18n';
 import type { TableColumnSchema } from '../schemas.js';
@@ -49,15 +50,32 @@ export interface ColumnResizeApi {
   // no-width column must fall back to the schema semantic and stay
   // auto-stretchable (P1-01: never invent a 120px default here).
   getColumnWidth(column: TableColumnSchema, index: number): number | string | undefined;
-  startResize(column: TableColumnSchema, index: number, startClientX: number, measuredWidth?: number): () => void;
+  // `snapshotWidths` (fixed-key space `name:index`, from the handle's DOM
+  // measurement) pins the whole column set for the drag session; the hook
+  // falls back to tracked widths, then declared schema widths (FM-0 plan 642:
+  // deterministic layout under content pressure).
+  startResize(
+    column: TableColumnSchema,
+    index: number,
+    startClientX: number,
+    measuredWidth?: number,
+    snapshotWidths?: Record<string, number>,
+  ): () => void;
   // Keyboard entry point (WCAG 2.1 SC 2.1.1): ArrowLeft/ArrowRight step the
   // width by `delta` px, clamped to [minWidth, maxWidth], and commit through the
   // same ownership path as a pointer drag (mirrors use-row-drag-sort H6).
   stepResize(column: TableColumnSchema, index: number, delta: number, measuredWidth?: number): void;
+  /** FM-0 plan 642: live drag marker (hook-key space), null when idle. */
+  readonly resizingKey?: string | null;
+  /** FM-0 plan 642: drag-session pin map (fixed-key space `name:index`). */
+  readonly sessionPinnedWidths?: Record<string, number> | null;
+  /** FM-0 plan 642: true once the user committed at least one resize. */
+  readonly hasCommittedResize?: boolean;
 }
 
 interface ActiveResize {
   key: string;
+  fixedKey: string;
   minWidth: number;
   maxWidth: number | undefined;
   startWidth: number;
@@ -152,7 +170,17 @@ export function useColumnResize(
   // reflects the same value, avoiding a revert-flicker; the sync effect below
   // clears synced scope entries.
   const [draggingWidths, setDraggingWidths] = useState<Record<string, number>>({});
+  // FM-0 plan 642 deterministic-layout session state: the live drag marker and
+  // the whole-column pin map (fixed-key space `name:index`) captured at drag
+  // start so the renderer can switch the table to `table-layout: fixed` with
+  // every column pinned — content pressure can no longer eat the drag.
+  const [resizingKey, setResizingKey] = useState<string | null>(null);
+  const [sessionPinnedWidths, setSessionPinnedWidths] = useState<Record<string, number> | null>(null);
+  // Committed-resize latch (user-driven commits only — the initialWidths
+  // declared-width prefill must NOT flip the table into fixed layout).
+  const [hasCommittedResize, setHasCommittedResize] = useState(false);
   const activeResizeRef = useRef<ActiveResize | null>(null);
+  const dragFrameRef = useRef<number | null>(null);
   // Teardown for the window listeners attached during the active drag. Owned by
   // React via the unmount effect below so a mid-drag unmount / pointercancel /
   // touch-scroll takeover never leaks listeners or leaves activeResizeRef stuck.
@@ -221,6 +249,10 @@ export function useColumnResize(
       listenerCleanupRef.current?.();
       listenerCleanupRef.current = null;
       activeResizeRef.current = null;
+      if (dragFrameRef.current !== null) {
+        cancelAnimationFrame(dragFrameRef.current);
+        dragFrameRef.current = null;
+      }
     };
   }, []);
 
@@ -247,8 +279,15 @@ export function useColumnResize(
   }, []);
 
   const startResize = useCallback(
-    (column: TableColumnSchema, index: number, startClientX: number, measuredWidth?: number) => {
+    (
+      column: TableColumnSchema,
+      index: number,
+      startClientX: number,
+      measuredWidth?: number,
+      snapshotWidths?: Record<string, number>,
+    ) => {
       const key = columnKey(column, index);
+      const fixedKey = `${column.name ?? 'column'}:${index}`;
       const minWidth = resolveColumnMinWidth(column);
       const maxWidth = resolveColumnMaxWidth(column);
       // Anchor on the RENDERED width for a no-width (stretch) column — the
@@ -258,15 +297,58 @@ export function useColumnResize(
       const startWidth = widths[key] ?? parseColumnWidth(measuredWidth, resolveColumnWidth(column));
       const { effectiveOwnership: eo, onWidthsChange: oc } = latest.current;
 
+      // Whole-column pin map for the drag session (fixed-key space): DOM
+      // snapshot first, then tracked widths, then declared schema widths. A
+      // widthless column with none of these stays unpinned (P1-01: never invent
+      // a width).
+      const pinned: Record<string, number> = {};
+      if (snapshotWidths) {
+        for (const [snapshotKey, snapshotWidth] of Object.entries(snapshotWidths)) {
+          if (typeof snapshotWidth === 'number' && Number.isFinite(snapshotWidth) && snapshotWidth > 0) {
+            pinned[snapshotKey] = snapshotWidth;
+          }
+        }
+      }
+      columns.forEach((sessionColumn, columnIndex) => {
+        const sessionFixedKey = `${sessionColumn.name ?? 'column'}:${columnIndex}`;
+        if (pinned[sessionFixedKey] !== undefined) {
+          return;
+        }
+        const tracked = widths[sessionColumn.name ?? `column-${columnIndex}`];
+        if (tracked !== undefined) {
+          pinned[sessionFixedKey] = tracked;
+          return;
+        }
+        const declared = parseColumnWidth(sessionColumn.width, NaN);
+        if (Number.isFinite(declared)) {
+          pinned[sessionFixedKey] = declared;
+        }
+      });
+
       stopListeners();
       activeResizeRef.current = {
         key,
+        fixedKey,
         minWidth,
         maxWidth,
         startWidth,
         startClientX,
         next: startWidth,
         feedback: eo !== 'controlled' || Boolean(oc),
+      };
+      setResizingKey(key);
+      setSessionPinnedWidths(pinned);
+
+      // rAF-coalesced drag reflection: pointermove only records the pending
+      // width; one setState pair per frame drives the overlay + session pin.
+      const applyFrame = () => {
+        dragFrameRef.current = null;
+        const active = activeResizeRef.current;
+        if (!active) return;
+        setDraggingWidths((prev) => (prev[active.key] === active.next ? prev : { ...prev, [active.key]: active.next }));
+        setSessionPinnedWidths((prev) =>
+          prev && prev[active.fixedKey] === active.next ? prev : { ...prev, [active.fixedKey]: active.next },
+        );
       };
 
       const onPointerMove = (event: PointerEvent) => {
@@ -277,13 +359,19 @@ export function useColumnResize(
         if (next < active.minWidth) next = active.minWidth;
         if (active.maxWidth !== undefined && next > active.maxWidth) next = active.maxWidth;
         active.next = next;
-        if (active.feedback) {
-          setDraggingWidths((prev) => (prev[active.key] === next ? prev : { ...prev, [active.key]: next }));
+        if (active.feedback && dragFrameRef.current === null) {
+          dragFrameRef.current = requestAnimationFrame(applyFrame);
         }
       };
 
       const finish = () => {
         stopListeners();
+        if (dragFrameRef.current !== null) {
+          cancelAnimationFrame(dragFrameRef.current);
+          dragFrameRef.current = null;
+        }
+        setResizingKey(null);
+        setSessionPinnedWidths(null);
         const active = activeResizeRef.current;
         activeResizeRef.current = null;
         if (!active) return;
@@ -303,6 +391,7 @@ export function useColumnResize(
           const current = sw && typeof sw === 'object' ? sw : { ...iw };
           // H1: persist the dragged-TO width (active.next), not the pre-drag width.
           rs.update(sp, { ...current, [key]: finalWidth });
+          setHasCommittedResize(true);
           // keep dragging overlay until scope syncs (sync effect clears it)
         } else if (eo2 === 'local') {
           setLocalWidths((prev) => ({ ...prev, [key]: finalWidth }));
@@ -312,9 +401,11 @@ export function useColumnResize(
             delete next[key];
             return next;
           });
+          setHasCommittedResize(true);
         } else if (eo2 === 'controlled') {
           if (oc2) {
             oc2({ ...iw, ...dw, [key]: finalWidth });
+            setHasCommittedResize(true);
             // keep overlay (no upstream store to sync within the hook)
           }
           // no callback: read-only; warning already issued at render (G10).
@@ -332,7 +423,7 @@ export function useColumnResize(
 
       return stopListeners;
     },
-    [columnKey, stopListeners, widths],
+    [columnKey, stopListeners, widths, columns],
   );
 
   const persistWidth = useCallback((next: Record<string, number>) => {
@@ -368,7 +459,15 @@ export function useColumnResize(
     startResize,
     stepResize,
     persistWidth,
-  } as ColumnResizeApi & { persistWidth: (next: Record<string, number>) => void };
+    resizingKey,
+    sessionPinnedWidths,
+    hasCommittedResize,
+  } as ColumnResizeApi & {
+    persistWidth: (next: Record<string, number>) => void;
+    resizingKey: string | null;
+    sessionPinnedWidths: Record<string, number> | null;
+    hasCommittedResize: boolean;
+  };
 }
 
 export const COLUMN_RESIZE_KEYBOARD_STEP = 10;
@@ -384,6 +483,8 @@ export function createColumnResizeHandleProps(options: {
   index: number;
   resizable: boolean;
   resizeApi?: ColumnResizeApi;
+  /** Active-drag marker for this column (drives data-resizing feedback). */
+  resizing?: boolean;
 }): {
   'data-slot': 'table-column-resize-handle';
   'aria-label': string;
@@ -395,7 +496,7 @@ export function createColumnResizeHandleProps(options: {
   className: string;
   style: { touchAction: 'none' };
 } {
-  const { column, index, resizable, resizeApi } = options;
+  const { column, index, resizable, resizeApi, resizing } = options;
   const measuredColumnWidth = (event: {
     currentTarget: { closest: (selector: string) => HTMLElement | null };
   }): number | undefined => {
@@ -403,11 +504,30 @@ export function createColumnResizeHandleProps(options: {
     const width = th?.getBoundingClientRect().width;
     return typeof width === 'number' && Number.isFinite(width) && width > 0 ? width : undefined;
   };
+  // Whole-column measured snapshot (fixed-key space) for the drag session —
+  // lets the renderer pin every column and switch to fixed layout mid-drag.
+  const measuredColumnSnapshot = (event: {
+    currentTarget: { closest: (selector: string) => HTMLElement | null };
+  }): Record<string, number> => {
+    const table = event.currentTarget.closest('table');
+    const { widths: measured } = measureColumnWidthsFromTable(table);
+    const snapshot: Record<string, number> = {};
+    measured.forEach((width, key) => {
+      snapshot[key] = width;
+    });
+    return snapshot;
+  };
   const resizeStart = (event: React.PointerEvent<HTMLSpanElement>) => {
     if (!resizable || !resizeApi) return;
     event.preventDefault();
     event.stopPropagation();
-    resizeApi.startResize(column, index, event.clientX, measuredColumnWidth(event));
+    resizeApi.startResize(
+      column,
+      index,
+      event.clientX,
+      measuredColumnWidth(event),
+      measuredColumnSnapshot(event),
+    );
   };
   const resizeKeyDown = (event: React.KeyboardEvent<HTMLSpanElement>) => {
     if (!resizable || !resizeApi) return;
@@ -427,10 +547,14 @@ export function createColumnResizeHandleProps(options: {
     role: 'separator',
     'aria-orientation': 'vertical',
     tabIndex: 0,
+    ...(resizing ? { 'data-resizing': true } : {}),
     onPointerDown: resizeStart,
     onKeyDown: resizeKeyDown,
+    // AMIS colDragLine parity (~/sources/amis _table.scss): 7px hit area with a
+    // 4px overhang past the column edge (-right-1 → 3px inside / 4px outside),
+    // stacked above sticky cells (z-[15]), highlight on hover and while dragging.
     className:
-      'absolute right-0 top-0 h-full w-1 cursor-col-resize select-none hover:bg-primary/40 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none',
+      'absolute -right-1 top-0 z-[15] h-full w-[7px] cursor-col-resize select-none hover:bg-primary/40 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none data-[resizing]:bg-primary/70',
     style: { touchAction: 'none' },
   };
 }

@@ -139,7 +139,7 @@ describe('useColumnResize scope-level persistence', () => {
     );
   });
 
-  it('H1 Proof: scope ownership shows live feedback while dragging', () => {
+  it('H1 Proof: scope ownership shows live feedback while dragging', async () => {
     const columns = [{ type: 'column', name: 'a', width: 100 }] as TableColumnSchema[];
     let api: any;
     render(
@@ -156,8 +156,10 @@ describe('useColumnResize scope-level persistence', () => {
     act(() => {
       api.startResize(columns[0]!, 0, 200);
     });
-    act(() => {
+    // FM-0 plan 642: mid-drag reflection is rAF-coalesced — flush a frame.
+    await act(async () => {
       window.dispatchEvent(new PointerEvent('pointermove', { clientX: 260 }));
+      await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
     });
 
     // Live feedback during the drag (delta 60 → 160), not frozen at 100.
@@ -293,16 +295,18 @@ describe('useColumnResize scope-level persistence', () => {
     warnSpy.mockRestore();
   });
 
-  it('local baseline remains when no ownership declared (backwards compat)', () => {
+  it('local baseline remains when no ownership declared (backwards compat)', async () => {
     const columns = [{ type: 'column', name: 'a', width: 100 }] as TableColumnSchema[];
     let api: any;
     render(<Probe columns={columns} onReady={(value) => (api = value)} />);
 
     expect(api.widths.a).toBe(100);
 
-    act(() => {
+    // FM-0 plan 642: mid-drag reflection is rAF-coalesced — flush a frame.
+    await act(async () => {
       api.startResize(columns[0]!, 0, 200);
       window.dispatchEvent(new PointerEvent('pointermove', { clientX: 250 }));
+      await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
     });
 
     expect(api.widths.a).toBe(150);

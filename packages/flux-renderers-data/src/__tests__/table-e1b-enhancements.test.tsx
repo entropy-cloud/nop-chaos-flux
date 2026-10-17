@@ -106,7 +106,7 @@ describe('useColumnResize hook helpers', () => {
 });
 
 describe('useColumnResize hook runtime', () => {
-  it('exposes initial widths from columns and applies min/max clamp during drag', () => {
+  it('exposes initial widths from columns and applies min/max clamp during drag', async () => {
     const columns = [
       { type: 'column', name: 'a', width: 100, minWidth: 50, maxWidth: 200 },
       { type: 'column', name: 'b', width: '120px' },
@@ -136,19 +136,29 @@ describe('useColumnResize hook runtime', () => {
     expect(widthA()).toBe('100');
     expect(widthB()).toBe('120');
 
-    act(() => {
+    // FM-0 plan 642: drag reflection is rAF-coalesced, so mid-drag assertions
+    // flush one animation frame after each pointermove.
+    const flushDragFrame = () =>
+      act(async () => {
+        await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+      });
+
+    await act(async () => {
       fireEvent.click(getByTestId('start'));
       window.dispatchEvent(new PointerEvent('pointermove', { clientX: 280 }));
+      await flushDragFrame();
     });
     expect(widthA()).toBe('180');
 
-    act(() => {
+    await act(async () => {
       window.dispatchEvent(new PointerEvent('pointermove', { clientX: 1000 }));
+      await flushDragFrame();
     });
     expect(widthA()).toBe('200');
 
-    act(() => {
+    await act(async () => {
       window.dispatchEvent(new PointerEvent('pointermove', { clientX: -1000 }));
+      await flushDragFrame();
     });
     expect(widthA()).toBe('50');
 

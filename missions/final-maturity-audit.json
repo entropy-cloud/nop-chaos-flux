@@ -1,0 +1,117 @@
+{
+  "name": "final-maturity-audit",
+  "description": "最终成熟度审计 mission：项目收官前最后一轮彻底审计，收敛到成熟产品的稳定与可靠程度。范围（roadmap work items FM-0–FM-8）：①FM-0 已知交互缺陷首批修复（CRUD 表格列宽拖拽对标 ~/sources/amis 机制重构——全高外扩命中区/实测宽锚定/table-layout 策略裁决/渲染节流；固定列行级状态样式透传——选中/hover/斑马纹 background:inherit 语义；表头全选固定列视觉核验；表内同族清扫；判别测试先红后绿）；②FM-1a/FM-1b 交互实操走查两批（数据域 + 设计器/调度/移动/AI/3D 域，browser-use 实操驱动 + interaction-state 口径 A–F/V1–V6，gantt bar drag resize 既有红在本批收口或归因）；③FM-2 代码质量与反模式终审（code-quality + workaround + deep-audit 核心维度 + adversarial 抽查）；④FM-3 测试保护力审计（单测契约覆盖审计 + 探索性契约测试 + 探索性 e2e）；⑤FM-4 React19 与运行时健壮性复查（react19 review + check:audit-* 全家 + audit:knip/semgrep/react-doctor + UR-8/UR-9 门禁复核）；⑥FM-5 渲染面回归复检（R2 基建增量 + 抽样复检 + ux-design-pattern 口径）；⑦FM-6/FM-7 发现三态归族消化（local 族/systemic 族首批 + 字母后缀滚动预授权，批内同探针复检）；⑧FM-8 终验与守护固化（交互旅程 Playwright e2e 化 + 台账对账 uncovered=0 + 全量门禁 + Audit Prompt Matrix 逐行终审标记）。工作流：FM-0/FM-1/FM-8 取证必须含 browser-use 真实操作（截图仅诊断评审，pass/fail 程序化——AGENTS.md 快照政策）；发现强制三态归族（systemic→FM-7 / local→FM-6 / watch-only→台账 docs/audits/final-maturity-audit/）；Fix 一律先红后绿点名判别测试；AMIS 仅作机制对标参照，实现为本仓自有代码。范围排除：架构深化重构（architecture-deepening）、AI 文案语气、新能力探索（next-gen attractors）、姊妹审计队列 open 项接管（interaction-state / workaround-code-smell / dom-structure 三队列工作项已全部 done，其台账 watch-only/successor 处置项为 FM-2 现场复核输入；cross-roadmap UR 7 open [UR-14..UR-20] 归属原队列——重叠发现现场复核后按三态归族并注记姊妹行坐标；在册 active plan 628 的基线恢复与静态债 triage 为 FM-2/FM-4 去重对照）。授权约束：flux-core 编译内核、schema validation、renderer 定义字段、样式契约为保护区域（plan-first/ask-first 按 docs/context/ai-autonomy-policy.md），触及须独立 plan + 人工确认；P0/P1 缺陷自动修复预授权（FM-0 及各消化批内，不触保护区域时）。沿用指针：R2 视觉走查基建（清单枚举/截图矩阵 runner/台账对账命令，docs/audits/visual-quality-r2/）与 interaction-state 台账结构（docs/audits/interaction-state/）直接复用不重建；AMIS 对标源在 ~/sources/amis（本机参考，引用路径 + 机制结论）。",
+  "version": "1.0.0",
+  "status": "active",
+  "startDate": "2026-10-17",
+  "targetDate": "2026-12-31",
+  "owner": "nop-chaos-flux",
+  "model": "glm-5.3-flash",
+  "variant": "max",
+  "roadmapPath": "docs/backlog/final-maturity-audit-roadmap.md",
+  "exitCriteria": "roadmap 全部 work item done 且发现台账 uncovered=0 且 FM-1 走查关键交互旅程已固化 e2e 且 pnpm check newHits=0 且 Audit Prompt Matrix 逐行终审标记完成且全量门禁（typecheck/build/lint/test）绿",
+  "milestones": [
+    {
+      "id": "M0",
+      "name": "已知交互缺陷首批修复（P0）",
+      "status": "done",
+      "tasks": [
+        {
+          "id": "T0.1",
+          "name": "FM-0 列宽拖拽 AMIS 对标重构 + 固定列状态样式透传 + 全选视觉核验 + 表内同族清扫（判别测试先红后绿）",
+          "status": "done",
+          "assignee": "unassigned"
+        }
+      ]
+    },
+    {
+      "id": "M1",
+      "name": "交互实操走查（两批）",
+      "status": "todo",
+      "tasks": [
+        {
+          "id": "T1.1",
+          "name": "FM-1a 数据域 browser-use 实操走查（CRUD/表格族/表单/弹层/分页）",
+          "status": "todo",
+          "assignee": "unassigned"
+        },
+        {
+          "id": "T1.2",
+          "name": "FM-1b 设计器/调度/移动/AI/3D 域 browser-use 实操走查（含 gantt 拖拽既有红收口）",
+          "status": "todo",
+          "assignee": "unassigned"
+        }
+      ]
+    },
+    {
+      "id": "M2",
+      "name": "代码/测试/运行时三路终审",
+      "status": "todo",
+      "tasks": [
+        {
+          "id": "T2.1",
+          "name": "FM-2 代码质量与反模式终审（code-quality + workaround 残余 + deep-audit + adversarial 抽查）",
+          "status": "todo",
+          "assignee": "unassigned"
+        },
+        {
+          "id": "T2.2",
+          "name": "FM-3 测试保护力审计（单测契约覆盖 + 探索性契约测试 + 探索性 e2e）",
+          "status": "todo",
+          "assignee": "unassigned"
+        },
+        {
+          "id": "T2.3",
+          "name": "FM-4 React19 与运行时健壮性复查（react19 review + audit 脚本全家 + UR-8/9 门禁复核）",
+          "status": "todo",
+          "assignee": "unassigned"
+        }
+      ]
+    },
+    {
+      "id": "M3",
+      "name": "渲染面回归复检",
+      "status": "todo",
+      "tasks": [
+        {
+          "id": "T3.1",
+          "name": "FM-5 R2 基建增量 + 抽样复检轮（ux-design-pattern 口径叠加）",
+          "status": "todo",
+          "assignee": "unassigned"
+        }
+      ]
+    },
+    {
+      "id": "M4",
+      "name": "归族消化",
+      "status": "todo",
+      "tasks": [
+        {
+          "id": "T4.1",
+          "name": "FM-6 局部缺陷消化首批族（后续字母批次预授权滚动）",
+          "status": "todo",
+          "assignee": "unassigned"
+        },
+        {
+          "id": "T4.2",
+          "name": "FM-7 系统性根因整改首批族（后续字母批次预授权滚动）",
+          "status": "todo",
+          "assignee": "unassigned"
+        }
+      ]
+    },
+    {
+      "id": "M5",
+      "name": "终验与守护固化",
+      "status": "todo",
+      "tasks": [
+        {
+          "id": "T5.1",
+          "name": "FM-8 交互旅程 e2e 化 + 台账对账 uncovered=0 + 全量门禁 + 提示词矩阵终审标记 + 收官",
+          "status": "todo",
+          "assignee": "unassigned"
+        }
+      ]
+    }
+  ]
+}

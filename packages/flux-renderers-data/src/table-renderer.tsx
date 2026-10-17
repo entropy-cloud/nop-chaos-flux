@@ -398,6 +398,8 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
     rowDraftColumnEnabled,
     resizeWidths: resizeApi.widths,
     measureRootRef,
+    sessionPinnedWidths: resizeApi.sessionPinnedWidths,
+    pinAll: resizeApi.hasCommittedResize,
   });
 
   const rowDragSortApi = useRowDragSort({
@@ -524,7 +526,12 @@ export function TableRenderer(props: RendererComponentProps<TableSchema>) {
         data-slot="table-container"
         data-auto-fill-height={autoFillActive ? 'true' : undefined}
       >
-        <Table data-striped={isStriped || undefined} data-bordered={isBordered || undefined}>
+        <Table
+          data-striped={isStriped || undefined}
+          data-bordered={isBordered || undefined}
+          data-col-resizing={resizeApi.resizingKey ? '' : undefined}
+          data-layout-fixed={!resizeApi.resizingKey && resizeApi.hasCommittedResize ? '' : undefined}
+        >
           <colgroup data-slot="table-column-group">
             {colgroupEntries.map(({ key, width }) => (
               <col

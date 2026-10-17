@@ -2,7 +2,7 @@ import type { CSSProperties } from 'react';
 import type { TableColumnSchema, TableSchema } from '../schemas.js';
 import { parseColumnWidth } from './parse-column-width.js';
 
-const CONTROL_COLUMN_WIDTH = 40;
+export const CONTROL_COLUMN_WIDTH = 40;
 const DEFAULT_FIXED_COLUMN_WIDTH = 160;
 // [G3-R3-视角8-01] leading drag-handle column (body cell uses w-10).
 export const DRAG_COLUMN_WIDTH = 40;
@@ -32,7 +32,12 @@ function createStickyStyle(
     position: 'sticky',
     [fixed]: `${offset}px`,
     zIndex: fixed === 'left' ? 2 : 1,
-    // 背景透明继承：行级 hover/斑马纹/选中态通过 --table-hover-bg 等 token 透传到固定列（AMIS .is-sticky { background: inherit } 等价语义）。
+    // 不透明固定列基线：sticky 单元格必须有非透明底（否则透出下方液态列内容）。
+    // 默认底色由 table.css 的 `[data-fixed]` 规则以 --table-fixed-bg（宿主可覆盖，
+    // 回退 --table-header-bg → --table-striped-bg）提供；行级 hover/选中/斑马纹由
+    // table.css 的状态叠加层规则（半透明状态 token 作 background-image 叠加在
+    // 不透明底之上）覆盖（FM-0 plan 642）。勘误：本注释原声称「背景透明继承 +
+    // AMIS .is-sticky { background: inherit } 等价语义」，live CSS 从未实现该语义。
     // maxWidth 防止 table-layout:auto 下剩余空间把固定列（序号/checkbox/expand 等）
     // 拉伸变宽：width 是建议值，没有 maxWidth 时浏览器会把表格剩余宽度分给所有列。
     ...(width !== undefined ? { width, minWidth: width, maxWidth: width } : {}),

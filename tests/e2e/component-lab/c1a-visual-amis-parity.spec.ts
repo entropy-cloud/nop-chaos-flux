@@ -61,7 +61,7 @@ test.describe('C1a AMIS visual parity acceptance', () => {
     expect(rowBox!.height).toBeGreaterThan(35);
   });
 
-  test('fixed-column hover pass-through: fixed cell background matches middle cell on row hover', async ({
+  test('fixed-cell state overlay: fixed base stays opaque and row hover adds the state overlay', async ({
     page,
   }) => {
     const lab = await openCrudLab(page);
@@ -80,6 +80,9 @@ test.describe('C1a AMIS visual parity acceptance', () => {
     // ux-r12e 契约反演：fixed 粘性列必须不透明（透明底会透出下方液态列内容，
     // .nop-table [data-fixed] 强制 --table-fixed-bg）——旧的"穿透=透明"断言已废。
     expect(fixedBgBefore).not.toBe('rgba(0, 0, 0, 0)');
+    const fixedImageBefore = (await readComputedStyle(fixedCell, ['background-image']))[
+      'background-image'
+    ];
 
     await middleCell.hover();
 
@@ -89,19 +92,19 @@ test.describe('C1a AMIS visual parity acceptance', () => {
       )
       .not.toBe('rgba(0, 0, 0, 0)');
 
-    // 悬停稳定性契约：hover 只落在行底色，固定列底色保持不透明且不被 hover 改写，
-    // 中列单元格保持透明（行底色穿透）。
+    // FM-0 plan 642 契约（取代 ux-r12e「hover 不落固定列」稳定性语义）：行 hover 时
+    // 固定列以半透明状态 token 的 background-image 叠加层呈现行态；不透明基线
+    // （background-color）保持不变；中列单元格保持透明（行底色穿透）。
     await expect
-      .poll(async () => {
-        const fixedBg = (await readComputedStyle(fixedCell, ['background-color']))[
-          'background-color'
-        ];
-        const middleBg = (await readComputedStyle(middleCell, ['background-color']))[
-          'background-color'
-        ];
-        return { fixedBg, middleBg };
-      })
-      .toEqual({ fixedBg: fixedBgBefore, middleBg: 'rgba(0, 0, 0, 0)' });
+      .poll(async () => (await readComputedStyle(fixedCell, ['background-image']))['background-image'])
+      .not.toBe(fixedImageBefore);
+    const fixedImage = (await readComputedStyle(fixedCell, ['background-image']))['background-image'];
+    expect(fixedImage).toContain('linear-gradient');
+
+    const fixedBg = (await readComputedStyle(fixedCell, ['background-color']))['background-color'];
+    expect(fixedBg).toBe(fixedBgBefore);
+    const middleBg = (await readComputedStyle(middleCell, ['background-color']))['background-color'];
+    expect(middleBg).toBe('rgba(0, 0, 0, 0)');
   });
 
   test('fixed edge shadow markers render with a real ::after box-shadow', async ({ page }) => {
