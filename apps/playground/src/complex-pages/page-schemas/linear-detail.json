@@ -527,6 +527,7 @@
                               "label": "应用",
                               "className": "ln-btn ln-btn-quiet h-6 px-2 text-xs",
                               "testid": "linear-detail-status-apply",
+                              "disabled": "${status == detail?.status}",
                               "onClick": {
                                 "action": "submitForm"
                               }

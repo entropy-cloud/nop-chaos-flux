@@ -89,7 +89,7 @@ Exit Criteria:
 - [x] UR-17/19/20 核验回写
 - [x] 回写多面一致
 - [x] 全量门禁无非既有红（最终轮数字见 Closure Audit Evidence）
-- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据（见 Closure Audit Evidence）
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据（提交后置审计 agent_87c6bf51 补位确认——执行时点仅执行代理复跑，流程瑕疵在 Evidence 如实披露）
 - [x] `pnpm typecheck`（0 非既有错）
 - [x] `pnpm build`（43/44；唯 playground vite.config 既有红——plan 628 领地）
 - [x] `pnpm lint`（绿）
@@ -107,12 +107,12 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: 2026-10-18 收口。UR-18 九项终态化（7 修：死开关/print 占位+Y 浮点 roundFrame/diff added 行号/KPI pr-px/SQL 灰条覆盖/page-designer 徽标判定/approval columnCount；2 裁决不修：kanban 日期、debugger launcher 位）；UR-19 复核已被 cq-3 共享 chrome 收敛；UR-20 三项既有红 fresh 实跑全转绿；UR-17 六项核验回写并入本批。
+Status Note: 2026-10-18 收口（含后置审计补救提交）。UR-18 九项终态化（7 修 + 2 裁决）；UR-19 复核已被 cq-3 共享 chrome 收敛；UR-20 三项既有红全转绿；UR-17 六项核验回写（2 实修随补救提交入库）。R1 审计发现的提交边界遗漏（M1）与回写缺口（M2/m3/m4）已全部补救。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: 独立执行代理 agent_a16933b8（UR-18 九项「核实→即修/裁决」逐项执行与回归，主会话外）+ 收口门禁独立复跑（typecheck 0 非既有错、test 全绿 exit 0、check exit 0）
-- Evidence: 九项逐项结论（7 修带 file:line、2 裁决带理由）；content 357/print 86/dashboard 94/page-designer 176/nop-debugger 135/data 1240 focused 全绿；DF-1 判别红→绿；三面回写 diff 落盘。R1 复核 = 收口门禁独立复跑（见上）。
+- Auditor / Agent: agent_87c6bf51（独立 fresh-session closure auditor，2026-10-18，commit 3dc0367e4 后置审计）
+- Evidence: R1 `issues`——UR-18 七修全部落地实读吻合（7 处全读 + DF-1 判别测试红态机制成立 + 裁决两项定性成立 + react19 scanner 649 实跑一致）；发现 M1（UR-17 两实修 + UR-18 #7 判别测试未随 commit 提交——工作树滞留）、M2（UR-19/20 Plan 列漏填）、m3（UR-19 源登记 1/3）、m4（W-C 表 4 列表头缺失）、m5（audit gate 以执行代理复跑预勾——流程瑕疵）、m6（UR-17 归属三方矛盾）。补救提交：M1 三文件单独入库 + M2 列填充 + m3/m4/m6 回写补齐 + 本 Evidence 回填（m5 流程瑕疵如实记录——提交时点的执行代理复跑不替代本独立审计）。
 
 Follow-up:
 

@@ -70,48 +70,48 @@
 
 ### W-A Complex Pages（40）
 
-| 页面                    | 状态 | 卡片                                                                                                     |
-| ----------------------- | ---- | -------------------------------------------------------------------------------------------------------- |
-| crud-views-export       | ✅   | 导出 toast+下载链接、表格/卡片视图切换、分页全通（截图目检）                                             |
-| dynamic-tabs            | ✅   | 远程数据 tab 懒加载 3 行+共 3 条（mountOnEnter 实证）                                                    |
-| standard-crud           | ✅   | CRUD 全链路：新增/编辑回填/删除确认/批量删除（34→32 条）/搜索重置/排序/分页/折叠                         |
-| tree-crud               | ✅   | 30 树节点逐点联动过滤（10→6→2→1…）+清除复原                                                              |
-| inline-edit-table       | ✅   | input-number 步进器 ×80、行保存 toast、分页全通                                                          |
-| advanced-query          | ✅   | 搜索过滤（10→1）/重置/分页全通                                                                           |
-| master-detail           | ✅   | 点选 NO-20240702 → 详情+SKU 4 行+子表 tab 切换                                                           |
-| detail-subtables        | ✅   | 订单选择器 dialog+清除+三子表 tab 切换                                                                   |
-| business-document       | ✅   | 步进器数量 2→4 金额 36000→72000 实时重算；新增/删除行；提交校验 toast 可读                               |
-| combo-editor            | ✅   | 添加项 共 2→3→2 位、删除/排序、保存校验 toast 可读（P3 双删除钮维持登记）                                |
-| form-wizard             | ✅   | 三步跳转+上一步 step1 禁用+分步校验                                                                      |
-| complex-form            | ✅   | 级联（省→市解禁）/高级选项展开/保存校验 toast 可读                                                       |
-| approval-tasks          | ✅   | 10 处理钮全部弹审批框；通过 → 待审批→已通过+列表即时更新                                                 |
-| dashboard               | ✅   | 纯展示页零操作钮；pageOverflow=0 饼图完整（截图）                                                        |
-| sundial-workbench       | ✅   | 视图切换 toast×5、分组折叠、添加待办弹窗                                                                 |
-| sundial-analytics       | ✅   | 纯展示页零操作钮，零错误                                                                                 |
-| sundial-detail          | ✅   | 旗标 toast、子任务校验、日期/重复/列表/移动/垃圾箱弹层全开                                               |
-| sundial-settings        | ✅   | 设置分组 toast×5+返回导航                                                                                |
-| sundial-todo-dialog     | ✅   | 标题自动聚焦、添加 → toast 待办已添加+弹窗关闭                                                           |
-| antdpro-list            | ✅   | 新建订单弹窗、列设置、全选+批量删除 toast、行查看(→详情)/编辑(回填+宿主更新)/删除(确认+toast+总数 36→35) |
-| antdpro-form-basic      | ✅   | 日期范围弹层、提交校验 toast 可读                                                                        |
-| antdpro-form-grouped    | ✅   | 入库日期/仓库选择弹层、提交 → toast+跳转                                                                 |
-| antdpro-form-dialog     | ✅   | 新建订单弹窗+空提交校验 toast                                                                            |
-| antdpro-form-step       | ✅   | 步骤连接线+空提交红框内联错误+「步骤校验未通过」横幅+上一步禁用（截图）                                  |
-| antdpro-detail-basic    | ✅   | 返回列表导航；打印按 host-channel 契约验证接线                                                           |
-| antdpro-detail-advanced | ✅   | 通过/驳回 toast+步骤推进+pill tab 切换                                                                   |
-| antdpro-dashboard       | ✅   | 纯展示页零操作钮，零错误                                                                                 |
-| antdpro-result          | ✅   | 查看订单→列表、再录一单→表单                                                                             |
-| cal-booking             | ✅   | 时长 tabs、月/周/日切换、时区、槽位面板分组、选时段 → 跳转确认页                                         |
-| cal-confirm             | ✅   | 添加嘉宾/移除、渠道 chips、空提交校验按已填字段精确过滤、返回上一步                                      |
-| cal-success             | ✅   | 日历链接/ICS、重新安排 → booking、取消预约确认框                                                         |
-| linear-issues           | ✅   | ⌘K 搜索、筛选/显示/新建/命令弹层、全选/行选批量栏、行 peek 弹层                                          |
-| linear-board            | ✅   | 234 卡/9 列；标签筛选片 234→10→234 双向生效（R12 修复维持）；卡片 peek 活动流                            |
-| linear-inbox            | ✅   | 全部标为已读/归档所选 toast+列表更新                                                                     |
-| linear-detail           | ✅   | 复制链接/归档/状态选择；改状态+应用 → 状态已更新（lastBulkUpdate 钩子实证）                              |
-| linear-projects         | ✅   | 纯展示页零操作钮，零错误                                                                                 |
-| linear-settings         | ✅   | 常规/外观/工作流 tab 实切换+3 偏好开关                                                                   |
-| notion-database         | ✅   | 分页第 2 页/每页条数切换（10→32 行）                                                                     |
-| airtable-grid           | ✅   | 隐藏字段/搜索/分组切换/行高/单元格编辑/行展开×10/新增记录弹层/分页                                       |
-| stripe-payments         | ✅   | 日期预设档、导出模态、行金额点击 → 交易详情抽屉（导航 shell 静态为设计意图）                             |
+| 页面                    | 状态 | 卡片                                                                                                                                                         |
+| ----------------------- | ---- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| crud-views-export       | ✅   | 导出 toast+下载链接、表格/卡片视图切换、分页全通（截图目检）                                                                                                 |
+| dynamic-tabs            | ✅   | 远程数据 tab 懒加载 3 行+共 3 条（mountOnEnter 实证）                                                                                                        |
+| standard-crud           | ✅   | CRUD 全链路：新增/编辑回填/删除确认/批量删除（34→32 条）/搜索重置/排序/分页/折叠                                                                             |
+| tree-crud               | ✅   | 30 树节点逐点联动过滤（10→6→2→1…）+清除复原                                                                                                                  |
+| inline-edit-table       | ✅   | input-number 步进器 ×80、行保存 toast、分页全通                                                                                                              |
+| advanced-query          | ✅   | 搜索过滤（10→1）/重置/分页全通                                                                                                                               |
+| master-detail           | ✅   | 点选 NO-20240702 → 详情+SKU 4 行+子表 tab 切换                                                                                                               |
+| detail-subtables        | ✅   | 订单选择器 dialog+清除+三子表 tab 切换                                                                                                                       |
+| business-document       | ✅   | 步进器数量 2→4 金额 36000→72000 实时重算；新增/删除行；提交校验 toast 可读                                                                                   |
+| combo-editor            | ✅   | 添加项 共 2→3→2 位、删除/排序、保存校验 toast 可读（P3 双删除钮维持登记【2026-10-18 复核已收敛（cross-roadmap UR-19）：cq-3 共享 chrome 后仅剩单一 trash】） |
+| form-wizard             | ✅   | 三步跳转+上一步 step1 禁用+分步校验                                                                                                                          |
+| complex-form            | ✅   | 级联（省→市解禁）/高级选项展开/保存校验 toast 可读                                                                                                           |
+| approval-tasks          | ✅   | 10 处理钮全部弹审批框；通过 → 待审批→已通过+列表即时更新                                                                                                     |
+| dashboard               | ✅   | 纯展示页零操作钮；pageOverflow=0 饼图完整（截图）                                                                                                            |
+| sundial-workbench       | ✅   | 视图切换 toast×5、分组折叠、添加待办弹窗                                                                                                                     |
+| sundial-analytics       | ✅   | 纯展示页零操作钮，零错误                                                                                                                                     |
+| sundial-detail          | ✅   | 旗标 toast、子任务校验、日期/重复/列表/移动/垃圾箱弹层全开                                                                                                   |
+| sundial-settings        | ✅   | 设置分组 toast×5+返回导航                                                                                                                                    |
+| sundial-todo-dialog     | ✅   | 标题自动聚焦、添加 → toast 待办已添加+弹窗关闭                                                                                                               |
+| antdpro-list            | ✅   | 新建订单弹窗、列设置、全选+批量删除 toast、行查看(→详情)/编辑(回填+宿主更新)/删除(确认+toast+总数 36→35)                                                     |
+| antdpro-form-basic      | ✅   | 日期范围弹层、提交校验 toast 可读                                                                                                                            |
+| antdpro-form-grouped    | ✅   | 入库日期/仓库选择弹层、提交 → toast+跳转                                                                                                                     |
+| antdpro-form-dialog     | ✅   | 新建订单弹窗+空提交校验 toast                                                                                                                                |
+| antdpro-form-step       | ✅   | 步骤连接线+空提交红框内联错误+「步骤校验未通过」横幅+上一步禁用（截图）                                                                                      |
+| antdpro-detail-basic    | ✅   | 返回列表导航；打印按 host-channel 契约验证接线                                                                                                               |
+| antdpro-detail-advanced | ✅   | 通过/驳回 toast+步骤推进+pill tab 切换                                                                                                                       |
+| antdpro-dashboard       | ✅   | 纯展示页零操作钮，零错误                                                                                                                                     |
+| antdpro-result          | ✅   | 查看订单→列表、再录一单→表单                                                                                                                                 |
+| cal-booking             | ✅   | 时长 tabs、月/周/日切换、时区、槽位面板分组、选时段 → 跳转确认页                                                                                             |
+| cal-confirm             | ✅   | 添加嘉宾/移除、渠道 chips、空提交校验按已填字段精确过滤、返回上一步                                                                                          |
+| cal-success             | ✅   | 日历链接/ICS、重新安排 → booking、取消预约确认框                                                                                                             |
+| linear-issues           | ✅   | ⌘K 搜索、筛选/显示/新建/命令弹层、全选/行选批量栏、行 peek 弹层                                                                                              |
+| linear-board            | ✅   | 234 卡/9 列；标签筛选片 234→10→234 双向生效（R12 修复维持）；卡片 peek 活动流                                                                                |
+| linear-inbox            | ✅   | 全部标为已读/归档所选 toast+列表更新                                                                                                                         |
+| linear-detail           | ✅   | 复制链接/归档/状态选择；改状态+应用 → 状态已更新（lastBulkUpdate 钩子实证）                                                                                  |
+| linear-projects         | ✅   | 纯展示页零操作钮，零错误                                                                                                                                     |
+| linear-settings         | ✅   | 常规/外观/工作流 tab 实切换+3 偏好开关                                                                                                                       |
+| notion-database         | ✅   | 分页第 2 页/每页条数切换（10→32 行）                                                                                                                         |
+| airtable-grid           | ✅   | 隐藏字段/搜索/分组切换/行高/单元格编辑/行展开×10/新增记录弹层/分页                                                                                           |
+| stripe-payments         | ✅   | 日期预设档、导出模态、行金额点击 → 交易详情抽屉（导航 shell 静态为设计意图）                                                                                 |
 
 ### W-A2 主子通信对齐审计（2026-10-03，plan 538）
 
@@ -157,7 +157,7 @@
 | flux-basic                     | ✅   | 表单提交管线（component:submit）、对话框、combo 增删、Inspect 行弹层；Docs/API/Urgent 为静态 tag 数据非按钮                                                                                                                  |
 | table-column-width             | ✅   | 列宽策略宿主：选择/全选机制验证（E3 宿主 fixture）                                                                                                                                                                           |
 | table-popover                  | ✅   | 单元格 popOver 逐行打开 ✓、复制到剪贴板、分页                                                                                                                                                                                |
-| tree-display-ux                | ✅   | 展开/折叠/搜索高亮机制 ✓（E3）、节点树渲染                                                                                                                                                                                   |
+| tree-display-ux                | ✅   | 展开/折叠/搜索高亮机制 ✓（E3）、节点树渲染 收口注记                                                                                                                                                                          |
 | condition-builder              | ✅   | 添加条件/分组/筛选、操作符与值下拉、配置弹窗、删除重组 ✓                                                                                                                                                                     |
 | condition-builder-formula      | ✅   | E3 公式集成变体：条件增删/分组/操作符下拉 ✓                                                                                                                                                                                  |
 | form-input-enhancements        | ✅   | input-number 步进、array-editor 增删/排序（等长值变更类 no-op 为检测盲区已核）、Submit→console 设计                                                                                                                          |
@@ -226,7 +226,7 @@
 
 ## 七、已知在册基线（执行时对照，不重复开卡）
 
-- R12 确认文档在册项：linear-board（tab 对齐已修/筛选片已修 → W-A1 只验操作面）、dashboard（渠道占比卡已修）、combo-editor 双删除钮（共享 composite 组件，维持登记）、sundial-detail 留白（已居中）、antdpro form-basic/detail-basic 背景接缝（改判非缺陷）、master-detail 子表加载 >2s（性能观测）。
+- R12 确认文档在册项：linear-board（tab 对齐已修/筛选片已修 → W-A1 只验操作面）、dashboard（渠道占比卡已修）、combo-editor 双删除钮（共享 composite 组件，维持登记）【2026-10-18 复核已收敛（cross-roadmap UR-19）：cq-3 共享 chrome 后仅剩单一 trash，combo-editor.json 无内嵌删除钮】、sundial-detail 留白（已居中）、antdpro form-basic/detail-basic 背景接缝（改判非缺陷）、master-detail 子表加载 >2s（性能观测）。
 - 渲染器级 plan-first：container className-flex 陷阱【2026-10-17 已修复（plan 641 UR-14，bare 路径免包装）】；表格 fixed 列宽度预留（不透明底已在 R12e 落地）；SPA hash 导航竞态（自动化测试关注）【2026-10-17 观测结论（plan 641 UR-16）：双导航法规避即正式结论，无产品修复项】。
 
 ### W-A1 执行期新增登记（2026-10-03）

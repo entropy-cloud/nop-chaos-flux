@@ -55,6 +55,23 @@ describe('designer-registry', () => {
     expect(types.has('carousel')).toBe(false);
   });
 
+  it('UR-18 #7: template-slot leaves (input-text/select) do not carry the container badge, structural containers do', () => {
+    const registry = createPageDesignerRegistry();
+    const items = buildMvpPaletteItems(registry);
+    const containerOf = (type: string) =>
+      items.find((item) => item.type === type)?.isContainer;
+    // suggestTemplate/optionTemplate 模板槽 region 不再被计为容器。
+    expect(containerOf('input-text')).toBe(false);
+    expect(containerOf('select')).toBe(false);
+    // 结构容器（region 规则带 regionKey）不受影响。
+    expect(containerOf('container')).toBe(true);
+    expect(containerOf('flex')).toBe(true);
+    expect(containerOf('tabs')).toBe(true);
+    // grid/collapse 顶层无 region 规则（region 嵌在 items prop contract 内），维持非容器判定。
+    expect(containerOf('grid')).toBe(false);
+    expect(containerOf('collapse')).toBe(false);
+  });
+
   it('excludes domain-host and no-scaffold types from a custom registry', () => {
     const registry = createRendererRegistry();
     registry.register(

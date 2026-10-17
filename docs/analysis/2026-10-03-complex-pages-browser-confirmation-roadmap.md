@@ -6,12 +6,12 @@
 
 ## 一、确认结论总览
 
-| 结论                              | 页数 | 说明                                                                                              |
-| --------------------------------- | ---- | ------------------------------------------------------------------------------------------------- |
-| ✅ 确认通过（含既往修复实机复验） | 36   | 数据完整、布局无塌陷/黑域/碰撞、可读性达标                                                        |
-| ⚠️→✅ 确认通过，残留 P2 当轮已修  | 2    | linear-board（看板 tab 错位 + 筛选片文字——已修，§三.1）、dashboard（渠道占比卡溢出——已修，§三.2） |
-| ⚠️ 确认通过但带在册 P3            | 2    | sundial-detail（检查器左置留白）、combo-editor（× 与 trash 双删除钮冗余）                         |
-| ❌ 未通过                         | 0    | R12 后无 P1 残留                                                                                  |
+| 结论                              | 页数 | 说明                                                                                                                                                                                   |
+| --------------------------------- | ---- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| ✅ 确认通过（含既往修复实机复验） | 36   | 数据完整、布局无塌陷/黑域/碰撞、可读性达标                                                                                                                                             |
+| ⚠️→✅ 确认通过，残留 P2 当轮已修  | 2    | linear-board（看板 tab 错位 + 筛选片文字——已修，§三.1）、dashboard（渠道占比卡溢出——已修，§三.2）                                                                                      |
+| ⚠️ 确认通过但带在册 P3            | 2    | sundial-detail（检查器左置留白）、combo-editor（× 与 trash 双删除钮冗余）【2026-10-18 复核已收敛（cross-roadmap UR-19）：cq-3 共享 chrome 后仅剩单一 trash，demo schema 无内嵌删除钮】 |
+| ❌ 未通过                         | 0    | R12 后无 P1 残留                                                                                                                                                                       |
 
 ## 二、逐页确认清单（40/40）
 
@@ -101,7 +101,7 @@
 
 - **已修复（当轮）**：sundial-detail 检查器居中（mx-auto）；antdpro-form-step 步骤连接线（wizard data-mode 钩子 + css 连接线，token 裸分量陷阱实机修正为 `hsl(var(--border)/0.6)`）；approval-tasks 状态徽标（琥珀/绿/玫红）+ crud-views-export 状态徽标（✅启用/⛔禁用）；business-document/inline-edit-table 空操作列表头补「行操作」标签（input-table + 行保存条两处渲染器）；detail-subtables 订单金额改由明细 Σ(qty×price) 派生（勾稽）；linear-detail 表头带（随 R12 token 覆盖已融入深色）。
 - **table fixed 粘性列透明底**（渲染器缺口）：`packages/ui/styles/table.css` 补 `[data-fixed]` 不透明底规则（token 链回退）。
-- **仍在册**：combo-editor ×/trash 双删除（共享 composite 组件语义，改动面大）、antdpro form-basic/detail-basic 背景接缝（改判：卡片边界于渐变底上，非缺陷）、approval-tasks 查询卡右侧空区（布局偏好）。【2026-10-18 已修复（cross-roadmap UR-18 批）：queryForm columnCount 3→2 收窄空列——低成本行权修复，推翻原布局偏好裁决】
+- **仍在册**：combo-editor ×/trash 双删除（共享 composite 组件语义，改动面大）【2026-10-18 复核已收敛（cross-roadmap UR-19）】、antdpro form-basic/detail-basic 背景接缝（改判：卡片边界于渐变底上，非缺陷）、approval-tasks 查询卡右侧空区（布局偏好）。【2026-10-18 已修复（cross-roadmap UR-18 批）：queryForm columnCount 3→2 收窄空列——低成本行权修复，推翻原布局偏好裁决】
 
 ### 渲染器级（plan-first，已在 R12 补充登记）
 

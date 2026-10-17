@@ -818,6 +818,7 @@
                 {
                   "type": "input-text",
                   "name": "subtaskAddTitle",
+                  "label": "子任务标题",
                   "className": "sd-input",
                   "placeholder": "添加子任务…",
                   "testid": "sundial-detail-subtask-add",
