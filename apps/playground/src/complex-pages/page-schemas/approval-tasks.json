@@ -21,7 +21,7 @@
       },
       "queryForm": {
         "layout": "horizontal",
-        "columnCount": 3,
+        "columnCount": 2,
         "gap": "sm",
         "body": [
           {

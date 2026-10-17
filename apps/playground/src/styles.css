@@ -590,3 +590,14 @@ body {
 [data-testid='dash-stat-growth']:hover .dash-icon-bg {
   background-color: #e11d48 !important;
 }
+
+/* UR-18 (designer-ux PR family): SQL code-editor 上方灰条——plain SQL（无
+   format/snippets/变量/执行/全屏标志）时 flux-code-editor 仍无条件渲染
+   code-editor-toolbar 空容器（sql-editor-toolbar 的 bg+border-bottom+padding
+   即灰条）。渲染器自身以 data-has-toolbar 标记“无工具栏内容”，这里按该信号
+   隐藏空条。渲染器层根治（code-editor-renderer.tsx `{isSQL ? sqlSlots.toolbar :
+   null}` → `{isSQL && showToolbar ? ... : null}`）落在 flux-code-editor 包，
+   超出 UR-18 允许改动包清单，登记待后续批处理。 */
+.nop-code-editor:not([data-has-toolbar]) > [data-slot='code-editor-toolbar'] {
+  display: none;
+}

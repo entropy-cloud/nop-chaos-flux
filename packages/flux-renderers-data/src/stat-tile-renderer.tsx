@@ -181,7 +181,7 @@ export function StatTileRenderer(props: RendererComponentProps<StatTileSchema>) 
         <span
           data-slot="stat-tile-value"
           data-value={value === undefined ? 'null' : String(value)}
-          className="min-w-0 truncate text-3xl font-semibold tabular-nums tracking-tight"
+          className="min-w-0 truncate pr-px text-3xl font-semibold tabular-nums tracking-tight"
         >
           {value === undefined ? '--' : formatValue(value, formatter, i18n.language)}
         </span>

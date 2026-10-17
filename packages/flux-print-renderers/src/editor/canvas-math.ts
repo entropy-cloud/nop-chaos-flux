@@ -145,6 +145,17 @@ export function gridCandidates(pageSizeMm: number, gridSize: number): number[] {
   return candidates;
 }
 
+/** 拖拽/缩放产物坐标收敛到 2 位小数（mm）：未命中吸附线的自由拖拽除以 PX_PER_MM×zoom 必然带浮点尾差。 */
+export function roundFrame(frame: Frame): Frame {
+  const round = (value: number) => Math.round(value * 100) / 100;
+  return {
+    left: round(frame.left),
+    top: round(frame.top),
+    width: round(frame.width),
+    height: round(frame.height),
+  };
+}
+
 /** 旋转角（度）：由中心与指针位置计算绝对角度，默认磁吸 0/90/180/270（±5° 内），free 模式跳过。 */
 export function computeRotateAngle(
   center: PaperPoint,

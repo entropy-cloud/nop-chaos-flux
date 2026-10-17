@@ -101,12 +101,12 @@
 
 - **已修复（当轮）**：sundial-detail 检查器居中（mx-auto）；antdpro-form-step 步骤连接线（wizard data-mode 钩子 + css 连接线，token 裸分量陷阱实机修正为 `hsl(var(--border)/0.6)`）；approval-tasks 状态徽标（琥珀/绿/玫红）+ crud-views-export 状态徽标（✅启用/⛔禁用）；business-document/inline-edit-table 空操作列表头补「行操作」标签（input-table + 行保存条两处渲染器）；detail-subtables 订单金额改由明细 Σ(qty×price) 派生（勾稽）；linear-detail 表头带（随 R12 token 覆盖已融入深色）。
 - **table fixed 粘性列透明底**（渲染器缺口）：`packages/ui/styles/table.css` 补 `[data-fixed]` 不透明底规则（token 链回退）。
-- **仍在册**：combo-editor ×/trash 双删除（共享 composite 组件语义，改动面大）、antdpro form-basic/detail-basic 背景接缝（改判：卡片边界于渐变底上，非缺陷）、approval-tasks 查询卡右侧空区（布局偏好）。
+- **仍在册**：combo-editor ×/trash 双删除（共享 composite 组件语义，改动面大）、antdpro form-basic/detail-basic 背景接缝（改判：卡片边界于渐变底上，非缺陷）、approval-tasks 查询卡右侧空区（布局偏好）。【2026-10-18 已修复（cross-roadmap UR-18 批）：queryForm columnCount 3→2 收窄空列——低成本行权修复，推翻原布局偏好裁决】
 
 ### 渲染器级（plan-first，已在 R12 补充登记）
 
-1. **container className-flex 作者陷阱**：container-body 包装使 schema 外层 flex 类静默失效——linear 家族与 antdpro-result 曾同病。demo 层已全部改 direction 契约；渲染器层透传/免包装需契约设计。【2026-10-17 已修复（plan `docs/plans/641-cross-roadmap-ur14-15-16-wave-d-bounded-plan.md` UR-14）：渲染器层采纳「免包装」修法——bare 路径（无 header/footer、无 flex 契约字段）body 直接渲染于容器根，外层 className 布局类真正作用于内容】
-2. **表格 fixed 列不预留宽度**：fixed:right 粘性列盖液态列（antdpro-list 已去 fixed 规避）。
+1. **container className-flex 作者陷阱**：container-body 包装使 schema 外层 flex 类静默失效——linear 家族与 antdpro-result 曾同病。demo 层已全部改 direction 契约；渲染器层透传/免包装需契约设计。【2026-10-18 已修复（cross-roadmap UR-14，plan 641）：bare 路径免包装——无 header/footer 且无 flex 契约字段时 body 直接渲染于容器根，外层布局类真正生效（判别测试红→绿，9 处契约测试更新）】【2026-10-17 已修复（plan `docs/plans/641-cross-roadmap-ur14-15-16-wave-d-bounded-plan.md` UR-14）：渲染器层采纳「免包装」修法——bare 路径（无 header/footer、无 flex 契约字段）body 直接渲染于容器根，外层 className 布局类真正作用于内容】
+2. **表格 fixed 列不预留宽度**：fixed:right 粘性列盖液态列（antdpro-list 已去 fixed 规避）。【不透明底部分：FM-0 plan 642 已落地（--table-fixed-bg 基线 + 状态叠加层）；宽度预留余项归并发在途批次】
 3. **异步路由恢复竞态观测**：SPA 内 goto 同文档 hash 偶发不触发重挂载（本轮确认工作遇到的导航竞态，browser-use 双导航法规避）——仅自动化测试关注，用户手点无碍。【2026-10-17 观测结论（plan `docs/plans/641-cross-roadmap-ur14-15-16-wave-d-bounded-plan.md` UR-16）：既有双导航法规避即正式结论——自动化测试规范 = goto 同文档 hash 后需二次 goto（或改用带参数 hash 触发真实导航）；用户手点无碍，无产品修复项】
 
 ## 四、验收口径

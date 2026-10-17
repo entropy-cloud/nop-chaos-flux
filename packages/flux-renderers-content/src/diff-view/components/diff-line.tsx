@@ -37,7 +37,7 @@ export function DiffLineComponent({
         data-diff-gutter="old"
         className="nop-diff-gutter"
       >
-        {oldLineNum ?? ''}
+        {oldLineNum ?? newLineNum ?? ''}
       </span>
       {isUnified && (
         <span

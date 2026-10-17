@@ -60,6 +60,20 @@ describe('DiffViewRenderer', () => {
     expect(screen.getAllByText('line1').length).toBeGreaterThanOrEqual(1);
   });
 
+  it('DF-1: shows line numbers for added lines in the split-view gutter (aligned with deleted-row handling)', () => {
+    render(<DiffViewRenderer {...createMockProps()} />);
+    const addedLine = document.querySelector(
+      '.nop-diff-split-new [data-diff-type="add"]',
+    );
+    expect(addedLine).toBeTruthy();
+    expect(addedLine?.querySelector('[data-slot="diff-gutter"]')?.textContent ?? '').toMatch(/^\d+$/);
+    const deletedLine = document.querySelector(
+      '.nop-diff-split-old [data-diff-type="delete"]',
+    );
+    expect(deletedLine).toBeTruthy();
+    expect(deletedLine?.querySelector('[data-slot="diff-gutter"]')?.textContent ?? '').toMatch(/^\d+$/);
+  });
+
   it('renders unified view when viewType is unified', () => {
     render(<DiffViewRenderer {...createMockProps({ viewType: 'unified' })} />);
     const container = document.querySelector('[data-view="unified"]');

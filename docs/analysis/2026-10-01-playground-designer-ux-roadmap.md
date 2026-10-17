@@ -77,11 +77,11 @@
 
 - 复审计结论：**CONVERGENCE: not-reached**——R1-R10 全部 17 个修复面在 live 验证落地（含全部 P0），新发现 2 P1（N-1 Word 工作台爆宽 / N-2 linear-issues 偶发空面板）→ R11 plan（`docs/plans/2026-10-01-ux-r11-convergence-p1-plan.md`）修复/钉住。
 - Follow-up 登记（复审计确认未复现或未修复，非新 P0/P1）：
-  - PR-1（print 样式区输入空无占位；Y 浮点未复现，疑拖拽期才现）
+  - PR-1（print 样式区输入空无占位；Y 浮点未复现，疑拖拽期才现）【2026-10-18 已修复（cross-roadmap UR-18 批）：占位补齐（格式示例）；Y 浮点本次复现为真——computeSnap 直通浮点增量，moveFrame 无取整；roundFrame（2 位小数）套用 move/resize 两路】
   - GR-2（graph 邻接边小环——归边路由引擎 follow-up 家族）【2026-10-17 已修复（plan 640）：共享把手扇出/汇入边按组垂直 bundle offset 分离（graph 本地 bundleEdge，避免跨包耦合）】
   - OP-1（运营大屏渠道占比卡右缘溢出；首屏 loading 未复现）
-  - DF-1（diff 新增行行号列空白；删除行已修复）
-  - P3 nits：dashboard-demo KPI 轻微裁边 / code-editor SQL 上方灰条 / kanban 卡无日期 / page-designer 叶子字段带容器徽标语义 / debugger launcher 压 palette 底部
+  - DF-1（diff 新增行行号列空白；删除行已修复）【2026-10-18 已修复（UR-18 批）：split 视图 added 行 old gutter 回退显示 newLineNum（与 DiffGutter 既有口径对齐），判别测试红→绿】
+  - P3 nits：dashboard-demo KPI 轻微裁边【2026-10-18 已修复（UR-18 批）：值 span 补 pr-px 抵消 tracking-tight 字距收缩】 / code-editor SQL 上方灰条【2026-10-18 已修复（UR-18 批，playground 层语义覆盖）：无工具栏内容时隐藏 toolbar 容器；根治单行改法（code-editor-renderer.tsx:474 isSQL && showToolbar）留后续批】 / kanban 卡无日期【2026-10-18 裁决不修：kanban 全链无日期字段设计，补日期属新功能而非视觉缺陷】 / page-designer 叶子字段带容器徽标语义【2026-10-18 已修复（UR-18 批）：hasStructuralRegion 要求 region 规则带 regionKey 才计容器——palette 徽标判定修正，零行为涟漪】 / debugger launcher 压 palette 底部【2026-10-18 裁决不修：位置性遮挡 z-index 无解，bottom-left 为 ux-r6 G-1 文档化决策，拖拽转 floating 已有完整逃逸路径】
   - N-2 linear-issues 首屏空面板竞态调查（负载下 mount/dispose 时序取证，复现优先；dependsOn 根未初始化机制主张已被运行时源码证伪——source-registry.ts:398 无条件 start）【2026-10-17 取证结论（plan `docs/plans/633-cross-roadmap-wave-b-renderer-p2-plan.md` UR-6）：定向注入实验证实「单次读失败经 dependsOn 初始化 refresh 自愈」（解释竞态稀有性）；3 连败坐实失败不可见缺陷（误导性「当前筛选条件下没有问题」空态、零错误提示零重试）——已修复（statusPath + 错误态感知空槽 + refreshSource 重试，`linear-issues.json`；判别 e2e `linear-issues-fetch-failure.spec.ts` 先红后绿）；候选①③本轮注入路径未复现，失败可见化后后续发生即有用户可见信号】
 
 ## R13 全页面遍历 Roadmap 登记（2026-10-02，用户提出）
@@ -93,8 +93,8 @@
 - **容器渲染器 className-flex 作者陷阱**：`container` 恒把 body 包进无类名 `container-body`，schema 写在外层 className 的 flex 布局类全部静默失效（linear 家族 6 页 + antdpro-result 横幅同病）。schema 层已按 `direction`/`align` 契约修正；渲染器层修法（无 header/footer 时免包装，或 className 布局类透传 body）为行为契约变更，plan-first，successor = container 布局类透传设计。【2026-10-17 已修复（plan `docs/plans/641-cross-roadmap-ur14-15-16-wave-d-bounded-plan.md` UR-14）：渲染器层采纳「免包装」修法——bare 路径（无 header/footer、无 flex 契约字段）body 直接渲染于容器根，外层 className 布局类真正作用于内容；bodyClassName/meta.className 组合到根；container-body 仅在 header/footer 或 flex 契约路径保留】
 - **表格 fixed 列渲染器缺口**：`fixed: "right"` 列不预留宽度，粘性列盖住液态列（antdpro-list 实测 31px 重叠且透明底透字）。demo 已去 fixed；渲染器修复（宽度预留 + 不透明底）plan-first。
 - ~~linear-issues replica 家族自有 css 债~~（R12 补扫 P2 三项）→ **已修复（2026-10-03 自动修复轮）**：topbar `h-12` 固定高装不下 76px 内容改 `min-h-12 py-1`；表头白底带经 token 级覆盖 `--table-header-bg` 融入深色；批量栏零选态隐藏（`visible: ${(0)>0}` 门控）+ 滚动条深色化。cp8 e2e 守护钉在案。
-- **combo-editor P3**：行内 × 与 trash 双删除 affordance 冗余。
-- **HEAD 既有 e2e 红 3 项**（非本轮引入，stash 验证）：flow-designer-dingtalk-visual "end variant 出现/terminal dot 变卡片"×2 + taskflow-designer-ui "playground 入口导航卡"——与并行会话 flux-core WIP 面相关，successor = 并行会话收口时处理。
+- **combo-editor P3**：行内 × 与 trash 双删除 affordance 冗余。【2026-10-18 复核结论（cross-roadmap UR-19）：已被 cq-3 共享 chrome 重构收敛——ComboItemView 仅渲染 ArrayItemActionButtons 单一 trash（array-item-shared.tsx），combo-editor.json 演示 schema 无内嵌 × 删除钮（实读核验）】
+- **HEAD 既有 e2e 红 3 项**（非本轮引入，stash 验证）：flow-designer-dingtalk-visual "end variant 出现/terminal dot 变卡片"×2 + taskflow-designer-ui "playground 入口导航卡"——与并行会话 flux-core WIP 面相关，successor = 并行会话收口时处理。【2026-10-18 复核结论（cross-roadmap UR-20）：三项全部转绿（dingtalk-visual 6/6、taskflow-ui 入口 2/2，fresh 实跑）——flux-core WIP 已随 plan 621/637 收口落地修复，无需 watch-only 裁决】
 
 ## 执行顺序与状态
 

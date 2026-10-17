@@ -32,9 +32,10 @@ interface NumberFieldProps {
   value: number | undefined;
   onChange: (value: number) => void;
   step?: number;
+  placeholder?: string;
 }
 
-function NumberField({ label, value, onChange, step = 1 }: NumberFieldProps) {
+function NumberField({ label, value, onChange, step = 1, placeholder }: NumberFieldProps) {
   return (
     <Row label={label}>
       <Input
@@ -42,6 +43,7 @@ function NumberField({ label, value, onChange, step = 1 }: NumberFieldProps) {
         step={step}
         aria-label={label}
         className="h-7 text-xs"
+        placeholder={placeholder}
         value={value === undefined ? '' : String(value)}
         onChange={(event) => {
           const parsed = Number(event.target.value);
@@ -52,10 +54,26 @@ function NumberField({ label, value, onChange, step = 1 }: NumberFieldProps) {
   );
 }
 
-function TextField({ label, value, onChange }: { label: string; value: string; onChange: (value: string) => void }) {
+function TextField({
+  label,
+  value,
+  onChange,
+  placeholder,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  placeholder?: string;
+}) {
   return (
     <Row label={label}>
-      <Input aria-label={label} className="h-7 text-xs" value={value} onChange={(event) => onChange(event.target.value)} />
+      <Input
+        aria-label={label}
+        className="h-7 text-xs"
+        placeholder={placeholder}
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+      />
     </Row>
   );
 }
@@ -256,7 +274,7 @@ function StyleSection({
   const style = selected.style;
   return (
     <Section title={t('flux.print.inspector.styleSection')}>
-      <NumberField label={t('flux.print.inspector.fontSize')} value={style.fontSize} onChange={(fontSize) => patchElement({ style: { ...style, fontSize } } as Partial<PrintElementSchema>)} />
+      <NumberField label={t('flux.print.inspector.fontSize')} value={style.fontSize} placeholder="12" onChange={(fontSize) => patchElement({ style: { ...style, fontSize } } as Partial<PrintElementSchema>)} />
       <SelectField
         label={t('flux.print.inspector.textAlign')}
         value={style.textAlign ?? 'left'}
@@ -267,10 +285,10 @@ function StyleSection({
           { value: 'right', label: t('flux.print.inspector.alignRight') },
         ]}
       />
-      <TextField label={t('flux.print.inspector.color')} value={style.color ?? ''} onChange={(color) => patchElement({ style: { ...style, color } } as Partial<PrintElementSchema>)} />
-      <TextField label={t('flux.print.inspector.backgroundColor')} value={style.backgroundColor ?? ''} onChange={(backgroundColor) => patchElement({ style: { ...style, backgroundColor } } as Partial<PrintElementSchema>)} />
-      <NumberField label={t('flux.print.inspector.borderWidth')} value={style.borderWidth} onChange={(borderWidth) => patchElement({ style: { ...style, borderWidth } } as Partial<PrintElementSchema>)} />
-      <TextField label={t('flux.print.inspector.borderColor')} value={style.borderColor ?? ''} onChange={(borderColor) => patchElement({ style: { ...style, borderColor } } as Partial<PrintElementSchema>)} />
+      <TextField label={t('flux.print.inspector.color')} value={style.color ?? ''} placeholder="#333333" onChange={(color) => patchElement({ style: { ...style, color } } as Partial<PrintElementSchema>)} />
+      <TextField label={t('flux.print.inspector.backgroundColor')} value={style.backgroundColor ?? ''} placeholder="#ffffff" onChange={(backgroundColor) => patchElement({ style: { ...style, backgroundColor } } as Partial<PrintElementSchema>)} />
+      <NumberField label={t('flux.print.inspector.borderWidth')} value={style.borderWidth} placeholder="0" onChange={(borderWidth) => patchElement({ style: { ...style, borderWidth } } as Partial<PrintElementSchema>)} />
+      <TextField label={t('flux.print.inspector.borderColor')} value={style.borderColor ?? ''} placeholder="#dddddd" onChange={(borderColor) => patchElement({ style: { ...style, borderColor } } as Partial<PrintElementSchema>)} />
     </Section>
   );
 }

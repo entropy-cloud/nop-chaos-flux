@@ -12,12 +12,11 @@
  */
 
 import { createRendererRegistry, isSchema } from '@nop-chaos/flux-core';
-import type { RendererRegistry, SchemaInput } from '@nop-chaos/flux-core';
+import type { RendererDefinition, RendererRegistry, SchemaInput } from '@nop-chaos/flux-core';
 import type { PaletteItem } from '@nop-chaos/page-designer-core';
 import {
   buildPaletteItems,
   classifyNode,
-  isContainerDefinition,
 } from '@nop-chaos/page-designer-core';
 import { registerBasicRenderers } from '@nop-chaos/flux-renderers-basic';
 import { registerFormRenderers } from '@nop-chaos/flux-renderers-form/definitions';
@@ -67,13 +66,29 @@ export function createPageDesignerRegistry(): RendererRegistry {
   return registry;
 }
 
+/**
+ * palette 徽标语义的容器判定：region 槽须声明 `regionKey`（设计器可落子的结构槽）。
+ * `isContainerDefinition` 的 `regionKey ?? key` 兜底把无 regionKey 的模板槽 region
+ * （input 族的 suggestTemplate / select 的 optionTemplate——内容模板，不承载设计器
+ * 子节点）也计为容器，导致这些叶子字段在 palette 错带容器徽标（UR-18 #7）。
+ * 结构容器（form/fieldset/tabs/layout 家族）的 region 规则全部声明 regionKey，
+ * 本判定与 `isContainerDefinition` 在它们上零差异。
+ */
+function hasStructuralRegion(definition: RendererDefinition): boolean {
+  return (
+    definition.fields?.some(
+      (rule) => rule.kind === 'region' && typeof rule.regionKey === 'string' && rule.regionKey !== '',
+    ) ?? false
+  );
+}
+
 function toScaffoldedItem(type: string, definition: NonNullable<ReturnType<RendererRegistry['get']>>): PaletteItem {
   return {
     type,
     displayName: definition.displayName ?? type,
     ...(definition.icon !== undefined ? { icon: definition.icon } : {}),
     group: definition.category ?? 'form',
-    isContainer: isContainerDefinition(definition),
+    isContainer: hasStructuralRegion(definition),
     isOpaqueLeaf: classifyNode(definition) === 'opaque-leaf',
   };
 }

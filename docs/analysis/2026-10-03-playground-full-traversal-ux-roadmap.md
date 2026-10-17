@@ -153,7 +153,7 @@
 ### W-C 渲染器演示（27）
 
 | 页面                           | 状态 | 卡片                                                                                                                                                                                                                         |
-| ------------------------------ | ---- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| ------------------------------ | ---- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
 | flux-basic                     | ✅   | 表单提交管线（component:submit）、对话框、combo 增删、Inspect 行弹层；Docs/API/Urgent 为静态 tag 数据非按钮                                                                                                                  |
 | table-column-width             | ✅   | 列宽策略宿主：选择/全选机制验证（E3 宿主 fixture）                                                                                                                                                                           |
 | table-popover                  | ✅   | 单元格 popOver 逐行打开 ✓、复制到剪贴板、分页                                                                                                                                                                                |
@@ -165,7 +165,7 @@
 | layout-family-enhancements     | ✅   | tab 切换（含 badge）、aside 备注、mountOnEnter 系列 ✓                                                                                                                                                                        |
 | text-icon-visual-fields        | ✅   | 复制 toast「已复制」、maxLine 展开/收起（E3）                                                                                                                                                                                |
 | component-handles              | ✅   | Focus/Clear/Reset 句柄语义程序化验证 ✓（activeElement 翻转+值清空）、Select 弹层、表单提交/重置                                                                                                                              |
-| event-prevention               | ✅   | X2 三拦截全工作（e2e 4/4 绿：表单/链接/键盘 + 开关切换）；P3：schema 内残留死开关按钮（path:\_ 无操作，功能由外置 React 开关承担）——清理候选                                                                                 |
+| event-prevention               | ✅   | X2 三拦截全工作（e2e 4/4 绿：表单/链接/键盘 + 开关切换）；P3：schema 内残留死开关按钮（path:\_ 无操作，功能由外置 React 开关承担）——清理候选                                                                                 | 【2026-10-18 已修复（cross-roadmap UR-18 批）：死按钮删除——真实开关为外置 React Toggle，语义由其完整承担】 |
 | boolean-control-value-contract | ✅   | checkbox trueValue/falseValue 契约翻转 ✓（E3）                                                                                                                                                                               |
 | data-verify                    | ✅   | 数据源机制验证页：展开/setValue 探针 ✓                                                                                                                                                                                       |
 | env-stream                     | ✅   | Start stream 触发流式输出 ✓、Abort 空栈 no-op、协议/解码器选择                                                                                                                                                               |
@@ -231,12 +231,12 @@
 
 ### W-A1 执行期新增登记（2026-10-03）
 
-- **P3**：批量操作零选中静默无反馈（standard-crud 批量删除、antdpro-list 批量导出同病）——建议「请先选择记录」提示或禁用态。
-- **P3**：sundial-detail 子任务空标题校验文案用原始键名（`subtaskAddTitle不能为空`）——schema 字段补 label 即可。
-- **P3**：approval-tasks 审批「通过」成功后弹窗不自动关闭（保留可继续操作形态，建议关闭或禁用双钮）。
-- **P3**：剪贴板写入失败 toast 含原始英文异常（`Failed to execute 'writeText'…`，cal-success/linear-detail 复制链接同病）——失败文案宜收敛为本地化短语。
-- **P3**：linear-detail 状态选择未变更直接点「应用」提交空 patch → mock 判 invalid patch → 误报「状态更新失败」——建议未变更时禁用「应用」。
-- **P3（a11y）**：master-detail 订单列表项为无角色 SPAN，键盘不可达（R12 展现层未覆盖维度）。
+- **P3**：批量操作零选中静默无反馈（standard-crud 批量删除、antdpro-list 批量导出同病）——建议「请先选择记录」提示或禁用态。【2026-10-18 已修复（plan 641 UR-17 核验）：standard-crud 与 antdpro-list 均已有 `disabled: "${!$crud.hasSelection}"` 禁用态（后续迭代落地），登记建议采纳】
+- **P3**：sundial-detail 子任务空标题校验文案用原始键名（`subtaskAddTitle不能为空`）——schema 字段补 label 即可。【2026-10-18 已修复（plan 641 UR-17）：input-text 补 `label: "子任务标题"`】
+- **P3**：approval-tasks 审批「通过」成功后弹窗不自动关闭（保留可继续操作形态，建议关闭或禁用双钮）。【已修复（后续迭代）：通过/驳回成功 then 链均已含 `closeSurface`，实读 schema 证实】
+- **P3**：剪贴板写入失败 toast 含原始英文异常（`Failed to execute 'writeText'…`，cal-success/linear-detail 复制链接同病）——失败文案宜收敛为本地化短语。【已修复（后续迭代）：action-adapter copy 分支 catch 后 `t('flux.action.copyFailed')` 本地化 toast，原始异常仅随 ActionResult 携带】
+- **P3**：linear-detail 状态选择未变更直接点「应用」提交空 patch → mock 判 invalid patch → 误报「状态更新失败」——建议未变更时禁用「应用」。【2026-10-18 已修复（plan 641 UR-17）：应用按钮 `disabled: "${status == detail?.status}"`】
+- **P3（a11y）**：master-detail 订单列表项为无角色 SPAN，键盘不可达（R12 展现层未覆盖维度）。【已修复（后续迭代）：radio-group 渲染器已重构为 ui RadioGroup/RadioGroupItem（每项 aria-label、键盘可达），md-order-picker 即该渲染器消费方】
 - **已修（当波 P1）**：表单校验失败 toast 显示 `[object Object]`——`flux-action-core` 失败通知对结构化非 Error 负载（ValidationResult[]）直接 String() 所致；新增 `describeActionFailure`（数组取 message 拼接、对象取 message 字段、兜底 JSON），全站生效（standard-crud/business-document/antdpro-form-dialog/complex-form 实机复验均输出可读中文文案）；回归测试 ×2（action-dispatcher-control-flow.test.ts）。
 - **已修（当波 P2）**：配置 `messages.failed` 的 ajax 失败叠加通用 `Request failed` 双 toast——`flux-runtime` executeRuntimeAjaxAction 在作者消息消费失败后补标 `failureHandled`，dispatcher 通用失败通知跳过；回归测试 ×2（runtime-ajax-messages.test.ts）。
 - **测试观测面**：linear mock 新增 `lastBulkUpdate` 钩子（与既有 lastMove 同款，e2e 请求体观测）。

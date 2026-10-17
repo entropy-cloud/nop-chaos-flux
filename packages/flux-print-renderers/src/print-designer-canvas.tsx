@@ -14,6 +14,7 @@ import {
   computeRotateAngle,
   computeSnap,
   gridCandidates,
+  roundFrame,
   screenToPaper,
   type Frame,
 } from './editor/canvas-math.js';
@@ -146,7 +147,7 @@ export function PrintDesignerCanvas({ controller, className }: PrintDesignerCanv
       const snapOptions = dragSnapOptionsRef.current;
       if (snapOptions) {
         const snapped = computeSnap(moved, snapOptions);
-        scheduleMoveFrame(drag.id, clampFrame(snapped.frame, drag.regionBounds.width, drag.regionBounds.height));
+        scheduleMoveFrame(drag.id, roundFrame(clampFrame(snapped.frame, drag.regionBounds.width, drag.regionBounds.height)));
       }
       return;
     }
@@ -158,7 +159,7 @@ export function PrintDesignerCanvas({ controller, className }: PrintDesignerCanv
         pointer.left - drag.startPointer.left,
         pointer.top - drag.startPointer.top,
       );
-      controller.moveFrame(drag.id, clampFrame(resized, drag.regionBounds.width, drag.regionBounds.height));
+      controller.moveFrame(drag.id, roundFrame(clampFrame(resized, drag.regionBounds.width, drag.regionBounds.height)));
       return;
     }
 

@@ -117,18 +117,6 @@ export function EventPreventionDemoPage({ onBack }: EventPreventionDemoPageProps
             text: 'Demo 1 — Native form submit. Toggle the preventDefault flag and click Submit.',
           },
           {
-            type: 'flex',
-            direction: 'row',
-            gap: 'sm',
-            body: [
-              {
-                type: 'button',
-                label: preventSubmit ? 'Switch to allow submit' : 'Switch to prevent submit',
-                onClick: { action: 'setValue', args: { path: '_', value: 0 } },
-              },
-            ],
-          },
-          {
             type: 'native-submit-form',
             label: 'Submit form',
             onSubmit: {
