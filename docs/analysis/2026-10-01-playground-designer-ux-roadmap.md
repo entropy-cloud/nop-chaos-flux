@@ -90,7 +90,7 @@
 
 ## R12 补充登记（执行期，2026-10-02）
 
-- **容器渲染器 className-flex 作者陷阱**：`container` 恒把 body 包进无类名 `container-body`，schema 写在外层 className 的 flex 布局类全部静默失效（linear 家族 6 页 + antdpro-result 横幅同病）。schema 层已按 `direction`/`align` 契约修正；渲染器层修法（无 header/footer 时免包装，或 className 布局类透传 body）为行为契约变更，plan-first，successor = container 布局类透传设计。
+- **容器渲染器 className-flex 作者陷阱**：`container` 恒把 body 包进无类名 `container-body`，schema 写在外层 className 的 flex 布局类全部静默失效（linear 家族 6 页 + antdpro-result 横幅同病）。schema 层已按 `direction`/`align` 契约修正；渲染器层修法（无 header/footer 时免包装，或 className 布局类透传 body）为行为契约变更，plan-first，successor = container 布局类透传设计。【2026-10-17 已修复（plan `docs/plans/641-cross-roadmap-ur14-15-16-wave-d-bounded-plan.md` UR-14）：渲染器层采纳「免包装」修法——bare 路径（无 header/footer、无 flex 契约字段）body 直接渲染于容器根，外层 className 布局类真正作用于内容；bodyClassName/meta.className 组合到根；container-body 仅在 header/footer 或 flex 契约路径保留】
 - **表格 fixed 列渲染器缺口**：`fixed: "right"` 列不预留宽度，粘性列盖住液态列（antdpro-list 实测 31px 重叠且透明底透字）。demo 已去 fixed；渲染器修复（宽度预留 + 不透明底）plan-first。
 - ~~linear-issues replica 家族自有 css 债~~（R12 补扫 P2 三项）→ **已修复（2026-10-03 自动修复轮）**：topbar `h-12` 固定高装不下 76px 内容改 `min-h-12 py-1`；表头白底带经 token 级覆盖 `--table-header-bg` 融入深色；批量栏零选态隐藏（`visible: ${(0)>0}` 门控）+ 滚动条深色化。cp8 e2e 守护钉在案。
 - **combo-editor P3**：行内 × 与 trash 双删除 affordance 冗余。

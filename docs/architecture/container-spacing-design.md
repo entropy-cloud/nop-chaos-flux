@@ -100,8 +100,11 @@ File: `packages/flux-react/src/default-spacing.css`
 | Selector                                          | Rules                                                                    |
 | ------------------------------------------------- | ------------------------------------------------------------------------ |
 | `.nop-container > [data-slot="container-body"]`   | `display: flex; flex-direction: column; gap: var(--space-form-item-gap)` |
+| `.nop-container[data-container-bare]`             | `display: flex; flex-direction: column; gap: var(--space-form-item-gap)` |
 | `.nop-container > [data-slot="container-header"]` | `margin-bottom: var(--space-field-label-gap)`                            |
 | `.nop-container > [data-slot="container-footer"]` | `margin-top: var(--space-field-label-gap)`                               |
+
+The `[data-container-bare]` selector covers the no-wrapper (bare) form: with no `container-body` element left to carry the baseline (plan 641 UR-14), the root marker receives the same column-flow + item-gap default, and author utilities on the root override it by layer order.
 
 ### Tabs content
 
@@ -130,6 +133,10 @@ When `ContainerRenderer` activates the flex-child path (semantic props `directio
 - CSS `flex-direction: column` providing the default column baseline that semantic classes such as `flex-row` or `flex-col` can override only when the schema explicitly requests them
 - CSS default gap providing the shared default baseline until an explicit `gap` prop supplies a Tailwind utility or inline override
 - Duplicate `display: flex` declarations on the semantic path remaining harmless, because the ownership distinction is about where defaults are declared, not whether the same computed value is restated
+
+## Container `data-container-bare` Attribute
+
+When `ContainerRenderer` takes the no-wrapper (bare) path — no header/footer slots and no flex-contract props — it adds `data-container-bare=""` to the root element. The attribute anchors the bare-container spacing baseline in package CSS: the root itself gets the same `flex-direction: column` + `--space-form-item-gap` default that `container-body` wrappers carry, so bare containers keep their documented 16px child rhythm while author utilities on the root (`flex`, `grid`, `gap-*`) still win by layer order. Renderer code emits the marker only; no default layout styles live in JSX.
 
 ## Form/FieldSet `gap` Semantic Prop
 
@@ -197,16 +204,16 @@ Per-slot props are simpler, match the existing pattern (`gap`, `direction`), and
 
 ## Container Inventory
 
-| Container              | Default Internal Spacing                                                     | Mechanism                                       |
-| ---------------------- | ---------------------------------------------------------------------------- | ----------------------------------------------- |
-| Page                   | 24px gap between sections, 16px padding                                      | CSS `@layer base`                               |
-| Form                   | 16px gap between fields, 12px between actions                                | CSS `@layer base`; override via `gap` prop      |
-| FieldSet               | 16px gap + border/padding reset                                              | CSS `@layer base`; override via `gap` prop      |
-| Container (bare)       | 16px gap between children                                                    | CSS `@layer base`                               |
-| Container (flex-child) | Same default baseline, overridden only by explicitly authored semantic props | CSS `@layer base` + renderer semantic overrides |
-| Flex                   | Zero                                                                         | Layout primitive — author sets `gap` prop       |
-| Tabs content           | 16px gap between children                                                    | CSS `@layer base`                               |
-| FieldFrame             | 4px internal, 8px label-top, 16px label-left                                 | CSS `@layer base`                               |
+| Container              | Default Internal Spacing                                                     | Mechanism                                               |
+| ---------------------- | ---------------------------------------------------------------------------- | ------------------------------------------------------- |
+| Page                   | 24px gap between sections, 16px padding                                      | CSS `@layer base`                                       |
+| Form                   | 16px gap between fields, 12px between actions                                | CSS `@layer base`; override via `gap` prop              |
+| FieldSet               | 16px gap + border/padding reset                                              | CSS `@layer base`; override via `gap` prop              |
+| Container (bare)       | 16px gap between children                                                    | CSS `@layer base` via root `data-container-bare` marker |
+| Container (flex-child) | Same default baseline, overridden only by explicitly authored semantic props | CSS `@layer base` + renderer semantic overrides         |
+| Flex                   | Zero                                                                         | Layout primitive — author sets `gap` prop               |
+| Tabs content           | 16px gap between children                                                    | CSS `@layer base`                                       |
+| FieldFrame             | 4px internal, 8px label-top, 16px label-left                                 | CSS `@layer base`                                       |
 
 **Why Flex has no default gap**: Flex is a layout primitive. No single default is correct for toolbars, card grids, form rows, or tag lists.
 
@@ -215,7 +222,7 @@ Per-slot props are simpler, match the existing pattern (`gap`, `direction`), and
 ## Known Limitations
 
 - **Spacing accumulation**: Nested containers accumulate gaps (page 24px + container 16px + form 16px). For compact layouts, use `gap: "sm"` on inner containers or adjust theme tokens.
-- **Container `className: "gap-2"` without semantic props**: Adds `gap-2` to `.nop-container` root, not to inner `[data-slot="container-body"]`. Use `bodyClassName` or semantic props to control inner body gap.
+- **Container `className: "gap-2"` on wrapper forms**: Adds `gap-2` to `.nop-container` root, not to inner `[data-slot="container-body"]` — only reachable when a header/footer wrapper or semantic props exist. Use `bodyClassName` or semantic props to control inner body gap. On the bare (no-wrapper) path the root `className` reaches the children directly, so `gap-2` on the root does control the child rhythm there.
 - **No `padding` semantic prop on Container**: Add padding via `className: "p-4"`.
 
 ## Rejected Alternatives

@@ -227,7 +227,7 @@
 ## 七、已知在册基线（执行时对照，不重复开卡）
 
 - R12 确认文档在册项：linear-board（tab 对齐已修/筛选片已修 → W-A1 只验操作面）、dashboard（渠道占比卡已修）、combo-editor 双删除钮（共享 composite 组件，维持登记）、sundial-detail 留白（已居中）、antdpro form-basic/detail-basic 背景接缝（改判非缺陷）、master-detail 子表加载 >2s（性能观测）。
-- 渲染器级 plan-first：container className-flex 陷阱；表格 fixed 列宽度预留（不透明底已在 R12e 落地）；SPA hash 导航竞态（自动化测试关注）。
+- 渲染器级 plan-first：container className-flex 陷阱【2026-10-17 已修复（plan 641 UR-14，bare 路径免包装）】；表格 fixed 列宽度预留（不透明底已在 R12e 落地）；SPA hash 导航竞态（自动化测试关注）【2026-10-17 观测结论（plan 641 UR-16）：双导航法规避即正式结论，无产品修复项】。
 
 ### W-A1 执行期新增登记（2026-10-03）
 

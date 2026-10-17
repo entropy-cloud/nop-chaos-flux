@@ -432,7 +432,7 @@ Renderer components emit marker classes and schema-derived classes only. Default
 </div>
 ```
 
-The default spacing rules in `@layer base` apply `display: flex`, `flex-direction`, `gap`, and `padding` to layout renderer slots (page-body, form-body, fieldset-body, container-body, tabs-content, field-frame). For container bodies, this CSS baseline applies to both the bare path and the semantic flex-child path; renderer code only contributes explicit direction, wrap, alignment, and gap overrides requested by schema props. These defaults remain overridable because Tailwind utilities live in `@layer utilities` which takes precedence over `@layer base`.
+The default spacing rules in `@layer base` apply `display: flex`, `flex-direction`, `gap`, and `padding` to layout renderer slots (page-body, form-body, fieldset-body, container-body, tabs-content, field-frame). For containers, the baseline targets the `container-body` wrapper on the header/footer and semantic flex-child paths, and the container root itself via the `data-container-bare` marker on the no-wrapper (bare) path; renderer code only contributes explicit direction, wrap, alignment, and gap overrides requested by schema props. These defaults remain overridable because Tailwind utilities live in `@layer utilities` which takes precedence over `@layer base`.
 
 ### Mobile Infrastructure Helper Classes
 
@@ -500,21 +500,27 @@ Container、Flex、Grid 是三种不同层次的布局渲染器，选择取决�
 #### Container 的 className 路由（关键差异）
 
 ```html
-<!-- type: "container" 的 DOM 结构 -->
+<!-- type: "container" 的 DOM 结构（wrapper 形态：有 header/footer，或使用了 semantic flex props） -->
 <div class="nop-container [schema-className]">
   ← className 挂在外层，不控制布局
-  <div data-slot="container-body" class="flex [bodyClassName]">← 内层 flex 容器 ...children...</div>
+  <div data-slot="container-body" data-flex class="flex [bodyClassName]">
+    ← 内层 flex 容器 ...children...
+  </div>
+</div>
+
+<!-- bare 形态：无 header/footer 且无 semantic flex props（plan 641 UR-14 免包装） -->
+<div class="nop-container [schema-className]" data-container-bare>
+  ← children 直挂根下，className 布局类真正作用于内容
 </div>
 ```
 
-- **`className`** → 外层 `nop-container`，不影响子节点排列
-- **`bodyClassName`** → 内层 `data-slot="container-body"`，实际控制子节点布局
-- **semantic props**（`direction`/`wrap`/`gap`/`align`）→ 同样作用于内层 body div
+- **bare 形态**：无 `container-body` 包装；外层 `className` 的布局类（`flex` 等）直接控制子节点排列；`@layer base` 默认纵向节奏（`flex-col` + `--space-form-item-gap` gap）经 `data-container-bare` 标记落在根上，作者工具类按层序覆盖
+- **wrapper 形态**（有 header/footer，或使用 semantic props）：**`className`** → 外层 `nop-container`，不影响子节点排列；**`bodyClassName`** → 内层 `data-slot="container-body"`，实际控制子节点布局；**semantic props**（`direction`/`wrap`/`gap`/`align`）→ 同样作用于内层 body div
 
 因此：
 
-- 不想引入外层 wrapper → 用 `type: "flex"`（单层 `nop-flex` 根节点）
-- 已有 `container` 想加 flex → 用 semantic prop（`direction`/`wrap`/`gap`）或 `bodyClassName: "flex flex-row gap-4"`，**不可用** `className: "flex flex-row"`（挂错层级）
+- bare container 想加 flex → 直接写外层 `className: "flex flex-row gap-4"`（免包装后作用于内容）
+- wrapper 形态的 container 想加 flex → 用 semantic prop（`direction`/`wrap`/`gap`）或 `bodyClassName: "flex flex-row gap-4"`；仅写 `className: "flex flex-row"` 时布局类挂外层不达内容（此时内容仍有 `container-body` 包装）
 - 需要自适应换行 → `wrap: true`（flex 和 container 均支持）
 
 ## Spacing Conventions

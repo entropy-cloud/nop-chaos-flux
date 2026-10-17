@@ -105,9 +105,9 @@
 
 ### 渲染器级（plan-first，已在 R12 补充登记）
 
-1. **container className-flex 作者陷阱**：container-body 包装使 schema 外层 flex 类静默失效——linear 家族与 antdpro-result 曾同病。demo 层已全部改 direction 契约；渲染器层透传/免包装需契约设计。
+1. **container className-flex 作者陷阱**：container-body 包装使 schema 外层 flex 类静默失效——linear 家族与 antdpro-result 曾同病。demo 层已全部改 direction 契约；渲染器层透传/免包装需契约设计。【2026-10-17 已修复（plan `docs/plans/641-cross-roadmap-ur14-15-16-wave-d-bounded-plan.md` UR-14）：渲染器层采纳「免包装」修法——bare 路径（无 header/footer、无 flex 契约字段）body 直接渲染于容器根，外层 className 布局类真正作用于内容】
 2. **表格 fixed 列不预留宽度**：fixed:right 粘性列盖液态列（antdpro-list 已去 fixed 规避）。
-3. **异步路由恢复竞态观测**：SPA 内 goto 同文档 hash 偶发不触发重挂载（本轮确认工作遇到的导航竞态，browser-use 双导航法规避）——仅自动化测试关注，用户手点无碍。
+3. **异步路由恢复竞态观测**：SPA 内 goto 同文档 hash 偶发不触发重挂载（本轮确认工作遇到的导航竞态，browser-use 双导航法规避）——仅自动化测试关注，用户手点无碍。【2026-10-17 观测结论（plan `docs/plans/641-cross-roadmap-ur14-15-16-wave-d-bounded-plan.md` UR-16）：既有双导航法规避即正式结论——自动化测试规范 = goto 同文档 hash 后需二次 goto（或改用带参数 hash 触发真实导航）；用户手点无碍，无产品修复项】
 
 ## 四、验收口径
 

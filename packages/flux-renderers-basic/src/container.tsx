@@ -55,7 +55,14 @@ export function ContainerRenderer(props: RendererComponentProps<ContainerSchema>
     }
   };
 
-  const commonClassName = cn('nop-container', props.meta.className);
+  const noWrapperBody = !useFlexChild && !hasRendererSlotContent(headerContent) && !hasRendererSlotContent(footerContent);
+  // plan 641 UR-14: in the no-wrapper body branch the author's bodyClassName
+  // composes onto the root (there is no body element left to carry it).
+  const commonClassName = cn(
+    'nop-container',
+    props.meta.className,
+    noWrapperBody && slotProps.bodyClassName,
+  );
 
   const interactiveProps = isClickable
     ? { role: 'button' as const, tabIndex: 0 as const, onClick: handleClick, onKeyDown: handleKeyDown }
@@ -66,6 +73,7 @@ export function ContainerRenderer(props: RendererComponentProps<ContainerSchema>
       className={commonClassName}
       data-testid={props.meta.testid || undefined}
       data-cid={props.meta.cid || undefined}
+      data-container-bare={noWrapperBody ? '' : undefined}
       {...interactiveProps}
     >
       {hasRendererSlotContent(headerContent) ? (
@@ -98,6 +106,13 @@ export function ContainerRenderer(props: RendererComponentProps<ContainerSchema>
         >
           {bodyContent}
         </div>
+      ) : noWrapperBody ? (
+        // plan 641 UR-14: no header/footer and no flex contract in play — render
+        // the body directly so layout classes authored on the outer className
+        // (e.g. `flex`) reach the content instead of dying on an anonymous
+        // wrapper (the author-trap this fixes). bodyClassName composes onto the
+        // root (see noWrapperBody above).
+        <>{bodyContent}</>
       ) : (
         <div data-slot="container-body" className={cn(slotProps.bodyClassName)}>
           {bodyContent}

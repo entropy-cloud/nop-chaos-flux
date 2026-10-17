@@ -78,6 +78,16 @@
     gap: var(--space-form-item-gap);
   }
 
+  /* plan 641 UR-14: on the no-wrapper (bare) path there is no container-body
+     element, so the documented bare-container baseline (column flow + item gap)
+     moves onto the root via the data-container-bare marker. Author utilities in
+     @layer utilities still override. */
+  .nop-container[data-container-bare] {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-form-item-gap);
+  }
+
   .nop-container > [data-slot='container-header'] {
     margin-bottom: var(--space-field-label-gap);
   }

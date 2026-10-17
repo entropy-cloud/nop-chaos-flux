@@ -111,14 +111,13 @@ describe('container semantic layout props emit real layout classes (C1.1 P1-1)',
     expect(body?.className).toContain('md:flex-wrap');
   });
 
-  it('bare path still emits no classes and no data-flex', () => {
+  it('bare path renders body directly with no classes and no data-flex (plan 641 UR-14)', () => {
     const { container } = renderInPage({
       type: 'container',
       body: [{ type: 'text', text: 'A' }],
     } as BaseSchema);
-    const body = container.querySelector('[data-slot="container-body"]');
-    expect(body?.hasAttribute('data-flex')).toBe(false);
-    expect(body?.className).toBe('');
+    expect(container.querySelector('[data-slot="container-body"]')).toBeNull();
+    expect(container.textContent).toContain('A');
   });
 
   it('root marker stays nop-container only (no layout classes leak to root)', () => {

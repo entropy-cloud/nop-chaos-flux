@@ -143,14 +143,13 @@ describe('container renderer — responsive direction/wrap (M3b)', () => {
     expect(body?.className).toContain('md:flex-wrap');
   });
 
-  it('keeps body as non-flex when no layout fields (no regression)', () => {
+  it('bare container renders body directly with no flex attributes (plan 641 UR-14)', () => {
     const { container } = renderInPage({
       type: 'container',
       body: [{ type: 'text', text: 'A' }],
     } as BaseSchema);
-    const body = container.querySelector('[data-slot="container-body"]');
-    expect(body).toBeTruthy();
-    expect(body?.getAttribute('data-flex')).toBeNull();
+    expect(container.querySelector('[data-slot="container-body"]')).toBeNull();
+    expect(container.textContent).toContain('A');
   });
 });
 

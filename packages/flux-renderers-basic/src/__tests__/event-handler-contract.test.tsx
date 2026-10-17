@@ -45,9 +45,11 @@ describe('event handler contracts', () => {
     );
     expect(screen.getByText('Child A')).toBeTruthy();
     expect(screen.getByText('Child B')).toBeTruthy();
-    const body = container.querySelector('[data-slot="container-body"]');
-    expect(body?.textContent).toContain('Child A');
-    expect(body?.textContent).toContain('Child B');
+    // plan 641 UR-14: bare container renders body directly (no wrapper) —
+    // content lives under the container root.
+    const ct = container.querySelector('.nop-container') as HTMLElement;
+    expect(ct.textContent).toContain('Child A');
+    expect(ct.textContent).toContain('Child B');
   });
 
   it('page renders body region and footer region', () => {

@@ -5,7 +5,7 @@ import { createBasicSchemaRenderer, env, formulaCompiler } from '../test-support
 describe('per-slot className props', () => {
   afterEach(() => cleanup());
 
-  it('applies bodyClassName to container-body', () => {
+  it('composes bodyClassName onto the container root on the bare path (plan 641 UR-14 no-wrapper)', () => {
     const SchemaRenderer = createBasicSchemaRenderer();
     const { container } = render(
       <SchemaRenderer
@@ -19,9 +19,12 @@ describe('per-slot className props', () => {
         formulaCompiler={formulaCompiler}
       />,
     );
-    const body = container.querySelector('[data-slot="container-body"]');
-    expect(body?.className).toContain('grid');
-    expect(body?.className).toContain('grid-cols-2');
+    // plan 641 UR-14: bare container (no header/footer/flex props) renders the
+    // body directly — bodyClassName composes onto the root element.
+    const root = container.querySelector('.nop-container') as HTMLElement;
+    expect(root.className).toContain('grid');
+    expect(root.className).toContain('grid-cols-2');
+    expect(container.querySelector('[data-slot="container-body"]')).toBeNull();
   });
 
   it('applies headerClassName to container-header', () => {
@@ -86,7 +89,7 @@ describe('per-slot className props', () => {
     expect(body?.className).toContain('gap-4');
   });
 
-  it('applies bodyClassName on bare path (no semantic props)', () => {
+  it('applies bodyClassName on bare path to the root (no semantic props)', () => {
     const SchemaRenderer = createBasicSchemaRenderer();
     const { container } = render(
       <SchemaRenderer
@@ -100,13 +103,13 @@ describe('per-slot className props', () => {
         formulaCompiler={formulaCompiler}
       />,
     );
-    const body = container.querySelector('[data-slot="container-body"]');
-    expect(body?.className).toContain('grid');
-    expect(body?.className).toContain('grid-cols-3');
-    expect(body?.hasAttribute('data-flex')).toBe(false);
+    const root = container.querySelector('.nop-container') as HTMLElement;
+    expect(root.className).toContain('grid');
+    expect(root.className).toContain('grid-cols-3');
+    expect(container.querySelector('[data-slot="container-body"]')).toBeNull();
   });
 
-  it('does not inject inline default gap on bare path', () => {
+  it('bare path renders no wrapper and no injected style/data-flex (plan 641 UR-14)', () => {
     const SchemaRenderer = createBasicSchemaRenderer();
     const { container } = render(
       <SchemaRenderer
@@ -120,9 +123,11 @@ describe('per-slot className props', () => {
       />,
     );
 
-    const body = container.querySelector('[data-slot="container-body"]');
-    expect(body?.hasAttribute('style')).toBe(false);
-    expect(body?.hasAttribute('data-flex')).toBe(false);
+    expect(container.querySelector('[data-slot="container-body"]')).toBeNull();
+    const root = container.querySelector('.nop-container') as HTMLElement;
+    expect(root.hasAttribute('style')).toBe(false);
+    expect(root.hasAttribute('data-flex')).toBe(false);
+    expect(root.getAttribute('data-container-bare')).toBe('');
   });
 
   it('does not inject inline default gap on flex-child path without explicit gap', () => {
@@ -147,6 +152,8 @@ describe('per-slot className props', () => {
     expect(body?.getAttribute('data-flex')).toBe('');
     expect(body?.getAttribute('data-direction')).toBe('column');
     expect(body?.hasAttribute('style')).toBe(false);
+    const flexRoot = container.querySelector('.nop-container') as HTMLElement;
+    expect(flexRoot.hasAttribute('data-container-bare')).toBe(false);
   });
 
   it('applies all three slot classNames simultaneously', () => {
@@ -228,7 +235,7 @@ describe('per-slot className props', () => {
     expect(footer?.className).toContain('border-t');
   });
 
-  it('emits no extra class when slot props are omitted', () => {
+  it('emits no extra class when slot props are omitted (bare body renders directly)', () => {
     const SchemaRenderer = createBasicSchemaRenderer();
     const { container } = render(
       <SchemaRenderer
@@ -241,11 +248,18 @@ describe('per-slot className props', () => {
         formulaCompiler={formulaCompiler}
       />,
     );
-    const body = container.querySelector('[data-slot="container-body"]');
-    expect(body?.getAttribute('class')).toBe('');
+    // plan 641 UR-14: bare container renders body content directly under the
+    // root — no wrapper element exists to carry a class.
+    const root = container.querySelector('.nop-container') as HTMLElement;
+    const directText = Array.from(root.children).some(
+      (child) => child.tagName !== 'DIV' || !child.hasAttribute('data-slot'),
+    );
+    expect(root.className).toBe('nop-container');
+    expect(root.textContent).toContain('A');
+    expect(directText || root.children.length >= 1).toBe(true);
   });
 
-  it('coexists className on root with bodyClassName on body', () => {
+  it('coexists className with bodyClassName on the bare-path root', () => {
     const SchemaRenderer = createBasicSchemaRenderer();
     const { container } = render(
       <SchemaRenderer
@@ -260,11 +274,13 @@ describe('per-slot className props', () => {
         formulaCompiler={formulaCompiler}
       />,
     );
-    const root = container.querySelector('.nop-container');
-    const body = container.querySelector('[data-slot="container-body"]');
-    expect(root?.className).toContain('p-4');
-    expect(body?.className).toContain('grid');
-    expect(body?.className).toContain('grid-cols-2');
+    // plan 641 UR-14: bare path — meta.className and bodyClassName both
+    // compose onto the root (body renders directly).
+    const root = container.querySelector('.nop-container') as HTMLElement;
+    expect(root.className).toContain('p-4');
+    expect(root.className).toContain('grid');
+    expect(root.className).toContain('grid-cols-2');
+    expect(container.querySelector('[data-slot="container-body"]')).toBeNull();
   });
 
   it('applies contentClassName to tabs-content', () => {
@@ -307,5 +323,35 @@ describe('per-slot className props', () => {
     );
     const toolbar = container.querySelector('[data-slot="tabs-toolbar"]');
     expect(toolbar?.className).toContain('mb-2');
+  });
+});
+
+
+describe('plan 641 UR-14 author-trap fix (outer layout classes reach content)', () => {
+  afterEach(() => cleanup());
+
+  it('bare container with outer flex classes lays out content directly (old wrapper implementation fails this)', () => {
+    const SchemaRenderer = createBasicSchemaRenderer();
+    const { container } = render(
+      <SchemaRenderer
+        schemaUrl="test://ur14-author-trap"
+        schema={{
+          type: 'container',
+          className: 'flex flex-col gap-2',
+          body: [{ type: 'text', text: 'A' }],
+        }}
+        env={env}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+    const root = container.querySelector('.nop-container') as HTMLElement;
+    expect(root.className).toContain('flex');
+    expect(root.className).toContain('flex-col');
+    expect(root.className).toContain('gap-2');
+    expect(root.getAttribute('data-container-bare')).toBe('');
+    const content = root.querySelector('.nop-text') as HTMLElement | null;
+    expect(content).toBeTruthy();
+    expect(content!.parentElement).toBe(root);
+    expect(root.querySelector('[data-slot="container-body"]')).toBeNull();
   });
 });

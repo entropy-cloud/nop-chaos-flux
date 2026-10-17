@@ -24,6 +24,12 @@ describe('default-spacing.css contract', () => {
     expect(styles).not.toContain("\n  [data-slot='field-description'] {");
   });
 
+  it('carries the bare-container baseline on the no-wrapper root via data-container-bare (plan 641 UR-14)', () => {
+    expect(styles).toContain(
+      ".nop-container[data-container-bare] {\n    display: flex;\n    flex-direction: column;\n    gap: var(--space-form-item-gap);\n  }",
+    );
+  });
+
   it('drives horizontal field label width through --field-label-width with an auto fallback', () => {
     expect(styles).toContain(
       ".nop-field[data-label-align='left'] [data-slot='field-label']",

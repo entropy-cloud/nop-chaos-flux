@@ -87,7 +87,7 @@ describe('layout renderer styling contract: no hardcoded layout', () => {
     expect(classList).not.toContain('flex-col');
   });
 
-  it('container bare body has no data-flex and no style attribute', () => {
+  it('container bare path renders body directly with no data-flex and no style (plan 641 UR-14)', () => {
     const SchemaRenderer = createBasicSchemaRenderer();
     const { container } = render(
       <SchemaRenderer
@@ -97,9 +97,10 @@ describe('layout renderer styling contract: no hardcoded layout', () => {
         formulaCompiler={formulaCompiler}
       />,
     );
-    const body = container.querySelector('[data-slot="container-body"]');
-    expect(body?.hasAttribute('data-flex')).toBe(false);
-    expect(body?.hasAttribute('style')).toBe(false);
+    expect(container.querySelector('[data-slot="container-body"]')).toBeNull();
+    const root = container.querySelector('.nop-container') as HTMLElement;
+    expect(root.hasAttribute('data-flex')).toBe(false);
+    expect(root.hasAttribute('style')).toBe(false);
   });
 
   it('container with direction:column adds flex to inner body, not root', () => {
@@ -191,7 +192,7 @@ describe('layout renderer styling contract: no hardcoded layout', () => {
     expect(body?.className).not.toContain('bg-gray-100');
   });
 
-  it('container applies className to root, not body', () => {
+  it('container applies className to root; bare-path bodyClassName composes onto root too (plan 641 UR-14)', () => {
     const SchemaRenderer = createBasicSchemaRenderer();
     const { container } = render(
       <SchemaRenderer
@@ -207,7 +208,6 @@ describe('layout renderer styling contract: no hardcoded layout', () => {
     );
     const ct = container.querySelector('.nop-container');
     expect(ct?.className).toContain('p-4');
-    const body = container.querySelector('[data-slot="container-body"]');
-    expect(body?.className).not.toContain('p-4');
+    expect(container.querySelector('[data-slot="container-body"]')).toBeNull();
   });
 });
