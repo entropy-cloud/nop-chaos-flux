@@ -225,4 +225,5 @@ export const DOMAIN_HOME_FAMILY: Record<string, HomeFamilyId> = {
   'debugger-lab': 'diagnostics',
   'component-handles': 'diagnostics',
   'event-prevention': 'diagnostics',
+  'xlang-debug': 'diagnostics',
 };

@@ -386,13 +386,40 @@ export function createDebugClient(options: CreateDebugClientOptions): DebugClien
   // ===== 连接 =====
 
   async function connect(): Promise<void> {
-    if (disposed || stopped) {
+    // plan 621 审计 B3：dispose→connect 可复活——StrictMode 双挂载下同一 client
+    // 实例经历 setup→cleanup(dispose)→setup(connect)，dispose 后静默 return 会让
+    // remount 永不连接。dispose 的 teardown 已清空 pending/timers/connection，
+    // 复活 = 复位一次性闩锁 + 重连退避（currentSessionId 保留——rebind 流依赖）。
+    // stopped（finish 终态：authFailed/protocolUnsupported）不复活。
+    if (disposed) {
+      disposed = false;
+      reconnectAttempt = 0;
+    }
+    if (stopped) {
       return;
     }
     state = 'connecting';
     const token = getToken();
-    const url = `${serverUrl}${serverUrl.includes('?') ? '&' : '?'}nopDebugToken=${encodeURIComponent(token ?? '')}`;
-    const conn = openSocket(url);
+    // plan 621 审计 B4：空 token 不拼参数——宿主注入点（如 demo 页的 openSocket
+    // 包装）追加 nopDebugToken 时避免同键双参（servlet 首值语义取空 → 4401）
+    const separator = serverUrl.includes('?') ? '&' : '?';
+    const url = token
+      ? `${serverUrl}${separator}nopDebugToken=${encodeURIComponent(token)}`
+      : `${serverUrl}${separator.slice(0, -1)}`;
+    let conn: WebSocketConnection;
+    try {
+      conn = openSocket(url);
+    } catch (error) {
+      // plan 621 审计 B6：opener 同步抛错（如相对 URL SyntaxError）→ 终态呈现，
+      // 不进重连矩阵（必然复抛的重连风暴），不走未处理拒绝
+      state = 'disconnected';
+      stopped = true;
+      onSessionClosed?.({
+        reason: 'closed',
+        detail: `openSocket failed: ${(error as Error | undefined)?.message ?? String(error)}`,
+      });
+      return;
+    }
     connection = conn;
 
     conn.onopen = () => {

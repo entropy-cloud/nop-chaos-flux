@@ -1363,6 +1363,9 @@ importers:
         specifier: workspace:*
         version: link:../flux-code-editor
     devDependencies:
+      '@codemirror/view':
+        specifier: ^6.41.0
+        version: 6.41.0
       '@lezer/generator':
         specifier: ^1.8.1
         version: 1.8.1
@@ -5224,6 +5227,7 @@ packages:
   eslint@9.39.4:
     resolution: {integrity: sha512-XoMjdBOwe/esVgEvLmNsD3IRHkm7fbKIUGvrleloJXUZgDHig2IPWNniv+GwjyJXzuNqVjlr5+4yVUZjycJwfQ==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
+    deprecated: This version is no longer supported. Please see https://eslint.org/version-support for other options.
     hasBin: true
     peerDependencies:
       jiti: '*'

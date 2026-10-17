@@ -41,7 +41,6 @@ export { LogPanel, type LogPanelProps } from './panel/log-panel.js';
 export {
   XlangDebugEditor,
   type XlangDebugEditorProps,
-  browserOpenSocket,
   createCompileService,
   type CompileFetcherAdapterOptions,
 } from './assembly/xlang-debug-editor.js';

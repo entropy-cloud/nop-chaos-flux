@@ -2,7 +2,6 @@ import React, { lazy } from 'react';
 import type { NopDebuggerController } from '@nop-chaos/nop-debugger';
 import { BooleanControlValueContractDemoPage } from './pages/boolean-control-value-contract-demo';
 import { CodeEditorPage } from './pages/code-editor-page';
-import XlangDebugPage from './pages/xlang-debug-page';
 import { ComponentHandlesDemoPage } from './pages/component-handles-demo';
 import { EventPreventionDemoPage } from './pages/event-prevention-demo';
 import { FlowDesignerPage } from './pages/flow-designer-page';
@@ -181,6 +180,8 @@ const LazyThreeGalleryDemoPage = lazy(() =>
 const LazyWordEditorPage = lazy(() =>
   import('./pages/word-editor-page').then((m) => ({ default: m.WordEditorPage })),
 );
+// plan 621 m3：xlang 页依赖 lezer grammar 产物，惰性加载避免进主 chunk（Ai 系先例）
+const LazyXlangDebugPage = lazy(() => import('./pages/xlang-debug-page'));
 
 /**
  * Single-source domain route wiring (cq-6 Phase 3): the former 78-case
@@ -211,7 +212,7 @@ export const DOMAIN_ROUTE_PAGES: Record<string, (ctx: DomainPageContext) => Reac
   'condition-builder': (ctx) => <LazyConditionBuilderPage onBack={ctx.goHome} />,
   'condition-builder-formula': (ctx) => <LazyConditionBuilderFormulaPage onBack={ctx.goHome} />,
   'code-editor': (ctx) => <CodeEditorPage onBack={ctx.goHome} />,
-  'xlang-debug': () => <XlangDebugPage />,
+  'xlang-debug': () => <LazyXlangDebugPage />,
   'word-editor': (ctx) => <LazyWordEditorPage onBack={ctx.goHome} />,
   'performance-table': (ctx) => (
     <PerformanceTablePage

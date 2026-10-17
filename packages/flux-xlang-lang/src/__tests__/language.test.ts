@@ -1,5 +1,5 @@
 import { EditorState } from '@codemirror/state';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { createLanguageExtension } from '@nop-chaos/flux-code-editor';
 import { mapXlangDiagnostics, registerXlangLanguage, xlang } from '../index.js';
 
@@ -54,5 +54,50 @@ describe('createXlangLinter diagnostics bridge', () => {
   it('returns empty mapping for empty diagnostics (compile-failure fallback shape)', () => {
     const doc = EditorState.create({ doc: 'let x = 1;' }).doc;
     expect(mapXlangDiagnostics([], doc)).toEqual([]);
+  });
+
+  it('passes sourcePath to compile (plan 621 M3/B2: document anchor, not hardcoded repl.xpl)', async () => {
+    const { createXlangLinter } = await import('../index.js');
+    const { EditorView } = await import('@codemirror/view');
+    const { forceLinting } = await import('@codemirror/lint');
+    const calls: Array<[string, string]> = [];
+    const compile = async (sourcePath: string, source: string) => {
+      calls.push([sourcePath, source]);
+      return [];
+    };
+    const view = new EditorView({
+      state: EditorState.create({
+        doc: 'return 1;',
+        extensions: [createXlangLinter({ compile, sourcePath: 'demo.xpl' })],
+      }),
+      parent: document.body,
+    });
+    forceLinting(view);
+    await vi.waitFor(() => expect(calls.length).toBe(1));
+    expect(calls[0]![0]).toBe('demo.xpl');
+    expect(calls[0]![1]).toBe('return 1;');
+    view.destroy();
+  });
+
+  it('defaults compile sourcePath to repl.xpl when option omitted (REPL scenario)', async () => {
+    const { createXlangLinter } = await import('../index.js');
+    const { EditorView } = await import('@codemirror/view');
+    const { forceLinting } = await import('@codemirror/lint');
+    const calls: Array<[string, string]> = [];
+    const compile = async (sourcePath: string, source: string) => {
+      calls.push([sourcePath, source]);
+      return [];
+    };
+    const view = new EditorView({
+      state: EditorState.create({
+        doc: 'return 2;',
+        extensions: [createXlangLinter({ compile })],
+      }),
+      parent: document.body,
+    });
+    forceLinting(view);
+    await vi.waitFor(() => expect(calls.length).toBe(1));
+    expect(calls[0]![0]).toBe('repl.xpl');
+    view.destroy();
   });
 });

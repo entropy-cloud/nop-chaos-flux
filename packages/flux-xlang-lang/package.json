@@ -21,6 +21,7 @@
     "@nop-chaos/flux-code-editor": "workspace:*"
   },
   "devDependencies": {
+    "@codemirror/view": "^6.41.0",
     "@lezer/generator": "^1.8.1",
     "react": "^19.0.0"
   },

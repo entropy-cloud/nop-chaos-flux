@@ -73,6 +73,8 @@ export const xlangDebugEditorFieldRules: SchemaFieldRule[] = [
       shape: { kind: 'string' },
       displayName: 'Source Path',
       description: 'Debug document anchor shared by gutter/sync/diagnostics.',
+      // plan 621 审计 B7：缺省 '' 会让下行三族按 sourcePath 过滤全空（静默无装饰）
+      required: true,
     },
   },
   {
@@ -82,6 +84,7 @@ export const xlangDebugEditorFieldRules: SchemaFieldRule[] = [
       shape: { kind: 'string' },
       displayName: 'Server URL',
       description: 'WS gateway address (/ws/xlang-debugger).',
+      required: true,
     },
   },
   {

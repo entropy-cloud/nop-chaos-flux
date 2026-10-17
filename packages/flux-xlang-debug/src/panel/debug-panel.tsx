@@ -12,8 +12,8 @@ import { LogPanel } from './log-panel.js';
 export interface DebugPanelProps {
   store: DebugStore;
   client: DebugClient;
-  /** 文档锚点（与 gutter 同源；面板本身按 threadId 直查，不消费它）。 */
-  getSourcePath?: () => string;
+  // plan 621 审计 B8：620 曾声明的可选 getSourcePath 摘除——面板按 threadId
+  // 直查（getStackInfo/getFrameVariables），文档锚点面板零消费
 }
 
 type TabKey = 'variables' | 'stack' | 'logs';

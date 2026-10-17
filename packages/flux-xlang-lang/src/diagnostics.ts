@@ -20,6 +20,8 @@ export interface CreateXlangLinterOptions {
   compile: XlangCompileService;
   /** 诊断请求去抖毫秒数（默认 500）。 */
   debounceMs?: number;
+  /** 编译文档锚点（plan 621 M3：缺省 'repl.xpl'——REPL 场景；装配层传编辑器 sourcePath）。 */
+  sourcePath?: string;
 }
 
 /** 诊断映射（导出供单测）：行号 clamp 到文档范围，severity 归一。 */
@@ -47,6 +49,7 @@ export function mapXlangDiagnostics(diagnostics: XlangDiagnostic[], doc: Text): 
  */
 export function createXlangLinter(options: CreateXlangLinterOptions): Extension {
   const debounceMs = options.debounceMs ?? 500;
+  const sourcePath = options.sourcePath ?? 'repl.xpl';
   return linter(async (view) => {
     const source = view.state.doc.toString();
     if (!source.trim()) {
@@ -54,7 +57,7 @@ export function createXlangLinter(options: CreateXlangLinterOptions): Extension 
     }
     try {
       const diagnostics = await withTimeout(
-        options.compile('repl.xpl', source),
+        options.compile(sourcePath, source),
         Math.max(debounceMs * 4, 2000),
       );
       return mapXlangDiagnostics(diagnostics ?? [], view.state.doc);

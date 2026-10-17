@@ -408,15 +408,97 @@ describe('debug client terminal codes and edge paths (audit m3)', () => {
     client.dispose();
   });
 
-  it('openSocket-missing fails connect explicitly', async () => {
+  it('openSocket-missing fails terminal via onSessionClosed (plan 621 B6: visible error bar, not unhandled rejection)', async () => {
     const store = createDebugStore();
+    const onSessionClosed = vi.fn();
     const client = createDebugClient({
       store,
       openSocket: undefined as unknown as WebSocketOpener,
       serverUrl: '/ws/xlang-debugger',
       getToken: () => 't',
+      onSessionClosed,
     });
-    await expect(client.connect()).rejects.toThrow();
+    // B6 契约修订：同步失败不再 reject（装配层 void client.connect() 会成未处理拒绝），
+    // 改终态回调呈现——connect 正常 resolve，onSessionClosed 携带原因
+    await expect(client.connect()).resolves.toBeUndefined();
+    expect(onSessionClosed).toHaveBeenCalledTimes(1);
+    expect(onSessionClosed.mock.calls[0]![0].reason).toBe('closed');
+    expect(String(onSessionClosed.mock.calls[0]![0].detail)).toContain('openSocket');
+    expect(client.connectionState()).toBe('disconnected');
+  });
+
+  it('throwing opener fails terminal with error detail, no reconnect storm (plan 621 B6)', async () => {
+    const store = createDebugStore();
+    const onSessionClosed = vi.fn();
+    const opener = vi.fn((_url: string) => {
+      throw new SyntaxError('Failed to construct WebSocket: url must be absolute');
+    });
+    const client = createDebugClient({
+      store,
+      openSocket: opener as unknown as WebSocketOpener,
+      serverUrl: '/relative/ws',
+      getToken: () => undefined,
+      onSessionClosed,
+    });
+    await expect(client.connect()).resolves.toBeUndefined();
+    expect(onSessionClosed).toHaveBeenCalledTimes(1);
+    expect(onSessionClosed.mock.calls[0]![0].reason).toBe('closed');
+    expect(String(onSessionClosed.mock.calls[0]![0].detail)).toContain('url must be absolute');
+    expect(client.connectionState()).toBe('disconnected');
+    // 终态：重连窗口内 opener 不再被调（必然复抛的重连风暴被避免）
+    await vi.advanceTimersByTimeAsync(20_000);
+    expect(opener).toHaveBeenCalledTimes(1);
+  });
+
+  it('empty token omits nopDebugToken param entirely (plan 621 B4: single injection seam)', async () => {
+    const store = createDebugStore();
+    const connections: MockConnection[] = [];
+    const opener: WebSocketOpener = vi.fn((_url: string) => {
+      const conn = new MockConnection();
+      connections.push(conn);
+      return conn;
+    });
+    const client = createDebugClient({
+      store,
+      openSocket: opener,
+      serverUrl: '/ws/xlang-debugger',
+      getToken: () => undefined,
+    });
+    void client.connect();
+    const url = (opener as unknown as { mock: { calls: Array<[string]> } }).mock.calls[0]![0];
+    // 宿主注入点（demo 页 openSocket 包装）追加时不得同键双参：无 token 一参不拼
+    expect(url).toBe('/ws/xlang-debugger');
+    expect(url).not.toContain('nopDebugToken');
+    client.dispose();
+  });
+
+  it('connect after dispose revives the same client instance (plan 621 B3: StrictMode remount)', async () => {
+    const env = createEnv();
+    await openSession(env);
+    expect(env.client.connectionState()).toBe('connected');
+    env.client.dispose();
+    expect(env.client.connectionState()).toBe('disconnected');
+    // StrictMode 第二次 setup：同实例再 connect 必须真实重开连接并完成握手
+    // （复活后 reconnectAttempt 归零——revive 前 dispose 清空 pending/timers）
+    await openSession(env);
+    expect(env.connections.length).toBe(2);
+    expect(env.client.connectionState()).toBe('connected');
+    const conn2 = env.connections[1]!;
+    expect(conn2.sent.some((f) => f.includes('session.open'))).toBe(true);
+    env.client.dispose();
+  });
+
+  it('finish terminal (authFailed) still blocks revive (stopped latch survives)', async () => {
+    const env = createEnv();
+    await openSession(env);
+    env.connections[0]!.closeFromServer(4401);
+    await flushMicrotasks();
+    expect(env.client.connectionState()).toBe('disconnected');
+    // 终态后同实例 connect：stopped 闩锁不复活（4401 是协议终态，不是卸载语义）
+    await env.client.connect();
+    expect(env.connections.length).toBe(1);
+    expect(env.client.connectionState()).toBe('disconnected');
+    env.client.dispose();
   });
 
 

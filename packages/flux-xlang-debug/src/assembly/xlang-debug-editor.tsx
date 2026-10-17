@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import type { WebSocketConnection, WebSocketOpener } from '@nop-chaos/flux-core';
+import type { WebSocketOpener } from '@nop-chaos/flux-core';
 import { createBaseExtensions, useCodeMirror } from '@nop-chaos/flux-code-editor';
 import {
   createXlangLinter,
@@ -11,6 +11,7 @@ import { createDebugStore } from '../state/debug-store.js';
 import { createDebugClient } from '../client/debug-client.js';
 import { syncStoreToExtensions } from '../extension/sync.js';
 import { createBreakpointGutter } from '../extension/breakpoint-gutter.js';
+import { breakpointsField } from '../extension/fields.js';
 import { exceptionLinesField, suspendedLinesField } from '../extension/decorations.js';
 import { sourcePathFacet } from '../extension/source-path.js';
 import { DebugPanel } from '../panel/debug-panel.js';
@@ -93,11 +94,20 @@ export function XlangDebugEditor(props: XlangDebugEditorProps) {
       // （m1 勘正：原 createLanguageExtension 仅语言扩展，缺行号/折叠等基础能力）
       ...createBaseExtensions({ language: 'xlang', lineNumbers: true, folding: true }),
       createBreakpointGutter(store),
+      // plan 621 审计 B1：断点集合 StateField 必须在装配 state 里——gutter 的
+      // lineMarker 读 field(breakpointsField, false)，缺位则标记永不渲染
+      // （sync 桥的 setBreakpointsEffect 无消费者，静默丢弃）
+      breakpointsField,
       suspendedLinesField,
       exceptionLinesField,
       sourcePathFacet.of(sourcePath),
       // eslint-disable-next-line react-hooks/refs -- 同上：延迟绑定，调用期读取
-      createXlangLinter({ compile: (sp, source) => compileRef.current(sp, source), debounceMs: 800 }),
+      createXlangLinter({
+        // plan 621 审计 B2：sourcePath 参数化（M3）——诊断按文档锚点编译
+        compile: (sp, source) => compileRef.current(sp, source),
+        sourcePath,
+        debounceMs: 800,
+      }),
     ],
     [store, sourcePath],
   );
@@ -140,40 +150,10 @@ export function XlangDebugEditor(props: XlangDebugEditorProps) {
       <div className="xlang-debug-editor-main">
         <div ref={editorRef} />
       </div>
-      <DebugPanel store={store} client={client} getSourcePath={() => sourcePath} />
+      {/* plan 621 审计 B8：getSourcePath 面板零消费——620 残留 prop 摘除 */}
+      <DebugPanel store={store} client={client} />
     </div>
   );
-}
-
-/** WebSocketConnection 便捷适配：浏览器原生 WebSocket → flux-core 契约（宿主无 openSocket 实现时用）。 */
-export function browserOpenSocket(url: string): WebSocketConnection {
-  const ws = new WebSocket(url);
-  const connection: WebSocketConnection = {
-    get readyState() {
-      switch (ws.readyState) {
-        case WebSocket.CONNECTING:
-          return 'connecting' as const;
-        case WebSocket.OPEN:
-          return 'open' as const;
-        case WebSocket.CLOSING:
-          return 'closing' as const;
-        default:
-          return 'closed' as const;
-      }
-    },
-    send: (data) => ws.send(data as string),
-    close: (code, reason) => ws.close(code, reason),
-    onopen: null,
-    onmessage: null,
-    onclose: null,
-    onerror: null,
-  };
-  // 转发底层事件到结构化回调（宿主在 connection 上挂 handler）
-  ws.onopen = () => connection.onopen?.({ type: 'open' });
-  ws.onmessage = (event) => connection.onmessage?.({ type: 'message', data: typeof event.data === 'string' ? event.data : String(event.data) });
-  ws.onclose = (event) => connection.onclose?.({ type: 'close', code: event.code, reason: event.reason });
-  ws.onerror = () => connection.onerror?.({ type: 'error', error: undefined });
-  return connection;
 }
 
 export interface CompileFetcherAdapterOptions {

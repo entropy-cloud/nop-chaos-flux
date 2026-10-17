@@ -2,13 +2,16 @@ import { useState } from 'react';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { createSchemaRenderer, createDefaultRegistry } from '@nop-chaos/flux-react';
 import type { RendererEnv } from '@nop-chaos/flux-core';
+import { registerBasicRenderers } from '@nop-chaos/flux-renderers-basic';
 import { registerXlangDebugEditorRenderers } from '@nop-chaos/flux-xlang-debug';
 import { createDefaultOpenSocket } from '../env/socket-impl';
 
 /** xlang 在线调试演示页（plan 621 Phase 2，M4：经 schema+registry+SchemaRenderer
  * 路径渲染——renderer definition 获得 live 消费方）。token/后端地址为演示态手工
- * 注入（playground 无登录流与 dev proxy——真实后端联调归 item 21/22）。 */
+ * 注入（playground 无登录流与 dev proxy——真实后端联调归 item 21/22）。
+ * registry：basic（'page' 容器）+ xlang-debug-editor；整页随路由 lazy 加载。 */
 const registry = createDefaultRegistry();
+registerBasicRenderers(registry);
 registerXlangDebugEditorRenderers(registry);
 const formulaCompiler = createFormulaCompiler();
 const SchemaRenderer = createSchemaRenderer();
