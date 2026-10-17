@@ -222,3 +222,19 @@ docs/index.md 12 处抽样链接零断链；注册红清单体系（scanner/knip
 - 门禁实测：`pnpm check` exit 0（本会话后台实测，2026-10-16 23:2x）；`check-active-doc-code-anchors` 357 docs 绿。
 - 各 finding 的 file:line 证据由五路子代理两侧比对（doc + live code）确认，非转述旧日志。
 - 并发会话时间线：23:15:49 e219762d2（其 plan 620 closure，含 assembly WIP）→ 1b37965d7（plan 621 phase 1，修复本会话早前观测到的 4 处 TS 错误）→ 仍在推进（plan 621 文档/测试未提交态）。
+
+---
+
+## 9. 收尾处置对账（2026-10-17，五 plan 循环完成后补记）
+
+| findings                                                                                                       | 处置                                                                                       | 落点                                           |
+| -------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ | ---------------------------------------------- |
+| A1-A12（owner-doc 漂移 ×12）                                                                                   | ✅ 全部收敛                                                                                | plan 622（R2 approved，commit bd8453f47）      |
+| C1-C4（e2e skip 治理）                                                                                         | ✅ 治理完成（24 处 skip 全豁免化；:169 恢复直过；watch-only opt-in 开关）                  | plan 623（approved，941ecfb42）                |
+| D2-D5+B5（依赖/基线卫生）                                                                                      | ✅ 收敛（13 背书、3 对齐、knip -106/+6、scanner 727、死依赖 2删3留）                       | plan 624（R2 approved，3df4a5ef0 + follow-up） |
+| F2-F4+F6（plan 状态机）                                                                                        | ✅ 收敛（15 份头部对齐、479→deferred、616 证据重建、roadmap 头）                           | plan 625（approved，0e0fae188）                |
+| B1-B4（ratchet + stringify 残留）                                                                              | ✅ 收敛（7 扫描器 ratchet；B3/B4 结构等价 + 判别测试）                                     | plan 626（R2 approved，见 626 commit）         |
+| D6/F1/F3-xlang/F2-xlang-621                                                                                    | ⏸ 并发会话领地（handoff 记录于 plan 625 Phase 3/4）                                        | plan 621 自身流程                              |
+| C5（薄覆盖）/C6（既有红收口跟踪）/async 330 与 react19 650 逐条裁决/three-perf script/D1 CQ-S17/479 stash 恢复 | 📋 已登记 follow-up（各 plan Deferred/Non-Blocking Follow-ups 节，均带 non-blocking 理由） | 后续治理轮                                     |
+
+**循环终止判定**：五个 owner plan 全部经独立 draft review + 独立 closure audit 收口并各自提交；剩余未决项全部满足以下之一——(a) 并发会话所有权（plan 621、playground db67dba02 红）；(b) 文档化既有红（playground vite.config）；(c) 显式登记的 non-blocking follow-up（带理由与 successor）。无可执行的新 findings。
