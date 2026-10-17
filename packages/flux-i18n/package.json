@@ -32,6 +32,7 @@
     "@nop-chaos/ui": "workspace:*",
     "@types/react": "^19.3.0",
     "i18next": "^26.0.5",
+    "react": "^19.0.0",
     "react-i18next": "^17.0.4"
   },
   "scripts": {

@@ -52,9 +52,13 @@
   },
   "devDependencies": {
     "@nop-chaos/flux-formula": "workspace:*",
+    "html2canvas": "^1.4.1",
+    "ical.js": "^2.2.1",
+    "jspdf": "^2.5.2",
     "lucide-react": "^1.17.0",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.0.0",
+    "xlsx": "^0.18.5"
   },
   "scripts": {
     "build": "tsc -p tsconfig.build.json && node ../../scripts/copy-build-assets.mjs src/styles.css dist/styles.css src/calendar/utils/calendar-print.css dist/calendar/utils/calendar-print.css src/calendar/calendar.css dist/calendar/calendar.css src/gantt/gantt.css dist/gantt/gantt.css src/kanban/kanban.css dist/kanban/kanban.css src/barcode-input/barcode-input.css dist/barcode-input/barcode-input.css",

@@ -28,6 +28,6 @@
   },
   "description": "Pure TypeScript print engine: print template schemas, unit conversion, validation diagnostics, and formula binding",
   "devDependencies": {
-    "@types/qrcode": "^1.5.5"
+    "@types/qrcode": "^1.5.6"
   }
 }

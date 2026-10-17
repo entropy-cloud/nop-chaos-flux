@@ -31,7 +31,7 @@
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-i18next": "^17.0.0",
-    "recharts": "^3.8.0",
+    "recharts": "^3.8.1",
     "zustand": "^5.0.12"
   },
   "peerDependenciesMeta": {
@@ -40,10 +40,10 @@
     }
   },
   "devDependencies": {
-    "@testing-library/react": "^16.3.0",
     "@nop-chaos/flux-core": "workspace:*",
     "@nop-chaos/flux-formula": "workspace:*",
     "@nop-chaos/flux-react": "workspace:*",
+    "@nop-chaos/flux-renderers-3d": "workspace:*",
     "@nop-chaos/flux-renderers-basic": "workspace:*",
     "@nop-chaos/flux-renderers-content": "workspace:*",
     "@nop-chaos/flux-renderers-data": "workspace:*",
@@ -51,11 +51,16 @@
     "@nop-chaos/flux-renderers-form-advanced": "workspace:*",
     "@nop-chaos/flux-renderers-layout": "workspace:*",
     "@nop-chaos/flux-renderers-scheduling": "workspace:*",
-    "@nop-chaos/flux-renderers-3d": "workspace:*",
+    "@nop-chaos/ui": "workspace:*",
+    "@testing-library/react": "^16.3.0",
     "echarts": "^6.0.0",
+    "i18next": "^26.0.5",
+    "lucide-react": "^1.17.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "lucide-react": "^1.17.0"
+    "react-i18next": "^17.0.4",
+    "recharts": "^3.8.1",
+    "zustand": "^5.0.12"
   },
   "scripts": {
     "build": "vite build && node ../../scripts/prepare-flux-bundle-dist.mjs",
