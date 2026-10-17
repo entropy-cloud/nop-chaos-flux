@@ -132,6 +132,7 @@ export function GanttBars({ store, className, selectedTaskId, criticalTaskIds, o
               tabIndex={0}
               role="button"
               aria-label={task.text ? t('scheduling.gantt.taskBarLabel', { text: task.text }) : t('scheduling.gantt.barLabel')}
+              title={task.text ? `${task.text} (${task.start})` : task.start}
               className="absolute cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring"
               style={{ left: cx - size / 2, top: cy - size / 2, width: size, height: size }}
               onClick={() => onBarClick?.(task.id)}
@@ -177,6 +178,7 @@ export function GanttBars({ store, className, selectedTaskId, criticalTaskIds, o
             tabIndex={0}
             role="button"
             aria-label={task.text ? t('scheduling.gantt.taskBarLabel', { text: task.text }) : t('scheduling.gantt.barLabel')}
+            title={task.text ? `${task.text} (${task.start} → ${task.end})` : `${task.start} → ${task.end}`}
             aria-roledescription="gantt bar"
             className={cn(
               'absolute rounded-sm group cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring',

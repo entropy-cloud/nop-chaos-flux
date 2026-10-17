@@ -85,7 +85,13 @@ export function GanttGrid({ store, columns, onSelectTask, selectedTaskId, classN
     }
   };
 
-  const getColumnWidth = (column: GanttColumn): number => column.width ?? 100;
+  // Adjudication (plan 639 UR-12 GT-3): single-horizontal-scrollbar principle —
+  // the left grid never scrolls horizontally. Columns use percentage widths so
+  // the table always fits the pane exactly; the timeline is the sole
+  // horizontal scrollbar (its scrollLeft drives the windowed cell grid).
+  const columnTotal = resolvedColumns.reduce((sum, col) => sum + (col.width ?? 100), 0) || 1;
+  const getColumnWidthPercent = (column: GanttColumn): string =>
+    `${(((column.width ?? 100) / columnTotal) * 100).toFixed(4)}%`;
   const totalSize = virtualItems.length > 0 ? virtualizer.getTotalSize() : tasks.length * rowHeight;
   const renderTasks = virtualItems.length > 0
     ? virtualItems.map(vi => ({ task: tasks[vi.index] })).filter(x => x.task)
@@ -96,7 +102,7 @@ export function GanttGrid({ store, columns, onSelectTask, selectedTaskId, classN
   return (
     <div
       ref={scrollContainerRef}
-      className={cn('nop-gantt-grid h-full overflow-auto min-h-[400px]', className)}
+      className={cn('nop-gantt-grid h-full overflow-y-auto overflow-x-hidden min-h-[400px]', className)}
       data-slot="gantt-grid"
       role="treegrid" aria-label={t('scheduling.gantt.taskListLabel')} onClick={(e) => { if (e.target === e.currentTarget) onEmptyCellClick?.(); }} onKeyDown={(e) => { if (e.key === 'Enter' && e.target === e.currentTarget) onEmptyCellClick?.(); }}>
       <table className="w-full border-collapse table-fixed">
@@ -105,8 +111,8 @@ export function GanttGrid({ store, columns, onSelectTask, selectedTaskId, classN
             {resolvedColumns.map((col) => (
               <th
                 key={col.name}
-                className="sticky top-0 z-10 bg-muted border-b border-r px-2 py-1.5 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider"
-                style={{ width: getColumnWidth(col), minWidth: col.minWidth ?? 50 }}
+                className="sticky top-0 z-10 bg-muted border-b border-r px-2 py-1.5 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider [overflow-wrap:anywhere]"
+                style={{ width: getColumnWidthPercent(col) }}
                 data-slot="gantt-grid-header-cell"
               >
                 {col.label}
@@ -137,9 +143,9 @@ export function GanttGrid({ store, columns, onSelectTask, selectedTaskId, classN
                 {resolvedColumns.map((col) => (
                   <td
                     key={col.name}
-                    className="border-r px-1 py-0.5 text-xs align-middle"
+                    className="border-r px-1 py-0.5 text-xs align-middle overflow-hidden text-ellipsis whitespace-nowrap"
                     data-slot="gantt-grid-cell"
-                    style={{ width: getColumnWidth(col) }}
+                    style={{ width: getColumnWidthPercent(col) }}
                     onDoubleClick={() => handleCellDoubleClick(task.id, col.name)}
                   >
                     {col.name === 'text' ? (

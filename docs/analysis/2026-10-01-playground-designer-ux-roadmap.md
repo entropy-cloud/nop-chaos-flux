@@ -67,7 +67,7 @@
 
 ## R8 补充登记（draft 期裁定，2026-10-01）
 
-- GT-3（Gantt 左网格/时间线双横向滚动条错位 + 悬停 tooltip 缺失）：修复需重构 gantt 双区滚动同步机制，超出有界修复范畴——登记 follow-up，successor = 滚动容器同步机制重构（plan `2026-10-01-ux-r8-scheduling-viewport-plan.md` Recorded Scope adjudication）。
+- GT-3（Gantt 左网格/时间线双横向滚动条错位 + 悬停 tooltip 缺失）：修复需重构 gantt 双区滚动同步机制，超出有界修复范畴——登记 follow-up，successor = 滚动容器同步机制重构（plan `2026-10-01-ux-r8-scheduling-viewport-plan.md` Recorded Scope adjudication）。【2026-10-17 已修复（plan `docs/plans/639-cross-roadmap-ur12-gantt-scroll-sync-plan.md`）：单横向滚动条原则——左网格列宽 % 化恒适配 pane + overflow-x-hidden（判别 e2e 实测 grid 横向溢出清零），横向唯一滚动面 = timeline（store.scrollLeft 单写者语义不变）；bar 原生 title tooltip 补齐】
 
 ## R7 补充登记（执行期，2026-10-01）
 
