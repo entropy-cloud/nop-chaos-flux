@@ -55,18 +55,39 @@ Current users: `flux-renderers-data` (`echarts-renderer.tsx` → `echarts-setup.
 
 ## Package Inventory (2026-10-10 state)
 
-| Package                     | Heavy lib             | Component lazy                                             | Module loader                                        |
-| --------------------------- | --------------------- | ---------------------------------------------------------- | ---------------------------------------------------- |
-| `flux-renderers-3d`         | three                 | `createLazyRendererComponent` → `renderer/three-canvas.js` | — (three fully inside the async chunk)               |
-| `flux-renderers-industrial` | leafer-ui             | `createLazyRendererComponent` via `scada-canvas-lazy.ts`   | —                                                    |
-| `flux-renderers-graph`      | @xyflow/react + dagre | `createLazyRendererComponent` → `graph-renderer.js`        | —                                                    |
-| `flux-renderers-pivot`      | @visactor/vtable      | `createLazyRendererComponent` → `pivot-renderer.js`        | —                                                    |
-| `flux-renderers-map`        | ol                    | `createLazyRendererComponent` → `map-renderer.js`          | `createLazyLibLoader(loadOlApi)`                     |
-| `flux-renderers-data`       | echarts / recharts    | `createLazyRendererComponent` (chart + echarts)            | `createLazyLibLoader(echarts-setup)`                 |
-| `flux-code-editor`          | codemirror family     | `createLazyRendererComponent` → `code-editor-renderer.js`  | —                                                    |
-| `flux-renderers-scheduling` | @zxing/library        | — (runtime renderer is light)                              | `createLazyLibLoader` in `barcode-detector-utils.ts` |
+| Package                     | Heavy lib                                                           | Component lazy                                                                           | Module loader                                                                 |
+| --------------------------- | ------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| `flux-renderers-3d`         | three                                                               | `createLazyRendererComponent` → `renderer/three-canvas.js`                               | — (three fully inside the async chunk)                                        |
+| `flux-renderers-industrial` | leafer-ui                                                           | `createLazyRendererComponent` via `scada-canvas-lazy.ts`                                 | —                                                                             |
+| `flux-renderers-graph`      | @xyflow/react + dagre                                               | `createLazyRendererComponent` → `graph-renderer.js`                                      | —                                                                             |
+| `flux-renderers-pivot`      | @visactor/vtable                                                    | `createLazyRendererComponent` → `pivot-renderer.js`                                      | —                                                                             |
+| `flux-renderers-map`        | ol                                                                  | `createLazyRendererComponent` → `map-renderer.js`                                        | `createLazyLibLoader(loadOlApi)`                                              |
+| `flux-renderers-data`       | echarts / recharts                                                  | `createLazyRendererComponent` (chart + echarts)                                          | `createLazyLibLoader(echarts-setup)`                                          |
+| `flux-code-editor`          | codemirror family                                                   | `createLazyRendererComponent` → `code-editor-renderer.js`                                | —                                                                             |
+| `flux-renderers-scheduling` | @zxing/library                                                      | — (runtime renderer is light)                                                            | `createLazyLibLoader` in `barcode-detector-utils.ts`                          |
+| `flux-xlang-debug`          | codemirror family + @lezer (via flux-code-editor / flux-xlang-lang) | `createLazyRendererComponent<XlangDebugEditorSchema>` → `assembly/xlang-debug-editor.js` | — (2026-10-18, plan 2474: registration surface is the `/definitions` subpath) |
 
 Editor-side entries that were already isolated stay as-is: `@leafer-in/editor` behind the `/editor` subpath export, tiptap inside the lazily loaded word-editor chunk.
+
+## Bundle-entry subpath: `/definitions` light registration face (flux-xlang-debug, plan 2474)
+
+A package whose `src/index.ts` statically re-exports heavy implementation modules (panels, CodeMirror
+extension fields) must not become a bundle-entry import: the facade would pull the whole heavy graph
+into the main chunk regardless of lazy renderer wiring. Following the `flux-renderers-form/definitions`
+precedent, `flux-xlang-debug` exposes a **light registration subpath** `@nop-chaos/flux-xlang-debug/definitions`
+(`src/assembly/renderer.ts` + `assembly/compile-service.ts`) carrying only the definition, field rules,
+register function, and the type-only-typed compile-service factory. The bundle facade (`packages/flux-bundle`)
+imports **only** that subpath and registers the renderer in the default stack; the CE/lezer implementation
+loads as the `xlang-debug-editor-*` async chunk on first `'xlang-debug-editor'` node. The workspace alias
+map resolves the subpath for vite/vitest, and the subpath key must be declared **before** the bare package
+key (prefix matching, first key wins). `scripts/check-flux-bundle-pack.mjs` guards the boundary at the
+artifact level: the tarball must contain the `xlang-debug-editor-` async chunk, and the main chunk's
+static header must not reference it (note: `@codemirror`/`@lezer` are bundled, not host-external — their
+specifiers never appear in the header, so the relative-edge assertion is the discriminative check).
+
+The package's own `src/index.ts` still re-exports the heavy face for direct consumers (playground workspace
+use); converging it to the 3d-style trimmed entry is registered as governance follow-up, not required for
+bundle delivery.
 
 ## Industrial-specific: symbol registration rides the chunk
 

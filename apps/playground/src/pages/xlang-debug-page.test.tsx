@@ -66,13 +66,15 @@ describe('XlangDebugPage smoke (plan 621 Phase 2)', () => {
     expect(button.disabled).toBe(true);
   });
 
-  it('renders editor surface via schema+registry+SchemaRenderer path after connect (wiring)', () => {
+  // plan 2474 Phase 1：definition 组件改 createLazyRendererComponent——首帧 Spinner
+  // fallback，编辑器 DOM 在动态 import 落地后出现（预期内异步化，非回归）
+  it('renders editor surface via schema+registry+SchemaRenderer path after connect (wiring)', async () => {
     (globalThis as unknown as { __xlangPageInjected?: unknown[] }).__xlangPageInjected = undefined;
     render(<XlangDebugPage />);
     fireEvent.change(screen.getByPlaceholderText('access token'), { target: { value: 'demo-token' } });
     fireEvent.click(screen.getByRole('button', { name: '连接调试会话' }));
-    // M4：schema type 'xlang-debug-editor' 经 renderer definition 命中装配组件
-    expect(document.querySelector('[data-testid="xlang-debug-editor"]')).toBeTruthy();
+    // M4：schema type 'xlang-debug-editor' 经 renderer definition 命中装配组件（懒边界后异步出现）
+    await screen.findByTestId('xlang-debug-editor');
     // plan 621 审计 B5（判别化）：三族下行 StateField 逐个在注入集（计数断言抓不出缺员）
     const injected = (globalThis as unknown as { __xlangPageInjected?: unknown[] }).__xlangPageInjected ?? [];
     expect(injected).toContain(breakpointsField);

@@ -23,10 +23,13 @@ function readSource(file: string): Promise<string> {
 export function findStaticImports(source: string, specifierPrefix: string): string[] {
   const escaped = specifierPrefix.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   const suffix = `(/[^'"]*)?`;
+  // closure audit M-1：[^;\n] 不能跨行——prettier 对 >80 字符 import 的多行折叠
+  // （import {\n A,\n} from 'x'）会漏检；量词改有界跨行 [\s\S]{0,400}?（上限防
+  // 灾难回溯）；import type 负向先行在跨行下仍先于 from 生效
   const patterns = [
-    new RegExp(`^[ \\t]*import\\s+(?!type\\b)[^;\\n]*from\\s*['"]${escaped}${suffix}['"]`, 'gm'),
+    new RegExp(`^[ \\t]*import\\s+(?!type\\b)[\\s\\S]{0,400}?from\\s*['"]${escaped}${suffix}['"]`, 'gm'),
     new RegExp(`^[ \\t]*import\\s*['"]${escaped}${suffix}['"]`, 'gm'),
-    new RegExp(`^[ \\t]*export\\s+[^;\\n]*from\\s*['"]${escaped}${suffix}['"]`, 'gm'),
+    new RegExp(`^[ \\t]*export\\s+[\\s\\S]{0,400}?from\\s*['"]${escaped}${suffix}['"]`, 'gm'),
   ];
   return patterns.flatMap((pattern) => source.match(pattern) ?? []);
 }
@@ -54,6 +57,17 @@ describe('xlang-debug unified lazy-loading guard (/definitions is the bundle reg
         expect(findStaticImports(source, specifier), `${file}: static import of ${specifier}`).toEqual([]);
       }
     }
+  });
+
+  it('guard catches multi-line wrapped value imports (closure audit M-1 probe)', async () => {
+    // prettier 多行折叠形态：import {\n ... \n} from '@codemirror/view'
+    const multiline = `import {\n  EditorView,\n} from '@codemirror/view';\nconst x = 1;\nexport { a } from\n  '@lezer/common';`;
+    // 懒量词回滚可跨语句过匹配——守卫断言"存在即红"，过匹配是保守方向，计数不钉
+    expect(findStaticImports(multiline, '@codemirror').length).toBeGreaterThanOrEqual(1);
+    expect(findStaticImports(multiline, '@lezer').length).toBeGreaterThanOrEqual(1);
+    // import type 多行形态仍豁免
+    const typeOnly = `import type {\n  Foo,\n} from '@codemirror/state';`;
+    expect(findStaticImports(typeOnly, '@codemirror')).toEqual([]);
   });
 
   it('compile-service touches flux-xlang-lang only via import type', async () => {

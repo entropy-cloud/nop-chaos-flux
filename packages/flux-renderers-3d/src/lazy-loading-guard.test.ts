@@ -18,9 +18,10 @@ function readSource(file: string): Promise<string> {
 export function findStaticImports(source: string, specifier: string): string[] {
   const escaped = specifier.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   const patterns = [
-    new RegExp(`^[ \\t]*import\\s+(?!type\\b)[^;\\n]*from\\s*['"]${escaped}['"]`, 'gm'),
+    // closure audit M-1 家族镜像（plan 2474）：有界跨行——prettier 多行折叠 import 不再漏检
+    new RegExp(`^[ \\t]*import\\s+(?!type\\b)[\\s\\S]{0,400}?from\\s*['"]${escaped}['"]`, 'gm'),
     new RegExp(`^[ \\t]*import\\s*\\(?\\s*['"]${escaped}['"]`, 'gm'),
-    new RegExp(`^[ \\t]*export\\s+[^;\\n]*from\\s*['"]${escaped}['"]`, 'gm'),
+    new RegExp(`^[ \\t]*export\\s+[\\s\\S]{0,400}?from\\s*['"]${escaped}['"]`, 'gm'),
   ];
   return patterns.flatMap((pattern) => source.match(pattern) ?? []);
 }
