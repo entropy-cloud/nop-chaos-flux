@@ -134,7 +134,7 @@ Exit Criteria:
 - [x] 所有 in-scope skip 治理项落地（Phase Exit Criteria 全勾）
 - [x] focused 运行与 `--list` diff 证据记录于 daily log（`_tmp/plan623-list-{default,exclude}.txt` + focused 4 passed/2 skipped）
 - [x] 无静默降级：恢复失败、真实回归、盘点漂移均已按 Failure Paths 处置（scada ×3 未裁决失败已披露登记，未洗白）
-- [x] `pnpm typecheck`（repo 基线扫，非覆盖性门禁——见节首说明）：**80/82 绿，唯一红 = `@nop-chaos/flux-playground` vite.config Excessive stack depth——既有红**（docs/logs/2026/10-16.md 已 stash 验证 master 同红；本 plan diff 12 文件不含该文件）
+- [x] `pnpm typecheck`（repo 基线扫，非覆盖性门禁——见节首说明）：**42/44 绿，唯一失败任务 = `@nop-chaos/flux-playground` vite.config Excessive stack depth——既有红**（docs/logs/2026/10-16.md 已 stash 验证 master 同红；本 plan diff 12 文件不含该文件）【closure 后勘误：原记 80/82 误引 test 任务数；typecheck 任务总数 44】
 - [x] `pnpm lint`（repo 基线扫）：44/44 绿
 - [x] `pnpm test`（repo 基线扫；与 registered 单测基线对照披露差异）：80/82 任务绿；唯一红 = playground——**520 passed/2 failed + 2 文件级失败，归因并发会话 plan 621 Phase 2 提交 db67dba02（非本 plan diff）**：(a) `route-matrix.test.ts` ×2——新增 xlang-debug 域路由未配 DOMAIN_HOME_FAMILY 映射；(b) `app.test.tsx`/`app-diagnostics-route.test.tsx` 文件级——新增 xlang-debug-page 拉入 CE `formFieldChromeRules` 但 `@nop-chaos/flux-renderers-form` mock 未导出（其 plan 621 checklist "app.test.tsx pages mock 跟进"项未收全）。其余 41 包与 registered 基线一致（xlang 域 scope-excluded 惯例）
 - [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据
