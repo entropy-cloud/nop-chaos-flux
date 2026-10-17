@@ -1,6 +1,6 @@
 # 617 xlang 调试编辑器扩展包（roadmap item 16，@nop-chaos/flux-xlang-debug Phase A：state + 扩展）
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-10-16
 > Source: xlang-web-debugger roadmap item 16（owner 仓 nop-entropy）；设计权威 = nop-entropy `ai-dev/design/xlang-web-debugger/05-frontend-architecture.md` §3.4（debug store 下行 schema/上行动作/Effect 分类一次定死）+ `01-ws-protocol.md`（事件形状）
 > Related: docs/plans/616（item 15，flux-xlang-lang 已交付；本包与其互不依赖——gutter 对任何语言可用）

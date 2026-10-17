@@ -1,6 +1,6 @@
 # Components Roadmap
 
-> Last Updated: 2026-08-05
+> Last Updated: 2026-10-17（plan 625 Phase 4 刷新——原头 2026-08-05 未随 2026-10-07 编辑更新）
 > Source: `docs/components/amis-baseline-matrix.md`, `docs/components/index.md`
 
 ## Purpose

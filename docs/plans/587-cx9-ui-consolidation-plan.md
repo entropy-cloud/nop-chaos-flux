@@ -1,6 +1,6 @@
 # 587 CX-9 共性重构：ui 包复制沉积与补偿层收敛批（useSurfaceFocusWrap/tabbable 合一/toolbar 数据驱动/zIndex 共享/media 订阅归一）
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-10-13
 > Source: `docs/backlog/workaround-code-smell-audit-roadmap.md` CX-9 条目（WA-3 批立案 WA-ui-001/002/003/004，台账 101-104 行 successor-required→本批）；先例：plan 579-586
 > Related: `docs/architecture/styling-system.md`

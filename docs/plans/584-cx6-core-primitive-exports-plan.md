@@ -1,6 +1,6 @@
 # 584 CX-6 共性重构：flux-core 基础原语导出批（isTemplateNode + 环安全 deepEqual）
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-10-12
 > Source: `docs/backlog/workaround-code-smell-audit-roadmap.md` CX-6 条目（WA-3 批立案 WA-react-007/008，台账 94/95 行 successor-required→本批）；先例：plan 579-583
 > Related: `docs/architecture/flux-core.md`

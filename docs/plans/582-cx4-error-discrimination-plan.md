@@ -1,6 +1,6 @@
 # 582 CX-4 共性重构：表达式错误判别码化与三处嗅探收敛（UnpopulatedScopeAccessError）
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-10-13
 > Source: `docs/backlog/workaround-code-smell-audit-roadmap.md` CX-4 条目（WA-2 批立案 WA-runtime-001，台账 78 行 successor-required→本批）；先例：plan 579/580/581
 > Related: `docs/architecture/flux-core.md`、`docs/architecture/renderer-env.md`

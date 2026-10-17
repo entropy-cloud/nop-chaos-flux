@@ -1,6 +1,6 @@
 # 583 CX-5 共性重构：abort 信号组合原语下沉 flux-core（composeAbortSignals 超集 API）
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-10-13
 > Source: `docs/backlog/workaround-code-smell-audit-roadmap.md` CX-5 条目（WA-2 批立案 WA-action-core-002，台账 85 行 successor-required→本批）；先例：plan 579-582
 > Related: `docs/architecture/flux-core.md`、`docs/architecture/action-scope-and-imports.md`

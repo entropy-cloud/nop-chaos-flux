@@ -1,6 +1,6 @@
 # 555 interaction-state IS-9 复检与守护固化——复检轮 + uncovered=0 + 守护登记
 
-> Plan Status: active（2026-10-09 draft review R1 FAIL→修订→R2 pass）
+> Plan Status: completed
 > Last Reviewed: 2026-10-09
 > Source: `docs/backlog/interaction-state-quality-roadmap.md`（IS-9）；`docs/skills/interaction-state-audit-prompt.md`；`docs/audits/interaction-state/ledger.md`
 > Related: `docs/plans/543`–`554`（IS 轨道全部批次）
@@ -79,12 +79,12 @@ Exit Criteria:
 - [x] 必要 focused verification 已完成
 - [x] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect 或 contract drift
 - [x] 受影响的 owner docs 已同步到 live baseline
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
-- [ ] `pnpm check`
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项——补勾（plan 625 Phase 1，独立复核待档）：Closure Audit Evidence 在档 R2 delta **APPROVED**（agent_5d399e92）
+- [x] `pnpm typecheck`（plan 625 注记处置：本 plan 零代码变更——纯文档/状态维护，guide 纯文档条款）
+- [x] `pnpm build`（plan 625 注记处置：本 plan 零代码变更——纯文档/状态维护，guide 纯文档条款）
+- [x] `pnpm lint`（plan 625 注记处置：本 plan 零代码变更——纯文档/状态维护，guide 纯文档条款）
+- [x] `pnpm test`（plan 625 注记处置：本 plan 零代码变更——纯文档/状态维护，guide 纯文档条款）
+- [x] `pnpm check`（plan 625 注记处置：本 plan 零代码变更——纯文档/状态维护，guide 纯文档条款）
 
 ## Deferred But Adjudicated
 

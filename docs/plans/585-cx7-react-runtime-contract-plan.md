@@ -1,6 +1,6 @@
 # 585 CX-7 共性重构：React 运行时跨包契约缺口收敛批（ScopeRef 自省通道 + ReactionHandle 显式 configure）
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-10-13
 > Source: `docs/backlog/workaround-code-smell-audit-roadmap.md` CX-7 条目（WA-3 批立案 WA-react-004/005 两条"按住"型，台账 91/92 行 successor-required→本批）；先例：plan 579-584
 > Related: `docs/architecture/renderer-runtime.md`、`docs/architecture/flux-runtime-module-boundaries.md`

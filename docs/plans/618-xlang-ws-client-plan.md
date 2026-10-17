@@ -1,6 +1,6 @@
 # 618 xlang WS 调试客户端与租约续期（roadmap item 17，@nop-chaos/flux-xlang-debug Phase B：client）
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-10-16
 > Source: roadmap item 17；设计权威 = nop-entropy `ai-dev/design/xlang-web-debugger/01-ws-protocol.md`（协议/事件/鉴权）+ `02-lease-lifecycle.md`（续期/重连语义）+ `05-frontend-architecture.md` §3.4（client 模块归本包，消费 617 store 契约）
 > Related: docs/plans/617（store 契约 + transport 接口 + 下行 applier 已定死）

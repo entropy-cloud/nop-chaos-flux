@@ -1,6 +1,6 @@
 # 577 workaround-audit WA-15b playground 审计批二（pages 域 demo 页目录）
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-10-12
 > Source: `docs/backlog/workaround-code-smell-audit-roadmap.md`（WA-15b 工作项，Phase Status 对应行）+ `docs/skills/workaround-code-smell-audit-prompt.md`；先例：`docs/plans/576/575/571`
 > Related: `docs/audits/workaround-code-smell/inventory/modules.json`；`docs/audits/workaround-code-smell/wa-15a/report.md`（承接转发三项+watch 5 条）；`docs/audits/workaround-code-smell/wa-11/report.md`（尾部勘误注记）；`docs/context/ai-autonomy-policy.md`
@@ -171,13 +171,3 @@ Closure Audit Evidence:
 ## Non-Blocking Follow-ups
 
 - （如共性裁定触发 CX-n，其执行归 CX-n plan；本节收口时按实际填写。）
-
-## Closure
-
-Status Note: （收口时填——done / 超圈说明）
-
-Closure Audit Evidence:
-
-- Reviewer / Agent: （待独立子 agent fresh session）
-- Rounds: （待填）
-- Findings addressed: （待填）

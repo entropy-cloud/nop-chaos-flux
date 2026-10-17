@@ -1,6 +1,6 @@
 # 616 xlang 在线编辑器语言包（roadmap item 15，@nop-chaos/flux-xlang-lang + flux-code-editor 开放化）
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-10-16
 > Source: xlang-web-debugger roadmap item 15（owner 仓 nop-entropy `ai-dev/backlog/xlang-web-debugger-roadmap.md`）；设计权威 = nop-entropy `ai-dev/design/xlang-web-debugger/05-frontend-architecture.md` §3.2/§3.3（registry 开放化/包结构/构建链/门禁四件套）+ `06-grammar-spike.md`（grammar 生产输入与 11 条坑清单）；POC 产物 = nop-entropy `_tmp/xlang-lezer-spike/`（xlang.grammar/tokens.js/sample.xlang，一次性证据）
 > Related: 后端 item 14 已交付 `/r/nop-xlang-debug/compile` 诊断端点（`{sourcePath?, source}` → `{diagnostics:[{line,severity,message,errorCode?}]}`，本 plan 诊断桥的注入契约对端）
@@ -152,9 +152,9 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: （待收口后填写）
+Status Note: 2026-10-17 由 plan 625 Phase 3 补账翻 completed（原收口动作 5c14b9a85 已完成但本节占位未填——F3 声称-记录漂移修复，证据自 daily log 重建）。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: （待独立子代理审计）
-- Evidence: （待填）
+- Auditor / Agent: agent_45729f0c（fresh session；重建自 docs/logs/2026/10-16.md §616 与 5c14b9a85 提交记录）
+- Evidence: closure audit **approved**——6 维度全 PASS + 2 变异探针（registry miss 回落 / grammar 吞文件坑体量断言红→恢复→绿）；3 minor 全处理（bracketMatching 补落地为 LanguageSupport 第二参、expression+template+lint 新行为 characterization 钉住、knip/文档指针措辞勘正）；CE 111/111、xlang-lang 8/8。5c14b9a85 收口提交在档。

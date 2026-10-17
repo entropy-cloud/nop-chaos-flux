@@ -1,13 +1,21 @@
 # 479 视觉质量 V8a：Print 设计器视觉修复 Plan
 
-> Plan Status: draft
-> Last Reviewed: 2026-09-21
+> Plan Status: deferred
+> Last Reviewed: 2026-10-17
 > Source: `docs/analysis/visual-quality/V8a-print-designer.md`（独立核实 revised → 勘误回写后 pass）、`docs/backlog/visual-quality-roadmap.md` V8a、`docs/components/print/design.md`、09-13 遗留登记（logs/2026/09-13.md + branch review §2.3/§5）
 > Related: `docs/plans/476-visual-quality-v6-spreadsheet-tokenization-plan.md`（--ss-\* 先例）、`docs/plans/477-visual-quality-v7-report-designer-plan.md`（守卫单测先例）
 
 ## Purpose
 
 把路线图 V8a 收口：09-13 遗留①–⑩ 逐项修复或显式裁决；吸附辅助线渲染（数据已算出仅差消费）+ Alt 禁用；多选修饰键最小面；诊断 i18n 接管（17 codes × 2 locale）；元素级标红实时化；dark 唯一击穿面（画布内联环境色）令牌化；e2e 视觉断言 + testid 化。
+
+## 625 Phase 2 处置记录（2026-10-17，独立子代理复核待档）
+
+- **实际落地子集（diff 溯源 52b4e610f）**：仅诊断 i18n 键面——`flux.print.diagnostic.*` 17 codes × zh-CN/en-US（嵌套 PRINT\_\* 键，实测两 locale 各 17）+ `scripts/check-i18n-keys.mjs`。对应 :87 Fix 的"键新增"半边（t() 接线/标红/useMemo 派生**未落地**——零 grep 证据）。
+- **未落地项**：吸附辅助线消费与渲染、Alt 禁用、多选修饰键、元素级标红实时化、dark `--print-*` 令牌化、e2e testid 化与双态断言、owner docs 回写——全部零落地证据（`nop-print-snap-line`/`data-print-diagnostic`/`--print-*` 全仓零命中；`print-designer-canvas.tsx` altKey 仍仅 rotate 消费 = 479 前状态；`print-designer.spec.ts` 9 测非 12）。
+- **失实工作实际存于 stash@{0}**（WIP on master: 0e75ae915，非祖先提交；同消息重复提交 33135a45a 亦非祖先）。
+- **勘误**：52b4e610f 提交 message 声称 "Closure audit: issues->approved" 与 "M-2 plan bookkeeping backfilled"——与其自身 diff 矛盾（本 plan 文件未动、工作不在 diff 内），**不得引用为收口证据**。
+- **处置**：Plan Status → `deferred`（工作未落地故非 completed；无人在途故非 active）；未落地项整批入 Deferred（Successor = stash@{0} 恢复评估，代码轨道）。
 
 ## Current Baseline
 
@@ -134,6 +142,13 @@ Exit Criteria:
 
 ## Deferred But Adjudicated
 
+### V8a 核心视觉工作（canvas/吸附/多选/dark/e2e，2026-10-17 plan 625 Phase 2 裁决）
+
+- Classification: `out-of-scope improvement`
+- Why Not Blocking Closure: 代码工作未落地且无人在途；恢复评估属代码轨道（stash@{0}），非本状态维护 plan 可收口
+- Successor Required: `yes`
+- Successor Path: stash@{0}（WIP on master: 0e75ae915）恢复评估——pop + 完成收尾或显式废弃；visual-quality-roadmap V8a 条目回写随该裁决
+
 ### 标尺拖动参考线（R12）
 
 - Classification: `out-of-scope improvement`
@@ -166,7 +181,7 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: （closure audit 通过后填写）
+Status Note: 2026-10-17 由 plan 625 Phase 2 处置为 `deferred`：52b4e610f 实际只落地诊断 i18n 键子集（diff 溯源），核心视觉工作未落 master（实际存于 stash@{0}）；提交 message 的收口声称与其 diff 矛盾已就地勘误。恢复评估归 stash 轨道 successor。
 
 Closure Audit Evidence:
 

@@ -1,6 +1,6 @@
 # 576 workaround-audit WA-15a playground 审计批一（complex-pages + taskflow-designer-lib + designer-hosts + ai + env + src 根级散文件）
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-10-12
 > Source: `docs/backlog/workaround-code-smell-audit-roadmap.md`（WA-15a 工作项，Phase Status 第 17 行）+ `docs/skills/workaround-code-smell-audit-prompt.md`；先例：`docs/plans/575/572/571`
 > Related: `docs/audits/workaround-code-smell/inventory/modules.json`；`docs/audits/workaround-code-smell/wa-11/report.md`（plan 529 Deferred 转发线索）；`docs/audits/workaround-code-smell/wa-14/report.md`（ai-hitl-demo init 时序转发）；`docs/context/ai-autonomy-policy.md`
@@ -171,13 +171,3 @@ Closure Audit Evidence:
 ## Non-Blocking Follow-ups
 
 - （如共性裁定触发 CX-n，其执行归 CX-n plan；本节收口时按实际填写。）
-
-## Closure
-
-Status Note: （收口时填）
-
-Closure Audit Evidence:（closure audit 通过后由执行 session 落盘）
-
-- Reviewer / Agent:
-- Verdict / Rounds:
-- Evidence:

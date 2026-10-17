@@ -1,6 +1,6 @@
 # 578 workaround-audit WA-15c playground 审计批三（component-lab 组件实验场）
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-10-12
 > Source: `docs/backlog/workaround-code-smell-audit-roadmap.md`（WA-15c 工作项，Phase Status 对应行）+ `docs/skills/workaround-code-smell-audit-prompt.md`；先例：`docs/plans/577/576/575`
 > Related: `docs/audits/workaround-code-smell/inventory/modules.json`；`docs/audits/workaround-code-smell/wa-15b/report.md`（CX-19/CX-20 扩围在案）；`docs/context/ai-autonomy-policy.md`

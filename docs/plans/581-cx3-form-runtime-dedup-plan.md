@@ -1,6 +1,6 @@
 # 581 CX-3 共性重构：form-runtime 族复制沉积收敛批（summary 原语/patchFieldStateInMap/ScopeRef 工厂/cascade 守卫）
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-10-12
 > Source: `docs/backlog/workaround-code-smell-audit-roadmap.md` CX-3 条目（WA-2 批立案 WA-runtime-002/003/004/005，台账 79-82 行 successor-required→本批）；先例：plan 579/580
 > Related: `docs/audits/workaround-code-smell/ledger.md`；`docs/architecture/form-validation.md`、`docs/architecture/flux-runtime-module-boundaries.md`

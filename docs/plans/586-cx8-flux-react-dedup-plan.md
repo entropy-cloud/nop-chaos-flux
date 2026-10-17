@@ -1,6 +1,6 @@
 # 586 CX-8 共性重构：flux-react 包内复制沉积收敛批（useDeferredDispose/PanelResizer/SurfaceChromeShell）
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-10-13
 > Source: `docs/backlog/workaround-code-smell-audit-roadmap.md` CX-8 条目（WA-3 批立案 WA-react-001/002/003+WA-4 批增补第 7 份，台账 88/89/90 行 successor-required→本批）；先例：plan 579-585
 > Related: `docs/architecture/renderer-runtime.md`

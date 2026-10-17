@@ -1,6 +1,6 @@
 # 620 xlang 调试面板（roadmap item 18，@nop-chaos/flux-xlang-debug Phase C：panel + query 面）
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-10-16
 > Source: roadmap item 18；设计权威 = nop-entropy `ai-dev/design/xlang-web-debugger/05-frontend-architecture.md` §3.4（面板数据不进 store——组件直接按 threadId 发 query；交互先例 @nop-chaos/nop-debugger）+ `01-ws-protocol.md` §3.3（getStackInfo/getFrameVariables/expandExprValue/getExprValue）
 > Related: docs/plans/617（store 契约）/618（client transport+事件面；F8 裁定 query 公共面归本 item 扩充）。**编号勘误（F9）**：原 619 与 `619-rm14-rm9-deferred-closure-plan.md` 撞号，改 620
