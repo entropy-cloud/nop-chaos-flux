@@ -7,6 +7,8 @@ async function openFlowDesigner(page: import('@playwright/test').Page) {
   await assertTrackedPageErrors(page);
 }
 
+// skip 理由（plan 623）：合成事件（nop-designer:test-connect）诊断标本——真实键盘连线
+// 回归由下方活跃测试承载；本变体仅在诊断连线事件管道时手工启用。
 test.skip('diagnostic synthetic connect event updates the live edge count', async ({ page }) => {
   await openFlowDesigner(page);
 

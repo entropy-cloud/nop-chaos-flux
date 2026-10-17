@@ -18,7 +18,7 @@ test.describe('Gantt Performance Baseline', () => {
     await assertTrackedPageErrors(page);
   });
 
-  test('scroll FPS on gantt-perf-scale synchronized grid+timeline', async ({ page }) => {
+  test('scroll FPS on gantt-perf-scale synchronized grid+timeline @watch-only', async ({ page }) => {
     await page.goto('/#/gantt-perf-scale', { waitUntil: 'domcontentloaded' });
     await expect(page.getByText('Gantt Performance Scale')).toBeVisible({ timeout: 120_000 });
     await expect(page.locator('[data-slot="gantt-bar"]').first()).toBeVisible({ timeout: 120_000 });
@@ -41,7 +41,7 @@ test.describe('Gantt Performance Baseline', () => {
     await assertTrackedPageErrors(page);
   });
 
-  test('drag FPS on gantt-perf-scale (drag a task bar 200px)', async ({ page }) => {
+  test('drag FPS on gantt-perf-scale (drag a task bar 200px) @watch-only', async ({ page }) => {
     await page.goto('/#/gantt-perf-scale', { waitUntil: 'domcontentloaded' });
     await expect(page.getByText('Gantt Performance Scale')).toBeVisible({ timeout: 120_000 });
     await expect(page.locator('[data-slot="gantt-bar"]').first()).toBeVisible({ timeout: 120_000 });

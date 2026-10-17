@@ -1,3 +1,5 @@
+// skip 理由（plan 623 C3 裁决）：独立评审轮的一次性诊断标本集（debugger API 检查/导航
+// 并发压测/report/word designer 走查）——评审轮已闭合，保留手工复现价值，不入 CI 门禁。
 import { expect, test, type Page, assertTrackedPageErrors } from '../fixtures.js';
 import { DOMAIN_RENDERER_ROUTES } from '../../../apps/playground/src/route-model';
 

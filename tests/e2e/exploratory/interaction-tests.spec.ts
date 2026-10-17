@@ -1,3 +1,6 @@
+// skip 理由（plan 623 C3 裁决）：探索性诊断标本集（form 交互/dialog 生命周期/tabs/动态
+// renderer 切换/reaction 复杂表单）——保留手工复现价值，不入 CI 门禁；启用单块前先核对
+// ComponentLabHelper 等 helper 签名是否随演化漂移。
 import { expect, test, type Page } from '../fixtures.js';
 import { ComponentLabHelper, scenarioSlug } from '../component-lab/helpers';
 

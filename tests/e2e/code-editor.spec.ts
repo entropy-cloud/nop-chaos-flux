@@ -483,6 +483,8 @@ test('search panel opens via Mod-f, localizes, and closes on Escape', async ({ p
   await expect(panel).toHaveCount(0);
 });
 
+// skip 理由（plan 623）：截图资产生成 helper，非断言门禁——照
+// readme-flux-basic-screenshot.spec 先例，手工生成资产时启用。
 test.skip('captures code editor page screenshot', async ({ page }, testInfo) => {
   await openCodeEditor(page);
 

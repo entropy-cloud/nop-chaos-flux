@@ -30,6 +30,8 @@ async function openFlowDesigner(page: import('@playwright/test').Page) {
   await assertTrackedPageErrors(page);
 }
 
+// skip 理由（plan 623）：HTML 捕获资产生成 helper（截图 + 节点/工具栏 markup 导出），
+// 非断言门禁——照 readme-flux-basic-screenshot.spec 先例，手工生成资产时启用。
 test.skip('captures node and hover toolbar html', async ({ page }, testInfo) => {
   await openFlowDesigner(page);
 
@@ -166,7 +168,9 @@ test.skip('captures node and hover toolbar html', async ({ page }, testInfo) => 
   console.log('TOOLBAR_HTML_END');
 });
 
-test.skip('verifies palette and top toolbar visual structure', async ({ page }) => {
+// plan 623 恢复决策：真断言测试（palette/工具栏/minimap 结构），原无理由 skip——
+// 恢复运行；选择器漂移按 live UI 修正（见该测试内断言）。
+test('verifies palette and top toolbar visual structure', async ({ page }) => {
   await openFlowDesigner(page);
 
   const palette = page.locator('[data-testid="left-panel-expanded"] .nop-palette').first();

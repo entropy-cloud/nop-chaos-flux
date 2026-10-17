@@ -38,7 +38,7 @@ test.describe('Kanban Performance Baseline', () => {
     expect(fps.avgFps).toBeGreaterThan(30);
   });
 
-  test('drag FPS on kanban-perf-scale (20×300) route targets 60fps avg', async ({
+  test('drag FPS on kanban-perf-scale (20×300) route targets 60fps avg @watch-only', async ({
     page,
     allowConsoleErrors,
   }) => {

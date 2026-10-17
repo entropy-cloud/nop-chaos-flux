@@ -1,3 +1,5 @@
+// skip 理由（plan 623 C3 裁决）：CRUD 表体渲染一次性诊断标本——诊断问题已闭环，
+// 保留手工复现价值，不入 CI 门禁。
 import { test, expect, filterNoise as _filterNoise } from '../fixtures.js';
 import { ComponentLabHelper, scenarioSlug } from './helpers';
 

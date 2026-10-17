@@ -50,6 +50,11 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   workers: 2,
   reporter: 'list',
+  // plan 623: opt-in clean runs — E2E_EXCLUDE_WATCH_ONLY=1 drops the adjudicated
+  // watch-only perf-threshold tests (title-suffix ` @watch-only`, registry:
+  // docs/context/project-context.md). Default (unset) keeps every test, so the
+  // DV full-run protocol still sees the known reds transparently.
+  grepInvert: process.env.E2E_EXCLUDE_WATCH_ONLY ? [/@watch-only/] : undefined,
   use: {
     baseURL: baseUrl,
     // Keep trace capture honest under the current retries=0 baseline.

@@ -1,6 +1,8 @@
 import { test, expect, assertTrackedPageErrors } from './fixtures.js';
 import { selectComboboxOptionByLabel } from './select-helpers.js';
 
+// skip 理由（plan 623）：admin code meta 一次性诊断标本——诊断问题已闭环，
+// 保留手工复现价值，不入 CI 门禁。
 test.skip('diagnose admin code meta explanation on live flux-basic page', async ({ page }) => {
   test.setTimeout(90_000);
 
