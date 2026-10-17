@@ -5,6 +5,7 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import type { RendererDefinition } from '@nop-chaos/flux-core';
+import { xlangDebugEditorRendererDefinition } from '@nop-chaos/flux-xlang-debug/definitions';
 import {
   FLUX_ROOT_CLASS,
   createDefaultFluxEnv,
@@ -48,8 +49,21 @@ describe('@nop-chaos/flux public entry contract', () => {
     expect(registry.has('kanban')).toBe(true);
     expect(registry.has('calendar')).toBe(true);
     expect(registry.has('gantt')).toBe(true);
+    // plan 2474：xlang 在线调试编辑器随默认栈注册（definition 同步、实现异步 chunk）
+    expect(registry.has('xlang-debug-editor')).toBe(true);
     expect(registry.has('barcode-input')).toBe(true);
     expect(registerDefaultFluxRenderers(registry)).toBe(registry);
+  });
+
+  it('registers xlang-debug-editor definition synchronously with lazy implementation (plan 2474)', () => {
+    const registry = createFluxRendererRegistry();
+    const definition = registry.get('xlang-debug-editor');
+    expect(definition).toBeDefined();
+    // 懒边界：definition/fields 同步可见，组件为 createLazyRendererComponent 包装
+    expect(definition?.fields?.map((f) => f.key)).toEqual(['sourcePath', 'serverUrl', 'initialSource']);
+    // registry 契约：同 definition 对象重复注册不抛（幂等）——以轻子路径导出的
+    // RegisteredRendererDefinition 原对象为准（get() 的宽类型不带 sourcePackage 面）
+    expect(() => registry.register(xlangDebugEditorRendererDefinition)).not.toThrow();
   });
 
   it('uses the core renderer contract at the facade boundary', () => {

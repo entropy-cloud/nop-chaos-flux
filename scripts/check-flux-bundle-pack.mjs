@@ -78,7 +78,7 @@ export async function verifyTarball({ tarballPath }) {
     );
   }
 
-  const expectedAsyncChunkStems = ['echarts-setup-', 'chart-renderer-', 'three-canvas-'];
+  const expectedAsyncChunkStems = ['echarts-setup-', 'chart-renderer-', 'three-canvas-', 'xlang-debug-editor-'];
   for (const stem of expectedAsyncChunkStems) {
     if (!jsEntries.some((entry) => entry.startsWith(`package/dist/${stem}`))) {
       throw new Error(`Missing async chunk for lazy renderer implementation: dist/${stem}*.js`);
@@ -118,10 +118,26 @@ export async function verifyTarball({ tarballPath }) {
       headerSpecifiers.has(lib) ||
       [...headerSpecifiers].some((specifier) => specifier.startsWith(`${lib}/`)),
   );
+
+  // plan 2474：xlang 懒边界主 chunk 守卫。@codemirror/@lezer 不在 hostOwnedExternal、
+  // 会被内联进 chunk（头部 specifier 恒空，对它们扫描无判别力）；判别面改静态头部
+  // 的**相对引用**——懒边界破坏（实现被静态 import）时 rolldown 把 xlang 实现模块
+  // 变成主 chunk 静态依赖，头部即出现 `./xlang-debug-editor-*`；正常边界下它只在
+  // 体内以动态 import 形态出现。
+  const leakedXlangHeaderEdges = [...headerSpecifiers].filter((specifier) =>
+    specifier.startsWith('./xlang-debug-editor-'),
+  );
   if (leakedHeavyLibs.length > 0) {
     throw new Error(
       `dist/index.js statically imports heavy renderer lib(s): ${leakedHeavyLibs.join(', ')}. ` +
         'Lazy implementation chunks were inlined back into the main chunk.',
+    );
+  }
+
+  if (leakedXlangHeaderEdges.length > 0) {
+    throw new Error(
+      `dist/index.js statically references xlang implementation chunk(s): ${leakedXlangHeaderEdges.join(', ')}. ` +
+        'The xlang-debug-editor lazy boundary was broken (implementation became a static main-chunk dep).',
     );
   }
 

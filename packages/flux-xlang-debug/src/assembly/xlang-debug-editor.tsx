@@ -1,12 +1,14 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import type { WebSocketOpener } from '@nop-chaos/flux-core';
+import type { RendererComponentProps, WebSocketOpener } from '@nop-chaos/flux-core';
+import { useRendererRuntime, useRenderScope } from '@nop-chaos/flux-react';
 import { createBaseExtensions, useCodeMirror } from '@nop-chaos/flux-code-editor';
 import {
   createXlangLinter,
   registerXlangLanguage,
   type XlangCompileService,
-  type XlangDiagnostic,
 } from '@nop-chaos/flux-xlang-lang';
+import { createCompileService } from './compile-service.js';
+import type { XlangDebugEditorSchema } from './renderer.js';
 import { createDebugStore } from '../state/debug-store.js';
 import { createDebugClient } from '../client/debug-client.js';
 import { syncStoreToExtensions } from '../extension/sync.js';
@@ -156,42 +158,51 @@ export function XlangDebugEditor(props: XlangDebugEditorProps) {
   );
 }
 
-export interface CompileFetcherAdapterOptions {
-  /** flux-core ApiFetcher（宿主 env.fetcher——鉴权随宿主链）。 */
-  fetcher: (api: {
-    url: string;
-    method: string;
-    headers: Record<string, string>;
-    data: { sourcePath: string; source: string };
-  }) => Promise<{ status: number; data?: { diagnostics?: Array<{ line: number; severity: string; message: string; errorCode?: string }> } | null }>;
-  endpoint?: string;
-  headers?: Record<string, string>;
-}
-
 /**
- * 诊断编译服务适配（plan 621 M6）：宿主 env.fetcher → XlangCompileService。
- * ApiResponse envelope：status===0 取 data.diagnostics；401/403 等以 error
- * severity 诊断呈现（不抛——linter 兜底空集）。
+ * renderer 适配组件（plan 2474 Phase 1 自 renderer.tsx 迁入重模块）：env 具象化
+ * （fetcher→compile 服务、openSocket 能力提取）后委托装配组件本体。轻注册面
+ * （../renderer.ts）经 createLazyRendererComponent 动态装载本模块。
  */
-export function createCompileService(adapter: CompileFetcherAdapterOptions): XlangCompileService {
-  const endpoint = adapter.endpoint ?? '/r/nop-xlang-debug/compile';
-  const headers = adapter.headers ?? {};
-  return async (sourcePath, source): Promise<XlangDiagnostic[]> => {
-    const response = await adapter.fetcher({
-      url: endpoint,
-      method: 'POST',
-      headers,
-      data: { sourcePath, source },
-    });
-    if (response.status !== 0) {
-      return [
+export function XlangDebugEditorRenderer(props: RendererComponentProps<XlangDebugEditorSchema>) {
+  const runtime = useRendererRuntime();
+  const env = runtime.env;
+  const scope = useRenderScope();
+  const sourcePath = String(props.props.sourcePath ?? '');
+  const serverUrl = String(props.props.serverUrl ?? '');
+  const initialSource = props.props.initialSource == null ? undefined : String(props.props.initialSource);
+
+  const compile: XlangCompileService = createCompileService({
+    // env.fetcher（ApiFetcher<T> 泛型）以 compile 端点形状具象化
+    fetcher: async (api) => {
+      const response = await env.fetcher(
         {
-          line: 1,
-          severity: 'error' as const,
-          message: `compile request failed (status ${response.status})`,
+          url: api.url,
+          method: api.method,
+          headers: api.headers,
+          data: api.data,
         },
-      ];
-    }
-    return (response.data?.diagnostics ?? []) as XlangDiagnostic[];
-  };
+        { scope, env }
+      );
+      return {
+        status: response.status,
+        data: response.data as {
+          diagnostics?: Array<{ line: number; severity: string; message: string; errorCode?: string }>;
+        } | null,
+      };
+    },
+  });
+
+  // openSocket capability check（flux-core 契约）；缺省时装配组件内连接失败呈现
+  const openSocket = env.openSocket;
+
+  return (
+    <XlangDebugEditor
+      sourcePath={sourcePath}
+      serverUrl={serverUrl}
+      openSocket={openSocket ?? (undefined as unknown as WebSocketOpener)}
+      compile={compile}
+      getToken={() => undefined}
+      initialSource={initialSource}
+    />
+  );
 }

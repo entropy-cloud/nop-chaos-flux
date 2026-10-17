@@ -51,6 +51,7 @@
     "@nop-chaos/flux-renderers-form-advanced": "workspace:*",
     "@nop-chaos/flux-renderers-layout": "workspace:*",
     "@nop-chaos/flux-renderers-scheduling": "workspace:*",
+    "@nop-chaos/flux-xlang-debug": "workspace:*",
     "@nop-chaos/ui": "workspace:*",
     "@testing-library/react": "^16.3.0",
     "echarts": "^6.0.0",

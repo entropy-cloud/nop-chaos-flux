@@ -159,6 +159,10 @@ export const workspacePackageAliases = {
   '@nop-chaos/flux-xlang-lang': fileURLToPath(
     new URL('./packages/flux-xlang-lang/src/index.ts', import.meta.url),
   ),
+  // plan 2474：子路径键必须在裸键之前（前缀匹配首键生效，form definitions 块同排布）
+  '@nop-chaos/flux-xlang-debug/definitions': fileURLToPath(
+    new URL('./packages/flux-xlang-debug/src/assembly/renderer.ts', import.meta.url),
+  ),
   '@nop-chaos/flux-xlang-debug': fileURLToPath(
     new URL('./packages/flux-xlang-debug/src/index.ts', import.meta.url),
   ),

@@ -390,6 +390,9 @@ importers:
       '@nop-chaos/flux-renderers-scheduling':
         specifier: workspace:*
         version: link:../flux-renderers-scheduling
+      '@nop-chaos/flux-xlang-debug':
+        specifier: workspace:*
+        version: link:../flux-xlang-debug
       '@nop-chaos/ui':
         specifier: workspace:*
         version: link:../ui

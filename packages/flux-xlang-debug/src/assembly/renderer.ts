@@ -2,13 +2,11 @@ import type {
   RegisteredRendererDefinition,
   SchemaFieldRule,
   BaseSchema,
-  RendererComponentProps,
   RendererRegistry,
-  WebSocketOpener,
 } from '@nop-chaos/flux-core';
-import { useRendererRuntime, useRenderScope } from '@nop-chaos/flux-react';
-import { XlangDebugEditor, createCompileService } from './xlang-debug-editor.js';
-import type { XlangCompileService } from '@nop-chaos/flux-xlang-lang';
+import { createLazyRendererComponent } from '@nop-chaos/flux-react';
+
+export { createCompileService, type CompileFetcherAdapterOptions } from './compile-service.js';
 
 /** xlang-debug-editor schema（plan 621 M4：被消费 prop 均需 field rule）。 */
 export interface XlangDebugEditorSchema extends BaseSchema {
@@ -21,49 +19,15 @@ export interface XlangDebugEditorSchema extends BaseSchema {
   initialSource?: string;
 }
 
-export function XlangDebugEditorRenderer(props: RendererComponentProps<XlangDebugEditorSchema>) {
-  const runtime = useRendererRuntime();
-  const env = runtime.env;
-  const scope = useRenderScope();
-  const sourcePath = String(props.props.sourcePath ?? '');
-  const serverUrl = String(props.props.serverUrl ?? '');
-  const initialSource = props.props.initialSource == null ? undefined : String(props.props.initialSource);
-
-  const compile: XlangCompileService = createCompileService({
-    // env.fetcher（ApiFetcher<T> 泛型）以 compile 端点形状具象化
-    fetcher: async (api) => {
-      const response = await env.fetcher(
-        {
-          url: api.url,
-          method: api.method,
-          headers: api.headers,
-          data: api.data,
-        },
-        { scope, env }
-      );
-      return {
-        status: response.status,
-        data: response.data as {
-          diagnostics?: Array<{ line: number; severity: string; message: string; errorCode?: string }>;
-        } | null,
-      };
-    },
-  });
-
-  // openSocket capability check（flux-core 契约）；缺省时装配组件内连接失败呈现
-  const openSocket = env.openSocket;
-
-  return (
-    <XlangDebugEditor
-      sourcePath={sourcePath}
-      serverUrl={serverUrl}
-      openSocket={openSocket ?? (undefined as unknown as WebSocketOpener)}
-      compile={compile}
-      getToken={() => undefined}
-      initialSource={initialSource}
-    />
-  );
-}
+/**
+ * 注册面组件 = 懒边界（plan 2474 Phase 1，three-canvas 先例）：definition/field
+ * rules 同步、实现（xlang-debug-editor.js 携 CE/lezer 重图）动态 chunk 按需加载。
+ * 本模块属 **轻路径**（@nop-chaos/flux-xlang-debug/definitions 注册面，bundle 门面
+ * 唯一 import 点）——不得静态 import 重模块，lazy-loading-guard.test.ts 守卫。
+ */
+const LazyXlangDebugEditorRenderer = createLazyRendererComponent<XlangDebugEditorSchema>(
+  () => import('./xlang-debug-editor.js').then((m) => m.XlangDebugEditorRenderer),
+);
 
 export const xlangDebugEditorFieldRules: SchemaFieldRule[] = [
   {
@@ -101,7 +65,7 @@ export const xlangDebugEditorFieldRules: SchemaFieldRule[] = [
 
 export const xlangDebugEditorRendererDefinition: RegisteredRendererDefinition = {
   type: 'xlang-debug-editor',
-  component: XlangDebugEditorRenderer,
+  component: LazyXlangDebugEditorRenderer,
   sourcePackage: '@nop-chaos/flux-xlang-debug',
   fields: xlangDebugEditorFieldRules,
 };

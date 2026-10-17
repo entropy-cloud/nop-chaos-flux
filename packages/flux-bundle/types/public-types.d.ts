@@ -60,3 +60,12 @@ export declare function createFluxSchemaRendererWithRegistry(
 ): FluxSchemaRendererComponent;
 
 export declare function createFluxSchemaRenderer(): FluxSchemaRendererComponent;
+
+/**
+ * xlang 在线调试编辑器渲染器注册（plan 2474）：已在 registerDefaultFluxRenderers
+ * 内调用；单独暴露供自定义 registry 复用。definition 同步注册，CE/lezer 实现
+ * 经异步 chunk 按需加载。
+ */
+export declare function registerXlangDebugEditorRenderers(
+  registry: FluxRendererRegistry,
+): void;

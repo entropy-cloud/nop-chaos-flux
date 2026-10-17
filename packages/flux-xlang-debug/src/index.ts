@@ -40,12 +40,14 @@ export { EvalInput, type EvalInputProps } from './panel/eval-input.js';
 export { LogPanel, type LogPanelProps } from './panel/log-panel.js';
 export {
   XlangDebugEditor,
+  XlangDebugEditorRenderer,
   type XlangDebugEditorProps,
-  createCompileService,
-  type CompileFetcherAdapterOptions,
 } from './assembly/xlang-debug-editor.js';
 export {
-  XlangDebugEditorRenderer,
+  createCompileService,
+  type CompileFetcherAdapterOptions,
+} from './assembly/compile-service.js';
+export {
   xlangDebugEditorRendererDefinition,
   xlangDebugEditorFieldRules,
   registerXlangDebugEditorRenderers,

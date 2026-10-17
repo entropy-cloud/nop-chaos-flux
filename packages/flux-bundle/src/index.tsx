@@ -10,6 +10,9 @@ import { registerFormRenderers } from '@nop-chaos/flux-renderers-form/definition
 import { registerLayoutRenderers } from '@nop-chaos/flux-renderers-layout';
 import { registerSchedulingRenderers } from '@nop-chaos/flux-renderers-scheduling';
 import { registerThreeRenderers } from '@nop-chaos/flux-renderers-3d';
+// plan 2474 Phase 2：只经轻子路径进包（重 index 禁触——renderer-lazy-loading.md 约定）；
+// definition/field rules 同步注册，CE/lezer 实现落异步 chunk（three-canvas 同型懒边界）
+import { registerXlangDebugEditorRenderers } from '@nop-chaos/flux-xlang-debug/definitions';
 import './style.css';
 
 import type {
@@ -18,6 +21,8 @@ import type {
   FluxSchemaRendererComponent,
   FluxSchemaRendererProps,
 } from './types.js';
+
+export { registerXlangDebugEditorRenderers } from '@nop-chaos/flux-xlang-debug/definitions';
 
 export type {
   FluxApiRequest,
@@ -46,6 +51,9 @@ export function registerDefaultFluxRenderers(registry: FluxRendererRegistry): Fl
   // 3D 渲染族：注册同步、实现经 createLazyRendererComponent 落在 three-canvas
   // 异步 chunk——three.js 只在首个 three-canvas 节点渲染时加载，不进主 chunk
   registerThreeRenderers(registry);
+  // xlang 在线调试编辑器（plan 2474）：同型懒边界——definition 同步注册，
+  // codemirror/lezer 实现只在首个 'xlang-debug-editor' 节点渲染时加载
+  registerXlangDebugEditorRenderers(registry);
   return registry;
 }
 
