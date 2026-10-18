@@ -270,3 +270,78 @@ describe('owner registration containment contracts', () => {
     );
   });
 });
+
+// FM-010: the fifth and sixth ungated validation-convergence entries. The
+// change branch of applyChangesAndRevalidate awaited validateField bare, and
+// notifyFieldHidden's show branch fired revalidateSubtree fire-and-forget —
+// both reject the V18/M-09 seam contract when an async validator explodes.
+describe('FM-010 convergence entries', () => {
+  function makeSeamRuntime(reportFailure: ReturnType<typeof vi.fn>) {
+    return createManagedFormRuntime({
+      id: 'test-form',
+      initialValues: { email: 'a@example.com' },
+      parentScope: createScopeRef({
+        id: 'parent',
+        path: '$',
+        store: createScopeStore({ email: 'a@example.com' }),
+      }),
+      validation: makeFormModel({ email: makeNode('email', { required: true }) }),
+      validateRule: vi.fn().mockReturnValue(undefined),
+      executeValidationRule: vi.fn().mockResolvedValue(undefined),
+      reportDependentRevalidationFailure: reportFailure,
+    } as never);
+  }
+
+  it('contains a throwing change-branch validateField into the seam instead of rejecting applyChangesAndRevalidate', async () => {
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const reportFailure = vi.fn();
+    const runtime = makeSeamRuntime(reportFailure);
+    vi.spyOn(runtime, 'validateField').mockRejectedValue(new Error('field validator exploded'));
+
+    const result = await runtime.applyChangesAndRevalidate({
+      writes: { email: 'b@example.com' },
+      changedPaths: ['email'],
+      reason: 'change',
+    });
+
+    expect(reportFailure).toHaveBeenCalledWith('email', expect.any(Error));
+    expect(result.ok).toBe(false);
+    expect(result.errors).toContainEqual(
+      expect.objectContaining({
+        message: expect.stringContaining('internal error'),
+        sourceKind: 'form',
+      }),
+    );
+    consoleError.mockRestore();
+  });
+
+  it('still rethrows AbortError from the change-branch validateField', async () => {
+    const reportFailure = vi.fn();
+    const runtime = makeSeamRuntime(reportFailure);
+    vi.spyOn(runtime, 'validateField').mockRejectedValue(
+      Object.assign(new Error('aborted'), { name: 'AbortError' }),
+    );
+
+    await expect(
+      runtime.applyChangesAndRevalidate({
+        writes: { email: 'b@example.com' },
+        changedPaths: ['email'],
+        reason: 'change',
+      }),
+    ).rejects.toMatchObject({ name: 'AbortError' });
+    expect(reportFailure).not.toHaveBeenCalled();
+  });
+
+  it('routes notifyFieldHidden show-branch revalidation failures into the seam instead of an unhandled rejection', async () => {
+    const reportFailure = vi.fn();
+    const runtime = makeSeamRuntime(reportFailure);
+    vi.spyOn(runtime, 'validateSubtree').mockRejectedValue(new Error('subtree exploded'));
+
+    runtime.notifyFieldHidden('email', true);
+    runtime.notifyFieldHidden('email', false);
+
+    await vi.waitFor(() => {
+      expect(reportFailure).toHaveBeenCalledWith('email', expect.any(Error));
+    });
+  });
+});

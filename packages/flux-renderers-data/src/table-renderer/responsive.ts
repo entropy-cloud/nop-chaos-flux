@@ -27,36 +27,32 @@ export function resolveResponsiveBreakpoint(breakpoint: TableResponsiveConfig['b
 }
 
 export function splitResponsiveColumns(columns: TableColumnSchema[]) {
-  const leftFixedColumns = columns.filter((column) => column.fixed === 'left');
-  const rightFixedColumns = columns.filter((column) => column.fixed === 'right');
-  const nonFixedColumns = columns.filter(
+  // FM-024: identity keys must be computed in a single index space. The old
+  // two-pass version named unnamed fixed columns by their fixed-side subset
+  // index but matched them by full-array index, so any misalignment folded
+  // the fixed (operations) column into hiddenColumns — breaking the mobile
+  // "fixed column never hides" guarantee.
+  let leftIndex = 0;
+  let rightIndex = 0;
+  const keys = columns.map((column) => {
+    if (column.name) return column.name;
+    if (column.fixed === 'left') return `left-${leftIndex++}`;
+    if (column.fixed === 'right') return `right-${rightIndex++}`;
+    return '__primary__';
+  });
+
+  const primaryColumn = columns.find(
     (column) => column.fixed !== 'left' && column.fixed !== 'right',
   );
-  const primaryColumn = nonFixedColumns[0];
+
   const primaryColumnNames = new Set<string>();
-
-  leftFixedColumns.forEach((column, index) => {
-    primaryColumnNames.add(column.name ?? `left-${index}`);
+  columns.forEach((column, index) => {
+    if (column.fixed === 'left' || column.fixed === 'right' || column === primaryColumn) {
+      primaryColumnNames.add(keys[index]!);
+    }
   });
 
-  rightFixedColumns.forEach((column, index) => {
-    primaryColumnNames.add(column.name ?? `right-${index}`);
-  });
-
-  if (primaryColumn) {
-    primaryColumnNames.add(primaryColumn.name ?? '__primary__');
-  }
-
-  const primaryColumns = columns.filter((column, index) =>
-    primaryColumnNames.has(
-      column.name ??
-        (column.fixed === 'left'
-          ? `left-${index}`
-          : column.fixed === 'right'
-            ? `right-${index}`
-            : '__primary__'),
-    ),
-  );
+  const primaryColumns = columns.filter((_, index) => primaryColumnNames.has(keys[index]!));
   const hiddenColumns = columns.filter((column) => !primaryColumns.includes(column));
 
   return {

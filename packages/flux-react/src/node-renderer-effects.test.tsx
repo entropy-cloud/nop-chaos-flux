@@ -1,5 +1,5 @@
 import React from 'react';
-import { render } from '@testing-library/react';
+import { act, render } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import type { ActionSchema, NodeInstance, RendererHelpers } from '@nop-chaos/flux-core';
 import { useNodeLifecycleActions } from './node-renderer-effects.js';
@@ -19,7 +19,7 @@ function LifecycleProbe(props: {
 }
 
 describe('useNodeLifecycleActions', () => {
-  it('dispatches mount once per node instance and uses latest refs on unmount', () => {
+  it('dispatches mount once per node instance and uses latest refs on unmount', async () => {
     const mountAction = { actionType: 'custom', action: 'mount-a' } as unknown as ActionSchema;
     const unmountActionA = { actionType: 'custom', action: 'unmount-a' } as unknown as ActionSchema;
     const unmountActionB = { actionType: 'custom', action: 'unmount-b' } as unknown as ActionSchema;
@@ -52,6 +52,10 @@ describe('useNodeLifecycleActions', () => {
     expect(dispatchB).toHaveBeenCalledTimes(0);
 
     rendered.unmount();
+
+    // FM-028 F5: the unmount dispatch is deferred to a microtask so the
+    // StrictMode simulation can be distinguished from a real unmount.
+    await act(async () => {});
 
     expect(dispatchB).toHaveBeenCalledTimes(1);
     expect(dispatchB).toHaveBeenCalledWith(unmountActionB, { nodeInstance });

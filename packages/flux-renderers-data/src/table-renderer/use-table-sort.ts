@@ -5,6 +5,11 @@ import type { TableSchema } from '../schemas.js';
 import { createTableEventContext } from './table-event-context.js';
 import type { MultiSortState, SortEntry, SortState } from './types.js';
 
+function isDevRuntime() {
+  const importMeta = import.meta as ImportMeta & { env?: { DEV?: boolean } };
+  return importMeta.env?.DEV === true;
+}
+
 function toSortDirection(value: unknown): SortState['direction'] {
   return value === 'asc' || value === 'desc' ? value : null;
 }
@@ -85,6 +90,19 @@ export function useTableSort(
   const sortOwnership = schemaProps.sortOwnership ?? 'local';
   const sortStatePath =
     typeof schemaProps.sortStatePath === 'string' ? schemaProps.sortStatePath : undefined;
+
+  // FM-016 (RM-11, mirrors use-column-resize): scope ownership without a
+  // statePath degrades to local with a dev warning (per-render, same shape as
+  // the use-column-resize precedent) — the old code fell between the scope
+  // and local write branches, so sorting was a fully silent no-op under this
+  // misconfiguration.
+  if (sortOwnership === 'scope' && !sortStatePath && isDevRuntime()) {
+    console.warn(
+      '[TableRenderer] sortOwnership: "scope" requires sortStatePath; falling back to local sort state.',
+    );
+  }
+  const effectiveSortOwnership =
+    sortOwnership === 'scope' && !sortStatePath ? 'local' : sortOwnership;
   const multiSortEnabled = schemaProps.multiSort === true;
 
   const [localSingleSort, setLocalSingleSort] = useState<SortState>({ column: '', direction: null });
@@ -115,7 +133,7 @@ export function useTableSort(
     [controlledSortInput.sort, controlledSortInput.sortEntries, controlledSingleSort, multiSortEnabled],
   );
 
-  const scopeSortActive = sortOwnership === 'scope' && !!sortStatePath;
+  const scopeSortActive = effectiveSortOwnership === 'scope' && !!sortStatePath;
   const scopeSingleSort = useOwnershipScopeValue<SortState | undefined>(
     scopeSortActive && !multiSortEnabled ? 'scope' : 'local',
     sortStatePath,
@@ -138,7 +156,7 @@ export function useTableSort(
 
   const sortEntries = useMemo<MultiSortState>(() => {
     if (isMultiMode) {
-      if (sortOwnership === 'controlled') {
+      if (effectiveSortOwnership === 'controlled') {
         if (multiSortEnabled && controlledMultiEntries.length === 0) {
           const importMeta = import.meta as ImportMeta & { env?: { DEV?: boolean } };
           if (importMeta.env?.DEV === true) {
@@ -149,10 +167,10 @@ export function useTableSort(
         }
         return controlledMultiEntries;
       }
-      if (sortOwnership === 'scope') return scopeMultiEntries ?? [];
+      if (effectiveSortOwnership === 'scope') return scopeMultiEntries ?? [];
       return localMultiEntries;
     }
-    return singleToEntries(sortOwnership === 'controlled' ? controlledSingleSort : sortOwnership === 'scope' ? (scopeSingleSort ?? { column: '', direction: null }) : localSingleSort);
+    return singleToEntries(effectiveSortOwnership === 'controlled' ? controlledSingleSort : effectiveSortOwnership === 'scope' ? (scopeSingleSort ?? { column: '', direction: null }) : localSingleSort);
   }, [
     controlledMultiEntries,
     controlledSingleSort,
@@ -162,13 +180,13 @@ export function useTableSort(
     multiSortEnabled,
     scopeMultiEntries,
     scopeSingleSort,
-    sortOwnership,
+    effectiveSortOwnership,
   ]);
 
   const sortState = useMemo<SortState>(() => {
     if (isMultiMode) {
-      if (sortOwnership === 'controlled') return controlledSingleSort;
-      if (sortOwnership === 'scope') {
+      if (effectiveSortOwnership === 'controlled') return controlledSingleSort;
+      if (effectiveSortOwnership === 'scope') {
         const entries = scopeMultiEntries ?? [];
         return entries.length === 0
           ? { column: '', direction: null }
@@ -176,8 +194,8 @@ export function useTableSort(
       }
       return entriesToSingle(localMultiEntries);
     }
-    if (sortOwnership === 'controlled') return controlledSingleSort;
-    if (sortOwnership === 'scope') return scopeSingleSort ?? { column: '', direction: null };
+    if (effectiveSortOwnership === 'controlled') return controlledSingleSort;
+    if (effectiveSortOwnership === 'scope') return scopeSingleSort ?? { column: '', direction: null };
     return localSingleSort;
   }, [
     controlledSingleSort,
@@ -186,7 +204,7 @@ export function useTableSort(
     localSingleSort,
     scopeMultiEntries,
     scopeSingleSort,
-    sortOwnership,
+    effectiveSortOwnership,
   ]);
 
   const handleSort = useCallback(
@@ -223,9 +241,9 @@ export function useTableSort(
         }
 
         startTransition(() => {
-          if (sortOwnership === 'scope' && sortStatePath) {
+          if (effectiveSortOwnership === 'scope' && sortStatePath) {
             renderScope.update(sortStatePath, nextEntries);
-          } else if (sortOwnership === 'local') {
+          } else if (effectiveSortOwnership === 'local') {
             setLocalMultiEntries(nextEntries);
             setLocalMultiActive(true);
             const primary = nextEntries[0];
@@ -270,9 +288,9 @@ export function useTableSort(
       const newState = { column: columnName, direction: newDirection } satisfies SortState;
 
       startTransition(() => {
-        if (sortOwnership === 'scope' && sortStatePath) {
+        if (effectiveSortOwnership === 'scope' && sortStatePath) {
           renderScope.update(sortStatePath, newState);
-        } else if (sortOwnership === 'local') {
+        } else if (effectiveSortOwnership === 'local') {
           setLocalSingleSort(newState);
           setLocalMultiActive(false);
           setLocalMultiEntries([]);
@@ -294,7 +312,7 @@ export function useTableSort(
         }),
       );
     },
-    [columns, multiSortEnabled, onSortChange, renderScope, sortEntries, sortOwnership, sortState, sortStatePath],
+    [columns, multiSortEnabled, onSortChange, renderScope, sortEntries, effectiveSortOwnership, sortState, sortStatePath],
   );
 
   return { sortState, sortEntries, handleSort };

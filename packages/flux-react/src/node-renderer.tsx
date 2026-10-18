@@ -27,6 +27,7 @@ import {
 import { useRendererRuntimeContext } from './runtime-context-hooks.js';
 import { createNodeInstance, createTemplateNodeRuntimeState } from './node-instance.js';
 import { useNodeScopes } from './use-node-scopes.js';
+import { useDeferredDispose } from './use-deferred-dispose.js';
 import { NodeRendererResolved } from './node-renderer-resolved.js';
 
 export { resolveFrameWrapMode } from './node-renderer-utils.js';
@@ -198,30 +199,19 @@ export const NodeRenderer = memo(function NodeRenderer(props: {
     },
     [runtime, props.scope, importBindings, props.node.id],
   );
-  const importBindingsScopeRef = useRef<ScopeRef | undefined>(undefined);
-  useLayoutEffect(() => {
-    const previousImportBindingsScope = importBindingsScopeRef.current;
-    const nextImportBindingsScope = renderScope === props.scope ? undefined : renderScope;
-
-    importBindingsScopeRef.current = nextImportBindingsScope;
-
-    if (
-      previousImportBindingsScope &&
-      previousImportBindingsScope !== nextImportBindingsScope
-    ) {
-      runtime.disposeScope(previousImportBindingsScope.id);
-    }
-
-    return () => {
-      if (importBindingsScopeRef.current === nextImportBindingsScope) {
-        importBindingsScopeRef.current = undefined;
-      }
-
-      if (nextImportBindingsScope) {
-        runtime.disposeScope(nextImportBindingsScope.id);
-      }
-    };
-  }, [runtime, renderScope, props.scope]);
+  // FM-028 F4: the owned import-bindings child scope is disposed through the
+  // shared deferred-dispose contract (liveness-checked, StrictMode-safe)
+  // instead of a bare runtime.disposeScope in the layout-effect cleanup — the
+  // bare form disposed the live scope whenever the effect's cleanup ran
+  // without a real unmount following it.
+  const ownedImportBindingsScope =
+    renderScope === props.scope ? undefined : (renderScope as ScopeRef);
+  useDeferredDispose({
+    value: ownedImportBindingsScope,
+    dispose: (disposedScope) => {
+      runtime.disposeScope(disposedScope.id);
+    },
+  });
 
   if (nodeImports?.length && !importFrame) {
     return null;

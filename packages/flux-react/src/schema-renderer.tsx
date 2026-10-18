@@ -308,8 +308,13 @@ export function createSchemaRenderer(registryDefinitions: RegisteredRendererDefi
       if (creationErrorRef.current || !runtime || !page) {
         return;
       }
+      // FM-028 F3: setEnv is a ref swap (runtime env consumers read lazily at
+      // dispatch/action time), and page.refresh() only bumps the page store's
+      // refreshTick — a counter with zero subscribers whose store fan-out is
+      // gated off by the unchanged-data check. The bump per host render was
+      // the entire inline-env cost; removal changes no observable behavior,
+      // while keeping props.env in deps preserves real env replacement.
       runtime.setEnv(props.env);
-      page.refresh();
     }, [page, props.env, runtime]);
 
     useDeferredDispose({

@@ -4,13 +4,18 @@ import type { ScopeSnapshot } from './types/node-identity.js';
 /**
  * Checks if an error is an AbortError (from AbortController.abort() or similar).
  * This is the single canonical implementation - all packages should import from here.
+ * Walks the `cause` chain (bounded depth): metadata wrappers re-wrap thrown errors
+ * as `new Error(message, {cause})`, which must not strip abort identity.
  */
 export function isAbortError(
   error: unknown,
+  depth = 0,
 ): error is DOMException | { name?: string; code?: string } {
   if (error == null || typeof error !== 'object') return false;
-  const e = error as { name?: string; code?: string };
-  return e.name === 'AbortError' || e.code === 'ABORT_ERR';
+  const e = error as { name?: string; code?: string; cause?: unknown };
+  if (e.name === 'AbortError' || e.code === 'ABORT_ERR') return true;
+  if (depth < 4) return isAbortError(e.cause, depth + 1);
+  return false;
 }
 
 /**

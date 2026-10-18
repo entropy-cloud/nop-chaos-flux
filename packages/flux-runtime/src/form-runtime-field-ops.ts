@@ -5,6 +5,7 @@ import type {
   RuntimeFieldRegistration,
 } from '@nop-chaos/flux-core';
 import { getCompiledValidationField, setIn } from '@nop-chaos/flux-core';
+import { isAbortError } from './error-utils.js';
 import { patchFieldStateInMap } from './form-field-state-patch.js';
 import { findRuntimeRegistration } from './form-runtime-registration.js';
 import type { ManagedFormRuntimeSharedState } from './form-runtime-types.js';
@@ -426,7 +427,24 @@ export function notifyFieldHidden(
     }
   } else {
     sharedState.hiddenFields.delete(path);
-    void revalidateSubtree?.(path, 'system');
+    // FM-010: the sixth convergence entry. This fire-and-forget revalidation
+    // used to surface a throwing validator as an unhandled rejection. Route
+    // it through the same owner diagnostics seam as the other entries;
+    // AbortError is an intentional supersede, not a failure to report.
+    void revalidateSubtree?.(path, 'system')?.catch((error: unknown) => {
+      if (isAbortError(error)) {
+        return;
+      }
+      const reportFailure =
+        sharedState.inputValue.reportDependentRevalidationFailure ??
+        ((reportedPath: string, reportedError: unknown) => {
+          console.error(
+            `[form-runtime] dependent revalidation failed for "${reportedPath}"`,
+            reportedError instanceof Error ? reportedError.cause ?? reportedError : reportedError,
+          );
+        });
+      reportFailure(path, error);
+    });
   }
 }
 

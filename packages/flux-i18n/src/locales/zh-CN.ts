@@ -48,6 +48,7 @@ export const zhCN: Resource = {
       queryFailed: '查询失败',
       queryFailedDetail: '查询失败：{{message}}',
       saveFailedDetail: '保存失败：{{message}}',
+      surfaceHookFailed: '浮层 {{hookName}} 钩子执行失败：{{message}}',
       saving: '保存中...',
       unsaved: '未保存',
       retry: '重试',

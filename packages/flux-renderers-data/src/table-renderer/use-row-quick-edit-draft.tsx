@@ -165,6 +165,10 @@ export function useRowQuickEditDraft(input: UseRowQuickEditDraftInput): RowQuick
     draftRecordRef.current = { ...record };
     savedRecordRef.current = { ...record };
     draftScopeStore.publish(['$slot.record']);
+    // FM-020: an external record refresh (save round-trip) rewrites both refs;
+    // without a version bump the isRowDirty memo stays at its pre-refresh
+    // value and the save button stays lit for an already-clean row.
+    setDraftVersion((v) => v + 1);
   }, [draftScopeStore, record]);
 
   const getFieldValue = useCallback((field: string): string => {

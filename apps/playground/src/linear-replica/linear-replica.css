@@ -1054,7 +1054,13 @@
 }
 
 .ln-root label,
-.ln-dialog label {
+.ln-dialog label,
+/* FM-031: form field labels render as span[data-slot='field-label'] (not a
+   label element), so the selector above missed them — under a light host the
+   theme-reactive foreground landed on the fixed dark canvas at 1.00:1. Scope
+   the fixed token to the slot marker to match the plain-label precedent. */
+.ln-root [data-slot='field-label'],
+.ln-dialog [data-slot='field-label'] {
   color: var(--ln-text-3);
 }
 

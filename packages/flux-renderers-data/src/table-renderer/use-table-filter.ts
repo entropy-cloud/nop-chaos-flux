@@ -5,6 +5,11 @@ import type { TableSchema } from '../schemas.js';
 import { createTableEventContext } from './table-event-context.js';
 import type { FilterState } from './types.js';
 
+function isDevRuntime() {
+  const importMeta = import.meta as ImportMeta & { env?: { DEV?: boolean } };
+  return importMeta.env?.DEV === true;
+}
+
 export function useTableFilter(
   schemaProps: TableSchema,
   onFilterChange: RendererComponentProps<TableSchema>['events']['onFilterChange'],
@@ -14,6 +19,20 @@ export function useTableFilter(
   const filterOwnership = schemaProps.filterOwnership ?? 'local';
   const filterStatePath =
     typeof schemaProps.filterStatePath === 'string' ? schemaProps.filterStatePath : undefined;
+
+  // FM-016 (RM-11, mirrors use-column-resize): scope ownership without a
+  // statePath degrades to local with a dev warning (per-render, same shape as
+  // the use-column-resize precedent) — the old code read the scope branch
+  // while committing local, so filters were a fully silent no-op under this
+  // misconfiguration.
+  if (filterOwnership === 'scope' && !filterStatePath && isDevRuntime()) {
+    console.warn(
+      '[TableRenderer] filterOwnership: "scope" requires filterStatePath; falling back to local filter state.',
+    );
+  }
+  const effectiveFilterOwnership =
+    filterOwnership === 'scope' && !filterStatePath ? 'local' : filterOwnership;
+
   const [localFilterState, setLocalFilterState] = useState<FilterState>({});
 
   const toFilterState = useCallback((value: unknown): FilterState => {
@@ -36,7 +55,7 @@ export function useTableFilter(
   );
 
   const scopeFilterState = useOwnershipScopeValue<FilterState | undefined>(
-    filterOwnership === 'scope' && filterStatePath ? 'scope' : 'local',
+    effectiveFilterOwnership === 'scope' && filterStatePath ? 'scope' : 'local',
     filterStatePath,
     {
       select: (scopeData) => toFilterState(getIn(scopeData, filterStatePath as string)),
@@ -62,12 +81,12 @@ export function useTableFilter(
 
   const filterState = useMemo(
     () =>
-      filterOwnership === 'controlled'
+      effectiveFilterOwnership === 'controlled'
         ? controlledFilterState
-        : filterOwnership === 'scope'
+        : effectiveFilterOwnership === 'scope'
           ? (scopeFilterState ?? {})
           : localFilterState,
-    [controlledFilterState, filterOwnership, localFilterState, scopeFilterState],
+    [controlledFilterState, effectiveFilterOwnership, localFilterState, scopeFilterState],
   );
 
   // Shared commit pipeline (cq-3 Phase 4): scope/local write + event dispatch +
@@ -85,7 +104,7 @@ export function useTableFilter(
       },
     ) => {
       startTransition(() => {
-        if (filterOwnership === 'scope' && filterStatePath) {
+        if (effectiveFilterOwnership === 'scope' && filterStatePath) {
           renderScope.update(
             filterStatePath,
             Object.fromEntries(
@@ -109,7 +128,7 @@ export function useTableFilter(
       );
       onFilterStateChange?.(newFilters);
     },
-    [filterOwnership, filterStatePath, onFilterChange, onFilterStateChange, renderScope],
+    [effectiveFilterOwnership, filterStatePath, onFilterChange, onFilterStateChange, renderScope],
   );
 
   const handleFilter = useCallback(

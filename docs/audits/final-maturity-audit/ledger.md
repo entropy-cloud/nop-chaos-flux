@@ -1,6 +1,6 @@
 # 最终成熟度审计台账（Findings Ledger）
 
-> Last Updated: 2026-10-18（FM-1b 批次登记）
+> Last Updated: 2026-10-18（FM-6 首批消化登记）
 > 状态机与对账口径见 `README.md`。
 
 ## Findings
@@ -21,17 +21,17 @@
 
 | FM-008 | FM-2 | 主报告 P1-1（render-nodes.tsx 编译缓存） | 模块级编译缓存键缺 runtime 身份——跨 registry 复用同一 schema 对象时 providerPlan 策略布尔可能跨 runtime 套用；组件身份半边经实验不可复现（渲染期 context 解析） | fixed→verified | — | 二级 WeakMap（input→runtime→entry）构造性消除 hazard class；回归守卫 `schema-renderer-compile-cache.test.tsx`（双 registry 渲染分离）+ flux-react 621/621；判别实证披露见报告 P1 节 |
 | FM-009 | FM-2 | 主报告 P1-2（form-runtime-owner.ts validateRegisteredChildren） | 第四条 dependent-validation 入口裸抛，击穿 V18/M-09 收敛契约——validator 抛错直接 reject validateForm/applyChangesAndRevalidate | fixed→verified | — | 套用 validateFormPath 同款收口（AbortError 透传 + 诊断缝 + form-level error）；判别红→绿 `owner-registration-contracts.test.ts`（旧实现 reject 必挂）；flux-runtime 1543/1543 |
-| FM-010 | FM-2 | adversarial Finding A | 收敛契约仍有第五/第六条未收口入口（applyChangesAndRevalidate change 分支裸 validateField、validateSubtree 族裸 validatePath + `void revalidateSubtree` fire-and-forget 成 unhandled rejection） | found | local → FM-6 候选 | P3；FM-2 当批仅修 P0/P1（plan Phase 4 边界）；与 FM-009 同族，建议 FM-6 首批与 P1-2 修法一并收口 |
-| FM-011 | FM-2 | adversarial Finding C（action-runners.ts:28-43） | attachThrownMetadata 包装丢 name/code，AbortError 降级为 failure——有意取消触发诊断噪音 + 错误 toast | found | local → FM-6 候选 | P2；isAbortError 只看顶层 name/code 不走 cause 链 |
-| FM-012 | FM-2 | adversarial Finding D（action-execution.ts:248-253） | 并行聚合丢弃 cancelled/timedOut 旗标——全取消批次被判纯 failure，H35 取消类区分在聚合边界失效 | found | local → FM-6 候选 | P2；聚合不在 caughtFailureResults → reportUnhandledFailureClass 无条件 notify；无取消传播测试 |
+| FM-010 | FM-2 | adversarial Finding A | 收敛契约仍有第五/第六条未收口入口（applyChangesAndRevalidate change 分支裸 validateField、validateSubtree 族裸 validatePath + `void revalidateSubtree` fire-and-forget 成 unhandled rejection） | fixed→verified | — | P3；FM-2 当批仅修 P0/P1（plan Phase 4 边界）；与 FM-009 同族，建议 FM-6 首批与 P1-2 修法一并收口 |
+| FM-011 | FM-2 | adversarial Finding C（action-runners.ts:28-43） | attachThrownMetadata 包装丢 name/code，AbortError 降级为 failure——有意取消触发诊断噪音 + 错误 toast | fixed→verified | — | P2；isAbortError 只看顶层 name/code 不走 cause 链 |
+| FM-012 | FM-2 | adversarial Finding D（action-execution.ts:248-253） | 并行聚合丢弃 cancelled/timedOut 旗标——全取消批次被判纯 failure，H35 取消类区分在聚合边界失效 | fixed→verified | — | P2；聚合不在 caughtFailureResults → reportUnhandledFailureClass 无条件 notify；无取消传播测试 |
 | FM-013 | FM-2 | 主报告 P2-1（flux-runtime 死遥测接线四处） | createDependentRevalidationFailureHandler onError 全仓无人传、reportImportFailure 五参数全忽略、reportRuntimeHostIssue 死字段、ErrorMonitorPayload 死类型 | found | watch-only（628 §D 同族） | P2；与 628 错误处理缺口同族无主实例，628 评审可并入；Why Not Blocking：诊断通道缺损失真属 628 已登记的错误处理族 |
 | FM-014 | FM-2 | 主报告 P2-2（form-runtime.ts setValues 顶层 catch） | setValues 失败仅 console.error 无 notify/monitor，违背 M-09 口径 | found | watch-only（628 §D 同族） | P2；同 FM-013 归属；form-runtime.ts:593-595 |
 | FM-015 | FM-2 | 主报告 P2-3 + adversarial Spot 1 | render-nodes fragment-scope 版本状态机为渲染桥接最脆弱热点（两 state + 四 ref + 微任务延迟处置） | verified | watch-only（热点观察） | adversarial 五类攻击序列（StrictMode 双调/微任务交错/卸载竞态/useId 重挂等）全部收敛——查证过无问题；必要复杂度，维持现状 |
-| FM-016 | FM-2 | 渲染器分片 P2-1（use-table-filter/sort ownership） | 读侧仅判 ownership==='scope'（无 path 永远空读）、写侧要求 &&statePath——未走 resolveOwnershipMode 的降级+dev warn RM-11 标准，误配零告警 | found | local → FM-6 候选 | P2；RM-11（plan 613）已把同族语义定性为 silent no-op 缺陷并修复，修复方向已获背书 |
-| FM-017 | FM-2 | 渲染器分片 P2-2（form.tsx surface triggerHook） | triggerHook 失败仅 console.warn，无 notify/monitor 通道 | found | local → FM-6 候选 | P2；不在 628 §D 五缺口名单内，同族无主实例 |
+| FM-016 | FM-2 | 渲染器分片 P2-1（use-table-filter/sort ownership） | 读侧仅判 ownership==='scope'（无 path 永远空读）、写侧要求 &&statePath——未走 resolveOwnershipMode 的降级+dev warn RM-11 标准，误配零告警 | fixed→verified | — | P2；RM-11（plan 613）已把同族语义定性为 silent no-op 缺陷并修复，修复方向已获背书 |
+| FM-017 | FM-2 | 渲染器分片 P2-2（form.tsx surface triggerHook） | triggerHook 失败仅 console.warn，无 notify/monitor 通道 | fixed→verified | — | P2；不在 628 §D 五缺口名单内，同族无主实例 |
 | FM-018 | FM-2 | 渲染器分片 P2-3（renderer-core.ts:91 RendererRenderOutput=unknown） | 渲染输出类型 unknown 迫使每个渲染器自铸 asReactNode 洗型 shim——全仓业务源码 32 处手写副本且形态已漂移 | found | systemic → FM-7 候选 | P2；契约层缺口（收窄返回类型或提供官方洗型 helper），跨包系统性 |
 | FM-019 | FM-2 | adversarial Finding B | 编译缓存单槽位：同一 schema 对象在多个 compileOptions 间轮换（tab 往返）100% 失效重编译 | found | watch-only / optimization candidate | P3；plan 628 的跨实例缓存设计（input→runtime 二级键）不解决此形态，可在 628 缓存实现时一并评估多槽位 |
-| FM-020 | FM-2 | adversarial Finding E（use-row-quick-edit-draft） | 重置 effect 漏 setDraftVersion bump——外部刷新后 isRowDirty 惰性缓存卡 true，保存钮误亮并发起多余真实保存 | found | local → FM-6 候选 | P3；与 controller 版本重置路径不对称 |
+| FM-020 | FM-2 | adversarial Finding E（use-row-quick-edit-draft） | 重置 effect 漏 setDraftVersion bump——外部刷新后 isRowDirty 惰性缓存卡 true，保存钮误亮并发起多余真实保存 | fixed→verified | — | P3；与 controller 版本重置路径不对称 |
 | FM-021 | FM-2 | 主报告 P3 批（核心 5 + 渲染器 9 + adversarial 3 中除 FM-010/019/020 外的局部项） | 局部重复实现（checkbox 保存管线 ~40 行分叉、draft-scope 孪生、warn-once 三套并存等）、死导出、死参数/死局部、form-rules 未知 rule 静默丢弃、capability `{} as never` 三处等局部组织问题 | found | local → FM-6 候选（批量） | P3 ×14；逐条六要素见报告 Findings 节；无行为风险，归 FM-6 首批裁定消化清单 |
 
 ## 批次覆盖记录（FM-2 追加）
@@ -40,7 +40,7 @@
 
 | FM-022 | FM-3 | 探索测试 B-GAP1（P1，owner doc form-validation.md C10） | 排除集非空时 `clearValueWhenHidden` 豁免键被 submit payload 投影过滤器静默丢弃（key remains 契约违背）——隐私/数据完整性面 | fixed→verified | — | P1 修复同批（computePreservedHiddenPaths 豁免保留集）；判别测试 `form-runtime-submit-hidden-projection.test.ts`（修复前 fail 实测）；flux-runtime 1549+1skip 绿；两条旧标题正名 |
 | FM-023 | FM-3 | 探索测试 GAP7（input-suggest.tsx:280） | IME 确认 Enter（isComposing/229）在高亮候选时误提交候选，静默覆盖组合文本——form.tsx 修复同族不对称 | found | watch-only（successor：form.tsx IME 同族修复扩展，并发会话领地） | P2；`it.skip` 立案留档（flux-renderers-form fm3-contract-probes）；plain-Enter 正向对照为活跃加固。Why Not Blocking：触发面窄（仅 IME 候选态）、同族修复在途、归并发领地 |
-| FM-024 | FM-3 | 探索测试 C-04（responsive.ts:38-59） | splitResponsiveColumns 无名 fixed 列退化命名在两个不一致索引空间计算——错位时 fixed 列被折叠进 hiddenColumns，破坏移动端操作列保证 | found | local → FM-6 候选 | P2；`it.skip` 立案留档（flux-renderers-data fm3-contract-probes）；2 例名列加固已入库 |
+| FM-024 | FM-3 | 探索测试 C-04（responsive.ts:38-59） | splitResponsiveColumns 无名 fixed 列退化命名在两个不一致索引空间计算——错位时 fixed 列被折叠进 hiddenColumns，破坏移动端操作列保证 | fixed→verified | — | P2；`it.skip` 立案留档（flux-renderers-data fm3-contract-probes）；2 例名列加固已入库 |
 | FM-025 | FM-3 | 差距清单未消化批（分片 A/B/C 合计 25 条中的非当批项） | 补测清单：A-G-A 取消通知（涉 FM-011/012）、A-G-B templateNodeId doc-测试方向性分叉（裁决项）、A-G-C scope 泄漏可观测性、B-GAP3/4/5 邻接面、C-02/05/06/07/08/09 及各 P3 | found | local → FM-6 候选（批量，test-gap 非 defect） | 逐条六要素见报告三分片；uncovered 口径：本行含 disposition 即已处置 |
 | FM-026 | FM-3 | e2e 探针 watch-only 注记 | ①分页默认语义（render-time 视图剪除）与 AMIS 单向清空的文档化分歧；②树懒加载"不重复请求"半边 harness 限制仅间接钉守 | found | watch-only | ①文档化分歧非缺陷，如需 AMIS 对齐属行为裁决项；②建议 lab fixture 增请求计数探针。Why Not Blocking：均非行为错误 |
 
@@ -49,7 +49,7 @@
 - **FM-3（2026-10-18，plan 644）**：新增 FM-022–FM-026 共 5 条（fixed→verified 1 / watch-only 2 / local→FM-6 候选 2 [FM-024 具名 + FM-025 批量 test-gap]）；探索测试新增 19 例单测（16 加固 + 1 修复回归 + 2 skip 立案）+ e2e 探针 6 例全绿入库。
 
 | FM-027 | FM-4 | react19 复查 F1（container-hooks.ts:15-81，修复后跨度） | useContainerDomRegistration cleanup 不失效 ref-triple 去重守卫——任意无关重渲染后容器从 registry 永久静默消失（container: 定向弹层回落默认容器） | fixed→verified | — | P1 修复同批（cleanup 内重置守卫，每渲染重注册语义与无依赖数组 effect 一致）；判别测试 `container-hooks-registration.test.tsx` 旧实现红（重渲染后注册丢失）→ 绿；unmount 反向用例同钉 |
-| FM-028 | FM-4 | react19 复查 F2–F5（P2 ×4） | F2 crud-renderer-load loadMore 单槽 resolver 并发孤儿化 promise→无限滚动永久失效（sentinel+retry 并发）；F3 schema-renderer import/setEnv effect 以整个 props.env 为依赖（内联 env 每渲染整树重挂）；F4 node-renderer import-bindings 裸 disposeScope 违反 useDeferredDispose 约定（StrictMode 自愈链路脆弱）；F5 onUnmount/onMount StrictMode 模拟卸载期真实派发 | found | local → FM-6 候选（4 条具名） | P2；逐条六要素见 `fm4-react19-review.md`；Why Not Blocking：触发面为并发/StrictMode/内联 env 等特定形态，无主路径行为错误 |
+| FM-028 | FM-4 | react19 复查 F2–F5（P2 ×4） | F2 crud-renderer-load loadMore 单槽 resolver 并发孤儿化 promise→无限滚动永久失效（sentinel+retry 并发）；F3 schema-renderer import/setEnv effect 以整个 props.env 为依赖（内联 env 每渲染整树重挂）；F4 node-renderer import-bindings 裸 disposeScope 违反 useDeferredDispose 约定（StrictMode 自愈链路脆弱）；F5 onUnmount/onMount StrictMode 模拟卸载期真实派发 | fixed→verified | — | P2；逐条六要素见 `fm4-react19-review.md`；Why Not Blocking：触发面为并发/StrictMode/内联 env 等特定形态，无主路径行为错误 |
 | FM-029 | FM-4 | audit:mutants bounded run | stryker 既有配置下 mutation score 1.63（coverage 映射趋零）——测量失真非保护力结论（validation 族在 flux-runtime 套件内有大量直接单测，FM-3 38 项已约束证据） | found | watch-only / optimization candidate | creditable mutation testing 需 stryker test-mapping 配置手术；successor：独立小批修配置后再评估。Why Not Blocking：工具测量失真，非产品缺陷 |
 | FM-030 | FM-4 | UR-8/9 抽样复核 + plan 636 治理漂移 | UR-8×4 + UR-9×3 抽样 7/7 无回退（迁移坐标全部核实）；治理发现：plan 636 收口提交 7bbeeb9f2 状态翻转漏落（文件留 active）——已按在案审计记录回填 completed | fixed→verified | — | 回填证据：7bbeeb9f2 在案 closure audit（R1→R2 approved）+ 本日 agent_15fc7ccd 独立复核 7/7；19-02/19-05 与 FM-011/012 互不重叠 |
 
@@ -57,7 +57,7 @@
 
 - **FM-4（2026-10-18，plan 645）**：新增 FM-027–FM-030 共 4 条（fixed→verified 2 / watch-only 1 / local→FM-6 候选 1 批 [FM-028 四条具名]）；7 非门禁扫描器 triage 零 P0/P1 新面；react-doctor 686 条启发式抽样零确认缺陷（参考线索存档）。
 
-| FM-031 | FM-5 | 走查分片 3（linear-settings） | light 宿主下复刻画布恒暗 × 字段标签主题响应式 token → 标签 1.00:1 不可读（dark 19.05:1 正常） | found | local → FM-6 候选 | P2；修复方向 = 画布本地固定色或 dark 作用域；同族对照（固定色标签 18.73:1）已探针坐实 |
+| FM-031 | FM-5 | 走查分片 3（linear-settings） | light 宿主下复刻画布恒暗 × 字段标签主题响应式 token → 标签 1.00:1 不可读（dark 19.05:1 正常） | fixed→verified | — | P2；修复方向 = 画布本地固定色或 dark 作用域；同族对照（固定色标签 18.73:1）已探针坐实 |
 | FM-032 | FM-5 | 走查分片 1（xlang-debug） | dark CodeMirror 无主题适配（亮灰行号槽嵌深色编辑器）+ 门控表单裸元素零样式（违反 @nop-chaos/ui 强制契约） | found | watch-only（xlang 并发会话领地，successor = 该工作流） | P1/P2；Why Not Blocking：xlang 域按并发领地排除（同 FM-023 口径） |
 | FM-033 | FM-5 | 走查分片 2（R2 在案复发） | 11 条 R2 在案 finding 复发维持（C3-02 版心收缩族 ×4、C4 窄视口族 ×5、dark 半适配族 ×2、E4-03 ×1）——非新回归 | found | local → FM-6 候选（维持 R2 原归族坐标） | 复检确认 + 10 项 R2 finding 确认已修复（正向销项在案） |
 | FM-034 | FM-5 | ux-design-pattern 叠加 | MEDIUM 5：linear-inbox 无空态、侧边栏 6 死导航项、状态徽标双机制、行删除三做法并存、collapse tone 色条宿主外不可见 | found | local → FM-6 候选 | 详见 `_tmp/fm5-ux-overlay.md` 附录 A 格式 |
@@ -67,7 +67,7 @@
 
 - **FM-5（2026-10-18，plan 646）**：新增 FM-031–FM-035 共 5 条（watch-only 2 / local→FM-6 候选 3）；**P0×1 + P1×3 当批修复即 verified**（bisheng-build 边路由崩溃——判别 3 用例红→绿直录本行；scada-gallery 对比度 1.48→15.74、linear-inbox 归档确认、antdpro-list 删除确认——schema/demo 修复即时 live 验证）；coverage 台账 129 walked（pending 8 新页）+ 149 controls 结构闭合；evidence cards 55 张落 `docs/analysis/fm5-render-recheck/cards/`。FM-5a successor：8 条改版页超上界顺延。
 
-| FM-036 | FM-1a | 走查 crud-views-export（A 类视图状态；第 2 坐标 master-detail） | 视图切换 Tab 激活后非活动 tabpanel 不隐藏——双视图纵向叠加 ≥2.6s 且 resize 不复原；候选根因 tabs keepMounted + TabsPanel mounted→hidden 翻转未完成 | found | local → FM-6 候选 | P2；修复需 tabs 隐藏语义修复 + 11 处 tabs 消费 schema 类扫描回归；复现序列见 `_tmp/fm1a-walk/crud-views-export.md` |
+| FM-036 | FM-1a | 走查 crud-views-export（A 类视图状态；第 2 坐标 master-detail） | 视图切换 Tab 激活后非活动 tabpanel 不隐藏——双视图纵向叠加 ≥2.6s 且 resize 不复原；候选根因 tabs keepMounted + TabsPanel mounted→hidden 翻转未完成 | fixed→verified | — | P2；修复需 tabs 隐藏语义修复 + 11 处 tabs 消费 schema 类扫描回归；复现序列见 `_tmp/fm1a-walk/crud-views-export.md` |
 | FM-037 | FM-1a | 走查 P3（行拖拽能力不可达） | 行拖拽机制（data-dragging opacity，plan 642 入库）数据域全部页面无 draggable:true 实例——能力不可达不可测 | found | local → FM-6 候选 | P3 design-debt；建议 lab 页补 draggable 实例 + e2e |
 
 ## 批次覆盖记录（FM-1a 追加）
@@ -75,10 +75,14 @@
 - **FM-1a（2026-10-18，plan 647）**：新增 FM-036/037 共 2 条（均 local→FM-6 候选）；**P0/P1 零新案**；13 页 × ≈60 序列真实驱动（PASS 9 / FAIL 1 / n-a 3）；在案注记 5 项（IS 坐标 ×4 + FM-026 复核成立）；FM-5 confirmText 修复三处 live 正向验证；IS ledger 相关页行已注记 FM-1a CRUD 矩阵维度覆盖。
 
 | FM-038 | FM-1b | 走查 gantt 收口裁决（roadmap 点名既有红；trusted 探针逐环） | gantt 条缘 resize 按压被悬停删除 X 吞掉（X 锚点=路径中顶点，20×20 矩形与 resize 区重叠 6×20px → 拖拽会话不启动 = 既有红根因）+ 同点 press-release 误删依赖连线（links 9→8 实测，B 遮挡×C 复合 P1） | fixed→verified | — | 事件层修复（`gantt-links.tsx` document 捕获 pointerdown 转发 bar + click 抑制，render 树 pristine 同形）；判别：`:131` 红→绿 + 新增 `:160` 回归钉 + 全文件 17/17（--retries=0，主会话独立复验）+ 邻域 17/17 + RTL 1/1；render 侧重定位方案经 9 变体二分证实被 playground react-compiler dev 变换破坏 onClick 派发（工具链披露，watch-note 在报告）；裁决全文 `_tmp/fm1b-gantt-adjudication.md` |
-| FM-039 | FM-1b | 走查 flow-designer（F-1） | palette 插入不入撤销历史：添加条件节点 6→7 后 undo disabled 恒定，点击无效；对照删除节点后撤销可用（6→7）——撤销 affordance 对插入失效 | found | local → FM-6 候选 | P2；C 类；候选根因 designer-command-adapter history 未覆盖 palette insert（未证实至行）；判别方向 insert→undo 节点数回落；新坐标 IS-flow-designer-008；复现读数 `_tmp/fm1b-walk/flow-designer.md` |
-| FM-040 | FM-1b | 走查 taskflow-designer（F-2） | 插入节点视口静默漂移：添加Script 7→8 后 vp translateY 93.53→111.11（+17.6px，非用户滚动/缩放意图）；对照 flow-designer 插入 vp 逐字节稳定——跨设计器不一致 | found | local → FM-6 候选 | P2；A 类 V2 违例；归属 playground taskflow-designer-lib/canvas 插入后 auto-pan（未证实至行）；判别：插入前后 vp transform 逐字节相等；新坐标 IS-taskflow-designer-008；读数 `_tmp/fm1b-walk/taskflow-designer.md` |
+| FM-039 | FM-1b | 走查 flow-designer（F-1） | palette 插入不入撤销历史：添加条件节点 6→7 后 undo disabled 恒定，点击无效；对照删除节点后撤销可用（6→7）——撤销 affordance 对插入失效 | found | watch-only（FM-6 首批改判：候选根因 designer-command-adapter history 缺口经单元探针证伪——addNode/insert 路径均 pushHistory 且 canUndo=true（fm39-insert-undo-probe 2 绿）；嫌疑收敛至页面层，归 FM-1b-b 复走，探针留作判别基线） | P2；C 类；候选根因 designer-command-adapter history 未覆盖 palette insert（未证实至行）；判别方向 insert→undo 节点数回落；新坐标 IS-flow-designer-008；复现读数 `_tmp/fm1b-walk/flow-designer.md` |
+| FM-040 | FM-1b | 走查 taskflow-designer（F-2） | 插入节点视口静默漂移：添加Script 7→8 后 vp translateY 93.53→111.11（+17.6px，非用户滚动/缩放意图）；对照 flow-designer 插入 vp 逐字节稳定——跨设计器不一致 | found | watch-only（FM-6 首批 time-box 读码未达行级：xyflow-canvas 视口面排除 init-fitView/受控 viewport/epsilon persist 门——嫌疑收敛至 xyflow 内部或 taskflow 页注入路径；升级调查项归 FM-1b-b/独立小批，判别方向不变） | P2；A 类 V2 违例；归属 playground taskflow-designer-lib/canvas 插入后 auto-pan（未证实至行）；判别：插入前后 vp transform 逐字节相等；新坐标 IS-taskflow-designer-008；读数 `_tmp/fm1b-walk/taskflow-designer.md` |
 | FM-041 | FM-1b | 走查 design-debt 候选 ×3 | ① flow-designer 族切换 fit 非确定（同族两次进入 scale 0.382 vs 0.468）；② ai-conversations 新建会话后视图不切换到新会话；③ gantt 删除 X 视觉仍压条缘（FM-038 事件层收口后观感残留，无错误行为） | found | watch-only（P3 观感债，FM-6 批次可顺带） | 逐条读数在对应 `_tmp/fm1b-walk/<page>.md`；Why Not Blocking：P3 观感候选，无行为/数据风险 |
 
 ## 批次覆盖记录（FM-1b 追加）
 
 - **FM-1b（2026-10-18，plan 648）**：新增 FM-038–FM-041 共 4 条（fixed→verified 1 / local→FM-6 候选 2 / watch-only 1 批 [FM-041 三条具名]）；**P1×1 当批修复即 verified**（gantt 既有红收口 = roadmap 点名交付）；11 域页 + 1 路由核验 × 35+ 序列（clean 5 / limited-clean 4 / finding 2）；IS 新坐标 2 条（IS-flow-designer-008 / IS-taskflow-designer-008）；字母批去向：mobile 族 + spreadsheet + dashboard-demo + three-gallery/scada-gallery 候选（预授权 FM-1b-b）+ xlang-debug 移交并发线。
+
+## 批次覆盖记录（FM-6 首批追加）
+
+- **FM-6（2026-10-18，plan 649）**：首批 12 行消化——fixed→verified 10 行（FM-010/011/012/016/017/020/024/028/031/036，15 处修复 12 张审计卡全数先红后绿或 skip 翻绿）；FM-039/040 按 Failure Paths 改判 watch-only（候选根因证伪 / time-box 未达行级，均升级调查去向披露，零静默降级）。uncovered = 0 维持。审计卡 `_tmp/fm6-cards/`（12 张）。FM-6-b 字母批承接 FM-021/025/033/034/037。

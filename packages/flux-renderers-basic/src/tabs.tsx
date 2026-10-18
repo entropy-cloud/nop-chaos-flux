@@ -458,6 +458,7 @@ export function TabsRenderer(props: RendererComponentProps<TabsSchema>) {
             key={value}
             value={value}
             keepMounted={keepMounted}
+            hidden={!isActive}
             data-slot="tabs-content"
             className={cn(schemaProps.contentClassName)}
           >

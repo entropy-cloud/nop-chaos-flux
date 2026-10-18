@@ -326,3 +326,49 @@ describe('basicRendererDefinitions tabs onChange type namespace + ctx (CX-10 / 0
     await waitFor(() => expect(urls).toContain('/type-tabs:change-value-second'));
   });
 });
+
+// FM-036: base-ui delays the `hidden` flip on kept-mounted inactive panels
+// until its animations-finished callback; a long/restarted animation on the
+// panel delays it indefinitely (crud-views-export double-view stacking,
+// FM-1a). The renderer must hide an inactive panel at render time.
+describe('tabs inactive panel immediate hidden (FM-036 regression)', () => {
+  afterEach(() => {
+    cleanup();
+    vi.restoreAllMocks();
+  });
+
+  it('sets hidden on the deactivated panel without waiting for animations', async () => {
+    const SchemaRenderer = createBasicSchemaRenderer();
+    render(
+      <SchemaRenderer
+        schemaUrl="test://basic/tabs-fm036-immediate-hidden"
+        schema={{
+          type: 'tabs',
+          value: 'first',
+          items: [
+            { key: 'first', title: 'First', body: { type: 'text', text: 'first-body' } },
+            { key: 'second', title: 'Second', body: { type: 'text', text: 'second-body' } },
+          ],
+        }}
+        env={env}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+
+    await waitFor(() => expect(screen.getByText('first-body')).toBeTruthy());
+    const firstPanel = screen.getByText('first-body').closest('[data-slot="tabs-content"]') as HTMLElement;
+    expect(firstPanel).toBeTruthy();
+    // Simulate a long-running CSS animation on the panel: base-ui's flip
+    // would never complete while this is pending.
+    Object.defineProperty(firstPanel, 'getAnimations', {
+      configurable: true,
+      value: () => [{ finished: new Promise<void>(() => {}) }],
+    });
+
+    fireEvent.click(screen.getByText('Second'));
+
+    await waitFor(() => expect(screen.getByText('second-body')).toBeTruthy());
+    expect(firstPanel.hasAttribute('hidden')).toBe(true);
+    expect(screen.getByText('first-body').closest('[data-slot="tabs-content"]')).toBe(firstPanel);
+  });
+});

@@ -47,6 +47,7 @@ export const enUS: Resource = {
       queryFailed: 'Query failed',
       queryFailedDetail: 'Query failed: {{message}}',
       saveFailedDetail: 'Save failed: {{message}}',
+      surfaceHookFailed: 'Surface {{hookName}} hook failed: {{message}}',
       saving: 'Saving...',
       unsaved: 'Unsaved',
       retry: 'Retry',

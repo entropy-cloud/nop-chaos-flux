@@ -136,11 +136,14 @@ export function useCrudLoadAction(args: {
   // strictly higher page number appends (accumulate); anything else (reload,
   // query change, server-correction) replaces the accumulated set.
   const lastSettledPageRef = useRef(0);
-  // Single-slot resolver armed by `loadMore()`: resolved with the settle
-  // result when the next load dispatch settles (or with a no-op result when
-  // the dispatch effect bails without dispatching), so the infinite hook can
-  // drive loading/error and the G5 concurrent guard from a real thenable.
-  const loadMoreResolveRef = useRef<((result: ActionResult) => void) | undefined>(undefined);
+  // Resolver slot armed by `loadMore()`: resolved with the settle result when
+  // the next load dispatch settles (or with a no-op result when the dispatch
+  // effect bails without dispatching), so the infinite hook can drive
+  // loading/error and the G5 concurrent guard from a real thenable.
+  // FM-028 F2: the slot is multi-valued — a second arm used to overwrite the
+  // single resolver, orphaning the first promise forever (sentinel+retry
+  // concurrency); unmount now settles leftovers instead of leaking them.
+  const loadMoreResolveRef = useRef<Set<(result: ActionResult) => void>>(new Set());
 
   // Per-instance child scope projection of the CRUD scope variables
   // (pagination/query/sort/filters/selection). The loadAction dispatches against
@@ -166,16 +169,18 @@ export function useCrudLoadAction(args: {
 
   const settleLoadMore = useCallback(
     (result: ActionResult) => {
-      const resolve = loadMoreResolveRef.current;
-      loadMoreResolveRef.current = undefined;
-      resolve?.(result);
+      const resolvers = loadMoreResolveRef.current;
+      loadMoreResolveRef.current = new Set();
+      for (const resolve of resolvers) {
+        resolve(result);
+      }
     },
     [],
   );
 
   const loadMore = useCallback(() => {
     const promise = new Promise<ActionResult>((resolve) => {
-      loadMoreResolveRef.current = resolve;
+      loadMoreResolveRef.current.add(resolve);
     });
     return promise;
   }, []);
@@ -433,8 +438,11 @@ export function useCrudLoadAction(args: {
         helpers.disposeScope(crudScopeRef.current.id);
         crudScopeRef.current = undefined;
       }
+      // FM-028 F2: an armed loadMore promise must not outlive the renderer —
+      // settle it so the infinite hook's await never hangs on unmount.
+      settleLoadMore({ ok: false, cancelled: true });
     };
-  }, [helpers]);
+  }, [helpers, settleLoadMore]);
 
   return useMemo(
     () => ({ rows, total, loading, loadState, error, reload, loadMore }),

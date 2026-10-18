@@ -31,6 +31,14 @@ function attachThrownMetadata(
 ): unknown {
   if (error instanceof Error) {
     const wrapped = new Error(error.message, { cause: error });
+    // Preserve error identity (FM-011): the wrapper must keep name/code so
+    // abort/timeouts stay classifiable downstream (isAbortError also walks
+    // the cause chain, but diagnostics read the top-level fields).
+    wrapped.name = error.name;
+    const coded = error as Error & { code?: unknown };
+    if (coded.code != null) {
+      (wrapped as Error & { code?: unknown }).code = coded.code;
+    }
     return Object.assign(wrapped, metadata);
   }
   if (error && typeof error === 'object') {

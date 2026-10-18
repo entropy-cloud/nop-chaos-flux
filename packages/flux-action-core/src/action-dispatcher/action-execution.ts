@@ -245,12 +245,29 @@ async function runParallelActions(
   const representativeError =
     representativeFailure ? createParallelFailureError(representativeFailure) : undefined;
 
-  return {
+  const aggregate: ActionResult = {
     ok: results.every((result) => !isFailureClass(result)),
     data: results,
     results,
     error: representativeError,
   };
+
+  // FM-012: preserve cancellation identity across the aggregate boundary. When
+  // no child failed outright, the batch terminated through cancel/timeout paths
+  // and the aggregate must carry those flags — otherwise an all-cancelled batch
+  // is indistinguishable from a real failure downstream (H35 keeps it
+  // failure-class either way, so cleanup hooks are unaffected). A batch with a
+  // genuine failure keeps pure failure classification.
+  if (!results.some((result) => classifyActionResult(result) === 'failure')) {
+    if (results.some((result) => result.cancelled)) {
+      aggregate.cancelled = true;
+    }
+    if (results.some((result) => result.timedOut)) {
+      aggregate.timedOut = true;
+    }
+  }
+
+  return aggregate;
 }
 
 async function runSingleAction(

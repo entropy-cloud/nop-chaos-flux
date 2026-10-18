@@ -88,8 +88,8 @@
       "tasks": [
         {
           "id": "T4.1",
-          "name": "FM-6 局部缺陷消化首批族（后续字母批次预授权滚动）",
-          "status": "todo",
+          "name": "FM-6 局部缺陷消化首批族（后续字母批次预授权滚动；首批收口注记：10 行 fixed→verified + FM-039/040 watch-only 改判，FM-6-b 滚动承接）",
+          "status": "done",
           "assignee": "unassigned"
         },
         {

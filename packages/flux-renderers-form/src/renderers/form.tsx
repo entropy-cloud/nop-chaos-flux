@@ -232,7 +232,19 @@ export function FormRenderer(props: RendererComponentProps<FormSchema>) {
         hookName,
       });
       if (!hookResult?.ok) {
+        // FM-017: the hook failure previously had no channel beyond this dev
+        // warn — surface it through env.notify (submit itself already
+        // succeeded, so this is a side-effect warning, not an error toast).
+        // The dev warn carries the full error object; the toast carries the
+        // stringified detail (raw .message stays on the console channel).
         console.warn('[form] surface submit hook failed:', hookResult?.error ?? hookResult);
+        runtime.env.notify?.(
+          'warning',
+          t('flux.common.surfaceHookFailed', {
+            hookName,
+            message: String(hookResult?.error ?? 'unknown'),
+          }),
+        );
       }
     };
 
@@ -331,6 +343,7 @@ export function FormRenderer(props: RendererComponentProps<FormSchema>) {
     validateErrorAction,
     currentSurfaceRuntime,
     currentComponentRegistry,
+    runtime.env,
     props.props,
   ]);
 

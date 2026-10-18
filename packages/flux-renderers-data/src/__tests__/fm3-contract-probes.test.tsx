@@ -256,11 +256,9 @@ describe('FM-3 C-04 splitResponsiveColumns fixed-column invariant', () => {
     expect(hiddenColumns.some((column) => column.fixed === 'left' || column.fixed === 'right')).toBe(false);
   });
 
-  // FM-3 探洞立案：P2 splitResponsiveColumns 无名 fixed 列退化命名在两个索引空间
-  // 计算（fixed 侧子集 index vs 全列数组 index），错位时 fixed 列被错误折叠进
-  // hiddenColumns，移动端"操作列不消失"保证被破坏。见
-  // packages/flux-renderers-data/src/table-renderer/responsive.ts:38-59。
-  it.skip('an unnamed fixed column NOT aligned with its fixed-side index must still stay in primary', () => {
+  // FM-3 探洞立案 → FM-6 修复翻绿（plan 649）：双索引空间已合一
+  // （responsive.ts 单趟 key 推导），无名 fixed 列不再错位折叠。
+  it('an unnamed fixed column NOT aligned with its fixed-side index must still stay in primary', () => {
     // Left variant: fixed-left preceded by a non-fixed column.
     const leftVariant = [
       { name: 'a', label: 'A' },

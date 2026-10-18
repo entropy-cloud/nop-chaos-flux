@@ -1,6 +1,6 @@
 import React from 'react';
 import { act, render } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   createHelpers,
   ExpandProbe,
@@ -304,5 +304,89 @@ describe('useTableExpand', () => {
       api.handleToggleExpand('r1');
     });
     expect(Array.from(api.expandedRowKeys)).toEqual(['r2']);
+  });
+});
+
+// FM-016: scope ownership without a statePath must degrade to local with a dev
+// warning (RM-11 standard, mirrors use-column-resize). The old code read the
+// scope branch while writing local — filter went silent-no-op and sort wrote
+// to neither channel.
+describe('FM-016 scope-without-statePath degradation', () => {
+  beforeEach(() => {
+    resetTableControlTestState();
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('degrades misconfigured filter ownership to local and warns', () => {
+    let api: any;
+
+    render(
+      <FilterProbe
+        schemaProps={{ filterOwnership: 'scope' }}
+        helpers={createHelpers()}
+        onReady={(value) => {
+          api = value;
+        }}
+      />,
+    );
+
+    act(() => {
+      api.handleSearch('name', 'foo');
+    });
+
+    expect(api.filterState.name?.keyword).toBe('foo');
+    expect(console.warn).toHaveBeenCalledWith(
+      expect.stringContaining('filterStatePath'),
+    );
+    expect(renderScopeUpdate).not.toHaveBeenCalled();
+  });
+
+  it('degrades misconfigured sort ownership to local and warns', () => {
+    let api: any;
+
+    render(
+      <SortProbe
+        schemaProps={{ sortOwnership: 'scope' }}
+        onSortChange={vi.fn()}
+        columns={[{ name: 'name', sortable: true }]}
+        helpers={createHelpers()}
+        onReady={(value) => {
+          api = value;
+        }}
+      />,
+    );
+
+    act(() => {
+      api.handleSort('name');
+    });
+
+    expect(api.sortState.column).toBe('name');
+    expect(api.sortState.direction).toBe('asc');
+    expect(console.warn).toHaveBeenCalledWith(
+      expect.stringContaining('sortStatePath'),
+    );
+    expect(renderScopeUpdate).not.toHaveBeenCalled();
+  });
+
+  it('keeps properly configured scope ownership on the scope channel', () => {
+    mockScopeState.data = { tableFilters: { name: { filters: ['x'], keyword: 'k' } } };
+    let api: any;
+
+    render(
+      <FilterProbe
+        schemaProps={{ filterOwnership: 'scope', filterStatePath: 'tableFilters' }}
+        helpers={createHelpers()}
+        onReady={(value) => {
+          api = value;
+        }}
+      />,
+    );
+
+    expect(api.filterState.name?.keyword).toBe('k');
+    expect(console.warn).not.toHaveBeenCalled();
   });
 });

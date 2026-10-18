@@ -27,6 +27,31 @@ describe('isAbortError', () => {
     expect(isAbortError({ name: 'TypeError' })).toBe(false);
     expect(isAbortError({})).toBe(false);
   });
+
+  // FM-011: metadata wrappers re-wrap thrown errors as `new Error(msg, {cause})`,
+  // so abort identity must survive one level of cause chaining.
+  it('walks the cause chain to find an abort identity', () => {
+    const abort = new DOMException('aborted', 'AbortError');
+    const wrapped = new Error('aborted', { cause: abort });
+    expect(isAbortError(wrapped)).toBe(true);
+  });
+
+  it('walks nested cause chains within a bounded depth', () => {
+    const abort = { code: 'ABORT_ERR' };
+    const l1 = new Error('l1', { cause: abort });
+    const l2 = new Error('l2', { cause: l1 });
+    expect(isAbortError(l2)).toBe(true);
+  });
+
+  it('returns false when only the message mentions AbortError', () => {
+    expect(isAbortError(new Error('wrapped: AbortError'))).toBe(false);
+  });
+
+  it('does not loop on self-referential cause chains', () => {
+    const selfRef: Error & { cause?: unknown } = new Error('loop');
+    selfRef.cause = selfRef;
+    expect(isAbortError(selfRef)).toBe(false);
+  });
 });
 
 describe('buildScopeChain', () => {

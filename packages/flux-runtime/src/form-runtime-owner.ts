@@ -220,16 +220,6 @@ export function buildFormOwnerRuntime(input: {
 
     const changedPathResults = new Map<string, ValidationError[]>();
 
-    if (reason === 'change') {
-      for (const path of changedPaths) {
-        const result = await input.getThisForm().validateField(path, reason);
-
-        if (!result.ok) {
-          changedPathResults.set(path, result.errors);
-        }
-      }
-    }
-
     // M-09: the third dependent-revalidation entry. A throwing dependent
     // revalidation is routed through the same owner diagnostics seam as
     // `validateForm`/`validateFormPath` (and `executeSetValues`'s
@@ -241,6 +231,36 @@ export function buildFormOwnerRuntime(input: {
       input.sharedState.inputValue.reportDependentRevalidationFailure ??
       defaultReportDependentRevalidationFailure;
     const dependentRevalidationErrors: ValidationError[] = [];
+
+    // FM-010: the fifth convergence entry. The change branch awaited
+    // `validateField` bare — a throwing async validator rejected this whole
+    // entry. Same containment as the dependent pass below: AbortError
+    // rethrown, everything else reported and surfaced as a form-level error.
+    if (reason === 'change') {
+      for (const path of changedPaths) {
+        try {
+          const result = await input.getThisForm().validateField(path, reason);
+
+          if (!result.ok) {
+            changedPathResults.set(path, result.errors);
+          }
+        } catch (error) {
+          if (isAbortError(error)) {
+            throw error;
+          }
+
+          reportFailure(path, error);
+          dependentRevalidationErrors.push({
+            path,
+            ownerPath: path,
+            message: 'Field validation failed due to an internal error',
+            rule: 'async' as const,
+            sourceKind: 'form' as const,
+            cause: error,
+          });
+        }
+      }
+    }
 
     for (const path of changedPaths) {
       try {

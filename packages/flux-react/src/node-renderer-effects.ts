@@ -6,13 +6,13 @@ import type {
   RendererHelpers,
 } from '@nop-chaos/flux-core';
 
+interface NodeLifecycleActions {
+  onMount?: ActionSchema | ActionSchema[] | CompiledActionProgram;
+  onUnmount?: ActionSchema | ActionSchema[] | CompiledActionProgram;
+}
+
 export function useNodeLifecycleActions(input: {
-  lifecycleActions:
-    | {
-        onMount?: ActionSchema | ActionSchema[] | CompiledActionProgram;
-        onUnmount?: ActionSchema | ActionSchema[] | CompiledActionProgram;
-      }
-    | undefined;
+  lifecycleActions: NodeLifecycleActions | undefined;
   helpers: RendererHelpers;
   nodeInstance: NodeInstance;
   enabled?: boolean;
@@ -20,6 +20,13 @@ export function useNodeLifecycleActions(input: {
   const latestHelpersRef = useRef(input.helpers);
   const latestLifecycleActionsRef = useRef(input.lifecycleActions);
   const lastInitKeyRef = useRef<unknown>(undefined);
+  const mountedRef = useRef(false);
+  // FM-028 F5: StrictMode's mount/cleanup/mount simulation used to dispatch
+  // onUnmount for real (and re-fire onMount). The cleanup defers the onUnmount
+  // decision to a microtask and skips it when the same node instance re-armed
+  // (simulation); a real unmount still dispatches and resets the mount key.
+  const lifecycleEpochRef = useRef(0);
+  const realUnmountRef = useRef(false);
 
   useEffect(() => {
     latestHelpersRef.current = input.helpers;
@@ -27,15 +34,46 @@ export function useNodeLifecycleActions(input: {
   });
 
   useEffect(() => {
+    mountedRef.current = true;
+
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
+
+  const resolveUnmount = (key: unknown, epoch: number, lifecycleActions: NodeLifecycleActions) => {
+    // Epoch counter read is the point of the deferred check (may have advanced
+    // past `epoch` if the same node re-armed); the read happens at microtask
+    // time, not during render.
+    const sameNodeRearmed =
+      lifecycleEpochRef.current !== epoch && lastInitKeyRef.current === key;
+    if (sameNodeRearmed) {
+      // StrictMode simulated unmount — the node is still live.
+      return;
+    }
+    realUnmountRef.current = true;
+    lastInitKeyRef.current = undefined;
+    if (!lifecycleActions.onUnmount) {
+      return;
+    }
+    warnIfPreventionRequestedOnLifecycle(lifecycleActions.onUnmount, 'onUnmount');
+    void latestHelpersRef.current.dispatch(lifecycleActions.onUnmount, {
+      nodeInstance: key as NodeInstance,
+    });
+  };
+
+  useEffect(() => {
     if (input.enabled === false) {
       return;
     }
 
     const key = input.nodeInstance;
-    const alreadyMounted = lastInitKeyRef.current === key;
+    const epoch = ++lifecycleEpochRef.current;
+    const isLiveRemount = lastInitKeyRef.current === key && !realUnmountRef.current;
     lastInitKeyRef.current = key;
+    realUnmountRef.current = false;
 
-    if (!alreadyMounted) {
+    if (!isLiveRemount) {
       const lifecycleActions = latestLifecycleActionsRef.current;
 
       if (lifecycleActions?.onMount) {
@@ -47,15 +85,16 @@ export function useNodeLifecycleActions(input: {
     }
 
     return () => {
-      lastInitKeyRef.current = undefined;
       const currentLifecycleActions = latestLifecycleActionsRef.current;
 
-      if (currentLifecycleActions?.onUnmount) {
-        warnIfPreventionRequestedOnLifecycle(currentLifecycleActions.onUnmount, 'onUnmount');
-        void latestHelpersRef.current.dispatch(currentLifecycleActions.onUnmount, {
-          nodeInstance: input.nodeInstance,
-        });
+      if (!currentLifecycleActions?.onUnmount) {
+        lastInitKeyRef.current = undefined;
+        return;
       }
+
+      queueMicrotask(() => {
+        resolveUnmount(key, epoch, currentLifecycleActions);
+      });
     };
   }, [input.enabled, input.nodeInstance]);
 }
