@@ -1,0 +1,24 @@
+{
+  "name": "report-designer-nop-report",
+  "description": "把通用 Report Designer 收口为可用的 nop-report 报表设计器：①范围——实现 nop-report profile 及其实例化 adapter（两级 codec：SpreadsheetDocument<->ExcelWorkbookLike、ReportSemanticDocument<->XptWorkbookLike、组合 nop-report template codec；字段源 provider；字段拖放 adapter；inspector schema（cell Basic+XPT、sheet/workbook）；expression editor/reference picker adapter 实现与消费；preview adapter；profile 装配与端到端 e2e），codec 走纯 TS、不引 hucre，外部信封绑定 nop-report 的 XDSL workbook 模型（二进制 .xpt.xlsx 由后端承担）；范围排除——带区/分组头/expandType canvas 语义渲染、二进制 xlsx/CSV 的 TS 侧解析生成、Excel 完整样式模型（styleId 注册表/条件格式/图片/图表/pivot）、report-designer-renderers 纳入 UI 一致性 gate、通用 core/renderers 既有实现筛选。②授权——普通收敛工作 autonomy=implement；保护区域按 docs/context/ai-autonomy-policy.md（flux-core 公共导出/renderer 定义/样式契约/ui 公共导出 等 plan-first/ask-first 分级）；P0/P1 缺陷自动修复预授权；跨包公共 API/包边界等结构性重构（含新建 packages/report-designer-nop-report、给 ReportDesignerProfile 加 referencePickerId 等加法）执行前人工确认。③派生机制——线性 roadmap（NRP-1→NRP-2/NRP-3→NRP-4→NRP-5），无 Loop Rule；新 work item 由人手在该 roadmap 内增删，不得由 AI 自行派生。④自动修复机制沿用——codec 契约勘误沿用 docs/architecture/report-designer/codec-design.md 就地勘误；对象级审计提示沿用 docs/skills/deep-audit-prompts.md。",
+  "roadmapPath": "docs/backlog/report-designer-nop-report-roadmap.md",
+  "plansDir": "docs/plans",
+  "planGuide": "docs/plans/00-plan-authoring-and-execution-guide.md",
+  "auditsDir": "docs/audits/report-designer-nop-report",
+  "contextDir": "docs/context",
+  "moduleDir": ".",
+  "commands": {
+    "test": "pnpm test",
+    "build": "pnpm build",
+    "lint": "pnpm lint",
+    "typecheck": "pnpm typecheck",
+    "check": "pnpm check"
+  },
+  "prompts": {
+    "multiAudit": "docs/skills/deep-audit-prompts.md",
+    "openAudit": "docs/skills/open-ended-adversarial-review-prompt.md"
+  },
+  "commitFormat": "feat(report-designer-nop-report): <description>",
+  "model": "glm-5.3-flash",
+  "variant": "max"
+}
