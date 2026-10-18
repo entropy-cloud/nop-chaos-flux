@@ -20,7 +20,7 @@
 import { createServer } from 'node:http';
 import { createHash } from 'node:crypto';
 
-const PORT = Number(process.env.MOCK_PORT || 4180);
+const PORT = Number(process.env.XLANG_E2E_MOCK_PORT || process.env.MOCK_PORT || 4180);
 const WS_GUID = '258EAFA5-E914-47DA-95CA-C5AB0DC85B11';
 
 const connections = new Set();
@@ -54,50 +54,57 @@ function broadcast(frame) {
   for (const socket of connections) sendText(socket, text);
 }
 
+// closure audit Minor-1/2 加固：边界检查（扩展长度头截断不抛）+ 残字节保留循环
+// （粘包/跨 chunk 帧不再丢失）+ 解码全 try/catch（未捕获异常会杀死 mock webServer）
 function decodeClientFrames(socket, buffer, onFrame) {
-  // 逐帧解包（同一 chunk 可能粘多帧；最小实现按单帧处理——D1 帧低频，粘包概率可忽略）
-  if (buffer.length < 2) return;
-  const opcode = buffer[0] & 0x0f;
-  const masked = (buffer[1] & 0x80) !== 0;
-  let length = buffer[1] & 0x7f;
-  let offset = 2;
-  if (length === 126) {
-    length = buffer.readUInt16BE(2);
-    offset = 4;
-  } else if (length === 127) {
-    length = Number(buffer.readBigUInt64BE(2));
-    offset = 10;
+  let offset = 0;
+  while (offset + 2 <= buffer.length) {
+    const opcode = buffer[offset] & 0x0f;
+    const masked = (buffer[offset + 1] & 0x80) !== 0;
+    let length = buffer[offset + 1] & 0x7f;
+    let headerEnd = offset + 2;
+    if (length === 126) {
+      if (buffer.length < headerEnd + 2) break; // 扩展长度头截断：等下一个 chunk
+      length = buffer.readUInt16BE(headerEnd);
+      headerEnd += 2;
+    } else if (length === 127) {
+      if (buffer.length < headerEnd + 8) break;
+      length = Number(buffer.readBigUInt64BE(headerEnd));
+      headerEnd += 8;
+    }
+    const maskEnd = headerEnd + (masked ? 4 : 0);
+    const frameEnd = maskEnd + length;
+    if (buffer.length < frameEnd) break; // payload 截断：等下一个 chunk
+    if (opcode === 0x8) {
+      // close 握手：回 close 并断开
+      socket.write(Buffer.from([0x88, 0x00]));
+      socket.destroy();
+      connections.delete(socket);
+      return; // close 后残余帧无意义
+    }
+    if (opcode === 0x9) {
+      // ping → pong（0x8A，无掩码）
+      const payload = buffer.subarray(maskEnd, frameEnd);
+      socket.write(Buffer.concat([Buffer.from([0x8a, payload.length]), payload]));
+    } else if (opcode === 0x1) {
+      let payload;
+      if (masked) {
+        const key = buffer.subarray(headerEnd, maskEnd);
+        const body = buffer.subarray(maskEnd, frameEnd);
+        payload = Buffer.alloc(length);
+        for (let i = 0; i < length; i++) payload[i] = body[i] ^ key[i % 4];
+      } else {
+        payload = buffer.subarray(maskEnd, frameEnd);
+      }
+      try {
+        onFrame(JSON.parse(payload.toString('utf8')));
+      } catch {
+        // 非 JSON 帧：忽略
+      }
+    }
+    offset = frameEnd;
   }
-  if (buffer.length < offset + (masked ? 4 : 0) + length) return; // 不完整帧：丢弃（低频场景）
-  if (opcode === 0x8) {
-    // close 握手：回 close 并断开
-    const payload = Buffer.from([0x88, 0x00]);
-    socket.write(payload);
-    socket.destroy();
-    connections.delete(socket);
-    return;
-  }
-  if (opcode === 0x9) {
-    // ping → pong（0x8A，无掩码）
-    const payload = buffer.subarray(offset + (masked ? 4 : 0), offset + (masked ? 4 : 0) + length);
-    socket.write(Buffer.concat([Buffer.from([0x8a, payload.length]), payload]));
-    return;
-  }
-  if (opcode !== 0x1) return;
-  let payload;
-  if (masked) {
-    const key = buffer.subarray(offset, offset + 4);
-    const body = buffer.subarray(offset + 4, offset + 4 + length);
-    payload = Buffer.alloc(length);
-    for (let i = 0; i < length; i++) payload[i] = body[i] ^ key[i % 4];
-  } else {
-    payload = buffer.subarray(offset, offset + length);
-  }
-  try {
-    onFrame(JSON.parse(payload.toString('utf8')));
-  } catch {
-    // 非 JSON 帧：忽略
-  }
+  return buffer.length > offset ? buffer.subarray(offset) : Buffer.alloc(0);
 }
 
 function handleClientFrame(frame) {
@@ -209,6 +216,7 @@ const server = createServer((req, res) => {
     received.length = 0;
     state.breakpoints = [];
     state.suspendedThread = null;
+    compileResponse = { diagnostics: [] };
     res.writeHead(200);
     res.end('{}');
     return;
@@ -263,10 +271,15 @@ server.on('upgrade', (req, socket) => {
   connections.add(socket);
   socket.buffer = Buffer.alloc(0);
   socket.on('data', (chunk) => {
-    socket.buffer = Buffer.concat([socket.buffer, chunk]);
-    const frame = socket.buffer;
-    decodeClientFrames(socket, frame, (parsed) => handleClientFrame({ ...parsed, __socket: socket }));
-    socket.buffer = Buffer.alloc(0); // 最小实现：低频单帧假设
+    try {
+      socket.buffer = decodeClientFrames(socket, Buffer.concat([socket.buffer, chunk]), (parsed) =>
+        handleClientFrame({ ...parsed, __socket: socket }));
+    } catch (error) {
+      // 解码异常不得杀死 mock webServer（audit Minor-1）：记日志并断开该连接
+      console.error('[xlang-debug-mock] frame decode failed:', error);
+      connections.delete(socket);
+      socket.destroy();
+    }
   });
   socket.on('error', () => connections.delete(socket));
   socket.on('close', () => connections.delete(socket));

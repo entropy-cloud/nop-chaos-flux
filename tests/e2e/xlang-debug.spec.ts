@@ -15,7 +15,7 @@ import type { Page } from '@playwright/test';
  * 真实 nop-entropy 后端集成由 entropy item 21 全链测试承载（plans/2475）；
  * docker-compose 联调为 plans/621 已登记 follow-up。
  *
- * CI：现有 `pnpm e2e` 门槛直接承载（webServer 数组自动拉起 mock 服务器）。
+ * CI：现有 `pnpm test:e2e` 门槛直接承载（webServer 数组自动拉起 mock 服务器）。
  */
 
 // 本文件内串行：5 用例共享真实 mock 服务器状态（/__reset 会互清帧计数）——
@@ -87,6 +87,10 @@ test('xlang debug full chain: breakpoint gutter → suspend → renew → step �
   });
   await pollFrames(page, 'debugger.getFrameVariables', 1);
   await expect(page.locator('[data-testid="xlang-debug-vars"]')).toBeVisible();
+  // 变量名断言（audit Minor-3）：mock 变量 a / RESULT 渲染可见（值在懒展开层——
+  // VariablesTree 顶层仅渲染名字）
+  await expect(page.locator('[data-testid="xlang-debug-vars"]')).toContainText('a');
+  await expect(page.locator('[data-testid="xlang-debug-vars"]')).toContainText('RESULT');
 
   // 续期：open lease.renewIntervalMs=250 → 心跳帧可观测
   await pollFrames(page, 'lease.renew', 1);
@@ -161,6 +165,8 @@ test('xlang debug diagnostics bridge: compile diagnostics render as editor lint'
   await expect(page.locator('[data-testid="xlang-debug-editor"]')).toBeVisible();
   // 诊断桥：linter 去抖（装配层 800ms）+ compile 往返后渲染 .cm-lintRange-error 文本装饰
   await expect(page.locator('.cm-lintRange-error').first()).toBeVisible({ timeout: 15_000 });
+  // audit Minor-3 消息内容断言不可行：CM lint 装饰的消息走 tooltip 悬浮（无 title
+  // 属性 DOM 面）——两用例以路径区分（200 诊断 vs 500 合成），消息级断言登记机会性
 });
 
 test('xlang debug compile failure: non-ok compile falls back to synthesized diagnostic', async ({ page, errorMonitor }) => {

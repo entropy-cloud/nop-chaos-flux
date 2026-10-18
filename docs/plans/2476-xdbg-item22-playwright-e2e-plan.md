@@ -1,6 +1,6 @@
 # 2476 xdbg item 22 前后端 Playwright e2e（xlang 在线调试全链，flux 侧）
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-10-18
 > Source: roadmap item 22（ai-dev/backlog/xlang-web-debugger-roadmap.md）；场景蓝本 = entropy plan 2475 TestXdslTaskDebugFullChain（协议时序权威）+ D1/D2 设计；e2e 基座 = flux playwright.config.ts（playground dev server, chromium）
 > Related: flux docs/plans/621（item 19 装配/演示页）、entropy plans/2475（item 21）、2474（item 20 交付链）
@@ -79,9 +79,10 @@ Exit Criteria:
 - [ ] Anti-Hollow：UI 操作→client 帧→mock 服务端语义→事件→UI 呈现双向连通（帧断言 + DOM 断言双向实证）
 - [ ] flux docs/logs 更新；CI 说明登记
 - [ ] 独立子 agent closure-audit 完成并记录证据
-- [x] `pnpm --filter @nop-chaos/flux-playground exec playwright test tests/e2e/xlang-debug.spec.ts` 绿
+- [x] `pnpm test:e2e tests/e2e/xlang-debug.spec.ts` 绿（**closure audit M-2a 勘正**：原 gate 命令 `--filter playground exec playwright` 于 apps/playground cwd 下无 config/tests 必失败；须于仓库根执行）
 - [x] `pnpm typecheck` / `pnpm lint` 绿（新增 spec 文件入档）
 - [x] flux 仓无 check-plan-checklist 工具（R1 m8 实证）——按 flux plan guide Rule-20 文本一致性人工核对并记录于 Closure
+- [x] **closure audit M-1 消化**：mock 服务器引发 `pnpm check:scanner-baselines` 红（+4/+7 全在本文件——test-infra shape-heuristic 家族：控制面 catch 形态与 res.end(JSON.stringify) 同步应答）——按仓规登记路径（scanner-baselines.json reRegistrationNotes 附裁定注记 + 计数 330→334 / 723→730），`pnpm check:scanner-baselines` 复测 within baseline；附带 Minor-1（扩展长度头边界检查 + 解码 try/catch）、Minor-2（残字节保留循环替代整 buffer 丢弃）、Minor-4（端口 XLANG_E2E_MOCK_PORT env 化 + /\_\_reset 清 compileResponse + `pnpm test:e2e` 文档勘正）全部落码
 
 ## Deferred But Adjudicated
 
@@ -93,14 +94,32 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: （待收口后填写）
-Completed: （待收口后填写）
+Status Note: item 22（前后端 Playwright e2e）收口——真实 D1 mock 服务器 + vite 代理架构下 5 用例 e2e（全链/断连重连/租约过期/诊断桥/compile 500 兜底）连续多轮 5/5 绿，并在全量 e2e 套件中 5/5 绿（#2159-2163）。closure audit（agent_d9785461）0B/2M/5m：M-1 scanner 债按仓规登记消化（within baseline 复测）；M-2 三处文本修正落位；5 minor 全处置（含 mock 服务器加固）。262 大面积红经归因三分披露（已提交代码 schema 诊断主导 + flaky + 并行在途 confound），与本 diff 无关（config 还原抽样）。
+Completed: 2026-10-18
 
 Closure Audit Evidence:
 
-- Reviewer / Agent: （待填）
-- Evidence: （待填）
+- Reviewer / Agent: 独立子代理 agent_d9785461（fresh session，cold-start 亲测 5/5 34.0s）
+- Audit Session: agent_d9785461-cd0d-49de-a842-6d0c4585a7ed
+- Evidence:
+  - A RFC6455 正确性 PASS（accept key/掩码/ping-pong/close 逐项核验）；M-1 后加固：扩展长度头边界检查 + 解码 try/catch + 残字节保留循环（Minor-1/2 落码）
+  - B spec 判别力 PASS（真实帧/eval 42/rebind 形状/态切换双向）；M-3 变量名断言落码（值在懒展开层——断言修至名字集）；lint 消息级断言不可行（tooltip 无 DOM 面）登记机会性
+  - C 接线架构 PASS（webServer 数组启动顺序 + 代理按需惰性声明成立）
+  - D 门禁亲测 PASS：spec 5/5（cold start）；typecheck 同 2 既有红非新增（FM-2 会话独立记录同值）；lint 0——**M-1：check:scanner-baselines 红（+4/+7 全在 mock 服务器）→ 按仓规登记 + within baseline 复测**
+  - E 全量记录核查 PASS（1563/262、xlang 5/5 #2159-2163）；**M-2c/E 归因三分勘正落 plan**（主导=已提交代码 schema 诊断；flaky 桶；在途 confound 披露；还原抽样落 flaky 桶非硬失败集）
+  - F Deferred 诚实 PASS（单条 merged docker-compose）；R1 落位抽查 PASS；M-2 文本三处（gate 命令/Draft Review Record R1 回填/log 结果行）落位
+  - scanner 登记后 `check:scanner-baselines` within baseline（649<650 既有 shrink 提示非红）；lint 0
+  - Deferred 分类检查：单条（真实后端 docker-compose）out-of-scope 维持——无 in-scope live defect 被降级
+
+Follow-up:
+
+- 真实后端 docker-compose 联调（Deferred 维持）
+- lint 消息级 e2e 断言（tooltip DOM 面，机会性）
+- mock 服务器端口 env 已 XLANG_E2E_MOCK_PORT 化（4 处硬编码消除，Minor-4 落码）
 
 ## Draft Review Record
 
+- Reviewer / Agent: 独立子代理 agent_ba3c6445（fresh session，R1）
+- Verdict: revised（0B/4M/9m 全修订）
+- Findings addressed: M1 evt.resumed{threadIds} 契约（缺省则面板永久挂起）；M2 compile fulfill 原始 body + `.cm-lintRange-error` 选择器（.cm-lintmarker 不存在）；M3 补 Scope 节 + typecheck/lint 门；M4 mock 面（getFrameVariables 桩/每连新 sessionId/StrictMode 容忍/renewIntervalMs=250）；m1-m9（initialSource 6 行/zh-CN label/matcher RegExp/fallback 措辞/checklist 工具不存在/flux logs 路径/全量口径）
 - Reviewer / Agent: （待 R1）
