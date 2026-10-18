@@ -127,11 +127,12 @@ describe('VariablesTree lazy expansion', () => {
     // 点击展开 → expandExprValue
     fireEvent.click(screen.getByText('order'));
     await waitFor(() => {
+      // plan 650 F-3：keys=[] —— keys 是 expr 求值后的导航步（引擎语义），展开节点自身
       expect(query).toHaveBeenLastCalledWith('debugger.expandExprValue', {
         threadId: 17,
         frameIndex: 0,
         expr: 'order',
-        keys: [{ name: 'order' }],
+        keys: [],
       });
       expect(screen.getByText('id')).toBeTruthy();
       expect(screen.getByText('items')).toBeTruthy();

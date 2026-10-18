@@ -77,7 +77,10 @@ export function VariablesTree({ store, client, threadId, frameIndex }: Variables
     const result = await client
       .query<{ vars: Array<{ name?: string }> | null; truncated?: boolean }>(
         'debugger.expandExprValue',
-        { threadId, frameIndex, expr: node.expr, keys: [{ name: node.name }] },
+        // plan 650 F-3（item 26 审计）：keys 是 expr 求值结果出发的导航步（引擎
+        // DebugValueHelper 逐层下钻）——"展开该节点"= keys: []（节点自身列子项）；
+        // 子节点 expr 已是 buildChildrenExpr 复合形态，导航语义由 expr 承载
+        { threadId, frameIndex, expr: node.expr, keys: [] },
       )
       .catch(() => null);
     const children: TreeNode[] = (result?.vars ?? []).map((child) => {

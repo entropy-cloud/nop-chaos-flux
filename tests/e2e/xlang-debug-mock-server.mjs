@@ -172,8 +172,28 @@ function handleClientFrame(frame) {
         lease: { expiresAtMs: Date.now() + 30_000 },
       });
       break;
-    default:
-      reply({});
+    case 'debugger.expandExprValue': {
+      // plan 650 F-19：按引擎导航语义最小实现——keys 为 expr 求值结果出发的导航步
+      // （keys=[] 即对节点自身列子项；未知名/越界 key 落空值，与真实引擎 getNextValue
+      // 行为一致），使 e2e 具备暴露 keys 语义失真的能力（item 26 审计 F-3 假阴性根因）
+      const keys = Array.isArray(frame.params?.keys) ? frame.params.keys : [];
+      const hit = keys.length === 0;
+      reply({
+        vars: hit
+          ? [{ kind: 'var', name: 'child', type: 'java.lang.Integer', value: '7' }]
+          : [],
+      });
+      break;
+    }
+    default: {
+      // plan 650 F-19：未知 debugger.* method 显式 -32601（协议漂移可观测）——
+      // session.* 命名空间维持既有宽容（用例只轮询出站帧，不依赖其响应）
+      if (String(frame.method ?? '').startsWith('debugger.')) {
+        reply({ error: { code: -32601, message: `unknown method: ${frame.method}` } });
+      } else {
+        reply({});
+      }
+    }
   }
 }
 

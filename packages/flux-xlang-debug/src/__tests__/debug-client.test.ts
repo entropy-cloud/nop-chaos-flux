@@ -17,8 +17,11 @@ class MockConnection implements WebSocketConnection {
     this.sent.push(String(data));
   }
 
-  close(): void {
+  close(code = 1000, reason = ''): void {
+    if (this.readyState === 'closed') return;
     this.readyState = 'closed';
+    // 对齐真实 socket：close() 触发 onclose（client 侧 disposed/stopped/身份守卫负责早退）
+    this.onclose?.({ type: 'close', code, reason });
   }
 
   open() {
@@ -404,7 +407,148 @@ describe('debug client terminal codes and edge paths (audit m3)', () => {
       result: { sessionId: 'u1:c1', protoVersion: '1.0', lease: { ttlMs: 30000, renewIntervalMs: 100 } },
     }));
     connections[0].receive(JSON.stringify({ jsonrpc: '2.0', method: 'evt.sessionClosed', params: { reason: 'graceExpired' } }));
-    expect(onSessionClosed).toHaveBeenCalledWith(expect.objectContaining({ reason: 'closed' }));
+    // plan 650 F-1：四值 reason 透传（废除折叠为 'closed'）
+    expect(onSessionClosed).toHaveBeenCalledWith(expect.objectContaining({ reason: 'graceExpired' }));
+    client.dispose();
+  });
+
+  /**
+   * plan 650 F-1（item 26 审计）：evt.sessionClosed 会话状态收敛——心跳停/挂起清/
+   * lease 空/transport 失效/连接撕卸；userClosed 终态不自动重建。
+   */
+  it('evt.sessionClosed invalidates session state (F-1)', async () => {
+    const onSessionClosed = vi.fn();
+    const store = createDebugStore();
+    const connections: MockConnection[] = [];
+    const client = createDebugClient({
+      store,
+      openSocket: ((_url: string) => {
+        const conn = new MockConnection();
+        connections.push(conn);
+        return conn;
+      }) as WebSocketOpener,
+      serverUrl: '/ws/xlang-debugger',
+      getToken: () => 't',
+      onSessionClosed,
+    });
+    client.connect();
+    const conn = connections[0];
+    conn.open();
+    await Promise.resolve();
+    const openFrame = JSON.parse(conn.sent.find((f) => f.includes('session.open'))!);
+    conn.receive(JSON.stringify({
+      jsonrpc: '2.0', id: openFrame.id,
+      result: { sessionId: 'u1:c1', protoVersion: '1.0', lease: { ttlMs: 30000, renewIntervalMs: 100 } },
+    }));
+    // 造挂起态 + transport
+    store.getState().addSuspended({ threadId: 1, sourcePath: 'a.xpl', line: 1 });
+    await vi.advanceTimersByTimeAsync(150); // 至少一次 renew（心跳在跑）
+    const renewCountBefore = conn.sent.filter((f) => f.includes('lease.renew')).length;
+    expect(renewCountBefore).toBeGreaterThan(0);
+    expect(store.getState().transport).not.toBeNull();
+
+    conn.receive(JSON.stringify({ jsonrpc: '2.0', method: 'evt.sessionClosed', params: { reason: 'userClosed' } }));
+    expect(onSessionClosed).toHaveBeenCalledWith(expect.objectContaining({ reason: 'userClosed' }));
+    // 收敛断言：挂起清/lease 空/transport 失效/连接撕卸
+    expect(store.getState().suspended).toEqual([]);
+    expect(store.getState().lease).toBeNull();
+    expect(store.getState().transport).toBeNull();
+    expect(client.connectionState()).toBe('disconnected');
+    expect(conn.readyState).toBe('closed');
+    // 终态（userClosed）：无自动重建——不再有新连接
+    await vi.advanceTimersByTimeAsync(20000);
+    expect(connections).toHaveLength(1);
+    client.dispose();
+  });
+
+  /**
+   * plan 650 F-1：graceExpired 可重试——失效后由 onclose 编排重连，重连后 rebind 旧 id
+   * 被拒 → rebuildOnNewSession 复位状态 + 断点重放（F-2 复位断言）。
+   */
+  it('graceExpired reconnects and rebuild resets stale suspended state (F-1/F-2)', async () => {
+    const store = createDebugStore();
+    const connections: MockConnection[] = [];
+    const client = createDebugClient({
+      store,
+      openSocket: ((_url: string) => {
+        const conn = new MockConnection();
+        connections.push(conn);
+        return conn;
+      }) as WebSocketOpener,
+      serverUrl: '/ws/xlang-debugger',
+      getToken: () => 't',
+    });
+    client.connect();
+    const conn1 = connections[0];
+    conn1.open();
+    await Promise.resolve();
+    const open1 = JSON.parse(conn1.sent.find((f) => f.includes('session.open'))!);
+    conn1.receive(JSON.stringify({
+      jsonrpc: '2.0', id: open1.id,
+      result: { sessionId: 'u1:c1', protoVersion: '1.0', lease: { ttlMs: 30000, renewIntervalMs: 100 } },
+    }));
+    store.getState().addSuspended({ threadId: 9, sourcePath: 'old.xpl', line: 3 }); // 旧会话挂起态残留
+
+    conn1.receive(JSON.stringify({ jsonrpc: '2.0', method: 'evt.sessionClosed', params: { reason: 'serverShutdown' } }));
+    expect(store.getState().suspended).toEqual([]);
+    // conn.close(1000) → onclose → 重连（重连退避，推进时钟）
+    await vi.advanceTimersByTimeAsync(20000);
+    expect(connections.length).toBeGreaterThanOrEqual(2);
+    const conn2 = connections[connections.length - 1];
+    conn2.open();
+    await Promise.resolve();
+    const open2 = JSON.parse(conn2.sent.find((f) => f.includes('session.open'))!);
+    conn2.receive(JSON.stringify({
+      jsonrpc: '2.0', id: open2.id,
+      result: { sessionId: 'u1:transient', protoVersion: '1.0', lease: { ttlMs: 30000, renewIntervalMs: 100 } },
+    }));
+    await Promise.resolve();
+    await Promise.resolve(); // open.then → sendRequest(rebind) 链式微任务
+    // rebind 旧 id u1:c1 → BOUND_ELSEWHERE → rebuildOnNewSession（采纳过渡会话 + 复位 + 断点重放）
+    const rebindFrame = JSON.parse(conn2.sent.find((f) => f.includes('session.rebind'))!);
+    conn2.receive(JSON.stringify({
+      jsonrpc: '2.0', id: rebindFrame.id,
+      error: { code: -32000, message: 'session not rebindable', errorCode: 'nop.err.xlang.debugger.session-bound-elsewhere' },
+    }));
+    await Promise.resolve();
+    const setBps = conn2.sent.find((f) => f.includes('setBreakpoints'));
+    if (store.getState().breakpoints.length > 0) {
+      expect(setBps).toBeTruthy(); // 断点重放
+    }
+    expect(store.getState().suspended).toEqual([]); // F-2：重建不复位则残留旧挂起态
+    client.dispose();
+  });
+
+  /**
+   * plan 650 F-4：StrictMode 双挂载——旧连接 onclose 晚到不践踏新连接状态（身份守卫）。
+   */
+  it('stale late onclose does not clobber the new connection (F-4)', async () => {
+    const store = createDebugStore();
+    const connections: MockConnection[] = [];
+    const client = createDebugClient({
+      store,
+      openSocket: ((_url: string) => {
+        const conn = new MockConnection();
+        connections.push(conn);
+        return conn;
+      }) as WebSocketOpener,
+      serverUrl: '/ws/xlang-debugger',
+      getToken: () => 't',
+    });
+    client.connect();
+    const conn1 = connections[0];
+    conn1.open();
+    // 模拟 StrictMode：dispose（旧连接 close 但桩不触发 onclose）→ 再 connect（新连接）
+    client.dispose();
+    client.connect();
+    const conn2 = connections[connections.length - 1];
+    conn2.open();
+    await Promise.resolve();
+    expect(client.connectionState()).toBe('connecting'); // conn2 open 后 open 往返在途
+    // 旧连接 onclose 晚到——身份守卫必须早退（不置 state=disconnected、不触发重连风暴）
+    conn1.closeFromServer(1006);
+    expect(client.connectionState()).not.toBe('disconnected');
+    expect(connections).toHaveLength(2); // 无第三条连接（无重连风暴）
     client.dispose();
   });
 

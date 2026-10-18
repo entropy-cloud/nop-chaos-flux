@@ -64,36 +64,38 @@
 
 ### Phase 1 - 会话状态机收敛 + keys 修正 + 守卫 + mock 语义化
 
-Status: planned
+Status: completed
 Targets: `packages/flux-xlang-debug/src/client/debug-client.ts`、`src/panel/variables-tree.tsx`、`tests/e2e/xlang-debug-mock-server.mjs`、`src/__tests__/*`
 
 - Item Types: `Fix`（F-1/F-2/F-3 已确认 live defect；F-4/F-19 门禁级加固）
 
-- [ ] `resetSessionState()` 子原语（suspended/lease 复位）；`invalidateSession(reason)`（子原语 + 心停 + 关连接置空 + state 撕卸 + setTransport(null) + 回调四值透传）
-- [ ] evt.sessionClosed 分支接 invalidateSession + 按因语义（重连单留 onclose 路）；scheduleReconnect 去重守卫
-- [ ] rebuildOnNewSession 接 resetSessionState（F-2）
-- [ ] variables-tree keys: []（F-3）+ panel.test.tsx 断言修订
-- [ ] connect 三 handler 身份守卫 + rebind catch 先关旧连接（F-4 path A+B）
-- [ ] mock 服务器 -32601 + expandExprValue keys 导航最小实现（F-19）
-- [ ] 单测：sessionClosed 收敛（心跳停/挂起清/lease 空/transport 失效/reason 透传/不自动重建）；serverShutdown 后 onclose 驱动重连且重连后 rebind-reject 复位（rebuild 复位断言）；陈旧 onclose 晚到不践踏新连接（手工注入晚到 onclose——桩无需扩展）；debug-client.test.ts sessionClosed 用例修订
-- [ ] 变异探针：invalidateSession 分支移除 → sessionClosed 收敛单测红；keys 改回 [{name}] → panel.test.tsx 红；恢复 grep 断言
-- [ ] e2e 5/5 绿（mock -32601 语义化后）；flux-xlang-debug vitest 全绿
+- [x] `resetSessionState()` 子原语（suspended/lease 复位）；`invalidateSession(reason)`（子原语 + 心停 + 关连接置空 + state 撕卸 + setTransport(null) + 回调四值透传）
+- [x] evt.sessionClosed 分支接 invalidateSession + 按因语义（重连单留 onclose 路）；scheduleReconnect 去重守卫
+- [x] rebuildOnNewSession 接 resetSessionState（F-2）
+- [x] variables-tree keys: []（F-3）+ panel.test.tsx 断言修订
+- [x] connect 三 handler 身份守卫 + rebind catch 先关旧连接（F-4 path A+B）
+- [x] mock 服务器 -32601 + expandExprValue keys 导航最小实现（F-19）
+- [x] 单测：sessionClosed 收敛（心跳停/挂起清/lease 空/transport 失效/reason 透传/不自动重建）；serverShutdown 后 onclose 驱动重连且重连后 rebind-reject 复位（rebuild 复位断言）；陈旧 onclose 晚到不践踏新连接（手工注入晚到 onclose——桩无需扩展）；debug-client.test.ts sessionClosed 用例修订
+- [x] 变异探针：invalidateSession 分支移除 → sessionClosed 收敛单测红；keys 改回 [{name}] → panel.test.tsx 红；恢复 grep 断言
+- [x] e2e 5/5 绿（mock -32601 语义化后）；flux-xlang-debug vitest 全绿
 
 Exit Criteria:
 
-- [ ] 新增/修订单测全绿 + 变异红证据入档（红→绿）
-- [ ] **接线验证**：resetSessionState 被 invalidateSession 与 rebuildOnNewSession 两处真实调用；invalidateSession 被 evt.sessionClosed 分支真实调用（变异探针承载）
-- [ ] e2e 5/5 绿；vitest 全绿；playground 定向用例零回归
-- [ ] **无静默跳过**：未知 method 显式 -32601（mock 侧），不静默空 reply
-- [ ] flux docs/logs 条目更新；entropy 侧 item 27 收口引用
+**Phase 1 执行证据（2026-10-18）**：vitest **46/46 绿**（新增 3 用例：sessionClosed 收敛/graceExpired 重连+rebuild 复位/晚到 onclose 守卫；修订 2 处：panel keys []、sessionClosed reason 四值）；e2e **5/5 绿**（33.7s，mock -32601 语义化后零回归）；playground **530/530**；lint 0/typecheck 0。**变异探针**：A（invalidateSession 分支移除）→ sessionClosed 收敛单测红（suspended 残留）→ 恢复断言；B（keys 回退 [{name}]）→ panel.test.tsx 红 → 恢复断言。**执行勘误两则**：①invalidateSession 初稿先置空 connection 再 close——可重试路径的 onclose 会被 F-4 身份守卫拦截致重连永不触发（单测抓出），改为按因双路径（可重试=连接身份留给 onclose 编排；终态=本地撕卸+stopped 闩锁）；②MockConnection.close() 改为触发 onclose（对齐真实 socket；client 侧守卫负责早退）——scheduleReconnect 去重守卫配套"触发后清句柄"防永久阻断后续重连。
+
+- [x] 新增/修订单测全绿 + 变异红证据入档（红→绿）
+- [x] **接线验证**：resetSessionState 被 invalidateSession 与 rebuildOnNewSession 两处真实调用；invalidateSession 被 evt.sessionClosed 分支真实调用（变异探针承载）
+- [x] e2e 5/5 绿；vitest 全绿；playground 定向用例零回归
+- [x] **无静默跳过**：未知 method 显式 -32601（mock 侧），不静默空 reply
+- [x] flux docs/logs 条目更新；entropy 侧 item 27 收口引用
 
 ## Closure Gates
 
-- [ ] F-1/F-2/F-3（P1）全部落地且有判别性测试（变异红证据）
-- [ ] F-4/F-19（P2）落地
-- [ ] 既有测试面零回归（vitest + e2e 5/5 + playground 定向）
+- [x] F-1/F-2/F-3（P1）全部落地且有判别性测试（变异红证据）
+- [x] F-4/F-19（P2）落地
+- [x] 既有测试面零回归（vitest + e2e 5/5 + playground 定向）
 - [ ] 独立子 agent closure-audit 完成并记录证据（含 Anti-Hollow：resetSessionState 两处接线、keys [] 到达出站帧）
-- [ ] pnpm lint / typecheck 零新增错误（包级）
+- [x] pnpm lint / typecheck 零新增错误（包级）
 - [ ] flux 侧无 checklist 工具——按 flux plan guide 文本一致性人工核对并记录于 Closure
 
 ## Deferred But Adjudicated

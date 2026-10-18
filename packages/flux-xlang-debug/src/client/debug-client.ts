@@ -35,7 +35,12 @@ export type SessionCloseReason =
   | 'closed'
   | 'authFailed'
   | 'rebindRejected'
-  | 'protocolUnsupported';
+  | 'protocolUnsupported'
+  // plan 650 F-1：D1 §3.5 四值透传（evt.sessionClosed 终态语义）
+  | 'userClosed'
+  | 'graceExpired'
+  | 'serverShutdown'
+  | 'protocolError';
 
 export interface CreateDebugClientOptions {
   store: DebugStore;
@@ -136,9 +141,17 @@ export function createDebugClient(options: CreateDebugClientOptions): DebugClien
           errorCode: p.errorCode as string | undefined,
         });
         return;
-      case 'evt.sessionClosed':
-        onSessionClosed?.({ reason: 'closed', detail: JSON.stringify(p) });
+      case 'evt.sessionClosed': {
+        // plan 650 F-1（item 26 审计）：会话销毁终态收敛——心跳停/状态复位/连接撕卸/
+        // transport 失效，四值 reason 透传（废除折叠为 'closed'）。按因语义：
+        // graceExpired/serverShutdown 可重试（重连单留 onclose 一条路——conn.close(1000)
+        // 触发的 onclose 编排，scheduleReconnect 去重守卫防双触发）；userClosed 终态不自动
+        // 重建；protocolError 为 BE 前向兼容死分支（一期无发射路径）。currentSessionId
+        // 保留——重连后走 open→rebind→BOUND_ELSEWHERE→rebuildOnNewSession 环路重放断点。
+        const reason = String(p.reason ?? 'userClosed') as SessionCloseReason;
+        invalidateSession(reason);
         return;
+      }
       case 'evt.log': {
         const entry: XlangLogEntry = {
           level: String(p.level ?? 'info'),
@@ -316,10 +329,16 @@ export function createDebugClient(options: CreateDebugClientOptions): DebugClien
     if (stopped || disposed) {
       return;
     }
+    // plan 650 F-1：去重守卫——evt.sessionClosed(conn.close 触发 onclose) 与 socket
+    // 1006 的天然双触发只编排一次重连（双定时器 = 双连接 = 双会话）
+    if (reconnectTimer != null) {
+      return;
+    }
     reconnectAttempt += 1;
     const jitter = Math.random() * 0.3 + 0.85;
     const delay = Math.min(RECONNECT_BASE_MS * 2 ** (reconnectAttempt - 1) * jitter, RECONNECT_MAX_MS);
     reconnectTimer = setTimeout(() => {
+      reconnectTimer = null; // 触发后清句柄——去重守卫只拦"未触发的在途定时器"
       void connect();
     }, delay);
   }
@@ -364,8 +383,48 @@ export function createDebugClient(options: CreateDebugClientOptions): DebugClien
     store.getState().setSuspended(restored);
   }
 
+  /** plan 650 F-2 共享子原语：会话作用域状态复位（不动连接/transport——rebuild 场景存活）。 */
+  function resetSessionState(): void {
+    store.getState().setSuspended([]);
+    store.getState().setLease(null);
+  }
+
+  /**
+   * plan 650 F-1（item 26 审计）：会话销毁终态收敛——心跳停、会话状态复位、连接撕卸
+   * （close + 置空：BE 他端 close 后 socket 保持打开，不关则僵尸 renew/面板查询照发）、
+   * transport 失效。currentSessionId 保留（rebind-reject 环路重放断点）。
+   */
+  function invalidateSession(reason: SessionCloseReason): void {
+    resetSessionState();
+    stopRenewHeartbeat();
+    const conn = connection;
+    if (reason === 'graceExpired' || reason === 'serverShutdown') {
+      // 可重试：连接身份留给 onclose——close 触发的 onclose 走既有 teardown+重连编排
+      //（重连单留 onclose 一条路的本意；scheduleReconnect 去重防 evt+1006 双触发）
+      try {
+        conn?.close(1000, 'session invalidated');
+      } catch {
+        // 已关闭
+      }
+    } else {
+      // 终态（userClosed；protocolError 为 BE 前向兼容死分支）：本地撕卸 + stopped 闩锁
+      //（onclose 因 stopped 早退），socket 照关
+      connection = null;
+      state = 'disconnected';
+      store.getState().setTransport(null);
+      stopped = true;
+      try {
+        conn?.close(1000, 'session invalidated');
+      } catch {
+        // 已关闭
+      }
+    }
+    onSessionClosed?.({ reason });
+  }
+
   /** F4：rebind 被拒 → 按新会话重建（采纳过渡会话 + 恢复心跳 + 重发断点），非终态。 */
   function rebuildOnNewSession(transitionalSessionId: string): void {
+    resetSessionState(); // plan 650 F-2：旧会话挂起态/lease 复位（连接与 transport 存活）
     currentSessionId = transitionalSessionId;
     startRenewHeartbeatAfterConnect(); // F5：重建租约时钟（立即 renew + 心跳）
     const breakpoints = [...store.getState().breakpoints];
@@ -423,6 +482,7 @@ export function createDebugClient(options: CreateDebugClientOptions): DebugClien
     connection = conn;
 
     conn.onopen = () => {
+      if (connection !== conn) return; // plan 650 F-4：陈旧连接回调不践踏新连接状态
       void sendRequest('session.open', { protoVersion: PROTO_VERSION })
           .then((result) => {
             const open = result as { sessionId: string; lease: LeasePolicy } | undefined;
@@ -448,6 +508,15 @@ export function createDebugClient(options: CreateDebugClientOptions): DebugClien
                       rebuildOnNewSession(open.sessionId); // F4：按新会话重建（采纳过渡会话），非终态
                       return;
                     }
+                    // plan 650 F-4 path B：先关存活连接再重连（防双 socket + 服务端过渡会话泄漏）
+                    const staleConn = connection;
+                    connection = null;
+                    state = 'disconnected';
+                    try {
+                      staleConn?.close(1000, 'rebind rejected');
+                    } catch {
+                      // 已关闭
+                    }
                     scheduleReconnect();
                   });
               return;
@@ -465,10 +534,12 @@ export function createDebugClient(options: CreateDebugClientOptions): DebugClien
     };
 
     conn.onmessage = (event) => {
+      if (connection !== conn) return; // plan 650 F-4：陈旧连接帧不入 store
       handleMessage(typeof event.data === 'string' ? event.data : '');
     };
 
     conn.onclose = (event) => {
+      if (connection !== conn) return; // plan 650 F-4：晚到 onclose 不践踏新连接（StrictMode 双挂载）
       connection = null;
       state = 'disconnected';
       stopRenewHeartbeat();
