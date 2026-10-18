@@ -57,7 +57,7 @@
         {
           "id": "T2.2",
           "name": "FM-3 测试保护力审计（单测契约覆盖 + 探索性契约测试 + 探索性 e2e）",
-          "status": "todo",
+          "status": "done",
           "assignee": "unassigned"
         },
         {

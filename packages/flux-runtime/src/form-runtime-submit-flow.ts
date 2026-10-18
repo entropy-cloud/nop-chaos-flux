@@ -184,9 +184,28 @@ function computeExcludedHiddenPaths(
   return exclude;
 }
 
+function computePreservedHiddenPaths(
+  hiddenFields: Set<string> | undefined,
+  excludedPaths: Set<string>,
+): Set<string> {
+  const preserved = new Set<string>();
+  if (!hiddenFields) {
+    return preserved;
+  }
+
+  for (const path of hiddenFields) {
+    if (!excludedPaths.has(path)) {
+      preserved.add(path);
+    }
+  }
+
+  return preserved;
+}
+
 function excludeHiddenFieldPaths(
   obj: Record<string, unknown>,
   hiddenFields: Set<string>,
+  preservedPaths: Set<string> = new Set(),
 ): Record<string, unknown> {
   function walk(current: unknown, path: string): unknown {
     if (current == null || typeof current !== 'object') {
@@ -215,7 +234,9 @@ function excludeHiddenFieldPaths(
 
       const processed = walk(value, childPath);
 
-      if (processed !== undefined) {
+      // C10: clearValueWhenHidden paths stay in the payload even when the
+      // cleared value is undefined.
+      if (processed !== undefined || preservedPaths.has(childPath)) {
         result[key] = processed;
       }
     }
@@ -429,8 +450,12 @@ export async function executeFormSubmit(
             sharedState.hiddenFields,
             currentValidation,
           );
+          const preservedPaths = computePreservedHiddenPaths(
+            sharedState.hiddenFields,
+            excludedPaths,
+          );
           const data = excludedPaths.size > 0
-            ? excludeHiddenFieldPaths(rawValues, excludedPaths)
+            ? excludeHiddenFieldPaths(rawValues, excludedPaths, preservedPaths)
             : rawValues;
           return Promise.resolve({ ok: true, data });
         };

@@ -37,3 +37,13 @@
 ## 批次覆盖记录（FM-2 追加）
 
 - **FM-2（2026-10-18，plan 643）**：新增 FM-008–FM-021 共 14 条（fixed 2 / watch-only 3 / local→FM-6 候选 7 [含 FM-021 批量行] / systemic→FM-7 候选 1 / verified 1 [FM-015 兼 watch-only 热点观察 disposition]）；workaround 残余复核 50 条另录 `fm2-workaround-residual-review.md`（2 条转 verified 已回写原台账）。
+
+| FM-022 | FM-3 | 探索测试 B-GAP1（P1，owner doc form-validation.md C10） | 排除集非空时 `clearValueWhenHidden` 豁免键被 submit payload 投影过滤器静默丢弃（key remains 契约违背）——隐私/数据完整性面 | fixed→verified | — | P1 修复同批（computePreservedHiddenPaths 豁免保留集）；判别测试 `form-runtime-submit-hidden-projection.test.ts`（修复前 fail 实测）；flux-runtime 1549+1skip 绿；两条旧标题正名 |
+| FM-023 | FM-3 | 探索测试 GAP7（input-suggest.tsx:280） | IME 确认 Enter（isComposing/229）在高亮候选时误提交候选，静默覆盖组合文本——form.tsx 修复同族不对称 | found | watch-only（successor：form.tsx IME 同族修复扩展，并发会话领地） | P2；`it.skip` 立案留档（flux-renderers-form fm3-contract-probes）；plain-Enter 正向对照为活跃加固。Why Not Blocking：触发面窄（仅 IME 候选态）、同族修复在途、归并发领地 |
+| FM-024 | FM-3 | 探索测试 C-04（responsive.ts:38-59） | splitResponsiveColumns 无名 fixed 列退化命名在两个不一致索引空间计算——错位时 fixed 列被折叠进 hiddenColumns，破坏移动端操作列保证 | found | local → FM-6 候选 | P2；`it.skip` 立案留档（flux-renderers-data fm3-contract-probes）；2 例名列加固已入库 |
+| FM-025 | FM-3 | 差距清单未消化批（分片 A/B/C 合计 25 条中的非当批项） | 补测清单：A-G-A 取消通知（涉 FM-011/012）、A-G-B templateNodeId doc-测试方向性分叉（裁决项）、A-G-C scope 泄漏可观测性、B-GAP3/4/5 邻接面、C-02/05/06/07/08/09 及各 P3 | found | local → FM-6 候选（批量，test-gap 非 defect） | 逐条六要素见报告三分片；uncovered 口径：本行含 disposition 即已处置 |
+| FM-026 | FM-3 | e2e 探针 watch-only 注记 | ①分页默认语义（render-time 视图剪除）与 AMIS 单向清空的文档化分歧；②树懒加载"不重复请求"半边 harness 限制仅间接钉守 | found | watch-only | ①文档化分歧非缺陷，如需 AMIS 对齐属行为裁决项；②建议 lab fixture 增请求计数探针。Why Not Blocking：均非行为错误 |
+
+## 批次覆盖记录（FM-3 追加）
+
+- **FM-3（2026-10-18，plan 644）**：新增 FM-022–FM-026 共 5 条（fixed→verified 1 / watch-only 2 / local→FM-6 候选 2 [FM-024 具名 + FM-025 批量 test-gap]）；探索测试新增 19 例单测（16 加固 + 1 修复回归 + 2 skip 立案）+ e2e 探针 6 例全绿入库。
