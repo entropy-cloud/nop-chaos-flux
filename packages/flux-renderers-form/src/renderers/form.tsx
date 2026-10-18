@@ -530,6 +530,12 @@ export function FormRenderer(props: RendererComponentProps<FormSchema>) {
     if (event.key !== 'Enter') {
       return;
     }
+    // Enter used to confirm an IME candidate (Chinese/Japanese/Korean input)
+    // must not submit the form. `keyCode === 229` covers browsers that do not
+    // set `isComposing` on the keydown that ends composition.
+    if (event.nativeEvent.isComposing || event.keyCode === 229) {
+      return;
+    }
     if (preventEnterSubmit) {
       return;
     }

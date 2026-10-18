@@ -273,6 +273,67 @@ describe('form shell enhancements - Enter key handling', () => {
     });
   });
 
+  it('does NOT submit when Enter confirms an IME composition (keyCode 229)', async () => {
+    const SchemaRenderer = makeRenderer();
+    render(
+      <SchemaRenderer
+        schemaUrl="test://form/enter-ime-keycode"
+        schema={{
+          type: 'form',
+          id: 'enter-ime-keycode-form',
+          submitAction: {
+            action: 'ajax',
+            args: { url: '/api/enter-ime', method: 'post' },
+          },
+          body: [{ type: 'input-text', name: 'deptName', label: 'Dept' }],
+        }}
+        env={env}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+
+    const input = screen.getByLabelText('Dept');
+    fireEvent.keyDown(input, {
+      key: 'Enter',
+      keyCode: 229,
+      bubbles: true,
+    });
+
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    expect(submitCalls).toHaveLength(0);
+  });
+
+  it('does NOT submit when keydown reports isComposing', async () => {
+    const SchemaRenderer = makeRenderer();
+    render(
+      <SchemaRenderer
+        schemaUrl="test://form/enter-ime-composing"
+        schema={{
+          type: 'form',
+          id: 'enter-ime-composing-form',
+          submitAction: {
+            action: 'ajax',
+            args: { url: '/api/enter-composing', method: 'post' },
+          },
+          body: [{ type: 'input-text', name: 'deptName', label: 'Dept' }],
+        }}
+        env={env}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+
+    const input = screen.getByLabelText('Dept');
+    fireEvent.keyDown(input, {
+      key: 'Enter',
+      keyCode: 13,
+      isComposing: true,
+      bubbles: true,
+    });
+
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    expect(submitCalls).toHaveLength(0);
+  });
+
   it('does NOT submit when Enter is pressed on a collapsible fieldset legend (interactive trigger)', async () => {
     const SchemaRenderer = makeRenderer();
     render(
