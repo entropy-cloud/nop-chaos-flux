@@ -1,16 +1,16 @@
 {
   "_header": {
-    "description": "Whitelisted @vitest-environment jsdom pragmas under packages/. Registered entries are deliberate (DOMPurify spec-compliance etc.); new entries fail check:jsdom-pragma-whitelist. Shrink via --update-baselines.",
-    "lastUpdated": "2026-09-30",
+    "description": "Whitelisted @vitest-environment jsdom pragmas under packages/. Registered entries are deliberate (DOMPurify spec-compliance etc.); new entries fail check:jsdom-pragma-whitelist. Shrink via --update-baselines. Format migration 2026-10-19: keys are file-level (`path`, no line) — live-tree constraints must not key on line numbers.",
+    "lastUpdated": "2026-10-19",
     "count": 6,
-    "adjudication": "flux-renderers-content 5 entries: DOMPurify security tests need spec-compliant DOM (deliberate, kept). flux-renderers-data 1 entry: table-quick-edit-savebar-order.test.tsx \u2014 jsdom devDep kept in package for it (adjudicated deliberate 2026-09-30, see daily log)."
+    "adjudication": "flux-renderers-content 5 entries: DOMPurify security tests need spec-compliant DOM (deliberate, kept). flux-renderers-data 1 entry: table-quick-edit-savebar-order.test.tsx — jsdom devDep kept in package for it (adjudicated deliberate 2026-09-30, see daily log)."
   },
   "entries": [
-    "packages/flux-renderers-content/src/html.test.tsx:2",
-    "packages/flux-renderers-content/src/markdown-reactivity.test.tsx:1",
-    "packages/flux-renderers-content/src/markdown-src.test.tsx:1",
-    "packages/flux-renderers-content/src/markdown.test.tsx:2",
-    "packages/flux-renderers-content/src/sanitize.test.ts:4",
-    "packages/flux-renderers-data/src/__tests__/table-quick-edit-savebar-order.test.tsx:1"
+    "packages/flux-renderers-content/src/html.test.tsx",
+    "packages/flux-renderers-content/src/markdown-reactivity.test.tsx",
+    "packages/flux-renderers-content/src/markdown-src.test.tsx",
+    "packages/flux-renderers-content/src/markdown.test.tsx",
+    "packages/flux-renderers-content/src/sanitize.test.ts",
+    "packages/flux-renderers-data/src/__tests__/table-quick-edit-savebar-order.test.tsx"
   ]
 }

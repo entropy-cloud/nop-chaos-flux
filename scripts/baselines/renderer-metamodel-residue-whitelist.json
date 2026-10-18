@@ -1,23 +1,22 @@
 {
   "_header": {
-    "description": "RM-9 (plan 611) metamodel residue adjudication baseline. suppressions[] = point hits (ruleId::path:line) that participate in the gate diff; registry[] = adjudicated range/by-design items with no point location (never produce hits). Unregistered hits fail check:audit-renderer-metamodel-residue. Shrink-only: --update-baselines may remove vanished suppressions but never adds entries (roadmap Cross-Cutting 6; new exemptions require human confirmation).",
-    "lastUpdated": "2026-10-18",
-    "count": 12,
-    "adjudication": "suppressions 12: A5-frame-wrap (6) — the frame family's deliberate path members after RM-2 (compiled-contract pass-through, resolver input, wiring, consumer, meta resolution); B7 (3) — base-definition optional component widened by RegisteredRendererDefinition plus the opaque compiled face; A8 (3) — the TemplateNode renderer-type triad carrier declarations (rendererType=living, TemplateNode.type=test-only, component.type=consumer-less; dead-carrier contraction owned by successor). registry 4: roadmap explicit-exclusion trio + the §5.3 snapshot-volume constraint (awaiting human confirmation on machine-ization)."
+    "description": "RM-9 (plan 611) metamodel residue adjudication baseline. suppressions[] = point hits keyed `ruleId::path::normalizedLineText` — CONTENT-anchored (directive 2026-10-19: live-tree constraints must not key on line numbers; keys survive edits above the line and identical statements share one adjudication). registry[] = adjudicated range/by-design items (their `ref` fields are historical pointers, exempt from the rule). Unregistered hits fail check:audit-renderer-metamodel-residue. Shrink-only: --update-baselines may remove vanished suppressions but never adds entries (roadmap Cross-Cutting 6; new exemptions require human confirmation). Format migration 2026-10-19: `ruleId::path:line` -> content key, entries remapped from HEAD line contents.",
+    "lastUpdated": "2026-10-19",
+    "count": 11,
+    "adjudication": "suppressions 11 (deduped to content keys: identical statement forms share one adjudication): A5-frame-wrap (6) — the frame family's deliberate path members after RM-2 (compiled-contract pass-through, resolver input, wiring, consumer, meta resolution); B7 (3) — base-definition optional component widened by RegisteredRendererDefinition plus the opaque compiled face; A8 (3) — the TemplateNode renderer-type triad carrier declarations (rendererType=living, TemplateNode.type=test-only, component.type=consumer-less; dead-carrier contraction owned by successor). registry 4: roadmap explicit-exclusion trio + the §5.3 snapshot-volume constraint (awaiting human confirmation on machine-ization)."
   },
   "suppressions": [
-    "rm-a5-frame-wrap-dual-path::packages/flux-core/src/types/compiled-renderer-contract.ts:77",
-    "rm-a5-frame-wrap-dual-path::packages/flux-react/src/node-frame-wrapper.tsx:21",
-    "rm-a5-frame-wrap-dual-path::packages/flux-react/src/node-renderer-resolved.tsx:446",
-    "rm-a5-frame-wrap-dual-path::packages/flux-renderers-form-advanced/src/variant-field/variant-field-view.tsx:95",
-    "rm-a5-frame-wrap-dual-path::packages/flux-runtime/src/node-runtime.ts:254",
-    "rm-a5-frame-wrap-dual-path::packages/flux-runtime/src/node-runtime.ts:258",
-    "rm-a8-renderer-type-triad::packages/flux-core/src/types/node-identity.ts:138",
-    "rm-a8-renderer-type-triad::packages/flux-core/src/types/node-identity.ts:142",
-    "rm-a8-renderer-type-triad::packages/flux-core/src/types/node-identity.ts:143",
-    "rm-b7-component-optional::packages/flux-core/src/types/compiled-renderer-contract.ts:43",
-    "rm-b7-component-optional::packages/flux-core/src/types/compiled-renderer-contract.ts:49",
-    "rm-b7-component-optional::packages/flux-core/src/types/renderer-core.ts:220"
+    "rm-a5-frame-wrap-dual-path::packages/flux-core/src/types/compiled-renderer-contract.ts::frameWrap: definition.frameWrap,",
+    "rm-a5-frame-wrap-dual-path::packages/flux-react/src/node-frame-wrapper.tsx::props.resolvedMeta.frameWrap,",
+    "rm-a5-frame-wrap-dual-path::packages/flux-react/src/node-renderer-resolved.tsx::definitionFrameWrap={props.node.component.frameWrap}",
+    "rm-a5-frame-wrap-dual-path::packages/flux-renderers-form-advanced/src/variant-field/variant-field-view.tsx::const frameWrap = meta.frameWrap ?? schemaProps.frameWrap;",
+    "rm-a5-frame-wrap-dual-path::packages/flux-runtime/src/node-runtime.ts::meta.frameWrap as CompiledRuntimeValue<boolean | 'label' | 'group' | 'none' | undefined> | undefined,",
+    "rm-a5-frame-wrap-dual-path::packages/flux-runtime/src/node-runtime.ts::state?.meta.frameWrap as RuntimeValueState<unknown> | undefined,",
+    "rm-a8-renderer-type-triad::packages/flux-core/src/types/node-identity.ts::readonly type: S['type'];",
+    "rm-a8-renderer-type-triad::packages/flux-core/src/types/node-identity.ts::readonly rendererType: string;",
+    "rm-a8-renderer-type-triad::packages/flux-core/src/types/node-identity.ts::readonly component: CompiledRendererContract<S>;",
+    "rm-b7-component-optional::packages/flux-core/src/types/compiled-renderer-contract.ts::component?: unknown;",
+    "rm-b7-component-optional::packages/flux-core/src/types/renderer-core.ts::component?: BivariantCallback<[RendererComponentProps<S, P>], RendererRenderOutput>;"
   ],
   "registry": [
     {

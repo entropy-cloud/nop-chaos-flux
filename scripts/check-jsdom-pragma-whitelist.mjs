@@ -31,8 +31,11 @@ async function collectHits() {
     const relPath = toPosixPath(path.relative(rootDir, filePath));
     if (!isTestFile(relPath)) continue;
     const content = await readFile(filePath, 'utf8');
-    for (const pragma of findJsdomPragmas(content)) {
-      hits.push(`${relPath}:${pragma.line}`);
+    // File-level key (directive 2026-10-19): a file carries at most one
+    // jsdom pragma; line numbers rot on edits above the pragma and must not
+    // key live-tree constraints.
+    if (findJsdomPragmas(content).length > 0) {
+      hits.push(relPath);
     }
   }
   return hits;

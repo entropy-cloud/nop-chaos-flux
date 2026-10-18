@@ -25,7 +25,12 @@ const baselineFile = path.join(rootDir, 'scripts', 'baselines', 'renderer-metamo
 const label = 'find-renderer-metamodel-residue';
 
 function toKey(result) {
-  return `${result.ruleId}::${result.filePath}:${result.line}`;
+  // Content-anchored suppression keys (FM post-program directive 2026-10-19):
+  // constraints on the live tree must not key on line numbers (they rot on
+  // every edit above the line). `lineText` is the comment-stripped, trimmed
+  // code text of the hit — identical statements share one adjudication, and
+  // report output still carries the current line for diagnostics only.
+  return `${result.ruleId}::${result.filePath}::${result.lineText}`;
 }
 
 async function loadBaseline() {
