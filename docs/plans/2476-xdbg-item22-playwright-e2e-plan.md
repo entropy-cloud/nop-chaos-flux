@@ -75,10 +75,10 @@ Exit Criteria:
 
 ## Closure Gates
 
-- [ ] 所有 in-scope 行为实现且有测试（spec 即交付物）
-- [ ] Anti-Hollow：UI 操作→client 帧→mock 服务端语义→事件→UI 呈现双向连通（帧断言 + DOM 断言双向实证）
-- [ ] flux docs/logs 更新；CI 说明登记
-- [ ] 独立子 agent closure-audit 完成并记录证据
+- [x] 所有 in-scope 行为实现且有测试（spec 即交付物）——2026-10-18 收口翻转前复核：spec 5/5 绿（34.5s）
+- [x] Anti-Hollow：UI 操作→client 帧→mock 服务端语义→事件→UI 呈现双向连通（帧断言 + DOM 断言双向实证）——closure audit B 维 PASS（spec 判别力双向实证）
+- [x] flux docs/logs 更新；CI 说明登记——f5a2b65fc/b9d54d3de/cfd966ee9 落档
+- [x] 独立子 agent closure-audit 完成并记录证据——agent_d9785461（0B/2M/5m 全消化，见 Closure Audit Evidence）
 - [x] `pnpm test:e2e tests/e2e/xlang-debug.spec.ts` 绿（**closure audit M-2a 勘正**：原 gate 命令 `--filter playground exec playwright` 于 apps/playground cwd 下无 config/tests 必失败；须于仓库根执行）
 - [x] `pnpm typecheck` / `pnpm lint` 绿（新增 spec 文件入档）
 - [x] flux 仓无 check-plan-checklist 工具（R1 m8 实证）——按 flux plan guide Rule-20 文本一致性人工核对并记录于 Closure
