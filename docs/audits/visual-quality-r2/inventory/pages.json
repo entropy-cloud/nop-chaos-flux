@@ -343,10 +343,34 @@
       "walkPhase": "R2-1"
     },
     {
+      "id": "pih-workspace",
+      "hash": "#/complex-pages/pih-workspace",
+      "routeKind": "showcase-page",
+      "title": "Pi-Harness · 对话工作台",
+      "batch": "R2-1a",
+      "walkPhase": "R2-1"
+    },
+    {
       "id": "stripe-payments",
       "hash": "#/complex-pages/stripe-payments",
       "routeKind": "showcase-page",
       "title": "金融数据面板 · 支付流水",
+      "batch": "R2-1a",
+      "walkPhase": "R2-1"
+    },
+    {
+      "id": "content-landing",
+      "hash": "#/complex-pages/content-landing",
+      "routeKind": "showcase-page",
+      "title": "营销官网与文档门户",
+      "batch": "R2-1a",
+      "walkPhase": "R2-1"
+    },
+    {
+      "id": "bisheng-build",
+      "hash": "#/complex-pages/bisheng-build",
+      "routeKind": "showcase-page",
+      "title": "毕昇构建器 · 工作流编排页",
       "batch": "R2-1a",
       "walkPhase": "R2-1"
     },
@@ -439,6 +463,14 @@
       "walkPhase": "R2-1"
     },
     {
+      "id": "page-designer",
+      "hash": "#/page-designer",
+      "routeKind": "domain",
+      "title": "Page Designer",
+      "batch": "R2-1d",
+      "walkPhase": "R2-1"
+    },
+    {
       "id": "print-designer",
       "hash": "#/print-designer",
       "routeKind": "domain",
@@ -499,6 +531,14 @@
       "hash": "#/condition-builder-formula",
       "routeKind": "domain",
       "title": "Condition Builder Formula",
+      "batch": "R2-1d",
+      "walkPhase": "R2-1"
+    },
+    {
+      "id": "xlang-debug",
+      "hash": "#/xlang-debug",
+      "routeKind": "domain",
+      "title": "XLang Debug",
       "batch": "R2-1d",
       "walkPhase": "R2-1"
     },
@@ -927,6 +967,30 @@
       "walkPhase": "R2-1"
     },
     {
+      "id": "three-gallery",
+      "hash": "#/three-gallery",
+      "routeKind": "domain",
+      "title": "Three Gallery",
+      "batch": "R2-1d",
+      "walkPhase": "R2-1"
+    },
+    {
+      "id": "three-industrial-demo",
+      "hash": "#/three-industrial-demo",
+      "routeKind": "domain",
+      "title": "Three Industrial Demo",
+      "batch": "R2-1d",
+      "walkPhase": "R2-1"
+    },
+    {
+      "id": "scada-gallery",
+      "hash": "#/scada-gallery",
+      "routeKind": "domain",
+      "title": "Scada Gallery",
+      "batch": "R2-1d",
+      "walkPhase": "R2-1"
+    },
+    {
       "id": "scada-pressure-demo",
       "hash": "#/scada-pressure-demo",
       "routeKind": "domain",
@@ -1155,6 +1219,30 @@
       "hash": "#/lab/input-number",
       "routeKind": "lab-renderer",
       "title": "Input Number",
+      "batch": "R2-2-carrier",
+      "walkPhase": "R2-2-carrier"
+    },
+    {
+      "id": "lab-slider",
+      "hash": "#/lab/slider",
+      "routeKind": "lab-renderer",
+      "title": "Slider",
+      "batch": "R2-2-carrier",
+      "walkPhase": "R2-2-carrier"
+    },
+    {
+      "id": "lab-rating",
+      "hash": "#/lab/rating",
+      "routeKind": "lab-renderer",
+      "title": "Rating",
+      "batch": "R2-2-carrier",
+      "walkPhase": "R2-2-carrier"
+    },
+    {
+      "id": "lab-input-color",
+      "hash": "#/lab/input-color",
+      "routeKind": "lab-renderer",
+      "title": "Input Color",
       "batch": "R2-2-carrier",
       "walkPhase": "R2-2-carrier"
     },
@@ -1447,6 +1535,54 @@
       "walkPhase": "R2-2-carrier"
     },
     {
+      "id": "lab-user-select",
+      "hash": "#/lab/user-select",
+      "routeKind": "lab-renderer",
+      "title": "User Select",
+      "batch": "R2-2-carrier",
+      "walkPhase": "R2-2-carrier"
+    },
+    {
+      "id": "lab-department-select",
+      "hash": "#/lab/department-select",
+      "routeKind": "lab-renderer",
+      "title": "Department Select",
+      "batch": "R2-2-carrier",
+      "walkPhase": "R2-2-carrier"
+    },
+    {
+      "id": "lab-cron-editor",
+      "hash": "#/lab/cron-editor",
+      "routeKind": "lab-renderer",
+      "title": "Cron Editor",
+      "batch": "R2-2-carrier",
+      "walkPhase": "R2-2-carrier"
+    },
+    {
+      "id": "lab-input-signature",
+      "hash": "#/lab/input-signature",
+      "routeKind": "lab-renderer",
+      "title": "Input Signature",
+      "batch": "R2-2-carrier",
+      "walkPhase": "R2-2-carrier"
+    },
+    {
+      "id": "lab-verification-code",
+      "hash": "#/lab/verification-code",
+      "routeKind": "lab-renderer",
+      "title": "Verification Code",
+      "batch": "R2-2-carrier",
+      "walkPhase": "R2-2-carrier"
+    },
+    {
+      "id": "lab-input-city",
+      "hash": "#/lab/input-city",
+      "routeKind": "lab-renderer",
+      "title": "Input City",
+      "batch": "R2-2-carrier",
+      "walkPhase": "R2-2-carrier"
+    },
+    {
       "id": "lab-batch-bar",
       "hash": "#/lab/batch-bar",
       "routeKind": "lab-renderer",
@@ -1571,6 +1707,14 @@
       "hash": "#/lab/collapse",
       "routeKind": "lab-renderer",
       "title": "Collapse",
+      "batch": "R2-2-carrier",
+      "walkPhase": "R2-2-carrier"
+    },
+    {
+      "id": "lab-resizable",
+      "hash": "#/lab/resizable",
+      "routeKind": "lab-renderer",
+      "title": "Resizable",
       "batch": "R2-2-carrier",
       "walkPhase": "R2-2-carrier"
     },

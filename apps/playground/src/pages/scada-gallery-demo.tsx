@@ -196,7 +196,10 @@ export function ScadaGalleryDemoPage({ onBack }: ScadaGalleryDemoPageProps) {
           {alarmActive ? '⚠ 泵房出口压力越限（> 88 kPa）——声光警灯已联动闪烁' : '⚠ 供料罐液位低（< 20%）——已触发补料与警灯'}
         </div>
       )}
-      <div className="flex-1 min-h-0 rounded-xl border border-[var(--nop-nav-border)] bg-[#0b1220] overflow-hidden flex flex-col p-3">
+      {/* FM5-S1-B-3: fixed dark HMI surface — DOM text inside must stay light in
+          both themes (label contrast was 1.48:1 under light); #e6ecf3 equals the
+          dark theme's app text so dark mode is unchanged (15.7:1 on #0b1220). */}
+      <div className="flex-1 min-h-0 rounded-xl border border-[var(--nop-nav-border)] bg-[#0b1220] text-[#e6ecf3] overflow-hidden flex flex-col p-3">
         <GallerySchemaRenderer
           key={scene}
           schemaUrl="playground://pages/scada-gallery"

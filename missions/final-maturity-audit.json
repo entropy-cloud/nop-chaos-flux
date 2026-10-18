@@ -71,12 +71,12 @@
     {
       "id": "M3",
       "name": "渲染面回归复检",
-      "status": "todo",
+      "status": "done",
       "tasks": [
         {
           "id": "T3.1",
           "name": "FM-5 R2 基建增量 + 抽样复检轮（ux-design-pattern 口径叠加）",
-          "status": "todo",
+          "status": "done",
           "assignee": "unassigned"
         }
       ]

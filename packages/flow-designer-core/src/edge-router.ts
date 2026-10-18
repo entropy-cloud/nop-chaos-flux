@@ -9,6 +9,12 @@
  * Forward edges return `default` and keep the existing bezier rendering
  * byte-for-byte (zero regression surface). Edges sharing a handle on the same
  * side are bundled with a center offset on their handle axis.
+ *
+ * Defensive contract (FM-5 bisheng-build P0): an edge whose endpoint lacks
+ * measured geometry or whose side is not one of the four router sides (demo
+ * schemas declare ports like "right-top") has no resolvable handle anchor —
+ * such edges are skipped by routing and fall back to the default bezier
+ * instead of throwing and blanking the whole designer canvas.
  */
 
 export interface EdgeRouterNodeInput {
@@ -63,6 +69,25 @@ const DEFAULT_LANE_BASE = 24;
 const DEFAULT_CORRIDOR_MARGIN = 24;
 const DEFAULT_PAIR_GAP = 12;
 const DEFAULT_BACKWARD_EPSILON = 1;
+
+const ROUTER_SIDES: ReadonlySet<string> = new Set<EdgeRouterSide>(['top', 'right', 'bottom', 'left']);
+
+/** Runtime guard: schema-driven nodes can reach the router before measurement
+ * (x/y/width/height undefined or non-finite). */
+function hasMeasuredGeometry(node: EdgeRouterNodeInput): boolean {
+  return (
+    Number.isFinite(node.x) &&
+    Number.isFinite(node.y) &&
+    Number.isFinite(node.width) &&
+    Number.isFinite(node.height)
+  );
+}
+
+/** Runtime guard: demo port positions are not limited to the four router
+ * sides (e.g. "right-top"), and handlePoint has no anchor for them. */
+function hasRoutableSides(edge: EdgeRouterEdgeInput): boolean {
+  return ROUTER_SIDES.has(edge.sourceSide) && ROUTER_SIDES.has(edge.targetSide);
+}
 
 interface Box {
   x: number;
@@ -148,15 +173,24 @@ export function computeEdgeRoutes(
   const pairGap = options?.pairGap ?? DEFAULT_PAIR_GAP;
   const backwardEpsilon = options?.backwardEpsilon ?? DEFAULT_BACKWARD_EPSILON;
 
-  const boxes: Box[] = nodes.map((n) => ({
-    x: n.x,
-    y: n.y,
-    width: n.width,
-    height: n.height,
-    right: n.x + n.width,
-    bottom: n.y + n.height,
-  }));
-  const boxById = new Map<string, Box>(nodes.map((n, i) => [n.id, boxes[i]]));
+  // Nodes without measured geometry contribute no box: lanes and gap columns
+  // computed over a non-finite box would poison every route (NaN lanes), so
+  // their edges fall back to the default route below.
+  const boxes: Box[] = [];
+  const boxById = new Map<string, Box>();
+  for (const n of nodes) {
+    if (!hasMeasuredGeometry(n)) continue;
+    const box: Box = {
+      x: n.x,
+      y: n.y,
+      width: n.width,
+      height: n.height,
+      right: n.x + n.width,
+      bottom: n.y + n.height,
+    };
+    boxes.push(box);
+    boxById.set(n.id, box);
+  }
   const maxRight = boxes.reduce((m, b) => Math.max(m, b.right), 0);
   const maxBottom = boxes.reduce((m, b) => Math.max(m, b.bottom), 0);
   const minTop = boxes.reduce((m, b) => Math.min(m, b.y), Number.POSITIVE_INFINITY);
@@ -166,6 +200,9 @@ export function computeEdgeRoutes(
   const sourceGroups = new Map<string, string[]>();
   const targetGroups = new Map<string, string[]>();
   for (const edge of edges) {
+    const sourceBox = boxById.get(edge.source);
+    const targetBox = boxById.get(edge.target);
+    if (!sourceBox || !targetBox || !hasRoutableSides(edge)) continue;
     const sk = `${edge.source}::${edge.sourceSide}`;
     const tk = `${edge.target}::${edge.targetSide}`;
     sourceGroups.set(sk, [...(sourceGroups.get(sk) ?? []), edge.id]);
@@ -178,7 +215,7 @@ export function computeEdgeRoutes(
   for (const edge of edges) {
     const sourceBox = boxById.get(edge.source);
     const targetBox = boxById.get(edge.target);
-    if (!sourceBox || !targetBox) continue;
+    if (!sourceBox || !targetBox || !hasRoutableSides(edge)) continue;
     const sp = handlePoint(sourceBox, edge.sourceSide);
     if (sp.x >= targetBox.x - backwardEpsilon) {
       laneXByEdge.set(edge.id, maxRight + laneBase + laneIdx * laneGap);
@@ -189,7 +226,9 @@ export function computeEdgeRoutes(
   for (const edge of edges) {
     const sourceBox = boxById.get(edge.source);
     const targetBox = boxById.get(edge.target);
-    if (!sourceBox || !targetBox) {
+    if (!sourceBox || !targetBox || !hasRoutableSides(edge)) {
+      // Unmeasured endpoint or unresolvable side: no anchor to route from —
+      // fall back to the consumer's default bezier instead of throwing.
       result.set(edge.id, { route: { kind: 'default' }, anchorShift: 0 });
       continue;
     }

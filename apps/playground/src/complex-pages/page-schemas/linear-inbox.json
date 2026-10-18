@@ -251,7 +251,7 @@
                     },
                     {
                       "type": "button",
-                      "label": "归档所选",
+                      "label": "全部归档",
                       "className": "ln-btn ln-btn-ghost h-7 px-3 text-xs",
                       "testid": "linear-inbox-bulk-archive",
                       "onClick": {
@@ -264,6 +264,7 @@
                             "op": "archive"
                           }
                         },
+                        "confirmText": "确认归档全部未归档通知？",
                         "messages": {
                           "success": "已归档全部通知",
                           "failed": "没有可归档的通知"

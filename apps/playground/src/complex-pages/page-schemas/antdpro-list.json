@@ -310,6 +310,7 @@
                     "messages": {
                       "success": "批量删除成功"
                     },
+                    "confirmText": "确认删除选中的 ${$crud.selectionCount} 条记录？",
                     "then": {
                       "action": "component:refresh",
                       "componentId": "antdpro-list-crud"

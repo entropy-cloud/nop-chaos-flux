@@ -360,14 +360,21 @@ describe('R2 visual inventory generator (plan 491)', () => {
   const controls = buildControls();
 
   it('enumerates the full route model with expected scale', () => {
-    // Cross-checks against route-matrix.test.ts liveTotal conventions:
+    // Cross-checks against route-matrix.test.ts liveTotal conventions.
+    // FM-5 plan 646 re-baseline (2026-10-18): 18 routes joined since the R2
+    // close (content-landing, pih-workspace, page-designer, scada-gallery,
+    // three-gallery, three-industrial-demo, xlang-debug, bisheng-build,
+    // lab-cron-editor, lab-department-select, lab-input-city, lab-input-color,
+    // lab-input-signature, lab-input-rating, lab-rating, lab-resizable,
+    // lab-slider, lab-user-select, lab-verification-code) — scale pins moved
+    // 124->134 carriers / 121->129 walked; batch assignment rules unchanged.
     const labCarriers = pages.filter((p) => p.walkPhase === 'R2-2-carrier');
-    expect(ALL_SHARED_RENDERER_ROUTES.length).toBe(124);
-    expect(labCarriers.length).toBe(124);
-    expect(DOMAIN_RENDERER_ROUTES.length).toBe(78);
+    expect(ALL_SHARED_RENDERER_ROUTES.length).toBe(134);
+    expect(labCarriers.length).toBe(134);
+    expect(DOMAIN_RENDERER_ROUTES.length).toBe(83);
     const r1Pages = pages.filter((p) => p.walkPhase === 'R2-1');
-    // 78 domain + 40 showcase + 3 index = 121 walked pages
-    expect(r1Pages.length).toBe(78 + COMPLEX_PAGES.length + 3);
+    // 83 domain + 43 showcase + 3 index = 129 walked pages
+    expect(r1Pages.length).toBe(83 + COMPLEX_PAGES.length + 3);
     expect(r1Pages.length).toBeGreaterThan(100);
   });
 
@@ -443,7 +450,7 @@ describe('R2 visual inventory generator (plan 491)', () => {
     writeFileSync(`${OUT_DIR}/controls.json`, `${JSON.stringify(controlsJson, null, 2)}\n`);
 
     const { pageRows, controlRows } = buildLedger(pages, controls);
-    expect(pageRows.length).toBe(121);
+    expect(pageRows.length).toBe(129);
     expect(controlRows.length).toBe(controls.length);
     for (const row of [...pageRows, ...controlRows]) {
       expect(row.id, 'ledger row id must be defined').toBeTruthy();

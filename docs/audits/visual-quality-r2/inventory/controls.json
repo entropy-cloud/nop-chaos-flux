@@ -376,6 +376,16 @@
       "matrixReason": "no complexity attribute registered (≤2 of 6)"
     },
     {
+      "type": "cron-editor",
+      "sourcePackage": "@nop-chaos/flux-renderers-form",
+      "category": "unknown",
+      "labRoute": "#/lab/cron-editor",
+      "fixtureRequired": false,
+      "batch": "R2-2a",
+      "matrix": "simplified",
+      "matrixReason": "no complexity attribute registered (≤2 of 6)"
+    },
+    {
       "type": "crud",
       "sourcePackage": "@nop-chaos/flux-renderers-data",
       "category": "data",
@@ -420,6 +430,16 @@
       "sourcePackage": "@nop-chaos/flux-renderers-form",
       "category": "Date",
       "labRoute": "#/lab/date-range",
+      "fixtureRequired": false,
+      "batch": "R2-2a",
+      "matrix": "simplified",
+      "matrixReason": "no complexity attribute registered (≤2 of 6)"
+    },
+    {
+      "type": "department-select",
+      "sourcePackage": "@nop-chaos/flux-renderers-form",
+      "category": "unknown",
+      "labRoute": "#/lab/department-select",
       "fixtureRequired": false,
       "batch": "R2-2a",
       "matrix": "simplified",
@@ -716,6 +736,26 @@
       "matrixReason": "no complexity attribute registered (≤2 of 6)"
     },
     {
+      "type": "input-city",
+      "sourcePackage": "@nop-chaos/flux-renderers-form",
+      "category": "unknown",
+      "labRoute": "#/lab/input-city",
+      "fixtureRequired": false,
+      "batch": "R2-2a",
+      "matrix": "simplified",
+      "matrixReason": "no complexity attribute registered (≤2 of 6)"
+    },
+    {
+      "type": "input-color",
+      "sourcePackage": "@nop-chaos/flux-renderers-form",
+      "category": "unknown",
+      "labRoute": "#/lab/input-color",
+      "fixtureRequired": false,
+      "batch": "R2-2a",
+      "matrix": "simplified",
+      "matrixReason": "no complexity attribute registered (≤2 of 6)"
+    },
+    {
       "type": "input-date",
       "sourcePackage": "@nop-chaos/flux-renderers-form",
       "category": "Date",
@@ -800,6 +840,16 @@
       "sourcePackage": "@nop-chaos/flux-renderers-form",
       "category": "Date",
       "labRoute": "#/lab/input-quarter",
+      "fixtureRequired": false,
+      "batch": "R2-2a",
+      "matrix": "simplified",
+      "matrixReason": "no complexity attribute registered (≤2 of 6)"
+    },
+    {
+      "type": "input-signature",
+      "sourcePackage": "@nop-chaos/flux-renderers-form",
+      "category": "unknown",
+      "labRoute": "#/lab/input-signature",
       "fixtureRequired": false,
       "batch": "R2-2a",
       "matrix": "simplified",
@@ -1076,6 +1126,16 @@
       "matrixReason": "no complexity attribute registered (≤2 of 6)"
     },
     {
+      "type": "rating",
+      "sourcePackage": "@nop-chaos/flux-renderers-form",
+      "category": "unknown",
+      "labRoute": "#/lab/rating",
+      "fixtureRequired": false,
+      "batch": "R2-2a",
+      "matrix": "simplified",
+      "matrixReason": "no complexity attribute registered (≤2 of 6)"
+    },
+    {
       "type": "reaction",
       "sourcePackage": "@nop-chaos/flux-renderers-basic",
       "category": "logic",
@@ -1092,6 +1152,16 @@
       "labRoute": "#/lab/recurse",
       "fixtureRequired": false,
       "batch": "R2-2a",
+      "matrix": "simplified",
+      "matrixReason": "no complexity attribute registered (≤2 of 6)"
+    },
+    {
+      "type": "resizable",
+      "sourcePackage": "@nop-chaos/flux-renderers-layout",
+      "category": "layout",
+      "labRoute": "#/lab/resizable",
+      "fixtureRequired": false,
+      "batch": "R2-2b",
       "matrix": "simplified",
       "matrixReason": "no complexity attribute registered (≤2 of 6)"
     },
@@ -1162,6 +1232,16 @@
       "labRoute": "#/lab/separator",
       "fixtureRequired": false,
       "batch": "R2-2b",
+      "matrix": "simplified",
+      "matrixReason": "no complexity attribute registered (≤2 of 6)"
+    },
+    {
+      "type": "slider",
+      "sourcePackage": "@nop-chaos/flux-renderers-form",
+      "category": "unknown",
+      "labRoute": "#/lab/slider",
+      "fixtureRequired": false,
+      "batch": "R2-2a",
       "matrix": "simplified",
       "matrixReason": "no complexity attribute registered (≤2 of 6)"
     },
@@ -1356,10 +1436,30 @@
       "matrixReason": "2 complexity attributes: overlay-editing/async-loading"
     },
     {
+      "type": "user-select",
+      "sourcePackage": "@nop-chaos/flux-renderers-form",
+      "category": "unknown",
+      "labRoute": "#/lab/user-select",
+      "fixtureRequired": false,
+      "batch": "R2-2a",
+      "matrix": "simplified",
+      "matrixReason": "no complexity attribute registered (≤2 of 6)"
+    },
+    {
       "type": "variant-field",
       "sourcePackage": "@nop-chaos/flux-renderers-form-advanced",
       "category": "Form Advanced",
       "labRoute": "#/lab/variant-field",
+      "fixtureRequired": false,
+      "batch": "R2-2a",
+      "matrix": "simplified",
+      "matrixReason": "no complexity attribute registered (≤2 of 6)"
+    },
+    {
+      "type": "verification-code",
+      "sourcePackage": "@nop-chaos/flux-renderers-form",
+      "category": "unknown",
+      "labRoute": "#/lab/verification-code",
       "fixtureRequired": false,
       "batch": "R2-2a",
       "matrix": "simplified",

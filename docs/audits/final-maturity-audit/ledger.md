@@ -56,3 +56,13 @@
 ## 批次覆盖记录（FM-4 追加）
 
 - **FM-4（2026-10-18，plan 645）**：新增 FM-027–FM-030 共 4 条（fixed→verified 2 / watch-only 1 / local→FM-6 候选 1 批 [FM-028 四条具名]）；7 非门禁扫描器 triage 零 P0/P1 新面；react-doctor 686 条启发式抽样零确认缺陷（参考线索存档）。
+
+| FM-031 | FM-5 | 走查分片 3（linear-settings） | light 宿主下复刻画布恒暗 × 字段标签主题响应式 token → 标签 1.00:1 不可读（dark 19.05:1 正常） | found | local → FM-6 候选 | P2；修复方向 = 画布本地固定色或 dark 作用域；同族对照（固定色标签 18.73:1）已探针坐实 |
+| FM-032 | FM-5 | 走查分片 1（xlang-debug） | dark CodeMirror 无主题适配（亮灰行号槽嵌深色编辑器）+ 门控表单裸元素零样式（违反 @nop-chaos/ui 强制契约） | found | watch-only（xlang 并发会话领地，successor = 该工作流） | P1/P2；Why Not Blocking：xlang 域按并发领地排除（同 FM-023 口径） |
+| FM-033 | FM-5 | 走查分片 2（R2 在案复发） | 11 条 R2 在案 finding 复发维持（C3-02 版心收缩族 ×4、C4 窄视口族 ×5、dark 半适配族 ×2、E4-03 ×1）——非新回归 | found | local → FM-6 候选（维持 R2 原归族坐标） | 复检确认 + 10 项 R2 finding 确认已修复（正向销项在案） |
+| FM-034 | FM-5 | ux-design-pattern 叠加 | MEDIUM 5：linear-inbox 无空态、侧边栏 6 死导航项、状态徽标双机制、行删除三做法并存、collapse tone 色条宿主外不可见 | found | local → FM-6 候选 | 详见 `_tmp/fm5-ux-overlay.md` 附录 A 格式 |
+| FM-035 | FM-5 | 走查分片 1 采集基建观察 | capture 矩阵三类伪影：空白帧（竞态）、交互态与 default 字节相同（未捕获）、lazy chunk 首帧假阳性——已致 2 次假阳性误判（经 settled 复拍定谳） | found | watch-only / optimization candidate | runner 改进建议（settle 延迟/双帧采样/空白帧大小 suspect 检测）登记；Why Not Blocking：采集器增强属基建优化 |
+
+## 批次覆盖记录（FM-5 追加）
+
+- **FM-5（2026-10-18，plan 646）**：新增 FM-031–FM-035 共 5 条（watch-only 2 / local→FM-6 候选 3）；**P0×1 + P1×3 当批修复即 verified**（bisheng-build 边路由崩溃——判别 3 用例红→绿直录本行；scada-gallery 对比度 1.48→15.74、linear-inbox 归档确认、antdpro-list 删除确认——schema/demo 修复即时 live 验证）；coverage 台账 129 walked（pending 8 新页）+ 149 controls 结构闭合；evidence cards 55 张落 `docs/analysis/fm5-render-recheck/cards/`。FM-5a successor：8 条改版页超上界顺延。
