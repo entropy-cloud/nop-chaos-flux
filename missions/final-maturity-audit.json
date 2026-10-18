@@ -103,12 +103,12 @@
     {
       "id": "M5",
       "name": "终验与守护固化",
-      "status": "todo",
+      "status": "done",
       "tasks": [
         {
           "id": "T5.1",
           "name": "FM-8 交互旅程 e2e 化 + 台账对账 uncovered=0 + 全量门禁 + 提示词矩阵终审标记 + 收官",
-          "status": "todo",
+          "status": "done",
           "assignee": "unassigned"
         }
       ]

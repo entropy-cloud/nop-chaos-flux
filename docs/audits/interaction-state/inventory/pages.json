@@ -190,6 +190,14 @@
       "profile": "dynamic"
     },
     {
+      "id": "xlang-debug",
+      "hash": "#/xlang-debug",
+      "family": "domain",
+      "title": "XLang Debug",
+      "batch": "IS-6",
+      "profile": "dynamic"
+    },
+    {
       "id": "code-editor",
       "hash": "#/code-editor",
       "family": "domain",
@@ -842,7 +850,7 @@
       "hash": "#/complex-pages/antdpro-list",
       "family": "complex",
       "title": "AntD Pro 订单列表",
-      "batch": "IS-7b",
+      "batch": "IS-7a",
       "profile": "dynamic"
     },
     {
@@ -998,10 +1006,34 @@
       "profile": "dynamic"
     },
     {
+      "id": "pih-workspace",
+      "hash": "#/complex-pages/pih-workspace",
+      "family": "complex",
+      "title": "Pi-Harness · 对话工作台",
+      "batch": "IS-7b",
+      "profile": "dynamic"
+    },
+    {
       "id": "stripe-payments",
       "hash": "#/complex-pages/stripe-payments",
       "family": "complex",
       "title": "金融数据面板 · 支付流水",
+      "batch": "IS-7b",
+      "profile": "dynamic"
+    },
+    {
+      "id": "content-landing",
+      "hash": "#/complex-pages/content-landing",
+      "family": "complex",
+      "title": "营销官网与文档门户",
+      "batch": "IS-7b",
+      "profile": "dynamic"
+    },
+    {
+      "id": "bisheng-build",
+      "hash": "#/complex-pages/bisheng-build",
+      "family": "complex",
+      "title": "毕昇构建器 · 工作流编排页",
       "batch": "IS-7b",
       "profile": "dynamic"
     },
