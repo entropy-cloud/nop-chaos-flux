@@ -27,12 +27,12 @@
     {
       "id": "M1",
       "name": "交互实操走查（两批）",
-      "status": "todo",
+      "status": "in progress",
       "tasks": [
         {
           "id": "T1.1",
           "name": "FM-1a 数据域 browser-use 实操走查（CRUD/表格族/表单/弹层/分页）",
-          "status": "todo",
+          "status": "done",
           "assignee": "unassigned"
         },
         {

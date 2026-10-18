@@ -66,3 +66,10 @@
 ## 批次覆盖记录（FM-5 追加）
 
 - **FM-5（2026-10-18，plan 646）**：新增 FM-031–FM-035 共 5 条（watch-only 2 / local→FM-6 候选 3）；**P0×1 + P1×3 当批修复即 verified**（bisheng-build 边路由崩溃——判别 3 用例红→绿直录本行；scada-gallery 对比度 1.48→15.74、linear-inbox 归档确认、antdpro-list 删除确认——schema/demo 修复即时 live 验证）；coverage 台账 129 walked（pending 8 新页）+ 149 controls 结构闭合；evidence cards 55 张落 `docs/analysis/fm5-render-recheck/cards/`。FM-5a successor：8 条改版页超上界顺延。
+
+| FM-036 | FM-1a | 走查 crud-views-export（A 类视图状态；第 2 坐标 master-detail） | 视图切换 Tab 激活后非活动 tabpanel 不隐藏——双视图纵向叠加 ≥2.6s 且 resize 不复原；候选根因 tabs keepMounted + TabsPanel mounted→hidden 翻转未完成 | found | local → FM-6 候选 | P2；修复需 tabs 隐藏语义修复 + 11 处 tabs 消费 schema 类扫描回归；复现序列见 `_tmp/fm1a-walk/crud-views-export.md` |
+| FM-037 | FM-1a | 走查 P3（行拖拽能力不可达） | 行拖拽机制（data-dragging opacity，plan 642 入库）数据域全部页面无 draggable:true 实例——能力不可达不可测 | found | local → FM-6 候选 | P3 design-debt；建议 lab 页补 draggable 实例 + e2e |
+
+## 批次覆盖记录（FM-1a 追加）
+
+- **FM-1a（2026-10-18，plan 647）**：新增 FM-036/037 共 2 条（均 local→FM-6 候选）；**P0/P1 零新案**；13 页 × ≈60 序列真实驱动（PASS 9 / FAIL 1 / n-a 3）；在案注记 5 项（IS 坐标 ×4 + FM-026 复核成立）；FM-5 confirmText 修复三处 live 正向验证；IS ledger 相关页行已注记 FM-1a CRUD 矩阵维度覆盖。
