@@ -243,6 +243,9 @@ describe('debug client', () => {
     const firstRenewF4 = parseFrame(firstConn.sent.filter((f) => f.includes('lease.renew'))[0]);
     firstConn.receive(JSON.stringify({ jsonrpc: '2.0', id: firstRenewF4.id, result: { lease: { expiresAtMs: 1, suspendedThreadIds: [] } } }));
     env.store.getState().setBreakpoints([{ sourcePath: 'keep.xpl', line: 2 }]);
+    // plan 650 closure audit Major-1：非 sessionClosed 断连路径（1006）无 invalidateSession——
+    // rebuild 是 suspended 复位的唯一接线点（判别：变异移除 resetSessionState → 此断言红）
+    env.store.getState().addSuspended({ threadId: 9, sourcePath: 'stale.xpl', line: 3 });
     firstConn.closeFromServer(1006);
     await vi.advanceTimersByTimeAsync(600);
     const secondConn = env.connections[1];
@@ -268,6 +271,8 @@ describe('debug client', () => {
       bps: [{ sourcePath: 'keep.xpl', line: 2 }],
     });
     expect(env.client.sessionId()).toBe('u1:conn-2');
+    // F-2 判别断言：rebuild 复位旧会话残留挂起态（无 invalidateSession 的路径）
+    expect(env.store.getState().suspended).toEqual([]);
     const methods = secondConn.sent.map((f) => { try { return JSON.parse(f).method ?? 'resp'; } catch { return '?'; } });
     expect(methods).toContain('lease.renew');
     env.client.dispose();

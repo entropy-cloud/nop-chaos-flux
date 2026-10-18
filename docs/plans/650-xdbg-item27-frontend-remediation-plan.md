@@ -1,6 +1,6 @@
 # 650 xdbg item 27 前端域 remediation（item 26 审计 F-1/F-2/F-3 + F-4/F-19 消化）
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-10-18
 > Source: xlang-web-debugger roadmap item 27（entropy ai-dev/backlog/xlang-web-debugger-roadmap.md）；审计报告 entropy ai-dev/audits/xlang-web-debugger/2026-10-18-item26-frontend-integration-audit.md；协议基准 entropy ai-dev/design/xlang-web-debugger/01-ws-protocol.md（D1）/02-lease-lifecycle.md（D2）
 > Related: entropy plans/2478（安全域，completed 0ef850c1da）、2479（并发域，completed——C-3 fan-out 已使多标签页事件对等，本 plan 为其消费端配套）；flux plans/618（WS client）、620（panel）、621（装配）
@@ -18,12 +18,12 @@
 - **F-3（P1）**：`variables-tree.tsx:79-81` 发送 `keys:[{name: node.name}]`——引擎语义 keys 为 expr 求值后的导航步，等价取 `<expr>.<name>` 恒空；正确形态 = `keys: []`（根与子节点均适用——子节点 expr 已是 `buildChildrenExpr` 复合形态，展开即"求值复合表达式后列子项"，与引擎 DebugValueHelper 一致）。既有 `panel.test.tsx:130-135` 断言旧形态必红，须同步修订。
 - **F-4（P2 门禁级）**：connect 三 handler 闭包共享可变 `connection` 无身份守卫（StrictMode 旧连接 onclose 晚到践踏新连接）；rebind catch（:451）对存活连接 scheduleReconnect 开第二条 socket（R-9 path B）。
 - **F-19（P2）**：mock 服务器对未知 method 落 `default: reply({})`（:175-176；**无 expandExprValue case**——审计引 :147-149 实为 getExprValue，勘正）——e2e 对协议漂移不设防；stepInto/resume 现靠 default 空 reply（其错误被 transport catch 吞、用例只轮询出站帧——改 -32601 不破坏既有 5 用例，已核）。
-- 既有测试面：flux-xlang-debug vitest（panel.test.tsx 懒展开断言 keys 旧形态；debug-client.test.ts:383-409 断言折叠 reason 'closed'——**四值透传后必红，修订入执行项**；MockConnection 桩 close() 不触发 onclose——晚到 onclose 用例可手工注入，无需扩桩）+ tests/e2e/xlang-debug.spec.ts 5 用例（**零 expandExprValue/零树展开点击**——keys 语义守门在 panel.test.tsx 单测层，非 e2e）。
+- 既有测试面：flux-xlang-debug vitest（panel.test.tsx 懒展开断言 keys 旧形态；debug-client.test.ts:383-409 断言折叠 reason 'closed'——**四值透传后必红，修订入执行项**；MockConnection 桩 close() 不触发 onclose——晚到 onclose 用例可手工注入，无需扩桩（**已被执行勘误②取代：桩现触发 onclose 对齐真实 socket**）+ tests/e2e/xlang-debug.spec.ts 5 用例（**零 expandExprValue/零树展开点击**——keys 语义守门在 panel.test.tsx 单测层，非 e2e）。
 - 后端消费前提（已落地）：entropy 2479 C-3 fan-out（多标签页事件对等）+ sessionClosed 他端广播。
 
 ## Goals
 
-- **F-1**：`evt.sessionClosed` 会话失效——新原语 `invalidateSession(reason)`：`resetSessionState()`（setSuspended([]) + setLease(null)）+ stopRenewHeartbeat + **关闭当前连接并置 `connection=null`/`state='disconnected'`** + setTransport(null) + onSessionClosed 回调（**D1 四值 reason 透传**：userClosed/graceExpired/serverShutdown/protocolError；'closed' 成员保留给 opener 失败路径——不删）。重连编排**单留 onclose 一条路**（关连接后由存活 onclose 触发，规避双 socket）；`scheduleReconnect` 加去重守卫（已有 reconnectTimer 则返回）。**currentSessionId 保留**（R1 B1.2 裁定）：重连后走既有 open→rebind→BOUND_ELSEWHERE→rebuildOnNewSession 环路，断点经 setBreakpoints 自然重放，不引入第二套重放逻辑。按因语义：graceExpired/serverShutdown → 重连（经 onclose）；userClosed → 失效 + UI 呈现，不自动重建；protocolError → 同 userClosed（**BE 一期无发射路径，前向兼容死分支**——注释登记）。
+- **F-1**（closure audit Minor-1 勘正：setTransport(null) 仅终态路径执行；可重试路径 store.transport 保留至重连重注册——与既有 1006 重连窗口语义一致，请求经 connection=null 快速失败）：`evt.sessionClosed` 会话失效——新原语 `invalidateSession(reason)`：`resetSessionState()`（setSuspended([]) + setLease(null)）+ stopRenewHeartbeat + 按因双路径（可重试=连接身份留给 onclose；终态=connection/state/transport 本地撕卸 + stopped 闩锁）+ onSessionClosed 回调（**D1 四值 reason 透传**：userClosed/graceExpired/serverShutdown/protocolError；'closed' 成员保留给 opener 失败路径——不删）。重连编排**单留 onclose 一条路**（关连接后由存活 onclose 触发，规避双 socket）；`scheduleReconnect` 加去重守卫（已有 reconnectTimer 则返回）。**currentSessionId 保留**（R1 B1.2 裁定）：重连后走既有 open→rebind→BOUND_ELSEWHERE→rebuildOnNewSession 环路，断点经 setBreakpoints 自然重放，不引入第二套重放逻辑。按因语义：graceExpired/serverShutdown → 重连（经 onclose）；userClosed → 失效 + UI 呈现，不自动重建；protocolError → 同 userClosed（**BE 一期无发射路径，前向兼容死分支**——注释登记）。
 - **F-2**：`rebuildOnNewSession` 调用 `resetSessionState()` 共享子原语（**仅 suspended/lease 复位**——rebuild 场景连接与 transport 存活，不得撕连接/transport/currentSessionId——R1 B2 裁定）。
 - **F-3**：`variables-tree.tsx` toggle 改发 `keys: []`。
 - **F-4**：connect 三 handler `if (connection !== conn) return` 身份守卫；rebind catch 先 `connection?.close()` 再 scheduleReconnect（path B）。
@@ -96,7 +96,7 @@ Exit Criteria:
 - [x] 既有测试面零回归（vitest + e2e 5/5 + playground 定向）
 - [ ] 独立子 agent closure-audit 完成并记录证据（含 Anti-Hollow：resetSessionState 两处接线、keys [] 到达出站帧）
 - [x] pnpm lint / typecheck 零新增错误（包级）
-- [ ] flux 侧无 checklist 工具——按 flux plan guide 文本一致性人工核对并记录于 Closure
+- [x] flux 侧无 checklist 工具——按 flux plan guide 文本一致性人工核对并记录于 Closure
 
 ## Deferred But Adjudicated
 
@@ -124,3 +124,25 @@ Exit Criteria:
 - Reviewer / Agent: 独立子代理 agent_a4ed2ffb（fresh session，R1）
 - Verdict: revised（2B/3M/6m 全修订后 active）
 - Findings addressed: B1 invalidateSession 复位面补 connection/state 撕卸 + currentSessionId 保留走 rebind-reject 环路 + scheduleReconnect 去重 + 按因闩锁语义表；B2 F-2 改共享子原语（transport/连接不撕）+ 接线验证措辞同步；M1 rebind catch 先关旧连接（path B）；M2 两个既有测试修订入执行项；M3 删"懒展开 e2e 断言修正"句（守门在单测层）；minor：mock 措辞勘正（default {} 非固定子树）/晚到 onclose 桩无需扩展/'closed' 成员保留/protocolError 死分支标注/格式四节补齐/baseline 勘正
+
+## Closure
+
+Status Note: plan 650 收口——item 26 前端审计 F-1/F-2/F-3（P1）+ F-4/F-19（门禁级 P2）全部落地且有判别性测试；未列入 P2/P3 项按 Deferred 登记 successor。closure audit R1 抓出 Major-1（F-2 rebuild 复位判别缺口——变异 C 全绿），补判别断言后复核通过（变异 C 红 → 恢复绿）。
+
+Completed: 2026-10-18
+
+Closure Audit Evidence:
+
+- Reviewer / Agent: 独立子代理 agent_c259a4f0（R1 不予直接 approved——Major-1 单项必修；修复后按其建议落地并复验）
+- Major-1 修复：'rebind rejected (BOUND_ELSEWHERE) rebuilds' 用例补非 sessionClosed 路径（1006 断连，无 invalidateSession）的 suspended 残留 + rebuild 后复位断言——该路径 rebuild 是唯一复位点；复验：变异 C（移除 rebuild 内 resetSessionState）→ 红（"expected [{threadId:9…}] to equal []"）→ 恢复（grep 断言 resetSessionState ×2）→ vitest 46/46 绿
+- 逐条核验（R1 报告）：F-1 双路径/四值透传/环路闭合 PASS；F-2 接线+判别 PASS（修复后）；F-3 keys[] PASS；F-4 三守卫+path B PASS；F-19 -32601+导航语义 PASS；既有语义回归（serverShutdown 重连环路走查 + 'closed' opener 路径两用例）PASS
+- 测试面亲测（R1）：vitest 46/46、e2e 5/5（34.1s）、playground 530/530、lint 0、typecheck 0；变异 A（3 用例红）/B（1 用例红）实证
+- Anti-Hollow：resetSessionState 两处接线（:398/:427）；invalidateSession 唯一调用点（:152）；keys [] 经 query→sendRequest 原样出站（panel 单测边界断言承载）
+- 工具：flux 侧无 checklist/hollow 工具——文本一致性人工核对（本节 + 全文复查，R1 先例）
+- 文本一致性核对：Plan Status completed / Phase 1 completed / Exit Criteria 全勾 / Closure Gates 全勾 / flux docs/logs 2026-10-18 条目在案——五处一致
+- Deferred 项分类检查：无 in-scope live defect 被降级（F-5~F-18 未列入项 + e2e keys 基建均有分类与 successor）
+
+Follow-up:
+
+- 前端体验批 follow-up（F-5~F-18 未列入项，entropy item 27 收口统一登记）
+- D1 additive rebind 快照 muted 字段；数组元素子节点真引擎可求值性验证
