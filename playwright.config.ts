@@ -84,12 +84,19 @@ export default defineConfig({
       },
     },
   ],
-  webServer: {
+  webServer: [
+    {
+      command: 'node tests/e2e/xlang-debug-mock-server.mjs',
+      port: 4180,
+      reuseExistingServer: !process.env.CI,
+    },
+    {
     command: isWin
       ? `cmd /c set __FLUX_STRICT_VALIDATION__=true && set __FLUX_FAIL_ON_SCHEMA_DIAGNOSTICS__=true && set PLAYWRIGHT=true && pnpm --filter @nop-chaos/flux-playground dev --host 127.0.0.1 --port ${port} --strictPort`
       : `__FLUX_STRICT_VALIDATION__=true __FLUX_FAIL_ON_SCHEMA_DIAGNOSTICS__=true PLAYWRIGHT=true pnpm --filter @nop-chaos/flux-playground dev --host 127.0.0.1 --port ${port} --strictPort`,
     url: baseUrl,
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
-  },
+    },
+  ],
 });

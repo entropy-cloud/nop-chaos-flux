@@ -9,6 +9,21 @@ export default defineConfig(({ mode }) => ({
   resolve: {
     alias: workspacePackageAliases,
   },
+  // plan 2476（item 22）：xlang 在线调试 e2e——dev 代理至 D1 mock 服务器
+  // （tests/e2e/xlang-debug-mock-server.mjs，playwright webServer 拉起；无 mock 服务器时
+  // 仅这两个路径不可用，其余 dev 功能不受影响）
+  server: {
+    proxy: {
+      '/ws/xlang-debugger': {
+        target: 'ws://127.0.0.1:4180',
+        ws: true,
+      },
+      '/r/nop-xlang-debug': {
+        target: 'http://127.0.0.1:4180',
+        changeOrigin: true,
+      },
+    },
+  },
   plugins: [
     tailwindcss(),
     react(),
