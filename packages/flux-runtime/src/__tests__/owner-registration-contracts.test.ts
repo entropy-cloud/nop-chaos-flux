@@ -143,6 +143,52 @@ describe('owner registration containment contracts', () => {
     expect(result.fieldErrors.external).toBeUndefined();
   });
 
+  it('contains validateChild throw failures into the diagnostics seam instead of rejecting validateForm (FM-2 P1-2)', async () => {
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const reportFailure = vi.fn();
+    const parentStore = createScopeStore({ profile: { name: '' }, external: '' });
+    const parentScope = createScopeRef({ id: 'parent', path: '$', store: parentStore });
+    const runtime = createManagedFormRuntime({
+      id: 'test-form',
+      initialValues: { profile: { name: '' }, external: '' },
+      parentScope,
+      validation: makeFormModel({ 'profile.name': makeNode('profile.name') }),
+      validateRule: vi.fn().mockReturnValue(undefined),
+      executeValidationRule: vi.fn().mockResolvedValue(undefined),
+      reportDependentRevalidationFailure: reportFailure,
+    } as never);
+    runtime.registerField({
+      path: 'profile',
+      childPaths: ['profile.name'],
+      getValue() {
+        return {};
+      },
+      validateChild() {
+        throw new Error('validator exploded');
+      },
+    });
+
+    // Old behavior: the bare `await validatePath` in validateRegisteredChildren
+    // rejected validateForm outright — the fourth ungated entry breaking the
+    // V18/M-09 three-entry convergence contract.
+    const result = await runtime.validateForm();
+
+    expect(reportFailure).toHaveBeenCalledWith('profile.name', expect.any(Error));
+    expect(result.ok).toBe(false);
+    // The same throwing validator is contained on both the child pass and the
+    // owner pass, so the aggregate may carry more than one seam entry — the
+    // contract is: resolve instead of reject, seam reported, form-level
+    // internal error present so submit stays blocked.
+    expect(result.errors.length).toBeGreaterThan(0);
+    expect(result.errors).toContainEqual(
+      expect.objectContaining({
+        message: expect.stringContaining('internal error'),
+        sourceKind: 'form',
+      }),
+    );
+    consoleError.mockRestore();
+  });
+
   it('surfaces runtime child validation errors for compiled array parents at child paths', async () => {
     const parentStore = createScopeStore({ tags: ['alpha', ''] });
     const parentScope = createScopeRef({ id: 'parent', path: '$', store: parentStore });

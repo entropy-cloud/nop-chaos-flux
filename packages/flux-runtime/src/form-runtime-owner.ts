@@ -415,7 +415,10 @@ export function buildFormOwnerRuntime(input: {
         // this seam: this `validateForm`/`validateFormPath` entry, the
         // `executeSetValues` entry (via attachDependentRevalidationFailureHandler),
         // and the `applyChangesAndRevalidate` entry (via its revalidateDependents
-        // catch). The form result is still marked not-ok (form-level error
+        // catch) — plus the child-registration entry below (FM-2 plan 643 P1-2;
+        // the applyChanges change branch and validateSubtree family remain
+        // ungated, tracked as FM-010 in the final-maturity ledger). The form
+        // result is still marked not-ok (form-level error
         // below) so submit does not silently proceed on unknown validation state.
         const reportFailure =
           input.sharedState.inputValue.reportDependentRevalidationFailure ??
@@ -442,12 +445,39 @@ export function buildFormOwnerRuntime(input: {
       registration: import('@nop-chaos/flux-core').RuntimeFieldRegistration,
     ) {
       if (!registration.validateChild || !registration.childPaths?.length) return;
+      // FM-2 plan 643 P1-2: this is the fourth dependent-validation entry and
+      // used to `await validatePath` bare — a throwing user validator (or
+      // async-rule transport failure) rejected validateForm /
+      // applyChangesAndRevalidate outright, breaking the V18/M-09 three-entry
+      // convergence contract. Same containment as validateFormPath: AbortError
+      // passes through, everything else routes through the
+      // reportDependentRevalidationFailure seam and becomes a form-level error
+      // so submit stays blocked on unknown validation state.
       for (const childPath of registration.childPaths) {
         validatedPaths.add(childPath);
-        const result = await validatePath(input.sharedState, childPath, reason, options);
-        if (!result.ok) {
-          fieldErrors[childPath] = result.errors;
-          errors.push(...result.errors);
+        try {
+          const result = await validatePath(input.sharedState, childPath, reason, options);
+          if (!result.ok) {
+            fieldErrors[childPath] = result.errors;
+            errors.push(...result.errors);
+          }
+        } catch (error) {
+          if (isAbortError(error)) {
+            throw error;
+          }
+          console.error(`[flux-runtime] Child validation threw for path "${childPath}":`, error);
+          const reportFailure =
+            input.sharedState.inputValue.reportDependentRevalidationFailure ??
+            defaultReportDependentRevalidationFailure;
+          reportFailure(childPath, error);
+          errors.push({
+            path: childPath,
+            ownerPath: registration.path,
+            message: `Validation failed due to an internal error: ${error instanceof Error ? error.message : String(error)}`,
+            rule: 'async' as const,
+            sourceKind: 'form' as const,
+            cause: error,
+          });
         }
         captureSideEffectErrors(childPath);
       }

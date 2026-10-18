@@ -18,3 +18,22 @@
 ## 批次覆盖记录
 
 - **FM-0（2026-10-18，plan 642）**：7 条登记（FM-001–FM-007）；fixed 2 + sweep-fixed 1；verified（无缺陷）1；watch-only 3。uncovered = 0（本批无 pending/found 未处置——FM-006/FM-007 为 watch-only 处置态）。
+
+| FM-008 | FM-2 | 主报告 P1-1（render-nodes.tsx 编译缓存） | 模块级编译缓存键缺 runtime 身份——跨 registry 复用同一 schema 对象时 providerPlan 策略布尔可能跨 runtime 套用；组件身份半边经实验不可复现（渲染期 context 解析） | fixed→verified | — | 二级 WeakMap（input→runtime→entry）构造性消除 hazard class；回归守卫 `schema-renderer-compile-cache.test.tsx`（双 registry 渲染分离）+ flux-react 621/621；判别实证披露见报告 P1 节 |
+| FM-009 | FM-2 | 主报告 P1-2（form-runtime-owner.ts validateRegisteredChildren） | 第四条 dependent-validation 入口裸抛，击穿 V18/M-09 收敛契约——validator 抛错直接 reject validateForm/applyChangesAndRevalidate | fixed→verified | — | 套用 validateFormPath 同款收口（AbortError 透传 + 诊断缝 + form-level error）；判别红→绿 `owner-registration-contracts.test.ts`（旧实现 reject 必挂）；flux-runtime 1543/1543 |
+| FM-010 | FM-2 | adversarial Finding A | 收敛契约仍有第五/第六条未收口入口（applyChangesAndRevalidate change 分支裸 validateField、validateSubtree 族裸 validatePath + `void revalidateSubtree` fire-and-forget 成 unhandled rejection） | found | local → FM-6 候选 | P3；FM-2 当批仅修 P0/P1（plan Phase 4 边界）；与 FM-009 同族，建议 FM-6 首批与 P1-2 修法一并收口 |
+| FM-011 | FM-2 | adversarial Finding C（action-runners.ts:28-43） | attachThrownMetadata 包装丢 name/code，AbortError 降级为 failure——有意取消触发诊断噪音 + 错误 toast | found | local → FM-6 候选 | P2；isAbortError 只看顶层 name/code 不走 cause 链 |
+| FM-012 | FM-2 | adversarial Finding D（action-execution.ts:248-253） | 并行聚合丢弃 cancelled/timedOut 旗标——全取消批次被判纯 failure，H35 取消类区分在聚合边界失效 | found | local → FM-6 候选 | P2；聚合不在 caughtFailureResults → reportUnhandledFailureClass 无条件 notify；无取消传播测试 |
+| FM-013 | FM-2 | 主报告 P2-1（flux-runtime 死遥测接线四处） | createDependentRevalidationFailureHandler onError 全仓无人传、reportImportFailure 五参数全忽略、reportRuntimeHostIssue 死字段、ErrorMonitorPayload 死类型 | found | watch-only（628 §D 同族） | P2；与 628 错误处理缺口同族无主实例，628 评审可并入；Why Not Blocking：诊断通道缺损失真属 628 已登记的错误处理族 |
+| FM-014 | FM-2 | 主报告 P2-2（form-runtime.ts setValues 顶层 catch） | setValues 失败仅 console.error 无 notify/monitor，违背 M-09 口径 | found | watch-only（628 §D 同族） | P2；同 FM-013 归属；form-runtime.ts:593-595 |
+| FM-015 | FM-2 | 主报告 P2-3 + adversarial Spot 1 | render-nodes fragment-scope 版本状态机为渲染桥接最脆弱热点（两 state + 四 ref + 微任务延迟处置） | verified | watch-only（热点观察） | adversarial 五类攻击序列（StrictMode 双调/微任务交错/卸载竞态/useId 重挂等）全部收敛——查证过无问题；必要复杂度，维持现状 |
+| FM-016 | FM-2 | 渲染器分片 P2-1（use-table-filter/sort ownership） | 读侧仅判 ownership==='scope'（无 path 永远空读）、写侧要求 &&statePath——未走 resolveOwnershipMode 的降级+dev warn RM-11 标准，误配零告警 | found | local → FM-6 候选 | P2；RM-11（plan 613）已把同族语义定性为 silent no-op 缺陷并修复，修复方向已获背书 |
+| FM-017 | FM-2 | 渲染器分片 P2-2（form.tsx surface triggerHook） | triggerHook 失败仅 console.warn，无 notify/monitor 通道 | found | local → FM-6 候选 | P2；不在 628 §D 五缺口名单内，同族无主实例 |
+| FM-018 | FM-2 | 渲染器分片 P2-3（renderer-core.ts:91 RendererRenderOutput=unknown） | 渲染输出类型 unknown 迫使每个渲染器自铸 asReactNode 洗型 shim——全仓业务源码 32 处手写副本且形态已漂移 | found | systemic → FM-7 候选 | P2；契约层缺口（收窄返回类型或提供官方洗型 helper），跨包系统性 |
+| FM-019 | FM-2 | adversarial Finding B | 编译缓存单槽位：同一 schema 对象在多个 compileOptions 间轮换（tab 往返）100% 失效重编译 | found | watch-only / optimization candidate | P3；plan 628 的跨实例缓存设计（input→runtime 二级键）不解决此形态，可在 628 缓存实现时一并评估多槽位 |
+| FM-020 | FM-2 | adversarial Finding E（use-row-quick-edit-draft） | 重置 effect 漏 setDraftVersion bump——外部刷新后 isRowDirty 惰性缓存卡 true，保存钮误亮并发起多余真实保存 | found | local → FM-6 候选 | P3；与 controller 版本重置路径不对称 |
+| FM-021 | FM-2 | 主报告 P3 批（核心 5 + 渲染器 9 + adversarial 3 中除 FM-010/019/020 外的局部项） | 局部重复实现（checkbox 保存管线 ~40 行分叉、draft-scope 孪生、warn-once 三套并存等）、死导出、死参数/死局部、form-rules 未知 rule 静默丢弃、capability `{} as never` 三处等局部组织问题 | found | local → FM-6 候选（批量） | P3 ×14；逐条六要素见报告 Findings 节；无行为风险，归 FM-6 首批裁定消化清单 |
+
+## 批次覆盖记录（FM-2 追加）
+
+- **FM-2（2026-10-18，plan 643）**：新增 FM-008–FM-021 共 14 条（fixed 2 / watch-only 3 / local→FM-6 候选 7 [含 FM-021 批量行] / systemic→FM-7 候选 1 / verified 1 [FM-015 兼 watch-only 热点观察 disposition]）；workaround 残余复核 50 条另录 `fm2-workaround-residual-review.md`（2 条转 verified 已回写原台账）。

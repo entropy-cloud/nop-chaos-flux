@@ -46,12 +46,12 @@
     {
       "id": "M2",
       "name": "代码/测试/运行时三路终审",
-      "status": "todo",
+      "status": "done",
       "tasks": [
         {
           "id": "T2.1",
           "name": "FM-2 代码质量与反模式终审（code-quality + workaround 残余 + deep-audit + adversarial 抽查）",
-          "status": "todo",
+          "status": "done",
           "assignee": "unassigned"
         },
         {

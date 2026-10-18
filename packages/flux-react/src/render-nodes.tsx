@@ -130,10 +130,25 @@ function matchesFragmentScopeEntry(
 // churn (re-created compileOptions objects) reuse the compiled nodes instead
 // of re-running the full compiler. Keyed on input identity via WeakMap; fresh
 // expression-produced arrays simply miss (no worse than before).
+// FM-2 plan 643 P1-1: the inner key is per-RUNTIME — compiled nodes carry the
+// renderer-definition provider plans (scope/registry/action policies), so a
+// cache shared across runtimes with divergent registries would apply the first
+// runtime's plans to the second.
 const normalizedInputCompileCache = new WeakMap<
   object,
-  { key: string; result: TemplateNode | readonly TemplateNode[] | null }
+  WeakMap<RendererRuntime, { key: string; result: TemplateNode | readonly TemplateNode[] | null }>
 >();
+
+function getRuntimeCacheSlot(
+  input: object,
+): WeakMap<RendererRuntime, { key: string; result: TemplateNode | readonly TemplateNode[] | null }> {
+  let slot = normalizedInputCompileCache.get(input);
+  if (!slot) {
+    slot = new WeakMap();
+    normalizedInputCompileCache.set(input, slot);
+  }
+  return slot;
+}
 
 function normalizeInputCacheKey(
   runtime: RendererRuntime,
@@ -203,12 +218,13 @@ export function normalizeNodeInput(
 
     if (isSchemaArray(input)) {
       const cacheKey = normalizeInputCacheKey(runtime, compileOptions);
-      const cached = normalizedInputCompileCache.get(input);
+      const slot = getRuntimeCacheSlot(input);
+      const cached = slot.get(runtime);
       if (cached && cached.key === cacheKey) {
         return cached.result;
       }
       const result = finishCompile(runtime.schemaCompiler.compile(input, strictOptions));
-      normalizedInputCompileCache.set(input, { key: cacheKey, result });
+      slot.set(runtime, { key: cacheKey, result });
       return result;
     }
 
@@ -229,12 +245,13 @@ export function normalizeNodeInput(
 
   if (isSchema(input)) {
     const cacheKey = normalizeInputCacheKey(runtime, compileOptions);
-    const cached = normalizedInputCompileCache.get(input);
+    const slot = getRuntimeCacheSlot(input);
+    const cached = slot.get(runtime);
     if (cached && cached.key === cacheKey) {
       return cached.result;
     }
     const result = finishCompile(runtime.schemaCompiler.compile(input, strictOptions));
-    normalizedInputCompileCache.set(input, { key: cacheKey, result });
+    slot.set(runtime, { key: cacheKey, result });
     return result;
   }
 
