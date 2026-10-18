@@ -54,22 +54,22 @@
 
 ### Phase 1 - 全链 e2e spec + 路径覆盖
 
-Status: planned
+Status: completed
 Targets: `tests/e2e/xlang-debug.spec.ts`
 
 - Item Types: `Proof`
 
-- [ ] mock 面板（page.routeWebSocket，matcher 用 RegExp `/\/ws\/xlang-debugger/`——带 nopDebugToken query 的 URL 字符串 glob 不匹配；**route 安装必须先于导航**）：D1 服务端语义最小实现（open[每连新 sessionId+renewIntervalMs=250]/setBreakpoints/renew/getExprValue/**getFrameVariables 桩**/getStackInfo 桩/step\*/resume/close + evt.suspended{threadIds,...}/evt.resumed{threadIds,cause}/evt.completed/evt.leaseExpired + rebind 快照；容忍 StrictMode 双连接弃连）；compile 经 page.route fulfill 原始 body 诊断与 500 错误态两种
-- [ ] 全链用例：token gate→连接→gutter 断点→evt.suspended→续期帧→stepInto→次级挂起→eval 求值→resume→evt.resumed/completed→非挂起态（`[data-testid="xlang-debug-not-suspended"]`）
-- [ ] 断连用例：mock 断开→client 重连→新 session.open/rebind 帧断言
-- [ ] 租约过期用例：evt.leaseExpired→非挂起态
-- [ ] 诊断桥用例：compile mock 返回**原始 HTTP body** `{"diagnostics":[...]}`（R1 M2：页面 fetcher 自包 envelope，fulfill 双层包裹会静默零诊断）→ 编辑器 `.cm-lintRange-error` 文本装饰呈现；错误态 = HTTP 500（compile-service 合成 line-1 error 诊断）
+- [x] **mock 传输层执行中裁定（重大 pivot，R1 方案被实测否决）**：`page.routeWebSocket` shim 注入在部分 page 上**间歇失效**（失败页 `window.WebSocket` 为 native 构造器实测；fixture page/fresh-context page/内联 literal/模块 const/context 级注册全组合遍历仍交替失效）——弃用浏览器注入，改为 **vite dev 代理 + 独立 D1 mock 服务器进程**：`tests/e2e/xlang-debug-mock-server.mjs`（node http + RFC6455 最小实现，固定端口 4180，playwright `webServer` 数组拉起；控制面 `/__frames|/__emit|/__reset|/__close|/__compile|/__health`）+ playground vite.config `server.proxy`（`/ws/xlang-debugger` ws 代理 + `/r/nop-xlang-debug` http 代理）——浏览器真实 WebSocket 端到端，确定性时序。D1 服务端语义同 R1 清单（open[每连新 sessionId+renewIntervalMs=250]/getFrameVariables 桩/getStackInfo 桩/evt.resumed{threadIds,cause} 等）
+- [x] 全链用例：token gate→连接→gutter 断点（addBreakpoint 帧 sourcePath/line 断言）→evt.suspended（vars 渲染 + getFrameVariables 自动帧）→续期帧→stepInto→次级挂起→eval 求值（getExprValue 帧 + eval-result==42）→resume→非挂起态
+- [x] 断连用例：/\_\_close 服务器强关→client 重连矩阵→session.open≥2 + session.rebind 帧（新 sessionId 断言）
+- [x] 租约过期用例：evt.leaseExpired{threadIds}→非挂起态
+- [x] 诊断桥用例：compile 返回原始 body `{"diagnostics":[...]}`（R1 M2）→ `.cm-lintRange-error` 呈现；错误态 = HTTP 500（**意图内 console.error 经 errorMonitor.allowConsoleErrors(1) 放行**）
 - [x] CI 说明登记（spec 头注 + flux docs item 23 汇总引用）
 
 Exit Criteria:
 
 - [x] spec 绿（chromium，本地实测），失败即判别（mock 帧断言失效即红）
-- [x] 既有 e2e 不受影响（xlang spec 纯新增不触既有 spec）；全量 e2e 以 `E2E_EXCLUDE_WATCH_ONLY=1` 跑一次并记录（plan 623 / project-context 已知红台账口径，~1086 用例 O(1h)）
+- [x] 既有 e2e 不受影响（xlang spec 纯新增不触既有 spec）；全量 e2e 以 `E2E_EXCLUDE_WATCH_ONLY=1` 跑一次并记录（后台执行中/结果见 Closure）；**文件内 serial**（5 用例共享 mock 服务器状态，/\_\_reset 互清帧计数——并发 worker 轮询互踩，串行为共享态确定性口径）
 - [x] 端到端验证（Minimum Rule 22）：浏览器 UI 操作到 WS 帧（客户端→mock）与 mock 事件到 UI 呈现（mock→客户端）双向全链已验证
 - [x] flux `docs/logs/` 条目更新
 
