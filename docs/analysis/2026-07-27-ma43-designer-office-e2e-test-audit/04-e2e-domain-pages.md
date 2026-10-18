@@ -5,41 +5,59 @@
 
 ## Results Summary
 
-**Total pages tested**: 7 / 7
+**Total pages tested**: 6 / 7
 
-| Page | console.errors | pageerrors | debugger errors | debugger failures | Passed |
-|------|---------------|------------|-----------------|-------------------|--------|
-| flow-designer | 0 | 0 | 0 | 0 | ✅ |
-| report-designer | 0 | 0 | 0 | 0 | ✅ |
-| word-editor | 0 | 0 | 0 | 0 | ✅ |
-| taskflow-designer | 0 | 0 | 0 | 0 | ✅ |
-| code-editor | 0 | 0 | 0 | 0 | ✅ |
-| component-handles | 0 | 0 | 0 | 0 | ✅ |
-| flux-basic | 0 | 0 | 0 | 0 | ✅ |
+| Page              | console.errors | pageerrors | debugger errors | debugger failures | Passed     |
+| ----------------- | -------------- | ---------- | --------------- | ----------------- | ---------- |
+| flow-designer     | 0              | 0          | 0               | 0                 | ✅         |
+| report-designer   | 0              | 0          | 0               | 0                 | ✅         |
+| word-editor       | 0              | 0          | 0               | 0                 | ✅         |
+| taskflow-designer | 0              | 0          | 2               | 2                 | ❌         |
+| code-editor       | 0              | 0          | 0               | 0                 | ✅         |
+| component-handles | —              | —          | —               | —                 | ⚪ no data |
+| flux-basic        | 0              | 0          | 0               | 0                 | ✅         |
 
 ## Issues Found
 
-**None.** All pages passed with zero console errors, zero page errors, zero debugger errors, and zero debugger failures.
+### taskflow-designer
+
+**Debugger errors**:
+
+- action error
+- action error
+  **Debugger failures**:
+- action error
+- action error
 
 ## Per-Page Detail
 
 ### flow-designer
+
 - ✅ No console errors, page errors, or debugger anomalies.
 
 ### report-designer
+
 - ✅ No console errors, page errors, or debugger anomalies.
 
 ### word-editor
+
 - ✅ No console errors, page errors, or debugger anomalies.
 
 ### taskflow-designer
-- ✅ No console errors, page errors, or debugger anomalies.
+
+- Debugger error: action error
+- Debugger error: action error
+- Debugger failure: action error
+- Debugger failure: action error
 
 ### code-editor
+
 - ✅ No console errors, page errors, or debugger anomalies.
 
 ### component-handles
-- ✅ No console errors, page errors, or debugger anomalies.
+
+- No data collected.
 
 ### flux-basic
+
 - ✅ No console errors, page errors, or debugger anomalies.
