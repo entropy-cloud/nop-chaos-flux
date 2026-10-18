@@ -69,7 +69,7 @@ Targets: `tests/e2e/xlang-debug.spec.ts`
 Exit Criteria:
 
 - [x] spec 绿（chromium，本地实测），失败即判别（mock 帧断言失效即红）
-- [x] 既有 e2e 不受影响（xlang spec 纯新增不触既有 spec）；全量 e2e 以 `E2E_EXCLUDE_WATCH_ONLY=1` 跑一次并记录（后台执行中/结果见 Closure）；**文件内 serial**（5 用例共享 mock 服务器状态，/\_\_reset 互清帧计数——并发 worker 轮询互踩，串行为共享态确定性口径）
+- [x] 既有 e2e 不受影响（xlang spec 纯新增不触既有 spec）；全量 e2e 以 `E2E_EXCLUDE_WATCH_ONLY=1` 跑一次并记录：**1563 passed / 262 failed（52.8m，exit 1）——xlang spec 5/5 全绿（#2159-2163）**；262 失败为与本 diff 无关的既有/环境性大面积红（遍布 ai-attachments/gantt/replica 等无关 spec 且从首个用例即开始；**config 还原抽样实证**：还原 item 22 之前 vite.config/playwright.config 后 ai-attachments 仍 2/2 红）——台账细目归 e2e 治理线（docs/audits/\* ledger 并行会话在记）；**文件内 serial**（5 用例共享 mock 服务器状态，/\_\_reset 互清帧计数——并发 worker 轮询互踩，串行为共享态确定性口径）
 - [x] 端到端验证（Minimum Rule 22）：浏览器 UI 操作到 WS 帧（客户端→mock）与 mock 事件到 UI 呈现（mock→客户端）双向全链已验证
 - [x] flux `docs/logs/` 条目更新
 
