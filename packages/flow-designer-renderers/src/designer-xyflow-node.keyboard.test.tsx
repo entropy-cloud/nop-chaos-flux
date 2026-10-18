@@ -19,6 +19,7 @@ vi.mock('@xyflow/react', () => ({
 }));
 
 vi.mock('@nop-chaos/flux-react', () => ({
+    asReactNode: (value: unknown) => value as object,
   ClassAliasesContext: {
     Provider: ({ children }: { children?: React.ReactNode }) => children,
   },

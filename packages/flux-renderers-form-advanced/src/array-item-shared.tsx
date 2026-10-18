@@ -7,16 +7,12 @@ import type {
   ScopeRef,
   ValidationScopeRuntime,
 } from '@nop-chaos/flux-core';
-import { useFormLayout, type FormLayoutContextValue } from '@nop-chaos/flux-react';
+import { asReactNode,  useFormLayout, type FormLayoutContextValue } from '@nop-chaos/flux-react';
 import { t } from '@nop-chaos/flux-i18n';
 import { Button } from '@nop-chaos/ui';
 import { ChevronDownIcon, ChevronUpIcon, Trash2Icon } from 'lucide-react';
 import { createItemFormProxy, createItemScope } from './composite-field/array-field-runtime.js';
 import { createProjectedValidationRuntime } from './detail-view/projected-validation-runtime.js';
-
-function asReactNode(value: unknown): React.ReactNode {
-  return value as React.ReactNode;
-}
 
 interface ArrayItemContext {
   itemScope: ScopeRef;

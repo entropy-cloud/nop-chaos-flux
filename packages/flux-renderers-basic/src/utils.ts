@@ -1,8 +1,5 @@
+export { asReactNode } from '@nop-chaos/flux-react';
 import type { ResponsiveBreakpoint } from './schemas.js';
-
-export function asReactNode(value: unknown): React.ReactNode {
-  return value as React.ReactNode;
-}
 
 /**
  * Collects schema-authored `data-slot` / `data-*` attributes from resolved

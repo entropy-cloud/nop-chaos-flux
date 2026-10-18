@@ -8,6 +8,7 @@ import {
 } from '@nop-chaos/flux-core';
 import type { ReportDesignerHostStatusSummary } from '@nop-chaos/report-designer-core';
 import {
+    asReactNode,
   hasRendererSlotContent,
   resolveRendererSlotContent,
   useCurrentActionScope,
@@ -77,10 +78,6 @@ export {
 // cohesive — it manages a single report designer instance's full lifecycle and rendering.
 // Splitting would scatter lifecycle management across files without clear responsibility gain.
 // Decision: current cohesion is acceptable, no extraction needed.
-
-function asReactNode(value: unknown): React.ReactNode {
-  return value as React.ReactNode;
-}
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return !!value && typeof value === 'object' && !Array.isArray(value);

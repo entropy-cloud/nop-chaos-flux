@@ -2,6 +2,7 @@ import { useCallback } from 'react';
 import { ArrowLeft, Save, FileText, Database, Columns, Type, ChevronLeft, ChevronRight } from 'lucide-react';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
 import {
+    asReactNode,
   hasRendererSlotContent,
   WorkbenchShell,
 } from '@nop-chaos/flux-react';
@@ -38,10 +39,6 @@ function collectDocumentText(value: unknown): string {
     })
     .join('')
     .trim();
-}
-
-function asReactNode(value: unknown): React.ReactNode {
-  return value as React.ReactNode;
 }
 
 export function WordEditorPage(props: RendererComponentProps<WordEditorPageSchema>) {

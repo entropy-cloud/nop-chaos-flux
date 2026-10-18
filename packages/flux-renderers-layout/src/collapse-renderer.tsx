@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
-import type { RendererComponentProps, RendererRenderOutput } from '@nop-chaos/flux-core';
-import { unwrapPreservedLiteral, unwrapBooleanLiteral } from '@nop-chaos/flux-react';
+import type { RendererComponentProps } from '@nop-chaos/flux-core';
+import { asReactNode,  unwrapPreservedLiteral, unwrapBooleanLiteral } from '@nop-chaos/flux-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger, cn } from '@nop-chaos/ui';
 import { ChevronDownIcon } from 'lucide-react';
 import type { CollapseItemSchema, CollapseSchema } from './schemas.js';
@@ -17,10 +17,6 @@ type CompiledCollapseItem = CollapseItemSchema & {
   bodyRegionKey?: string;
   leadingRegionKey?: string;
 };
-
-function asReactNode(value: RendererRenderOutput): React.ReactNode {
-  return value as React.ReactNode;
-}
 
 function resolveItemKey(item: CompiledCollapseItem, index: number): string {
   if (item.key !== undefined && item.key !== null && item.key !== '') {

@@ -4,6 +4,7 @@ import { render, waitFor, act } from '@testing-library/react';
 import { Gantt } from './gantt.js';
 
 vi.mock('@nop-chaos/flux-react', () => ({
+    asReactNode: (value: unknown) => value as object,
   useRenderScope: () => ({
     id: 'mock-scope',
     path: '/mock',

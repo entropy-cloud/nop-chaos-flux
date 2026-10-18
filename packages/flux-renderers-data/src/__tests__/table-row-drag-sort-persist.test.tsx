@@ -7,6 +7,7 @@ import type { TableRowEntry } from '../table-renderer/types.js';
 
 const scopeUpdate = vi.fn();
 vi.mock('@nop-chaos/flux-react', () => ({
+    asReactNode: (value: unknown) => value as object,
   useRenderScope: () => ({ update: scopeUpdate }),
 
   // RM-11 plan 613: ownership hooks delegate to the shared primitive —

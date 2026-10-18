@@ -8,6 +8,7 @@ const mockScopeState: { data: Record<string, unknown> } = { data: {} };
 const renderScopeUpdate = vi.fn();
 
 vi.mock('@nop-chaos/flux-react', () => ({
+    asReactNode: (value: unknown) => value as object,
   useRenderScope: () => ({ update: renderScopeUpdate }),
   useScopeSelector: (selector: (value: Record<string, unknown>) => unknown) =>
     selector(mockScopeState.data),

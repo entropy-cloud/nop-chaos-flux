@@ -9,6 +9,7 @@ import type {
 } from '@nop-chaos/flux-core';
 import { getIn } from '@nop-chaos/flux-core';
 import {
+    asReactNode,
   FormContext,
   FormLayoutContext,
   ScopeContext,
@@ -41,10 +42,6 @@ import {
 } from './array-field-scalar-validation.js';
 import { WrappedFieldAction } from '../wrapped-field-action.js';
 import { createProjectedValidationRuntime } from '../detail-view/projected-validation-runtime.js';
-
-function asReactNode(value: unknown): React.ReactNode {
-  return value as React.ReactNode;
-}
 
 function toArrayItems(value: unknown): unknown[] {
   return Array.isArray(value) ? value : [];

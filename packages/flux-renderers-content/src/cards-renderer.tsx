@@ -2,12 +2,12 @@ import React, { useEffect, useState } from 'react';
 import type {
   InstanceFrame,
   RendererComponentProps,
-  RendererRenderOutput,
   ScopeRef,
 } from '@nop-chaos/flux-core';
 import { getIn } from '@nop-chaos/flux-core';
 import { t } from '@nop-chaos/flux-i18n';
 import {
+    asReactNode,
   hasRendererSlotContent,
   resolveRendererSlotContent,
   useRenderInstancePath,
@@ -17,10 +17,6 @@ import type { CardsResponsiveColumns, CardsSchema, CardsSelectionMode } from './
 
 const DEFAULT_CARDS_KEY_FIELD = 'id';
 const EMPTY_SET: ReadonlySet<string> = new Set();
-
-function asReactNode(value: RendererRenderOutput): React.ReactNode {
-  return value as React.ReactNode;
-}
 
 function toCardsItems(value: unknown): unknown[] {
   return Array.isArray(value) ? value : [];

@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useScadaErrorText } from './scada-errors.js';
 import { observeFirstCanvasTagging, parseAndValidateScadaConfig } from '../shared/canvas-shell.js';
-// WA-industrial-008 ③: shared asReactNode (`?? null` form — the runtime copy
+// WA-industrial-008 ③: shared asReactNodeOrNull (`?? null` form — the runtime copy
 // was the bare-cast drift twin).
-import { asReactNode } from '../editor/canvas-view-helpers.js';
+import {asReactNodeOrNull} from '../editor/canvas-view-helpers.js';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
 import { useCurrentComponentRegistry, useRendererRuntime } from '@nop-chaos/flux-react';
 import { useFluxTranslation } from '@nop-chaos/flux-i18n';
@@ -310,7 +310,7 @@ export function ScadaCanvasRenderer(props: RendererComponentProps<ScadaCanvasSch
       className={cn('nop-scada-canvas h-full w-full', props.meta.className)}
     >
       {effectiveStatus === 'loading' ? (
-        asReactNode(loading?.render()) ?? (
+        asReactNodeOrNull(loading?.render()) ?? (
           <div
             data-slot="scada-canvas-loading"
             className="nop-scada-canvas-loading flex h-full w-full items-center justify-center gap-2 text-sm text-muted-foreground"
@@ -320,7 +320,7 @@ export function ScadaCanvasRenderer(props: RendererComponentProps<ScadaCanvasSch
           </div>
         )
       ) : effectiveStatus === 'error' ? (
-        asReactNode(empty?.render({ bindings: { error: parseError ?? errorInfo } })) ?? (
+        asReactNodeOrNull(empty?.render({ bindings: { error: parseError ?? errorInfo } })) ?? (
           <div data-slot="scada-canvas-error" className="nop-scada-canvas-error" data-code={parseError?.code ?? errorInfo?.code}>
             {resolveErrorText(parseError ?? errorInfo) || t('industrial.scada.canvasError')}
           </div>

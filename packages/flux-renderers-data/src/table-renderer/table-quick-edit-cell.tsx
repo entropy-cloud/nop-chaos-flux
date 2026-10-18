@@ -1,7 +1,7 @@
 import { useMemo, useRef } from 'react';
 import type { ActionSchema, RendererComponentProps, ScopeRef } from '@nop-chaos/flux-core';
 import { t } from '@nop-chaos/flux-i18n';
-import { useRendererEnv } from '@nop-chaos/flux-react';
+import { asReactNode,  useRendererEnv } from '@nop-chaos/flux-react';
 import {
   Button,
   Dialog,
@@ -16,10 +16,6 @@ import {
 import type { TableColumnQuickEditConfig, TableColumnSchema, TableSchema } from '../schemas.js';
 import { useTableQuickEditController } from './table-quick-edit-controller.js';
 import { useRowQuickEditDraftContext } from './use-row-quick-edit-draft.js';
-
-function asReactNode(value: unknown): React.ReactNode {
-  return value as React.ReactNode;
-}
 
 interface ResolvedTableQuickEditConfig {
   mode: 'inline' | 'dialog';

@@ -19,7 +19,7 @@ import { LayoutGrid } from 'lucide-react';
 import { hasScadaSymbol } from '../symbols/symbol-registry.js';
 import { computeMoveSnap, type SnapRect } from './snap/transform-snap.js';
 import { pickSymbolAtPoint } from './context-menu-hit.js';
-import { asReactNode, collectSiblingRects, computeAggregateViewportBounds } from './canvas-view-helpers.js';
+import { asReactNodeOrNull, collectSiblingRects, computeAggregateViewportBounds } from './canvas-view-helpers.js';
 import { ScadaEditorContextMenu, type ScadaEditorContextMenuAction, type ScadaEditorContextMenuState } from './context-menu.js';
 
 export type ScadaEditorCanvasStatus = 'loading' | 'ready' | 'error' | 'destroyed';
@@ -358,7 +358,7 @@ export function ScadaEditorCanvasRenderer(props: RendererComponentProps<ScadaEdi
   };
 
   const toolboxSlot = showLayoutBody
-    ? asReactNode(toolbox?.render({ bindings: { selection } })) ?? (
+    ? asReactNodeOrNull(toolbox?.render({ bindings: { selection } })) ?? (
         <EditorToolboxPanel
           runtime={runtime}
           selection={selection}
@@ -370,7 +370,7 @@ export function ScadaEditorCanvasRenderer(props: RendererComponentProps<ScadaEdi
       )
     : undefined;
   const paletteSlot = showLayoutBody
-    ? asReactNode(palette?.render()) ?? (
+    ? asReactNodeOrNull(palette?.render()) ?? (
         <EditorPalettePanel
           runtime={runtime}
           onError={handleError}
@@ -381,7 +381,7 @@ export function ScadaEditorCanvasRenderer(props: RendererComponentProps<ScadaEdi
       )
     : undefined;
   const inspectorSlot = showLayoutBody
-    ? asReactNode(inspector?.render({ bindings: { nodeId: selectedNodeId } })) ?? (
+    ? asReactNodeOrNull(inspector?.render({ bindings: { nodeId: selectedNodeId } })) ?? (
         <EditorInspectorPanel
           runtime={runtime}
           selectedNodeId={selectedNodeId}
@@ -393,7 +393,7 @@ export function ScadaEditorCanvasRenderer(props: RendererComponentProps<ScadaEdi
       )
     : undefined;
   const statusBarSlot = showLayoutBody
-    ? asReactNode(statusBar?.render()) ?? (
+    ? asReactNodeOrNull(statusBar?.render()) ?? (
         // plan 2026-08-08-0900-1 Phase 3 / P2 #11：statusBar 内置 fallback（发射 marker），不再恒 null。
         // plan 521 / U4：fallback 换真实 statusBar（viewport/mode/selection/undo-redo 摘要，数据已在 runtime）。
         <EditorStatusBar runtime={runtime} selection={selection} />
@@ -614,7 +614,7 @@ export function ScadaEditorCanvasRenderer(props: RendererComponentProps<ScadaEdi
           : null}
         {/* plan 2026-08-08-0900-1 Phase 3 / P2 #12：empty region 正确归所——ready 但无图元时显示空场景提示（canvas 区内 overlay）。 */}
         {showLayoutBody && runtime.session.workingConfig.symbols.length === 0
-          ? asReactNode(empty?.render()) ?? (
+          ? asReactNodeOrNull(empty?.render()) ?? (
               <div data-slot="scada-editor-empty" className="nop-scada-editor-empty">
                 <div className="flex flex-col items-center gap-2">
                   <LayoutGrid className="size-8 opacity-60" aria-hidden="true" />
@@ -626,7 +626,7 @@ export function ScadaEditorCanvasRenderer(props: RendererComponentProps<ScadaEdi
           : null}
 
         {effectiveStatus === 'loading'
-          ? asReactNode(loading?.render()) ?? (
+          ? asReactNodeOrNull(loading?.render()) ?? (
               <div data-slot="scada-editor-loading" className="nop-scada-editor-loading">
                 {t('industrial.scada.editor.loading')}
               </div>
@@ -634,7 +634,7 @@ export function ScadaEditorCanvasRenderer(props: RendererComponentProps<ScadaEdi
           : null}
         {effectiveStatus === 'error'
           ? // plan 2026-08-08-0900-1 Phase 3 / P2 #13：error 分支用 error region（非 empty region），消除语义错配。
-            asReactNode(errorRegion?.render({ bindings: { error: activeError } })) ?? (
+            asReactNodeOrNull(errorRegion?.render({ bindings: { error: activeError } })) ?? (
               <div data-slot="scada-editor-error" className="nop-scada-editor-error" data-code={errorCode}>
                 {errorText || t('industrial.scada.editor.canvasError')}
               </div>

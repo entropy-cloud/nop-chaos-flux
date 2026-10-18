@@ -5,8 +5,15 @@ import { collectWorldBounds } from './editor-working-helpers.js';
 import type { SnapRect } from './snap/transform-snap.js';
 import type { EditorEngineRuntime } from './renderer/hooks/use-editor-engine.js';
 
-/** region render 投影（E2.6）：unknown → ReactNode 安全收敛。 */
-export function asReactNode(value: unknown): ReactNode {
+/**
+ * Region render 投影（E2.6）：unknown → ReactNode 安全收敛，nullish 显式归 null。
+ *
+ * FM-018 裁定的保留变体：与官方缝 `@nop-chaos/flux-react` 的 `asReactNode`
+ * 不同，本件把 nullish 收敛为 null（下游 `?? fallback` 链依赖该形态——
+ * WA-industrial-008 ③，注册见 renderer/scada-canvas.tsx 头部），故不并入
+ * 官方纯 cast 缝，改名以示语义差。
+ */
+export function asReactNodeOrNull(value: unknown): ReactNode {
   return (value ?? null) as ReactNode;
 }
 

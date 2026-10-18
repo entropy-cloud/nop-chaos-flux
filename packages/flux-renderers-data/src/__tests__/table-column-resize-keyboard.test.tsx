@@ -7,6 +7,7 @@ import { TableHeaderRow } from '../table-renderer/table-header-row.js';
 import type { FixedColumnLayout } from '../table-renderer/fixed-columns.js';
 
 vi.mock('@nop-chaos/flux-react', () => ({
+    asReactNode: (value: unknown) => value as object,
   useRenderScope: () => ({ update: vi.fn() }),
   useScopeSelector: () => undefined,
   // RM-11 plan 613: ownership hooks delegate to the shared primitive —

@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useEffectEvent, useMemo, useRef, useStat
 import { useStore } from 'zustand';
 import type { ReactFlowInstance } from '@xyflow/react';
 import type { ComponentHandle, RendererComponentProps } from '@nop-chaos/flux-core';
-import { useCurrentComponentRegistry } from '@nop-chaos/flux-react';
+import { asReactNode,  useCurrentComponentRegistry } from '@nop-chaos/flux-react';
 import { t } from '@nop-chaos/flux-i18n';
 import { Button, Input, cn } from '@nop-chaos/ui';
 import { Maximize, X, ZoomIn, ZoomOut } from 'lucide-react';
@@ -41,10 +41,6 @@ const GRAPH_EVENT_PAYLOAD_TYPES: Readonly<Record<string, string>> = {
   onNodeDoubleClick: 'graph:node-double-click',
   onSelectionChange: 'graph:selection-change',
 };
-
-function asReactNode(value: unknown): React.ReactNode {
-  return value as React.ReactNode;
-}
 
 function normalizeNodes(value: unknown): GraphNode[] {
   if (!Array.isArray(value)) {

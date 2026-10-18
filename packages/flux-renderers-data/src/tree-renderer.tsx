@@ -3,6 +3,7 @@ import type { InstanceFrame, RendererComponentProps } from '@nop-chaos/flux-core
 import { getIn } from '@nop-chaos/flux-core';
 import { t } from '@nop-chaos/flux-i18n';
 import {
+    asReactNode,
   hasRendererSlotContent,
   resolveRendererSlotContent,
   useStatusPathPublication,
@@ -45,10 +46,6 @@ import {
 const TREE_EXPANDED_CHILD_BATCH_SIZE = 50;
 const TREE_INDENT_PX = 16;
 const TREE_BASE_PADDING_PX = 8;
-
-function asReactNode(value: unknown): React.ReactNode {
-  return value as React.ReactNode;
-}
 
 function renderNodeIcon(node: TreeNodeRecord, iconField: string): React.ReactNode {
   const rawIcon = getIn(node, iconField);

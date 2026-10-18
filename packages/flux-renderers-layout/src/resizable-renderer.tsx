@@ -3,10 +3,10 @@ import type { PanelImperativeHandle } from 'react-resizable-panels';
 import { getIn, toRecord } from '@nop-chaos/flux-core';
 import type {
   ComponentHandle,
-  RendererRenderOutput,
   RendererComponentProps,
 } from '@nop-chaos/flux-core';
 import {
+    asReactNode,
   unwrapBooleanLiteral,
   unwrapPreservedLiteral,
   useCurrentComponentRegistry,
@@ -18,10 +18,6 @@ import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@nop-chaos
 import type { ResizablePanelSchema, ResizableSchema } from './schemas.js';
 
 export interface ResizableRendererProps extends RendererComponentProps<ResizableSchema> {}
-
-function asReactNode(value: RendererRenderOutput): React.ReactNode {
-  return value as React.ReactNode;
-}
 
 function clampPercent(value: unknown): string | undefined {
   const n = typeof value === 'number' ? value : Number(value);

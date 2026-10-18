@@ -5,6 +5,7 @@ import { useTableSelection, type UseTableSelectionOptions } from '../table-rende
 import { buildTableRowEntries } from '../table-renderer/table-data.js';
 
 vi.mock('@nop-chaos/flux-react', () => ({
+    asReactNode: (value: unknown) => value as object,
   useRenderScope: () => ({ update: vi.fn() }),
   useScopeSelector: () => undefined,
 

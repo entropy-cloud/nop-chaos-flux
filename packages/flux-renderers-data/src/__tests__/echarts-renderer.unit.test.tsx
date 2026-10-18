@@ -24,6 +24,7 @@ vi.mock('../echarts-setup.js', () => ({
 }));
 
 vi.mock('@nop-chaos/flux-react', () => ({
+    asReactNode: (value: unknown) => value as object,
   useCurrentComponentRegistry: () => mockState.currentRegistry,
   useRenderScope: () => undefined,
   createNormalizedActionEvent: (event: unknown) => event,

@@ -1,16 +1,12 @@
-import type { RendererComponentProps, RendererRenderOutput } from '@nop-chaos/flux-core';
+import type { RendererComponentProps } from '@nop-chaos/flux-core';
 import { cn, useIsMobile } from '@nop-chaos/ui';
-import { resolveGap } from '@nop-chaos/flux-react';
+import { asReactNode,  resolveGap } from '@nop-chaos/flux-react';
 import type { GridItemSchema, GridResponsiveColumns, GridSchema } from './schemas.js';
 import { compiledItems } from './compiled-items.js';
 
 type CompiledGridItem = GridItemSchema & {
   bodyRegionKey?: string;
 };
-
-function asReactNode(value: RendererRenderOutput): React.ReactNode {
-  return value as React.ReactNode;
-}
 
 function resolveItemKey(item: CompiledGridItem, index: number): string {
   if (item.key !== undefined && item.key !== null && item.key !== '') {

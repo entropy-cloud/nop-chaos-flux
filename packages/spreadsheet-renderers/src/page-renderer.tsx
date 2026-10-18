@@ -3,6 +3,7 @@ import { useSyncExternalStoreWithSelector } from 'use-sync-external-store/shim/w
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
 import type { SpreadsheetHostStatusSummary } from '@nop-chaos/spreadsheet-core';
 import {
+    asReactNode,
   hasRendererSlotContent,
   resolveRendererSlotContent,
   useCurrentActionScope,
@@ -37,10 +38,6 @@ import type { SpreadsheetPageSchema } from './types.js';
 // Page-snapshot slice trio (plan 598 G1): single source in
 // @nop-chaos/spreadsheet-core (snapshot-selectors.ts); imported above and
 // consumed by the workbench subscription below.
-
-function asReactNode(value: unknown): React.ReactNode {
-  return value as React.ReactNode;
-}
 
 function renderFallbackBody(snapshot: SpreadsheetRuntimeSnapshot) {
   const activeSheetName = getRuntimeActiveSheetName(snapshot);

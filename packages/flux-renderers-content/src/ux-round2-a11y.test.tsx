@@ -5,6 +5,7 @@ import React from 'react';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 
 vi.mock('@nop-chaos/flux-react', () => ({
+    asReactNode: (value: unknown) => value as object,
   useCurrentComponentRegistry: () => undefined,
   useRendererEnv: () => ({}),
   useRendererRuntime: () => ({ dispatch: vi.fn() }),

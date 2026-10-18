@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { RendererComponentProps, ScopeRef } from '@nop-chaos/flux-core';
 import {
+    asReactNode,
   hasRendererSlotContent,
   resolveRendererSlotContent,
   useRendererRuntime,
@@ -45,10 +46,6 @@ import { useRowDragSort } from './table-renderer/use-row-drag-sort.js';
 import { useAutoFillHeight } from './table-renderer/use-auto-fill-height.js';
 import { extractLeafColumns } from './table-renderer/table-header-tree.js';
 import { useResponsiveExpandState } from './table-renderer/responsive.js';
-
-function asReactNode(value: unknown): React.ReactNode {
-  return value as React.ReactNode;
-}
 
 const EMPTY_TABLE_COLUMNS: TableColumnSchema[] = [];
 const EMPTY_TABLE_ROWS: Array<Record<string, any>> = [];

@@ -1,12 +1,11 @@
 import React from 'react';
 import type {
   RendererComponentProps,
-  RendererRenderOutput,
   ResponsiveBreakpoint,
   ResponsiveSchema,
   ResponsiveVariantSchema,
 } from '@nop-chaos/flux-core';
-import { unwrapPreservedLiteral } from '@nop-chaos/flux-react';
+import { asReactNode,  unwrapPreservedLiteral } from '@nop-chaos/flux-react';
 import { cn, useBreakpoints } from '@nop-chaos/ui';
 
 const BREAKPOINT_WIDTHS: Record<ResponsiveBreakpoint, number> = {
@@ -65,10 +64,6 @@ function buildVariantQuery(variant: ResponsiveVariantSchema): string {
 
 function hasBounds(variant: ResponsiveVariantSchema): boolean {
   return resolvePx(variant.min) !== undefined || resolvePx(variant.max) !== undefined;
-}
-
-function asReactNode(value: RendererRenderOutput): React.ReactNode {
-  return value as React.ReactNode;
 }
 
 export function ResponsiveRenderer(props: RendererComponentProps<ResponsiveSchema>) {

@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
+    asReactNode,
   createNormalizedActionEvent,
   useCurrentComponentRegistry,
   useRenderScope,
@@ -10,7 +11,7 @@ import { WorkbenchShell } from '@nop-chaos/flux-react';
 import { Button, cn } from '@nop-chaos/ui';
 import { useFluxTranslation } from '@nop-chaos/flux-i18n';
 import { Eye, Pencil, Redo2, Save, Trash2, Undo2 } from 'lucide-react';
-import type { ActionSchema, BaseSchema, RendererComponentProps, RendererRenderOutput, SchemaValue } from '@nop-chaos/flux-core';
+import type { ActionSchema, BaseSchema, RendererComponentProps, SchemaValue } from '@nop-chaos/flux-core';
 import {
   createDashboardDomainAdapter,
   diffDashboardDocument,
@@ -52,10 +53,6 @@ export interface DashboardEditorSchema extends BaseSchema {
   onError?: ActionSchema | ActionSchema[];
   onSessionChange?: ActionSchema | ActionSchema[];
   onModeChange?: ActionSchema | ActionSchema[];
-}
-
-function asReactNode(value: RendererRenderOutput): React.ReactNode {
-  return value as React.ReactNode;
 }
 
 function resolveInitialDocument(layout: unknown): DashboardDocument {

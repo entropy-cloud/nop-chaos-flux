@@ -11,6 +11,7 @@ const mockInit = vi.fn(() => ({
 }));
 
 vi.mock('@nop-chaos/flux-react', () => ({
+    asReactNode: (value: unknown) => value as object,
   useCurrentComponentRegistry: () => undefined,
   useRenderScope: () => undefined,
   createNormalizedActionEvent: (event: unknown) => event,

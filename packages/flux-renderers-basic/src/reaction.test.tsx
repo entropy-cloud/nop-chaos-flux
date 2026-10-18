@@ -8,6 +8,7 @@ const registerReaction = vi.fn(() => ({
 }));
 
 vi.mock('@nop-chaos/flux-react', () => ({
+    asReactNode: (value: unknown) => value as object,
   useRendererRuntime: () => ({ registerReaction }),
   useRenderScope: () => ({ scopeId: 'test-scope' }),
 }));

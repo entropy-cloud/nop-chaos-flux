@@ -1,6 +1,6 @@
 # 最终成熟度审计台账（Findings Ledger）
 
-> Last Updated: 2026-10-18（FM-6 首批消化登记）
+> Last Updated: 2026-10-18（FM-7 首批消化登记）
 > 状态机与对账口径见 `README.md`。
 
 ## Findings
@@ -29,7 +29,7 @@
 | FM-015 | FM-2 | 主报告 P2-3 + adversarial Spot 1 | render-nodes fragment-scope 版本状态机为渲染桥接最脆弱热点（两 state + 四 ref + 微任务延迟处置） | verified | watch-only（热点观察） | adversarial 五类攻击序列（StrictMode 双调/微任务交错/卸载竞态/useId 重挂等）全部收敛——查证过无问题；必要复杂度，维持现状 |
 | FM-016 | FM-2 | 渲染器分片 P2-1（use-table-filter/sort ownership） | 读侧仅判 ownership==='scope'（无 path 永远空读）、写侧要求 &&statePath——未走 resolveOwnershipMode 的降级+dev warn RM-11 标准，误配零告警 | fixed→verified | — | P2；RM-11（plan 613）已把同族语义定性为 silent no-op 缺陷并修复，修复方向已获背书 |
 | FM-017 | FM-2 | 渲染器分片 P2-2（form.tsx surface triggerHook） | triggerHook 失败仅 console.warn，无 notify/monitor 通道 | fixed→verified | — | P2；不在 628 §D 五缺口名单内，同族无主实例 |
-| FM-018 | FM-2 | 渲染器分片 P2-3（renderer-core.ts:91 RendererRenderOutput=unknown） | 渲染输出类型 unknown 迫使每个渲染器自铸 asReactNode 洗型 shim——全仓业务源码 32 处手写副本且形态已漂移 | found | systemic → FM-7 候选 | P2；契约层缺口（收窄返回类型或提供官方洗型 helper），跨包系统性 |
+| FM-018 | FM-2 | 渲染器分片 P2-3（renderer-core.ts:91 RendererRenderOutput=unknown） | 渲染输出类型 unknown 迫使每个渲染器自铸 asReactNode 洗型 shim——全仓业务源码 32 处手写副本且形态已漂移（FM-7 勘误对账 2026-10-18：live grep = 30 处本地定义〔23 非导出 + 7 导出，唯一非纯 cast 变体 canvas-view-helpers〕+ 19 纯导入消费方，共 49 文件/163 引用） | fixed→verified | — | P2；契约层缺口（收窄返回类型或提供官方洗型 helper），跨包系统性 |
 | FM-019 | FM-2 | adversarial Finding B | 编译缓存单槽位：同一 schema 对象在多个 compileOptions 间轮换（tab 往返）100% 失效重编译 | found | watch-only / optimization candidate | P3；plan 628 的跨实例缓存设计（input→runtime 二级键）不解决此形态，可在 628 缓存实现时一并评估多槽位 |
 | FM-020 | FM-2 | adversarial Finding E（use-row-quick-edit-draft） | 重置 effect 漏 setDraftVersion bump——外部刷新后 isRowDirty 惰性缓存卡 true，保存钮误亮并发起多余真实保存 | fixed→verified | — | P3；与 controller 版本重置路径不对称 |
 | FM-021 | FM-2 | 主报告 P3 批（核心 5 + 渲染器 9 + adversarial 3 中除 FM-010/019/020 外的局部项） | 局部重复实现（checkbox 保存管线 ~40 行分叉、draft-scope 孪生、warn-once 三套并存等）、死导出、死参数/死局部、form-rules 未知 rule 静默丢弃、capability `{} as never` 三处等局部组织问题 | found | local → FM-6 候选（批量） | P3 ×14；逐条六要素见报告 Findings 节；无行为风险，归 FM-6 首批裁定消化清单 |
@@ -82,6 +82,10 @@
 ## 批次覆盖记录（FM-1b 追加）
 
 - **FM-1b（2026-10-18，plan 648）**：新增 FM-038–FM-041 共 4 条（fixed→verified 1 / local→FM-6 候选 2 / watch-only 1 批 [FM-041 三条具名]）；**P1×1 当批修复即 verified**（gantt 既有红收口 = roadmap 点名交付）；11 域页 + 1 路由核验 × 35+ 序列（clean 5 / limited-clean 4 / finding 2）；IS 新坐标 2 条（IS-flow-designer-008 / IS-taskflow-designer-008）；字母批去向：mobile 族 + spreadsheet + dashboard-demo + three-gallery/scada-gallery 候选（预授权 FM-1b-b）+ xlang-debug 移交并发线。
+
+## 批次覆盖记录（FM-7 首批追加）
+
+- **FM-7（2026-10-18，plan 651）**：FM-018 官方洗型缝落地——`@nop-chaos/flux-react` 导出 `asReactNode`（唯一 auditable cast seam，expectTypeOf 类型面单测含 @ts-expect-error 反例）；49 文件清扫：23 个纯 cast 本地定义删除→导入 + 6 个导出型定义改 re-export（crud-renderer-delegate/list-renderer/utils/table-cell-chrome/table-header-text/wizard-step-helpers）+ 19 个纯导入消费方改 import 来源 + **唯一变体** canvas-view-helpers 改名 `asReactNodeOrNull` 保留（nullish→null 语义，下游 9 处 `?? fallback` 链依赖；WA-industrial-008 ③ 对账，注册头 scada-canvas.tsx）；归零核验：`grep -rlnE "function asReactNode\(|const asReactNode = " packages`（排 test/dist）= 仅官方 as-react-node.ts。16 处 mock factory（vi.mock('@nop-chaos/flux-react')）补 asReactNode 透传；6 处残留未用 RendererRenderOutput 导入清扫。门禁：lint 44/44、test 82/82、typecheck/build 唯 playground 既有红；check 全链复跑 exit 1 唯一残余 = knip xlang mock-server（并发线领地，多批在案披露——其 plan 650 提交后一度收敛，本批收口时随并发线后续状态回归）+ oversized 三文件均为登记豁免；gantt.test.tsx 因 mock 补丁触 700 行限，按 10-16 先例压缩回收至 699；metamodel-residue 白名单 variant-field-view 行号随清扫位移 98→95 维护；链末 3 个子检查（raw-schema-reads/metamodel-residue/designer-conformance）单独补跑全净。清扫附产数字勘正：vi.mock factory 透传补丁实为 **35 处**（初记 16 误）；163 引用为 grep -c 行口径（出现次数 164）。核对表工作副本 `_tmp/fm7-sweep.md`，本节为持久摘要。FM-7 后续字母批候选：RendererRenderOutput 返回类型收窄裁决。
 
 ## 批次覆盖记录（FM-6 首批追加）
 

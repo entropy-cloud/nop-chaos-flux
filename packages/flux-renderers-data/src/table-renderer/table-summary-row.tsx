@@ -8,10 +8,7 @@ import type {
 } from '../schemas.js';
 import type { FixedColumnLayout } from './fixed-columns.js';
 import { warnOnce } from './warn-once.js';
-
-function asReactNode(value: unknown): React.ReactNode {
-  return value as React.ReactNode;
-}
+import { asReactNode } from '@nop-chaos/flux-react';
 
 const ALIGN_CLASS: Record<string, string> = {
   left: 'text-left',

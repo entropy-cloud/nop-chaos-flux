@@ -34,6 +34,7 @@ function notifyFormStore() {
 }
 
 vi.mock('@nop-chaos/flux-react', () => ({
+    asReactNode: (value: unknown) => value as object,
   useRendererRuntime: () => ({ dispatch: vi.fn() }),
   useRendererEnv: () => ({
     fetcher: vi.fn().mockResolvedValue({ status: 200, data: new ArrayBuffer(0) }),

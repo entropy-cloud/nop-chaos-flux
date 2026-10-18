@@ -8,6 +8,7 @@ import type {
   ValidationRule,
 } from '@nop-chaos/flux-core';
 import {
+    asReactNode,
   hasRendererSlotContent,
   resolveRendererSlotContent,
   useCurrentComponentRegistry,
@@ -34,10 +35,6 @@ import { InputTableRow } from './input-table-row.js';
 export { InputTableRow } from './input-table-row.js';
 
 const EMPTY_COLUMNS: InputTableColumn[] = [];
-
-function asReactNode(value: unknown): React.ReactNode {
-  return value as React.ReactNode;
-}
 
 function toArrayItems(value: unknown): unknown[] {
   return Array.isArray(value) ? value : [];

@@ -8,6 +8,7 @@ import type {
   ValidationScopeRuntime,
 } from '@nop-chaos/flux-core';
 import {
+    asReactNode,
   FieldFrame,
   FormContext,
   FormLayoutContext,
@@ -31,10 +32,6 @@ import {
 } from '@nop-chaos/ui';
 import type { VariantFieldSchema } from '../composite-field/composite-schemas.js';
 import type { VariantResolvedOption } from './variant-field-helpers.js';
-
-function asReactNode(value: unknown): React.ReactNode {
-  return value as React.ReactNode;
-}
 
 function VariantFieldProviders({
   children,

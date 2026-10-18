@@ -1,3 +1,4 @@
+export { asReactNode } from './as-react-node.js';
 export { createDefaultEnv, createDefaultRegistry } from './defaults.js';
 export { createSchemaRenderer } from './schema-renderer.js';
 export { createAutoRendererComponent, ensureRendererComponent } from './auto-renderer.js';

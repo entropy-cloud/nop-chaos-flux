@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, waitFor, cleanup } from '@testing-library/react';
 
 vi.mock('@nop-chaos/flux-react', () => ({
+    asReactNode: (value: unknown) => value as object,
   useRendererEnv: vi.fn(),
   useInputComponentHandle: vi.fn(),
   FormContext: { Provider: ({ children }: { children: React.ReactNode }) => children },

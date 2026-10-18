@@ -1,6 +1,6 @@
-import type { ActionSchema, RendererRenderOutput } from '@nop-chaos/flux-core';
+export { asReactNode } from '@nop-chaos/flux-react';
+import type { ActionSchema } from '@nop-chaos/flux-core';
 import { unwrapBooleanLiteral, unwrapPreservedLiteral } from '@nop-chaos/flux-react';
-import type { ReactNode } from 'react';
 import type { WizardStepSchema } from './schemas.js';
 
 // ───────────────────────────── Wizard step helpers ─────────────────────────────
@@ -30,10 +30,6 @@ export function isStepDisabled(step: WizardStepSchema): boolean {
 
 export function findStepIndexByKey(steps: WizardStepSchema[], key: string | number): number {
   return steps.findIndex((step, idx) => resolveStepKey(step, idx) === key);
-}
-
-export function asReactNode(value: RendererRenderOutput): ReactNode {
-  return value as ReactNode;
 }
 
 /**

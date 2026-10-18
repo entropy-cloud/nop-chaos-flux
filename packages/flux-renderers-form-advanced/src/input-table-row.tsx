@@ -9,6 +9,7 @@ import type {
   ScopeRef,
 } from '@nop-chaos/flux-core';
 import {
+    asReactNode,
   ComponentRegistryContext,
   FormContext,
   FormLayoutContext,
@@ -19,10 +20,6 @@ import { TableCell, TableRow } from '@nop-chaos/ui';
 import type { InputTableColumn, InputTableSchema } from './composite-field/composite-schemas.js';
 import { instancePathEqual } from './composite-field/instance-path-equal.js';
 import { ArrayItemActionButtons, useArrayItemContext } from './array-item-shared.js';
-
-function asReactNode(value: unknown): React.ReactNode {
-  return value as React.ReactNode;
-}
 
 export type InputTableRowProps = {
   itemIdentity: string;

@@ -16,6 +16,7 @@ const state = vi.hoisted(() => ({
 }));
 
 vi.mock('@nop-chaos/flux-react', () => ({
+    asReactNode: (value: unknown) => value as object,
   resolveFrameWrapMode: (_wrap: unknown, _definitionDefault: unknown, authored: unknown) => {
     if (authored === false || authored === 'none') return 'none';
     if (authored === 'group') return 'group';

@@ -14,12 +14,9 @@ import {
 } from './pivot-option.js';
 import { attachPivotEvents } from './pivot-events.js';
 import { warnOnce } from './pivot-warn.js';
+import { asReactNode } from '@nop-chaos/flux-react';
 
 const DEFAULT_HEIGHT = 320;
-
-function asReactNode(value: unknown): React.ReactNode {
-  return value as React.ReactNode;
-}
 
 /** records/source 双入口：source 优先，二者同设 dev warn（chart series/source 裁定延续）。 */
 function resolvePivotData(resolved: Record<string, unknown>): unknown[] {

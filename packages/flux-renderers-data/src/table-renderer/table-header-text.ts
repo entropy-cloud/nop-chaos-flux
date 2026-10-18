@@ -1,9 +1,6 @@
+export { asReactNode } from '@nop-chaos/flux-react';
 import type { ReactNode } from 'react';
-
-/** 与调用方原实现一致的 identity cast（schema 值已是合法 ReactNode）。 */
-export function asReactNode(value: unknown): ReactNode {
-  return value as ReactNode;
-}
+import { asReactNode } from '@nop-chaos/flux-react';
 
 /**
  * 表头单元格文字解析（ux-r12e 从 table-header-row 抽出，控制该文件行数预算）：

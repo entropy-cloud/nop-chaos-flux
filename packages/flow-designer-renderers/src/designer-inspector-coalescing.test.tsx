@@ -31,6 +31,7 @@ vi.mock('./designer-icon', () => ({
 }));
 
 vi.mock('@nop-chaos/flux-react', () => ({
+    asReactNode: (value: unknown) => value as object,
   useCurrentComponentRegistry: () => undefined,
   useSchemaProps: (props: { props: Record<string, unknown> }) => props.props,
 }));

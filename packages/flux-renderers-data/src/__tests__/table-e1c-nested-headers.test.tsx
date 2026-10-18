@@ -12,6 +12,7 @@ import { useColumnResize } from '../table-renderer/use-column-resize.js';
 import type { FixedColumnLayout } from '../table-renderer/fixed-columns.js';
 
 vi.mock('@nop-chaos/flux-react', () => ({
+    asReactNode: (value: unknown) => value as object,
   useRenderScope: () => ({ update: vi.fn() }),
   useScopeSelector: () => undefined,
 

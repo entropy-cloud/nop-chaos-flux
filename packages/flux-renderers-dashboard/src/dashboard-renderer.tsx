@@ -1,6 +1,6 @@
 import React from 'react';
-import type { RendererComponentProps, RendererRenderOutput } from '@nop-chaos/flux-core';
-import { useRendererRuntime } from '@nop-chaos/flux-react';
+import type { RendererComponentProps } from '@nop-chaos/flux-core';
+import { asReactNode,  useRendererRuntime } from '@nop-chaos/flux-react';
 import { t } from '@nop-chaos/flux-i18n';
 import { cn } from '@nop-chaos/ui';
 import type { DashboardLayoutSchema, DashboardPanelSchema } from './schemas.js';
@@ -15,10 +15,6 @@ import {
   type PanelPixelRect,
 } from './layout-math.js';
 import { useCanvasWidth } from './use-canvas-width.js';
-
-function asReactNode(value: RendererRenderOutput): React.ReactNode {
-  return value as React.ReactNode;
-}
 
 interface LayoutProps {
   cols: number;

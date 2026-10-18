@@ -1,3 +1,4 @@
+export { asReactNode } from '@nop-chaos/flux-react';
 import React from 'react';
 import type { InstanceFrame, RenderRegionHandle, RendererComponentProps, ScopeRef } from '@nop-chaos/flux-core';
 import { getIn } from '@nop-chaos/flux-core';
@@ -8,10 +9,6 @@ import type { TableSchema, TableColumnSchema } from '../schemas.js';
 import { TableCellPopOver } from './table-cell-popover.js';
 import { copyToClipboard } from '@nop-chaos/flux-renderers-basic';
 /* Adjudication 01-03: cross-package coupling data→basic for copyToClipboard. Minimal scope (1 utility function). Accept-and-annotate: not worth extraction until a 3rd consumer appears. */
-
-export function asReactNode(value: unknown): React.ReactNode {
-  return value as React.ReactNode;
-}
 
 export function indentStyle(level: number): React.CSSProperties {
   if (level <= 0) return {};

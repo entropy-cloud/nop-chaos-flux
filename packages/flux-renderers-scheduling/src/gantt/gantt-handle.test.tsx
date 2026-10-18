@@ -16,6 +16,7 @@ const registryMock = vi.hoisted(() => {
 });
 
 vi.mock('@nop-chaos/flux-react', () => ({
+    asReactNode: (value: unknown) => value as object,
   useRenderScope: () => ({
     id: 'mock-scope',
     path: '/mock',

@@ -11,7 +11,7 @@ import type {
   ValidationRule,
   ValidationScopeRuntime,
 } from '@nop-chaos/flux-core';
-import { useCurrentFormModelGeneration, useCurrentValidationScope, useSchemaProps } from '@nop-chaos/flux-react';
+import { asReactNode,  useCurrentFormModelGeneration, useCurrentValidationScope, useSchemaProps } from '@nop-chaos/flux-react';
 import { t } from '@nop-chaos/flux-i18n';
 import { formFieldRules, useFormFieldFromProps } from '@nop-chaos/flux-renderers-form';
 import { Button, Popover, PopoverContent, PopoverTrigger, cn } from '@nop-chaos/ui';
@@ -31,10 +31,6 @@ import { groupValuesEqual, rewriteItemRight, sanitizeNode, sanitizeRight } from 
 import { createProjectedInlineForm } from '../composite-field/projected-inline-form.js';
 import { createProjectedValidationRuntime } from '../detail-view/projected-validation-runtime.js';
 import { createProjectedOwnerScope } from '../projected-owner-scope.js';
-
-function asReactNode(value: unknown): React.ReactNode {
-  return value as React.ReactNode;
-}
 
 function convertAmisRule(rule: unknown): ConditionGroupValue | ConditionItemValue {
   if (!rule || typeof rule !== 'object') {

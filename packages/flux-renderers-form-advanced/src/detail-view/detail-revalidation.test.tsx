@@ -13,6 +13,7 @@ const state = vi.hoisted(() => ({
 }));
 
 vi.mock('@nop-chaos/flux-react', () => ({
+    asReactNode: (value: unknown) => value as object,
   resolveFrameWrapMode: (_w: unknown, _d: unknown, authored: unknown) => (authored === false || authored === 'none' ? 'none' : authored === 'group' ? 'group' : 'label'),
   resolveRendererSlotContent: () => undefined,
   useCurrentForm: () => state.parentForm,

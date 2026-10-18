@@ -1,9 +1,9 @@
+export { asReactNode } from '@nop-chaos/flux-react';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import type {
   ComponentHandleRegistry,
   InstanceFrame,
   RendererComponentProps,
-  RendererRenderOutput,
 } from '@nop-chaos/flux-core';
 import { getIn, toPositiveNumber } from '@nop-chaos/flux-core';
 import { t } from '@nop-chaos/flux-i18n';
@@ -35,10 +35,6 @@ const DEFAULT_LIST_KEY_FIELD = 'id';
 const EMPTY_SET: ReadonlySet<string> = new Set();
 
 export type ListOwner = RendererComponentProps<ListSchema>;
-
-export function asReactNode(value: RendererRenderOutput): React.ReactNode {
-  return value as React.ReactNode;
-}
 
 function toListItems(value: unknown): unknown[] {
   return Array.isArray(value) ? value : [];

@@ -7,6 +7,7 @@ import {
 } from '@nop-chaos/flux-core';
 import type { DesignerHostStatusSummary } from '@nop-chaos/flow-designer-core';
 import {
+    asReactNode,
   hasRendererSlotContent,
   useCurrentActionScope,
   useRendererEnv,
@@ -52,10 +53,6 @@ import { DefaultInspector } from './designer-inspector.js';
 import { DesignerToolbarContent } from './designer-toolbar.js';
 import { useDesignerAutoLayout } from './use-designer-auto-layout.js';
 import { useDesignerShortcuts } from './use-designer-shortcuts.js';
-
-function asReactNode(value: unknown): React.ReactNode {
-  return value as React.ReactNode;
-}
 
 function hasPalettePanel(config: DesignerConfig): boolean {
   return (config.palette?.groups.length ?? 0) > 0;

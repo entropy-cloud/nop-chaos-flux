@@ -47,6 +47,7 @@ function createMockComponent(name: string, renderContent = false) {
 }
 
 vi.mock('@nop-chaos/flux-react', () => ({
+    asReactNode: (value: unknown) => value as object,
   useCurrentComponentRegistry: () => undefined,
   hasRendererSlotContent: (content: unknown) =>
     content !== null && content !== undefined && content !== false,

@@ -15,6 +15,7 @@ import { useRowDragSort } from '../table-renderer/use-row-drag-sort.js';
 import { SortProbe, createHelpers, resetTableControlTestState } from './use-table-controls.test-support.js';
 
 vi.mock('@nop-chaos/flux-react', () => ({
+    asReactNode: (value: unknown) => value as object,
   useRenderScope: () => ({ update: vi.fn() }),
   useScopeSelector: () => undefined,
 

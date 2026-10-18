@@ -3,7 +3,7 @@ import React from 'react';
 import { render, waitFor, act, fireEvent } from '@testing-library/react';
 import { Gantt } from './gantt.js';
 
-vi.mock('@nop-chaos/flux-react', () => ({
+vi.mock('@nop-chaos/flux-react', () => ({ asReactNode: (value: unknown) => value as object,
   useRendererRuntime: () => ({ dispatch: vi.fn() }),
   useRenderScope: () => ({ id: 'mock-scope', path: '/mock', readVisible: () => ({}), readOwn: () => ({}), update: vi.fn(), merge: vi.fn(), replace: vi.fn(), dispose: vi.fn() }),
   useScopeSelector: () => undefined,

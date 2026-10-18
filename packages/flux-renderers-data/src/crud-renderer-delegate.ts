@@ -1,11 +1,8 @@
+export { asReactNode } from '@nop-chaos/flux-react';
 import { createReadonlyScopeBinding } from '@nop-chaos/flux-react';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
 import type { CrudSchema } from './crud-schema.js';
 import type { TableSchema } from './schemas.js';
-
-export function asReactNode(value: unknown): React.ReactNode {
-  return value as React.ReactNode;
-}
 
 /**
  * AUDIT-03: the single, documented cast seam for CRUD→Table renderer delegation.
