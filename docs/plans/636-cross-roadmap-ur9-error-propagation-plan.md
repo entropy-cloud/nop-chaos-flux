@@ -1,7 +1,7 @@
 # 636 跨 roadmap UR-9 错误传播与诊断通道（13 条）——核验回写 + 19-16 收尾
 
-> Plan Status: active
-> Last Reviewed: 2026-10-17
+> Plan Status: completed
+> Last Reviewed: 2026-10-18
 > Source: `docs/backlog/cross-roadmap-remediation-roadmap.md` UR-9（Wave C，audit-remediation Follow-up Backlog D19 组 13 条）
 > Related: `docs/backlog/audit-remediation-roadmap.md`（头部「D19 all fixed and verified」2026-07-28）
 
@@ -91,15 +91,15 @@ Exit Criteria:
 
 ## Closure Gates
 
-- [ ] 19-16 收尾落地（两编译位点 + 判别测试红绿实测）
-- [ ] D19 13 行回写 + cross-roadmap UR-9 + daily log 三面一致
-- [ ] flux-react focused typecheck/test 绿、lint 绿；全量门禁无非既有红
-- [ ] 不存在被静默降级的 in-scope 项
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] 19-16 收尾落地（两编译位点 + 判别测试红绿实测）
+- [x] D19 13 行回写 + cross-roadmap UR-9 + daily log 三面一致
+- [x] flux-react focused typecheck/test 绿、lint 绿；全量门禁无非既有红
+- [x] 不存在被静默降级的 in-scope 项
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 
 ## Deferred But Adjudicated
 
@@ -116,13 +116,13 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: 待收口填写
+Status Note: 19-16 有界收尾 + D19 13 行核验回写全部落地（Deferred 节 19-16 完整收尾改判 out-of-scope → flux-compiler report-only 通道 successor 在案）。收口审计 R1 issues → R2 approved（残留清理后）；本 plan 收口提交 7bbeeb9f2 落盘时状态翻转漏落（文件随提交创建但留 active）——2026-10-18 FM-4 UR 门禁抽样复核（agent_15fc7ccd）发现该漂移并依据在案审计记录与本日独立复核回填。**回填后状态以提交 7bbeeb9f2 + 本节证据为准。**
 
 Closure Audit Evidence:
 
-- Auditor / Agent: 待填
-- Evidence: 待填
+- Auditor / Agent: closure audit R1 → R2 approved（记录于收口提交 7bbeeb9f2 message，plan 2476 并发期）；2026-10-18 FM-4 独立抽查 agent_15fc7ccd（UR-8/9 门禁复核 7/7 无回退）
+- Evidence: ①19-16 两编译位点 + 判别测试在案（schema-renderer.tsx:80-88 两分支 enabled:true 的部分修复态与 Deferred 裁定一致，2026-10-18 复核未回退）；②D19 13 行回写 + cross-roadmap UR-9 `done` + Plan 列 636 在案；③门禁数字见 7bbeeb9f2 记录（其时点无非既有红）；④复核边界：19-02/19-05 同域与 FM-011/012（FM-2 立案）互不重叠，不构成回退。
 
 Follow-up:
 
-- 见 Non-Blocking Follow-ups。
+- flux-core `ActionMonitorPayload` 悬空类型清理（flux-core Protected Area，plan-first successor 候选）；19-16 完整收尾归 flux-compiler report-only 通道 successor plan（见 Deferred）。

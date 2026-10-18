@@ -53,7 +53,7 @@ export function useContainerDomRegistration(
       element,
     };
 
-    return componentRegistry.register({
+    const registration = componentRegistry.register({
       id: containerId,
       type: 'container',
       ref: element,
@@ -63,6 +63,20 @@ export function useContainerDomRegistration(
         },
       },
     });
+
+    return function cleanup() {
+      registration();
+      // FM-4 plan 645 P1: this effect runs after every render (no dep array)
+      // with a ref-triple dedup guard. Tearing down a registration without
+      // resetting the guard made any unrelated re-render permanently silent —
+      // cleanup unregistered, the next run saw an unchanged triple and skipped
+      // re-registering, so the container vanished from the registry.
+      registeredRef.current = {
+        containerId: undefined,
+        componentRegistry: undefined,
+        element: null,
+      };
+    };
   });
 }
 

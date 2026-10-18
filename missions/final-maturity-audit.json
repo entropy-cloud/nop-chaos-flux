@@ -63,7 +63,7 @@
         {
           "id": "T2.3",
           "name": "FM-4 React19 与运行时健壮性复查（react19 review + audit 脚本全家 + UR-8/9 门禁复核）",
-          "status": "todo",
+          "status": "done",
           "assignee": "unassigned"
         }
       ]

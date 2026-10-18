@@ -47,3 +47,12 @@
 ## 批次覆盖记录（FM-3 追加）
 
 - **FM-3（2026-10-18，plan 644）**：新增 FM-022–FM-026 共 5 条（fixed→verified 1 / watch-only 2 / local→FM-6 候选 2 [FM-024 具名 + FM-025 批量 test-gap]）；探索测试新增 19 例单测（16 加固 + 1 修复回归 + 2 skip 立案）+ e2e 探针 6 例全绿入库。
+
+| FM-027 | FM-4 | react19 复查 F1（container-hooks.ts:15-81，修复后跨度） | useContainerDomRegistration cleanup 不失效 ref-triple 去重守卫——任意无关重渲染后容器从 registry 永久静默消失（container: 定向弹层回落默认容器） | fixed→verified | — | P1 修复同批（cleanup 内重置守卫，每渲染重注册语义与无依赖数组 effect 一致）；判别测试 `container-hooks-registration.test.tsx` 旧实现红（重渲染后注册丢失）→ 绿；unmount 反向用例同钉 |
+| FM-028 | FM-4 | react19 复查 F2–F5（P2 ×4） | F2 crud-renderer-load loadMore 单槽 resolver 并发孤儿化 promise→无限滚动永久失效（sentinel+retry 并发）；F3 schema-renderer import/setEnv effect 以整个 props.env 为依赖（内联 env 每渲染整树重挂）；F4 node-renderer import-bindings 裸 disposeScope 违反 useDeferredDispose 约定（StrictMode 自愈链路脆弱）；F5 onUnmount/onMount StrictMode 模拟卸载期真实派发 | found | local → FM-6 候选（4 条具名） | P2；逐条六要素见 `fm4-react19-review.md`；Why Not Blocking：触发面为并发/StrictMode/内联 env 等特定形态，无主路径行为错误 |
+| FM-029 | FM-4 | audit:mutants bounded run | stryker 既有配置下 mutation score 1.63（coverage 映射趋零）——测量失真非保护力结论（validation 族在 flux-runtime 套件内有大量直接单测，FM-3 38 项已约束证据） | found | watch-only / optimization candidate | creditable mutation testing 需 stryker test-mapping 配置手术；successor：独立小批修配置后再评估。Why Not Blocking：工具测量失真，非产品缺陷 |
+| FM-030 | FM-4 | UR-8/9 抽样复核 + plan 636 治理漂移 | UR-8×4 + UR-9×3 抽样 7/7 无回退（迁移坐标全部核实）；治理发现：plan 636 收口提交 7bbeeb9f2 状态翻转漏落（文件留 active）——已按在案审计记录回填 completed | fixed→verified | — | 回填证据：7bbeeb9f2 在案 closure audit（R1→R2 approved）+ 本日 agent_15fc7ccd 独立复核 7/7；19-02/19-05 与 FM-011/012 互不重叠 |
+
+## 批次覆盖记录（FM-4 追加）
+
+- **FM-4（2026-10-18，plan 645）**：新增 FM-027–FM-030 共 4 条（fixed→verified 2 / watch-only 1 / local→FM-6 候选 1 批 [FM-028 四条具名]）；7 非门禁扫描器 triage 零 P0/P1 新面；react-doctor 686 条启发式抽样零确认缺陷（参考线索存档）。
