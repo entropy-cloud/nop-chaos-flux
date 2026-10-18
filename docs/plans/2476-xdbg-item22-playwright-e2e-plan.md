@@ -115,11 +115,10 @@ Follow-up:
 
 - 真实后端 docker-compose 联调（Deferred 维持）
 - lint 消息级 e2e 断言（tooltip DOM 面，机会性）
-- mock 服务器端口 env 已 XLANG_E2E_MOCK_PORT 化（4 处硬编码消除，Minor-4 落码）
+- 端口 env 覆盖现状（R2 残留勘正）：XLANG_E2E_MOCK_PORT 仅 mock 服务器默认端口读取；webServer 条目/vite 代理/spec MOCK 常量仍为 4180 字面量——改端口须四处同步（行为默认正确，文本准确性修正）
 
 ## Draft Review Record
 
 - Reviewer / Agent: 独立子代理 agent_ba3c6445（fresh session，R1）
 - Verdict: revised（0B/4M/9m 全修订）
 - Findings addressed: M1 evt.resumed{threadIds} 契约（缺省则面板永久挂起）；M2 compile fulfill 原始 body + `.cm-lintRange-error` 选择器（.cm-lintmarker 不存在）；M3 补 Scope 节 + typecheck/lint 门；M4 mock 面（getFrameVariables 桩/每连新 sessionId/StrictMode 容忍/renewIntervalMs=250）；m1-m9（initialSource 6 行/zh-CN label/matcher RegExp/fallback 措辞/checklist 工具不存在/flux logs 路径/全量口径）
-- Reviewer / Agent: （待 R1）
