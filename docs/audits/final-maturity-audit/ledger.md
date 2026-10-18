@@ -1,6 +1,6 @@
 # 最终成熟度审计台账（Findings Ledger）
 
-> Last Updated: 2026-10-18（FM-0 批次登记）
+> Last Updated: 2026-10-18（FM-1b 批次登记）
 > 状态机与对账口径见 `README.md`。
 
 ## Findings
@@ -73,3 +73,12 @@
 ## 批次覆盖记录（FM-1a 追加）
 
 - **FM-1a（2026-10-18，plan 647）**：新增 FM-036/037 共 2 条（均 local→FM-6 候选）；**P0/P1 零新案**；13 页 × ≈60 序列真实驱动（PASS 9 / FAIL 1 / n-a 3）；在案注记 5 项（IS 坐标 ×4 + FM-026 复核成立）；FM-5 confirmText 修复三处 live 正向验证；IS ledger 相关页行已注记 FM-1a CRUD 矩阵维度覆盖。
+
+| FM-038 | FM-1b | 走查 gantt 收口裁决（roadmap 点名既有红；trusted 探针逐环） | gantt 条缘 resize 按压被悬停删除 X 吞掉（X 锚点=路径中顶点，20×20 矩形与 resize 区重叠 6×20px → 拖拽会话不启动 = 既有红根因）+ 同点 press-release 误删依赖连线（links 9→8 实测，B 遮挡×C 复合 P1） | fixed→verified | — | 事件层修复（`gantt-links.tsx` document 捕获 pointerdown 转发 bar + click 抑制，render 树 pristine 同形）；判别：`:131` 红→绿 + 新增 `:160` 回归钉 + 全文件 17/17（--retries=0，主会话独立复验）+ 邻域 17/17 + RTL 1/1；render 侧重定位方案经 9 变体二分证实被 playground react-compiler dev 变换破坏 onClick 派发（工具链披露，watch-note 在报告）；裁决全文 `_tmp/fm1b-gantt-adjudication.md` |
+| FM-039 | FM-1b | 走查 flow-designer（F-1） | palette 插入不入撤销历史：添加条件节点 6→7 后 undo disabled 恒定，点击无效；对照删除节点后撤销可用（6→7）——撤销 affordance 对插入失效 | found | local → FM-6 候选 | P2；C 类；候选根因 designer-command-adapter history 未覆盖 palette insert（未证实至行）；判别方向 insert→undo 节点数回落；新坐标 IS-flow-designer-008；复现读数 `_tmp/fm1b-walk/flow-designer.md` |
+| FM-040 | FM-1b | 走查 taskflow-designer（F-2） | 插入节点视口静默漂移：添加Script 7→8 后 vp translateY 93.53→111.11（+17.6px，非用户滚动/缩放意图）；对照 flow-designer 插入 vp 逐字节稳定——跨设计器不一致 | found | local → FM-6 候选 | P2；A 类 V2 违例；归属 playground taskflow-designer-lib/canvas 插入后 auto-pan（未证实至行）；判别：插入前后 vp transform 逐字节相等；新坐标 IS-taskflow-designer-008；读数 `_tmp/fm1b-walk/taskflow-designer.md` |
+| FM-041 | FM-1b | 走查 design-debt 候选 ×3 | ① flow-designer 族切换 fit 非确定（同族两次进入 scale 0.382 vs 0.468）；② ai-conversations 新建会话后视图不切换到新会话；③ gantt 删除 X 视觉仍压条缘（FM-038 事件层收口后观感残留，无错误行为） | found | watch-only（P3 观感债，FM-6 批次可顺带） | 逐条读数在对应 `_tmp/fm1b-walk/<page>.md`；Why Not Blocking：P3 观感候选，无行为/数据风险 |
+
+## 批次覆盖记录（FM-1b 追加）
+
+- **FM-1b（2026-10-18，plan 648）**：新增 FM-038–FM-041 共 4 条（fixed→verified 1 / local→FM-6 候选 2 / watch-only 1 批 [FM-041 三条具名]）；**P1×1 当批修复即 verified**（gantt 既有红收口 = roadmap 点名交付）；11 域页 + 1 路由核验 × 35+ 序列（clean 5 / limited-clean 4 / finding 2）；IS 新坐标 2 条（IS-flow-designer-008 / IS-taskflow-designer-008）；字母批去向：mobile 族 + spreadsheet + dashboard-demo + three-gallery/scada-gallery 候选（预授权 FM-1b-b）+ xlang-debug 移交并发线。

@@ -27,7 +27,7 @@
     {
       "id": "M1",
       "name": "交互实操走查（两批）",
-      "status": "in progress",
+      "status": "done",
       "tasks": [
         {
           "id": "T1.1",
@@ -37,8 +37,8 @@
         },
         {
           "id": "T1.2",
-          "name": "FM-1b 设计器/调度/移动/AI/3D 域 browser-use 实操走查（含 gantt 拖拽既有红收口）",
-          "status": "todo",
+          "name": "FM-1b 设计器/调度/移动/AI/3D 域 browser-use 实操走查（含 gantt 拖拽既有红收口；部分收敛注记：mobile 族/spreadsheet/dashboard-demo 等滚动至 FM-1b-b 字母批）",
+          "status": "done",
           "assignee": "unassigned"
         }
       ]

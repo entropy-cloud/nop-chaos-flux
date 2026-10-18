@@ -1,4 +1,4 @@
-import React, { useState, useSyncExternalStore } from 'react';
+import React, { useEffect, useState, useSyncExternalStore } from 'react';
 import { cn } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
 import { XIcon } from 'lucide-react';
@@ -39,6 +39,53 @@ export function GanttLinks({ store, className, onLinkClick, onLinkRemove }: Gant
   const handleLinkClick = (linkId: string | number) => {
     onLinkClick?.(linkId);
   };
+
+  // FM-1b P1: the hover X anchors at the link midpoint, which for short FS
+  // links sits exactly on the source bar's right-edge resize zone. A
+  // hover-intent press there used to delete the dependency link instead of
+  // interacting with the bar (also the deterministic red behind the e2e
+  // "bar drag resize-right changes width"). A render-side reposition of the X
+  // breaks onClick dispatch under the react-compiler dev transform (verified
+  // by bisect in the FM-1b gantt closure), so ownership is fixed at the event
+  // layer instead: a press on the X that lands inside a bar rect is forwarded
+  // to the bar, and the click it would produce is suppressed.
+  useEffect(() => {
+    const onPointerDown = (e: PointerEvent) => {
+      const target = e.target as Element | null;
+      const btn = target?.closest?.('.nop-gantt-link-delete-btn') as HTMLElement | null;
+      if (!btn) return;
+      // Read-only hit-test via the full stack: toggling pointerEvents here
+      // would recompute :hover mid-press, fire mouseleave on the link group
+      // and unmount the X before the click (FM-1b gantt closure reading).
+      const stack = document.elementsFromPoint(e.clientX, e.clientY);
+      const btnIdx = stack.indexOf(btn);
+      const barEl = btnIdx >= 0
+        ? stack.slice(btnIdx + 1).find((el) => el.hasAttribute?.('data-task-id'))
+        : null;
+      if (barEl) {
+        btn.dataset.pressForwardedToBar = '1';
+        barEl.dispatchEvent(new PointerEvent('pointerdown', { clientX: e.clientX, clientY: e.clientY, bubbles: true, cancelable: true }));
+      } else {
+        btn.dataset.pressForwardedToBar = '0';
+      }
+    };
+    const onClickCapture = (e: MouseEvent) => {
+      const target = e.target as Element | null;
+      const btn = target?.closest?.('.nop-gantt-link-delete-btn') as HTMLElement | null;
+      if (!btn) return;
+      if (btn.dataset.pressForwardedToBar === '1') {
+        e.stopPropagation();
+        e.preventDefault();
+      }
+      btn.dataset.pressForwardedToBar = '0';
+    };
+    document.addEventListener('pointerdown', onPointerDown, true);
+    document.addEventListener('click', onClickCapture, true);
+    return () => {
+      document.removeEventListener('pointerdown', onPointerDown, true);
+      document.removeEventListener('click', onClickCapture, true);
+    };
+  }, []);
 
   if (!hasLinks) return null;
 

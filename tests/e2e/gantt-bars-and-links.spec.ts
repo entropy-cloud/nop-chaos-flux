@@ -153,6 +153,36 @@ test.describe('Gantt — Bars, Milestones, Progress & Links', () => {
     await assertTrackedPageErrors(page);
   });
 
+  // FM-1b: hovering the bar's right-edge resize zone also hovers the link hit
+  // polyline (it starts at the bar edge midpoint); the hover delete button
+  // must never anchor over the bar rect — a press-release there used to
+  // delete the dependency link instead of being a zero-delta bar interaction.
+  test('press-release at bar resize edge does not delete dependency link', async ({ page }) => {
+    await page.goto(ROUTE, { waitUntil: 'commit' });
+    await expect(page.getByRole('heading', { name: HEADING })).toBeVisible({ timeout: 25_000 });
+
+    const bar = page.locator('[data-slot="gantt-bar"][data-task-id="2"]');
+    await expect(bar).toBeVisible({ timeout: 15_000 });
+
+    const linkCount = () => page.evaluate(() => document.querySelectorAll('[data-slot="gantt-link"] .nop-gantt-link-line').length);
+    const linksBefore = await linkCount();
+    expect(linksBefore).toBeGreaterThan(0);
+
+    const box = await bar.boundingBox();
+    if (!box) return;
+
+    await page.mouse.move(box.x + box.width - 3, box.y + box.height / 2);
+    await page.waitForTimeout(150);
+    await page.mouse.down();
+    await page.mouse.up();
+    await page.waitForTimeout(400);
+
+    expect(await linkCount()).toBe(linksBefore);
+    await expect(page.locator('.nop-gantt-bar-ghost')).toHaveCount(0);
+
+    await assertTrackedPageErrors(page);
+  });
+
   test('bar link handles visible on hover', async ({ page }) => {
     await page.goto(ROUTE, { waitUntil: 'commit' });
     await expect(page.getByRole('heading', { name: HEADING })).toBeVisible({ timeout: 25_000 });
