@@ -1,6 +1,10 @@
 import type { RegisteredRendererDefinition } from '@nop-chaos/flux-core';
+import { extendedMobileRendererDefinitions } from './mobile-renderer-definitions-extended.js';
 import type {
+  ActionSheetSchema,
   CountdownSchema,
+  FloatingBubbleSchema,
+  FloatingPanelSchema,
   InfiniteScrollSchema,
   NoticeBarSchema,
   PickerViewSchema,
@@ -17,12 +21,9 @@ import { NoticeBarRenderer } from './notice-bar.js';
 import { PickerViewRenderer } from './picker-view.js';
 import { PullRefreshRenderer } from './pull-refresh.js';
 import { SwipeCellRenderer } from './swipe-cell.js';
-import { WheelCascaderRenderer } from './wheel-cascader.js';
-import { WheelDatePickerRenderer } from './wheel-date-picker.js';
-import { WheelPickerRenderer } from './wheel-picker.js';
-import { WheelTimePickerRenderer } from './wheel-time-picker.js';
 
 export const mobileRendererDefinitions: RegisteredRendererDefinition[] = [
+  ...extendedMobileRendererDefinitions,
   {
     type: 'pull-refresh',
     displayName: 'Pull Refresh',
@@ -309,227 +310,6 @@ export const mobileRendererDefinitions: RegisteredRendererDefinition[] = [
     ],
   },
   {
-    type: 'wheel-picker',
-    displayName: 'Wheel Picker',
-    category: 'content',
-    sourcePackage: '@nop-chaos/flux-renderers-mobile',
-    defaultSchema: { type: 'wheel-picker', columns: [] },
-    component: WheelPickerRenderer,
-    fields: [
-      { key: 'label', kind: 'prop' },
-      { key: 'name', kind: 'prop' },
-      { key: 'columns', kind: 'prop' },
-      { key: 'value', kind: 'prop' },
-      { key: 'placeholder', kind: 'prop' },
-      {
-        key: 'disabled',
-        kind: 'prop',
-        valueType: 'boolean',
-        contract: { displayName: 'Disabled', shape: { kind: 'boolean' } },
-      },
-      {
-        key: 'required',
-        kind: 'prop',
-        valueType: 'boolean',
-        contract: { displayName: 'Required', shape: { kind: 'boolean' } },
-      },
-      {
-        key: 'onConfirm',
-        kind: 'event',
-        contract: {
-          displayName: 'On Confirm',
-          description: 'Dispatched when the popup confirm button is pressed. Payload: { type: "confirm", value, labels }.',
-          payload: {
-            kind: 'object',
-            fields: {
-              type: { kind: 'string' },
-              value: { kind: 'unknown' },
-              labels: { kind: 'array', item: { kind: 'string' } },
-            },
-          },
-        },
-      },
-      {
-        key: 'onCancel',
-        kind: 'event',
-        contract: {
-          displayName: 'On Cancel',
-          description: 'Dispatched when the popup is dismissed without confirming. Payload: { type: "cancel" }.',
-          payload: {
-            kind: 'object',
-            fields: { type: { kind: 'string' } },
-          },
-        },
-      },
-    ],
-  },
-  {
-    type: 'wheel-date-picker',
-    displayName: 'Wheel Date Picker',
-    category: 'content',
-    sourcePackage: '@nop-chaos/flux-renderers-mobile',
-    defaultSchema: { type: 'wheel-date-picker' },
-    component: WheelDatePickerRenderer,
-    fields: [
-      { key: 'label', kind: 'prop' },
-      { key: 'name', kind: 'prop' },
-      { key: 'min', kind: 'prop' },
-      { key: 'max', kind: 'prop' },
-      { key: 'value', kind: 'prop' },
-      { key: 'placeholder', kind: 'prop' },
-      {
-        key: 'disabled',
-        kind: 'prop',
-        valueType: 'boolean',
-        contract: { displayName: 'Disabled', shape: { kind: 'boolean' } },
-      },
-      {
-        key: 'required',
-        kind: 'prop',
-        valueType: 'boolean',
-        contract: { displayName: 'Required', shape: { kind: 'boolean' } },
-      },
-      {
-        key: 'onConfirm',
-        kind: 'event',
-        contract: {
-          displayName: 'On Confirm',
-          description: 'Dispatched when the popup confirm button is pressed. Payload: { type: "confirm", value, labels }.',
-          payload: {
-            kind: 'object',
-            fields: {
-              type: { kind: 'string' },
-              value: { kind: 'unknown' },
-              labels: { kind: 'array', item: { kind: 'string' } },
-            },
-          },
-        },
-      },
-      {
-        key: 'onCancel',
-        kind: 'event',
-        contract: {
-          displayName: 'On Cancel',
-          description: 'Dispatched when the popup is dismissed without confirming. Payload: { type: "cancel" }.',
-          payload: {
-            kind: 'object',
-            fields: { type: { kind: 'string' } },
-          },
-        },
-      },
-    ],
-  },
-  {
-    type: 'wheel-time-picker',
-    displayName: 'Wheel Time Picker',
-    category: 'content',
-    sourcePackage: '@nop-chaos/flux-renderers-mobile',
-    defaultSchema: { type: 'wheel-time-picker' },
-    component: WheelTimePickerRenderer,
-    fields: [
-      { key: 'label', kind: 'prop' },
-      { key: 'name', kind: 'prop' },
-      { key: 'minuteStep', kind: 'prop' },
-      { key: 'value', kind: 'prop' },
-      { key: 'placeholder', kind: 'prop' },
-      {
-        key: 'disabled',
-        kind: 'prop',
-        valueType: 'boolean',
-        contract: { displayName: 'Disabled', shape: { kind: 'boolean' } },
-      },
-      {
-        key: 'required',
-        kind: 'prop',
-        valueType: 'boolean',
-        contract: { displayName: 'Required', shape: { kind: 'boolean' } },
-      },
-      {
-        key: 'onConfirm',
-        kind: 'event',
-        contract: {
-          displayName: 'On Confirm',
-          description: 'Dispatched when the popup confirm button is pressed. Payload: { type: "confirm", value, labels }.',
-          payload: {
-            kind: 'object',
-            fields: {
-              type: { kind: 'string' },
-              value: { kind: 'unknown' },
-              labels: { kind: 'array', item: { kind: 'string' } },
-            },
-          },
-        },
-      },
-      {
-        key: 'onCancel',
-        kind: 'event',
-        contract: {
-          displayName: 'On Cancel',
-          description: 'Dispatched when the popup is dismissed without confirming. Payload: { type: "cancel" }.',
-          payload: {
-            kind: 'object',
-            fields: { type: { kind: 'string' } },
-          },
-        },
-      },
-    ],
-  },
-  {
-    type: 'wheel-cascader',
-    displayName: 'Wheel Cascader',
-    category: 'content',
-    sourcePackage: '@nop-chaos/flux-renderers-mobile',
-    defaultSchema: { type: 'wheel-cascader', options: [] },
-    component: WheelCascaderRenderer,
-    fields: [
-      { key: 'label', kind: 'prop' },
-      { key: 'name', kind: 'prop' },
-      { key: 'options', kind: 'prop' },
-      { key: 'value', kind: 'prop' },
-      { key: 'placeholder', kind: 'prop' },
-      {
-        key: 'disabled',
-        kind: 'prop',
-        valueType: 'boolean',
-        contract: { displayName: 'Disabled', shape: { kind: 'boolean' } },
-      },
-      {
-        key: 'required',
-        kind: 'prop',
-        valueType: 'boolean',
-        contract: { displayName: 'Required', shape: { kind: 'boolean' } },
-      },
-      {
-        key: 'onConfirm',
-        kind: 'event',
-        contract: {
-          displayName: 'On Confirm',
-          description: 'Dispatched when the popup confirm button is pressed. Payload: { type: "confirm", value, labels }.',
-          payload: {
-            kind: 'object',
-            fields: {
-              type: { kind: 'string' },
-              value: { kind: 'unknown' },
-              labels: { kind: 'array', item: { kind: 'string' } },
-            },
-          },
-        },
-      },
-      {
-        key: 'onCancel',
-        kind: 'event',
-        contract: {
-          displayName: 'On Cancel',
-          description: 'Dispatched when the popup is dismissed without confirming. Payload: { type: "cancel" }.',
-          payload: {
-            kind: 'object',
-            fields: { type: { kind: 'string' } },
-          },
-        },
-      },
-    ],
-  },
-  {
     type: 'notice-bar',
     displayName: 'Notice Bar',
     category: 'content',
@@ -603,4 +383,7 @@ export type MobileRendererSchema =
   | WheelPickerSchema
   | WheelDatePickerSchema
   | WheelTimePickerSchema
-  | WheelCascaderSchema;
+  | WheelCascaderSchema
+  | FloatingPanelSchema
+  | FloatingBubbleSchema
+  | ActionSheetSchema;

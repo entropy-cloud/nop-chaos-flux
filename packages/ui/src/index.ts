@@ -45,6 +45,7 @@ export * from './components/ui/select.js';
 export * from './components/ui/slider.js';
 export * from './components/ui/separator.js';
 export * from './components/ui/sheet.js';
+export { shouldCloseOnRelease } from './components/ui/sheet-gesture-close.js';
 export * from './components/ui/sidebar.js';
 export * from './components/ui/skeleton.js';
 export * from './components/ui/spinner.js';

@@ -194,6 +194,7 @@ export const DOMAIN_HOME_FAMILY: Record<string, HomeFamilyId> = {
   'm5-showcase': 'mobile',
   'm6-gesture-lab': 'mobile',
   'm7-wheel-pickers': 'mobile',
+  'm8-bottom-panels': 'mobile',
 
   'ai-chat': 'ai',
   'ai-conversations': 'ai',

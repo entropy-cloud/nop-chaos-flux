@@ -196,3 +196,55 @@ export interface WheelCascaderSchema extends BaseSchema {
   onConfirm?: ActionSchema | ActionSchema[];
   onCancel?: ActionSchema | ActionSchema[];
 }
+
+export interface FloatingPanelSchema extends BaseSchema {
+  type: 'floating-panel';
+  /** 锚点高度数组（px，升序）；面板拖拽后吸附最近锚点 */
+  anchors?: number[];
+  /** 初始高度（px），默认吸附到第一个锚点 */
+  defaultHeight?: number;
+  /** 面板内容 region（满屏后可滚动） */
+  body?: SchemaInput;
+  disabled?: boolean;
+  /** 面板落定新锚点。payload: { type: 'anchor', index, height } */
+  onChange?: ActionSchema | ActionSchema[];
+}
+
+export interface FloatingBubbleSchema extends BaseSchema {
+  type: 'floating-bubble';
+  /** 初始 X（px，相对容器左缘），默认右缘 */
+  initialX?: number;
+  /** 初始 Y（px，相对容器上缘），默认底部 */
+  initialY?: number;
+  /** 磁吸开关，默认 true（松手吸附最近左右边缘） */
+  magnetic?: boolean;
+  disabled?: boolean;
+  /** 位移 <6px 视为点击。payload: { type: 'click' } */
+  onClick?: ActionSchema | ActionSchema[];
+}
+
+export interface ActionSheetItem {
+  [key: string]: import('@nop-chaos/flux-core').SchemaValue;
+  label: string;
+  value: string | number;
+  disabled?: boolean;
+}
+
+export interface ActionSheetSchema extends BaseSchema {
+  type: 'action-sheet';
+  /** 触发器文案 */
+  triggerText?: string;
+  /** 弹层标题 */
+  title?: string;
+  items?: ActionSheetItem[];
+  /** 展示形态，默认 list */
+  display?: 'list' | 'grid';
+  /** 关闭按钮文案，默认 i18n 取消 */
+  cancelText?: string;
+  /** 点击遮罩关闭，默认 true */
+  closeOnMask?: boolean;
+  disabled?: boolean;
+  /** 选中条目。payload: { type: 'select', index, value, label } */
+  onSelect?: ActionSchema | ActionSchema[];
+  onCancel?: ActionSchema | ActionSchema[];
+}

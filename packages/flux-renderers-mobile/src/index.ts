@@ -9,6 +9,10 @@ export type {
   WheelTimePickerSchema,
   WheelCascaderOption,
   WheelCascaderSchema,
+  FloatingPanelSchema,
+  FloatingBubbleSchema,
+  ActionSheetItem,
+  ActionSheetSchema,
   PullRefreshSchema,
   InfiniteScrollSchema,
   SwipeCellSchema,
@@ -27,6 +31,9 @@ export { WheelPickerRenderer } from './wheel-picker.js';
 export { WheelDatePickerRenderer } from './wheel-date-picker.js';
 export { WheelTimePickerRenderer } from './wheel-time-picker.js';
 export { WheelCascaderRenderer } from './wheel-cascader.js';
+export { FloatingPanelRenderer } from './floating-panel.js';
+export { FloatingBubbleRenderer } from './floating-bubble.js';
+export { ActionSheetRenderer } from './action-sheet.js';
 export { PickerViewRenderer } from './picker-view.js';
 
 export { mobileRendererDefinitions } from './mobile-renderer-definitions.js';

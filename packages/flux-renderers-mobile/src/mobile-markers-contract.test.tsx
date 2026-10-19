@@ -186,7 +186,7 @@ describe('mobile renderer markers contract (MA-03/MA-25)', () => {
 });
 
 describe('mobile package public API surface (MM-11)', () => {
-  it('exports the renderer families + definitions + registerer + M6/M7 layers, and NOT the zero-consumer helpers', () => {
+  it('exports the renderer families + definitions + registerer + M6/M7/M8 layers, and NOT the zero-consumer helpers', () => {
     // MM-11: the public `.` entry is gated. M5 dropped zero-consumer helper
     // exports (useCountdownTimer, formatCountdown, ...); M6 (plan 664,
     // human-confirmed roadmap M6a) re-introduces the gesture layer as the
@@ -195,7 +195,10 @@ describe('mobile package public API surface (MM-11)', () => {
     const runtimeExports = Object.keys(MobileEntry).sort();
     expect(runtimeExports).toEqual(
       [
+        'ActionSheetRenderer',
         'CountdownRenderer',
+        'FloatingBubbleRenderer',
+        'FloatingPanelRenderer',
         'InfiniteScrollRenderer',
         'MOMENTUM_DECELERATION',
         'MomentumAnimator',

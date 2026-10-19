@@ -111,3 +111,27 @@ body.nop-scroll-lock {
 [data-slot='picker-view-row'][data-active='true'] {
   color: inherit;
 }
+
+/* M8 (plan 666): floating panel / bubble palette — package-local defaults via
+ * public override variables (same model as notice-bar / wheel-picker). */
+[data-slot='floating-panel'] {
+  background: var(--nop-floating-panel-bg, #ffffff);
+}
+
+[data-slot='floating-bubble'] {
+  background: var(--nop-floating-bubble-bg, #3b82f6);
+  color: var(--nop-floating-bubble-fg, #ffffff);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+  cursor: grab;
+}
+
+[data-slot='floating-panel-handle'] {
+  position: absolute;
+  top: 6px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 36px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--nop-floating-panel-handle, #d1d5db);
+}

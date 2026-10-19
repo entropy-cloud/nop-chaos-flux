@@ -1682,6 +1682,9 @@ export const zhCN: Resource = {
       countdown: {
         noTimeConfig: '未配置倒计时时间',
       },
+      actionSheet: {
+        cancel: '取消',
+      },
       wheelPicker: {
         confirm: '确认',
         cancel: '取消',

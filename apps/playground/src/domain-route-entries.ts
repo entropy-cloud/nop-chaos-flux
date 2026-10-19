@@ -348,6 +348,13 @@ export const DOMAIN_RENDERER_ROUTES: DomainRouteEntry[] = [
       'Comprehensive mobile showcase: M5 native renderers (pull-refresh, infinite-scroll, swipe-cell, countdown, notice-bar) + M1 responsive controls + M2 touch adaptation + M3 layout skeletons + M4 data display + content/layout renderers — all in one page.',
   },
   {
+    id: 'm8-bottom-panels',
+    title: 'M8 Bottom Panels',
+    eyebrow: 'Mobile Panels (M8)',
+    description:
+      'M8 bottom panels: floating-panel multi-anchor drag with content scroll arbitration, floating-bubble edge magnet, action-sheet list/grid, and ui Sheet opt-in gesture pull-down-to-close.',
+  },
+  {
     id: 'm7-wheel-pickers',
     title: 'M7 Wheel Pickers',
     eyebrow: 'Mobile Wheel (M7)',

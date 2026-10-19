@@ -1687,6 +1687,9 @@ export const enUS: Resource = {
       countdown: {
         noTimeConfig: 'No countdown time configured',
       },
+      actionSheet: {
+        cancel: 'Cancel',
+      },
       wheelPicker: {
         confirm: 'Confirm',
         cancel: 'Cancel',
