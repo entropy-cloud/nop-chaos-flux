@@ -161,3 +161,46 @@ describe('PullRefreshRenderer rebound geometry (OA-18)', () => {
     expect(indicator.style.height).toBe('0px');
   });
 });
+
+// M6d (plan 664 Phase 6): rubberband damping unification. The old linear
+// damping (deltaY * 0.5 clamped at 200px) is replaced by 1:1 pull up to the
+// release threshold and a shared hyperbolic rubberband beyond it
+// (d·dim·c)/(dim+c·d), dim=threshold, c=0.15. Every baseline below fails
+// against the old linear curve (60→30, 120→60, 200→100, 1000→200).
+describe('PullRefreshRenderer rubberband pull geometry (M6d)', () => {
+  it('pulls 1:1 up to the release threshold (old damped from the first pixel)', () => {
+    const { view } = renderPullRefresh({ threshold: 60 });
+    const root = rootEl(view);
+    fireEvent.touchStart(root, touch(0, 0));
+    fireEvent.touchMove(root, touch(0, 60));
+    const px = parseFloat(root.style.transform.match(/-?\d+\.?\d*/)?.[0] ?? '0');
+    expect(px).toBeCloseTo(60, 3);
+  });
+
+  it('damps beyond the threshold with the rubberband curve (δ=120 → 60 + 540/69)', () => {
+    const { view } = renderPullRefresh({ threshold: 60 });
+    const root = rootEl(view);
+    fireEvent.touchStart(root, touch(0, 0));
+    fireEvent.touchMove(root, touch(0, 120));
+    const px = parseFloat(root.style.transform.match(/-?\d+\.?\d*/)?.[0] ?? '0');
+    expect(px).toBeCloseTo(67.826, 2);
+  });
+
+  it('δ=200 → 60 + 1260/81 (old linear gave 100)', () => {
+    const { view } = renderPullRefresh({ threshold: 60 });
+    const root = rootEl(view);
+    fireEvent.touchStart(root, touch(0, 0));
+    fireEvent.touchMove(root, touch(0, 200));
+    const px = parseFloat(root.style.transform.match(/-?\d+\.?\d*/)?.[0] ?? '0');
+    expect(px).toBeCloseTo(75.556, 2);
+  });
+
+  it('saturates asymptotically instead of hard-clamping (δ=1000 → ≈102.09)', () => {
+    const { view } = renderPullRefresh({ threshold: 60 });
+    const root = rootEl(view);
+    fireEvent.touchStart(root, touch(0, 0));
+    fireEvent.touchMove(root, touch(0, 1000));
+    const px = parseFloat(root.style.transform.match(/-?\d+\.?\d*/)?.[0] ?? '0');
+    expect(px).toBeCloseTo(102.09, 1);
+  });
+});

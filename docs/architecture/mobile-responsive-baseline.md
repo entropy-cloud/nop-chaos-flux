@@ -390,3 +390,41 @@ safe-area-inset-right
 | M0.1d z-index 栈 | **M5 全部**、M1c（dialog/drawer）、M1a（bottom-sheet）                 | M1b/M1d/M2/M3b/M4b     |
 
 > M0.1 整体是 M1–M5 的**软前置**（不硬阻塞 todo 推进），但 M5 与 M1c/M1a 落地前最好先有 M0.1c + M0.1d。
+
+## 11. 同屏手势仲裁约定（M6 决策记录）
+
+> 本节是**决策记录，不是 implementation plan**。来源：`docs/plans/664-mobile-m6-gesture-infrastructure-plan.md` Phase 4（M6c）；背景调研 `docs/analysis/2026-10-19-mobile-advanced-libs-deep-research.md` §3 手势基建四流派、§4.7 ionic GestureController。
+
+### 11.1 同屏冲突矩阵（现状）
+
+| 竞争组合                                         | 轴关系       | 现有解决机制                                                                                                             | 残余风险                                                                                                        |
+| ------------------------------------------------ | ------------ | ------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------- |
+| pull-refresh × 页面垂直滚动                      | 同轴（垂直） | 容器边界：pull-refresh 置于滚动内容顶部，向下手势仅在其容器内发生；`touch-action: pan-x`（§5）把垂直手势留给容器 JS      | 低——嵌套滚动容器内复用 pull-refresh 时需容器链自判（归 M8a 面板仲裁同类问题）                                   |
+| pull-refresh × 横向滚动组件（tabs 滚动等）       | 跨轴         | `touch-action: pan-x` + `useTouch` 10px 方向锁                                                                           | 无                                                                                                              |
+| swipe-cell × 页面垂直滚动                        | 跨轴         | `touch-action: pan-y`（§5）+ 方向锁                                                                                      | 无                                                                                                              |
+| swipe-cell × 横向滚动组件（tabs swipe/carousel） | 同轴（水平） | swipe-cell 根元素 `pan-y` 使浏览器仍可垂直 pan；同轴时先触达者经方向锁持有手势序列；swipe-cell `closeOnOutside` 收敛多开 | 中——同屏横向滚动列表内嵌 swipe-cell 是真实场景（M5 e2e 已覆盖卡片列表形态）；若实测出现抢夺，触发 11.3 升级评估 |
+| 两个 swipe-cell 同屏                             | 同组件       | `closeOnOutside`（默认 true）：pointerdown 落在打开单元之外即关闭，等效"全局单开"约定（ionic item-sliding 同款）         | 无                                                                                                              |
+
+### 11.2 裁决
+
+**不引入 ionic GestureController 式全局 capture 独占总线。** 理由：
+
+1. 现有组件集合内不存在 CSS 轴所有权 + 方向锁无法解决的同轴真实冲突（11.1 矩阵）；
+2. capture 总线要求框架级单例与全局优先级表（ionic：menu=30 → refresher=31 → sheet=40 → item-swipe=100 → swipe-back=101），与 Flux schema 隔离的渲染器模型冲突——渲染器间不应感知彼此的手势生命周期；
+3. CSS-first 已在浏览器手势判定阶段解决跨轴竞争，JS 层只需处理同轴边界（该职责属于具体组件的状态机，不属于全局总线）。
+
+### 11.3 升级触发条件（何时重新评估 capture 独占）
+
+出现以下任一实测情况时，新开 work item 评估轻量 capture 仲裁（不做预埋实现）：
+
+1. 同屏**跨渲染器同轴**手势竞争在真机/e2e 中被复现（当前矩阵中标"中"的组合）；
+2. M8a FloatingPanel 的「面板未满屏拖面板/满屏滚内容」局部仲裁被实测不足以覆盖嵌套场景（面板内再嵌 pull-refresh/swipe-cell）；
+3. 新增移动原生组件引入了第三个同轴竞争方且无法用 `touch-action` 轴区分。
+
+### 11.4 新 mobile surface 义务
+
+M6 起新增的移动自定义 surface（M7 picker 弹出容器、M8 floating-panel、M9 viewer 遮罩等）必须：
+
+1. 消费 `useLockScroll`（`flux-renderers-mobile` 公共导出）做滚动穿透防护——modal 形态用全局模式，非模态常驻面板用 `localRef` 局部模式；Radix/Base UI 弹层（`@nop-chaos/ui`）已有内部 scroll lock，不重复接入；
+2. 根元素按 §5 声明 `touch-action` 轴所有权；
+3. 手势处理器对 `touchcancel` 幂等（OA-05 契约）：系统打断不提交状态、不派发事件。

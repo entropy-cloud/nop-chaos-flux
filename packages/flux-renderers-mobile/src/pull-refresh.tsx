@@ -4,11 +4,9 @@ import { t } from '@nop-chaos/flux-i18n';
 import { Spinner, cn } from '@nop-chaos/ui';
 import type { PullRefreshSchema } from './schemas.js';
 import { useTouch } from './hooks/use-touch.js';
+import { RUBBERBAND_CONSTANT, rubberband } from './hooks/gesture-math.js';
 
 type PullRefreshStatus = 'normal' | 'pulling' | 'loosing' | 'loading' | 'success' | 'error';
-
-const DAMPING_FACTOR = 0.5;
-const MAX_PULL_DISTANCE = 200;
 
 function resolveIndicatorText(
   status: PullRefreshStatus,
@@ -100,8 +98,17 @@ export function PullRefreshRenderer(props: RendererComponentProps<PullRefreshSch
   // only gated the threshold check for `'up'`, but the body translate stayed
   // positive — which is exactly the inverted-geometry bug. Now there is no
   // sign flip and no `'up'` branch.
+  //
+  // M6d (plan 664 Phase 6): the pull tracks the finger 1:1 up to the release
+  // threshold, then resists with the shared hyperbolic rubberband curve
+  // (saturating asymptotically at 2×threshold) — replacing the old linear
+  // `deltaY * 0.5` clamp-200 damping. The release decision still reads the
+  // RAW directionalDelta, so damping is visual-only.
   const directionalDelta = Math.max(0, state.deltaY);
-  const pullDistance = Math.min(directionalDelta * DAMPING_FACTOR, MAX_PULL_DISTANCE);
+  const pullDistance =
+    directionalDelta <= threshold
+      ? directionalDelta
+      : threshold + rubberband(directionalDelta - threshold, threshold, RUBBERBAND_CONSTANT);
   const reachedThreshold = directionalDelta >= threshold;
 
   // MA-10: derive the displayed status at render time instead of mirroring it

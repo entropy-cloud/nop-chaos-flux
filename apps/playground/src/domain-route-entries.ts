@@ -348,6 +348,13 @@ export const DOMAIN_RENDERER_ROUTES: DomainRouteEntry[] = [
       'Comprehensive mobile showcase: M5 native renderers (pull-refresh, infinite-scroll, swipe-cell, countdown, notice-bar) + M1 responsive controls + M2 touch adaptation + M3 layout skeletons + M4 data display + content/layout renderers — all in one page.',
   },
   {
+    id: 'm6-gesture-lab',
+    title: 'M6 Gesture Lab',
+    eyebrow: 'Mobile Gesture (M6)',
+    description:
+      'M6 gesture infrastructure: swipe-cell velocity flick / throw projection / overswipe first-action / K-map release, pull-refresh rubberband damping (1:1 to threshold), and useLockScroll body scroll-through lock — the shared base for the M7+ mobile surfaces.',
+  },
+  {
     id: 'calendar-perf-scale',
     title: 'Calendar Performance Scale',
     eyebrow: 'Performance',

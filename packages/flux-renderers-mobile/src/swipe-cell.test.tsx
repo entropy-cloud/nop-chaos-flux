@@ -1,4 +1,10 @@
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from '@testing-library/react';
 import React from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { SwipeCellSchema } from './schemas.js';
@@ -10,11 +16,13 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-function touch(x: number, y: number) {
+function touch(x: number, y: number, time?: number) {
   return {
     touches: [{ clientX: x, clientY: y } as Touch],
+    ...(time === undefined ? {} : { timeStamp: time }),
   } as unknown as React.TouchEvent;
 }
+
 
 function renderSwipeCell(
   options: {
@@ -370,6 +378,10 @@ describe('SwipeCellRenderer', () => {
     const leftAction = view.container.querySelector(
       '[data-testid="left-action"]',
     ) as HTMLButtonElement;
+    // A real user tap after the swipe is a NEW touch sequence — the new
+    // touchstart disarms the M6 drag-click suppressor before the click.
+    fireEvent.touchStart(leftAction, touch(10, 10));
+    fireEvent.touchEnd(leftAction);
     fireEvent.click(leftAction);
     expect(onActionMock).toHaveBeenCalledTimes(1);
     expect(onActionMock.mock.calls[0][0]).toEqual({ type: 'action', side: 'open-left' });
@@ -394,6 +406,9 @@ describe('SwipeCellRenderer', () => {
     const rightAction = view.container.querySelector(
       '[data-testid="right-action"]',
     ) as HTMLButtonElement;
+    // New touch sequence disarms the M6 drag-click suppressor (see left case).
+    fireEvent.touchStart(rightAction, touch(10, 10));
+    fireEvent.touchEnd(rightAction);
     fireEvent.click(rightAction);
     expect(onActionMock).toHaveBeenCalledTimes(1);
     expect(onActionMock.mock.calls[0][0]).toEqual({ type: 'action', side: 'open-right' });
@@ -593,3 +608,4 @@ describe('SwipeCellRenderer', () => {
     expect(leftRegion().style.transform).toBe('translateX(-100%)');
   });
 });
+

@@ -81,22 +81,42 @@ closed → sliding-left → open-left → closing
 closed → sliding-right → open-right → closing
 ```
 
-| 状态            | 触发                           | 表现                         |
-| --------------- | ------------------------------ | ---------------------------- | ----------- | ------------------------------ |
-| `closed`        | 初始 / 回弹完成                | 内容完全可见                 |
-| `sliding-left`  | 水平左滑 deltaX < 0            | 内容跟手左移，露出右侧操作区 |
-| `open-left`     | touchend 且                    | deltaX                       | > threshold | 内容固定在左侧，操作区完全可见 |
-| `sliding-right` | 水平右滑 deltaX > 0            | 内容跟手右移，露出左侧操作区 |
-| `open-right`    | touchend 且                    | deltaX                       | > threshold | 内容固定在右侧，操作区完全可见 |
-| `closing`       | 点击外部 / 操作完成 / 程序调用 | 回弹动画 300ms 回到 closed   |
+| 状态            | 触发                                       | 表现                           |
+| --------------- | ------------------------------------------ | ------------------------------ |
+| `closed`        | 初始 / 回弹完成                            | 内容完全可见                   |
+| `sliding-left`  | 水平左滑 deltaX < 0                        | 内容跟手左移，露出右侧操作区   |
+| `open-left`     | touchend 且释放决策为 open（M6 K-map，§6） | 内容固定在左侧，操作区完全可见 |
+| `sliding-right` | 水平右滑 deltaX > 0                        | 内容跟手右移，露出左侧操作区   |
+| `open-right`    | touchend 且释放决策为 open（M6 K-map，§6） | 内容固定在右侧，操作区完全可见 |
+| `closing`       | 点击外部 / 操作完成 / 程序调用             | 回弹动画 300ms 回到 closed     |
 
 ## 6. 触摸交互
 
-- 使用 `useTouch` Hook 检测水平拖拽
+- 使用 `useTouch` Hook 检测水平拖拽（M6 起 velocity 采样内建，见 `use-touch/design.md` §5.1）
 - 仅水平方向触发（`direction: 'horizontal'`）
-- 拖拽跟手 1:1，在操作区宽度处硬 clamp（`effectiveOffset = clamp(dragOffset, 0, leftWidth)` 或 `clamp(dragOffset, -rightWidth, 0)`），无边缘阻尼（NEW-MM-05：与运行时一致；早期文档误标 `deltaX * 0.3` 阻尼系数，但实现从未引入该系数。pull-refresh 的 `0.5` 垂直 pull elastic damping 是另一套模型，不适用于水平 swipe）
+- 拖拽跟手：开态拖拽与回弹在操作区宽度处硬 clamp；**closed 起始的拖拽超过操作区宽度后由共享 rubberband 阻尼**（dim=操作区宽、c=0.15，渐近饱和于 2×宽，plan 664 Phase 5）
+- **松手释放决策（M6d K-map，`swipe-cell-release.ts` 纯函数）**：常量 `FLICK_VELOCITY=0.1px/ms`、`THROW_FACTOR=50`、`MIN_FLICK_DELTA=10`、`OVERSWIPE_RATIO=1.15`。全格决策表：
+
+| 起点                    | 手势                                             | 决策                                                                                                                                                                        | 对比旧实现                                                                                                       |
+| ----------------------- | ------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| closed、方向 allowed    | overswipe：\|δ\| ≥ 1.15×操作区宽                 | **action**：程序化点击揭示区首个交互元素（选择器家族同 MA-09：`button, a, [role="button"], input, select, textarea`）→ onAction + close-after-action；无交互元素则降级 open | 旧实现仅 open                                                                                                    |
+| closed、方向 allowed    | \|δ\| ≥ threshold                                | open                                                                                                                                                                        | 不变                                                                                                             |
+| closed、方向 allowed    | flick（sign(v)=sign(δ) 且 \|v\|≥0.1）且 \|δ\|≥10 | open                                                                                                                                                                        | **新增**（velocity 投掷）                                                                                        |
+| closed、方向 allowed    | 投掷投影 \|δ\|+\|v\|·50 ≥ 操作区宽/2             | open                                                                                                                                                                        | **新增**                                                                                                         |
+| closed、方向 allowed    | 其余                                             | none                                                                                                                                                                        | 不变                                                                                                             |
+| closed、方向 disallowed | 任意                                             | none                                                                                                                                                                        | 不变                                                                                                             |
+| open S、朝开启方向      | \|δ\| ≥ threshold                                | 维持 open                                                                                                                                                                   | 不变（幂等 open）                                                                                                |
+| open S、朝开启方向      | \|δ\| < threshold 且朝开 flick                   | 维持 open                                                                                                                                                                   | **变更①**（旧：closeCell 回弹关闭）                                                                              |
+| open S、朝开启方向      | \|δ\| < threshold 非 flick                       | close                                                                                                                                                                       | 不变（小幅回弹关闭）                                                                                             |
+| open S、朝关闭方向      | \|δ\| ≥ threshold                                | **close**                                                                                                                                                                   | **变更②**（旧：对侧 allowed 时翻转到对侧开、disallowed 时无操作维持 open；统一收敛为 close，对齐 vant/f7/ionic） |
+| open S、朝关闭方向      | \|δ\| < threshold 且朝关 flick                   | **close**                                                                                                                                                                   | **变更③**（旧：无操作维持 open）                                                                                 |
+| open S、朝关闭方向      | \|δ\| < threshold 非 flick                       | 维持 open                                                                                                                                                                   | 不变                                                                                                             |
+
+变更①②③ 均有「旧实现必挂」判别测试（`swipe-cell-m6-gesture.test.tsx` M6 判别用例 + `swipe-cell-release.test.ts` 全格表）。open 起始不触发 overswipe/action。
+
 - 松手回弹：`transition: transform 300ms cubic-bezier(0.25, 0.46, 0.45, 0.94)`
 - 操作区宽度自动测量，滑动距离不超过操作区宽度
+- **拖后点击抑制（M6a）**：拖动 >6px 后下一次 trusted click 被捕获阶段拦截（防手势结束落点误触）；程序化 click（`isTrusted=false`）与组件内 overswipe 触发（显式 `allowNextClick()` 旁路）不受影响
 
 ## 7. 样式与 DOM marker
 
@@ -156,6 +176,7 @@ closed → sliding-right → open-right → closing
 ## 11. 风险、取舍与后续阶段
 
 - 手势与滚动容器的冲突是最常见问题：`useTouch` 仅判定方向（horizontal/vertical）做状态机分发，**不在 JS 层 `preventDefault`**；手势所有权与滚动抑制由消费组件的 CSS `touch-action` 提供（见 plan 3 MA-07）。渲染器层只负责方向判定与 `translateX`，不抢占浏览器原生滚动
+- 同屏仲裁（M6）：同屏多手势竞争的裁决见 `docs/architecture/mobile-responsive-baseline.md` §11（维持 CSS 轴所有权优先，不引入全局 capture 总线）
 - **触摸目标尺寸**：操作按钮需满足 M0 基线规范（`docs/architecture/mobile-responsive-baseline.md` §3）的 44×44px 最小尺寸
 - 后续可考虑增加 `autoClose` timeout（无操作自动回弹）
 - 与 `pull-refresh` 共用 `useTouch`，需确保手势不冲突（水平 vs 垂直方向分离）

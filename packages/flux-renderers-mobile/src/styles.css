@@ -79,3 +79,14 @@
   background-color: var(--nop-notice-bar-error-bg);
   color: var(--nop-notice-bar-error-fg);
 }
+
+/* M6b (plan 664): scroll-through lock body class, added/removed by
+ * useLockScroll global mode at reference-count 0<->1. The class hides body
+ * overflow on platforms where CSS alone stops the scroll; the authoritative
+ * guard is the document-level non-passive touchmove preventDefault in
+ * use-lock-scroll.ts (iOS Safari ignores body overflow:hidden alone).
+ * Scope: consumers must opt in via useLockScroll — nothing here matches
+ * elements the renderers emit, so nothing leaks without the hook. */
+body.nop-scroll-lock {
+  overflow: hidden;
+}

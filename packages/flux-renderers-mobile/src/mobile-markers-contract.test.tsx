@@ -186,25 +186,38 @@ describe('mobile renderer markers contract (MA-03/MA-25)', () => {
 });
 
 describe('mobile package public API surface (MM-11)', () => {
-  it('exports exactly the five renderers + definitions + registerer, and NOT the zero-consumer helpers', () => {
-    // MM-11: the public `.` entry is frozen to the renderer surface. The
-    // helper hooks/types (useTouch, useCountdownTimer, formatCountdown,
-    // TouchState, ...) were dropped after grep confirmed zero external
-    // consumers; they remain in-package via their internal modules.
+  it('exports the five renderers + definitions + registerer + M6 gesture layer, and NOT the zero-consumer helpers', () => {
+    // MM-11: the public `.` entry is gated. M5 dropped zero-consumer helper
+    // exports (useCountdownTimer, formatCountdown, ...); M6 (plan 664,
+    // human-confirmed roadmap M6a) re-introduces the gesture layer as the
+    // shared foundation for M7-M12 surfaces and hosts: useTouch first,
+    // then the gesture-math/lock-scroll family in the same plan.
     const runtimeExports = Object.keys(MobileEntry).sort();
     expect(runtimeExports).toEqual(
       [
         'CountdownRenderer',
         'InfiniteScrollRenderer',
+        'MOMENTUM_DECELERATION',
+        'MomentumAnimator',
         'NoticeBarRenderer',
         'PullRefreshRenderer',
+        'RUBBERBAND_CONSTANT',
         'SwipeCellRenderer',
+        'VelocityTracker',
         'mobileRendererDefinitions',
+        'nearest',
+        'momentumDistance',
+        'momentumDuration',
+        'quartEaseOut',
         'registerMobileRenderers',
+        'rubberband',
+        'supportsPassiveEvents',
+        'suppressClickAfterDrag',
+        'useLockScroll',
+        'useTouch',
       ].sort(),
     );
-    // Explicitly assert the dropped helpers are absent from the public surface.
-    expect(MobileEntry).not.toHaveProperty('useTouch');
+    // Explicitly assert the still-dropped helpers are absent.
     expect(MobileEntry).not.toHaveProperty('useCountdownTimer');
     expect(MobileEntry).not.toHaveProperty('formatCountdown');
     // The renderers + registerer are callable values.

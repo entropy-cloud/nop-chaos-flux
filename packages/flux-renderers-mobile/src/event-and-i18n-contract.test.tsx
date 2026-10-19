@@ -207,6 +207,9 @@ describe('mobile renderer event dispatch carries evaluationBindings ctx', () => 
     const actionBtn = container.querySelector(
       '[data-slot="swipe-cell-left"] button',
     ) as HTMLButtonElement;
+    // New touch sequence disarms the M6 drag-click suppressor before the tap.
+    fireEvent.touchStart(actionBtn, touch(10, 10));
+    fireEvent.touchEnd(actionBtn);
     fireEvent.click(actionBtn);
     await waitFor(() => expect(onAction).toHaveBeenCalledTimes(1));
     const actionPayload = { type: 'action', side: 'open-left' };
