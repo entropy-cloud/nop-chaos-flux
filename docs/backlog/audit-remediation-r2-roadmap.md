@@ -36,7 +36,7 @@
 | MA1.1     | 结构层—core 簇依赖、边界、导出面、schema 契约审计                      | `done` | flux-runtime-module-boundaries.md                | M0                  | deep-audit-prompts.md                                  |
 | MA1.2     | 结构层—runtime 簇依赖、边界、导出面审计                                | `done` | flux-runtime-module-boundaries.md                | M0                  | deep-audit-prompts.md                                  |
 | MA1.3     | 结构层—basic 渲染器定义字段与注册完整性审计                            | `done` | renderer-runtime.md                              | M0                  | flux-component-design-review-prompt.md                 |
-| MA1.4     | 结构层—content 族定义与样式契约审计                                    | `todo` | renderer-markers-and-selectors.md                | M0                  | flux-component-design-review-prompt.md                 |
+| MA1.4     | 结构层—content 族定义与样式契约审计                                    | `done` | renderer-markers-and-selectors.md                | M0                  | flux-component-design-review-prompt.md                 |
 | MA1.5     | 结构层—domain 族（industrial/3d/graph/map）定义与样式契约审计          | `todo` | renderer-markers-and-selectors.md                | M0                  | flux-component-design-review-prompt.md                 |
 | MA1.6     | 结构层—scheduling + ai 定义、导出面与 marker 审计                      | `todo` | renderer-runtime.md                              | M0                  | flux-component-design-review-prompt.md                 |
 | MA1.7     | 结构层—designer 族边界与一致性审计                                     | `todo` | flux-runtime-module-boundaries.md                | M0                  | deep-audit-prompts.md                                  |
