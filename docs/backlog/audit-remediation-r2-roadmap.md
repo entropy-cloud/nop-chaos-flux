@@ -41,7 +41,7 @@
 | MA1.6     | 结构层—scheduling + ai 定义、导出面与 marker 审计                      | `done` | renderer-runtime.md                              | M0                  | flux-component-design-review-prompt.md                 |
 | MA1.7     | 结构层—designer 族边界与一致性审计                                     | `done` | flux-runtime-module-boundaries.md                | M0                  | deep-audit-prompts.md                                  |
 | MA1.8     | 结构层—office 族（spreadsheet/word/report）定义与边界审计              | `done` | flux-runtime-module-boundaries.md                | M0                  | flux-component-design-review-prompt.md                 |
-| MA1.9     | 结构层—platform + print + xlang 导出面与 CSS exports 审计              | `todo` | frontend-baseline.md                             | M0                  | deep-audit-prompts.md                                  |
+| MA1.9     | 结构层—platform + print + xlang 导出面与 CSS exports 审计              | `done` | frontend-baseline.md                             | M0                  | deep-audit-prompts.md                                  |
 | MA2.1     | 运行时层—core+runtime 簇裸读取/FieldFrame/硬编码分发/生命周期审计      | `todo` | renderer-runtime.md                              | M0                  | deep-audit-prompts.md                                  |
 | MA2.2     | 运行时层—basic 渲染器分发、action 链路、校验参与审计                   | `todo` | action-scope-and-imports.md                      | M0                  | deep-audit-prompts.md                                  |
 | MA2.3     | 运行时层—content+mobile+domain+scheduling+ai 异步安全与 IO 边界审计    | `todo` | renderer-env.md                                  | M0                  | deep-audit-prompts.md                                  |
