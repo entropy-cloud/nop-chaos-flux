@@ -120,6 +120,52 @@ export class SchemaValidator {
         });
       }
     }
+    // 结构校验：dataSources 条目（design-protocol.md §4 schema surface，I3.2）
+    const dataSources = obj.dataSources;
+    if (dataSources !== undefined) {
+      if (!Array.isArray(dataSources)) {
+        errors.push({ path: 'dataSources', message: 'DataSources must be an array' });
+      } else {
+        dataSources.forEach((raw, index) => {
+          const path = `dataSources[${index}]`;
+          if (typeof raw !== 'object' || raw === null) {
+            errors.push({ path, message: 'DataSource must be an object' });
+            return;
+          }
+          const source = raw as Config;
+          if (typeof source.id !== 'string' || source.id.length === 0) {
+            errors.push({ path: `${path}.id`, message: 'DataSource id is required' });
+          }
+          if (typeof source.url !== 'string' || source.url.length === 0) {
+            errors.push({ path: `${path}.url`, message: 'DataSource url is required' });
+          }
+          if (!Array.isArray(source.tags)) {
+            errors.push({ path: `${path}.tags`, message: 'DataSource tags array is required' });
+          } else {
+            source.tags.forEach((rawTag, tagIndex) => {
+              const tagPath = `${path}.tags[${tagIndex}]`;
+              if (typeof rawTag !== 'object' || rawTag === null) {
+                errors.push({ path: tagPath, message: 'Tag must be an object' });
+                return;
+              }
+              const tag = rawTag as Config;
+              if (typeof tag.name !== 'string' || tag.name.length === 0) {
+                errors.push({ path: `${tagPath}.name`, message: 'Tag name is required' });
+              }
+              if (typeof tag.address !== 'string' || tag.address.length === 0) {
+                errors.push({ path: `${tagPath}.address`, message: 'Tag address is required' });
+              }
+              if (tag.type !== 'bool' && tag.type !== 'int16' && tag.type !== 'float32') {
+                errors.push({ path: `${tagPath}.type`, message: 'Tag type must be bool, int16 or float32' });
+              }
+            });
+          }
+          if (source.polling !== undefined && typeof source.polling !== 'number') {
+            errors.push({ path: `${path}.polling`, message: 'DataSource polling must be a number' });
+          }
+        });
+      }
+    }
     return { valid: errors.length === 0, errors };
   }
 

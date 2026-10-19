@@ -48,6 +48,17 @@ export const threeCanvasRendererDefinition: RegisteredRendererDefinition = {
       },
     },
     {
+      key: 'dataSources',
+      kind: 'prop',
+      contract: {
+        shape: { kind: 'unknown' },
+        displayName: 'Data Sources',
+        description:
+          'IndustrialTagConfig[] declarative industrial data sources (id/url/tags/polling), wired to env.openSocket via IndustrialAdapter. See docs/components/threejs-integration/design-protocol.md §4. Static config — no ${} expressions.',
+        editorType: 'code',
+      },
+    },
+    {
       key: 'events',
       kind: 'prop',
       contract: {

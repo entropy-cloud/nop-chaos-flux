@@ -115,3 +115,89 @@ describe('SchemaValidator (plan 468 Phase 1)', () => {
     expect(Object.keys(schema.definitions ?? {}).length).toBeGreaterThan(0);
   });
 });
+
+describe('SchemaValidator dataSources structural coverage (plan 470 Phase 1, I3.2)', () => {
+  function validDataSource() {
+    return {
+      id: 'plc-1',
+      url: 'wss://gateway.example.com/ws',
+      tags: [
+        { name: 'VALVE_001', address: 'VALVE_001.position', type: 'float32' },
+        { name: 'RUNNING', address: 'PLC.RUNNING', type: 'bool' },
+      ],
+      polling: 1000,
+    };
+  }
+
+  it('accepts a configuration with valid dataSources', () => {
+    const config = validConfig();
+    (config as { dataSources?: unknown }).dataSources = [validDataSource()];
+    const result = new SchemaValidator().validate(config);
+    expect(result.valid).toBe(true);
+    expect(result.errors).toEqual([]);
+  });
+
+  it('accepts configurations without dataSources (backward compatible)', () => {
+    const result = new SchemaValidator().validate(validConfig());
+    expect(result.valid).toBe(true);
+  });
+
+  it('reports non-array dataSources', () => {
+    const config = validConfig();
+    (config as { dataSources?: unknown }).dataSources = { id: 'plc-1' };
+    const errors = errorsOf(config);
+    expect(errors.some((e) => e.path === 'dataSources')).toBe(true);
+  });
+
+  it('aggregates per-entry structural errors with JSON Pointer paths', () => {
+    const config = validConfig();
+    (config as { dataSources?: unknown }).dataSources = [
+      { id: '', tags: 'not-an-array' },
+      { id: 'plc-2', url: 'wss://gw.example.com', tags: [{ name: 'T1', address: '', type: 'int32' }] },
+    ];
+    const errors = errorsOf(config);
+    const paths = errors.map((e) => e.path);
+    expect(paths).toContain('dataSources[0].id');
+    expect(paths).toContain('dataSources[0].url');
+    expect(paths).toContain('dataSources[0].tags');
+    expect(paths).toContain('dataSources[1].tags[0].address');
+    expect(paths).toContain('dataSources[1].tags[0].type');
+  });
+
+  it('reports non-object dataSources entries', () => {
+    const config = validConfig();
+    (config as { dataSources?: unknown }).dataSources = ['plc-1'];
+    const errors = errorsOf(config);
+    expect(errors.some((e) => e.path === 'dataSources[0]')).toBe(true);
+  });
+
+  it('reports tags missing name or address', () => {
+    const config = validConfig();
+    const dataSource = validDataSource();
+    (dataSource.tags as Array<Record<string, unknown>>)[0] = { type: 'bool' };
+    (config as { dataSources?: unknown }).dataSources = [dataSource];
+    const errors = errorsOf(config);
+    const paths = errors.map((e) => e.path);
+    expect(paths).toContain('dataSources[0].tags[0].name');
+    expect(paths).toContain('dataSources[0].tags[0].address');
+  });
+
+  it('reports non-numeric polling', () => {
+    const config = validConfig();
+    const dataSource = validDataSource();
+    (dataSource as { polling?: unknown }).polling = 'fast';
+    (config as { dataSources?: unknown }).dataSources = [dataSource];
+    const errors = errorsOf(config);
+    expect(errors.some((e) => e.path === 'dataSources[0].polling')).toBe(true);
+  });
+
+  it('getSchema describes dataSources against the IndustrialTagConfig definition', () => {
+    const schema = new SchemaValidator().getSchema() as {
+      properties?: Record<string, { type?: string; items?: { $ref?: string } }>;
+      definitions?: Record<string, unknown>;
+    };
+    expect(schema.properties?.dataSources?.type).toBe('array');
+    expect(schema.properties?.dataSources?.items?.$ref).toBe('#/definitions/IndustrialTagConfig');
+    expect(schema.definitions?.IndustrialTagConfig).toBeDefined();
+  });
+});
