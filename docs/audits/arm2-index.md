@@ -44,7 +44,7 @@
 | --------- | --------------------------------------------------------------------------------------- |
 | M0        | `docs/audits/arm2-index.md`（本文件）+ `docs/audits/arm2-scope-and-dimension-matrix.md` |
 | MA1.1     | `docs/audits/2026-10-19-1002-arm2-MA1.1-core-structure.md`                              |
-| MA1.2     | —                                                                                       |
+| MA1.2     | `docs/audits/2026-10-19-1052-arm2-MA1.2-runtime-structure.md`                           |
 | MA1.3     | —                                                                                       |
 | MA1.4     | —                                                                                       |
 | MA1.5     | —                                                                                       |
@@ -118,9 +118,10 @@
 
 > 规则（roadmap Cross-Cutting 6）：Finding ID = `P1-<工作项>-<序号>`（如 `P1-MA3.8-014`），ID 落索引后不可变；登记于来源报告产出时；修复 done 由 MR 批回填状态与修复行指针。P2/P3 不入本区（留在报告 deferred 区）。
 
-| Finding ID   | 包/面                                               | 一句话描述                                                                                                                                                                                               | 来源报告                                                   | 状态   | 修复行 |
-| ------------ | --------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------- | ------ | ------ |
-| P1-MA1.1-001 | docs owner doc（flux-runtime-module-boundaries.md） | validation 归属三处与 live 实质 drift：rules.ts 职责描述失实 / Where-To-Add 第 1 步指向未接线文件 / Versus validation/ 两 bullet 与同文档 Compiler boundary 节相反——按文档执行会静默写出不生效的校验规则 | `docs/audits/2026-10-19-1002-arm2-MA1.1-core-structure.md` | `open` | —      |
+| Finding ID   | 包/面                                                                | 一句话描述                                                                                                                                                                                                      | 来源报告                                                      | 状态   | 修复行 |
+| ------------ | -------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------- | ------ | ------ |
+| P1-MA1.1-001 | docs owner doc（flux-runtime-module-boundaries.md）                  | validation 归属三处与 live 实质 drift：rules.ts 职责描述失实 / Where-To-Add 第 1 步指向未接线文件 / Versus validation/ 两 bullet 与同文档 Compiler boundary 节相反——按文档执行会静默写出不生效的校验规则        | `docs/audits/2026-10-19-1002-arm2-MA1.1-core-structure.md`    | `open` | —      |
+| P1-MA1.2-001 | docs owner doc（flux-runtime-module-boundaries.md · Bundle Face 节） | 「Bundle Default Registration Face」写 7 族且 mobile/ai/graph 按需；live `registerDefaultFluxRenderers` 注册 9 族（+3d 懒边界提交 815d026dd 无 plan 无回写、+xlang-debug-editor plan 2474）——宿主可见契约 drift | `docs/audits/2026-10-19-1052-arm2-MA1.2-runtime-structure.md` | `open` | —      |
 
 ## Delegated 指针区
 
