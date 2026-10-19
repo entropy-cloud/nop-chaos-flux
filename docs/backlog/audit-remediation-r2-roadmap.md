@@ -48,7 +48,7 @@
 | MA2.4     | 运行时层—designer+office+platform+print+xlang 状态机与序列化边界审计   | `done` | renderer-runtime.md                              | M0                  | deep-audit-prompts.md                                  |
 | MA3.1     | 代码质量—flux-core                                                     | `done` | flux-core.md                                     | M0                  | code-quality-audit-prompt.md                           |
 | MA3.2     | 代码质量—formula + compiler + action-core                              | `done` | flux-core.md                                     | M0                  | code-quality-audit-prompt.md                           |
-| MA3.3     | 代码质量—flux-runtime                                                  | `todo` | renderer-runtime.md                              | M0                  | code-quality-audit-prompt.md                           |
+| MA3.3     | 代码质量—flux-runtime                                                  | `done` | renderer-runtime.md                              | M0                  | code-quality-audit-prompt.md                           |
 | MA3.4     | 代码质量—flux-react + flux-bundle                                      | `todo` | renderer-runtime.md                              | M0                  | code-quality-audit-prompt.md                           |
 | MA3.5     | 代码质量—renderers-basic + renderers-form                              | `todo` | renderer-runtime.md                              | M0                  | code-quality-audit-prompt.md                           |
 | MA3.6     | 代码质量—renderers-form-advanced + renderers-data                      | `todo` | renderer-runtime.md                              | M0                  | code-quality-audit-prompt.md                           |
