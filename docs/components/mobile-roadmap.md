@@ -1,8 +1,8 @@
 # Mobile Roadmap（移动端响应式 + 移动端原生组件）
 
-> Last Updated: 2026-06-24（plan 7 design.md ↔ code 契约对账收口：MM-17/18/19/20/21，含 infinite-scroll 滚动祖先 IO root 实装、notice-bar/pull-refresh 文档与代码收敛）
-> Source: `docs/components/existing-components-improvement-analysis.md` §8
-> 关联：`roadmap.md`（新增组件）、`existing-components-improvement-roadmap.md`（桌面端组件改进）— 三者独立不重叠
+> Last Updated: 2026-10-19（基于 11 库深度调研扩展移动端原生组件规划。M6–M12 扩展拆分为独立 roadmap：`mobile-native-components-roadmap.md`（全部 `proposed` 待人确认）；本文件保留 M0–M5，维持 `done` 不变）
+> Source: `docs/components/existing-components-improvement-analysis.md` §8（M0–M5）；M6–M12 依据 `docs/analysis/2026-10-19-mobile-advanced-libs-deep-research.md`（vant/antd-mobile/nutui/arco/tdesign/f7/ionic/swiper/embla/use-gesture/zarm 11 库源码调研）
+> 关联：`roadmap.md`（新增组件）、`existing-components-improvement-roadmap.md`（桌面端组件改进）、`mobile-native-components-roadmap.md`（移动原生组件第二批 M6–M12）— 四者独立不重叠
 
 ## Purpose
 
@@ -61,7 +61,7 @@
 | 触摸交互适配（手势、点击区域、软键盘）                                             | `mobileUI` 标志位                          |
 | 响应式布局（断点、容器查询）                                                       | 桌面端功能补齐（归改进 roadmap）           |
 | 必要的运行时分支（bottom-sheet/fullscreen/card-stack）                             | 新的非移动原生组件（归主 roadmap）         |
-| 移动端原生交互组件（pull-refresh/infinite-scroll/swipe-cell/countdown/notice-bar） | —                                          |
+| 移动端原生交互组件（M5 五组件 + M6–M12 扩展：picker 滚轮家族/floating-panel/index-bar/image-viewer/number-keyboard/signature/floating-bubble） | —                                          |
 
 ## Phase Status
 
@@ -76,6 +76,7 @@
 - M3 容器与布局响应式（page/flex/container/grid，2 子项 M3a~M3b）: `done`（`docs/plans/2026-06-23-0410-1-m3-container-and-layout-responsive-plan.md`；grid 响应式 successor 已落地：`docs/plans/2026-06-24-2358-1-newly-landed-renderer-responsive-followups-plan.md`）
 - M4 数据展示响应式（crud/cards/list/chart，3 子项 M4a~M4c）: `done`（M4a/M4c 收口；M4b cards/list successor 已落地，见 `docs/plans/2026-06-24-2358-1-newly-landed-renderer-responsive-followups-plan.md`）
 - M5 移动端原生组件（pull-refresh/infinite-scroll/swipe-cell/countdown/notice-bar，5 子项 M5a~M5e，共用 useTouch Hook，建议 1 plan）: `done`
+- M6–M12 移动端原生组件扩展（手势基建/Picker 滚轮家族/底部面板/图像手写/列表导航/安全输入/长尾池）: 独立 roadmap `mobile-native-components-roadmap.md`（2026-10-19 起草，全部 `proposed` 待人确认；状态以该文件为准，本文不重复维护）
 
 ## Status Values
 
@@ -211,6 +212,8 @@
 | **M5d** ✅ | countdown       | 倒计时展示，支持格式化模板和结束回调        | design.md 已立约，**代码已实现** | —    |
 | **M5e** ✅ | notice-bar      | 滚动通知栏，支持滚动动画和点击交互          | design.md 已立约，**代码已实现** | —    |
 
+> **M6–M12（移动端原生组件扩展）**：2026-10-19 基于 11 库调研起草的后续工作项（M6 手势基建 / M7 Picker 滚轮家族 / M8 底部面板 / M9 图像与手写 / M10 列表导航 / M11 安全输入 / M12 长尾池），已拆分至独立 roadmap `mobile-native-components-roadmap.md`（全部 `proposed`，待人确认），本文件不再重复维护其状态与详情。
+
 ## Dependency Graph
 
 ```mermaid
@@ -240,7 +243,7 @@ graph TD
     M01 -. 软前置 .-> M5a & M5c
 ```
 
-> 虚线 = 软前置（M0.1 不硬阻塞 M1–M5，但 M5 落地前最好先有 M0.1c haptics + M0.1d z-index 栈）。M0.1 已 `done`（plan：`docs/plans/2026-06-22-2057-1-m01-mobile-infrastructure-plan.md`）。
+> 虚线 = 软前置（M0.1 不硬阻塞 M1–M5，但 M5 落地前最好先有 M0.1c haptics + M0.1d z-index 栈）。M0.1 已 `done`（plan：`docs/plans/2026-06-22-2057-1-m01-mobile-infrastructure-plan.md`）。M6–M12 的依赖图见 `mobile-native-components-roadmap.md`。
 
 ## Cross-Cutting
 
@@ -265,6 +268,7 @@ graph TD
 - M0 是 M1-M5 硬前置；M0.1 是软前置（不阻塞，但 M5 落地前最好先做）。
 - 严格遵循"同组件同属性 + 响应式实现"，任何工作项若演变为新建 `*-mobile` 组件（如 `select-mobile`）或引入 mobileUI 标志位，必须回到人确认。
 - M5 移动端原生组件（pull-refresh/infinite-scroll/swipe-cell/countdown/notice-bar）归属 `flux-renderers-mobile` 包，这是独立于响应式改进的组件新增，遵循主 roadmap 的 renderer 实现规范。
+- M6–M12（2026-10-19 调研新增提案）同样归属 `flux-renderers-mobile` 包（ScrollMask 例外，走 ui/basic 层；M8c Sheet/Drawer 手势关闭走 ui 层增强）。全部 `proposed`，需人确认逐项转 `todo` 后才进执行队列；状态与详情以 `mobile-native-components-roadmap.md` 为准，依据见 `docs/analysis/2026-10-19-mobile-advanced-libs-deep-research.md`。
 - M3a 的页面骨架模式（Tabbar/NavBar/ActionBar/SubmitBar/Sticky）**不新增独立 renderer**，走 `page.region` + 标准 schema 模板（见 `page/design.md` §移动端骨架模式）。Tabbar 是路由导航（navigate），≠ `tabs`（内容切换）。
 - 跨 roadmap：本 roadmap 不做桌面端功能（归改进 roadmap）、不做非移动原生的新组件（归主 roadmap）。本 roadmap 的 M0.1/M1-M5 在 `roadmap.md` 有镜像项，**口径以本文为准**。
 
