@@ -1,7 +1,7 @@
 # Audit Remediation R2 Master Index (arm2-index)
 
 > Status: active（M0 / plan 653 初始化骨架；随各工作项产出滚动登记）
-> Last Updated: 2026-10-19（滚动：MA1.1–MA1.6 报告与 P1-MA1.1-001/P1-MA1.2-001/P1-MA1.5-001 登记；MA1.3/MA1.4/MA1.6 P1=0 仅报告行）
+> Last Updated: 2026-10-19（滚动：MA1.1–MA1.7 报告与 P1-MA1.1-001/P1-MA1.2-001/P1-MA1.5-001/P1-MA1.7-001 登记；MA1.3/MA1.4/MA1.6 P1=0 仅报告行）
 > Roadmap: `docs/backlog/audit-remediation-r2-roadmap.md`（工作项状态的唯一权威 = 其 Work Item Status 表；本索引不携带状态，只登记报告、finding 与基线）
 > Mission: `missions/audit-remediation-r2.json`
 > M0 Plan: `docs/plans/653-audit-r2-m0-orchestration-baseline-plan.md`
@@ -49,7 +49,7 @@
 | MA1.4     | `docs/audits/2026-10-19-1222-arm2-MA1.4-content-structure.md`                           |
 | MA1.5     | `docs/audits/2026-10-19-1307-arm2-MA1.5-domain-structure.md`                            |
 | MA1.6     | `docs/audits/2026-10-19-1340-arm2-MA1.6-scheduling-ai-structure.md`                     |
-| MA1.7     | —                                                                                       |
+| MA1.7     | `docs/audits/2026-10-19-1431-arm2-MA1.7-designer-structure.md`                          |
 | MA1.8     | —                                                                                       |
 | MA1.9     | —                                                                                       |
 | MA2.1     | —                                                                                       |
@@ -118,11 +118,12 @@
 
 > 规则（roadmap Cross-Cutting 6）：Finding ID = `P1-<工作项>-<序号>`（如 `P1-MA3.8-014`），ID 落索引后不可变；登记于来源报告产出时；修复 done 由 MR 批回填状态与修复行指针。P2/P3 不入本区（留在报告 deferred 区）。
 
-| Finding ID   | 包/面                                                                | 一句话描述                                                                                                                                                                                                             | 来源报告                                                      | 状态   | 修复行 |
-| ------------ | -------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------- | ------ | ------ |
-| P1-MA1.1-001 | docs owner doc（flux-runtime-module-boundaries.md）                  | validation 归属三处与 live 实质 drift：rules.ts 职责描述失实 / Where-To-Add 第 1 步指向未接线文件 / Versus validation/ 两 bullet 与同文档 Compiler boundary 节相反——按文档执行会静默写出不生效的校验规则               | `docs/audits/2026-10-19-1002-arm2-MA1.1-core-structure.md`    | `open` | —      |
-| P1-MA1.2-001 | docs owner doc（flux-runtime-module-boundaries.md · Bundle Face 节） | 「Bundle Default Registration Face」写 7 族且 mobile/ai/graph 按需；live `registerDefaultFluxRenderers` 注册 9 族（+3d 懒边界提交 815d026dd 无 plan 无回写、+xlang-debug-editor plan 2474）——宿主可见契约 drift        | `docs/audits/2026-10-19-1052-arm2-MA1.2-runtime-structure.md` | `open` | —      |
-| P1-MA1.5-001 | flux-renderers-3d（three-canvas 根 marker）                          | 3d 包零 `nop-*` 语义根 marker（根类裸 `three-canvas`@three-canvas.tsx:125）——Rule 2「marker 缺失」P1；missing-markers 扫描器因 `content.includes('nop-')` 被 `@nop-chaos/*` import 豁免而漏报（盲区另记 P2-MA1.5-002） | `docs/audits/2026-10-19-1307-arm2-MA1.5-domain-structure.md`  | `open` | —      |
+| Finding ID   | 包/面                                                                | 一句话描述                                                                                                                                                                                                                      | 来源报告                                                       | 状态   | 修复行 |
+| ------------ | -------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------- | ------ | ------ |
+| P1-MA1.1-001 | docs owner doc（flux-runtime-module-boundaries.md）                  | validation 归属三处与 live 实质 drift：rules.ts 职责描述失实 / Where-To-Add 第 1 步指向未接线文件 / Versus validation/ 两 bullet 与同文档 Compiler boundary 节相反——按文档执行会静默写出不生效的校验规则                        | `docs/audits/2026-10-19-1002-arm2-MA1.1-core-structure.md`     | `open` | —      |
+| P1-MA1.2-001 | docs owner doc（flux-runtime-module-boundaries.md · Bundle Face 节） | 「Bundle Default Registration Face」写 7 族且 mobile/ai/graph 按需；live `registerDefaultFluxRenderers` 注册 9 族（+3d 懒边界提交 815d026dd 无 plan 无回写、+xlang-debug-editor plan 2474）——宿主可见契约 drift                 | `docs/audits/2026-10-19-1052-arm2-MA1.2-runtime-structure.md`  | `open` | —      |
+| P1-MA1.5-001 | flux-renderers-3d（three-canvas 根 marker）                          | 3d 包零 `nop-*` 语义根 marker（根类裸 `three-canvas`@three-canvas.tsx:125）——Rule 2「marker 缺失」P1；missing-markers 扫描器因 `content.includes('nop-')` 被 `@nop-chaos/*` import 豁免而漏报（盲区另记 P2-MA1.5-002）          | `docs/audits/2026-10-19-1307-arm2-MA1.5-domain-structure.md`   | `open` | —      |
+| P1-MA1.7-001 | flow-designer-renderers（designer-edge-row/node-card）               | 16 处 BEM 类违反 State Rules/内部区域规则（6 状态修饰符 `--empty/active/selected`（6/6 站点已有 data-empty/active/selected 合规双写，BEM 为冗余违规）+ 10 `__` 元素类；owner doc :242/:479 明文禁止；CSS 零消费、测试锚点依赖） | `docs/audits/2026-10-19-1431-arm2-MA1.7-designer-structure.md` | `open` | —      |
 
 ## Delegated 指针区
 
