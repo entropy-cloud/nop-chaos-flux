@@ -44,7 +44,7 @@
 | MA1.9     | 结构层—platform + print + xlang 导出面与 CSS exports 审计              | `done` | frontend-baseline.md                             | M0                  | deep-audit-prompts.md                                  |
 | MA2.1     | 运行时层—core+runtime 簇裸读取/FieldFrame/硬编码分发/生命周期审计      | `done` | renderer-runtime.md                              | M0                  | deep-audit-prompts.md                                  |
 | MA2.2     | 运行时层—basic 渲染器分发、action 链路、校验参与审计                   | `done` | action-scope-and-imports.md                      | M0                  | deep-audit-prompts.md                                  |
-| MA2.3     | 运行时层—content+mobile+domain+scheduling+ai 异步安全与 IO 边界审计    | `todo` | renderer-env.md                                  | M0                  | deep-audit-prompts.md                                  |
+| MA2.3     | 运行时层—content+mobile+domain+scheduling+ai 异步安全与 IO 边界审计    | `done` | renderer-env.md                                  | M0                  | deep-audit-prompts.md                                  |
 | MA2.4     | 运行时层—designer+office+platform+print+xlang 状态机与序列化边界审计   | `todo` | renderer-runtime.md                              | M0                  | deep-audit-prompts.md                                  |
 | MA3.1     | 代码质量—flux-core                                                     | `todo` | flux-core.md                                     | M0                  | code-quality-audit-prompt.md                           |
 | MA3.2     | 代码质量—formula + compiler + action-core                              | `todo` | flux-core.md                                     | M0                  | code-quality-audit-prompt.md                           |
