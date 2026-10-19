@@ -105,3 +105,94 @@ export interface NoticeBarSchema extends BaseSchema {
   onClick?: ActionSchema | ActionSchema[];
   onClose?: ActionSchema | ActionSchema[];
 }
+
+export interface WheelPickerOption {
+  [key: string]: import('@nop-chaos/flux-core').SchemaValue;
+  label: string;
+  value: string | number;
+}
+
+export interface PickerViewSchema extends BaseSchema {
+  type: 'picker-view';
+  /** 滚轮列配置；多列为并列独立内核 */
+  columns?: WheelPickerOption[][];
+  /** 受控选中值（按列）。拖拽/惯性进行中的外部写入被抑制，落定后以落点为准 */
+  value?: (string | number)[];
+  /** 行高 px，默认 44（M0 触摸目标基线） */
+  rowHeight?: number;
+  /** 可视行数，默认 5 */
+  visibleRows?: number;
+  disabled?: boolean;
+  /** 单列落定派发。payload: { type:'change', column, index, value, label } */
+  onChange?: ActionSchema | ActionSchema[];
+}
+
+export interface WheelPickerSchema extends BaseSchema {
+  type: 'wheel-picker';
+  /** 字段标签（FieldFrame 包裹） */
+  label?: string;
+  /** 表单字段名（经 flux-react form hooks 写值） */
+  name?: string;
+  columns?: WheelPickerOption[][];
+  /** 受控选中值（按列） */
+  value?: (string | number)[];
+  placeholder?: string;
+  disabled?: boolean;
+  required?: boolean;
+  /** 确认时派发。payload: { type:'confirm', value: (string|number)[], labels: string[] } */
+  onConfirm?: ActionSchema | ActionSchema[];
+  onCancel?: ActionSchema | ActionSchema[];
+}
+
+type WheelDateValue = string;
+
+export interface WheelDatePickerSchema extends BaseSchema {
+  type: 'wheel-date-picker';
+  label?: string;
+  name?: string;
+  /** 最小日期（YYYY-MM-DD），默认 1900-01-01 */
+  min?: WheelDateValue;
+  /** 最大日期（YYYY-MM-DD），默认 2100-12-31 */
+  max?: WheelDateValue;
+  value?: WheelDateValue;
+  placeholder?: string;
+  disabled?: boolean;
+  required?: boolean;
+  onConfirm?: ActionSchema | ActionSchema[];
+  onCancel?: ActionSchema | ActionSchema[];
+}
+
+export interface WheelTimePickerSchema extends BaseSchema {
+  type: 'wheel-time-picker';
+  label?: string;
+  name?: string;
+  /** 分钟步进，默认 1 */
+  minuteStep?: number;
+  value?: string;
+  placeholder?: string;
+  disabled?: boolean;
+  required?: boolean;
+  onConfirm?: ActionSchema | ActionSchema[];
+  onCancel?: ActionSchema | ActionSchema[];
+}
+
+export interface WheelCascaderOption {
+  [key: string]: import('@nop-chaos/flux-core').SchemaValue;
+  label: string;
+  value: string | number;
+  children?: WheelCascaderOption[];
+}
+
+export interface WheelCascaderSchema extends BaseSchema {
+  type: 'wheel-cascader';
+  label?: string;
+  name?: string;
+  options?: WheelCascaderOption[];
+  /** 级联选中值（自根到叶） */
+  value?: (string | number)[];
+  placeholder?: string;
+  disabled?: boolean;
+  required?: boolean;
+  onConfirm?: ActionSchema | ActionSchema[];
+  onCancel?: ActionSchema | ActionSchema[];
+}

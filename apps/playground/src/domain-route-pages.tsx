@@ -15,6 +15,7 @@ import { M3LayoutDemoPage } from './pages/m3-layout-demo';
 import { M4DataDisplayDemoPage } from './pages/m4-data-display-demo';
 import { M5MobileShowcaseDemoPage } from './pages/m5-mobile-showcase-demo';
 import { M6GestureLabDemoPage } from './pages/m6-gesture-lab-demo';
+import { M7WheelPickersDemoPage } from './pages/m7-wheel-pickers-demo';
 import { MobileComponentsDemoPage } from './pages/mobile-components-demo';
 import { MobileInfrastructureDemoPage } from './pages/mobile-infrastructure-demo';
 import { PerformanceTablePage } from './pages/performance-table-page';
@@ -250,6 +251,7 @@ export const DOMAIN_ROUTE_PAGES: Record<string, (ctx: DomainPageContext) => Reac
   'm4-data': (ctx) => <M4DataDisplayDemoPage onBack={ctx.goHome} />,
   'm5-showcase': (ctx) => <M5MobileShowcaseDemoPage onBack={ctx.goHome} />,
   'm6-gesture-lab': (ctx) => <M6GestureLabDemoPage onBack={ctx.goHome} />,
+  'm7-wheel-pickers': (ctx) => <M7WheelPickersDemoPage onBack={ctx.goHome} />,
   'barcode-input': (ctx) => <LazyBarcodeDemoPage onBack={ctx.goHome} />,
   'graph-demo': (ctx) => <LazyGraphDemoPage onBack={ctx.goHome} />,
   'map-demo': (ctx) => <LazyMapDemoPage onBack={ctx.goHome} />,

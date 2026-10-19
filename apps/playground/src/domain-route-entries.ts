@@ -348,6 +348,13 @@ export const DOMAIN_RENDERER_ROUTES: DomainRouteEntry[] = [
       'Comprehensive mobile showcase: M5 native renderers (pull-refresh, infinite-scroll, swipe-cell, countdown, notice-bar) + M1 responsive controls + M2 touch adaptation + M3 layout skeletons + M4 data display + content/layout renderers — all in one page.',
   },
   {
+    id: 'm7-wheel-pickers',
+    title: 'M7 Wheel Pickers',
+    eyebrow: 'Mobile Wheel (M7)',
+    description:
+      'M7 wheel picker family: picker-view inline kernel (inertia/snap/controlled-write suppression), wheel-picker popup field, wheel-date-picker / wheel-time-picker config derivatives, wheel-cascader parent-children linkage.',
+  },
+  {
     id: 'm6-gesture-lab',
     title: 'M6 Gesture Lab',
     eyebrow: 'Mobile Gesture (M6)',

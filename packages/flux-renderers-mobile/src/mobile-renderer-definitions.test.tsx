@@ -10,9 +10,9 @@ afterEach(() => {
 });
 
 describe('mobileRendererDefinitions', () => {
-  it('declares 5 renderer definitions for mobile types', () => {
+  it('declares 10 renderer definitions for mobile types', () => {
     const types = mobileRendererDefinitions.map((def) => def.type).sort();
-    expect(types).toEqual(['countdown', 'infinite-scroll', 'notice-bar', 'pull-refresh', 'swipe-cell']);
+    expect(types).toEqual(['countdown', 'infinite-scroll', 'notice-bar', 'picker-view', 'pull-refresh', 'swipe-cell', 'wheel-cascader', 'wheel-date-picker', 'wheel-picker', 'wheel-time-picker']);
   });
 
   it('every definition points at @nop-chaos/flux-renderers-mobile sourcePackage', () => {

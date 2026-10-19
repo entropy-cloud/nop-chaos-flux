@@ -1,6 +1,6 @@
 # Mobile Native Components Roadmap（移动端原生组件扩展 M6–M12）
 
-> Last Updated: 2026-10-19（M6 `done`；M7–M11 经人确认转 `todo` 进入执行队列：人指令"执行 mobile-roadmap 直到彻底完成，每个工作项拟制一个计划，每计划完成自动提交"；M12 维持 demand-gated `proposed` 不排期）
+> Last Updated: 2026-10-19（M6/M7 `done`；M8–M11 经人确认转 `todo` 进入执行队列：人指令"执行 mobile-roadmap 直到彻底完成，每个工作项拟制一个计划，每计划完成自动提交"；M12 维持 demand-gated `proposed` 不排期）
 > Source: `docs/analysis/2026-10-19-mobile-advanced-libs-deep-research.md`（vant / antd-mobile / nutui / arco-design-mobile / tdesign-mobile-react / framework7 / ionic-framework / swiper / embla / use-gesture / zarm 源码调研）
 > 关联：`mobile-roadmap.md`（M0–M5 已完成：响应式基线 + 首批 5 个移动原生组件，状态以该文件为准）、`roadmap.md`（主组件 roadmap）
 
@@ -20,7 +20,7 @@
 > 全文件唯一动态状态区。状态流转同其他 roadmap；**可标记单位是 work item（M6/M7/…），不是单组件子项（M6a/M7b…）**；子项是同一 work item 的拆解说明，不是独立打勾单位。一个 work item = 一个 execution plan 的交付范围。
 
 - M6 手势基建升级（velocity/rubberband/momentum 纯函数层 + useLockScroll + 手势仲裁决策 + 现有 5 组件手感升级，4 子项 M6a~M6d）: `done`（2026-10-19，plan `docs/plans/664-mobile-m6-gesture-infrastructure-plan.md`，closure audit 两轮 R1 issues→R2 approved；iOS 分段 spinner 裁决 optimization candidate 落该 plan Deferred 节）
-- M7 Picker 滚轮家族（picker-view 内核 + picker/date-picker/cascader 派生，4 子项 M7a~M7d）: `todo`（2026-10-19 人确认转 `todo`）
+- M7 Picker 滚轮家族（【命名勘误 2026-10-19：落地实名 wheel- 家族——`picker-view` 内核 + `wheel-picker`/`wheel-date-picker`/`wheel-time-picker`/`wheel-cascader` 派生；原行 picker/date-picker/cascader 为提案时点命名，`picker` 已被 form-advanced 占用、`cascader` 被 L2.6 保留，裁定见 wheel-picker/design.md §2】，4 子项 M7a~M7d）: `done`（2026-10-19，plan `docs/plans/665-mobile-m7-wheel-picker-family-plan.md`，closure audit 两轮 R1 issues 1B+5M → R2 approved）
 - M8 底部面板组（FloatingPanel + FloatingBubble + Sheet/Drawer 小屏手势下拉关闭 + ActionSheet 形态决策，4 子项 M8a~M8d）: `todo`（2026-10-19 人确认转 `todo`）
 - M9 图像与手写组（ImageViewer 手势预览 + Signature，2 子项）: `todo`（2026-10-19 人确认转 `todo`）
 - M10 列表导航组（IndexBar + ScrollMask 渐隐增强，2 子项）: `todo`（2026-10-19 人确认转 `todo`）
@@ -44,12 +44,12 @@
 
 > 共识度最高（8/11 库）、算法密度最高的缺口。`picker/design.md` 已 retained 立约，实施时按调研结论升级内核路线（rAF + quartEaseOut 可打断，schema 中途变更需 stopMomentum）；vant/arco/nutui 惯性参数组（300ms/15px 触发、减速度 0.003）为默认手感基线。
 
-| Work item | 内容                                                                                                | 依赖 |
-| --------- | --------------------------------------------------------------------------------------------------- | ---- |
-| **M7a**   | picker-view 滚轮内核（单列滚轮：惯性 + 吸附 + 越界回弹 + transitionend 对齐 emit + 受控值回写抑制） | M6a  |
-| **M7b**   | picker（单列/多列弹出形态，接 z-index 栈 + safe-area + useLockScroll）                              | M7a  |
-| **M7c**   | date-picker / time-picker（纯配置派生年月日时分列，arco「一个内核支撑 4 组件」结构）                | M7a  |
-| **M7d**   | cascader（级联列联动；与 missing-components roadmap L2.2 region 省市区的 mobile wheel 分支对账）    | M7a  |
+| Work item | 内容                                                                                                                                                  | 依赖 |
+| --------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- | ---- |
+| **M7a**   | picker-view 滚轮内核（单列滚轮：惯性 + 吸附 + 越界回弹 + rAF MomentumAnimator 落定派发（plan 665 勘误：弃 CSS transitionend 路线） + 受控值回写抑制） | M6a  |
+| **M7b**   | picker（单列/多列弹出形态，接 z-index 栈 + safe-area + useLockScroll）                                                                                | M7a  |
+| **M7c**   | date-picker / time-picker（纯配置派生年月日时分列，arco「一个内核支撑 4 组件」结构）                                                                  | M7a  |
+| **M7d**   | cascader（级联列联动；与 missing-components roadmap L2.2 region 省市区的 mobile wheel 分支对账）                                                      | M7a  |
 
 ### M8 — 底部面板组
 

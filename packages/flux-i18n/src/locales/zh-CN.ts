@@ -1682,6 +1682,10 @@ export const zhCN: Resource = {
       countdown: {
         noTimeConfig: '未配置倒计时时间',
       },
+      wheelPicker: {
+        confirm: '确认',
+        cancel: '取消',
+      },
       barcode: {
         recognizing: '识别中...',
         recognitionFailed: '识别失败，请重试',

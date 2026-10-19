@@ -11,16 +11,17 @@
       "plan 627 (2026-10-17): discover-audit-suspects 727->723 (further shrink measured by the loop-closing reconciliation live run).",
       "plan 2476 (2026-10-18): find-async-without-failure-path 330->334 (+4)、discover-audit-suspects 723->730 (+7)。全部命中位于 tests/e2e/xlang-debug-mock-server.mjs（item 22 新增的 D1 协议 mock 服务器，playwright webServer 进程）——test-infra shape-heuristic 家族：+4 = 控制面/帧解码 handler 的 catch 形态（失败路径真实存在：400/500 应答与连接销毁+日志，启发式按形态计数）；+7 = 控制面 res.end(JSON.stringify(...)) 同步应答形态（e2e 控制面端点，非产品代码）。closure audit M-1 裁定登记路径（fm2 会话转记本工作流收口消化）。",
       "2026-10-18 plan 649 (FM-6 首批): 730 -> 733 / 334 -> 337。新增 suspect 为 FM-6 批次修复的启发式扫描计数漂移——action-execution.ts 聚合边界（FM-012 cancelled/timedOut 旗标透传，全路径 settle）、node-renderer-effects.ts epoch 微任务裁决（FM-028 F5，unmount 派发含 catch 语义）、use-table-filter/sort dev warn + effective ownership 门（FM-016，RM-11 标准，镜像 use-column-resize 已登记先例）。逐项 triage 见 _tmp/fm6-cards/（FM-012/028/016），无未处理异步失败路径。",
-      "2026-10-19 plan 664 (M6 手势基建): discover-audit-suspects 733 -> 734 / find-async-without-failure-path 337 -> 338（同源 +1：flux-renderers-mobile/src/hooks/supports-passive.ts 裸 catch）。该 catch 是 supportsPassiveEvents() 特性探测的**有意识静默回退**——probe getter 未被读取（环境不支持 passive 选项）时 supported=false 并缓存，属探测语义本体而非错误吞噬；镜像 use-map-geojson.ts:49 既有登记同形态。find-test-global-leaks 108 维持（M6 新测试的 ResizeObserver 替换走 vi.stubGlobal 白名单通道，零新增）。"
+      "2026-10-19 plan 664 (M6 手势基建): discover-audit-suspects 733 -> 734 / find-async-without-failure-path 337 -> 338（同源 +1：flux-renderers-mobile/src/hooks/supports-passive.ts 裸 catch）。该 catch 是 supportsPassiveEvents() 特性探测的**有意识静默回退**——probe getter 未被读取（环境不支持 passive 选项）时 supported=false 并缓存，属探测语义本体而非错误吞噬；镜像 use-map-geojson.ts:49 既有登记同形态。find-test-global-leaks 108 维持（M6 新测试的 ResizeObserver 替换走 vi.stubGlobal 白名单通道，零新增）。",
+      "2026-10-19 plan 665 (M7 滚轮家族): discover-audit-suspects 734 -> 754 (+20)、find-async-without-failure-path 338 -> 342 (+4)、find-react19-optimization-candidates 650 维持（曾 +39 后清零，见下）。三族同源，全部位于 flux-renderers-mobile 新增 5 渲染器（picker-view/wheel-picker/wheel-date-picker/wheel-time-picker/wheel-cascader）：①async +4 = confirm 处理器中能力守卫的 `void form.validateField(name, 'change')`（ValidationScopeRuntime 无此方法——按 plan 665 review m4 以能力探测调用，触发即交由表单内部失败路径）；②audit +20 = 4 处 validateField + 12 处 FieldFrame 字段包裹形态（import/开/闭标签 × 4 文件——FieldFrame 是 flux-react 官方字段壳，mobile 包经它接入表单 label/name 契约）+ 4 处包 CSS wheel 调色板规则（bare-data-slot-selector 分桶，MA-06/NEW-MM-06 豁免通道；与 styling +4 同源双计）；③find-react19-optimization-candidates 650 维持——家族曾 +39（新组件 useCallback/useMemo 冗余），已按 `redundant-use-callback` 指引与 AGENTS React19-first 规则改为普通函数（Compiler 接管记忆化），全量回落到基线内零新增。无未处理异步失败路径。"
     ]
   },
   "scanners": {
-    "find-styling-suspects": 240,
-    "discover-audit-suspects": 734,
+    "find-styling-suspects": 244,
+    "discover-audit-suspects": 754,
     "find-test-global-leaks": 108,
     "find-todo-exitless": 1,
     "find-as-any-casts": 41,
-    "find-async-without-failure-path": 338,
+    "find-async-without-failure-path": 342,
     "find-react19-optimization-candidates": 650
   }
 }

@@ -1687,6 +1687,10 @@ export const enUS: Resource = {
       countdown: {
         noTimeConfig: 'No countdown time configured',
       },
+      wheelPicker: {
+        confirm: 'Confirm',
+        cancel: 'Cancel',
+      },
       barcode: {
         recognizing: 'Recognizing...',
         recognitionFailed: 'Recognition failed, please retry',
