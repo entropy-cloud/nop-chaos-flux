@@ -1,7 +1,7 @@
 # Audit Remediation R2 Master Index (arm2-index)
 
 > Status: active（M0 / plan 653 初始化骨架；随各工作项产出滚动登记）
-> Last Updated: 2026-10-19（滚动：MA1.1–MA1.9 报告全数登记；**MA1 结构层九项收官**——P1 累计 4 条 open〔MA1.1/1.2/1.5/1.7〕待 MR；MA1.3/1.4/1.6/1.8/1.9 P1=0 仅报告行）
+> Last Updated: 2026-10-19（滚动：MA1.1–MA1.9 报告全数收官 + **MA2.1 开篇登记**——P1 累计 **5** 条 open〔MA1.1/1.2/1.5/1.7/2.1〕待 MR；MA1.3/1.4/1.6/1.8/1.9 P1=0 仅报告行）
 > Roadmap: `docs/backlog/audit-remediation-r2-roadmap.md`（工作项状态的唯一权威 = 其 Work Item Status 表；本索引不携带状态，只登记报告、finding 与基线）
 > Mission: `missions/audit-remediation-r2.json`
 > M0 Plan: `docs/plans/653-audit-r2-m0-orchestration-baseline-plan.md`
@@ -52,7 +52,7 @@
 | MA1.7     | `docs/audits/2026-10-19-1431-arm2-MA1.7-designer-structure.md`                          |
 | MA1.8     | `docs/audits/2026-10-19-1621-arm2-MA1.8-office-structure.md`                            |
 | MA1.9     | `docs/audits/2026-10-19-1705-arm2-MA1.9-platform-print-xlang-structure.md`              |
-| MA2.1     | —                                                                                       |
+| MA2.1     | `docs/audits/2026-10-19-1802-arm2-MA2.1-core-runtime-runtime.md`                        |
 | MA2.2     | —                                                                                       |
 | MA2.3     | —                                                                                       |
 | MA2.4     | —                                                                                       |
@@ -118,12 +118,13 @@
 
 > 规则（roadmap Cross-Cutting 6）：Finding ID = `P1-<工作项>-<序号>`（如 `P1-MA3.8-014`），ID 落索引后不可变；登记于来源报告产出时；修复 done 由 MR 批回填状态与修复行指针。P2/P3 不入本区（留在报告 deferred 区）。
 
-| Finding ID   | 包/面                                                                | 一句话描述                                                                                                                                                                                                                      | 来源报告                                                       | 状态   | 修复行 |
-| ------------ | -------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------- | ------ | ------ |
-| P1-MA1.1-001 | docs owner doc（flux-runtime-module-boundaries.md）                  | validation 归属三处与 live 实质 drift：rules.ts 职责描述失实 / Where-To-Add 第 1 步指向未接线文件 / Versus validation/ 两 bullet 与同文档 Compiler boundary 节相反——按文档执行会静默写出不生效的校验规则                        | `docs/audits/2026-10-19-1002-arm2-MA1.1-core-structure.md`     | `open` | —      |
-| P1-MA1.2-001 | docs owner doc（flux-runtime-module-boundaries.md · Bundle Face 节） | 「Bundle Default Registration Face」写 7 族且 mobile/ai/graph 按需；live `registerDefaultFluxRenderers` 注册 9 族（+3d 懒边界提交 815d026dd 无 plan 无回写、+xlang-debug-editor plan 2474）——宿主可见契约 drift                 | `docs/audits/2026-10-19-1052-arm2-MA1.2-runtime-structure.md`  | `open` | —      |
-| P1-MA1.5-001 | flux-renderers-3d（three-canvas 根 marker）                          | 3d 包零 `nop-*` 语义根 marker（根类裸 `three-canvas`@three-canvas.tsx:125）——Rule 2「marker 缺失」P1；missing-markers 扫描器因 `content.includes('nop-')` 被 `@nop-chaos/*` import 豁免而漏报（盲区另记 P2-MA1.5-002）          | `docs/audits/2026-10-19-1307-arm2-MA1.5-domain-structure.md`   | `open` | —      |
-| P1-MA1.7-001 | flow-designer-renderers（designer-edge-row/node-card）               | 16 处 BEM 类违反 State Rules/内部区域规则（6 状态修饰符 `--empty/active/selected`（6/6 站点已有 data-empty/active/selected 合规双写，BEM 为冗余违规）+ 10 `__` 元素类；owner doc :242/:479 明文禁止；CSS 零消费、测试锚点依赖） | `docs/audits/2026-10-19-1431-arm2-MA1.7-designer-structure.md` | `open` | —      |
+| Finding ID   | 包/面                                                                | 一句话描述                                                                                                                                                                                                                      | 来源报告                                                         | 状态   | 修复行 |
+| ------------ | -------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------- | ------ | ------ |
+| P1-MA1.1-001 | docs owner doc（flux-runtime-module-boundaries.md）                  | validation 归属三处与 live 实质 drift：rules.ts 职责描述失实 / Where-To-Add 第 1 步指向未接线文件 / Versus validation/ 两 bullet 与同文档 Compiler boundary 节相反——按文档执行会静默写出不生效的校验规则                        | `docs/audits/2026-10-19-1002-arm2-MA1.1-core-structure.md`       | `open` | —      |
+| P1-MA1.2-001 | docs owner doc（flux-runtime-module-boundaries.md · Bundle Face 节） | 「Bundle Default Registration Face」写 7 族且 mobile/ai/graph 按需；live `registerDefaultFluxRenderers` 注册 9 族（+3d 懒边界提交 815d026dd 无 plan 无回写、+xlang-debug-editor plan 2474）——宿主可见契约 drift                 | `docs/audits/2026-10-19-1052-arm2-MA1.2-runtime-structure.md`    | `open` | —      |
+| P1-MA1.5-001 | flux-renderers-3d（three-canvas 根 marker）                          | 3d 包零 `nop-*` 语义根 marker（根类裸 `three-canvas`@three-canvas.tsx:125）——Rule 2「marker 缺失」P1；missing-markers 扫描器因 `content.includes('nop-')` 被 `@nop-chaos/*` import 豁免而漏报（盲区另记 P2-MA1.5-002）          | `docs/audits/2026-10-19-1307-arm2-MA1.5-domain-structure.md`     | `open` | —      |
+| P1-MA1.7-001 | flow-designer-renderers（designer-edge-row/node-card）               | 16 处 BEM 类违反 State Rules/内部区域规则（6 状态修饰符 `--empty/active/selected`（6/6 站点已有 data-empty/active/selected 合规双写，BEM 为冗余违规）+ 10 `__` 元素类；owner doc :242/:479 明文禁止；CSS 零消费、测试锚点依赖） | `docs/audits/2026-10-19-1431-arm2-MA1.7-designer-structure.md`   | `open` | —      |
+| P1-MA2.1-001 | arm2-index M0 工具基线区（reactive-render-reads 行）                 | M0 登记基线值 2 失实，live 实测 21（high 20+medium 1）——疑误读扫描器输出 "2 rule buckets" 为命中数；破坏 MV「不得高于 M0」门禁正确性                                                                                            | `docs/audits/2026-10-19-1802-arm2-MA2.1-core-runtime-runtime.md` | `open` | —      |
 
 ## Delegated 指针区
 
@@ -140,32 +141,32 @@
 
 ### 24 个维度扫描器（全部 exit 0）
 
-| 扫描器                                         | 命中数 | 备注                                                                      |
-| ---------------------------------------------- | ------ | ------------------------------------------------------------------------- |
-| `check:audit-suspects`                         | 733    | = 注册基线 733（scanner-baselines.json）                                  |
-| `check:audit-runtime-raw-schema-reads`         | 0      |                                                                           |
-| `check:audit-fieldframe-bypasses`              | 0      |                                                                           |
-| `check:audit-async-failure-paths`              | 337    | = 注册基线 337                                                            |
-| `check:audit-hardcoded-type-dispatch`          | 0      |                                                                           |
-| `check:audit-missing-renderer-markers`         | 0      |                                                                           |
-| `check:audit-test-global-leaks`                | 108    | = 注册基线 108                                                            |
-| `check:audit-performance-suspects`             | 27     | 1 rule bucket                                                             |
-| `check:audit-styling-suspects`                 | 240    | = 注册基线 240                                                            |
-| `check:audit-non-retained-renderer-references` | 142    | 跨 11 个 non-retained 类型（基线库 69 类型）                              |
-| `check:audit-reactive-render-reads`            | 2      | 1 × [high] reactive-render-read + 1 × [medium] broad-scope-selector       |
-| `check:audit-react19-optimization-candidates`  | 649    | 注册基线 650（可收窄 1）                                                  |
-| `check:audit-as-any-casts`                     | 41     | = 注册基线 41                                                             |
-| `check:audit-canvas-wrapper-a11y`              | 0      |                                                                           |
-| `check:audit-event-dispatch-ctx`               | 0      | allowlisted 0                                                             |
-| `check:audit-renderer-browser-io`              | 0      |                                                                           |
-| `check:audit-renderer-metamodel-residue`       | 0      | 0 未裁决命中；11 suppression 匹配 / 4 registry 条目                       |
-| `check:audit-todo-exitless`                    | 1      | = 注册基线 1（scheduling undo-stack 双轨注记）                            |
-| `check:audit-ui-consistency-gaps`              | 0 新增 | 豁免均注册                                                                |
-| `check:ai-engine-invariants`                   | 0      |                                                                           |
-| `check:react19`                                | 0      |                                                                           |
-| `check:i18n-keys`                              | PASS   | 1843 defined（zh=en）/ 1443 used / 400 potentially unused（动态使用注记） |
-| `check:schema-prop-coverage`                   | PASS   | Layer 1/2 全覆盖 + schema 测试覆盖                                        |
-| `check:renderer-definition-fields-only`        | PASS   |                                                                           |
+| 扫描器                                         | 命中数 | 备注                                                                                                                                |
+| ---------------------------------------------- | ------ | ----------------------------------------------------------------------------------------------------------------------------------- |
+| `check:audit-suspects`                         | 733    | = 注册基线 733（scanner-baselines.json）                                                                                            |
+| `check:audit-runtime-raw-schema-reads`         | 0      |                                                                                                                                     |
+| `check:audit-fieldframe-bypasses`              | 0      |                                                                                                                                     |
+| `check:audit-async-failure-paths`              | 337    | = 注册基线 337                                                                                                                      |
+| `check:audit-hardcoded-type-dispatch`          | 0      |                                                                                                                                     |
+| `check:audit-missing-renderer-markers`         | 0      |                                                                                                                                     |
+| `check:audit-test-global-leaks`                | 108    | = 注册基线 108                                                                                                                      |
+| `check:audit-performance-suspects`             | 27     | 1 rule bucket                                                                                                                       |
+| `check:audit-styling-suspects`                 | 240    | = 注册基线 240                                                                                                                      |
+| `check:audit-non-retained-renderer-references` | 142    | 跨 11 个 non-retained 类型（基线库 69 类型）                                                                                        |
+| `check:audit-reactive-render-reads`            | **21** | high 20 + medium 1（2 rule buckets）。**勘误**：M0 原登记 2 系误读 bucket 数为命中数，经 MA2.1（P1-MA2.1-001）实测勘正于 2026-10-19 |
+| `check:audit-react19-optimization-candidates`  | 649    | 注册基线 650（可收窄 1）                                                                                                            |
+| `check:audit-as-any-casts`                     | 41     | = 注册基线 41                                                                                                                       |
+| `check:audit-canvas-wrapper-a11y`              | 0      |                                                                                                                                     |
+| `check:audit-event-dispatch-ctx`               | 0      | allowlisted 0                                                                                                                       |
+| `check:audit-renderer-browser-io`              | 0      |                                                                                                                                     |
+| `check:audit-renderer-metamodel-residue`       | 0      | 0 未裁决命中；11 suppression 匹配 / 4 registry 条目                                                                                 |
+| `check:audit-todo-exitless`                    | 1      | = 注册基线 1（scheduling undo-stack 双轨注记）                                                                                      |
+| `check:audit-ui-consistency-gaps`              | 0 新增 | 豁免均注册                                                                                                                          |
+| `check:ai-engine-invariants`                   | 0      |                                                                                                                                     |
+| `check:react19`                                | 0      |                                                                                                                                     |
+| `check:i18n-keys`                              | PASS   | 1843 defined（zh=en）/ 1443 used / 400 potentially unused（动态使用注记）                                                           |
+| `check:schema-prop-coverage`                   | PASS   | Layer 1/2 全覆盖 + schema 测试覆盖                                                                                                  |
+| `check:renderer-definition-fields-only`        | PASS   |                                                                                                                                     |
 
 ### 5 个 `audit:*`
 
