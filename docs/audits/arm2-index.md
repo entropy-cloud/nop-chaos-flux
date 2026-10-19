@@ -1,7 +1,7 @@
 # Audit Remediation R2 Master Index (arm2-index)
 
 > Status: active（M0 / plan 653 初始化骨架；随各工作项产出滚动登记）
-> Last Updated: 2026-10-19
+> Last Updated: 2026-10-19（MA1.1 报告与 P1-MA1.1-001 登记）
 > Roadmap: `docs/backlog/audit-remediation-r2-roadmap.md`（工作项状态的唯一权威 = 其 Work Item Status 表；本索引不携带状态，只登记报告、finding 与基线）
 > Mission: `missions/audit-remediation-r2.json`
 > M0 Plan: `docs/plans/653-audit-r2-m0-orchestration-baseline-plan.md`
@@ -43,7 +43,7 @@
 | Work Item | 报告 / Plan 路径                                                                        |
 | --------- | --------------------------------------------------------------------------------------- |
 | M0        | `docs/audits/arm2-index.md`（本文件）+ `docs/audits/arm2-scope-and-dimension-matrix.md` |
-| MA1.1     | —                                                                                       |
+| MA1.1     | `docs/audits/2026-10-19-1002-arm2-MA1.1-core-structure.md`                              |
 | MA1.2     | —                                                                                       |
 | MA1.3     | —                                                                                       |
 | MA1.4     | —                                                                                       |
@@ -118,9 +118,9 @@
 
 > 规则（roadmap Cross-Cutting 6）：Finding ID = `P1-<工作项>-<序号>`（如 `P1-MA3.8-014`），ID 落索引后不可变；登记于来源报告产出时；修复 done 由 MR 批回填状态与修复行指针。P2/P3 不入本区（留在报告 deferred 区）。
 
-| Finding ID | 包/面 | 一句话描述 | 来源报告 | 状态 | 修复行 |
-| ---------- | ----- | ---------- | -------- | ---- | ------ |
-| （暂无）   |       |            |          |      |        |
+| Finding ID   | 包/面                                               | 一句话描述                                                                                                                                                                                               | 来源报告                                                   | 状态   | 修复行 |
+| ------------ | --------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------- | ------ | ------ |
+| P1-MA1.1-001 | docs owner doc（flux-runtime-module-boundaries.md） | validation 归属三处与 live 实质 drift：rules.ts 职责描述失实 / Where-To-Add 第 1 步指向未接线文件 / Versus validation/ 两 bullet 与同文档 Compiler boundary 节相反——按文档执行会静默写出不生效的校验规则 | `docs/audits/2026-10-19-1002-arm2-MA1.1-core-structure.md` | `open` | —      |
 
 ## Delegated 指针区
 
