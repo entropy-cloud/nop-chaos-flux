@@ -1,7 +1,7 @@
 # Audit Remediation R2 Master Index (arm2-index)
 
 > Status: active（M0 / plan 653 初始化骨架；随各工作项产出滚动登记）
-> Last Updated: 2026-10-19（滚动：MA1.1–MA1.9 报告全数收官 + **MA2.1 开篇登记**——P1 累计 **5** 条 open〔MA1.1/1.2/1.5/1.7/2.1〕待 MR；MA1.3/1.4/1.6/1.8/1.9 P1=0 仅报告行）
+> Last Updated: 2026-10-19（滚动：MA1.1–MA1.9 收官 + MA2.1/MA2.2 登记——P1 累计 **5** 条 open〔MA1.1/1.2/1.5/1.7/2.1〕待 MR；MA1.3/1.4/1.6/1.8/1.9/2.2 P1=0 仅报告行）
 > Roadmap: `docs/backlog/audit-remediation-r2-roadmap.md`（工作项状态的唯一权威 = 其 Work Item Status 表；本索引不携带状态，只登记报告、finding 与基线）
 > Mission: `missions/audit-remediation-r2.json`
 > M0 Plan: `docs/plans/653-audit-r2-m0-orchestration-baseline-plan.md`
@@ -53,7 +53,7 @@
 | MA1.8     | `docs/audits/2026-10-19-1621-arm2-MA1.8-office-structure.md`                            |
 | MA1.9     | `docs/audits/2026-10-19-1705-arm2-MA1.9-platform-print-xlang-structure.md`              |
 | MA2.1     | `docs/audits/2026-10-19-1802-arm2-MA2.1-core-runtime-runtime.md`                        |
-| MA2.2     | —                                                                                       |
+| MA2.2     | `docs/audits/2026-10-19-1842-arm2-MA2.2-basic-runtime.md`                               |
 | MA2.3     | —                                                                                       |
 | MA2.4     | —                                                                                       |
 | MA3.1     | —                                                                                       |
