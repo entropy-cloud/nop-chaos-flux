@@ -1,7 +1,7 @@
 # Audit Remediation R2 Master Index (arm2-index)
 
 > Status: active（M0 / plan 653 初始化骨架；随各工作项产出滚动登记）
-> Last Updated: 2026-10-20（滚动：MA1.1–MA1.9 收官 + MA2.1/2.2/MA2.3 登记——P1 累计 **6** 条 open〔MA1.1/1.2/1.5/1.7/2.1/2.3〕待 MR；MA1.3/1.4/1.6/1.8/1.9/2.2 P1=0 仅报告行）
+> Last Updated: 2026-10-20（滚动：MA1.1–MA1.9 收官 + **MA2 运行时层 MA2.1–2.4 四项收官**——P1 累计 **6** 条 open〔MA1.1/1.2/1.5/1.7/2.1/2.3〕待 MR；MA1.3/1.4/1.6/1.8/1.9/2.2/2.4 P1=0 仅报告行）
 > Roadmap: `docs/backlog/audit-remediation-r2-roadmap.md`（工作项状态的唯一权威 = 其 Work Item Status 表；本索引不携带状态，只登记报告、finding 与基线）
 > Mission: `missions/audit-remediation-r2.json`
 > M0 Plan: `docs/plans/653-audit-r2-m0-orchestration-baseline-plan.md`
@@ -40,71 +40,71 @@
 
 > 报告命名模式：`docs/audits/YYYY-MM-DD-HHmm-arm2-<工作项>-<维度>.md`（修复项填 plan 路径）。M0 产物为本索引与 arm2 矩阵本体。
 
-| Work Item | 报告 / Plan 路径                                                                        |
-| --------- | --------------------------------------------------------------------------------------- |
-| M0        | `docs/audits/arm2-index.md`（本文件）+ `docs/audits/arm2-scope-and-dimension-matrix.md` |
-| MA1.1     | `docs/audits/2026-10-19-1002-arm2-MA1.1-core-structure.md`                              |
-| MA1.2     | `docs/audits/2026-10-19-1052-arm2-MA1.2-runtime-structure.md`                           |
-| MA1.3     | `docs/audits/2026-10-19-1141-arm2-MA1.3-basic-structure.md`                             |
-| MA1.4     | `docs/audits/2026-10-19-1222-arm2-MA1.4-content-structure.md`                           |
-| MA1.5     | `docs/audits/2026-10-19-1307-arm2-MA1.5-domain-structure.md`                            |
-| MA1.6     | `docs/audits/2026-10-19-1340-arm2-MA1.6-scheduling-ai-structure.md`                     |
-| MA1.7     | `docs/audits/2026-10-19-1431-arm2-MA1.7-designer-structure.md`                          |
-| MA1.8     | `docs/audits/2026-10-19-1621-arm2-MA1.8-office-structure.md`                            |
-| MA1.9     | `docs/audits/2026-10-19-1705-arm2-MA1.9-platform-print-xlang-structure.md`              |
-| MA2.1     | `docs/audits/2026-10-19-1802-arm2-MA2.1-core-runtime-runtime.md`                        |
-| MA2.2     | `docs/audits/2026-10-19-1842-arm2-MA2.2-basic-runtime.md`                               |
-| MA2.3     | `docs/audits/2026-10-20-0335-arm2-MA2.3-content-mobile-domain-scheduling-ai-runtime.md` |
-| MA2.4     | —                                                                                       |
-| MA3.1     | —                                                                                       |
-| MA3.2     | —                                                                                       |
-| MA3.3     | —                                                                                       |
-| MA3.4     | —                                                                                       |
-| MA3.5     | —                                                                                       |
-| MA3.6     | —                                                                                       |
-| MA3.7     | —                                                                                       |
-| MA3.8     | —                                                                                       |
-| MA3.9     | —                                                                                       |
-| MA3.10    | —                                                                                       |
-| MA3.11    | —                                                                                       |
-| MA3.12    | —                                                                                       |
-| MA3.13    | —                                                                                       |
-| MA3.14    | —                                                                                       |
-| MA3.15    | —                                                                                       |
-| MA3.16    | —                                                                                       |
-| MA3.17    | —                                                                                       |
-| MA3.18    | —                                                                                       |
-| MA4.1     | —                                                                                       |
-| MA4.2     | —                                                                                       |
-| MA4.3     | —                                                                                       |
-| MA4.4     | —                                                                                       |
-| MA4.5     | —                                                                                       |
-| MA5.1     | —                                                                                       |
-| MA5.2     | —                                                                                       |
-| MA5.3     | —                                                                                       |
-| MA5.4     | —                                                                                       |
-| MA5.5     | —                                                                                       |
-| MA5.6     | —                                                                                       |
-| MA6.1     | —                                                                                       |
-| MA6.2     | —                                                                                       |
-| MA6.3     | —                                                                                       |
-| MA6.4     | —                                                                                       |
-| MA7.1     | —                                                                                       |
-| MA7.2     | —                                                                                       |
-| MA7.3     | —                                                                                       |
-| MA8.1     | —                                                                                       |
-| MA8.2     | —                                                                                       |
-| MA8.3     | —                                                                                       |
-| MA9.1     | —                                                                                       |
-| MA9.2     | —                                                                                       |
-| MA9.3     | —                                                                                       |
-| MA9.4     | —                                                                                       |
-| MR1.0     | —                                                                                       |
-| MR2.0     | —                                                                                       |
-| MR3.0     | —                                                                                       |
-| MR4.0     | —                                                                                       |
-| MV        | —                                                                                       |
-| MG        | —                                                                                       |
+| Work Item | 报告 / Plan 路径                                                                         |
+| --------- | ---------------------------------------------------------------------------------------- |
+| M0        | `docs/audits/arm2-index.md`（本文件）+ `docs/audits/arm2-scope-and-dimension-matrix.md`  |
+| MA1.1     | `docs/audits/2026-10-19-1002-arm2-MA1.1-core-structure.md`                               |
+| MA1.2     | `docs/audits/2026-10-19-1052-arm2-MA1.2-runtime-structure.md`                            |
+| MA1.3     | `docs/audits/2026-10-19-1141-arm2-MA1.3-basic-structure.md`                              |
+| MA1.4     | `docs/audits/2026-10-19-1222-arm2-MA1.4-content-structure.md`                            |
+| MA1.5     | `docs/audits/2026-10-19-1307-arm2-MA1.5-domain-structure.md`                             |
+| MA1.6     | `docs/audits/2026-10-19-1340-arm2-MA1.6-scheduling-ai-structure.md`                      |
+| MA1.7     | `docs/audits/2026-10-19-1431-arm2-MA1.7-designer-structure.md`                           |
+| MA1.8     | `docs/audits/2026-10-19-1621-arm2-MA1.8-office-structure.md`                             |
+| MA1.9     | `docs/audits/2026-10-19-1705-arm2-MA1.9-platform-print-xlang-structure.md`               |
+| MA2.1     | `docs/audits/2026-10-19-1802-arm2-MA2.1-core-runtime-runtime.md`                         |
+| MA2.2     | `docs/audits/2026-10-19-1842-arm2-MA2.2-basic-runtime.md`                                |
+| MA2.3     | `docs/audits/2026-10-20-0335-arm2-MA2.3-content-mobile-domain-scheduling-ai-runtime.md`  |
+| MA2.4     | `docs/audits/2026-10-20-0420-arm2-MA2.4-designer-office-platform-print-xlang-runtime.md` |
+| MA3.1     | —                                                                                        |
+| MA3.2     | —                                                                                        |
+| MA3.3     | —                                                                                        |
+| MA3.4     | —                                                                                        |
+| MA3.5     | —                                                                                        |
+| MA3.6     | —                                                                                        |
+| MA3.7     | —                                                                                        |
+| MA3.8     | —                                                                                        |
+| MA3.9     | —                                                                                        |
+| MA3.10    | —                                                                                        |
+| MA3.11    | —                                                                                        |
+| MA3.12    | —                                                                                        |
+| MA3.13    | —                                                                                        |
+| MA3.14    | —                                                                                        |
+| MA3.15    | —                                                                                        |
+| MA3.16    | —                                                                                        |
+| MA3.17    | —                                                                                        |
+| MA3.18    | —                                                                                        |
+| MA4.1     | —                                                                                        |
+| MA4.2     | —                                                                                        |
+| MA4.3     | —                                                                                        |
+| MA4.4     | —                                                                                        |
+| MA4.5     | —                                                                                        |
+| MA5.1     | —                                                                                        |
+| MA5.2     | —                                                                                        |
+| MA5.3     | —                                                                                        |
+| MA5.4     | —                                                                                        |
+| MA5.5     | —                                                                                        |
+| MA5.6     | —                                                                                        |
+| MA6.1     | —                                                                                        |
+| MA6.2     | —                                                                                        |
+| MA6.3     | —                                                                                        |
+| MA6.4     | —                                                                                        |
+| MA7.1     | —                                                                                        |
+| MA7.2     | —                                                                                        |
+| MA7.3     | —                                                                                        |
+| MA8.1     | —                                                                                        |
+| MA8.2     | —                                                                                        |
+| MA8.3     | —                                                                                        |
+| MA9.1     | —                                                                                        |
+| MA9.2     | —                                                                                        |
+| MA9.3     | —                                                                                        |
+| MA9.4     | —                                                                                        |
+| MR1.0     | —                                                                                        |
+| MR2.0     | —                                                                                        |
+| MR3.0     | —                                                                                        |
+| MR4.0     | —                                                                                        |
+| MV        | —                                                                                        |
+| MG        | —                                                                                        |
 
 ## P0 追踪区
 
