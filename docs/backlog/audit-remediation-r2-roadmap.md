@@ -32,7 +32,7 @@
 
 | Work Item | 名称                                                                   | Status | Owner Doc                                        | Dependencies        | Skill                                                  |
 | --------- | ---------------------------------------------------------------------- | ------ | ------------------------------------------------ | ------------------- | ------------------------------------------------------ |
-| M0        | R2 审计编排基线（矩阵/工具基线/绿色基线/arm2-index）                   | `todo` | `docs/context/codebase-map.md`                   | —                   | audit-remediation-roadmap-authoring-prompt.md          |
+| M0        | R2 审计编排基线（矩阵/工具基线/绿色基线/arm2-index）                   | `done` | `docs/context/codebase-map.md`                   | —                   | audit-remediation-roadmap-authoring-prompt.md          |
 | MA1.1     | 结构层—core 簇依赖、边界、导出面、schema 契约审计                      | `todo` | flux-runtime-module-boundaries.md                | M0                  | deep-audit-prompts.md                                  |
 | MA1.2     | 结构层—runtime 簇依赖、边界、导出面审计                                | `todo` | flux-runtime-module-boundaries.md                | M0                  | deep-audit-prompts.md                                  |
 | MA1.3     | 结构层—basic 渲染器定义字段与注册完整性审计                            | `todo` | renderer-runtime.md                              | M0                  | flux-component-design-review-prompt.md                 |
