@@ -46,6 +46,8 @@ export * from './components/ui/slider.js';
 export * from './components/ui/separator.js';
 export * from './components/ui/sheet.js';
 export { shouldCloseOnRelease } from './components/ui/sheet-gesture-close.js';
+export { useScrollMask, type ScrollMaskState, type ScrollMaskAxis } from './hooks/use-scroll-mask.js';
+export { ScrollMask, type ScrollMaskProps } from './components/ui/scroll-mask.js';
 export * from './components/ui/sidebar.js';
 export * from './components/ui/skeleton.js';
 export * from './components/ui/spinner.js';

@@ -1,6 +1,6 @@
 # Mobile Native Components Roadmap（移动端原生组件扩展 M6–M12）
 
-> Last Updated: 2026-10-20（M6–M9 `done`；M10/M11 经人确认转 `todo` 进入执行队列：人指令"执行 mobile-roadmap 直到彻底完成，每个工作项拟制一个计划，每计划完成自动提交"；M12 维持 demand-gated `proposed` 不排期）
+> Last Updated: 2026-10-20（M6–M10 `done`；M11 经人确认转 `todo` 进入执行队列：人指令"执行 mobile-roadmap 直到彻底完成，每个工作项拟制一个计划，每计划完成自动提交"；M12 维持 demand-gated `proposed` 不排期）
 > Source: `docs/analysis/2026-10-19-mobile-advanced-libs-deep-research.md`（vant / antd-mobile / nutui / arco-design-mobile / tdesign-mobile-react / framework7 / ionic-framework / swiper / embla / use-gesture / zarm 源码调研）
 > 关联：`mobile-roadmap.md`（M0–M5 已完成：响应式基线 + 首批 5 个移动原生组件，状态以该文件为准）、`roadmap.md`（主组件 roadmap）
 
@@ -23,7 +23,7 @@
 - M7 Picker 滚轮家族（【命名勘误 2026-10-19：落地实名 wheel- 家族——`picker-view` 内核 + `wheel-picker`/`wheel-date-picker`/`wheel-time-picker`/`wheel-cascader` 派生；原行 picker/date-picker/cascader 为提案时点命名，`picker` 已被 form-advanced 占用、`cascader` 被 L2.6 保留，裁定见 wheel-picker/design.md §2】，4 子项 M7a~M7d）: `done`（2026-10-19，plan `docs/plans/665-mobile-m7-wheel-picker-family-plan.md`，closure audit 两轮 R1 issues 1B+5M → R2 approved）
 - M8 底部面板组（FloatingPanel + FloatingBubble + Sheet/Drawer 小屏手势下拉关闭 + ActionSheet 形态决策，4 子项 M8a~M8d）: `done`（2026-10-19，plan `docs/plans/666-mobile-m8-bottom-panels-plan.md`，closure audit 两轮 R1 issues 1B+3M → R2 approved；【M8c 裁决注记】breakpoints 半开档位不设——多档定位归 floating-panel 锚点；Sheet 手势关闭以 ui 包 opt-in `gestureClose`/`onGestureClose` props 交付，仅 side=bottom）
 - M9 图像与手写组（ImageViewer 手势预览 + Signature，2 子项）: `todo`（2026-10-19 人确认转 `todo`）
-- M10 列表导航组（IndexBar + ScrollMask 渐隐增强，2 子项）: `todo`（2026-10-19 人确认转 `todo`）
+- M10 列表导航组（M10a IndexBar 新增 + M10b ui 层 ScrollMask，2 子项）: `done`（2026-10-20，plan `docs/plans/668-mobile-m10-list-navigation-plan.md`，closure audit 两轮 R1 issues 1B+1M+1m → R2 approved；M10a sticky 顶推/从尾向头两子句 Deferred 注记见 plan Deferred 节）
 - M11 安全输入组（NumberKeyboard + verification-code/passcode 联动，2 子项）: `todo`（2026-10-19 人确认转 `todo`）
 - M12 长尾评估池（SwipeLoad/tapHold/swipe-back/sortable/barrage/water-mark，demand-gated 不排期）: `proposed`（demand-gated，任一项需真实需求 + 人确认后才转 `todo`）
 
@@ -69,10 +69,10 @@
 
 ### M10 — 列表导航组
 
-| Work item | 内容                                                                                                           | 依赖 |
-| --------- | -------------------------------------------------------------------------------------------------------------- | ---- |
-| **M10a**  | IndexBar 字母索引（从尾向头锚点定位 + sticky 顶推 transform + 侧栏非 passive touchmove/elementFromPoint 定位） | —    |
-| **M10b**  | ScrollMask 滚动渐隐（tabs/横向滚动容器两端「还有内容」提示；通用件落 ui/basic 层，不占 mobile 包红线）         | —    |
+| Work item | 内容                                                                                                                                                                                                                | 依赖 |
+| --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---- |
+| **M10a**  | IndexBar 字母索引（侧栏非 passive touchmove/elementFromPoint 定位 + scrollIntoView 联动；**sticky 顶推 transform 与从尾向头方向 Deferred**——sticky 归列表容器样式职责、方向性 watch-only，见 plan 668 Deferred 节） | —    |
+| **M10b**  | ScrollMask 滚动渐隐（tabs/横向滚动容器两端「还有内容」提示；**落地为 ui 层 useScrollMask hook + ScrollMask 组件**，plan 668）                                                                                       | —    |
 
 ### M11 — 安全输入组
 

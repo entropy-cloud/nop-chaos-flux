@@ -7,6 +7,7 @@ import { FloatingPanelRenderer } from './floating-panel.js';
 import { FloatingBubbleRenderer } from './floating-bubble.js';
 import { ActionSheetRenderer } from './action-sheet.js';
 import { ImageViewerRenderer } from './image-viewer.js';
+import { IndexBarRenderer } from './index-bar.js';
 
 /**
  * M7 wheel family + M8 bottom-panel renderer definitions (plan 665/666).
@@ -15,6 +16,41 @@ import { ImageViewerRenderer } from './image-viewer.js';
  * surface.
  */
 export const extendedMobileRendererDefinitions: RegisteredRendererDefinition[] = [
+  {
+    type: 'index-bar',
+    displayName: 'Index Bar',
+    category: 'content',
+    sourcePackage: '@nop-chaos/flux-renderers-mobile',
+    defaultSchema: { type: 'index-bar', items: [] },
+    component: IndexBarRenderer,
+    fields: [
+      { key: 'items', kind: 'prop' },
+      { key: 'targetSelector', kind: 'prop' },
+      {
+        key: 'disabled',
+        kind: 'prop',
+        valueType: 'boolean',
+        contract: { displayName: 'Disabled', shape: { kind: 'boolean' } },
+      },
+      {
+        key: 'onChange',
+        kind: 'event',
+        contract: {
+          displayName: 'On Change',
+          description: 'Dispatched when the located key changes during touch. Payload: { type: "select", index, value, label }.',
+          payload: {
+            kind: 'object',
+            fields: {
+              type: { kind: 'string' },
+              index: { kind: 'number' },
+              value: { kind: 'union', anyOf: [{ kind: 'string' }, { kind: 'number' }] },
+              label: { kind: 'string' },
+            },
+          },
+        },
+      },
+    ],
+  },
   {
     type: 'image-viewer',
     displayName: 'Image Viewer',

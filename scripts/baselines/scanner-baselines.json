@@ -14,16 +14,16 @@
       "2026-10-19 plan 664 (M6 手势基建): discover-audit-suspects 733 -> 734 / find-async-without-failure-path 337 -> 338（同源 +1：flux-renderers-mobile/src/hooks/supports-passive.ts 裸 catch）。该 catch 是 supportsPassiveEvents() 特性探测的**有意识静默回退**——probe getter 未被读取（环境不支持 passive 选项）时 supported=false 并缓存，属探测语义本体而非错误吞噬；镜像 use-map-geojson.ts:49 既有登记同形态。find-test-global-leaks 108 维持（M6 新测试的 ResizeObserver 替换走 vi.stubGlobal 白名单通道，零新增）。",
       "2026-10-19 plan 665 (M7 滚轮家族): discover-audit-suspects 734 -> 754 (+20)、find-async-without-failure-path 338 -> 342 (+4)、find-react19-optimization-candidates 650 维持（曾 +39 后清零，见下）。三族同源，全部位于 flux-renderers-mobile 新增 5 渲染器（picker-view/wheel-picker/wheel-date-picker/wheel-time-picker/wheel-cascader）：①async +4 = confirm 处理器中能力守卫的 `void form.validateField(name, 'change')`（ValidationScopeRuntime 无此方法——按 plan 665 review m4 以能力探测调用，触发即交由表单内部失败路径）；②audit +20 = 4 处 validateField + 12 处 FieldFrame 字段包裹形态（import/开/闭标签 × 4 文件——FieldFrame 是 flux-react 官方字段壳，mobile 包经它接入表单 label/name 契约）+ 4 处包 CSS wheel 调色板规则（bare-data-slot-selector 分桶，MA-06/NEW-MM-06 豁免通道；与 styling +4 同源双计）；③find-react19-optimization-candidates 650 维持——家族曾 +39（新组件 useCallback/useMemo 冗余），已按 `redundant-use-callback` 指引与 AGENTS React19-first 规则改为普通函数（Compiler 接管记忆化），全量回落到基线内零新增。无未处理异步失败路径。",
       "2026-10-19 plan 666 (M8 底部面板组): find-styling-suspects 244 -> 247 (+3 = floating-panel/bubble/handle 包 CSS 调色板规则，MA-06/NEW-MM-06 豁免通道同族)、discover-audit-suspects 754 -> 757 (+3 = styles.css 3 条 floating 包 CSS 调色板规则（bare-data-slot-selector 分桶，与 styling +3 同源双计）；action-sheet.tsx 零 suspect)、find-react19-optimization-candidates 650 -> 656 (+6 = action-sheet 4 处 redundant-use-callback 改普通函数后回落、floating-panel 1 处 exhaustive-deps 强制 useCallback、ui/sheet.tsx:62 gestureContext useMemo 1 处；构成： action-sheet 与 floating-panel/bubble 中 exhaustive-deps 强制的 useCallback/useMemo——applyHeight 为 effect 依赖、anchors/items/bounds 为 useCallback 依赖，非冗余记忆化；action-sheet 的 4 处冗余 useCallback 已按 redundant-use-callback 指引改普通函数后回落)。无未处理异步失败路径。",
-      "2026-10-20 plan 667 (M9 图像与手写): find-react19-optimization-candidates 656 -> 657 (+1 = image-viewer.tsx 受控 effect 对 window.innerWidth/innerHeight 的读取，exhaustive-deps 语义下保留；其余 6 处 useCallback 候选已按 redundant-use-callback 指引改普通函数回落)。无未处理异步失败路径；R2 补记：image-viewer 字面色迁包 CSS 后 find-styling-suspects 247 -> 249 (+2 = image-viewer bg/indicator 调色板规则)、discover-audit-suspects 757 -> 759 (+2 同源双计)。无未处理异步失败路径。"
+      "2026-10-20 plan 667 (M9 图像与手写): find-react19-optimization-candidates 656 -> 657 (+1 = image-viewer.tsx 受控 effect 对 window.innerWidth/innerHeight 的读取，exhaustive-deps 语义下保留；其余 6 处 useCallback 候选已按 redundant-use-callback 指引改普通函数回落)。无未处理异步失败路径；R2 补记：image-viewer 字面色迁包 CSS 后 find-styling-suspects 247 -> 249 (+2 = image-viewer bg/indicator 调色板规则)、discover-audit-suspects 757 -> 759 (+2 同源双计)。无未处理异步失败路径；R2 补记：plan 668 index-bar 落地后 react19 657 -> 661 (+4 = index-bar locate 链 useCallback 候选，同族)；R2 补记：index-bar 字面色迁包 CSS 后 find-styling-suspects 249 -> 252 (+3 = index-bar key/active/bubble 调色板规则)、discover-audit-suspects 759 -> 762 (+3 同源双计含 data-selected/data-index-key 属性选择器)。无未处理异步失败路径。\""
     ]
   },
   "scanners": {
-    "find-styling-suspects": 249,
-    "discover-audit-suspects": 759,
+    "find-styling-suspects": 252,
+    "discover-audit-suspects": 762,
     "find-test-global-leaks": 108,
     "find-todo-exitless": 1,
     "find-as-any-casts": 41,
     "find-async-without-failure-path": 342,
-    "find-react19-optimization-candidates": 657
+    "find-react19-optimization-candidates": 661
   }
 }

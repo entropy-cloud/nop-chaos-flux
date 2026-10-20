@@ -263,3 +263,22 @@ export interface ImageViewerSchema extends BaseSchema {
   /** 页码变更。payload: { type:'change', index } */
   onChange?: ActionSchema | ActionSchema[];
 }
+
+export interface IndexBarItem {
+  [key: string]: import('@nop-chaos/flux-core').SchemaValue;
+  label: string;
+  value: string | number;
+}
+
+export interface IndexBarSchema extends BaseSchema {
+  type: 'index-bar';
+  /** 索引键列表 */
+  items?: IndexBarItem[];
+  /** 联动滚动容器选择器：键定位后滚动容器内 `[data-index-anchor="{index}"]` 元素至视口顶部 */
+  targetSelector?: string;
+  disabled?: boolean;
+  /** 键定位/滑动变更。payload: { type:'select', index, value, label } */
+  onChange?: ActionSchema | ActionSchema[];
+}
+
+export type ScrollMaskAxis = 'x' | 'y';

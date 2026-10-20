@@ -348,6 +348,13 @@ export const DOMAIN_RENDERER_ROUTES: DomainRouteEntry[] = [
       'Comprehensive mobile showcase: M5 native renderers (pull-refresh, infinite-scroll, swipe-cell, countdown, notice-bar) + M1 responsive controls + M2 touch adaptation + M3 layout skeletons + M4 data display + content/layout renderers — all in one page.',
   },
   {
+    id: 'm10-list-navigation',
+    title: 'M10 List Navigation',
+    eyebrow: 'Mobile Navigation (M10)',
+    description:
+      'M10 list navigation: index-bar letter sidebar with non-passive touchmove elementFromPoint key location + scrollIntoView linkage, and ui-layer ScrollMask edge fade for horizontally scrollable containers.',
+  },
+  {
     id: 'm9-image-signature',
     title: 'M9 Image & Signature',
     eyebrow: 'Mobile Image (M9)',

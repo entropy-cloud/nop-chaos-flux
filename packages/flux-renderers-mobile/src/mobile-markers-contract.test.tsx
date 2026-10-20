@@ -200,6 +200,7 @@ describe('mobile package public API surface (MM-11)', () => {
         'FloatingBubbleRenderer',
         'FloatingPanelRenderer',
         'ImageViewerRenderer',
+        'IndexBarRenderer',
         'InfiniteScrollRenderer',
         'MOMENTUM_DECELERATION',
         'MomentumAnimator',

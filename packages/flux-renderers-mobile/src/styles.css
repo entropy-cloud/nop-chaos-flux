@@ -145,3 +145,18 @@ body.nop-scroll-lock {
 [data-slot='image-viewer-indicator'] {
   color: var(--nop-image-viewer-indicator-fg, #ffffff);
 }
+
+/* M10 (plan 668): index-bar palette — package-local defaults via public
+ * override variables (same model as wheel-picker / floating-panel). */
+[data-slot='index-bar-key'] {
+  color: var(--nop-index-bar-fg, #374151);
+}
+
+[data-slot='index-bar-key'][data-active='true'] {
+  color: var(--nop-index-bar-active-fg, #2563eb);
+}
+
+[data-slot='index-bar-bubble'] {
+  background: var(--nop-index-bar-bubble-bg, #2563eb);
+  color: var(--nop-index-bar-bubble-fg, #ffffff);
+}

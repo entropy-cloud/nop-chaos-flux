@@ -14,6 +14,9 @@ export type {
   ActionSheetItem,
   ActionSheetSchema,
   ImageViewerSchema,
+  IndexBarItem,
+  IndexBarSchema,
+  ScrollMaskAxis,
   PullRefreshSchema,
   InfiniteScrollSchema,
   SwipeCellSchema,
@@ -36,6 +39,7 @@ export { FloatingPanelRenderer } from './floating-panel.js';
 export { FloatingBubbleRenderer } from './floating-bubble.js';
 export { ActionSheetRenderer } from './action-sheet.js';
 export { ImageViewerRenderer } from './image-viewer.js';
+export { IndexBarRenderer } from './index-bar.js';
 export { PickerViewRenderer } from './picker-view.js';
 
 export { mobileRendererDefinitions } from './mobile-renderer-definitions.js';
