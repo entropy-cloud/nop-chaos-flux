@@ -104,7 +104,7 @@ Targets: `docs/audits/2026-10-20-HHmm-arm2-MA3.18-cross-cluster-quality.md`、`d
 - [x] 报告按附录 A 格式（`docs/skills/deep-audit-prompts.md`）落盘（收口补记门禁节 + 复核统计），文件名含时间戳
 - [x] arm2-index：MA3.18 行回填；P1（如有）入索引区（精确行编辑）
 - [x] daily log 追加 MA3.18 条目（计数=报告实数）——**含 MA3 代码质量层收官注记**
-- [ ] 执行 Closure Gates 预声明的 BUILD_VERIFY（全量 `pnpm test`，Cross-Cutting 9 强制的 Proof 交付物，Rule 18 交付物耦合偏差显式豁免注）并登记
+- [x] 执行 Closure Gates 预声明的 BUILD_VERIFY（全量 `pnpm test`，Cross-Cutting 9 强制的 Proof 交付物，Rule 18 交付物耦合偏差显式豁免注）并登记
 
 Exit Criteria:
 
@@ -113,7 +113,7 @@ Exit Criteria:
 
 ### Phase 4 - 收口与状态流转
 
-Status: in progress
+Status: completed
 Targets: roadmap、本 plan、git
 
 - Item Types: `Proof | Follow-up`
@@ -140,17 +140,19 @@ Exit Criteria:
 
 > 全量验证归此处（Rule 18）；BUILD_VERIFY 按 Cross-Cutting 9 预声明。
 
-- [ ] arm2 报告落盘且 Phase 1–3 Exit Criteria 全部满足（双风格两段齐备、收口补记门禁节实数）
-- [ ] arm2-index 登记（MA3.18 行 + P1 行如适用）与报告逐条一致
-- [ ] BUILD_VERIFY 全量 `pnpm test` 通过并登记
-- [ ] 执行期间核对 `check:react19`=0 / as-any 六包=0 / oversized 六包 unique=5 件存量口径 / TODO=0
-- [ ] 不存在被静默降级的 in-scope 项（P2/P3 只入报告 deferred 区附定级理由）
+- [x] arm2 报告落盘且 Phase 1–3 Exit Criteria 全部满足（双风格两段齐备、收口补记门禁节实数）
+- [x] arm2-index 登记（MA3.18 行 + P1 行如适用）与报告逐条一致
+- [x] BUILD_VERIFY 全量 `pnpm test` 通过并登记
+- [x] 执行期间核对 `check:react19`=0 / as-any 六包=0 / oversized 六包 unique=5 件存量口径 / TODO=0
+- [x] 不存在被静默降级的 in-scope 项（P2/P3 只入报告 deferred 区附定级理由）
 - [x] roadmap Work Item Status MA3.18 行已流转 `done`（closure audit 通过后）
 - [x] 由独立子代理（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项（首轮 `issues` 0B/2M/1m——R-A roadmap 流转未落盘+假勾、R-B DRR 未录 R1-R4、m1 daily log 重复标题〔字面串盲替同族第三起〕→ 行索引定位清零 → 残留验证 `approved` 0B/0M/0m）
-- [ ] `pnpm typecheck`（既有登记红 playground vite.config 口径——零新增即通过）
-- [ ] `pnpm build`（同上）
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] `pnpm typecheck`（既有登记红 playground vite.config 口径——零新增即通过）
+- [x] `pnpm build`（同上）
+- [x] `pnpm lint`
+- [x] `pnpm test`
+
+> 回写勘误（2026-10-21）：以上 Phase 3 BUILD_VERIFY 项、Phase 4 Status、Closure Gates 9 项的勾选在 2026-10-20 收口提交 `4f4682b29` 中未落盘（Closure Status Note 与提交说明均已载明实测证据：test 82/82、lint 44/44、typecheck/build 既有登记红零新增、报告/arm2-index/log 已落）；同次提交 roadmap MA3.18 行亦停在 `planned` 未流转 `done`。本次按 plan guide Rule 21「修复事实性错误」口径就地补齐，不改写任何证据内容。
 
 ## Deferred But Adjudicated
 
