@@ -182,4 +182,66 @@ describe('createInputComponentHandle', () => {
     const result = await handle.capabilities.invoke('bogus', undefined, {});
     expect(result.ok).toBe(false);
   });
+  it('undo skips when not interactive and invokes bindings.undo when interactive (plan 667 M9b)', async () => {
+    const undo = vi.fn();
+    const handle = createInputComponentHandle({
+      id: 'sig',
+      name: 'sig',
+      type: 'input-signature',
+      methods: ['clear', 'reset', 'undo', 'export'],
+      bindingsHolder: makeHolder({ isInteractive: () => false, undo }),
+    });
+    const skipped = await invoke(handle, 'undo');
+    expect(skipped).toEqual({ ok: true, skipped: true });
+    expect(undo).not.toHaveBeenCalled();
+
+    const interactive = createInputComponentHandle({
+      id: 'sig2',
+      name: 'sig2',
+      type: 'input-signature',
+      methods: ['clear', 'reset', 'undo', 'export'],
+      bindingsHolder: makeHolder({ isInteractive: () => true, undo }),
+    });
+    const result = await invoke(interactive, 'undo');
+    expect(result).toEqual({ ok: true });
+    expect(undo).toHaveBeenCalledTimes(1);
+  });
+
+  it('export reports not-visible when hidden and returns the bound data URL when visible (plan 667 M9b)', async () => {
+    const handle = createInputComponentHandle({
+      id: 'sig3',
+      name: 'sig3',
+      type: 'input-signature',
+      methods: ['clear', 'reset', 'export'],
+      bindingsHolder: makeHolder({ isVisible: () => false, export: () => 'data:image/png;base64,X' }),
+    });
+    const hidden = await invoke(handle, 'export');
+    expect(hidden).toEqual({ ok: false, code: 'not-visible' });
+
+    const visible = createInputComponentHandle({
+      id: 'sig4',
+      name: 'sig4',
+      type: 'input-signature',
+      methods: ['clear', 'reset', 'export'],
+      bindingsHolder: makeHolder({ isVisible: () => true, export: () => 'data:image/png;base64,X' }),
+    });
+    const result = await invoke(visible, 'export');
+    expect(result).toEqual({ ok: true, value: 'data:image/png;base64,X' });
+  });
+
+  it('empty-stack undo is a no-op that still reports ok (signature zero-stroke semantics)', async () => {
+    const undo = vi.fn();
+    const handle = createInputComponentHandle({
+      id: 'sig5',
+      name: 'sig5',
+      type: 'input-signature',
+      methods: ['clear', 'reset', 'undo', 'export'],
+      bindingsHolder: makeHolder({ isInteractive: () => true, undo }),
+    });
+    // the signature renderer's own undo() no-ops on an empty stack; the
+    // handle channel faithfully forwards, reporting ok either way
+    const result = await invoke(handle, 'undo');
+    expect(result).toEqual({ ok: true });
+  });
+
 });

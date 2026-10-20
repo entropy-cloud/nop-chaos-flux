@@ -6,6 +6,7 @@ import { WheelCascaderRenderer } from './wheel-cascader.js';
 import { FloatingPanelRenderer } from './floating-panel.js';
 import { FloatingBubbleRenderer } from './floating-bubble.js';
 import { ActionSheetRenderer } from './action-sheet.js';
+import { ImageViewerRenderer } from './image-viewer.js';
 
 /**
  * M7 wheel family + M8 bottom-panel renderer definitions (plan 665/666).
@@ -14,6 +15,60 @@ import { ActionSheetRenderer } from './action-sheet.js';
  * surface.
  */
 export const extendedMobileRendererDefinitions: RegisteredRendererDefinition[] = [
+  {
+    type: 'image-viewer',
+    displayName: 'Image Viewer',
+    category: 'content',
+    sourcePackage: '@nop-chaos/flux-renderers-mobile',
+    defaultSchema: { type: 'image-viewer', images: [] },
+    component: ImageViewerRenderer,
+    fields: [
+      { key: 'images', kind: 'prop' },
+      {
+        key: 'open',
+        kind: 'prop',
+        valueType: 'boolean',
+        contract: { displayName: 'Open', shape: { kind: 'boolean' } },
+      },
+      { key: 'initialIndex', kind: 'prop' },
+      {
+        key: 'disabled',
+        kind: 'prop',
+        valueType: 'boolean',
+        contract: { displayName: 'Disabled', shape: { kind: 'boolean' } },
+      },
+      {
+        key: 'onClose',
+        kind: 'event',
+        contract: {
+          displayName: 'On Close',
+          description: 'Dispatched when the viewer closes (swipe-down or mask). Payload: { type: "close", index }.',
+          payload: {
+            kind: 'object',
+            fields: {
+              type: { kind: 'string' },
+              index: { kind: 'number' },
+            },
+          },
+        },
+      },
+      {
+        key: 'onChange',
+        kind: 'event',
+        contract: {
+          displayName: 'On Change',
+          description: 'Dispatched when the visible page changes. Payload: { type: "change", index }.',
+          payload: {
+            kind: 'object',
+            fields: {
+              type: { kind: 'string' },
+              index: { kind: 'number' },
+            },
+          },
+        },
+      },
+    ],
+  },
   {
     type: 'wheel-picker',
     displayName: 'Wheel Picker',

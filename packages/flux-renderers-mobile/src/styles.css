@@ -135,3 +135,13 @@ body.nop-scroll-lock {
   border-radius: 2px;
   background: var(--nop-floating-panel-handle, #d1d5db);
 }
+
+/* M9 (plan 667): image-viewer palette — package-local defaults via public
+ * override variables (same model as notice-bar / wheel-picker / floating). */
+[data-slot='image-viewer'] {
+  background: var(--nop-image-viewer-bg, rgba(0, 0, 0, 0.95));
+}
+
+[data-slot='image-viewer-indicator'] {
+  color: var(--nop-image-viewer-indicator-fg, #ffffff);
+}

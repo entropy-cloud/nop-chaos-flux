@@ -50,6 +50,8 @@
 
 ## 8. 事件、动作与组件句柄能力
 
+- **plan 667 M9b 增强**：句柄 methods 扩展 `undo`（弹出最后一笔并重绘；空栈 no-op）与 `export`（返回当前 PNG dataURL，空栈 `undefined`）；笔画绘制由 lineTo 链升级为**二次贝塞尔中点平滑**（quadraticCurveTo，每段以相邻点中点为锚）。表单值通道不变（笔画结束 commit dataURL；零笔画 undefined 不变式保持）。
+
 组件句柄：`clear`（清空笔画并提交 undefined）、`reset`（回绑当前值）。绘制经原生 pointer 事件（pointerdown/move/up/cancel/leave 绑定于 canvas 元素，不经 React 合成委派）。
 
 ## 9. 数据源、表达式、导入能力接入点

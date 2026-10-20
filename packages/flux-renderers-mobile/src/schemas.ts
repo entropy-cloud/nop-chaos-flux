@@ -248,3 +248,18 @@ export interface ActionSheetSchema extends BaseSchema {
   onSelect?: ActionSchema | ActionSchema[];
   onCancel?: ActionSchema | ActionSchema[];
 }
+
+export interface ImageViewerSchema extends BaseSchema {
+  type: 'image-viewer';
+  /** 图片 URL 列表 */
+  images?: string[];
+  /** 受控打开 */
+  open?: boolean;
+  /** 打开时定位的页（0 基），越界钳制 */
+  initialIndex?: number;
+  disabled?: boolean;
+  /** 关闭（下滑超阈值/遮罩）。payload: { type:'close', index } */
+  onClose?: ActionSchema | ActionSchema[];
+  /** 页码变更。payload: { type:'change', index } */
+  onChange?: ActionSchema | ActionSchema[];
+}

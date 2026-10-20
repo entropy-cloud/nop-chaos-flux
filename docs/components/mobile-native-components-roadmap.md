@@ -1,6 +1,6 @@
 # Mobile Native Components Roadmap（移动端原生组件扩展 M6–M12）
 
-> Last Updated: 2026-10-19（M6/M7/M8 `done`；M9–M11 经人确认转 `todo` 进入执行队列：人指令"执行 mobile-roadmap 直到彻底完成，每个工作项拟制一个计划，每计划完成自动提交"；M12 维持 demand-gated `proposed` 不排期）
+> Last Updated: 2026-10-20（M6–M9 `done`；M10/M11 经人确认转 `todo` 进入执行队列：人指令"执行 mobile-roadmap 直到彻底完成，每个工作项拟制一个计划，每计划完成自动提交"；M12 维持 demand-gated `proposed` 不排期）
 > Source: `docs/analysis/2026-10-19-mobile-advanced-libs-deep-research.md`（vant / antd-mobile / nutui / arco-design-mobile / tdesign-mobile-react / framework7 / ionic-framework / swiper / embla / use-gesture / zarm 源码调研）
 > 关联：`mobile-roadmap.md`（M0–M5 已完成：响应式基线 + 首批 5 个移动原生组件，状态以该文件为准）、`roadmap.md`（主组件 roadmap）
 
@@ -62,10 +62,10 @@
 
 ### M9 — 图像与手写组
 
-| Work item | 内容                                                                                                                         | 依赖 |
-| --------- | ---------------------------------------------------------------------------------------------------------------------------- | ---- |
-| **M9a**   | ImageViewer 手势预览（双指以触点为不动点缩放 matrix + 双击 1↔2 + 横翻 + 下滑关闭 + 缩放态冻结横翻仲裁 + iOS 缩放防模糊补偿） | M6   |
-| **M9b**   | Signature 签名（canvas + 笔迹平滑 + undo + 导出 png + 表单字段接入；vant 2026-03 undo 增强为基线）                           | —    |
+| Work item | 内容                                                                                                                                                                                                                                                                          | 依赖 |
+| --------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---- |
+| **M9a**   | ImageViewer 手势预览（双指以触点为不动点缩放 matrix + 双击 1↔2 + 横翻 + 下滑关闭 + 缩放态冻结横翻仲裁；**iOS 缩放防模糊补偿 Deferred**——optimization candidate，见 plan 667 Deferred 节）                                                                                     | M6   |
+| **M9b**   | 【勘误 2026-10-20：落地为既有 `input-signature`（plan 507）能力增强——二次贝塞尔中点平滑 + undo/export 句柄通道；不新建 mobile 签名组件（plan 507 已覆盖，双实现红线同源）】Signature 签名（canvas + 笔迹平滑 + undo + 导出 png + 表单字段接入；vant 2026-03 undo 增强为基线） | —    |
 
 ### M10 — 列表导航组
 

@@ -12,7 +12,9 @@ interface StrokePoint {
 }
 
 const STRING_ADAPTER = stringAdapter();
-const SIGNATURE_METHODS = ['clear', 'reset'] as const;
+// plan 667 M9b: `undo` pops the stroke stack; `export` returns the current
+// PNG data URL (undefined when the canvas is empty).
+const SIGNATURE_METHODS = ['clear', 'reset', 'undo', 'export'] as const;
 const DEFAULT_PEN_COLOR = '#1f2937';
 const DEFAULT_PEN_WIDTH = 2;
 const DEFAULT_HEIGHT = 160;
@@ -82,9 +84,15 @@ export function InputSignatureRenderer(props: RendererComponentProps<InputSignat
       }
       ctx.beginPath();
       ctx.moveTo(stroke[0].x, stroke[0].y);
-      for (const point of stroke.slice(1)) {
-        ctx.lineTo(point.x, point.y);
+      // plan 667 M9b: quadratic midpoint smoothing — each segment curves to
+      // the real point, using the midpoint of the previous/next pair as the
+      // control anchor, replacing the jagged lineTo chain.
+      for (let i = 1; i < stroke.length - 1; i += 1) {
+        const midX = (stroke[i].x + stroke[i + 1].x) / 2;
+        const midY = (stroke[i].y + stroke[i + 1].y) / 2;
+        ctx.quadraticCurveTo(stroke[i].x, stroke[i].y, midX, midY);
       }
+      ctx.lineTo(stroke[stroke.length - 1].x, stroke[stroke.length - 1].y);
       ctx.stroke();
     }
     ctx.restore();
@@ -282,6 +290,15 @@ export function InputSignatureRenderer(props: RendererComponentProps<InputSignat
     resetValue: () => {
       handlers.onChange(value);
       return { fellBackToDefault: false };
+    },
+    undo: () => {
+      undo();
+    },
+    export: () => {
+      const canvas = canvasRef.current;
+      return strokesRef.current.length === 0
+        ? undefined
+        : (canvas?.toDataURL('image/png') ?? undefined);
     },
   });
 

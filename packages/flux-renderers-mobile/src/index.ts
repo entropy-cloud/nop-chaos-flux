@@ -13,6 +13,7 @@ export type {
   FloatingBubbleSchema,
   ActionSheetItem,
   ActionSheetSchema,
+  ImageViewerSchema,
   PullRefreshSchema,
   InfiniteScrollSchema,
   SwipeCellSchema,
@@ -34,6 +35,7 @@ export { WheelCascaderRenderer } from './wheel-cascader.js';
 export { FloatingPanelRenderer } from './floating-panel.js';
 export { FloatingBubbleRenderer } from './floating-bubble.js';
 export { ActionSheetRenderer } from './action-sheet.js';
+export { ImageViewerRenderer } from './image-viewer.js';
 export { PickerViewRenderer } from './picker-view.js';
 
 export { mobileRendererDefinitions } from './mobile-renderer-definitions.js';
