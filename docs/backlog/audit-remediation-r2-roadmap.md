@@ -53,7 +53,7 @@
 | MA3.5     | 代码质量—renderers-basic + renderers-form                              | `done` | renderer-runtime.md                              | M0                  | code-quality-audit-prompt.md                           |
 | MA3.6     | 代码质量—renderers-form-advanced + renderers-data                      | `done` | renderer-runtime.md                              | M0                  | code-quality-audit-prompt.md                           |
 | MA3.7     | 代码质量—content + layout + dashboard + pivot + mobile                 | `done` | renderer-runtime.md                              | M0                  | code-quality-audit-prompt.md                           |
-| MA3.8     | 代码质量—renderers-industrial                                          | `todo` | renderer-runtime.md                              | M0                  | code-quality-audit-prompt.md                           |
+| MA3.8     | 代码质量—renderers-industrial                                          | `done` | renderer-runtime.md                              | M0                  | code-quality-audit-prompt.md                           |
 | MA3.9     | 代码质量—renderers-3d + renderers-graph + renderers-map                | `todo` | renderer-runtime.md                              | M0                  | code-quality-audit-prompt.md                           |
 | MA3.10    | 代码质量—renderers-scheduling                                          | `todo` | renderer-runtime.md                              | M0                  | code-quality-audit-prompt.md                           |
 | MA3.11    | 代码质量—renderers-ai（含 message engine）                             | `todo` | renderer-runtime.md                              | M0                  | code-quality-audit-prompt.md                           |
