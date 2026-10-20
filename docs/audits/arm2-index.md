@@ -1,7 +1,7 @@
 # Audit Remediation R2 Master Index (arm2-index)
 
 > Status: active（M0 / plan 653 初始化骨架；随各工作项产出滚动登记）
-> Last Updated: 2026-10-20（滚动：MA1.1–MA1.9 收官 + MA2 运行时层 MA2.1–2.4 四项收官 + MA3.1–3.13 登记——P1 累计 **6** 条 open〔MA1.1/1.2/1.5/1.7/2.1/2.3〕待 MR；MA1.3/1.4/1.6/1.8/1.9/2.2/2.4/3.1–3.13 P1=0 仅报告行）
+> Last Updated: 2026-10-20（滚动：MA1.1–MA1.9 收官 + MA2 运行时层 MA2.1–2.4 四项收官 + MA3.1–3.14 登记——P1 累计 **6** 条 open〔MA1.1/1.2/1.5/1.7/2.1/2.3〕待 MR；MA1.3/1.4/1.6/1.8/1.9/2.2/2.4/3.1–3.14 P1=0 仅报告行）
 > Roadmap: `docs/backlog/audit-remediation-r2-roadmap.md`（工作项状态的唯一权威 = 其 Work Item Status 表；本索引不携带状态，只登记报告、finding 与基线）
 > Mission: `missions/audit-remediation-r2.json`
 > M0 Plan: `docs/plans/653-audit-r2-m0-orchestration-baseline-plan.md`
@@ -69,7 +69,7 @@
 | MA3.11    | `docs/audits/2026-10-20-1230-arm2-MA3.11-ai-quality.md`                                  |
 | MA3.12    | `docs/audits/2026-10-20-1315-arm2-MA3.12-flow-designer-quality.md`                       |
 | MA3.13    | `docs/audits/2026-10-20-1400-arm2-MA3.13-page-designer-quality.md`                       |
-| MA3.14    | —                                                                                        |
+| MA3.14    | `docs/audits/2026-10-20-1500-arm2-MA3.14-spreadsheet-quality.md`                         |
 | MA3.15    | —                                                                                        |
 | MA3.16    | —                                                                                        |
 | MA3.17    | —                                                                                        |
