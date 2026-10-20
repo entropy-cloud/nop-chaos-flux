@@ -61,7 +61,7 @@
 | MA3.13    | 代码质量—page-designer-core + page-designer-renderers                  | `done` | frontend-programming-model.md                    | M0                  | code-quality-audit-prompt.md                           |
 | MA3.14    | 代码质量—spreadsheet-core + spreadsheet-renderers                      | `done` | report-designer/design.md                        | M0                  | code-quality-audit-prompt.md                           |
 | MA3.15    | 代码质量—word-editor-core + word-editor-renderers                      | `done` | report-designer/design.md                        | M0                  | code-quality-audit-prompt.md                           |
-| MA3.16    | 代码质量—report-designer-core + report-designer-renderers              | `todo` | report-designer/design.md                        | M0                  | code-quality-audit-prompt.md                           |
+| MA3.16    | 代码质量—report-designer-core + report-designer-renderers              | `done` | report-designer/design.md                        | M0                  | code-quality-audit-prompt.md                           |
 | MA3.17    | 代码质量—ui + theme-tokens + tailwind-preset + flux-i18n               | `todo` | styling-system.md                                | M0                  | code-quality-audit-prompt.md                           |
 | MA3.18    | 代码质量—code-editor + nop-debugger + print ×2 + xlang ×2              | `todo` | frontend-programming-model.md                    | M0                  | code-quality-audit-prompt.md                           |
 | MA4.1     | 测试层—core+runtime 簇契约覆盖审计                                     | `todo` | flux-core.md                                     | M0                  | unit-test-logic-and-contract-coverage-audit-prompt.md  |
