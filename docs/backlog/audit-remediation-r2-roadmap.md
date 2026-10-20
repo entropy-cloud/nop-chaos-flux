@@ -56,7 +56,7 @@
 | MA3.8     | 代码质量—renderers-industrial                                          | `done` | renderer-runtime.md                              | M0                  | code-quality-audit-prompt.md                           |
 | MA3.9     | 代码质量—renderers-3d + renderers-graph + renderers-map                | `done` | renderer-runtime.md                              | M0                  | code-quality-audit-prompt.md                           |
 | MA3.10    | 代码质量—renderers-scheduling                                          | `done` | renderer-runtime.md                              | M0                  | code-quality-audit-prompt.md                           |
-| MA3.11    | 代码质量—renderers-ai（含 message engine）                             | `todo` | renderer-runtime.md                              | M0                  | code-quality-audit-prompt.md                           |
+| MA3.11    | 代码质量—renderers-ai（含 message engine）                             | `done` | renderer-runtime.md                              | M0                  | code-quality-audit-prompt.md                           |
 | MA3.12    | 代码质量—flow-designer-core + flow-designer-renderers + editor-core    | `todo` | flow-designer/design.md                          | M0                  | code-quality-audit-prompt.md                           |
 | MA3.13    | 代码质量—page-designer-core + page-designer-renderers                  | `todo` | frontend-programming-model.md                    | M0                  | code-quality-audit-prompt.md                           |
 | MA3.14    | 代码质量—spreadsheet-core + spreadsheet-renderers                      | `todo` | report-designer/design.md                        | M0                  | code-quality-audit-prompt.md                           |
