@@ -16,6 +16,7 @@ export type {
   ImageViewerSchema,
   IndexBarItem,
   IndexBarSchema,
+  NumberKeyboardSchema,
   ScrollMaskAxis,
   PullRefreshSchema,
   InfiniteScrollSchema,
@@ -40,6 +41,7 @@ export { FloatingBubbleRenderer } from './floating-bubble.js';
 export { ActionSheetRenderer } from './action-sheet.js';
 export { ImageViewerRenderer } from './image-viewer.js';
 export { IndexBarRenderer } from './index-bar.js';
+export { NumberKeyboardRenderer } from './number-keyboard.js';
 export { PickerViewRenderer } from './picker-view.js';
 
 export { mobileRendererDefinitions } from './mobile-renderer-definitions.js';

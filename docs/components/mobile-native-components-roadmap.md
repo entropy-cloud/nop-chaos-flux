@@ -1,6 +1,6 @@
 # Mobile Native Components Roadmap（移动端原生组件扩展 M6–M12）
 
-> Last Updated: 2026-10-20（M6–M10 `done`；M11 经人确认转 `todo` 进入执行队列：人指令"执行 mobile-roadmap 直到彻底完成，每个工作项拟制一个计划，每计划完成自动提交"；M12 维持 demand-gated `proposed` 不排期）
+> Last Updated: 2026-10-20（M6–M11 `done`；M12 demand-gated 不排期：人指令"执行 mobile-roadmap 直到彻底完成，每个工作项拟制一个计划，每计划完成自动提交"；M12 维持 demand-gated `proposed` 不排期）
 > Source: `docs/analysis/2026-10-19-mobile-advanced-libs-deep-research.md`（vant / antd-mobile / nutui / arco-design-mobile / tdesign-mobile-react / framework7 / ionic-framework / swiper / embla / use-gesture / zarm 源码调研）
 > 关联：`mobile-roadmap.md`（M0–M5 已完成：响应式基线 + 首批 5 个移动原生组件，状态以该文件为准）、`roadmap.md`（主组件 roadmap）
 
@@ -24,7 +24,7 @@
 - M8 底部面板组（FloatingPanel + FloatingBubble + Sheet/Drawer 小屏手势下拉关闭 + ActionSheet 形态决策，4 子项 M8a~M8d）: `done`（2026-10-19，plan `docs/plans/666-mobile-m8-bottom-panels-plan.md`，closure audit 两轮 R1 issues 1B+3M → R2 approved；【M8c 裁决注记】breakpoints 半开档位不设——多档定位归 floating-panel 锚点；Sheet 手势关闭以 ui 包 opt-in `gestureClose`/`onGestureClose` props 交付，仅 side=bottom）
 - M9 图像与手写组（ImageViewer 手势预览 + Signature，2 子项）: `todo`（2026-10-19 人确认转 `todo`）
 - M10 列表导航组（M10a IndexBar 新增 + M10b ui 层 ScrollMask，2 子项）: `done`（2026-10-20，plan `docs/plans/668-mobile-m10-list-navigation-plan.md`，closure audit 两轮 R1 issues 1B+1M+1m → R2 approved；M10a sticky 顶推/从尾向头两子句 Deferred 注记见 plan Deferred 节）
-- M11 安全输入组（NumberKeyboard + verification-code/passcode 联动，2 子项）: `todo`（2026-10-19 人确认转 `todo`）
+- M11 安全输入组（M11a NumberKeyboard 新增 + M11b 联动对账记录，2 子项）: `done`（2026-10-20，plan `docs/plans/669-mobile-m11-number-keyboard-plan.md`，closure audit 三轮 R1 issues 2B+1M → R2 issues 1M → R3 approved）
 - M12 长尾评估池（SwipeLoad/tapHold/swipe-back/sortable/barrage/water-mark，demand-gated 不排期）: `proposed`（demand-gated，任一项需真实需求 + 人确认后才转 `todo`）
 
 ## Work Items
@@ -76,10 +76,10 @@
 
 ### M11 — 安全输入组
 
-| Work item | 内容                                                                                                                | 依赖 |
-| --------- | ------------------------------------------------------------------------------------------------------------------- | ---- |
-| **M11a**  | NumberKeyboard 数字键盘（自绘虚拟键盘：乱序防窥/小数点/确认键布局；zarm keyboard+keyboard-picker 金融级形态为参照） | —    |
-| **M11b**  | 与 verification-code/passcode 输入联动契约（已有 `verification-code` 渲染器对账，避免双实现）                       | M11a |
+| Work item | 内容                                                                                                                                                                                                               | 依赖 |
+| --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---- |
+| **M11a**  | NumberKeyboard 数字键盘（4 行数字网格 [1-9][. 0 ⌫] + confirm 独立列；randomOrder 乱序防窥 1-9；zarm keyboard+keyboard-picker 金融级形态为参照）                                                                    | —    |
+| **M11b**  | 与 verification-code/passcode 输入联动契约（**落地为对账记录**：verification-code（form 包 InputOTP 域）经 form value 通道集成即可、不改造其内部；passcode 无既有实现无对账对象——见 number-keyboard/design.md §2） | M11a |
 
 ### M12 — 长尾评估池（demand-gated 不排期）
 

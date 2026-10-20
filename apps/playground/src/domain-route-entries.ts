@@ -348,6 +348,13 @@ export const DOMAIN_RENDERER_ROUTES: DomainRouteEntry[] = [
       'Comprehensive mobile showcase: M5 native renderers (pull-refresh, infinite-scroll, swipe-cell, countdown, notice-bar) + M1 responsive controls + M2 touch adaptation + M3 layout skeletons + M4 data display + content/layout renderers — all in one page.',
   },
   {
+    id: 'm11-number-keyboard',
+    title: 'M11 Number Keyboard',
+    eyebrow: 'Mobile Input (M11)',
+    description:
+      'M11 number keyboard: controlled bottom-sheet with a 4-row digit grid (1-9 / . / 0 / delete) + confirm column, randomOrder anti-peeking shuffle (1-9 per mount), decimal toggle, and the M11b verification-code linkage record.',
+  },
+  {
     id: 'm10-list-navigation',
     title: 'M10 List Navigation',
     eyebrow: 'Mobile Navigation (M10)',

@@ -160,3 +160,18 @@ body.nop-scroll-lock {
   background: var(--nop-index-bar-bubble-bg, #2563eb);
   color: var(--nop-index-bar-bubble-fg, #ffffff);
 }
+
+/* M11 (plan 669): number-keyboard palette — package-local defaults via public
+ * override variables (same model as wheel-picker / floating-panel). */
+[data-slot='number-keyboard-key'] {
+  color: var(--nop-number-keyboard-key-fg, #374151);
+}
+
+[data-slot='number-keyboard-key']:active {
+  background: var(--nop-number-keyboard-key-active-bg, #e5e7eb);
+}
+
+[data-slot='number-keyboard-key'] {
+  border-bottom: 1px solid var(--nop-number-keyboard-divider, #e5e7eb);
+  border-right: 1px solid var(--nop-number-keyboard-divider, #e5e7eb);
+}

@@ -282,3 +282,24 @@ export interface IndexBarSchema extends BaseSchema {
 }
 
 export type ScrollMaskAxis = 'x' | 'y';
+
+export interface NumberKeyboardSchema extends BaseSchema {
+  type: 'number-keyboard';
+  /** 受控打开 */
+  open?: boolean;
+  /** 小数点键，默认 true；false 时不渲染 */
+  decimal?: boolean;
+  /** 乱序防窥：数字键每 mount Fisher-Yates 重排（键集不变） */
+  randomOrder?: boolean;
+  /** 确认键禁用态 */
+  confirmDisabled?: boolean;
+  /** 弹层标题 */
+  title?: string;
+  disabled?: boolean;
+  /** 数字/`.`/delete 按键。payload: { type:'key', key, value? }（delete 省略 value） */
+  onKey?: ActionSchema | ActionSchema[];
+  /** 确认键。payload: { type:'confirm' } */
+  onConfirm?: ActionSchema | ActionSchema[];
+  /** 遮罩关闭。payload: { type:'cancel' } */
+  onCancel?: ActionSchema | ActionSchema[];
+}

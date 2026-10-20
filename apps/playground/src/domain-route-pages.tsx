@@ -19,6 +19,7 @@ import { M7WheelPickersDemoPage } from './pages/m7-wheel-pickers-demo';
 import { M8BottomPanelsDemoPage } from './pages/m8-bottom-panels-demo';
 import { M9ImageSignatureDemoPage } from './pages/m9-image-signature-demo';
 import { M10ListNavigationDemoPage } from './pages/m10-list-navigation-demo';
+import { M11NumberKeyboardDemoPage } from './pages/m11-number-keyboard-demo';
 import { MobileComponentsDemoPage } from './pages/mobile-components-demo';
 import { MobileInfrastructureDemoPage } from './pages/mobile-infrastructure-demo';
 import { PerformanceTablePage } from './pages/performance-table-page';
@@ -258,6 +259,7 @@ export const DOMAIN_ROUTE_PAGES: Record<string, (ctx: DomainPageContext) => Reac
   'm8-bottom-panels': (ctx) => <M8BottomPanelsDemoPage onBack={ctx.goHome} />,
   'm9-image-signature': (ctx) => <M9ImageSignatureDemoPage onBack={ctx.goHome} />,
   'm10-list-navigation': (ctx) => <M10ListNavigationDemoPage onBack={ctx.goHome} />,
+  'm11-number-keyboard': (ctx) => <M11NumberKeyboardDemoPage onBack={ctx.goHome} />,
   'barcode-input': (ctx) => <LazyBarcodeDemoPage onBack={ctx.goHome} />,
   'graph-demo': (ctx) => <LazyGraphDemoPage onBack={ctx.goHome} />,
   'map-demo': (ctx) => <LazyMapDemoPage onBack={ctx.goHome} />,

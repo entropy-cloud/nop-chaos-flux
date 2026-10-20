@@ -1687,6 +1687,10 @@ export const enUS: Resource = {
       countdown: {
         noTimeConfig: 'No countdown time configured',
       },
+      numberKeyboard: {
+        confirm: 'Confirm',
+        cancel: 'Cancel',
+      },
       actionSheet: {
         cancel: 'Cancel',
       },

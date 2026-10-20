@@ -205,6 +205,7 @@ describe('mobile package public API surface (MM-11)', () => {
         'MOMENTUM_DECELERATION',
         'MomentumAnimator',
         'NoticeBarRenderer',
+        'NumberKeyboardRenderer',
         'PickerViewRenderer',
         'PullRefreshRenderer',
         'RUBBERBAND_CONSTANT',

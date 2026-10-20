@@ -8,6 +8,7 @@ import { FloatingBubbleRenderer } from './floating-bubble.js';
 import { ActionSheetRenderer } from './action-sheet.js';
 import { ImageViewerRenderer } from './image-viewer.js';
 import { IndexBarRenderer } from './index-bar.js';
+import { NumberKeyboardRenderer } from './number-keyboard.js';
 
 /**
  * M7 wheel family + M8 bottom-panel renderer definitions (plan 665/666).
@@ -16,6 +17,87 @@ import { IndexBarRenderer } from './index-bar.js';
  * surface.
  */
 export const extendedMobileRendererDefinitions: RegisteredRendererDefinition[] = [
+  {
+    type: 'number-keyboard',
+    displayName: 'Number Keyboard',
+    category: 'content',
+    sourcePackage: '@nop-chaos/flux-renderers-mobile',
+    defaultSchema: { type: 'number-keyboard' },
+    component: NumberKeyboardRenderer,
+    fields: [
+      {
+        key: 'open',
+        kind: 'prop',
+        valueType: 'boolean',
+        contract: { displayName: 'Open', shape: { kind: 'boolean' } },
+      },
+      {
+        key: 'decimal',
+        kind: 'prop',
+        valueType: 'boolean',
+        contract: { displayName: 'Decimal', shape: { kind: 'boolean' } },
+      },
+      {
+        key: 'randomOrder',
+        kind: 'prop',
+        valueType: 'boolean',
+        contract: { displayName: 'Random Order', shape: { kind: 'boolean' } },
+      },
+      {
+        key: 'confirmDisabled',
+        kind: 'prop',
+        valueType: 'boolean',
+        contract: { displayName: 'Confirm Disabled', shape: { kind: 'boolean' } },
+      },
+      { key: 'title', kind: 'prop' },
+      {
+        key: 'disabled',
+        kind: 'prop',
+        valueType: 'boolean',
+        contract: { displayName: 'Disabled', shape: { kind: 'boolean' } },
+      },
+      {
+        key: 'onKey',
+        kind: 'event',
+        contract: {
+          displayName: 'On Key',
+          description: "Dispatched for digit/decimal/delete keys. Payload: { type: 'key', key, value? } — delete omits value.",
+          payload: {
+            kind: 'object',
+            fields: {
+              type: { kind: 'string' },
+              key: { kind: 'string' },
+              value: { kind: 'string' },
+            },
+          },
+        },
+      },
+      {
+        key: 'onConfirm',
+        kind: 'event',
+        contract: {
+          displayName: 'On Confirm',
+          description: "Dispatched when the confirm key is pressed. Payload: { type: 'confirm' }.",
+          payload: {
+            kind: 'object',
+            fields: { type: { kind: 'string' } },
+          },
+        },
+      },
+      {
+        key: 'onCancel',
+        kind: 'event',
+        contract: {
+          displayName: 'On Cancel',
+          description: "Dispatched when the mask is tapped. Payload: { type: 'cancel' }.",
+          payload: {
+            kind: 'object',
+            fields: { type: { kind: 'string' } },
+          },
+        },
+      },
+    ],
+  },
   {
     type: 'index-bar',
     displayName: 'Index Bar',
