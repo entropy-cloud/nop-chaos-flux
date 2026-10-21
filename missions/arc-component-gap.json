@@ -1,0 +1,24 @@
+{
+  "name": "arc-component-gap",
+  "description": "Arc 对照控件补充（驱动 docs/backlog/arc-component-gap-roadmap.md）：① 范围——以 Arc（arc-library registry 116 组件，live 实测）对照 flux 154 个注册 renderer type 后的补充线：G1 input-password 强度指示（showStrength 能力扩展）/ G2 inline-edit 落点 / G3 声明式 context-menu / G4 只读高亮 code-block / G5 split-button / G6 列表重排 / G7 image-compare，每控件拆 Design→Implement 两个 work item（先设计后实现），每候选经必要性+一致性分析落 立项/指针/拒绝 三选一裁决；排除 Arc 弹簧动效引擎、Blocks 页面组合、Pro 组件，以及已被既有权威登记的候选（skeleton=missing-components L7.1、toast 容器=L3、mentions/avatar/segmented/comment 等 gap-analysis 裁定，见 roadmap §5.2 指针表）。② 授权——默认 implement；保护区域 plan-first（flux-core/src、schema/contract validation、renderer 定义字段、样式契约）、ask-first（packages/ui/src/index.ts、认证安全），G1I/G5I 触碰 ui 公共导出前须人工确认；P0/P1 缺陷同 plan 自动修复（test-first + 回归）；结构性重构（公共 API/包边界）执行前人工确认；任何新增 retained type 先 amis-baseline-matrix.md 增行/flip（human gate），AI 不得自行 flip。③ 共性插入机制——不适用（线性 roadmap，无 CX-n 共性插入队列；工作项集合的增删重排由人裁决，AI 只标注 flag）。④ 自动修复纪律与豁免裁决沿用 docs/backlog/component-audit-roadmap.md「自动修复机制」节（编号条目 1–8）之等价口径；roadmap/mission 每次修订的共识审查按 docs/skills/roadmap-and-mission-authoring-with-consensus-review.md 步骤 4 执行（独立 fresh session 反复审查至零 Blocker）。交付面按 roadmap §9 交叉纪律与 missing-components 交付铁律 8 项（design.md 先行）。",
+  "roadmapPath": "docs/backlog/arc-component-gap-roadmap.md",
+  "plansDir": "docs/plans",
+  "planGuide": "docs/plans/00-plan-authoring-and-execution-guide.md",
+  "auditsDir": "docs/audits",
+  "contextDir": "docs/context",
+  "moduleDir": "packages",
+  "commands": {
+    "test": "pnpm test",
+    "build": "pnpm build",
+    "lint": "pnpm lint",
+    "typecheck": "pnpm typecheck",
+    "check": "pnpm check"
+  },
+  "prompts": {
+    "multiAudit": "docs/skills/deep-audit-prompts.md",
+    "openAudit": "docs/skills/open-ended-adversarial-review-prompt.md"
+  },
+  "commitFormat": "feat(arc-component-gap): <description>",
+  "model": "glm-5.3-flash",
+  "variant": "max"
+}
