@@ -65,7 +65,7 @@
 | MA3.17    | 代码质量—ui + theme-tokens + tailwind-preset + flux-i18n               | `done` | styling-system.md                                | M0                  | code-quality-audit-prompt.md                           |
 | MA3.18    | 代码质量—code-editor + nop-debugger + print ×2 + xlang ×2              | `done` | frontend-programming-model.md                    | M0                  | code-quality-audit-prompt.md                           |
 | MA4.1     | 测试层—core+runtime 簇契约覆盖审计                                     | `done` | flux-core.md                                     | M0                  | unit-test-logic-and-contract-coverage-audit-prompt.md  |
-| MA4.2     | 测试层—basic 渲染器契约覆盖审计                                        | `todo` | form-validation.md                               | M0                  | unit-test-logic-and-contract-coverage-audit-prompt.md  |
+| MA4.2     | 测试层—basic 渲染器契约覆盖审计                                        | `done` | form-validation.md                               | M0                  | unit-test-logic-and-contract-coverage-audit-prompt.md  |
 | MA4.3     | 测试层—content+mobile+domain+scheduling+ai 契约覆盖审计                | `todo` | renderer-runtime.md                              | M0                  | unit-test-logic-and-contract-coverage-audit-prompt.md  |
 | MA4.4     | 测试层—designer+office+platform+print+xlang 契约覆盖审计               | `todo` | renderer-runtime.md                              | M0                  | unit-test-logic-and-contract-coverage-audit-prompt.md  |
 | MA4.5     | 测试层—全仓 e2e 有效性 + mutation 抽样 + 测试泄漏复扫                  | `todo` | `docs/testing/e2e-standards.md`                  | M0                  | exploratory-e2e-testing-prompt.md                      |

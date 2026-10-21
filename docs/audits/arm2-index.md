@@ -1,7 +1,7 @@
 # Audit Remediation R2 Master Index (arm2-index)
 
 > Status: active（M0 / plan 653 初始化骨架；随各工作项产出滚动登记）
-> Last Updated: 2026-10-21（滚动：**MA4.1 测试层 core+runtime 簇契约覆盖收官**——P1 新增 **9** 条〔P1-MA4.1-001..009〕，累计 **15** 条 open 待 MR；P2×10 + P3 留报告 deferred 区。此前：M0 / MA1.1–1.9 / MA2.1–2.4 / MA3.1–3.18 收官，P1 前 6 条〔MA1.1/1.2/1.5/1.7/2.1/2.3〕，其余仅报告行）
+> Last Updated: 2026-10-21（滚动：**MA4.2 测试层 basic 渲染器簇契约覆盖收官**——P1 新增 **5** 条〔P1-MA4.2-001..005〕，累计 **20** 条 open 待 MR；P2×9 + P3 留报告 deferred 区。此前：M0 / MA1 / MA2 / MA3×18 / MA4.1 收官，前 15 条 P1 = MA1.1/1.2/1.5/1.7/2.1/2.3 + MA4.1-001..009）
 > Roadmap: `docs/backlog/audit-remediation-r2-roadmap.md`（工作项状态的唯一权威 = 其 Work Item Status 表；本索引不携带状态，只登记报告、finding 与基线）
 > Mission: `missions/audit-remediation-r2.json`
 > M0 Plan: `docs/plans/653-audit-r2-m0-orchestration-baseline-plan.md`
@@ -75,7 +75,7 @@
 | MA3.17    | `docs/audits/2026-10-20-1800-arm2-MA3.17-platform-ui-quality.md`                         |
 | MA3.18    | `docs/audits/2026-10-20-1900-arm2-MA3.18-cross-cluster-quality.md`                       |
 | MA4.1     | `docs/audits/2026-10-21-0415-arm2-MA4.1-core-runtime-tests.md`                           |
-| MA4.2     | —                                                                                        |
+| MA4.2     | `docs/audits/2026-10-21-1330-arm2-MA4.2-basic-tests.md`                                  |
 | MA4.3     | —                                                                                        |
 | MA4.4     | —                                                                                        |
 | MA4.5     | —                                                                                        |
@@ -135,6 +135,11 @@
 | P1-MA4.1-007 | flux-react+flux-runtime（imports overlay 写捕获，bug 163）           | 缺陷 open（node-renderer.tsx:191-198 无写透、scope.ts:515-537 只写 ownStore）且无回归守护、无 successor plan——仅 fixture 缓解面被 e2e 钉住；跨 scope 目标解析族（9 份最大族）成员                                                                                                                                                     | 同上                                                                                    | `open` | —      |
 | P1-MA4.1-008 | flux-action-core（错误无通道必 notify 分支，bug 69）                 | action-execution.ts:203 hasDiagnosticChannel 守卫零守护——caughtFailureResults 测试 grep 0 命中，现有 notify 断言全走返回式失败；删守卫（回 bug 69 原状）零测试变红                                                                                                                                                                    | 同上                                                                                    | `open` | —      |
 | P1-MA4.1-009 | arm2-index 工具基线区（audit:mutants 行）                            | stryker vitest 配置 include 经 mergeConfig 数组并集不生效（实测合并=全包 153 件）——M0 登记的 1.63% 测量口径失效不可解读，破坏 MV 对 mutation 基线比较正确性（P1-MA2.1-001 同型）；修复+重测归 MA4.5                                                                                                                                   | 同上                                                                                    | `open` | —      |
+| P1-MA4.2-001 | flux-react node-renderer-resolved（框架 meta 投影 gate）             | 节点级 visible/hidden/when→不渲染 gate（:436）零 schema 级判别测试——28 个含 visible:false 的测试文件全为组件自读面（wizard/columns spot-check）或 mock-prop 层，假分支写反全仓全绿                                                                                                                                                    | `docs/audits/2026-10-21-1330-arm2-MA4.2-basic-tests.md`                                 | `open` | —      |
+| P1-MA4.2-002 | flux-renderers-form（input-signature capability 漂移）               | 注册 SIGNATURE_METHODS 含 undo/export（signature-renderer.tsx:17）但 componentCapabilityContracts 仅声明 clear/reset（definitions :24-36）→ component:undo/export 编译期拒绝（action-selector-validation.ts:50 以声明面为唯一依据）——live defect + 零 pin；open R2 全 C3 24 常量对照仅此 1 例                                         | 同上                                                                                    | `open` | —      |
+| P1-MA4.2-003 | flux-renderers-form-advanced（array-field 标量子项校验链）           | collect/publishScalarArrayItemErrors + recurse-submit（array-field.tsx:431-516，~100 行）全包测试 0 引用；唯一相关件仅断言 label 存在从不触发校验——元数据断言替代行为断言                                                                                                                                                             | 同上                                                                                    | `open` | —      |
+| P1-MA4.2-004 | flux-renderers-data+form（CRUD/Form stale-result 治理族）            | crud-renderer-load.ts:293-302 cancelled settle 分支零测试（loadAction 测试全即时/单 deferred）+ 跨层乱序贯通缺（runtime 单请求 + form-loadaction vi.mock 整体 mock）——慢响应晚到覆盖新页三方全绿（doc action-scope-and-imports.md:664-677）                                                                                           | 同上                                                                                    | `open` | —      |
+| P1-MA4.2-005 | flux-renderers-data（serverPagination 纠正写回）                     | crud-renderer-load.ts:336-343 + crud-renderer-state.ts:330-349 零守护（grep serverPagination 全包测试 0 命中），实现注释自认循环防护 "Fix 3 once implemented" 未落地                                                                                                                                                                  | 同上                                                                                    | `open` | —      |
 
 ## Delegated 指针区
 
