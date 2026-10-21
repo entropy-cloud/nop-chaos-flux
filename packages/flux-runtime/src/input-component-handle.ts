@@ -1,6 +1,8 @@
 import type { ComponentHandle } from '@nop-chaos/flux-core';
 
-export type InputHandleMethod = 'clear' | 'reset' | 'focus' | 'open' | 'scanNow' | 'stopScan' | 'resetWasmPromise';
+// plan 667 M9b: `undo` (pop stroke stack) and `export` (return PNG data URL)
+// extend the signature field's handle surface.
+export type InputHandleMethod = 'clear' | 'reset' | 'focus' | 'open' | 'scanNow' | 'stopScan' | 'resetWasmPromise' | 'undo' | 'export';
 
 export interface InputHandleResetResult {
   fellBackToDefault: boolean;
@@ -16,6 +18,10 @@ export interface InputHandleBindings {
   scanNow?(): void;
   stopScan?(): void;
   resetWasmPromise?(): void;
+  /** Signature: pop the stroke stack and redraw. No-op on an empty stack. */
+  undo?(): void;
+  /** Signature: return the current PNG data URL, or undefined when empty. */
+  export?(): string | undefined;
 }
 
 export interface InputHandleBindingsHolder {
@@ -81,6 +87,20 @@ export function createInputComponentHandle(
             target.focus();
             bindings.openMenu?.();
             return { ok: true };
+          }
+          case 'undo': {
+            if (!bindings.isInteractive()) {
+              return { ok: true, skipped: true };
+            }
+            bindings.undo?.();
+            return { ok: true };
+          }
+          case 'export': {
+            if (!bindings.isVisible()) {
+              return { ok: false, code: 'not-visible' };
+            }
+            const exported = bindings.export?.();
+            return { ok: true, value: exported };
           }
           case 'scanNow': {
             bindings.scanNow?.();

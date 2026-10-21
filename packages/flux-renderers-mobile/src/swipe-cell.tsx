@@ -3,12 +3,22 @@ import type { RendererComponentProps } from '@nop-chaos/flux-core';
 import { cn } from '@nop-chaos/ui';
 import type { SwipeCellSchema } from './schemas.js';
 import { useTouch } from './hooks/use-touch.js';
+import { RUBBERBAND_CONSTANT, rubberband } from './hooks/gesture-math.js';
+import {
+  suppressClickAfterDrag,
+} from './hooks/click-suppression.js';
+import {
+  resolveSwipeRelease,
+  type SwipeOpenState,
+} from './swipe-cell-release.js';
 
 type SwipeDirection = 'left' | 'right' | 'both';
-type SwipeOpenState = 'closed' | 'open-left' | 'open-right';
 
 const CLOSE_TRANSITION_MS = 300;
 const TRANSITION = `transform ${CLOSE_TRANSITION_MS}ms cubic-bezier(0.25, 0.46, 0.45, 0.94)`;
+// MA-09 interactive selector family — the overswipe action trigger must
+// target exactly what the capture click handler treats as interactive.
+const INTERACTIVE_SELECTOR = 'button, a, [role="button"], input, select, textarea';
 
 function resolveSwipeDirection(value: unknown): SwipeDirection {
   if (value === 'left' || value === 'right' || value === 'both') return value;
@@ -17,6 +27,15 @@ function resolveSwipeDirection(value: unknown): SwipeDirection {
 
 function clamp(value: number, min: number, max: number) {
   return Math.max(min, Math.min(max, value));
+}
+
+// M6d: over-drag past the region width is resisted by the shared rubberband
+// curve (saturates at 2×width); committed/rebound states stay hard-clamped.
+function overDragOffset(raw: number, width: number): number {
+  if (width <= 0) return raw;
+  const excess = Math.abs(raw) - width;
+  if (excess <= 0) return raw;
+  return Math.sign(raw) * (width + rubberband(excess, width, RUBBERBAND_CONSTANT));
 }
 
 export function SwipeCellRenderer(props: RendererComponentProps<SwipeCellSchema>) {
@@ -106,10 +125,10 @@ export function SwipeCellRenderer(props: RendererComponentProps<SwipeCellSchema>
       return clamp(dragOffset, -rightWidth || dragOffset, 0);
     }
     if (dragOffset > 0 && canSwipeRight) {
-      return clamp(dragOffset, 0, leftWidth || dragOffset);
+      return overDragOffset(dragOffset, leftWidth);
     }
     if (dragOffset < 0 && canSwipeLeft) {
-      return clamp(dragOffset, -rightWidth || dragOffset, 0);
+      return overDragOffset(dragOffset, rightWidth);
     }
     return 0;
   })();
@@ -168,18 +187,40 @@ export function SwipeCellRenderer(props: RendererComponentProps<SwipeCellSchema>
     if (state.direction !== 'horizontal') {
       return;
     }
-    const absDelta = Math.abs(state.deltaX);
-    if (state.deltaX > 0 && canSwipeRight) {
-      if (absDelta >= threshold) {
-        openCell('open-left');
-      } else if (openState === 'open-left') {
-        closeCell();
-      }
-    } else if (state.deltaX < 0 && canSwipeLeft) {
-      if (absDelta >= threshold) {
-        openCell('open-right');
-      } else if (openState === 'open-right') {
-        closeCell();
+    // M6d K-map release decision (plan 664 Phase 5): static threshold OR
+    // flick OR velocity throw opens; closing gestures close; overswipe
+    // triggers the revealed region's first action. `openState` here is the
+    // pre-gesture committed state (unchanged during the drag).
+    const decision = resolveSwipeRelease({
+      deltaX: state.deltaX,
+      velocityX: state.velocityX,
+      threshold,
+      leftWidth,
+      rightWidth,
+      openState,
+      canSwipeLeft,
+      canSwipeRight,
+    });
+    if (decision.kind === 'open') {
+      openCell(decision.side);
+    } else if (decision.kind === 'close') {
+      closeCell();
+    } else if (decision.kind === 'action') {
+      const regionEl =
+        decision.side === 'open-left' ? leftRef.current : rightRef.current;
+      const interactive = regionEl?.querySelector<HTMLElement>(INTERACTIVE_SELECTOR);
+      if (interactive) {
+        // Synthetic click flows through the capture handler below -> onAction
+        // + close-after-action. Disarm the drag-click suppressor explicitly
+        // (deterministic across DOM implementations whose isTrusted is not
+        // faithfully modeled) — real browsers also exempt this via the
+        // isTrusted=false contract.
+        allowNextSyntheticClickRef.current?.();
+        interactive.click();
+      } else {
+        // Failure path: no interactive control in the region — degrade to a
+        // plain open instead of dispatching onAction.
+        openCell(decision.side);
       }
     }
     reset();
@@ -187,12 +228,15 @@ export function SwipeCellRenderer(props: RendererComponentProps<SwipeCellSchema>
     touchHandlers,
     state.direction,
     state.deltaX,
+    state.velocityX,
     canSwipeRight,
     canSwipeLeft,
     threshold,
+    leftWidth,
+    rightWidth,
+    openState,
     openCell,
     closeCell,
-    openState,
     reset,
   ]);
 
@@ -203,6 +247,21 @@ export function SwipeCellRenderer(props: RendererComponentProps<SwipeCellSchema>
   const handleTouchCancel = React.useCallback(() => {
     reset();
   }, [reset]);
+
+  // M6a: a drag that travels >6px must not end as a ghost click on the
+  // content/actions under the finger. Registered BEFORE the MA-09 action
+  // capture handler below so same-node capture listeners see it first;
+  // programmatic (isTrusted=false) clicks — including the overswipe
+  // trigger — are exempt by contract.
+  const allowNextSyntheticClickRef = React.useRef<(() => void) | null>(null);
+  React.useEffect(() => {
+    const container = containerRef.current;
+    if (!container || disabled) return;
+    const suppressor = suppressClickAfterDrag(container);
+    // eslint-disable-next-line react-hooks/immutability -- latest-ref handle: the suppressor is created in the mount effect and consumed by the release-decision callback (same pattern as flux-renderers-data C1a ref callbacks)
+    allowNextSyntheticClickRef.current = suppressor.allowNextClick;
+    return suppressor.cleanup;
+  }, [disabled]);
 
   // MA-09 / OA-02: tapping an interactive control (button/link) inside a
   // revealed action region dispatches onAction with the opening side and then

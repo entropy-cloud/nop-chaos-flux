@@ -92,7 +92,8 @@ normal → pulling → loosing → loading → success → normal
 
 - 使用 `useTouch` Hook 检测垂直拖拽
 - 仅垂直方向触发（`direction: 'vertical'`）；`direction` 字段仅 `'down'`（OA-14），不提供上拉分支
-- 拖拽距离弹性阻尼：`Math.min(deltaY * 0.5, maxPullDistance)`
+- 拖拽距离阻尼（M6d，plan 664 Phase 6 统一为 rubberband 曲线）：1:1 跟手至释放阈值，超过阈值后以共享橡皮筋函数阻尼 `threshold + rubberband(deltaY - threshold, threshold, 0.15)`，其中 `rubberband(d, dim, c) = (d·dim·c)/(dim+c·d)`（渐近饱和于 2×threshold）。旧实现的线性 `Math.min(deltaY * 0.5, 200)` 已废弃（判别基准：δ=200 旧 100px / 新 ≈75.56px）
+- 释放决策只读原始 `deltaY`（阻尼只影响视觉位移，不影响触发阈值判定）
 - 松手回弹动画：`transition: transform 300ms cubic-bezier(0.25, 0.46, 0.45, 0.94)`
 - 几何跟手 1:1（OA-09）：indicator 绝对定位（`position:absolute; transform:translateY(-100%)`）被提出文档流，translated track 内 `body` 是唯一 in-flow 子元素，因此 body 屏幕位移 === 根 translate === 手指位移（不再因 indicator 堆叠高度造成 ~2× 过冲）
 - `pulling`/`loosing` 标签渲染期派生（MA-10）：`status` state 只承载真实状态机迁移（normal/loading/success），touchmove 过程中的瞬态标签由 `state.isTouching && directionalDelta > 0` 派生，无 `useEffect+setState` 镜像

@@ -2,9 +2,10 @@ import { act, renderHook } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { useTouch } from './use-touch.js';
 
-function touch(x: number, y: number) {
+function touch(x: number, y: number, time = 0) {
   return {
     touches: [{ clientX: x, clientY: y } as Touch],
+    timeStamp: time,
   } as unknown as React.TouchEvent;
 }
 
@@ -17,7 +18,7 @@ afterEach(() => {
 });
 
 describe('useTouch', () => {
-  it('exposes the initial state snapshot', () => {
+  it('exposes the initial state snapshot (10 fields incl. velocity)', () => {
     const { result } = renderHook(() => useTouch());
     expect(result.current.state).toEqual({
       startX: 0,
@@ -28,6 +29,8 @@ describe('useTouch', () => {
       offsetY: 0,
       direction: '',
       isTouching: false,
+      velocityX: 0,
+      velocityY: 0,
     });
   });
 
@@ -164,15 +167,16 @@ describe('useTouch', () => {
     expect(result.current.state.deltaY).toBe(30);
   });
 
-  it('reset() zeroes every field including isTouching', () => {
+  it('reset() zeroes every field including velocity and isTouching', () => {
     const { result } = renderHook(() => useTouch({ threshold: 10 }));
     act(() => {
-      result.current.touchHandlers.onTouchStart(touch(10, 20));
+      result.current.touchHandlers.onTouchStart(touch(10, 20, 1000));
     });
     act(() => {
-      result.current.touchHandlers.onTouchMove(touch(80, 90));
+      result.current.touchHandlers.onTouchMove(touch(80, 90, 1050));
     });
     expect(result.current.state.deltaX).not.toBe(0);
+    expect(result.current.state.velocityX).not.toBe(0);
     act(() => {
       result.current.reset();
     });
@@ -185,6 +189,70 @@ describe('useTouch', () => {
       offsetY: 0,
       direction: '',
       isTouching: false,
+      velocityX: 0,
+      velocityY: 0,
     });
+  });
+
+  it('samples signed velocity in px/ms from the event timeStamp', () => {
+    const { result } = renderHook(() => useTouch({ threshold: 10 }));
+    act(() => {
+      result.current.touchHandlers.onTouchStart(touch(0, 0, 1000));
+    });
+    act(() => {
+      result.current.touchHandlers.onTouchMove(touch(30, -10, 1050));
+    });
+    // (30-0)/(1050-1000) = 0.6 px/ms, (-10)/50 = -0.2 px/ms
+    expect(result.current.state.velocityX).toBeCloseTo(0.6, 6);
+    expect(result.current.state.velocityY).toBeCloseTo(-0.2, 6);
+  });
+
+  it('keeps velocity readable after touchend for release decisions', () => {
+    const { result } = renderHook(() => useTouch({ threshold: 10 }));
+    act(() => {
+      result.current.touchHandlers.onTouchStart(touch(0, 0, 1000));
+    });
+    act(() => {
+      result.current.touchHandlers.onTouchMove(touch(40, 0, 1050));
+    });
+    act(() => {
+      result.current.touchHandlers.onTouchEnd();
+    });
+    expect(result.current.state.isTouching).toBe(false);
+    expect(result.current.state.velocityX).toBeCloseTo(0.8, 6);
+  });
+
+  it('resets velocity on the next touchstart (stale flick cannot leak)', () => {
+    const { result } = renderHook(() => useTouch({ threshold: 10 }));
+    act(() => {
+      result.current.touchHandlers.onTouchStart(touch(0, 0, 1000));
+    });
+    act(() => {
+      result.current.touchHandlers.onTouchMove(touch(40, 0, 1050));
+    });
+    act(() => {
+      result.current.touchHandlers.onTouchEnd();
+    });
+    expect(result.current.state.velocityX).toBeCloseTo(0.8, 6);
+    act(() => {
+      result.current.touchHandlers.onTouchStart(touch(0, 0, 5000));
+    });
+    expect(result.current.state.velocityX).toBe(0);
+    expect(result.current.state.velocityY).toBe(0);
+  });
+
+  it('decays velocity to zero when movement stalls beyond the 170ms window', () => {
+    const { result } = renderHook(() => useTouch({ threshold: 10 }));
+    act(() => {
+      result.current.touchHandlers.onTouchStart(touch(0, 0, 1000));
+    });
+    act(() => {
+      result.current.touchHandlers.onTouchMove(touch(40, 0, 1050));
+    });
+    expect(result.current.state.velocityX).toBeCloseTo(0.8, 6);
+    act(() => {
+      result.current.touchHandlers.onTouchMove(touch(40.5, 0, 1300));
+    });
+    expect(result.current.state.velocityX).toBe(0);
   });
 });

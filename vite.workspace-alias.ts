@@ -1,6 +1,9 @@
 import { fileURLToPath, URL } from 'node:url';
 
-export const workspacePackageAliases = {
+// Record<string, string>: the 76-key literal type blows TS's stack depth when
+// compared against Vite's Alias/PluginOption unions (pre-existing playground
+// vite.config.ts TS2321/TS2769, collapsed to a nominal map here).
+export const workspacePackageAliases: Record<string, string> = {
   '@nop-chaos/flux-core': fileURLToPath(
     new URL('./packages/flux-core/src/index.ts', import.meta.url),
   ),

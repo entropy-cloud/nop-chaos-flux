@@ -79,3 +79,99 @@
   background-color: var(--nop-notice-bar-error-bg);
   color: var(--nop-notice-bar-error-fg);
 }
+
+/* M6b (plan 664): scroll-through lock body class, added/removed by
+ * useLockScroll global mode at reference-count 0<->1. The class hides body
+ * overflow on platforms where CSS alone stops the scroll; the authoritative
+ * guard is the document-level non-passive touchmove preventDefault in
+ * use-lock-scroll.ts (iOS Safari ignores body overflow:hidden alone).
+ * Scope: consumers must opt in via useLockScroll — nothing here matches
+ * elements the renderers emit, so nothing leaks without the hook. */
+body.nop-scroll-lock {
+  overflow: hidden;
+}
+
+/* M7 (plan 665): wheel picker family palette — package-local fixed literals
+ * + public `--nop-wheel-*` override variables (same model as notice-bar,
+ * NEW-MM-06). Colors live here, NOT in TSX inline styles, per the
+ * styling-contract literal-color gate. */
+[data-slot='wheel-picker-backdrop'] {
+  background: rgba(0, 0, 0, 0.5);
+}
+
+[data-slot='wheel-picker-panel'] {
+  background: var(--nop-wheel-panel-bg, #ffffff);
+  color: var(--nop-wheel-panel-fg, #111827);
+}
+
+[data-slot='picker-view-row'] {
+  color: var(--nop-wheel-muted, #9ca3af);
+}
+
+[data-slot='picker-view-row'][data-active='true'] {
+  color: inherit;
+}
+
+/* M8 (plan 666): floating panel / bubble palette — package-local defaults via
+ * public override variables (same model as notice-bar / wheel-picker). */
+[data-slot='floating-panel'] {
+  background: var(--nop-floating-panel-bg, #ffffff);
+}
+
+[data-slot='floating-bubble'] {
+  background: var(--nop-floating-bubble-bg, #3b82f6);
+  color: var(--nop-floating-bubble-fg, #ffffff);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+  cursor: grab;
+}
+
+[data-slot='floating-panel-handle'] {
+  position: absolute;
+  top: 6px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 36px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--nop-floating-panel-handle, #d1d5db);
+}
+
+/* M9 (plan 667): image-viewer palette — package-local defaults via public
+ * override variables (same model as notice-bar / wheel-picker / floating). */
+[data-slot='image-viewer'] {
+  background: var(--nop-image-viewer-bg, rgba(0, 0, 0, 0.95));
+}
+
+[data-slot='image-viewer-indicator'] {
+  color: var(--nop-image-viewer-indicator-fg, #ffffff);
+}
+
+/* M10 (plan 668): index-bar palette — package-local defaults via public
+ * override variables (same model as wheel-picker / floating-panel). */
+[data-slot='index-bar-key'] {
+  color: var(--nop-index-bar-fg, #374151);
+}
+
+[data-slot='index-bar-key'][data-active='true'] {
+  color: var(--nop-index-bar-active-fg, #2563eb);
+}
+
+[data-slot='index-bar-bubble'] {
+  background: var(--nop-index-bar-bubble-bg, #2563eb);
+  color: var(--nop-index-bar-bubble-fg, #ffffff);
+}
+
+/* M11 (plan 669): number-keyboard palette — package-local defaults via public
+ * override variables (same model as wheel-picker / floating-panel). */
+[data-slot='number-keyboard-key'] {
+  color: var(--nop-number-keyboard-key-fg, #374151);
+}
+
+[data-slot='number-keyboard-key']:active {
+  background: var(--nop-number-keyboard-key-active-bg, #e5e7eb);
+}
+
+[data-slot='number-keyboard-key'] {
+  border-bottom: 1px solid var(--nop-number-keyboard-divider, #e5e7eb);
+  border-right: 1px solid var(--nop-number-keyboard-divider, #e5e7eb);
+}

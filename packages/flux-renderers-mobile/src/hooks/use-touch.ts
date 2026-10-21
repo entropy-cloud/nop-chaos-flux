@@ -1,4 +1,5 @@
 import { useCallback, useRef, useState } from 'react';
+import { VelocityTracker } from './velocity-tracker.js';
 
 export type TouchDirection = '' | 'horizontal' | 'vertical';
 
@@ -11,6 +12,10 @@ export interface TouchState {
   offsetY: number;
   direction: TouchDirection;
   isTouching: boolean;
+  /** Signed horizontal velocity in px/ms sampled over the 170ms window (M6a). */
+  velocityX: number;
+  /** Signed vertical velocity in px/ms sampled over the 170ms window (M6a). */
+  velocityY: number;
 }
 
 export interface UseTouchOptions {
@@ -36,6 +41,8 @@ const INITIAL_STATE: TouchState = {
   offsetY: 0,
   direction: '',
   isTouching: false,
+  velocityX: 0,
+  velocityY: 0,
 };
 
 function resolveDirection(
@@ -54,10 +61,18 @@ export function useTouch(options: UseTouchOptions = {}): UseTouchReturn {
   const threshold = options.threshold ?? 10;
   const [state, setState] = useState<TouchState>(INITIAL_STATE);
   const startRef = useRef({ x: 0, y: 0 });
+  // Lazy per-hook instance: touchend must leave the samples readable so the
+  // release decision (swipe-cell K-map) can consume velocity AFTER the lift.
+  const trackerRef = useRef<VelocityTracker | null>(null);
+  if (trackerRef.current == null) trackerRef.current = new VelocityTracker();
 
   const onTouchStart = useCallback((e: React.TouchEvent) => {
     const touch = e.touches[0];
     if (!touch) return;
+    trackerRef.current?.reset();
+    // Seed the window with the start sample so the first move already has a
+    // start→move baseline to diff against.
+    trackerRef.current?.add(touch.clientX, touch.clientY, e.timeStamp);
     startRef.current = { x: touch.clientX, y: touch.clientY };
     setState({
       ...INITIAL_STATE,
@@ -73,6 +88,8 @@ export function useTouch(options: UseTouchOptions = {}): UseTouchReturn {
       if (!touch) return;
       const deltaX = touch.clientX - startRef.current.x;
       const deltaY = touch.clientY - startRef.current.y;
+      const tracker = trackerRef.current;
+      tracker?.add(touch.clientX, touch.clientY, e.timeStamp);
       setState((prev) => ({
         ...prev,
         deltaX,
@@ -80,16 +97,21 @@ export function useTouch(options: UseTouchOptions = {}): UseTouchReturn {
         offsetX: Math.abs(deltaX),
         offsetY: Math.abs(deltaY),
         direction: resolveDirection(deltaX, deltaY, threshold),
+        velocityX: tracker?.velocityX ?? 0,
+        velocityY: tracker?.velocityY ?? 0,
       }));
     },
     [threshold],
   );
 
+  // Velocity is deliberately NOT cleared here: components read it in their
+  // touchend handler to make throw/flick release decisions (M6 K-map).
   const onTouchEnd = useCallback(() => {
     setState((prev) => ({ ...prev, isTouching: false }));
   }, []);
 
   const reset = useCallback(() => {
+    trackerRef.current?.reset();
     setState(INITIAL_STATE);
   }, []);
 

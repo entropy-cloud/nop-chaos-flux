@@ -32,6 +32,10 @@ interface TouchState {
   direction: '' | 'horizontal' | 'vertical';
   /** 是否正在触摸中 */
   isTouching: boolean;
+  /** 带符号水平速度（px/ms，M6），基于 170ms 采样窗 */
+  velocityX: number;
+  /** 带符号垂直速度（px/ms，M6），基于 170ms 采样窗 */
+  velocityY: number;
 }
 
 interface UseTouchOptions {
@@ -55,10 +59,12 @@ interface UseTouchReturn {
 
 ## 4. 手势阈值
 
-| 参数           | 默认值 | 说明                                       |
-| -------------- | ------ | ------------------------------------------ |
-| `threshold`    | 10px   | 判定为滑动的最小偏移量，用于区分点击与滑动 |
-| swipe 完成阈值 | 30px   | 外部消费组件按需判断                       |
+| 参数           | 默认值   | 说明                                         |
+| -------------- | -------- | -------------------------------------------- |
+| `threshold`    | 10px     | 判定为滑动的最小偏移量，用于区分点击与滑动   |
+| swipe 完成阈值 | 30px     | 外部消费组件按需判断                         |
+| 速度采样窗     | 170ms    | M6 velocity 追踪窗（embla DragTracker 模式） |
+| flick 阈值     | 0.1px/ms | M6 甩动判定下限（`VelocityTracker.isFlick`） |
 
 ## 5. 方向判定
 
@@ -67,6 +73,16 @@ interface UseTouchReturn {
 垂直方向: |deltaY| > |deltaX| && |deltaY| > threshold
 无方向:   |deltaX| <= threshold && |deltaY| <= threshold
 ```
+
+## 5.1 速度追踪（M6）
+
+`useTouch` 内置 `VelocityTracker`（`src/hooks/velocity-tracker.ts`）：
+
+- touchstart 重置追踪器并写入起始样本（坐标 + `e.timeStamp`）；touchstart 后首个 move 即有 start→move 基线差。
+- touchmove 逐事件追加样本，窗口外的旧样本丢弃（170ms），速度 = 窗口内最老样本 → 最新样本的位移/时间差，单位 **px/ms、带符号**。
+- 静止超过窗口后速度自然衰减为 0（长按慢拖不产生 flick）；采样间隔 <1ms 或时间倒退防护性归零。
+- **touchend 后 velocityX/velocityY 保持可读、不清零**——释放决策（如 swipe-cell K-map 的 flick/投掷项）在 touchend 处理器中消费；下一次 touchstart 或 `reset()` 时归零。
+- `deltaX/deltaY` 等既有字段语义不变，velocity 为纯增量扩展。
 
 ## 6. 使用示例
 
@@ -96,7 +112,7 @@ function PullRefresh({ children, onRefresh }: PullRefreshProps) {
 
 | 场景                 | 行为                                                                                                                                |
 | -------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
-| 快速滑动后 touchEnd  | 触发 swipe，delta 取最终值                                                                                                          |
+| 快速滑动后 touchEnd  | 触发 swipe，delta 取最终值；velocity 保持可读供释放决策消费（§5.1）                                                                 |
 | 滑动中途手指离开屏幕 | touchCancel 视为异常终止，reset                                                                                                     |
 | 多指触摸             | 只跟踪第一个 touch                                                                                                                  |
 | 嵌套滚动容器         | `useTouch` 仅判定方向（horizontal/vertical），不在 JS 层阻止滚动；手势所有权由消费组件的 CSS `touch-action` 提供（见 plan 3 MA-07） |

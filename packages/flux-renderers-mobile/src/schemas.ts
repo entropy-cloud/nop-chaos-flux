@@ -105,3 +105,201 @@ export interface NoticeBarSchema extends BaseSchema {
   onClick?: ActionSchema | ActionSchema[];
   onClose?: ActionSchema | ActionSchema[];
 }
+
+export interface WheelPickerOption {
+  [key: string]: import('@nop-chaos/flux-core').SchemaValue;
+  label: string;
+  value: string | number;
+}
+
+export interface PickerViewSchema extends BaseSchema {
+  type: 'picker-view';
+  /** 滚轮列配置；多列为并列独立内核 */
+  columns?: WheelPickerOption[][];
+  /** 受控选中值（按列）。拖拽/惯性进行中的外部写入被抑制，落定后以落点为准 */
+  value?: (string | number)[];
+  /** 行高 px，默认 44（M0 触摸目标基线） */
+  rowHeight?: number;
+  /** 可视行数，默认 5 */
+  visibleRows?: number;
+  disabled?: boolean;
+  /** 单列落定派发。payload: { type:'change', column, index, value, label } */
+  onChange?: ActionSchema | ActionSchema[];
+}
+
+export interface WheelPickerSchema extends BaseSchema {
+  type: 'wheel-picker';
+  /** 字段标签（FieldFrame 包裹） */
+  label?: string;
+  /** 表单字段名（经 flux-react form hooks 写值） */
+  name?: string;
+  columns?: WheelPickerOption[][];
+  /** 受控选中值（按列） */
+  value?: (string | number)[];
+  placeholder?: string;
+  disabled?: boolean;
+  required?: boolean;
+  /** 确认时派发。payload: { type:'confirm', value: (string|number)[], labels: string[] } */
+  onConfirm?: ActionSchema | ActionSchema[];
+  onCancel?: ActionSchema | ActionSchema[];
+}
+
+type WheelDateValue = string;
+
+export interface WheelDatePickerSchema extends BaseSchema {
+  type: 'wheel-date-picker';
+  label?: string;
+  name?: string;
+  /** 最小日期（YYYY-MM-DD），默认 1900-01-01 */
+  min?: WheelDateValue;
+  /** 最大日期（YYYY-MM-DD），默认 2100-12-31 */
+  max?: WheelDateValue;
+  value?: WheelDateValue;
+  placeholder?: string;
+  disabled?: boolean;
+  required?: boolean;
+  onConfirm?: ActionSchema | ActionSchema[];
+  onCancel?: ActionSchema | ActionSchema[];
+}
+
+export interface WheelTimePickerSchema extends BaseSchema {
+  type: 'wheel-time-picker';
+  label?: string;
+  name?: string;
+  /** 分钟步进，默认 1 */
+  minuteStep?: number;
+  value?: string;
+  placeholder?: string;
+  disabled?: boolean;
+  required?: boolean;
+  onConfirm?: ActionSchema | ActionSchema[];
+  onCancel?: ActionSchema | ActionSchema[];
+}
+
+export interface WheelCascaderOption {
+  [key: string]: import('@nop-chaos/flux-core').SchemaValue;
+  label: string;
+  value: string | number;
+  children?: WheelCascaderOption[];
+}
+
+export interface WheelCascaderSchema extends BaseSchema {
+  type: 'wheel-cascader';
+  label?: string;
+  name?: string;
+  options?: WheelCascaderOption[];
+  /** 级联选中值（自根到叶） */
+  value?: (string | number)[];
+  placeholder?: string;
+  disabled?: boolean;
+  required?: boolean;
+  onConfirm?: ActionSchema | ActionSchema[];
+  onCancel?: ActionSchema | ActionSchema[];
+}
+
+export interface FloatingPanelSchema extends BaseSchema {
+  type: 'floating-panel';
+  /** 锚点高度数组（px，升序）；面板拖拽后吸附最近锚点 */
+  anchors?: number[];
+  /** 初始高度（px），默认吸附到第一个锚点 */
+  defaultHeight?: number;
+  /** 面板内容 region（满屏后可滚动） */
+  body?: SchemaInput;
+  disabled?: boolean;
+  /** 面板落定新锚点。payload: { type: 'anchor', index, height } */
+  onChange?: ActionSchema | ActionSchema[];
+}
+
+export interface FloatingBubbleSchema extends BaseSchema {
+  type: 'floating-bubble';
+  /** 初始 X（px，相对容器左缘），默认右缘 */
+  initialX?: number;
+  /** 初始 Y（px，相对容器上缘），默认底部 */
+  initialY?: number;
+  /** 磁吸开关，默认 true（松手吸附最近左右边缘） */
+  magnetic?: boolean;
+  disabled?: boolean;
+  /** 位移 <6px 视为点击。payload: { type: 'click' } */
+  onClick?: ActionSchema | ActionSchema[];
+}
+
+export interface ActionSheetItem {
+  [key: string]: import('@nop-chaos/flux-core').SchemaValue;
+  label: string;
+  value: string | number;
+  disabled?: boolean;
+}
+
+export interface ActionSheetSchema extends BaseSchema {
+  type: 'action-sheet';
+  /** 触发器文案 */
+  triggerText?: string;
+  /** 弹层标题 */
+  title?: string;
+  items?: ActionSheetItem[];
+  /** 展示形态，默认 list */
+  display?: 'list' | 'grid';
+  /** 关闭按钮文案，默认 i18n 取消 */
+  cancelText?: string;
+  /** 点击遮罩关闭，默认 true */
+  closeOnMask?: boolean;
+  disabled?: boolean;
+  /** 选中条目。payload: { type: 'select', index, value, label } */
+  onSelect?: ActionSchema | ActionSchema[];
+  onCancel?: ActionSchema | ActionSchema[];
+}
+
+export interface ImageViewerSchema extends BaseSchema {
+  type: 'image-viewer';
+  /** 图片 URL 列表 */
+  images?: string[];
+  /** 受控打开 */
+  open?: boolean;
+  /** 打开时定位的页（0 基），越界钳制 */
+  initialIndex?: number;
+  disabled?: boolean;
+  /** 关闭（下滑超阈值/遮罩）。payload: { type:'close', index } */
+  onClose?: ActionSchema | ActionSchema[];
+  /** 页码变更。payload: { type:'change', index } */
+  onChange?: ActionSchema | ActionSchema[];
+}
+
+export interface IndexBarItem {
+  [key: string]: import('@nop-chaos/flux-core').SchemaValue;
+  label: string;
+  value: string | number;
+}
+
+export interface IndexBarSchema extends BaseSchema {
+  type: 'index-bar';
+  /** 索引键列表 */
+  items?: IndexBarItem[];
+  /** 联动滚动容器选择器：键定位后滚动容器内 `[data-index-anchor="{index}"]` 元素至视口顶部 */
+  targetSelector?: string;
+  disabled?: boolean;
+  /** 键定位/滑动变更。payload: { type:'select', index, value, label } */
+  onChange?: ActionSchema | ActionSchema[];
+}
+
+export type ScrollMaskAxis = 'x' | 'y';
+
+export interface NumberKeyboardSchema extends BaseSchema {
+  type: 'number-keyboard';
+  /** 受控打开 */
+  open?: boolean;
+  /** 小数点键，默认 true；false 时不渲染 */
+  decimal?: boolean;
+  /** 乱序防窥：数字键每 mount Fisher-Yates 重排（键集不变） */
+  randomOrder?: boolean;
+  /** 确认键禁用态 */
+  confirmDisabled?: boolean;
+  /** 弹层标题 */
+  title?: string;
+  disabled?: boolean;
+  /** 数字/`.`/delete 按键。payload: { type:'key', key, value? }（delete 省略 value） */
+  onKey?: ActionSchema | ActionSchema[];
+  /** 确认键。payload: { type:'confirm' } */
+  onConfirm?: ActionSchema | ActionSchema[];
+  /** 遮罩关闭。payload: { type:'cancel' } */
+  onCancel?: ActionSchema | ActionSchema[];
+}

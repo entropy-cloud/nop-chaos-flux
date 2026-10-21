@@ -348,6 +348,48 @@ export const DOMAIN_RENDERER_ROUTES: DomainRouteEntry[] = [
       'Comprehensive mobile showcase: M5 native renderers (pull-refresh, infinite-scroll, swipe-cell, countdown, notice-bar) + M1 responsive controls + M2 touch adaptation + M3 layout skeletons + M4 data display + content/layout renderers — all in one page.',
   },
   {
+    id: 'm11-number-keyboard',
+    title: 'M11 Number Keyboard',
+    eyebrow: 'Mobile Input (M11)',
+    description:
+      'M11 number keyboard: controlled bottom-sheet with a 4-row digit grid (1-9 / . / 0 / delete) + confirm column, randomOrder anti-peeking shuffle (1-9 per mount), decimal toggle, and the M11b verification-code linkage record.',
+  },
+  {
+    id: 'm10-list-navigation',
+    title: 'M10 List Navigation',
+    eyebrow: 'Mobile Navigation (M10)',
+    description:
+      'M10 list navigation: index-bar letter sidebar with non-passive touchmove elementFromPoint key location + scrollIntoView linkage, and ui-layer ScrollMask edge fade for horizontally scrollable containers.',
+  },
+  {
+    id: 'm9-image-signature',
+    title: 'M9 Image & Signature',
+    eyebrow: 'Mobile Image (M9)',
+    description:
+      'M9 image & signature: image-viewer gesture preview (pinch anchored at touch midpoint, double-tap 1↔2, paging, swipe-down close, zoomed pan freeze) and input-signature bezier smoothing + undo/export handle enhancement.',
+  },
+  {
+    id: 'm8-bottom-panels',
+    title: 'M8 Bottom Panels',
+    eyebrow: 'Mobile Panels (M8)',
+    description:
+      'M8 bottom panels: floating-panel multi-anchor drag with content scroll arbitration, floating-bubble edge magnet, action-sheet list/grid, and ui Sheet opt-in gesture pull-down-to-close.',
+  },
+  {
+    id: 'm7-wheel-pickers',
+    title: 'M7 Wheel Pickers',
+    eyebrow: 'Mobile Wheel (M7)',
+    description:
+      'M7 wheel picker family: picker-view inline kernel (inertia/snap/controlled-write suppression), wheel-picker popup field, wheel-date-picker / wheel-time-picker config derivatives, wheel-cascader parent-children linkage.',
+  },
+  {
+    id: 'm6-gesture-lab',
+    title: 'M6 Gesture Lab',
+    eyebrow: 'Mobile Gesture (M6)',
+    description:
+      'M6 gesture infrastructure: swipe-cell velocity flick / throw projection / overswipe first-action / K-map release, pull-refresh rubberband damping (1:1 to threshold), and useLockScroll body scroll-through lock — the shared base for the M7+ mobile surfaces.',
+  },
+  {
     id: 'calendar-perf-scale',
     title: 'Calendar Performance Scale',
     eyebrow: 'Performance',

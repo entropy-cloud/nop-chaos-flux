@@ -39,6 +39,7 @@ function fake2d() {
     lineWidth: 1,
     lineCap: 'butt',
     lineJoin: 'miter',
+    quadraticCurveTo: vi.fn(),
   };
 }
 
@@ -211,4 +212,77 @@ describe('input-signature renderer (missing-components L2.3, plan 507)', () => {
     fireEvent.blur(canvas);
     expect(document.querySelector('[data-slot="signature-focus-hint"]')).toBeNull();
   });
+});
+
+describe('input-signature M9b enhancements (plan 667 Phase 2)', () => {
+  function pointerDrag(canvas: HTMLCanvasElement, points: Array<{ x: number; y: number }>) {
+    fireEvent.pointerDown(canvas, { pointerId: 1, clientX: points[0].x, clientY: points[0].y });
+    for (const point of points.slice(1)) {
+      fireEvent.pointerMove(canvas, { pointerId: 1, clientX: point.x, clientY: point.y });
+    }
+    fireEvent.pointerUp(canvas, { pointerId: 1, clientX: points[points.length - 1].x, clientY: points[points.length - 1].y });
+  }
+
+  it('smooths strokes with quadratic midpoints instead of lineTo chains', async () => {
+    const ctx = fake2d();
+    stubCanvas(ctx);
+    renderSignatureForm([{ type: 'input-signature', name: 'sig', label: 'Signature' }]);
+    const canvas = document.querySelector('[data-slot="signature-canvas"]') as HTMLCanvasElement;
+
+    // two strokes, then undo the second: the full redraw path re-renders the
+    // surviving 4-point stroke through the smooth quadratic midpoint chain
+    // (the lineTo-only legacy implementation has zero quadraticCurveTo calls)
+    pointerDrag(canvas, [
+      { x: 10, y: 10 },
+      { x: 30, y: 30 },
+      { x: 50, y: 10 },
+      { x: 70, y: 30 },
+    ]);
+    pointerDrag(canvas, [
+      { x: 10, y: 10 },
+      { x: 30, y: 30 },
+    ]);
+
+    // Full redraw stays reserved for undo/clear; the undo click must wait out
+    // the post-stroke stray-click swallow window (finishStroke, 400ms).
+    await new Promise((resolve) => setTimeout(resolve, 450));
+    fireEvent.click(document.querySelector('[data-slot="signature-undo"]') as HTMLElement);
+
+    expect(ctx.quadraticCurveTo).toHaveBeenCalled();
+  });
+
+
+  it('M9b: stroke commits PNG dataURL form value; undo empties it (handle undo/export semantics via value channel)', async () => {
+    const ctx = fake2d();
+    stubCanvas(ctx);
+    renderSignatureForm([
+      {
+        type: 'input-signature',
+        name: 'sig',
+        label: 'Signature',
+      },
+      { type: 'form-state-probe', name: 'sig' },
+    ]);
+    const canvas = document.querySelector('[data-slot="signature-canvas"]') as HTMLCanvasElement;
+    pointerDrag(canvas, [
+      { x: 10, y: 10 },
+      { x: 30, y: 30 },
+      { x: 50, y: 10 },
+      { x: 70, y: 30 },
+    ]);
+    await waitFor(() => expect(probeText('sig')).toContain('data:image/png'));
+
+    // undo pops one stroke per click; the handle 'undo' method dispatches the
+    // same internal path as the toolbar button. Wait out the 400ms stray-click
+    // swallow window before the first undo. Four strokes ⇒ four undos ⇒ zero
+    // strokes ⇒ value undefined (plan 507 zero-stroke invariant).
+    await new Promise((resolve) => setTimeout(resolve, 450));
+    const undoButton = document.querySelector('[data-slot="signature-undo"]') as HTMLElement;
+    for (let i = 0; i < 4; i += 1) {
+      fireEvent.click(undoButton);
+      await new Promise((resolve) => setTimeout(resolve, 50));
+    }
+    await waitFor(() => expect(['undefined', 'null', ''].map((v) => probeText('sig') === v).some(Boolean)).toBe(true));
+  });
+
 });

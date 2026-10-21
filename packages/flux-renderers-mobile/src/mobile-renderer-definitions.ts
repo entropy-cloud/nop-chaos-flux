@@ -1,18 +1,29 @@
 import type { RegisteredRendererDefinition } from '@nop-chaos/flux-core';
+import { extendedMobileRendererDefinitions } from './mobile-renderer-definitions-extended.js';
 import type {
+  ActionSheetSchema,
   CountdownSchema,
+  FloatingBubbleSchema,
+  FloatingPanelSchema,
   InfiniteScrollSchema,
   NoticeBarSchema,
+  PickerViewSchema,
   PullRefreshSchema,
   SwipeCellSchema,
+  WheelCascaderSchema,
+  WheelDatePickerSchema,
+  WheelPickerSchema,
+  WheelTimePickerSchema,
 } from './schemas.js';
 import { CountdownRenderer } from './countdown.js';
 import { InfiniteScrollRenderer } from './infinite-scroll.js';
 import { NoticeBarRenderer } from './notice-bar.js';
+import { PickerViewRenderer } from './picker-view.js';
 import { PullRefreshRenderer } from './pull-refresh.js';
 import { SwipeCellRenderer } from './swipe-cell.js';
 
 export const mobileRendererDefinitions: RegisteredRendererDefinition[] = [
+  ...extendedMobileRendererDefinitions,
   {
     type: 'pull-refresh',
     displayName: 'Pull Refresh',
@@ -260,6 +271,45 @@ export const mobileRendererDefinitions: RegisteredRendererDefinition[] = [
     ],
   },
   {
+    type: 'picker-view',
+    displayName: 'Picker View',
+    category: 'content',
+    sourcePackage: '@nop-chaos/flux-renderers-mobile',
+    defaultSchema: { type: 'picker-view', columns: [] },
+    component: PickerViewRenderer,
+    fields: [
+      { key: 'columns', kind: 'prop' },
+      { key: 'value', kind: 'prop' },
+      { key: 'rowHeight', kind: 'prop' },
+      { key: 'visibleRows', kind: 'prop' },
+      {
+        key: 'disabled',
+        kind: 'prop',
+        valueType: 'boolean',
+        contract: { displayName: 'Disabled', shape: { kind: 'boolean' } },
+      },
+      {
+        key: 'onChange',
+        kind: 'event',
+        contract: {
+          displayName: 'On Change',
+          description:
+            'Dispatched once when a column settles on a row (snap or inertia landing). Payload: { type: "change", column, index, value, label }.',
+          payload: {
+            kind: 'object',
+            fields: {
+              type: { kind: 'string' },
+              column: { kind: 'number' },
+              index: { kind: 'number' },
+              value: { kind: 'union', anyOf: [{ kind: 'string' }, { kind: 'number' }] },
+              label: { kind: 'string' },
+            },
+          },
+        },
+      },
+    ],
+  },
+  {
     type: 'notice-bar',
     displayName: 'Notice Bar',
     category: 'content',
@@ -328,4 +378,12 @@ export type MobileRendererSchema =
   | InfiniteScrollSchema
   | SwipeCellSchema
   | CountdownSchema
-  | NoticeBarSchema;
+  | NoticeBarSchema
+  | PickerViewSchema
+  | WheelPickerSchema
+  | WheelDatePickerSchema
+  | WheelTimePickerSchema
+  | WheelCascaderSchema
+  | FloatingPanelSchema
+  | FloatingBubbleSchema
+  | ActionSheetSchema;

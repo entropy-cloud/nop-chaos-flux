@@ -8,6 +8,7 @@ import { XIcon } from 'lucide-react';
 import { createOverlayZIndex } from './overlay-z-index.js';
 import { useGlobalZIndex } from '../../hooks/use-global-z-index.js';
 import { useSurfaceFocusWrap } from './use-surface-focus-wrap.js';
+import { useSheetGestureClose } from './sheet-gesture-close.js';
 
 const { ZIndexContext: SheetZIndexContext, useOverlayZIndex: useSheetOverlayZIndex } =
   createOverlayZIndex();
@@ -44,8 +45,29 @@ const SHEET_SIDE_SIZE_CAPS: Record<SheetSize, [left: string, right: string]> = {
   ],
 };
 
-function Sheet({ ...props }: SheetPrimitive.Root.Props) {
-  return <SheetPrimitive.Root data-slot="sheet" {...props} />;
+const SheetGestureCloseContext = React.createContext<{
+  onGestureClose: () => void;
+} | null>(null);
+
+function Sheet({
+  gestureClose,
+  onGestureClose,
+  ...props
+}: SheetPrimitive.Root.Props & {
+  /** Opt-in mobile pull-down-to-close on side=bottom sheets (plan 666 M8c). Default off. */
+  gestureClose?: boolean;
+  /** App-owned close callback invoked when the gesture release decides to close. */
+  onGestureClose?: () => void;
+}) {
+  const gestureContext = React.useMemo(
+    () => (gestureClose && onGestureClose ? { onGestureClose } : null),
+    [gestureClose, onGestureClose],
+  );
+  return (
+    <SheetGestureCloseContext.Provider value={gestureContext}>
+      <SheetPrimitive.Root data-slot="sheet" {...props} />
+    </SheetGestureCloseContext.Provider>
+  );
 }
 
 function SheetTrigger({ ...props }: SheetPrimitive.Trigger.Props) {
@@ -94,6 +116,12 @@ function SheetContent({
   // before.
   const popupRef = React.useRef<HTMLDivElement | null>(null);
   const { handleSurfaceKeyDown } = useSurfaceFocusWrap(popupRef);
+  // plan 666 M8c: opt-in mobile pull-down-to-close (bottom side only).
+  const gestureContext = React.useContext(SheetGestureCloseContext);
+  useSheetGestureClose({
+    enabled: side === 'bottom' && gestureContext != null,
+    onClose: gestureContext?.onGestureClose ?? (() => {}),
+  });
   const [sizeCapLeft, sizeCapRight] = SHEET_SIDE_SIZE_CAPS[size];
   return (
     <SheetPortal>

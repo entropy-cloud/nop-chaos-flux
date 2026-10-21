@@ -192,6 +192,12 @@ export const DOMAIN_HOME_FAMILY: Record<string, HomeFamilyId> = {
   'm3-layout': 'mobile',
   'm4-data': 'mobile',
   'm5-showcase': 'mobile',
+  'm6-gesture-lab': 'mobile',
+  'm7-wheel-pickers': 'mobile',
+  'm8-bottom-panels': 'mobile',
+  'm9-image-signature': 'mobile',
+  'm10-list-navigation': 'mobile',
+  'm11-number-keyboard': 'mobile',
 
   'ai-chat': 'ai',
   'ai-conversations': 'ai',
