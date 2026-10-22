@@ -57,4 +57,4 @@
 
 ## 4. 台账回写
 
-- 本卡完成：ledger 对应行 → `carded`（card = `docs/analysis/fm5-render-recheck/cards/page:three-gallery.md`）。
+- 本卡完成：ledger 对应行 → `carded`（card = `docs/analysis/fm5-render-recheck/cards/page/three-gallery.md`）。

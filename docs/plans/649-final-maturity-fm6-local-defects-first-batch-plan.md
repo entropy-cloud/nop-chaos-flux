@@ -132,7 +132,7 @@ Targets: linear-settings 落点 = apps/playground/src/linear-replica/linear-repl
 - Item Types: `Proof | Fix`
 
 - [x] Proof：FM-036 行级根因证实（tabs keepMounted/hidden 语义读码；未证实走 root-cannot-prove 不硬修）。
-- [x] Proof：FM-031 判别（light 宿主标签对比度 <3:1 → ≥4.5:1；引用 FM-5 证据卡 `docs/analysis/fm5-render-recheck/cards/page:linear-settings.md` 已坐实的 token 机制——画布恒定浅色 × 响应式 token，同族对照 18.73:1）；FM-036 判别红（激活 B 视图后 A tabpanel 仍可见）。
+- [x] Proof：FM-031 判别（light 宿主标签对比度 <3:1 → ≥4.5:1；引用 FM-5 证据卡 `docs/analysis/fm5-render-recheck/cards/page/linear-settings.md` 已坐实的 token 机制——画布恒定浅色 × 响应式 token，同族对照 18.73:1）；FM-036 判别红（激活 B 视图后 A tabpanel 仍可见）。
 - [x] Fix：FM-031 修复（画布本地固定色或 dark 作用域，同族对照已坐实）；FM-036 修复（消费侧隐藏语义）+ 11 处 tabs 消费 schema 类扫描回归。
 - [x] 收口：台账 12 行翻转 + 批次记录（15 处修复/12 张审计卡，FM-028 单卡含四处逐项落卡）；`_tmp/fm6-cards/` 归档至报告附录；roadmap FM-6 行裁决（done 或注记滚动 FM-6-b）；mission 对应任务翻转；daily log。
 
@@ -153,7 +153,7 @@ Exit Criteria:
 - [x] 12 个台账行 / 15 处修复全部有审计卡（根因证实至行 / 修复 / 判别红→绿 / 复检——`_tmp/fm6-cards/` 12 张）
 - [x] 无法证实项全部走 Failure Paths 并落 Deferred（零静默降级——FM-039 候选根因证伪、FM-040 time-box 未达行级，均改判 watch-only + 升级去向）
 - [x] 台账翻转与批次记录一致，uncovered=0（10 行 fixed→verified + 2 行改判 watch-only）
-- [x] 受影响 owner docs 已同步或明确 No owner-doc update required——No owner-doc update required（FM-031 修复落 playground demo CSS 层与 `docs/analysis/fm5-render-recheck/cards/page:linear-settings.md` 证据卡修复方向一致；FM-036 行为收敛在既有 tabs 契约内；FM-016 落 RM-11 判例既有标准）
+- [x] 受影响 owner docs 已同步或明确 No owner-doc update required——No owner-doc update required（FM-031 修复落 playground demo CSS 层与 `docs/analysis/fm5-render-recheck/cards/page/linear-settings.md` 证据卡修复方向一致；FM-036 行为收敛在既有 tabs 契约内；FM-016 落 RM-11 判例既有标准）
 - [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据（见 Closure 节）
 - [x] `pnpm typecheck`（唯一 playground vite.config 既有红，归属在案）
 - [x] `pnpm build`（唯同红）

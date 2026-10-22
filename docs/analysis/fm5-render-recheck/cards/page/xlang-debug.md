@@ -77,4 +77,4 @@
 
 ## 4. 台账回写
 
-- 本卡完成：ledger 对应行 → `carded`（card = `docs/analysis/fm5-render-recheck/cards/page:xlang-debug.md`）；P1/P2 修复后复检 → `verified`。
+- 本卡完成：ledger 对应行 → `carded`（card = `docs/analysis/fm5-render-recheck/cards/page/xlang-debug.md`）；P1/P2 修复后复检 → `verified`。
