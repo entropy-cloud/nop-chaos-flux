@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import type { createDesignerCore } from '@nop-chaos/flow-designer-core';
 import { matchesShortcut } from './designer-page-helpers.js';
+import { focusDesignerCanvasSurface } from './designer-canvas-focus.js';
 import type { DesignerCommand } from './designer-command-types.js';
 
 type DesignerCoreLike = ReturnType<typeof createDesignerCore>;
@@ -91,6 +92,11 @@ export function useDesignerShortcuts(args: {
       if (matchesShortcut(event, shortcuts.delete)) {
         event.preventDefault();
         dispatch({ type: 'deleteSelection' });
+        // 删除会卸载持有 DOM 焦点的节点卡片（role=button tabIndex=0），浏览器把焦点
+        // 回落到 <body>，紧随的 undo/redo 键在 isInsideDesigner 处被整个拦掉——
+        // 表现为删除“不可撤销”（P0-MA5.1-002）。与节点 x-button 删除路径
+        // （designer-xyflow-node onDelete）一致，把焦点交还画布表面。
+        focusDesignerCanvasSurface(core);
         return;
       }
       // plan 526 Phase 3【执行期勘误】：方向键微调采用 xyflow 12.10 原生能力——
