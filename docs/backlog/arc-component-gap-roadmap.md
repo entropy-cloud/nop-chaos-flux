@@ -37,7 +37,7 @@
 
 | Work item                                           | 状态   | 依赖 | 说明                                                     |
 | --------------------------------------------------- | ------ | ---- | -------------------------------------------------------- |
-| G1D `input-password` 强度指示设计（`showStrength`） | `todo` | —    | 能力扩展，非新 type；登记 improvement-analysis           |
+| G1D `input-password` 强度指示设计（`showStrength`） | `done` | —    | 能力扩展，非新 type；登记 improvement-analysis           |
 | G1I `input-password` 强度指示实现                   | `todo` | G1D  | 按交付铁律落地                                           |
 | G2D inline-edit 落点裁决与设计                      | `todo` | —    | 先裁决 detail-field `editable` 扩展 vs 独立 type         |
 | G2I inline-edit 落地                                | `todo` | G2D  | 按 D 阶段裁决落点执行                                    |
@@ -196,7 +196,7 @@
 
 | Wave    | Work item                  | 状态   | Owner doc                                                                                  | 依赖 | Reuse                                                                               | Plan |
 | ------- | -------------------------- | ------ | ------------------------------------------------------------------------------------------ | ---- | ----------------------------------------------------------------------------------- | ---- |
-| 1（P1） | G1D strength 设计          | `todo` | `docs/components/input-password/design.md` + `existing-components-improvement-analysis.md` | —    | input-password 预留字段                                                             | —    |
+| 1（P1） | G1D strength 设计          | `done` | `docs/components/input-password/design.md` + `existing-components-improvement-analysis.md` | —    | input-password 预留字段                                                             | —    |
 | 1       | G1I strength 实现          | `todo` | 同上                                                                                       | G1D  | ui 新 primitive（ask-first）                                                        | —    |
 | 2（P2） | G2D inline-edit 落点+设计  | `todo` | `docs/components/detail-field/design.md`（或新 type design.md，按裁决）                    | —    | detail-field、输入原语                                                              | —    |
 | 2       | G2I inline-edit 落地       | `todo` | 按 G2D 裁决                                                                                | G2D  | 同上                                                                                | —    |
@@ -215,7 +215,7 @@
 
 > 每个 work item = 一个 execution plan 可交付完毕。Design item 与 Implement item 分属两个 plan（先设计、后实现，用户铁律）。
 
-- **G1D**：`showStrength` 协议设计（等级/配色/文案 i18n/a11y/与校验关系）；`existing-components-improvement-analysis.md` 登记；命名 pass（`naming-conventions.md` §2）。
+- **G1D**：`showStrength` 协议设计（等级/配色/文案 i18n/a11y/与校验关系）；`existing-components-improvement-analysis.md` 登记；命名 pass（`naming-conventions.md` §2。〔勘误 2026-10-22，G1D 执行时就地附注：操作节应为 §5"新增字段审查 Checklist"，§2 是 shadcn 映射表〕）。
 - **G1I**：ui 强度条 primitive（如 D 裁定需要，触 `ui/src/index.ts` ask-first）+ renderer 字段接线 + focused 单测 + e2e + 交付铁律 3/5/6/8。
 - **G2D**：落点二选一裁决（`detail-field.editable` vs 独立 type）+ 协议（触发/提交/取消/只读降级）；若新 type → matrix 增行提案（human gate）。
 - **G2I**：按裁决落地 + 测试 + 登记（铁律 2–8）。
