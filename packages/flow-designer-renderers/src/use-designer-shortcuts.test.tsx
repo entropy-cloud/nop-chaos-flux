@@ -3,6 +3,7 @@ import { cleanup, fireEvent, render } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { createDesignerCore } from '@nop-chaos/flow-designer-core';
 import type { DesignerCommand } from './designer-command-types.js';
+import { registerDesignerCanvasFocusHandler } from './designer-canvas-focus.js';
 import { useDesignerShortcuts } from './use-designer-shortcuts.js';
 
 type DesignerCoreLike = ReturnType<typeof createDesignerCore>;
@@ -28,7 +29,12 @@ function ShortcutHarness(props: {
   readOnly?: boolean;
 }) {
   const rootRef = React.useRef<HTMLDivElement | null>(null);
-  useDesignerShortcuts({ core: props.core, rootRef, dispatch: props.dispatch, readOnly: props.readOnly });
+  useDesignerShortcuts({
+    core: props.core,
+    rootRef,
+    dispatch: props.dispatch,
+    readOnly: props.readOnly,
+  });
   return (
     <div ref={rootRef} data-testid="designer-root">
       <input data-testid="editable-input" />
@@ -36,18 +42,22 @@ function ShortcutHarness(props: {
   );
 }
 
-function renderHarness(config: {
-  shortcuts?: Record<string, string[]>;
-  features?: Record<string, boolean>;
-  readOnly?: boolean;
-  documentMode?: 'graph' | 'tree';
-  activeNodeId?: string;
-} = {}) {
+function renderHarness(
+  config: {
+    shortcuts?: Record<string, string[]>;
+    features?: Record<string, boolean>;
+    readOnly?: boolean;
+    documentMode?: 'graph' | 'tree';
+    activeNodeId?: string;
+  } = {},
+) {
   const dispatch = vi.fn();
   const core = createMockCore(config);
-  const view = render(<ShortcutHarness core={core} dispatch={dispatch} readOnly={config.readOnly} />);
+  const view = render(
+    <ShortcutHarness core={core} dispatch={dispatch} readOnly={config.readOnly} />,
+  );
   const root = view.getByTestId('designer-root');
-  return { dispatch, root, view };
+  return { core, dispatch, root, view };
 }
 
 afterEach(() => {
@@ -123,6 +133,24 @@ describe('useDesignerShortcuts', () => {
     fireEvent.keyDown(document.body, { key: 'z', ctrlKey: true });
 
     expect(dispatch).not.toHaveBeenCalled();
+  });
+
+  // P0-MA5.1-002：Delete 会卸载持有焦点的节点卡片，浏览器把焦点回落到 <body>，
+  // 紧随的 undo 键会被 isInsideDesigner 拦掉。hook 必须在 deleteSelection 后把
+  // 焦点交还画布表面（与 x-button 删除路径同一机制）。
+  it('restores canvas surface focus after deleteSelection', () => {
+    const { core, dispatch, root } = renderHarness(baseConfig);
+    const focusSurface = vi.fn();
+    registerDesignerCanvasFocusHandler(core, focusSurface);
+
+    fireEvent.keyDown(root, { key: 'Delete' });
+
+    expect(dispatch).toHaveBeenCalledWith({ type: 'deleteSelection' });
+    expect(focusSurface).toHaveBeenCalledTimes(1);
+
+    fireEvent.keyDown(root, { key: 'z', ctrlKey: true });
+    expect(dispatch).toHaveBeenCalledWith({ type: 'undo' });
+    expect(focusSurface).toHaveBeenCalledTimes(1);
   });
 
   it('does not dispatch when readOnly is set', () => {
