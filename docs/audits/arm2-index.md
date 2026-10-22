@@ -1,7 +1,7 @@
 # Audit Remediation R2 Master Index (arm2-index)
 
 > Status: active（M0 / plan 653 初始化骨架；随各工作项产出滚动登记）
-> Last Updated: 2026-10-23（滚动：**MA6.2 UX 视觉 content+dashboard+mobile+print+ai 走查收官**——P1 新增 **2** 条〔P1-MA6.2-001 pivot VTable dark 主题监听机制级错配：pivot-renderer.tsx:37 监听 `.dark` class 而 playground 只写 `data-mode` attribute（theme.ts:37-38），监听永不触发、VTable 永持 light 白底 / -002 print 预览第 2 页不可达：纸面单块零滚动容器〕，累计 **63** 条 open；P2 ×6〔主色蓝小字族 5 面 / stat 卡截断新族 3 面 / diff-view dark 头部白块 / print-designer dark 画布内容色〔MA6.4 共管〕/ pull-refresh 零反馈〔真机复核 caveat〕/ ai-coverage autofocus 滚动 5290px〕+ P3 ×12 + 记录级 AI 文案 12 条 + T-1 工具缺陷三轮复发（修复优先级提升）+ watch-only 7；dark 平价 30/34 零违规。此前：M0 / MA1 / MA2 / MA3×18 / MA4×5 / MA5.1–5.6 / MA6.1 收官）
+> Last Updated: 2026-10-23（滚动：**MA6.3 UX 视觉 scheduling+domain 走查收官**——P1 零立案（canvas dark 全部完好：scada/three/graph/map 像素采样+截图双证）；P2 ×3 新案〔P2-MA6.3-001 calendar 月视图星期头与日期列几何错位（data-date vs 色带探针）/ -002 gantt 左网格日期列 26/26 省略+表头断词 / -003 字面 bg-white 页头壳族升格注册（MA6.2 P2-005 首见面+实见 10 页 + diff-view = 11 faces，breadth 修正 12 grep 投影→实见清单）〕，累计 **63** open；既有族 face 增量：MA6.1 P2-004 语义色 +8 / P2-006 目标尺寸 +5 / P2-005 窄视口 +1（scada-editor，MA6.4 共管）；P3 ×4 + 记录级 5 + T-1 第 4 轮复发（gantt 官方 PNG 空白帧）+ watch-only 11；dark 平价 9/19 零违规（10 缺陷面全属页头壳族单点可收口）、canvas dark 完好性 9/9 canvas 页 + A 轮 canvas 面全通过；[PERF] 4 perf 页视觉面通过（归 MA7.1）。此前：M0 / MA1 / MA2 / MA3×18 / MA4×5 / MA5.1–5.6 / MA6.1–6.2 收官）
 > Roadmap: `docs/backlog/audit-remediation-r2-roadmap.md`（工作项状态的唯一权威 = 其 Work Item Status 表；本索引不携带状态，只登记报告、finding 与基线）
 > Mission: `missions/audit-remediation-r2.json`
 > M0 Plan: `docs/plans/653-audit-r2-m0-orchestration-baseline-plan.md`
@@ -87,7 +87,7 @@
 | MA5.6     | `docs/audits/2026-10-22-0014-arm2-MA5.6-ai-walkthrough.md`                               |
 | MA6.1     | `docs/audits/2026-10-23-0226-arm2-MA6.1-basic-visual.md`                                 |
 | MA6.2     | `docs/audits/2026-10-23-0411-arm2-MA6.2-content-ai-visual.md`                            |
-| MA6.3     | —                                                                                        |
+| MA6.3     | `docs/audits/2026-10-23-0535-arm2-MA6.3-scheduling-domain-visual.md`                     |
 | MA6.4     | —                                                                                        |
 | MA7.1     | —                                                                                        |
 | MA7.2     | —                                                                                        |
