@@ -1,7 +1,7 @@
 # Audit Remediation R2 Master Index (arm2-index)
 
 > Status: active（M0 / plan 653 初始化骨架；随各工作项产出滚动登记）
-> Last Updated: 2026-10-22（滚动：**MA5.5 功能交互 domain+content+mobile+dashboard+print 预览走查收官**——P1 新增 **2** 条〔P1-MA5.5-001 dashboard 6/8 resize 手柄死区 + e 手柄拖拽变移动 / -002 dashboard Save 往返清空全部面板〔数据丢失类〕〕，累计 **59** 条 open；**P1-MA4.3-005 live 确认成立**（events.onReady 从未派发，4 通道 × 3 运行 + 同会话判别隔离）；jsdom 直派发假绿第二次出现 → MG 守卫候选；P2×6 + P3×11 + watch-only 6 留报告 deferred 区。此前：M0 / MA1 / MA2 / MA3×18 / MA4×5 / MA5.1–5.4 收官）
+> Last Updated: 2026-10-22（滚动：**MA5.6 功能交互 ai 族走查收官**——P1 新增 **1** 条〔P1-MA5.6-001 ai-conversations 会话切换永不换装消息：demo schema 只绑 conversationController/activeConversationId 不绑 engine，ai-chat.tsx 外部 engine 通道全程未用，unit 网在位、demo/e2e 层零网〕，累计 **60** 条 open；KEY LEAD B-08 resolved-confirm（真实拒绝反馈 role=alert 在位，e2e 弱网维持 P3 债）；聚焦损失 systemic 家族第 5 面（rich-text 弹层点击丢焦点）+ 数据丢失类 demo 面（linkage 分支切换静默丢回合）+ 元数据诊断 fallback 新家族 ×2 面 → MG 候选；P2×3 + P3×7 + watch-only 7 留报告 deferred 区。此前：M0 / MA1 / MA2 / MA3×18 / MA4×5 / MA5.1–5.5 收官）
 > Roadmap: `docs/backlog/audit-remediation-r2-roadmap.md`（工作项状态的唯一权威 = 其 Work Item Status 表；本索引不携带状态，只登记报告、finding 与基线）
 > Mission: `missions/audit-remediation-r2.json`
 > M0 Plan: `docs/plans/653-audit-r2-m0-orchestration-baseline-plan.md`
@@ -84,7 +84,7 @@
 | MA5.3     | `docs/audits/2026-10-22-1940-arm2-MA5.3-office-walkthrough.md`                           |
 | MA5.4     | `docs/audits/2026-10-22-2040-arm2-MA5.4-form-data-basic-walkthrough.md`                  |     |
 | MA5.5     | `docs/audits/2026-10-22-2210-arm2-MA5.5-domain-content-walkthrough.md`                   |     |
-| MA5.6     | —                                                                                        |
+| MA5.6     | `docs/audits/2026-10-22-0014-arm2-MA5.6-ai-walkthrough.md`                               |
 | MA6.1     | —                                                                                        |
 | MA6.2     | —                                                                                        |
 | MA6.3     | —                                                                                        |
@@ -182,6 +182,7 @@
 | P1-MA5.4-001 | apps/playground + flux-renderers-data（CRUD query/reset 工作流 UI 不可达） | crud-query 槽渲染原始 schema form 不合成 submit/reset actions（AMIS CRUD renderFilter :3017-3059 合成 submitText:search + onSubmit/onReset，对标偏差）——Keyword Enter 无操作、无按钮、零行空态不可达；MA4.5 E7 e2e hollow 的 live 反证升级为真实工作流断裂                                                                                                                                                               | `docs/audits/2026-10-22-2040-arm2-MA5.4-form-data-basic-walkthrough.md`                 | `open`                                                                                                                                                                | —      |
 | P1-MA5.5-001 | packages/flux-renderers-dashboard（resize 手柄死区 + e 手柄拖拽变移动）    | 8 手柄中 6 个命中测试落在面板（e/s/ne/nw/se/sw）——拖 e 手柄移动面板（left 134→223px 宽度不变）；jsdom 直派发绕过命中测试假绿（kanban 落点案同型第二次）                                                                                                                                                                                                                                                                  | `docs/audits/2026-10-22-2210-arm2-MA5.5-domain-content-walkthrough.md`                  | `open`                                                                                                                                                                | —      |
 | P1-MA5.5-002 | packages/flux-renderers-dashboard（Save 往返清空全部面板；数据丢失类）     | dashboard-domain-adapter.ts:123 序列化裸数组 vs dashboard-editor-renderer.tsx:63 仅收 {panels:[...]}——Save toast+localStorage 成功、reload 零面板；持久化往返守卫缺失                                                                                                                                                                                                                                                    | 同上                                                                                    | `open`                                                                                                                                                                | —      |
+| P1-MA5.6-001 | flux-renderers-ai demo 装配（ai-conversations 会话切换永不换装消息）       | apps/playground/src/ai/ai-conversations-example.json:49-50 只绑 conversationController+activeConversationId 不绑 engine——ai-chat.tsx:169-175 外部 engine 通道（design.md §11.2/§11.5 + use-conversation.ts:657 activeEngine）全程未用，聊天自建 detached engine；切会话侧栏高亮移动但消息列表永不更换（气泡计数曲线证实）；unit 网在位（ai-chat-conversation-change.test.tsx）、demo/e2e 层零网                          | `docs/audits/2026-10-22-0014-arm2-MA5.6-ai-walkthrough.md`                              | `open`                                                                                                                                                                | —      |
 
 ## Delegated 指针区
 
