@@ -1,7 +1,7 @@
 # Audit Remediation R2 Master Index (arm2-index)
 
 > Status: active（M0 / plan 653 初始化骨架；随各工作项产出滚动登记）
-> Last Updated: 2026-10-23（滚动：**MA6.3 UX 视觉 scheduling+domain 走查收官**——P1 零立案（canvas dark 全部完好：scada/three/graph/map 像素采样+截图双证）；P2 ×3 新案〔P2-MA6.3-001 calendar 月视图星期头与日期列几何错位（data-date vs 色带探针）/ -002 gantt 左网格日期列 26/26 省略+表头断词 / -003 字面 bg-white 页头壳族升格注册（MA6.2 P2-005 首见面+实见 10 页 + diff-view = 11 faces，breadth 修正 12 grep 投影→实见清单）〕，累计 **63** open；既有族 face 增量：MA6.1 P2-004 语义色 +8 / P2-006 目标尺寸 +5 / P2-005 窄视口 +1（scada-editor，MA6.4 共管）；P3 ×4 + 记录级 5 + T-1 第 4 轮复发（gantt 官方 PNG 空白帧）+ watch-only 11；dark 平价 9/19 零违规（10 缺陷面全属页头壳族单点可收口）、canvas dark 完好性 9/9 canvas 页 + A 轮 canvas 面全通过；[PERF] 4 perf 页视觉面通过（归 MA7.1）。此前：M0 / MA1 / MA2 / MA3×18 / MA4×5 / MA5.1–5.6 / MA6.1–6.2 收官）
+> Last Updated: 2026-10-23（滚动：**MA6.4 UX 视觉 designer/office+全局主题一致性 走查收官——MA6 批次 6.1–6.4 全部 done**——P1 零新案；P2 ×1 新案〔report-designer-host 主「预览」按钮死亡：渲染 enabled+primary 点击字节级无变化，A9 反向定罪，demo host 装配侧——P2 留报告 deferred 区不入索引（沿 P0/P1 行纪律）〕，累计 **63** open 不变；**P1-MA6.1-001 族面 +1**（flow-designer 流程 JSON 抽屉 DataViewer——designer-page-body.tsx:539，designer 宿主实证，单点修复同清两宿主面）；族面增量：MA6.1 P2-006 +2 型 / P2-005 +1 面 + scada-editor 298 精确复现（共管复核）；**P2-MA6.3-003 页头壳族 designer/office 零命中**（壳层 --nop-hero-\* 令牌化收敛证据）；全局一致性双扫描器 0 新增；P3 ×2 + 记录级 3 + T-1 第 5 轮复发（工具修复优先级最高）+ watch-only 4；dark 平价 7/8 零违规。此前：M0 / MA1 / MA2 / MA3×18 / MA4×5 / MA5.1–5.6 / MA6.1–6.3 收官）
 > Roadmap: `docs/backlog/audit-remediation-r2-roadmap.md`（工作项状态的唯一权威 = 其 Work Item Status 表；本索引不携带状态，只登记报告、finding 与基线）
 > Mission: `missions/audit-remediation-r2.json`
 > M0 Plan: `docs/plans/653-audit-r2-m0-orchestration-baseline-plan.md`
@@ -88,7 +88,7 @@
 | MA6.1     | `docs/audits/2026-10-23-0226-arm2-MA6.1-basic-visual.md`                                 |
 | MA6.2     | `docs/audits/2026-10-23-0411-arm2-MA6.2-content-ai-visual.md`                            |
 | MA6.3     | `docs/audits/2026-10-23-0535-arm2-MA6.3-scheduling-domain-visual.md`                     |
-| MA6.4     | —                                                                                        |
+| MA6.4     | `docs/audits/2026-10-23-0706-arm2-MA6.4-designer-theme-visual.md`                        |
 | MA7.1     | —                                                                                        |
 | MA7.2     | —                                                                                        |
 | MA7.3     | —                                                                                        |
