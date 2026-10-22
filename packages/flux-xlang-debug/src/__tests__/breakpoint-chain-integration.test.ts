@@ -32,7 +32,11 @@ describe('full breakpoint chain: click → store → sync → field → marker',
   it('clicking line 2 makes the line-2 marker resolvable', () => {
     const store = createDebugStore();
     const view = createView('let a = 1;\nlet b = 2;\nlet c = 3;', store);
-    const dispose = syncStoreToExtensions({ store, view, getSourcePath: (v) => v.state.facet(sourcePathFacet) });
+    const dispose = syncStoreToExtensions({
+      store,
+      view,
+      getSourcePath: (v) => v.state.facet(sourcePathFacet),
+    });
 
     expect(handleGutterClick(store, view, { from: 11 })).toBe(true); // line 2
     expect(store.getState().breakpoints).toEqual([{ sourcePath: 'demo.xpl', line: 2 }]);

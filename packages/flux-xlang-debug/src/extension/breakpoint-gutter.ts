@@ -27,7 +27,11 @@ const breakpointMarker = new BreakpointMarker();
  * happy-dom 零布局下不可行，B1 修复的可测形态）：lineBlock 为 CM gutter
  * 回调给的 BlockInfo（有 from/to 无 number）。
  */
-export function handleGutterClick(store: DebugStore, view: EditorView, lineBlock: { from: number } | undefined | null): boolean {
+export function handleGutterClick(
+  store: DebugStore,
+  view: EditorView,
+  lineBlock: { from: number } | undefined | null,
+): boolean {
   if (!lineBlock || !Number.isFinite(lineBlock.from)) {
     return false; // 行无法解析（真实浏览器中不发生；happy-dom 零布局产物）
   }
@@ -42,7 +46,10 @@ export function handleGutterClick(store: DebugStore, view: EditorView, lineBlock
  * 存的是 **1-based 行号**（handleGutterClick `doc.lineAt(from).number` 入集），
  * 而 CM `lineMarker` 回调给的 `line.from` 是 **文档偏移**——必须先换算行号再查集合。
  */
-export function breakpointLineMarker(view: EditorView, line: { from: number }): BreakpointMarker | null {
+export function breakpointLineMarker(
+  view: EditorView,
+  line: { from: number },
+): BreakpointMarker | null {
   const field = view.state.field(breakpointsField, false);
   if (field && field.has(view.state.doc.lineAt(line.from).number)) {
     return breakpointMarker;
@@ -61,7 +68,8 @@ export function createBreakpointGutter(store: DebugStore): Extension {
     // CM gutter 缺省不因 StateField 变化重绘标记行——必须显式声明 lineMarkerChange，
     // 否则 field 已更新而 gutter DOM 永不重建（offset 修复后的残留缺陷）。
     lineMarkerChange: (update) =>
-      update.startState.field(breakpointsField, false) !== update.state.field(breakpointsField, false),
+      update.startState.field(breakpointsField, false) !==
+      update.state.field(breakpointsField, false),
     initialSpacer: () => breakpointMarker,
     domEventHandlers: {
       mousedown(view, lineBlock, event) {
@@ -74,4 +82,3 @@ export function createBreakpointGutter(store: DebugStore): Extension {
     },
   });
 }
-

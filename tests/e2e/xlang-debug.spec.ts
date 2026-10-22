@@ -38,10 +38,13 @@ async function frames(page: Page): Promise<Frame[]> {
 
 async function pollFrames(page: Page, method: string, atLeast: number, timeout = 10_000) {
   await expect
-    .poll(async () => {
-      const all = await frames(page);
-      return all.filter((f) => f.method === method).length;
-    }, { timeout })
+    .poll(
+      async () => {
+        const all = await frames(page);
+        return all.filter((f) => f.method === method).length;
+      },
+      { timeout },
+    )
     .toBeGreaterThanOrEqual(atLeast);
 }
 
@@ -62,7 +65,9 @@ async function openDemo(page: Page) {
   await expect(page.locator('[data-testid="xlang-debug-editor"]')).toBeVisible();
 }
 
-test('xlang debug full chain: breakpoint gutter → suspend → renew → step → eval → resume → complete', async ({ page }) => {
+test('xlang debug full chain: breakpoint gutter → suspend → renew → step → eval → resume → complete', async ({
+  page,
+}) => {
   test.setTimeout(60_000);
   await openDemo(page);
   // 客户端→服务器：session.open（StrictMode 弃连容忍——按 method 过滤断言 ≥1）
@@ -80,7 +85,9 @@ test('xlang debug full chain: breakpoint gutter → suspend → renew → step �
   // P0-MA5.1-004 回归钉：断点标记必须真实渲染（spacer + 命中行各一）——
   // offset/line 谓词错位与 gutter 缺 lineMarkerChange 曾使标记永不出现
   await expect(
-    page.locator('.xlang-debug-breakpoint-gutter .cm-gutterElement:has(.xlang-debug-breakpoint-marker)'),
+    page.locator(
+      '.xlang-debug-breakpoint-gutter .cm-gutterElement:has(.xlang-debug-breakpoint-marker)',
+    ),
   ).toHaveCount(2, { timeout: 5_000 });
 
   // 命中：服务器 evt.suspended → 面板挂起态（变量树渲染并自动发 getFrameVariables）
@@ -88,7 +95,11 @@ test('xlang debug full chain: breakpoint gutter → suspend → renew → step �
     reason: 'breakAt',
     threadId: 9001,
     location: { sourcePath: SOURCE_PATH, line: 2 },
-    stackInfo: { threadId: 9001, threadName: 'mock', stackTrace: [{ funcName: 'main', sourcePath: SOURCE_PATH, line: 2 }] },
+    stackInfo: {
+      threadId: 9001,
+      threadName: 'mock',
+      stackTrace: [{ funcName: 'main', sourcePath: SOURCE_PATH, line: 2 }],
+    },
   });
   await pollFrames(page, 'debugger.getFrameVariables', 1);
   await expect(page.locator('[data-testid="xlang-debug-vars"]')).toBeVisible();
@@ -109,7 +120,11 @@ test('xlang debug full chain: breakpoint gutter → suspend → renew → step �
     reason: 'stepInto',
     threadId: 9001,
     location: { sourcePath: SOURCE_PATH, line: 3 },
-    stackInfo: { threadId: 9001, threadName: 'mock', stackTrace: [{ funcName: 'main', sourcePath: SOURCE_PATH, line: 3 }] },
+    stackInfo: {
+      threadId: 9001,
+      threadName: 'mock',
+      stackTrace: [{ funcName: 'main', sourcePath: SOURCE_PATH, line: 3 }],
+    },
   });
 
   // 求值：eval 输入 a → getExprValue 帧 → 结果渲染 42
@@ -125,10 +140,14 @@ test('xlang debug full chain: breakpoint gutter → suspend → renew → step �
   await pollFrames(page, 'debugger.resume', 1);
   await emit(page, 'evt.resumed', { threadIds: [9001], cause: 'user' });
   await emit(page, 'evt.completed', { ok: true, result: '7' });
-  await expect(page.locator('[data-testid="xlang-debug-not-suspended"]')).toBeVisible({ timeout: 10_000 });
+  await expect(page.locator('[data-testid="xlang-debug-not-suspended"]')).toBeVisible({
+    timeout: 10_000,
+  });
 });
 
-test('xlang debug reconnect: server drop → client reconnect → rebind snapshot', async ({ page }) => {
+test('xlang debug reconnect: server drop → client reconnect → rebind snapshot', async ({
+  page,
+}) => {
   test.setTimeout(60_000);
   await openDemo(page);
   await pollFrames(page, 'session.open', 1);
@@ -150,15 +169,23 @@ test('xlang debug lease expiry: evt.leaseExpired clears suspended state', async 
     reason: 'breakAt',
     threadId: 9002,
     location: { sourcePath: SOURCE_PATH, line: 2 },
-    stackInfo: { threadId: 9002, threadName: 'mock', stackTrace: [{ funcName: 'main', sourcePath: SOURCE_PATH, line: 2 }] },
+    stackInfo: {
+      threadId: 9002,
+      threadName: 'mock',
+      stackTrace: [{ funcName: 'main', sourcePath: SOURCE_PATH, line: 2 }],
+    },
   });
   await expect(page.locator('[data-testid="xlang-debug-vars"]')).toBeVisible({ timeout: 10_000 });
 
   await emit(page, 'evt.leaseExpired', { threadIds: [9002] });
-  await expect(page.locator('[data-testid="xlang-debug-not-suspended"]')).toBeVisible({ timeout: 10_000 });
+  await expect(page.locator('[data-testid="xlang-debug-not-suspended"]')).toBeVisible({
+    timeout: 10_000,
+  });
 });
 
-test('xlang debug diagnostics bridge: compile diagnostics render as editor lint', async ({ page }) => {
+test('xlang debug diagnostics bridge: compile diagnostics render as editor lint', async ({
+  page,
+}) => {
   test.setTimeout(60_000);
   await resetMock(page);
   await page.request.post(`${MOCK}/__compile`, {
@@ -174,7 +201,10 @@ test('xlang debug diagnostics bridge: compile diagnostics render as editor lint'
   // 属性 DOM 面）——两用例以路径区分（200 诊断 vs 500 合成），消息级断言登记机会性
 });
 
-test('xlang debug compile failure: non-ok compile falls back to synthesized diagnostic', async ({ page, errorMonitor }) => {
+test('xlang debug compile failure: non-ok compile falls back to synthesized diagnostic', async ({
+  page,
+  errorMonitor,
+}) => {
   test.setTimeout(60_000);
   // HTTP 500 属测试意图：浏览器会记录 console.error（Failed to load resource: 500）——放行 1 条
   errorMonitor.allowConsoleErrors(1);
