@@ -84,36 +84,52 @@ function useWideWorkbenchViewport(): boolean {
   return isWide;
 }
 
-function resolveWorkbenchGridCols(
+// P0-MA5.1-001（docs/bugs/14 同族机理）：Tailwind 只为扫描面内的完整类字面量
+// 生成 CSS。本表把 9 个网格变体全部以完整字面量落在本文件（playground
+// styles.css `@source ../../../packages` 扫描面内），运行时只做查表——
+// 禁止回退为模板字符串拼接（`grid-cols-[${...}`），那会让 CSS 规则消失、
+// body 塌缩单列。workbench-grid-classes.test.ts 钉住字面量在位。
+export const WORKBENCH_GRID_CLASS_VARIANTS = {
+  none: 'grid-cols-1',
+  leftExpanded: 'grid-cols-[15rem_minmax(0,1fr)]',
+  leftCollapsed: 'grid-cols-[2rem_minmax(0,1fr)]',
+  rightExpanded: 'grid-cols-[minmax(0,1fr)_22rem]',
+  rightCollapsed: 'grid-cols-[minmax(0,1fr)_2rem]',
+  bothExpanded: 'grid-cols-[15rem_minmax(0,1fr)_22rem]',
+  leftCollapsedOnly: 'grid-cols-[2rem_minmax(0,1fr)_22rem]',
+  rightCollapsedOnly: 'grid-cols-[15rem_minmax(0,1fr)_2rem]',
+  bothCollapsed: 'grid-cols-[2rem_minmax(0,1fr)_2rem]',
+} as const;
+
+export function resolveWorkbenchGridCols(
   hasLeft: boolean,
   hasRight: boolean,
   leftCollapsed: boolean,
   rightCollapsed: boolean,
 ): string {
-  const leftTrack = (collapsed: boolean) => workbenchPanelTrack('left', collapsed);
-  const rightTrack = (collapsed: boolean) => workbenchPanelTrack('right', collapsed);
-  if (!hasLeft && !hasRight) return 'grid-cols-1';
+  if (!hasLeft && !hasRight) return WORKBENCH_GRID_CLASS_VARIANTS.none;
   if (hasLeft && !hasRight) {
     return leftCollapsed
-      ? `grid-cols-[${leftTrack(true)}_minmax(0,1fr)]`
-      : `grid-cols-[${leftTrack(false)}_minmax(0,1fr)]`;
+      ? WORKBENCH_GRID_CLASS_VARIANTS.leftCollapsed
+      : WORKBENCH_GRID_CLASS_VARIANTS.leftExpanded;
   }
   if (!hasLeft && hasRight) {
     return rightCollapsed
-      ? `grid-cols-[minmax(0,1fr)_${rightTrack(true)}]`
-      : `grid-cols-[minmax(0,1fr)_${rightTrack(false)}]`;
+      ? WORKBENCH_GRID_CLASS_VARIANTS.rightCollapsed
+      : WORKBENCH_GRID_CLASS_VARIANTS.rightExpanded;
   }
   if (leftCollapsed && rightCollapsed) {
-    return `grid-cols-[${leftTrack(true)}_minmax(0,1fr)_${rightTrack(true)}]`;
+    return WORKBENCH_GRID_CLASS_VARIANTS.bothCollapsed;
   }
   if (leftCollapsed) {
-    return `grid-cols-[${leftTrack(true)}_minmax(0,1fr)_${rightTrack(false)}]`;
+    return WORKBENCH_GRID_CLASS_VARIANTS.leftCollapsedOnly;
   }
   if (rightCollapsed) {
-    return `grid-cols-[${leftTrack(false)}_minmax(0,1fr)_${rightTrack(true)}]`;
+    return WORKBENCH_GRID_CLASS_VARIANTS.rightCollapsedOnly;
   }
-  return `grid-cols-[${leftTrack(false)}_minmax(0,1fr)_${rightTrack(false)}]`;
+  return WORKBENCH_GRID_CLASS_VARIANTS.bothExpanded;
 }
+
 
 export function WorkbenchShell({
   className,
