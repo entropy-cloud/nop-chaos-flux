@@ -76,7 +76,7 @@
 | MA5.5     | 功能交互—domain+content+mobile+dashboard+print 预览实操走查            | `done` | renderer-runtime.md                              | M0                  | interaction-state-audit-prompt.md                      |
 | MA5.6     | 功能交互—ai 族功能走查（流式/工具调用/HITL/会话）                      | `done` | renderer-runtime.md                              | M0                  | interaction-state-audit-prompt.md                      |
 | MA6.1     | UX 视觉—basic+form+data 页面视觉走查（light+dark）                     | `done` | styling-system.md                                | M0                  | visual-page-quality-inspection-prompt.md               |
-| MA6.2     | UX 视觉—content+dashboard+mobile+ai 页面视觉走查（含 AI 文案轻量抽查） | `todo` | styling-system.md                                | M0                  | visual-page-quality-inspection-prompt.md               |
+| MA6.2     | UX 视觉—content+dashboard+mobile+ai 页面视觉走查（含 AI 文案轻量抽查） | `done` | styling-system.md                                | M0                  | visual-page-quality-inspection-prompt.md               |
 | MA6.3     | UX 视觉—scheduling+domain 页面视觉走查                                 | `todo` | theme-compatibility.md                           | M0                  | visual-page-quality-inspection-prompt.md               |
 | MA6.4     | UX 视觉—designer/office 界面视觉 + 全局主题一致性与 ui 原语易用性      | `todo` | theme-compatibility.md                           | M0                  | ux-design-pattern-audit-prompt.md                      |
 | MA7.1     | 性能—可疑点扫描、重渲染热点、perf 阈值裁决                             | `todo` | renderer-runtime.md                              | M0                  | react19-best-practices-review.md                       |
