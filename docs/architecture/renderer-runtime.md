@@ -187,6 +187,8 @@ It is intentionally not the owner of every runtime boundary in the tree.
 
 Those boundaries belong to the concrete creator path that introduces them.
 
+Per-node refresh contract (P0-MA5.1-003): when a document replacement recompiles a node in place — same derived node id, same React key — the node's resolved meta/props must refresh on the next render without any remount. The per-node selection pipeline runs through the in-repo `useSyncExternalStoreWithSelector` fork (`packages/flux-react/src/use-sync-external-store-with-selector.ts`), which is pinned to uncompiled semantics with `'use no memo'`: the React Compiler hoists the fork's mutable `memo` object across `useMemo` factory runs, and for static nodes the store snapshot is constant (`() => null`), so the compiled form would short-circuit `memoizedSelector` and freeze recompiled props at their first resolution. Any change to the fork must keep the "selector re-runs when selector/isEqual identity changes, even on an unchanged snapshot" behavior (pinned by its focused test, which applies the compiler transform to the fork module).
+
 ## Renderer Component Contract
 
 Renderer components receive:

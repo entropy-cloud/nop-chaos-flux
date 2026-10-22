@@ -44,6 +44,17 @@ export function useSyncExternalStoreWithSelector<TSnapshot, TSelection>(
   selector: (snapshot: TSnapshot) => TSelection,
   isEqual: (a: TSelection, b: TSelection) => boolean = objectIs,
 ): TSelection {
+  // P0-MA5.1-003: this hook hand-rolls its own memoization and relies on the
+  // `useMemo` factory re-running (fresh `memo` object) whenever `selector` /
+  // `isEqual` identities change. Under the React Compiler (playground build)
+  // the mutable `memo` is hoisted into a memo-cache slot and reused across
+  // factory runs, so a constant store snapshot (static nodes pass `() => null`)
+  // short-circuits `memoizedSelector` forever and recompiled props never reach
+  // the DOM. Pinned to the uncompiled semantics (the babel preset honors the
+  // directive even though the eslint plugin's eligibility check disagrees); see
+  // use-sync-external-store-with-selector.test.tsx for the discriminating run.
+  // eslint-disable-next-line react-compiler/react-compiler -- directive is load-bearing under the playground babel preset
+  'use no memo';
   const instRef = useRef<SelectionInst<TSelection>>({
     hasValue: false,
     value: null,
@@ -104,11 +115,7 @@ export function useSyncExternalStoreWithSelector<TSnapshot, TSelection>(
     ] as const;
   }, [getServerSnapshot, getSnapshot, isEqual, selector]);
 
-  const value = useSyncExternalStore(
-    subscribe,
-    getSelectionSnapshot,
-    getSelectionServerSnapshot,
-  );
+  const value = useSyncExternalStore(subscribe, getSelectionSnapshot, getSelectionServerSnapshot);
 
   useEffect(() => {
     instRef.current = {
