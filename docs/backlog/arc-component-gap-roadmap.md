@@ -1,7 +1,7 @@
 # Arc Component Gap Roadmap（Arc 对照控件补充）
 
 > Created: 2026-10-21（用户下达：基于 Arc 组件体系对照新增 roadmap 负责补充控件——先设计、后实现；每个控件必须给出必要性与整体一致性分析；成稿后经独立子 agent 反复审查至共识方可激活）
-> Status: **draft**（共识审查进行中；工作项集合整体待人确认后方可激活，激活前不进执行队列）
+> Status: **active**（2026-10-22 经用户执行指令激活——指令即 §11 激活前置条件 2 的人确认；详见 §11）
 > 拟制与共识流程：`docs/skills/roadmap-and-mission-authoring-with-consensus-review.md`
 > Mission: `missions/arc-component-gap.json`
 > Sources:
@@ -35,22 +35,22 @@
 
 > **本文件唯一的动态状态区。** 状态词表：`proposed`（待人确认——工作项集合与优先序整体经人确认后才转 `todo`，沿用 `docs/components/roadmap.md` 词表）/ `todo` / `planned`（plan 草案审查通过）/ `done`（closure audit 通过）。**Wave 只是组织标签，不带状态。**
 
-| Work item                                           | 状态       | 依赖 | 说明                                                     |
-| --------------------------------------------------- | ---------- | ---- | -------------------------------------------------------- |
-| G1D `input-password` 强度指示设计（`showStrength`） | `proposed` | —    | 能力扩展，非新 type；登记 improvement-analysis           |
-| G1I `input-password` 强度指示实现                   | `proposed` | G1D  | 按交付铁律落地                                           |
-| G2D inline-edit 落点裁决与设计                      | `proposed` | —    | 先裁决 detail-field `editable` 扩展 vs 独立 type         |
-| G2I inline-edit 落地                                | `proposed` | G2D  | 按 D 阶段裁决落点执行                                    |
-| G3D 声明式 context-menu 设计                        | `proposed` | —    | 若出新 type → matrix 增行（human gate）                  |
-| G3I context-menu 落地                               | `proposed` | G3D  |                                                          |
-| G4D 只读 code-block 落点裁决与设计                  | `proposed` | —    | 裁决复用 code-editor 静态 pre / markdown 扩展 / 新 type  |
-| G4I code-block 落地                                 | `proposed` | G4D  |                                                          |
-| G5D split-button 落点裁决与设计                     | `proposed` | —    | 裁决 dropdown-button `variant="split"` 扩展 vs 独立 type |
-| G5I split-button 落地                               | `proposed` | G5D  |                                                          |
-| G6D 列表重排（list-reorder）落点裁决与设计          | `proposed` | —    | 裁决 `list` 能力扩展 vs 独立 type                        |
-| G6I 列表重排落地                                    | `proposed` | G6D  |                                                          |
-| G7D image-compare 设计                              | `proposed` | —    | 最低优先级波次                                           |
-| G7I image-compare 落地                              | `proposed` | G7D  |                                                          |
+| Work item                                           | 状态   | 依赖 | 说明                                                     |
+| --------------------------------------------------- | ------ | ---- | -------------------------------------------------------- |
+| G1D `input-password` 强度指示设计（`showStrength`） | `todo` | —    | 能力扩展，非新 type；登记 improvement-analysis           |
+| G1I `input-password` 强度指示实现                   | `todo` | G1D  | 按交付铁律落地                                           |
+| G2D inline-edit 落点裁决与设计                      | `todo` | —    | 先裁决 detail-field `editable` 扩展 vs 独立 type         |
+| G2I inline-edit 落地                                | `todo` | G2D  | 按 D 阶段裁决落点执行                                    |
+| G3D 声明式 context-menu 设计                        | `todo` | —    | 若出新 type → matrix 增行（human gate）                  |
+| G3I context-menu 落地                               | `todo` | G3D  |                                                          |
+| G4D 只读 code-block 落点裁决与设计                  | `todo` | —    | 裁决复用 code-editor 静态 pre / markdown 扩展 / 新 type  |
+| G4I code-block 落地                                 | `todo` | G4D  |                                                          |
+| G5D split-button 落点裁决与设计                     | `todo` | —    | 裁决 dropdown-button `variant="split"` 扩展 vs 独立 type |
+| G5I split-button 落地                               | `todo` | G5D  |                                                          |
+| G6D 列表重排（list-reorder）落点裁决与设计          | `todo` | —    | 裁决 `list` 能力扩展 vs 独立 type                        |
+| G6I 列表重排落地                                    | `todo` | G6D  |                                                          |
+| G7D image-compare 设计                              | `todo` | —    | 最低优先级波次                                           |
+| G7I image-compare 落地                              | `todo` | G7D  |                                                          |
 
 建议执行序：**G1 →（G2、G3、G4 可并行）→（G5、G6 可并行）→ G7**。`proposed` → `todo` 的人确认发生在本文激活时（§11 激活前置条件）。
 
@@ -194,22 +194,22 @@
 
 ## 6. Phases（work item 索引）
 
-| Wave    | Work item                  | 状态       | Owner doc                                                                                  | 依赖 | Reuse                                                                               | Plan |
-| ------- | -------------------------- | ---------- | ------------------------------------------------------------------------------------------ | ---- | ----------------------------------------------------------------------------------- | ---- |
-| 1（P1） | G1D strength 设计          | `proposed` | `docs/components/input-password/design.md` + `existing-components-improvement-analysis.md` | —    | input-password 预留字段                                                             | —    |
-| 1       | G1I strength 实现          | `proposed` | 同上                                                                                       | G1D  | ui 新 primitive（ask-first）                                                        | —    |
-| 2（P2） | G2D inline-edit 落点+设计  | `proposed` | `docs/components/detail-field/design.md`（或新 type design.md，按裁决）                    | —    | detail-field、输入原语                                                              | —    |
-| 2       | G2I inline-edit 落地       | `proposed` | 按 G2D 裁决                                                                                | G2D  | 同上                                                                                | —    |
-| 2       | G3D context-menu 设计      | `proposed` | `docs/components/context-menu/design.md`（新 type 时）或 layout 系 design 更新             | —    | ui ContextMenu、dropdown-button 协议；若裁出新 type → matrix 增行 human gate 先于 I | —    |
-| 2       | G3I context-menu 落地      | `proposed` | 同 G3D                                                                                     | G3D  | 同上                                                                                | —    |
-| 2       | G4D code-block 落点+设计   | `proposed` | 按裁决（code-editor / markdown / 新 type 三选一的 design.md）                              | —    | code-editor colorize（复用方一）、CodeMirror 语言包、diff-view adapter              | —    |
-| 2       | G4I code-block 落地        | `proposed` | 按 G4D 裁决                                                                                | G4D  | 同上                                                                                | —    |
-| 3（P2） | G5D split-button 落点+设计 | `proposed` | `docs/components/dropdown-button/design.md`（或新 type）                                   | —    | dropdown-button 协议                                                                | —    |
-| 3       | G5I split-button 落地      | `proposed` | 按 G5D 裁决                                                                                | G5D  | 同上                                                                                | —    |
-| 3       | G6D list-reorder 落点+设计 | `proposed` | `docs/components/list/design.md`（或新 type）                                              | —    | use-row-drag-sort                                                                   | —    |
-| 3       | G6I list-reorder 落地      | `proposed` | 按 G6D 裁决                                                                                | G6D  | 同上                                                                                | —    |
-| 4（P3） | G7D image-compare 设计     | `proposed` | `docs/components/image-compare/design.md`（新 type 时）                                    | —    | content media 家族                                                                  | —    |
-| 4       | G7I image-compare 落地     | `proposed` | 同 G7D                                                                                     | G7D  | 同上                                                                                | —    |
+| Wave    | Work item                  | 状态   | Owner doc                                                                                  | 依赖 | Reuse                                                                               | Plan |
+| ------- | -------------------------- | ------ | ------------------------------------------------------------------------------------------ | ---- | ----------------------------------------------------------------------------------- | ---- |
+| 1（P1） | G1D strength 设计          | `todo` | `docs/components/input-password/design.md` + `existing-components-improvement-analysis.md` | —    | input-password 预留字段                                                             | —    |
+| 1       | G1I strength 实现          | `todo` | 同上                                                                                       | G1D  | ui 新 primitive（ask-first）                                                        | —    |
+| 2（P2） | G2D inline-edit 落点+设计  | `todo` | `docs/components/detail-field/design.md`（或新 type design.md，按裁决）                    | —    | detail-field、输入原语                                                              | —    |
+| 2       | G2I inline-edit 落地       | `todo` | 按 G2D 裁决                                                                                | G2D  | 同上                                                                                | —    |
+| 2       | G3D context-menu 设计      | `todo` | `docs/components/context-menu/design.md`（新 type 时）或 layout 系 design 更新             | —    | ui ContextMenu、dropdown-button 协议；若裁出新 type → matrix 增行 human gate 先于 I | —    |
+| 2       | G3I context-menu 落地      | `todo` | 同 G3D                                                                                     | G3D  | 同上                                                                                | —    |
+| 2       | G4D code-block 落点+设计   | `todo` | 按裁决（code-editor / markdown / 新 type 三选一的 design.md）                              | —    | code-editor colorize（复用方一）、CodeMirror 语言包、diff-view adapter              | —    |
+| 2       | G4I code-block 落地        | `todo` | 按 G4D 裁决                                                                                | G4D  | 同上                                                                                | —    |
+| 3（P2） | G5D split-button 落点+设计 | `todo` | `docs/components/dropdown-button/design.md`（或新 type）                                   | —    | dropdown-button 协议                                                                | —    |
+| 3       | G5I split-button 落地      | `todo` | 按 G5D 裁决                                                                                | G5D  | 同上                                                                                | —    |
+| 3       | G6D list-reorder 落点+设计 | `todo` | `docs/components/list/design.md`（或新 type）                                              | —    | use-row-drag-sort                                                                   | —    |
+| 3       | G6I list-reorder 落地      | `todo` | 按 G6D 裁决                                                                                | G6D  | 同上                                                                                | —    |
+| 4（P3） | G7D image-compare 设计     | `todo` | `docs/components/image-compare/design.md`（新 type 时）                                    | —    | content media 家族                                                                  | —    |
+| 4       | G7I image-compare 落地     | `todo` | 同 G7D                                                                                     | G7D  | 同上                                                                                | —    |
 
 ## 7. Phase Details（交付范围，短清单）
 
@@ -283,5 +283,5 @@ flowchart LR
 **激活前置条件**（全部满足后才可 `draft` → `active`）：
 
 1. ✅ 共识审查 `approved`——R3（2026-10-21，`ses_ea20a4d1cffel0GF5f6lj4phV8`）零 Blocker / 零 Major，§11 表记满；
-2. ⬜ 人确认 G1–G7 工作项集合与优先序（§2 全表 `proposed` → `todo`）——**唯一待办 human gate**；
+2. ✅ 人确认 G1–G7 工作项集合与优先序（§2 全表 `proposed` → `todo`）——2026-10-22 用户执行指令："新建worktree，执行docs/backlog/arc-component-gap-roadmap.md直到彻底完成。每个plan完成后自动提交一次"。该指令即本 gate 的人确认（用户明确下令整体执行至彻底完成，即确认工作项集合与优先序），随激活提交入仓；
 3. ✅ mission 字段与 roadmap 的 `commitFormat`/`roadmapPath` 逐字符对账通过（R3 审查维度④ PASS）。
