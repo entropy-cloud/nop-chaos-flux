@@ -77,6 +77,11 @@ test('xlang debug full chain: breakpoint gutter → suspend → renew → step �
   await pollFrames(page, 'debugger.addBreakpoint', 1);
   const addBp = (await frames(page)).filter((f) => f.method === 'debugger.addBreakpoint')[0];
   expect(addBp.params.bp).toMatchObject({ sourcePath: SOURCE_PATH, line: 2 });
+  // P0-MA5.1-004 回归钉：断点标记必须真实渲染（spacer + 命中行各一）——
+  // offset/line 谓词错位与 gutter 缺 lineMarkerChange 曾使标记永不出现
+  await expect(
+    page.locator('.xlang-debug-breakpoint-gutter .cm-gutterElement:has(.xlang-debug-breakpoint-marker)'),
+  ).toHaveCount(2, { timeout: 5_000 });
 
   // 命中：服务器 evt.suspended → 面板挂起态（变量树渲染并自动发 getFrameVariables）
   await emit(page, 'evt.suspended', {
