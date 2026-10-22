@@ -69,7 +69,7 @@
 | MA4.3     | 测试层—content+mobile+domain+scheduling+ai 契约覆盖审计                | `done` | renderer-runtime.md                              | M0                  | unit-test-logic-and-contract-coverage-audit-prompt.md  |
 | MA4.4     | 测试层—designer+office+platform+print+xlang 契约覆盖审计               | `done` | renderer-runtime.md                              | M0                  | unit-test-logic-and-contract-coverage-audit-prompt.md  |
 | MA4.5     | 测试层—全仓 e2e 有效性 + mutation 抽样 + 测试泄漏复扫                  | `done` | `docs/testing/e2e-standards.md`                  | M0                  | exploratory-e2e-testing-prompt.md                      |
-| MA5.1     | 功能交互—designer 族 + 调试面实操走查                                  | `todo` | flow-designer/design.md                          | M0                  | complex-component-display-operability-audit-prompt.md  |
+| MA5.1     | 功能交互—designer 族 + 调试面实操走查                                  | `done` | flow-designer/design.md                          | M0                  | complex-component-display-operability-audit-prompt.md  |
 | MA5.2     | 功能交互—scheduling 实操走查（gantt/kanban/calendar/barcode）          | `todo` | renderer-runtime.md                              | M0                  | complex-component-display-operability-audit-prompt.md  |
 | MA5.3     | 功能交互—office 族编辑器实操走查                                       | `todo` | report-designer/design.md                        | M0                  | complex-component-display-operability-audit-prompt.md  |
 | MA5.4     | 功能交互—form/data/basic 功能走查（AMIS 对标）                         | `todo` | form-validation.md                               | M0                  | interaction-state-audit-prompt.md                      |
