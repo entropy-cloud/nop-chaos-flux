@@ -73,7 +73,7 @@
 | MA5.2     | 功能交互—scheduling 实操走查（gantt/kanban/calendar/barcode）          | `done`    | renderer-runtime.md                              | M0                  | complex-component-display-operability-audit-prompt.md  |
 | MA5.3     | 功能交互—office 族编辑器实操走查                                       | `done`    | report-designer/design.md                        | M0                  | complex-component-display-operability-audit-prompt.md  |
 | MA5.4     | 功能交互—form/data/basic 功能走查（AMIS 对标）                         | `done`    | form-validation.md                               | M0                  | interaction-state-audit-prompt.md                      |
-| MA5.5     | 功能交互—domain+content+mobile+dashboard+print 预览实操走查            | `planned` | renderer-runtime.md                              | M0                  | interaction-state-audit-prompt.md                      |
+| MA5.5     | 功能交互—domain+content+mobile+dashboard+print 预览实操走查            | `done`    | renderer-runtime.md                              | M0                  | interaction-state-audit-prompt.md                      |
 | MA5.6     | 功能交互—ai 族功能走查（流式/工具调用/HITL/会话）                      | `todo`    | renderer-runtime.md                              | M0                  | interaction-state-audit-prompt.md                      |
 | MA6.1     | UX 视觉—basic+form+data 页面视觉走查（light+dark）                     | `todo`    | styling-system.md                                | M0                  | visual-page-quality-inspection-prompt.md               |
 | MA6.2     | UX 视觉—content+dashboard+mobile+ai 页面视觉走查（含 AI 文案轻量抽查） | `todo`    | styling-system.md                                | M0                  | visual-page-quality-inspection-prompt.md               |
