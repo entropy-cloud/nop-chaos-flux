@@ -1,7 +1,7 @@
 # Audit Remediation R2 Master Index (arm2-index)
 
 > Status: active（M0 / plan 653 初始化骨架；随各工作项产出滚动登记）
-> Last Updated: 2026-10-23（滚动：**MA8.3 CI guard 审计收官——MA8 批次 8.1–8.3 全部 done**——P1 新增 **2** 条〔P1-MA8.3-001 check 链当轮 RED 于 knip-baseline #22：standing 双源在案红（10-18 mock-server spawn 引用 + 9-16 UseDataSourcesArgs 从未注册——closure R1 重定罪非并发线诱发），守卫真实生效的活体证据、修复归 guard/工具批 / -002 audit:deps standing-red 未入链未基线化：depcruise 57 no-circular 命中 exit 1 但零链位零机器可读基线〕+ P2 ×1（docs-garbled report-only）+ P3 ×3；**26 项激活验证：25 真门禁/零空转/11 注入探针全 RED**（备份优先+byte-identical 10/10）+ 行号键零残留（2026-10-19 迁移复核成立）+ **基线区过时漂移已刷新**（styling 255/suspects 765/async 342/react19 663）+ semgrep 未安装裁决引用；watch 3。累计 **69** open（67 + 2 新 P1；P1-MA8.3-001 为活状态案——仍计 open，随并发线落地收口）。此前：M0 / MA1 / MA2 / MA3×18 / MA4×5 / MA5.1–5.6 / MA6.1–6.4 / MA7.1–7.3 / MA8.1–8.2 收官）
+> Last Updated: 2026-10-23（滚动：**MA9.1 核心链路对抗审计收官**——P0/P1 零立案；P2 ×3 新案〔P2-MA9.1-001 取消路径虚假 error toast 族 3 面单根——runtime-action-helpers.ts:155 confirm 拒绝缺 failureHandled（对照 :170 ajax 路径有）/ -002 pipe 语法×三元静默变义 3 形状——pipe-syntax.ts 无三元感知，**WA-formula-002 watch 首个实漂移证据** / -003 同模板多实例 debounce 键互踩〕+ P3 ×2 + **绿资产 13**（A-17 危险成员矩阵 18 形状全拦截可收编）+ **MG 候选 3**（cancelled 类默认豁免单点修复/矩阵收编/解析器感知）+ 不可判别 3 转 MA9.4；探针 17 清单+6 清单外=23 判别（红 7/绿 13）；方法学备案 2。累计 **69** open 不变。此前：M0 / MA1 / MA2 / MA3×18 / MA4×5 / MA5.1–5.6 / MA6.1–6.4 / MA7.1–7.3 / MA8.1–8.3 收官）
 > Roadmap: `docs/backlog/audit-remediation-r2-roadmap.md`（工作项状态的唯一权威 = 其 Work Item Status 表；本索引不携带状态，只登记报告、finding 与基线）
 > Mission: `missions/audit-remediation-r2.json`
 > M0 Plan: `docs/plans/653-audit-r2-m0-orchestration-baseline-plan.md`
@@ -95,7 +95,7 @@
 | MA8.1     | `docs/audits/2026-10-23-1011-arm2-MA8.1-doc-contract.md`                                 |
 | MA8.2     | `docs/audits/2026-10-23-1103-arm2-MA8.2-i18n-deprecation.md`                             |
 | MA8.3     | `docs/audits/2026-10-23-1150-arm2-MA8.3-ci-guards.md`                                    |
-| MA9.1     | —                                                                                        |
+| MA9.1     | `docs/audits/2026-10-23-1301-arm2-MA9.1-core-adversarial.md`                             |
 | MA9.2     | —                                                                                        |
 | MA9.3     | —                                                                                        |
 | MA9.4     | —                                                                                        |
