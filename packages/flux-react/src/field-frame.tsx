@@ -59,7 +59,7 @@ export interface FieldFrameProps {
   className?: string;
   testid?: string;
   cid?: number;
-  rootProps?: Record<string, string | number | undefined>;
+  rootProps?: Record<string, unknown>;
   children: ReactNode;
 }
 

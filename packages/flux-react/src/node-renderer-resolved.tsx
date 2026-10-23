@@ -447,6 +447,9 @@ export const NodeRendererResolved = memo(function NodeRendererResolved(props: {
       resolvedMeta={finalResolvedMeta}
       resolvedPropsValue={resolvedComponentProps}
       regions={regions}
+      dispatchAction={(action) =>
+        helpers.dispatch(action, { scope: nodeInstance.scope, nodeInstance })
+      }
     >
       {element}
     </NodeFrameWrapper>

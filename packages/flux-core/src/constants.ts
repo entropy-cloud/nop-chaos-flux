@@ -8,6 +8,7 @@ export const META_FIELDS = new Set([
   'disabled',
   'testid',
   'frameWrap',
+  'contextMenu',
 ]);
 
 /** BaseSchema 基础属性：所有渲染器都接受的通用字段 */
