@@ -84,7 +84,7 @@
 | MA7.3     | 样式—契约合规、BEM 漂移、marker 完整性、暗色覆盖                       | `done`    | renderer-markers-and-selectors.md                | M0                  | deep-audit-prompts.md                                  |
 | MA8.1     | 文档—owner docs 与 live code 一致性审计                                | `done`    | `docs/context/source-of-truth-and-precedence.md` | M0                  | doc-evaluation.md                                      |
 | MA8.2     | 运维—i18n 完整性 + deprecation 清理 + todo-exitless                    | `done`    | `flux-guide/README.md`                           | M0                  | deprecated-feature-cleanup.md                          |
-| MA8.3     | 运维—CI guard 激活与工具基线有效性验证                                 | `planned` | `docs/context/project-context.md`                | M0                  | deep-audit-prompts.md                                  |
+| MA8.3     | 运维—CI guard 激活与工具基线有效性验证                                 | `done` | `docs/context/project-context.md`                | M0                  | deep-audit-prompts.md                                  |
 | MA9.1     | 开放式—核心链路对抗审计（compile→scope→render→action）                 | `todo`    | flux-design-principles.md                        | M0                  | open-ended-adversarial-review-prompt.md                |
 | MA9.2     | 开放式—渲染器族对抗审计（跨簇信号驱动）                                | `todo`    | flux-design-principles.md                        | M0                  | open-ended-adversarial-review-prompt.md                |
 | MA9.3     | 开放式—designer+office 族对抗审计                                      | `todo`    | flux-design-principles.md                        | M0                  | open-ended-adversarial-review-prompt.md                |
