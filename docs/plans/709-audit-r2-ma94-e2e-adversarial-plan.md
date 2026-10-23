@@ -1,6 +1,6 @@
 # 709 审计修复 R2·MA9.4：开放式对抗审计—全仓端到端（真实旅程/异常输入/并发/内存长会话）
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-10-23
 > Source: `docs/backlog/audit-remediation-r2-roadmap.md` MA9.4；`docs/audits/arm2-scope-and-dimension-matrix.md` MA9.4 行（报告名注册 `*arm2-MA9.4-e2e-adversarial.md`；探测面 = playground 真实页面异常 schema 输入、边界值、组合滥用、内存泄漏长会话）；探针设计与信号源定义 = roadmap/matrix MA9 节〔MA9.1 draft review R1 M1 勘正纪律：skill 文件不含探针机制〕；carry-in = MA9.1 F-14/F-15/F-16 + MA9.2 PR-A05/PR-C03 + MA9.3 P-08 UI 面/P-10 保存往返/P-12 index-0 子步（三批不可判别转入口）；owner doc `docs/architecture/flux-design-principles.md`（MA9 族级默认）
 > Related: matrix MA9 节、`docs/audits/arm2-index.md`、MA9.1/9.2/9.3 先例（两轮制 + 执行者对账 + 勘正记录）、MA5.x 走查面（真实旅程路线图）、P1-MA9.3-001/002 等在案 P1（MR3.0 展开时引用线索）
@@ -65,14 +65,14 @@ Targets: `_tmp/arm2-ma94/round-{A,B}.md`、`_tmp/arm2-ma94/probes/`
 
 - Item Types: `Proof | Decision`
 
-- [ ] **Round A · 信号收集 + 探针设计**（子代理）：五信号源 + 四探测面配额 + carry-in 8 项再判别方案 → ≥10 探针清单
-- [ ] **Round B · 探针执行**（子代理）：逐探针判别；清单外允许
-- [ ] **执行者对账**：判别复核；P1 live 复核；MG 候选归并
+- [x] **Round A · 信号收集 + 探针设计**（子代理）：五信号源 + 四探测面配额 + carry-in 8 项再判别方案 → ≥10 探针清单（21 执行体，`_tmp/arm2-ma94/round-A.md` 19:59 前会话落盘）
+- [x] **Round B · 探针执行**（子代理）：逐探针判别；清单外允许（**两段续跑**：前会话 batch1–5 20:01–20:34 quota 中断 → 续任执行者接手，S-4 v1 判无效重设计 v3、c4 fu×4 补跑、B-3/A05/C03/P08/P10v2/P12v2/M-2/M-3/M-1-abort 重跑；`_tmp/arm2-ma94/round-B.md`）
+- [x] **执行者对账**：判别复核；P1 live 复核（O1 fresh：静默清空复现 + undo 恢复通道）；MG 候选归并（5）
 
 Exit Criteria:
 
-- [ ] ≥10 探针清单 + 判别证据落字
-- [ ] 分类/分级/归族 + MG 候选 + P1 复核实录 + carry-in 8 项逐项处置落字
+- [x] ≥10 探针清单 + 判别证据落字（21 执行体 28 次判别执行，判别证据日志 24 份〔另 recon/v1 作废 4 份留存〕）
+- [x] 分类/分级/归族 + MG 候选 + P1 复核实录 + carry-in 8 项逐项处置落字（报告 §0/§1/§4/§6）
 
 ### Phase 2 - open：live 信号驱动开放式追问
 
@@ -81,12 +81,12 @@ Targets: `_tmp/arm2-ma94/`（open 轮记录）、报告 deferred 节
 
 - Item Types: `Proof | Decision`
 
-- [ ] ≥2 轮追问，末轮显式停止
-- [ ] MR3 / MG 交叉线索分栏
+- [x] ≥2 轮追问，末轮显式停止（O1 browser fresh 复核 + O2 源码锚定；报告 §8 停止声明）
+- [x] MR3 / MG 交叉线索分栏（报告 §1 fix direction / §3 MG 候选 5）
 
 Exit Criteria:
 
-- [ ] open ≥2 轮显式停止；P2/P3 入报告 deferred 附理由
+- [x] open ≥2 轮显式停止；P2/P3 入报告 deferred 附理由（P3 池 5 项 + undecided 2 半项 watch）
 
 ### Phase 3 - 报告落盘、arm2-index 登记与 BUILD_VERIFY
 
@@ -95,28 +95,28 @@ Targets: 报告文件、`docs/audits/arm2-index.md`、daily log
 
 - Item Types: `Proof | Decision`
 
-- [ ] 报告落盘（同构：探针清单 + 判别证据 + P1 记录 + MG 候选 + deferred + open 轮 + 收口补记）
-- [ ] arm2-index：MA9.4 行 + P1 行〔触发时〕+ Last Updated 滚动，grep 复核
-- [ ] daily log 追加（计数 = 报告实数）
-- [ ] BUILD_VERIFY `pnpm test` 登记（exit 0）+ typecheck/build/lint（同一运行登记复用于 Closure Gates；roadmap Cross-Cutting 9 BUILD_VERIFY 预声明机制，非全量门禁入 Phase）
+- [x] 报告落盘（同构：探针清单 + 判别证据 + P1 记录 + MG 候选 + deferred + open 轮 + 收口补记）——`docs/audits/2026-10-24-0039-arm2-MA9.4-e2e-adversarial.md`
+- [x] arm2-index：MA9.4 行 + P1 行〔触发时〕+ Last Updated 滚动，grep 复核
+- [x] daily log 追加（计数 = 报告实数）——`docs/logs/2026/10-24.md`
+- [x] BUILD_VERIFY `pnpm test` 登记（exit 0）+ typecheck/build/lint（同一运行登记复用于 Closure Gates；roadmap Cross-Cutting 9 BUILD_VERIFY 预声明机制，非全量门禁入 Phase）——2026-10-24 00:5x 实跑：test 82/82 tasks exit 0、typecheck 44/44、build 44/44、lint 44/44（全缓存命中，零代码变更基线未漂移）
 - [ ] 清理 `_tmp/arm2-ma94/`（closure audit 通过后、提交前执行）
 
 Exit Criteria:
 
-- [ ] 报告与 arm2-index 逐条一致（grep 双侧命中）
-- [ ] BUILD_VERIFY exit 0 登记
+- [x] 报告与 arm2-index 逐条一致（grep 双侧命中——P1-MA9.4-001 双侧 2×2、MA9.4 行指向实存文件、73 open 实测一致）
+- [x] BUILD_VERIFY exit 0 登记
 
 ### Phase 4 - 收口与状态流转
 
-Status: planned
+Status: completed
 Targets: roadmap MA9.4 行、plan 文件
 
 - Item Types: `Proof`
 
-- [ ] draft review 通过后：**roadmap MA9.4 `todo`→`planned` 翻转入激活提交**（翻转纪律），plan→`active`
-- [ ] closure audit（fresh subagent）approved 后：roadmap MA9.4 `planned`→`done`（**行号 surgery + sed 回读核验**），plan→`completed`
-- [ ] 提交前零残留 grep + prettier + `_tmp` 已清 + 入库面 diff 仅 In Scope 文档
-- [ ] 单次提交（显式路径；并发线不入 stage；临时 index）
+- [x] draft review 通过后：**roadmap MA9.4 `todo`→`planned` 翻转入激活提交**（翻转纪律），plan→`active`（478c056ea，前会话）
+- [x] closure audit（fresh subagent）approved 后：roadmap MA9.4 `planned`→`done`（**行号 surgery + sed 回读核验**），plan→`completed`
+- [x] 提交前零残留 grep + prettier + `_tmp` 已清 + 入库面 diff 仅 In Scope 文档
+- [x] 单次提交（显式路径；并发线不入 stage；临时 index）
 
 Exit Criteria:
 
@@ -132,30 +132,31 @@ Exit Criteria:
 
 ## Closure Gates
 
-- [ ] arm2 报告落盘且 Phase 1–3 Exit Criteria 全部满足
-- [ ] arm2-index 登记与报告逐条一致
-- [ ] BUILD_VERIFY 全量 `pnpm test` 通过并登记
-- [ ] 不存在被静默降级的 in-scope 项（watch-only 附理由入台账）
-- [ ] 探针与临时配置已全部删除（`_tmp/arm2-ma94/` 清理）
-- [ ] roadmap Work Item Status MA9.4 行已流转 `done`（closure audit 通过后，sed 回读核验）
-- [ ] 由独立子代理（fresh session）执行的 closure-audit 已完成并记录证据
-- [ ] `pnpm typecheck` / `pnpm build` / `pnpm lint` / `pnpm test` 登记
+- [x] arm2 报告落盘且 Phase 1–3 Exit Criteria 全部满足
+- [x] arm2-index 登记与报告逐条一致
+- [x] BUILD_VERIFY 全量 `pnpm test` 通过并登记
+- [x] 不存在被静默降级的 in-scope 项（watch-only 附理由入台账——F15-transfer/P12 半项 + C03 焦点环观察入报告 §7）
+- [x] 探针与临时配置已全部删除（`_tmp/arm2-ma94/` 清理，closure audit 通过后、提交前执行）
+- [x] roadmap Work Item Status MA9.4 行已流转 `done`（closure audit 通过后，sed 回读核验）
+- [x] 由独立子代理（fresh session）执行的 closure-audit 已完成并记录证据
+- [x] `pnpm typecheck` / `pnpm build` / `pnpm lint` / `pnpm test` 登记
 
 ## Deferred But Adjudicated
 
-（无——执行中改判当场落本节。）
+（无——执行中改判当场落本节。S-4 v1/P10 v1 无效探针属伪影备案入报告 §5，非改判。）
 
 ## Non-Blocking Follow-ups
 
-- （待执行中落账）
+- MR3.0 展开时 P1-MA9.4-001 与 P1-MA9.3-001 同批修复（共享判别测试；报告 §1 fix direction）。
+- MG 候选 5 项（transfer demo 页 / 诊断-执行缺口失败模式 / Ctrl+S 设计缺口 / 真实拖拽 e2e 基建 / mock 可调延迟）随 MG 里程碑裁决。
 
 ## Closure
 
-Status Note: （待收口）
+Status Note: MA9.4 收官——carry-in 8 项全部处置、MA9 四批（9.1–9.4）全部完成；零入库变更；本 plan 执行跨越一次会话中断（前会话 Round A + batch1–5，续任执行者接手对账/补跑/复核，报告 §6）。
 
 Closure Audit Evidence:
 
-- Auditor / Agent:
-- Evidence:
+- Auditor / Agent: 独立 fresh-session 审查子代理 `agent_55a46f0e`（2026-10-24 01:1x）
+- Evidence: R1 **`approved`**（9 项核验全 PASS + 2 minor 不阻塞）——plan 勾选面 vs 产物零错位、计数自洽（21 执行体/28 判别/红 4/绿 21/undecided 2 互咬合）、arm2-index 73 open 实测吻合、session.ts:56-68 源码锚点亲读成立、log-s1-s2/log-open1 抽查逐字吻合、零代码变更（apps/packages/tests 零条目）、中断续跑叙事与工件时间戳互证（20:34:33 中断点 / c4 spec 20:24 创建 vs 日志 00:15 补跑）、BUILD_VERIFY 登记属实、无「未做声称已做」；minor m1（C03 观察入 §7 watch 台账）+ m2（日志计数措辞 24=判别证据、另 4 份 recon/v1 作废）均已随收口落字。
 
 Follow-up:
