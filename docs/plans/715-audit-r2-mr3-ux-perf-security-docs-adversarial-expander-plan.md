@@ -1,6 +1,6 @@
 # 715 审计修复 R2·MR3.0：P1 修复展开器—功能/UX/性能/安全/文档/开放式（追加 R3.n 行）
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-10-24
 > Source: `docs/backlog/audit-remediation-r2-roadmap.md` MR3.0（Dependencies MA5–MA9——六个维度组 21 个审计工作项全部 `done`，展开器解锁）；`docs/skills/test-first-implementation-prompt.md`（R 行 Skill 列）
 > Related: `docs/audits/arm2-index.md`（P1 追踪区 MA5–MA9 ×27 条在案）、`docs/plans/00-plan-authoring-and-execution-guide.md`（Rule 22/25）、roadmap Cross-Cutting 4/5/8/11；先例 `docs/plans/711-...`（MR1.0 approved）、`docs/plans/713-...`（MR2.0 approved）
@@ -71,48 +71,48 @@
 
 ### Phase 1 - live 复核与粒度/去重裁定
 
-Status: planned
+Status: completed
 Targets: 本 plan Current Baseline 补记、`docs/audits/arm2-index.md`
 
 - Item Types: `Decision | Proof`
 
-- [ ] 27 条逐条状态列复核 + 实质面抽验 ≥10 条（跨 9 报告分层：MA5.1×2 / MA5.2-002 / MA5.3-002 / MA5.5-002 / MA5.6-001 / MA6.1-001 / MA6.2-002 / MA8.3-001 / MA9.3-002——打开报告定位文件/锚点确认缺口仍在）；4 条交叉/族行（5.2-002、9.2-001、9.3-001、9.4-001）逐条处置声明
-- [ ] 去重裁决落字（五成员 + ARC 线逐行对照；ui JsonViewer 与 FM-7-b 令牌层区分：6.1-001 是 dark 模式下第三方字面色 token 缺口、非令牌层批次）
-- [ ] 粒度裁定落字：12 行归并方案（Phase 2 表）逐行合并/拆分理由
+- [x] 27 条逐条状态列复核 + 实质面抽验 ≥10 条——复核实录：状态列 27/27 `open`（draft review 全量 grep + 执行者区间核对）；抽验 10 条全 live 未愈合：执行者 6 条〔5.1-001 designer-toolbar.tsx:256 `!toolbarSnapshot.canUndo` 假阴性接线 / 5.1-005 `xlang-debug-*` CSS 全仓 0 命中 / 5.2-001 kanban-column.tsx:50-53 registerColumn+registerBoardDropZone 双注册在 / 6.2-002 nop-print-paper（print-designer-canvas.tsx:244）单块无滚动容器 / 9.2-001 SIGNATURE_METHODS（signature-renderer.tsx:17）= clear/reset/undo/export 与声明 clear/reset 漂移在 / 5.1-002 Escape 面在案〕+ draft review 4 条亲验〔5.5-002 dashboard-domain-adapter.ts:123 裸数组 serialize vs editor-renderer.tsx:63 对象消费、8.3-001 knip-baseline 实跑 exit 1 双源、9.3-001 dsl.ts 仅查 steps、9.4-001 session.ts:56-68〕。4 条交叉/族行处置：5.2-002 随行交叉注记（修复行 `—`、归并 MR4.0）/ 9.2-001 R3.12 独立行 / 9.3-001 R3.1 / 9.4-001 R3.2（双向互注记已入 roadmap 行文）
+- [x] 去重裁决落字（活跃集五成员 + ARC 线〔712 已收官、714 in-flight detail-field inline edit〕逐行对照零重叠；ui JsonViewer 与 FM-7-b 区分维持 Current Baseline 判定：6.1-001 是 dark 模式第三方字面色 token 缺口、非令牌层批次）
+- [x] 粒度裁定落字：12 行归并方案逐行理由=同包族/同结果面（R3.1 flow 族跨包同族 / R3.2 page-designer 同包 / R3.3 调试面同结果面跨 C10+C12 / R3.4 scheduling 交互+性能同包 / R3.5 office 同族 / R3.6-R3.8 单点面 / R3.9 视觉 dark+预览同主题层 / R3.10 同 owner docs 面 / R3.11 同 check 链结果面 / R3.12 单族），防 micro-plan 且无 closure 语义分叉（Rule 22/25）
 
 Exit Criteria:
 
-- [ ] 三项裁定全部落字可追溯；抽验实录在案
+- [x] 三项裁定全部落字可追溯；抽验实录在案
 
 ### Phase 2 - R 行追加与指针回填
 
-Status: planned
+Status: completed
 Targets: `docs/backlog/audit-remediation-r2-roadmap.md`、`docs/audits/arm2-index.md`
 
 - Item Types: `Fix`
 
-- [ ] roadmap 追加 R3.1–R3.12 行（归并方案：R3.1 flow-designer 族交互+导入校验 = 5.1-001/002 + 9.3-001〔同族：跨 flow-designer-renderers 包与 playground 宿主 taskflow lib——9.3-001 落 apps/playground/src/taskflow-designer-lib/dsl.ts，修复 plan 落点含宿主 lib；行文互加注记 9.3-001〔与 P1-MA9.4-001/R3.2 同族、判别测试设计共享〕〕；R3.2 page-designer 交互+导入校验 = 5.1-003 + 9.4-001〔同包；行文互加注记 9.4-001〔与 P1-MA9.3-001/R3.1 同族、判别测试设计共享〕〕；R3.3 调试面修复 = 5.1-004/005/006〔debugger+xlang 调试面同结果面〕；R3.4 scheduling 交互与性能 = 5.2-001/002〔002 交叉注记〕+ 7.1-001；R3.5 office 族编辑器修复 = 5.3-001/002 + 9.3-002；R3.6 CRUD 工作流可达性 = 5.4-001；R3.7 dashboard 交互与数据安全 = 5.5-001/002；R3.8 ai demo 装配 = 5.6-001；R3.9 视觉面 dark 与预览 = 6.1-001〔ask-first 标注〕/6.2-001/6.2-002；R3.10 文档修复批 = 8.1-001/002/003〔同 owner docs 面〕；R3.11 guard 链治理 = 8.3-001/002〔同 check 链结果面〕；R3.12 capability 声明族收敛 = 9.2-001）
-- [ ] arm2-index 26 条修复行指针回填（R3.x）
-- [ ] grep 双侧复核（roadmap 12 行 ↔ 索引 26 指针 + 1 随行注记〔002 修复行 `—`〕；计数链 27 = 26 指针回填 + 1 交叉注记 + 0 closed/drift + 0 delegated/遗漏）
+- [x] roadmap 追加 R3.1–R3.12 行（归并方案：R3.1 flow-designer 族交互+导入校验 = 5.1-001/002 + 9.3-001〔同族：跨 flow-designer-renderers 包与 playground 宿主 taskflow lib——9.3-001 落 apps/playground/src/taskflow-designer-lib/dsl.ts，修复 plan 落点含宿主 lib；行文互加注记 9.3-001〔与 P1-MA9.4-001/R3.2 同族、判别测试设计共享〕〕；R3.2 page-designer 交互+导入校验 = 5.1-003 + 9.4-001〔同包；行文互加注记 9.4-001〔与 P1-MA9.3-001/R3.1 同族、判别测试设计共享〕〕；R3.3 调试面修复 = 5.1-004/005/006〔debugger+xlang 调试面同结果面〕；R3.4 scheduling 交互与性能 = 5.2-001/002〔002 交叉注记〕+ 7.1-001；R3.5 office 族编辑器修复 = 5.3-001/002 + 9.3-002；R3.6 CRUD 工作流可达性 = 5.4-001；R3.7 dashboard 交互与数据安全 = 5.5-001/002；R3.8 ai demo 装配 = 5.6-001；R3.9 视觉面 dark 与预览 = 6.1-001〔ask-first 标注〕/6.2-001/6.2-002；R3.10 文档修复批 = 8.1-001/002/003〔同 owner docs 面〕；R3.11 guard 链治理 = 8.3-001/002〔同 check 链结果面〕；R3.12 capability 声明族收敛 = 9.2-001）——12 行已落位（MR3.0 之后、MR4.0 之前，:113-124）
+- [x] arm2-index 26 条修复行指针回填（R3.x）——python 行号映射逐行 ID 断言（172-198 连续块）后批量编辑，27 行改动（26 指针 + 002 描述注记）
+- [x] grep 双侧复核（roadmap 12 行 ↔ 索引 26 指针 + 1 随行注记〔002 修复行 `—`〕；计数链 27 = 26 指针回填 + 1 交叉注记 + 0 closed/drift + 0 delegated/遗漏）——实测分布 R3.1×3/R3.2×2/R3.3×3/R3.4×2/R3.5×3/R3.6×1/R3.7×2/R3.8×1/R3.9×3/R3.10×3/R3.11×2/R3.12×1 = 26 ✓；002 注记在、修行列 `—` ✓；33 todo = MR4/MV/MG 3 + R1×4 + R2×14 + R3×12 咬合 ✓
 
 Exit Criteria:
 
-- [ ] roadmap 行追加 prettier 干净；arm2-index 指针回填 grep 双侧命中；计数链咬合
+- [x] roadmap 行追加 prettier 干净；arm2-index 指针回填 grep 双侧命中；计数链咬合
 
 ### Phase 3 - 状态流转与收口
 
-Status: planned
+Status: completed
 Targets: roadmap MR3.0 行、本 plan、daily log
 
 - Item Types: `Proof`
 
-- [ ] draft review 通过后：MR3.0 `todo`→`planned` 翻转入激活提交，plan→`active`
-- [ ] closure audit（fresh subagent）approved 后：MR3.0 `planned`→`done`（sed 回读核验），plan→`completed`
-- [ ] daily log 追加；单次提交（显式路径；并发线不入 stage）
+- [x] draft review 通过后：MR3.0 `todo`→`planned` 翻转入激活提交，plan→`active`（dbdce8020）
+- [x] closure audit（fresh subagent）approved 后：MR3.0 `planned`→`done`（regex 定位替换 + 回读核验），plan→`completed`
+- [x] daily log 追加；单次提交（显式路径；并发线不入 stage）
 
 Exit Criteria:
 
-- [ ] roadmap 与 plan 状态流转一致；提交仅含 In Scope 文件
+- [x] roadmap 与 plan 状态流转一致；提交仅含 In Scope 文件
 
 ## Draft Review Record
 
@@ -123,13 +123,13 @@ Exit Criteria:
 
 ## Closure Gates
 
-- [ ] R3.1–R3.12 行落 roadmap 且每行 finding 编号可追溯
-- [ ] arm2-index 26 指针回填 + P1-MA5.2-002 交叉注记（修复行 `—`；无 drift 时；有则 26−n + n 条 closed 注记）
-- [ ] Phase 1 三项裁定有 live 证据（含抽验 ≥10 条实录）
-- [ ] 不存在被静默降级的 in-scope 项（27 条全部有 R 行承接、交叉注记随行、delegated 登记或 drift 闭环）
-- [ ] 由独立子代理（fresh session）执行的 closure-audit 已完成并记录证据
-- [ ] `pnpm typecheck`
-- [ ] `pnpm test`
+- [x] R3.1–R3.12 行落 roadmap 且每行 finding 编号可追溯
+- [x] arm2-index 26 指针回填 + P1-MA5.2-002 交叉注记（修复行 `—`；零 drift）
+- [x] Phase 1 三项裁定有 live 证据（抽验 10 条实录：执行者 6 + draft review 4）
+- [x] 不存在被静默降级的 in-scope 项（27 条全部有 R 行承接、交叉注记随行、delegated 登记或 drift 闭环）
+- [x] 由独立子代理（fresh session）执行的 closure-audit 已完成并记录证据
+- [x] `pnpm typecheck`（44/44；auditor 独立复跑同证）
+- [x] `pnpm test`（82/82 @ 03:42 无并发干扰窗口；auditor 独立复跑同证）
 
 > build/lint 按 guide 纯文档条款删除（零 ts/tsx/css 变更）；保留 typecheck+test（test 受并发线 test-first 循环干扰时按 713 先例：绿窗实测 + 排除法验证 + 干扰如实披露）。
 
@@ -144,11 +144,13 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: （待收口）
+Status Note: MR3.0 收官——R3.1–R3.12 十二行落位、26 指针回填、P1-MA5.2-002 随行交叉注记（归并裁决归 MR4.0）；27 条 MA5–MA9 P1 全处置（26 排行 + 1 注记 + 0 delegated/遗漏、零 drift）；零代码变更。三展开器收官：R1×4 + R2×14 + R3×12 = 30 个修复工作项行承接全部 73 条 P1（open 累计 73→71，两次 drift 闭环）。
 
 Closure Audit Evidence:
 
-- Auditor / Agent:
-- Evidence:
+- Auditor / Agent: 独立 fresh-session 审查子代理 `agent_282f60c4`（2026-10-24 03:5x）
+- Evidence: R1 **`approved`**（8/8 PASS + 0 findings）——12 行谱系序落位（git diff -w 净内容核验）、26+1 双向指针逐行亲核、3 条抽验亲核全中（designer-toolbar :256 / xlang CSS 0 命中 / SIGNATURE_METHODS 漂移）、4 交叉行处置吻合、ask-first 标注在、零越界（716 ARC 线文件印证 runway 分配）、typecheck/test 独立复跑双绿。
 
 Follow-up:
+
+- no remaining plan-owned work（R3.1–R3.12 修复执行由各行自身 plan 承接）
