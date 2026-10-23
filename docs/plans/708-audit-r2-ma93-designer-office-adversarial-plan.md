@@ -1,6 +1,6 @@
 # 708 审计修复 R2·MA9.3：开放式对抗审计—designer+office 族（长会话状态、undo/redo、序列化往返、大文档）
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-10-23
 > Source: `docs/backlog/audit-remediation-r2-roadmap.md` MA9.3；`docs/audits/arm2-scope-and-dimension-matrix.md` MA9.3 行（报告名注册 `*arm2-MA9.3-designer-office-adversarial.md`；探针面 = designer+office 族〔长会话状态、undo/redo、序列化往返、大文档〕）；探针设计与信号源定义 = roadmap/matrix MA9 节〔MA9.1 draft review R1 M1 勘正纪律：skill 文件不含探针机制〕；owner doc `docs/architecture/flow-designer/design.md`（关联 report-designer/design.md；roadmap owner 列 flux-design-principles.md 为 MA9 族级默认，topical owner 沿 707 先例）
 > Related: matrix MA9 节、`docs/audits/arm2-index.md`、MA5.1/MA5.3/MA9.1 先例（P0-MA5.1-001..004 全部修复在案、MA5.3 office 走查、MA9.1 两轮制先例）、MA9.1 watch 5 + P2-MA9.1-001..003（MR3.0 展开时引用线索 / MG 候选）
@@ -41,12 +41,12 @@ designer+office 族对抗审计：长会话状态（跨操作状态残留/内存
 
 ## Failure Paths
 
-| 可测场景编号    | 触发                | 行为                                           | 可重试 |
-| --------------- | ------------------- | ------------------------------------------- | ------ |
-| probe-undecided | 探针不可判别        | 记录原因 + MA9.4 转入候选                   | 是     |
-| audit-p0-found  | Rule 2 六类之一     | 即时通道                                    | 否     |
-| subagent-quota  | 限流/模型失败       | fresh 重启一次；再败执行者亲跑              | 是     |
-| round-overflow  | 单轮超上限          | **字母批拆分（MA9.3-a/-b，Cross-Cutting 5 预授权）** | 否     |
+| 可测场景编号    | 触发            | 行为                                                 | 可重试 |
+| --------------- | --------------- | ---------------------------------------------------- | ------ |
+| probe-undecided | 探针不可判别    | 记录原因 + MA9.4 转入候选                            | 是     |
+| audit-p0-found  | Rule 2 六类之一 | 即时通道                                             | 否     |
+| subagent-quota  | 限流/模型失败   | fresh 重启一次；再败执行者亲跑                       | 是     |
+| round-overflow  | 单轮超上限      | **字母批拆分（MA9.3-a/-b，Cross-Cutting 5 预授权）** | 否     |
 
 （"用户可见表现"列不适用——流程性失败路径。）
 
@@ -58,68 +58,68 @@ designer+office 族对抗审计：长会话状态（跨操作状态残留/内存
 
 ### Phase 1 - multi：信号收集 + 探针设计 → 执行
 
-Status: planned
+Status: completed
 Targets: `_tmp/arm2-ma93/round-{A,B}.md`、`_tmp/arm2-ma93/probes/`
 
 - Item Types: `Proof | Decision`
 
-- [ ] **Round A · 信号收集 + 探针设计**（子代理）：五信号源 + 四探测面配额 → ≥10 探针清单
-- [ ] **Round B · 探针执行**（子代理）：逐探针判别；清单外允许
-- [ ] **执行者对账**：判别复核；P1 live 复核；MG 候选归并
+- [x] **Round A · 信号收集 + 探针设计**（子代理）：五信号源 + 四探测面配额 → ≥10 探针清单（14 条，14:40 落盘）
+- [x] **Round B · 探针执行**（子代理）：逐探针判别；清单外允许（14+8=22 项判别，15:43 落盘；前一执行会话完成，续任执行者接手对账）
+- [x] **执行者对账**：判别复核；P1 live 复核（V1/V2/V3/V3b 四组读数 + P2-004/005 源码亲读）；MG 候选归并（P1-002 机制勘正落报告 §1/§6）
 
 Exit Criteria:
 
-- [ ] ≥10 探针清单 + 判别证据落字
-- [ ] 分类/分级/归族 + MG 候选 + P1 复核实录
+- [x] ≥10 探针清单 + 判别证据落字（14+8=22；红 7/绿 12/不可判别 3 子步）
+- [x] 分类/分级/归族 + MG 候选 + P1 复核实录（P1 ×2 live 复核成立含 1 项机制收窄）
 
 ### Phase 2 - open：live 信号驱动开放式追问
 
-Status: planned
+Status: completed
 Targets: `_tmp/arm2-ma93/`（open 轮记录）、报告 deferred 节
 
 - Item Types: `Proof | Decision`
 
-- [ ] ≥2 轮追问，末轮显式停止
-- [ ] MR3 / MG 交叉线索分栏
+- [x] ≥2 轮追问，末轮显式停止（R1 word undo 机制改判 + R2 族归并与交叉裁决——报告 §8）
+- [x] MR3 / MG 交叉线索分栏（MR3 +P1-001/002+P2-003/004；MG +5 候选；MA9.4 +不可判别 3 子步）
 
 Exit Criteria:
 
-- [ ] open ≥2 轮显式停止；P2/P3 入报告 deferred 附理由
+- [x] open ≥2 轮显式停止；P2/P3 入报告 deferred 附理由（P3 ×2 + watch 7 入报告 §1/§7）
 
 ### Phase 3 - 报告落盘、arm2-index 登记与 BUILD_VERIFY
 
-Status: planned
+Status: completed
 Targets: 报告文件、`docs/audits/arm2-index.md`、daily log
 
 - Item Types: `Proof | Decision`
 
-- [ ] 报告落盘（同构：探针清单 + 判别证据 + P1 记录 + MG 候选 + deferred + open 轮 + 收口补记）
-- [ ] arm2-index：MA9.3 行 + P1 行〔触发时〕+ Last Updated 滚动，grep 复核
-- [ ] daily log 追加（计数 = 报告实数）
-- [ ] BUILD_VERIFY `pnpm test` 登记（exit 0）+ typecheck/build/lint（同一运行登记复用于 Closure Gates）
-- [ ] 清理 `_tmp/arm2-ma93/`（closure audit 通过后、提交前执行）
+- [x] 报告落盘（同构：探针清单 + 判别证据 + P1 记录 + MG 候选 + deferred + open 轮 + 收口补记）——`docs/audits/2026-10-23-1903-arm2-MA9.3-designer-office-adversarial.md`
+- [x] arm2-index：MA9.3 行 + P1 行〔触发时〕+ Last Updated 滚动，grep 复核
+- [x] daily log 追加（计数 = 报告实数）
+- [x] BUILD_VERIFY `pnpm test` 登记（exit 0）+ typecheck/build/lint（同一运行登记复用于 Closure Gates）——typecheck/build/lint 44/44 ×3 + test 82/82，exit 0
+- [x] 清理 `_tmp/arm2-ma93/`（closure audit 通过后、提交前执行）
 
 Exit Criteria:
 
-- [ ] 报告与 arm2-index 逐条一致（grep 双侧命中）
-- [ ] BUILD_VERIFY exit 0 登记
+- [x] 报告与 arm2-index 逐条一致（grep 双侧命中；closure R1 逐条核验 PASS）
+- [x] BUILD_VERIFY exit 0 登记
 
 ### Phase 4 - 收口与状态流转
 
-Status: planned
+Status: completed
 Targets: roadmap MA9.3 行、plan 文件
 
 - Item Types: `Proof`
 
-- [ ] draft review 通过后：**roadmap MA9.3 `todo`→`planned` 翻转入激活提交**（翻转纪律），plan→`active`
-- [ ] closure audit（fresh subagent）approved 后：roadmap MA9.3 `planned`→`done`（**行号 surgery + sed 回读核验**），plan→`completed`
-- [ ] 提交前零残留 grep + prettier + `_tmp` 已清 + 入库面 diff 仅 In Scope 文档
-- [ ] 单次提交（显式路径；并发线不入 stage；临时 index）
+- [x] draft review 通过后：**roadmap MA9.3 `todo`→`planned` 翻转入激活提交**（翻转纪律），plan→`active`（已由激活提交 `06e1edb2b` 于 2026-10-23 14:31 落地——执行会话中断前完成）
+- [x] closure audit（fresh subagent）approved 后：roadmap MA9.3 `planned`→`done`（**行号 surgery + sed 回读核验**），plan→`completed`
+- [x] 提交前零残留 grep + prettier + `_tmp` 已清 + 入库面 diff 仅 In Scope 文档
+- [x] 单次提交（显式路径；并发线不入 stage；临时 index）
 
 Exit Criteria:
 
-- [ ] roadmap 与 plan 状态流转一致（sed 回读核验）
-- [ ] 提交仅含 In Scope 文件
+- [x] roadmap 与 plan 状态流转一致（sed 回读核验：MA9.3=`done`、MA9.4=`todo` 不变）
+- [x] 提交仅含 In Scope 文件
 
 ## Draft Review Record
 
@@ -130,14 +130,14 @@ Exit Criteria:
 
 ## Closure Gates
 
-- [ ] arm2 报告落盘且 Phase 1–3 Exit Criteria 全部满足
-- [ ] arm2-index 登记与报告逐条一致
-- [ ] BUILD_VERIFY 全量 `pnpm test` 通过并登记
-- [ ] 不存在被静默降级的 in-scope 项（watch-only 附理由入台账）
-- [ ] 探针与临时配置已全部删除（`_tmp/arm2-ma93/` 清理）
-- [ ] roadmap Work Item Status MA9.3 行已流转 `done`（closure audit 通过后，sed 回读核验）
-- [ ] 由独立子代理（fresh session）执行的 closure-audit 已完成并记录证据
-- [ ] `pnpm typecheck` / `pnpm build` / `pnpm lint` / `pnpm test` 登记
+- [x] arm2 报告落盘且 Phase 1–3 Exit Criteria 全部满足
+- [x] arm2-index 登记与报告逐条一致
+- [x] BUILD_VERIFY 全量 `pnpm test` 通过并登记
+- [x] 不存在被静默降级的 in-scope 项（watch-only 附理由入台账——报告 §7 七条）
+- [x] 探针与临时配置已全部删除（`_tmp/arm2-ma93/` 清理）
+- [x] roadmap Work Item Status MA9.3 行已流转 `done`（closure audit 通过后，sed 回读核验）
+- [x] 由独立子代理（fresh session）执行的 closure-audit 已完成并记录证据
+- [x] `pnpm typecheck` / `pnpm build` / `pnpm lint` / `pnpm test` 登记
 
 ## Deferred But Adjudicated
 
@@ -145,15 +145,18 @@ Exit Criteria:
 
 ## Non-Blocking Follow-ups
 
-- （待执行中落账）
+- 不可判别 3 子步转 MA9.4 候选（P-08 UI 面 / P-10 保存往返 / P-12 index-0 插入）——报告 §7-1。
+- watch 台账 7 条沿引报告 §7（「选 210」徽标、word 字数计口径、016 家族放大观察面等）。
 
 ## Closure
 
-Status Note: （待收口）
+Status Note: Phase 1–4 全部完成：22 项判别（红 7/绿 12/不可判别 3 子步）产出 P1 ×2 / P2 ×2 / P3 ×2 + watch 升格证据；执行者对账含 1 项机制勘正（P1-002 收窄）与 4 组 live 复核；报告 + arm2-index（Last Updated/MA9.3 行/P1 ×2 行）同 commit 回填；BUILD_VERIFY exit 0（typecheck/build/lint 44/44 ×3 + test 82/82）；closure audit R1 `approved`（0B/0M/3m，三条 Minor 随收口落地：m1 绿计数口径注记、m2 探针演化注记、m3 dsl.ts:107 行号修正）；roadmap MA9.3 `planned`→`done`（sed 回读核验）。会话中断续跑偏差（Round A/B 前会话完成、对账由续任执行者接手）已落报告 §6/§9。
 
 Closure Audit Evidence:
 
-- Auditor / Agent:
-- Evidence:
+- Auditor / Agent: 独立 fresh-session 子代理 `agent_409b9377`（2026-10-23，八项核验全 PASS）
+- Evidence: Verdict `approved`（0B/0M/3m）；源码亲读四处吻合（dsl.ts/tree-session.ts/round-trip.ts/designer-inspector.tsx）；git diff apps/packages/tests = 0；arm2-index 72 open 行实测一致；机制勘正两说并存核验通过
 
 Follow-up:
+
+- no remaining plan-owned work（MA9.4 / MR3.0 线索移交见报告 §6/§8 交叉分栏）
