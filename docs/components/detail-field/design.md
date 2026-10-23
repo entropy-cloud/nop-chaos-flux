@@ -55,7 +55,7 @@ interface DetailFieldSchema extends BoundFieldSchemaBase {
 
 ### 4a. `editable` 点即编辑协议（G2D 设计，实现归 G2I）
 
-**触发与点击目标**：`editTrigger` 默认 `click`（可 `dblclick`）；命中区为 `detail-field-viewer` 容器；viewer 内可交互子内容（按钮/链接）`stopPropagation` 优先于触发。
+**触发与点击目标**：`editTrigger` 默认 `click`（可 `dblclick`）；命中区为 `detail-field-viewer` 容器；viewer 内可交互子内容（button/a/input/select/textarea/label）点击不触发编辑（G2I 实现为 `closest()` 排除，行为等价于 stopPropagation 优先）。
 
 **编辑态**：viewer 原位替换为单行 `Input`（首版固定），`aria-label` 沿用字段 label，初始显示值 = viewer 同源（`String(fieldValue)`），聚焦并全选。
 
@@ -107,7 +107,7 @@ interface DetailFieldSchema extends BoundFieldSchemaBase {
 - viewer 区 `data-slot="detail-field-viewer"`；触发按钮 `aria-label={triggerLabel}`。
 - surface：Dialog（sm/default/lg/xl）或 Drawer（placement 默认 bottom）；`data-slot="detail-field-surface-body"`、`data-slot="detail-field-draft-body"`、`data-slot="detail-field-draft-error"`（`role="status"` + `aria-live="assertive"`）。
 - `data-slot="field-control"` 由 FieldFrame 输出（`wrap: true`），根节点不再重复（plan-2026-08-05-1359-1 Phase 3 裁决）。
-- `editable: true` 编辑态输出 `data-slot="detail-field-inline-editor"`（G2D 协议，见 §4a）。
+- `editable: true` 编辑态输出 `data-slot="detail-field-inline-editor"`（G2D 协议，见 §4a）；内联错误节点 `data-slot="detail-field-inline-error"`（`role="alert"`，id `${name}-inline-error`，input `aria-describedby` 指向）。
 
 ## 11. 实现拆分建议
 

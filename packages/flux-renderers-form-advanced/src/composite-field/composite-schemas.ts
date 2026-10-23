@@ -76,6 +76,10 @@ export interface DetailFieldSchema extends BoundFieldSchemaBase {
   transformInAction?: ActionSchema | ActionSchema[];
   transformOutAction?: ActionSchema | ActionSchema[];
   validateValueAction?: ActionSchema | ActionSchema[];
+  /** G2I inline editing (docs/components/detail-field/design.md §4a): in-place viewer editing; mutually exclusive with the transform/validate actions. */
+  editable?: boolean;
+  /** Inline edit trigger (only consumed when `editable: true`), defaults to 'click'. */
+  editTrigger?: 'click' | 'dblclick';
 }
 
 /**

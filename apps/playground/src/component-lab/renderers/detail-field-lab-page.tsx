@@ -118,6 +118,21 @@ const projectedSubmit = {
   ],
 };
 
+const inlineEditableField = {
+  type: 'form',
+  data: { nickname: 'Pilot' },
+  body: [
+    {
+      type: 'detail-field',
+      name: 'nickname',
+      label: 'Nickname',
+      editable: true,
+      content: [{ type: 'input-text', name: 'nickname', label: 'Nickname' }],
+    },
+    { type: 'text', text: '${nickname ? "Live: " + nickname : ""}' },
+  ],
+};
+
 export function DetailFieldLabPage() {
   return (
     <MultiScenarioLabPage
@@ -134,6 +149,12 @@ export function DetailFieldLabPage() {
           description:
             'The viewer slot shows the address on two lines. Click "Edit" to open the dialog with street, city, state, and ZIP fields.',
           schema: addressDetailField,
+        },
+        {
+          title: 'Inline editing (editable)',
+          description:
+            'editable: true turns the viewer into click-to-edit: click the value, type, then Enter or blur to commit (Escape cancels). No dialog is opened.',
+          schema: inlineEditableField,
         },
         {
           title: 'Projected dialog edit submit (bug 73 pattern)',
