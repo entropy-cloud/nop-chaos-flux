@@ -1,7 +1,7 @@
 # Audit Remediation R2 Master Index (arm2-index)
 
 > Status: active（M0 / plan 653 初始化骨架；随各工作项产出滚动登记）
-> Last Updated: 2026-10-23（滚动：**MA7.2 安全审计收官**——P0/P1 零立案；P2 ×2 新案〔P2-MA7.2-001 print 模板 page.background 未净化 style-attribute 路径——render-html.ts:139 引号突破可达同源 srcdoc、当前 schema 作者信任边界下不可远程触达 / -002 三处手写 URL scheme 守卫分歧且可 WHATWG 空白规范化绕过——React 19.2.4 兜底已实证覆盖〕+ P3 ×3；**sanitize 16 路径全净化/转义链**（DOMPurify 配置充分性验证通过、tiptap 双门纯文本）、动态执行零缺陷（公式引擎手写 AST 解释器）、浏览器 IO 0 命中、audit:deps 57=M0 基线、CVE 面 125 advisories（5C/55H）记录归依赖治理批、semgrep 未安装裁决手动等价扫描；watch 4。此前：M0 / MA1 / MA2 / MA3×18 / MA4×5 / MA5.1–5.6 / MA6.1–6.4 / MA7.1 收官）
+> Last Updated: 2026-10-23（滚动：**MA7.3 样式审计收官——MA7 批次 7.1–7.3 全部 done**——P0/P1 零立案；P2 ×2 新案〔P2-MA7.3-001 spreadsheet 自违反 design.md §10 作用域禁令 57 处裸 `[data-slot]` 选择器——根作用域化单点收口连带塌缩基线大头 / -002 gantt drop-indicator 无命名空间+零 CSS（5 处 marker 漂移之一）〕+ P3 ×6（BEM 迁移 2 包 ~18 处等）；**基线校准裁决：styling-suspects 注册基线 255 非 240**（+15 合法棘轮，执行者实跑=子代理镜像重算=255 三方吻合，MV 对 255）；BEM 漂移收敛 2 包；token 四块对称；**MA6 四条样式侧收口归并全部实证仍在**（本报告为样式侧权威底稿）+ 4 个未入册字面族均有 dark 处理（watch）；P0/P1 零立案累计 **64** open 不变。此前：M0 / MA1 / MA2 / MA3×18 / MA4×5 / MA5.1–5.6 / MA6.1–6.4 / MA7.1–7.2 收官）
 > Roadmap: `docs/backlog/audit-remediation-r2-roadmap.md`（工作项状态的唯一权威 = 其 Work Item Status 表；本索引不携带状态，只登记报告、finding 与基线）
 > Mission: `missions/audit-remediation-r2.json`
 > M0 Plan: `docs/plans/653-audit-r2-m0-orchestration-baseline-plan.md`
@@ -91,7 +91,7 @@
 | MA6.4     | `docs/audits/2026-10-23-0706-arm2-MA6.4-designer-theme-visual.md`                        |
 | MA7.1     | `docs/audits/2026-10-23-0755-arm2-MA7.1-performance.md`                                  |
 | MA7.2     | `docs/audits/2026-10-23-0847-arm2-MA7.2-security.md`                                     |
-| MA7.3     | —                                                                                        |
+| MA7.3     | `docs/audits/2026-10-23-0924-arm2-MA7.3-styling.md`                                      |
 | MA8.1     | —                                                                                        |
 | MA8.2     | —                                                                                        |
 | MA8.3     | —                                                                                        |
