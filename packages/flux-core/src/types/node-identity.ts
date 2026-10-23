@@ -113,6 +113,8 @@ export type NodeMetaProgram = {
   disabled?: CompiledRuntimeValue<boolean | undefined>;
   testid?: CompiledRuntimeValue<string | undefined>;
   frameWrap?: CompiledRuntimeValue<boolean | 'label' | 'group' | 'none' | undefined>;
+  /** contextMenu meta capability: static authoring config (items), v1 without expression evaluation. */
+  contextMenu?: CompiledRuntimeValue<unknown>;
 };
 
 export interface TemplateProviderPlan {

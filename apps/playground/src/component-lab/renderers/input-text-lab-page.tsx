@@ -124,6 +124,25 @@ const suggestEnv = {
   },
 };
 
+const contextMenuField = {
+  type: 'form',
+  body: [
+    {
+      type: 'input-text',
+      name: 'hostname',
+      label: 'Hostname (right-click me)',
+      contextMenu: {
+        items: [
+          { key: 'copy', label: 'Copy value', action: { action: 'showToast', args: { level: 'info', message: 'Copy requested' } } },
+          { key: 'clear', label: 'Clear field', destructive: true },
+          { separator: true },
+          { key: 'meta', label: 'Field metadata', disabled: true },
+        ],
+      },
+    },
+  ],
+};
+
 export function InputTextLabPage() {
   return (
     <MultiScenarioLabPage
@@ -146,6 +165,12 @@ export function InputTextLabPage() {
           description:
             'input-text / input-email / input-password / input-number / textarea in one form: real input into each control, then submit. valuesPath publishes the committed values into the page scope where an outer text echoes all five values.',
           schema: familyCompositeForm,
+        },
+        {
+          title: 'Declarative context menu (meta capability)',
+          description:
+            'contextMenu declared on the field attaches to the wrap:true frame root: right-click or Shift+F10 opens the menu, item click dispatches the action, Escape or outside click closes.',
+          schema: contextMenuField,
         },
         {
           title: 'input-text suggestSource writeback in form',

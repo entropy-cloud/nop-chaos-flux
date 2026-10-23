@@ -5,7 +5,7 @@
 ## 1. 定位
 
 - `contextMenu` 是**meta 通道能力扩展**：任意 wrap:true 节点可在 schema 上声明右键菜单（items + action 派发），由通用 wrap 层附着监听并渲染自由定位菜单 surface。
-- 不新增 retained type、不改变任何节点 DOM 结构；菜单 surface portal 至 body。
+- 不新增 retained type、不改变任何节点 DOM 结构；菜单 surface 经帧根同层 inline `position:fixed` 渲染（G3I 勘误，见 §6）。
 
 ## 2. 挂载契约裁决（G3D 一票裁决）
 
@@ -49,7 +49,7 @@ type ContextMenuItemSchema =
 ## 6. a11y 与 DOM
 
 - surface：`role="menu"`；item 为原生 `<button role="menuitem" disabled?>`——shell 选择器 `[role="menuitem"]:not([disabled])` 命中原生 disabled 属性。
-- marker：`data-slot="context-menu-surface"`（portal 至 body）；destructive item 走 `text-destructive` 语义色。
+- marker：`data-slot="context-menu-surface"`；destructive item 走 `text-destructive` 语义色。（G3I 勘误：原设计 portal 至 body，实现改为帧根同层 inline `position:fixed` 渲染——flux-react 分层无 react-dom 依赖、portal 需新增 ui 公共导出（ask-first 保护区域）；代价是祖先含 transform/filter 时定位退化，登记 watch-only residual。）
 - 样式对齐 dropdown menu 既有视觉（bg-popover / border / shadow token）。
 
 ## 7. 边界声明

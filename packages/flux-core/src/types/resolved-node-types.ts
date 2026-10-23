@@ -14,6 +14,8 @@ export interface ResolvedNodeMeta {
   disabled: boolean;
   testid?: string;
   frameWrap?: boolean | 'label' | 'group' | 'none';
+  /** contextMenu meta capability config (shape owned by flux-react context-menu-surface). */
+  contextMenu?: unknown;
   changed: boolean;
   cid?: number;
 }

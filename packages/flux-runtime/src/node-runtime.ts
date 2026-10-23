@@ -257,6 +257,15 @@ export function createNodeRuntime(input: {
         // Safe: state mirrors the compiled program structure.
         state?.meta.frameWrap as RuntimeValueState<unknown> | undefined,
       ),
+      contextMenu: evaluateCompiledValue(
+        input.expressionCompiler,
+        // Safe: compiled meta program produces the correct type for contextMenu.
+        meta.contextMenu as CompiledRuntimeValue<unknown> | undefined,
+        scope,
+        env,
+        // Safe: state mirrors the compiled program structure.
+        state?.meta.contextMenu as RuntimeValueState<unknown> | undefined,
+      ),
       changed: true,
     };
 

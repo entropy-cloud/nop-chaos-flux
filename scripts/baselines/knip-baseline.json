@@ -461,6 +461,7 @@
     "packages/flux-formula/src/registry.ts#FormulaFunctionMeta",
     "packages/flux-formula/src/registry.ts#FormulaInvokeMode",
     "packages/flux-print-renderers/src/renderer-definitions.tsx#PrintElementRendererProps",
+    "packages/flux-react/src/context-menu-surface.tsx#ContextMenuItemSchema",
     "packages/flux-react/src/keyboard.ts#ChordFeedResult",
     "packages/flux-react/src/schema-diagnostics-reporter.ts#SchemaDiagnosticReporter",
     "packages/flux-react/src/structural-loop-provider.tsx#StructuralLoopProviderProps",

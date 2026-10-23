@@ -5,6 +5,8 @@ import type { RenderRegionHandle } from './react-contracts.js';
 import { FieldFrame, toFieldRemarkProps } from './field-frame.js';
 import type { FieldRemarkSchemaLike } from './field-frame.js';
 import { resolveFrameWrapMode } from './node-renderer-utils.js';
+import { useNodeContextMenu, warnContextMenuOnNonWrappedNode } from './context-menu-surface.js';
+import type { ContextMenuConfig } from './context-menu-surface.js';
 
 export function NodeFrameWrapper(props: {
   templateNode: TemplateNode;
@@ -13,6 +15,7 @@ export function NodeFrameWrapper(props: {
   resolvedMeta: ResolvedNodeMeta;
   resolvedPropsValue: Record<string, unknown>;
   regions: Readonly<Record<string, RenderRegionHandle>>;
+  dispatchAction?: (action: import('@nop-chaos/flux-core').ActionSchema) => Promise<unknown>;
   children: ReactNode;
 }) {
   const frameWrapMode = resolveFrameWrapMode(
@@ -21,7 +24,18 @@ export function NodeFrameWrapper(props: {
     props.resolvedMeta.frameWrap,
   );
 
+  const contextMenuConfig = props.resolvedMeta.contextMenu as ContextMenuConfig | undefined;
+  const dispatchAction = props.dispatchAction;
+  const { contextMenuHandlers, contextMenuSurface } = useNodeContextMenu(
+    contextMenuConfig,
+    props.resolvedMeta.disabled === true,
+    dispatchAction ?? (() => Promise.resolve(undefined)),
+  );
+
   if (frameWrapMode === 'none') {
+    if (contextMenuConfig) {
+      warnContextMenuOnNonWrappedNode(props.templateNode.rendererType);
+    }
     return <>{props.children}</>;
   }
 
@@ -59,6 +73,7 @@ export function NodeFrameWrapper(props: {
   const labelWidthValue = props.resolvedPropsValue.labelWidth as string | number | undefined;
 
   return (
+    <>
     <FieldFrame
       name={fieldName}
       renderer={props.templateNode.rendererType}
@@ -75,8 +90,11 @@ export function NodeFrameWrapper(props: {
       className={props.resolvedMeta.frameClassName}
       testid={props.resolvedMeta.testid}
       cid={props.resolvedMeta.cid}
+      rootProps={contextMenuHandlers}
     >
       {props.children}
     </FieldFrame>
+    {contextMenuSurface}
+    </>
   );
 }

@@ -51,7 +51,7 @@ describe('META_FIELDS', () => {
   });
 
   it('has exactly 9 fields', () => {
-    expect(META_FIELDS.size).toBe(9);
+    expect(META_FIELDS.size).toBe(10);
   });
 
   it('does not contain arbitrary strings', () => {
