@@ -49,17 +49,17 @@
 - `weak`：长度 < 8，或仅含 1 个字符类别。
 - `fair`：长度 ≥ 8 且含 2 个字符类别。
 - `good`：长度 ≥ 8 且含 3 个字符类别；或长度 ≥ 10 且含 2 类。
-- `strong`：长度 ≥ 12 且含 3 个以上字符类别。
+- `strong`：长度 ≥ 12 且含 3 个及以上字符类别（≥3）。
 - 空值：不渲染整个强度行（无轨道、无文案）。
 
 **四档配色语义**（一律走语义 token，禁止 raw emerald/amber 类；badge/button-status 测试已强制状态色走 token）：
 
-| 档位   | token           | 文案 i18n key（`flux.common.*`，camelCase，先例 `showPassword`/`hidePassword`） |
-| ------ | --------------- | ------------------------------------------------------------------------------- |
-| weak   | `--destructive` | `flux.common.pwdStrengthWeak`                                                   |
-| fair   | `--warning`     | `flux.common.pwdStrengthFair`                                                   |
-| good   | `--secondary`   | `flux.common.pwdStrengthGood`                                                   |
-| strong | `--success`     | `flux.common.pwdStrengthStrong`                                                 |
+| 档位   | token                                                                                                  | 文案 i18n key（`flux.common.*`，camelCase，先例 `showPassword`/`hidePassword`） |
+| ------ | ------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------- |
+| weak   | `--destructive`                                                                                        | `flux.common.pwdStrengthWeak`                                                   |
+| fair   | `--warning`                                                                                            | `flux.common.pwdStrengthFair`                                                   |
+| good   | `--secondary`（G1I 勘误：live 主题无 plain `--color-secondary` 映射，实现落 `muted-foreground` token） | `flux.common.pwdStrengthGood`                                                   |
+| strong | `--success`                                                                                            | `flux.common.pwdStrengthStrong`                                                 |
 
 强度条文案标签的可见文本 i18n key：`flux.common.pwdStrengthLabel`（"Password strength"）。
 

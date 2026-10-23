@@ -366,4 +366,37 @@ test.describe('IS-8a renderer-lab interaction state (plan 552)', () => {
     expect(reading.width, 'full dialog must span the viewport width').toBe(reading.innerWidth);
     await assertTrackedPageErrors(page);
   });
+
+  // arc-component-gap G1I (plan 712): showStrength renders a four-segment
+  // meter below the input; display-only (no validation participation).
+  test('input-password: strength meter tracks weak→strong programmatically', async ({ page }) => {
+    await gotoPage(page, '/#/lab/input-password');
+    const stage = page.locator('[data-testid="scenario-stage-strength-meter"]');
+    await expect(stage).toBeVisible({ timeout: 15_000 });
+    // Empty value: no strength row.
+    expect(await stage.locator('[data-slot="input-password-strength"]').count()).toBe(0);
+    const input = stage.locator('input[type="password"]');
+    await input.fill('abc');
+    const weak = await page.evaluate(() => {
+      const el = document.querySelector(
+        '[data-testid="scenario-stage-strength-meter"] [data-slot="input-password-strength"]',
+      );
+      return el?.getAttribute('aria-valuenow');
+    });
+    expect(weak).toBe('1');
+    await input.fill('Abcd1234!@#$');
+    const strong = await page.evaluate(() => {
+      const stage = document.querySelector('[data-testid="scenario-stage-strength-meter"]');
+      const meter = stage?.querySelector('[data-slot="input-password-strength"]');
+      const active = stage
+        ? [...stage.querySelectorAll('[data-slot="input-password-strength-segment"]')].filter(
+            (s) => s.getAttribute('data-active') === 'true',
+          )
+        : [];
+      return { now: meter?.getAttribute('aria-valuenow'), active: active.length };
+    });
+    expect(strong.now).toBe('4');
+    expect(strong.active).toBe(4);
+    await assertTrackedPageErrors(page);
+  });
 });

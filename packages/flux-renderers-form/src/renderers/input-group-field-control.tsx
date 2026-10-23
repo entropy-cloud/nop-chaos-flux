@@ -28,6 +28,7 @@ type InputGroupFieldControlProps = FieldFrameInjectedAria & {
   showClearButton?: boolean;
   onClear?: () => void;
   revealSlot?: ReactNode;
+  strengthSlot?: ReactNode;
 };
 
 export function InputGroupFieldControl(props: InputGroupFieldControlProps) {
@@ -47,6 +48,7 @@ export function InputGroupFieldControl(props: InputGroupFieldControlProps) {
     showClearButton,
     onClear,
     revealSlot,
+    strengthSlot,
   } = props;
 
   const ownId = inputProps.id;
@@ -75,6 +77,7 @@ export function InputGroupFieldControl(props: InputGroupFieldControlProps) {
   };
 
   return (
+    <>
     <InputGroup className={className}>
       {prefix ? (
         <InputGroupAddon align="inline-start">
@@ -104,5 +107,7 @@ export function InputGroupFieldControl(props: InputGroupFieldControlProps) {
         </InputGroupAddon>
       ) : null}
     </InputGroup>
+    {strengthSlot}
+    </>
   );
 }

@@ -29,7 +29,8 @@ import {
   radioGroupSpecificContracts,
   selectSpecificContracts,
 } from './input-contracts.js';
-import { InputGroupFieldControl } from './input-group-field-control.js';
+import { InputGroupFieldControl, mergeAriaSpace } from './input-group-field-control.js';
+import { computePasswordStrength, PasswordStrengthMeter } from './input-password-strength.js';
 import type {
   InputSchema,
 } from '../schemas.js';
@@ -69,6 +70,7 @@ export const inputEnhancementFieldRules: SchemaFieldRule[] = [
   { key: 'nativeAutoComplete', kind: 'prop' },
   { key: 'inputMode', kind: 'prop' },
   { key: 'revealPassword', kind: 'prop', valueType: 'boolean' },
+  { key: 'showStrength', kind: 'prop', valueType: 'boolean' },
   { key: 'placeholder', kind: 'prop' },
   { key: 'minLength', kind: 'prop' },
   { key: 'maxLength', kind: 'prop' },
@@ -137,6 +139,13 @@ export function createInputRenderer(inputType: string) {
     });
 
     const revealEnabled = inputType === 'password' && props.props.revealPassword === true;
+    const strengthEnabled = inputType === 'password' && props.props.showStrength === true;
+    const strengthLevel = strengthEnabled ? computePasswordStrength(inputValue) : null;
+    const strengthLabelId = strengthEnabled && strengthLevel && name ? `${name}-strength` : undefined;
+    const strengthSlot =
+      strengthEnabled && strengthLevel ? (
+        <PasswordStrengthMeter level={strengthLevel} describedById={strengthLabelId} />
+      ) : null;
     const [revealed, setRevealed] = useState(false);
     const actualInputType = revealEnabled && revealed ? 'text' : inputType;
 
@@ -226,7 +235,7 @@ export function createInputRenderer(inputType: string) {
     ) : null;
 
     const hasInlineEndSlot = Boolean(suffix) || clearable || showCounter || revealEnabled;
-    const needsInputGroup = Boolean(prefix) || hasInlineEndSlot;
+    const needsInputGroup = Boolean(prefix) || hasInlineEndSlot || strengthEnabled;
 
     const inputMode = resolveInputMode(inputType, props.props.inputMode);
 
@@ -242,7 +251,7 @@ export function createInputRenderer(inputType: string) {
       'aria-label': String((props.props.label ?? name) || '') || undefined,
       'aria-required': props.props.required ? true : undefined,
       'aria-invalid': presentation.showError ? true : undefined,
-      'aria-describedby': describedBy,
+      'aria-describedby': mergeAriaSpace(describedBy, strengthLabelId),
       'aria-errormessage': errorMessageId,
       placeholder: props.props.placeholder ? String(props.props.placeholder) : undefined,
       onFocus: (event) => {
@@ -282,6 +291,7 @@ export function createInputRenderer(inputType: string) {
         showClearButton={showClearButton}
         onClear={handleClear}
         revealSlot={revealSlot}
+        strengthSlot={strengthSlot}
       />,
     );
   };
