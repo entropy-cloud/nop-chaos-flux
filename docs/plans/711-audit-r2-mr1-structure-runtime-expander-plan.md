@@ -1,6 +1,6 @@
 # 711 审计修复 R2·MR1.0：P1 修复展开器—结构+运行时（追加 R1.n 行）
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-10-24
 > Source: `docs/backlog/audit-remediation-r2-roadmap.md` MR1.0（Dependencies MA1、MA2——两簇 13 个审计工作项全部 `done`，展开器解锁）；`docs/skills/test-first-implementation-prompt.md`（R 行 Skill 列声明，修复执行时使用）
 > Related: `docs/audits/arm2-index.md`（P1 追踪区 6 条在案）、`docs/plans/00-plan-authoring-and-execution-guide.md`（Rule 22/25 合并优先）、roadmap Cross-Cutting 4（R\*.0 展开预授权）/8（修复去重）/11（判别性测试纪律——约束的是 R 行修复执行，非本展开器）
@@ -48,7 +48,7 @@
 
 ### Out Of Scope
 
-- R1.n 修复的执行；P2/P3 处置；MA3+ finding 展开；并发线遗留（docs/index.md、platform-hardening-roadmap.md、P0-MA5.1-002 plan 清理行——工作树已知遗留不入 stage）。
+- R1.n 修复的执行；P2/P3 处置；MA3+ finding 展开；并发线遗留不入 stage（起草时 3 项：docs/index.md、platform-hardening-roadmap.md、P0-MA5.1-002 plan 清理行；closure auditor m1 补记：执行期间工作树新增并发 712 password-strength 线 ~10 文件〔apps/packages/tests/docs〕——内容甄别非本 plan 面，收口提交显式路径隔离）。
 
 ## Failure Paths
 
@@ -66,44 +66,44 @@
 
 ### Phase 1 - live 复核与粒度裁定
 
-Status: planned
+Status: completed
 Targets: 本 plan Current Baseline 补记、`docs/audits/arm2-index.md`
 
 - Item Types: `Decision | Proof`
 
-- [ ] 6 条 P1 逐条 live 复核：状态列仍 `open` + **逐条打开 finding 实质面确认未愈合**（文档段落/git diff/代码锚点——P1-MA1.5-001 锚点重钉 :125→live 实位）
-- [ ] P1-MA2.1-001 finding-drift 裁定落字：修复已由 MA2.1 plan 落地（:227 勘误注记）→ 该行就地注记 + 状态回填 `closed`，R 行不排（Failure Paths finding-drift 径）
-- [ ] 修复去重裁决落字：对照集 = roadmap Purpose 第 3 条原文五成员（FM-1b-b / FM-6-b / FM-7-b / UR-15 / NRP-1..5），逐条零重叠结论（FM-7-b 显式排除理由：本批均为 R2 自有 finding，P1-MA1.7-001 为组件内类名清理非令牌层缺口、P1-MA1.5-001 为 marker 缺失非令牌契约）
-- [ ] 粒度裁定落字：R1.1 = P1-MA1.1-001 + P1-MA1.2-001 合并（同 owner doc 同修复型 doc-drift 收敛）；R1.2 = P1-MA1.5-001（marker 代码修复）；R1.3 = P1-MA1.7-001（BEM 清理 + 测试锚点同步，同包）；R1.4 = P1-MA2.3-001（media IO env 治理，涉及 env 通道裁定故独立）
+- [x] 6 条 P1 逐条 live 复核：状态列仍 `open` + **逐条打开 finding 实质面确认未愈合**（文档段落/git diff/代码锚点——P1-MA1.5-001 锚点重钉 ：125→live 实位）——复核实录：MA1.1 owner doc `:91/:198/:431/:443` rules.ts 引用与 `:443` Versus 节 live；MA1.2 `:569`「7 renderer families」live（draft review 亲验）；MA1.5 重钉 `renderer/three-canvas.tsx:144` 裸类 live；MA1.7 `designer-edge-row.tsx`/`designer-node-card.tsx` BEM 修饰符 + `__` 元素类 ×10 live（含测试锚点文件）；MA2.3 `use-barcode-camera.ts:67` live（draft review 亲验）；MA2.1 实质面已愈合（见下行）
+- [x] P1-MA2.1-001 finding-drift 裁定落字：修复已由 MA2.1 plan 落地（:227 勘误注记）→ 该行就地注记 + 状态回填 `closed`，R 行不排（Failure Paths finding-drift 径）
+- [x] 修复去重裁决落字：对照集 = roadmap Purpose 第 3 条原文五成员（FM-1b-b / FM-6-b / FM-7-b / UR-15 / NRP-1..5），逐条零重叠结论（FM-7-b 显式排除理由：本批均为 R2 自有 finding，P1-MA1.7-001 为组件内类名清理非令牌层缺口、P1-MA1.5-001 为 marker 缺失非令牌契约）——结论维持 Current Baseline 判定，五成员 live 证据见 draft review round-1/2 实测（FM roadmap :31/:36、cross-roadmap :34）
+- [x] 粒度裁定落字：R1.1 = P1-MA1.1-001 + P1-MA1.2-001 合并（同 owner doc 同修复型 doc-drift 收敛）；R1.2 = P1-MA1.5-001（marker 代码修复）；R1.3 = P1-MA1.7-001（BEM 清理 + 测试锚点同步，同包）；R1.4 = P1-MA2.3-001（media IO env 治理，涉及 env 通道裁定故独立）
 
 Exit Criteria:
 
-- [ ] 四项裁定（实质面复核 / drift 闭环 / 去重 / 粒度）全部落字，可追溯到 live 证据
+- [x] 四项裁定（实质面复核 / drift 闭环 / 去重 / 粒度）全部落字，可追溯到 live 证据
 
 ### Phase 2 - R 行追加与指针回填
 
-Status: planned
+Status: completed
 Targets: `docs/backlog/audit-remediation-r2-roadmap.md`、`docs/audits/arm2-index.md`
 
 - Item Types: `Fix`
 
-- [ ] roadmap Work Item Status 表追加 R1.1–R1.4 行（MR1.0 之后、MR2.0 之前；Status `todo`；每行名称内嵌 finding 编号）；Dependencies 选 `MR1.0`（谱系指针——R 行由本展开器产出、closure 依赖其状态机，异于 r1 先例「无」的扁平登记；选型理由随行注记一句）
-- [ ] arm2-index P1 追踪区 5 条「修复行」列 `—`→`R1.x` 回填；P1-MA2.1-001 行注记 + `closed`
-- [ ] grep 双侧复核（roadmap R1.1–R1.4 ↔ arm2-index 修复行指针 4+5 命中 + closed 1）
+- [x] roadmap Work Item Status 表追加 R1.1–R1.4 行（MR1.0 之后、MR2.0 之前；Status `todo`；每行名称内嵌 finding 编号）；Dependencies 选 `MR1.0`（谱系指针——R 行由本展开器产出、closure 依赖其状态机，异于 r1 先例「无」的扁平登记；选型理由随行注记一句）
+- [x] arm2-index P1 追踪区 5 条「修复行」列 `—`→`R1.x` 回填；P1-MA2.1-001 行注记 + `closed`
+- [x] grep 双侧复核（roadmap R1.1–R1.4 ↔ arm2-index 修复行指针 4+5 命中 + closed 1）——实测：roadmap R1.1–R1.4 四行 todo；arm2-index R1.1 ×2 / R1.2 / R1.3 / R1.4 + MA2.1 `closed` + 注记在案；prettier 重排后复核通过
 
 Exit Criteria:
 
-- [ ] roadmap 行追加且 prettier 干净；arm2-index 指针回填且 grep 双侧命中
+- [x] roadmap 行追加且 prettier 干净；arm2-index 指针回填且 grep 双侧命中
 
 ### Phase 3 - 状态流转与收口
 
-Status: planned
+Status: completed
 Targets: roadmap MR1.0 行、本 plan、daily log
 
 - Item Types: `Proof`
 
-- [ ] draft review 通过后：roadmap MR1.0 `todo`→`planned` 翻转入激活提交（翻转纪律），plan→`active`
-- [ ] closure audit（fresh subagent）approved 后：roadmap MR1.0 `planned`→`done`（sed 回读核验），plan→`completed`
+- [x] draft review 通过后：roadmap MR1.0 `todo`→`planned` 翻转入激活提交（翻转纪律），plan→`active`（8474c678b）
+- [x] closure audit（fresh subagent）approved 后：roadmap MR1.0 `planned`→`done`（sed 回读核验），plan→`completed`
 - [ ] daily log 追加；单次提交（显式路径；并发线不入 stage）
 
 Exit Criteria:
@@ -120,13 +120,13 @@ Exit Criteria:
 
 ## Closure Gates
 
-- [ ] R1.1–R1.4 行落 roadmap 且每行引用 finding 编号可追溯
-- [ ] arm2-index 5 条 P1 修复行指针全部回填 + P1-MA2.1-001 注记闭环（`closed`）
-- [ ] Phase 1 四项裁定有 live 证据
-- [ ] 不存在被静默降级的 in-scope 项（6 条 P1 全部有 R 行承接、delegated 登记或 drift 闭环处置）
-- [ ] 由独立子代理（fresh session）执行的 closure-audit 已完成并记录证据
-- [ ] `pnpm typecheck`
-- [ ] `pnpm test`
+- [x] R1.1–R1.4 行落 roadmap 且每行引用 finding 编号可追溯
+- [x] arm2-index 5 条 P1 修复行指针全部回填 + P1-MA2.1-001 注记闭环（`closed`）
+- [x] Phase 1 四项裁定有 live 证据
+- [x] 不存在被静默降级的 in-scope 项（6 条 P1 全部有 R 行承接、delegated 登记或 drift 闭环处置）
+- [x] 由独立子代理（fresh session）执行的 closure-audit 已完成并记录证据
+- [x] `pnpm typecheck`（exit 0；closure auditor 独立复跑 44/44 同证）
+- [x] `pnpm test`（三跑：首跑一次瞬时失败无失败任务名可考〔输出截断〕，第 2/3 跑连续 82/82 tasks 全绿且期间零代码变更，auditor 第 4 跑 82/82 独立复证——瞬时不可复现定性成立）
 
 > build/lint 按 guide 纯文档条款删除（零 ts/tsx/css 变更）；保留 typecheck+test 抽查以证零意外。
 
@@ -145,11 +145,13 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: （待收口）
+Status Note: MR1.0 收官——roadmap R1.1–R1.4 四行落位、arm2-index 5 处指针回填、P1-MA2.1-001 finding-drift 闭环（`closed`）；6 条 MA1/MA2 P1 全部处置（4 R 行承接 + 1 drift 闭环 + 0 delegated/遗漏）；零代码变更。closure auditor m1（并发线 712 password-strength ~10 文件在本 plan 起草后进入工作树，Out Of Scope 枚举起草时仅 3 项）已在本节注记——收口提交继续显式路径只挑 In Scope 文件，并发线不入 stage；m2（P1-MA1.5-001 行描述保留报告期锚点 :125）按 Non-Goals 不改审计引用，R1.2 执行以 roadmap 行注记的 ：144 为准。
 
 Closure Audit Evidence:
 
-- Auditor / Agent:
-- Evidence:
+- Auditor / Agent: 独立 fresh-session 审查子代理 `agent_70a0c070`（2026-10-24 02:0x）
+- Evidence: R1 **`approved`**（8 项核验全 PASS + 2 minor 不阻塞）——锚点重钉 ：144 亲读吻合、MA2.1 闭环合规（:227 勘误 + 行注记 + Deferred 记账一致）、R 行落位格式与指针双向闭合（4 行↔5 指针）、去重五成员 live 抽验零重叠、6 条 P1 完整处置零遗漏、零越界（apps/packages/tests 变更经内容甄别全部属并发 712 线）、诚实性核验通过（含 test 首跑瞬时失败如实披露 + auditor 独立复跑 typecheck 44/44 / test 82/82 第 4 跑全绿）。
 
 Follow-up:
+
+- no remaining plan-owned work（R1.1–R1.4 修复执行由各行自身 plan 承接，非本展开器债务）
