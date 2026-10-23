@@ -10,7 +10,7 @@
 - amis 仅作参考之一，**非标尺**。能力裁决与决策表见 `input-text/design.md` §2 Flux 决策表（本组件沿用）。
 - 当前最小能力与 `input-text` 一致。
 - `minLength`/`maxLength`/`pattern` 同 input-text，已实现（双重生效：编译期 `collectSchemaValidationRules` 收集为 validation rule + `createInputRenderer` 透传原生 `<input>` 属性）。详见 `input-text/design.md` §2、§3。
-- 显示切换（已实现）与自动生成密码属于后续增强，不应在首版文档里直接固化成复杂协议；强度提示已由 `showStrength` 落地（见 §2/§4/§10）。
+- 显示切换（已实现）与自动生成密码属于后续增强，不应在首版文档里直接固化成复杂协议；强度提示契约已定稿（`showStrength`，实现随 arc-component-gap G1I 落地，见 §2/§4/§10）。
 - **revealPassword 显示切换** 由 E2a-bis 工作项落地（基础能力，amis 默认开启；`revealPassword: true` 启用，详见 §2/§7/§10）。
 
 ### Flux 决策表
@@ -41,8 +41,8 @@
 - **强度等级算法**（本地确定性规则计分，value 的纯函数）：
   - 值为空 → 强度条整体不渲染；
   - 非空且长度 < 6 → level 0（太短）；
-  - 否则 level = max(1, 满足计数)，计数四条目：长度 ≥ 8 / 同时含小写与大写字母 / 含数字 / 含符号（非字母数字字符）；计数 0–4 → level 落在 1–4。
-- **meter 解剖**：固定 4 段；填充段数 = max(1, level)（level 0 与 level 1 同为 1 段填充，由等级词与 `aria-valuenow` 区分）；所有填充段统一取当前 level 的颜色。
+  - 否则 level = max(1, 满足计数)，计数四条目：长度 ≥ 8 / 同时含小写与大写字母 / 含数字 / 含符号（非字母数字字符）；计数 0–4 → level 落在 1–4。长度读法 = JS `.length`（UTF-16 code units）。
+- **meter 解剖**：固定 4 段；填充段数 = max(1, level)（level 0 与 level 1 同为 1 段填充，由等级词与 `aria-valuenow` 区分）；所有填充段统一取当前 level 的颜色，未填充段 `bg-muted`。
 - **颜色语义**（等级 → 语义 token 工具类，禁原始色板色号）：level 0–1 `bg-destructive`、level 2 `bg-warning`、level 3–4 `bg-success`（对应 `@nop-chaos/theme-tokens` 的 `--destructive`/`--warning`/`--success` 族，与 alert renderer 语义色用法同源）。
 - **a11y**：meter 容器 `role="meter"` + `aria-valuemin={0}` + `aria-valuemax={4}` + `aria-valuenow={level}` + `aria-valuetext`=等级词，`aria-label` 走 `flux.common.passwordStrength`（不可见）。**不改** input 的 `aria-describedby`——该链归 field frame 错误引用所有（有 pin 测试），强度条以 DOM 顺序紧随输入框成为可及读出。
 - **与校验的关系**：强度条是纯展示反馈，不参与校验、不阻塞提交、不写表单值；强度策略强制走 `pattern`/`validate`（校验链既有职责）。`showStrength` 与 `pattern` 相互独立：声明 `pattern` 不影响等级计算，强度条不计入 `required`/`pattern` 的任何校验结论。

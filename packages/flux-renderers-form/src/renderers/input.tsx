@@ -30,6 +30,7 @@ import {
   selectSpecificContracts,
 } from './input-contracts.js';
 import { InputGroupFieldControl } from './input-group-field-control.js';
+import { PasswordStrengthMeter } from './input-password-strength.js';
 import type {
   InputSchema,
 } from '../schemas.js';
@@ -69,6 +70,7 @@ export const inputEnhancementFieldRules: SchemaFieldRule[] = [
   { key: 'nativeAutoComplete', kind: 'prop' },
   { key: 'inputMode', kind: 'prop' },
   { key: 'revealPassword', kind: 'prop', valueType: 'boolean' },
+  { key: 'showStrength', kind: 'prop', valueType: 'boolean' },
   { key: 'placeholder', kind: 'prop' },
   { key: 'minLength', kind: 'prop' },
   { key: 'maxLength', kind: 'prop' },
@@ -139,6 +141,10 @@ export function createInputRenderer(inputType: string) {
     const revealEnabled = inputType === 'password' && props.props.revealPassword === true;
     const [revealed, setRevealed] = useState(false);
     const actualInputType = revealEnabled && revealed ? 'text' : inputType;
+
+    const strengthEnabled = inputType === 'password' && props.props.showStrength === true;
+    const strengthSlot =
+      strengthEnabled && inputValue.length > 0 ? <PasswordStrengthMeter value={inputValue} /> : null;
 
     const suggest = useInputSuggest({
       config: {
@@ -267,12 +273,23 @@ export function createInputRenderer(inputType: string) {
     const rootMarker = `nop-input-${inputType}`;
 
     if (!needsInputGroup) {
+      const bareControl = <Input {...sharedInputProps} className={cn(rootMarker, props.meta.className)} />;
+      // Wrapper stays mounted for the whole strengthEnabled lifetime: swapping
+      // bare input ↔ wrapped div across empty/non-empty transitions would
+      // remount the input and detach it mid-interaction.
       return suggest.wrap(
-        <Input {...sharedInputProps} className={cn(rootMarker, props.meta.className)} />,
+        strengthEnabled ? (
+          <div>
+            {bareControl}
+            {strengthSlot}
+          </div>
+        ) : (
+          bareControl
+        ),
       );
     }
 
-    return suggest.wrap(
+    const groupControl = (
       <InputGroupFieldControl
         className={cn('nop-input-group', rootMarker, props.meta.className)}
         inputProps={sharedInputProps}
@@ -282,7 +299,18 @@ export function createInputRenderer(inputType: string) {
         showClearButton={showClearButton}
         onClear={handleClear}
         revealSlot={revealSlot}
-      />,
+      />
+    );
+
+    return suggest.wrap(
+      strengthEnabled ? (
+        <div>
+          {groupControl}
+          {strengthSlot}
+        </div>
+      ) : (
+        groupControl
+      ),
     );
   };
 }

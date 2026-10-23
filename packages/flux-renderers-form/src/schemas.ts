@@ -65,6 +65,7 @@ export interface InputSchema extends BoundFieldSchemaBase {
   showCounter?: boolean;
   nativeAutoComplete?: string;
   revealPassword?: boolean;
+  showStrength?: boolean;
   validate?: {
     action?: ActionSchema;
     debounce?: number;

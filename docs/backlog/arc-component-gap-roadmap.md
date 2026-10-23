@@ -38,7 +38,7 @@
 | Work item                                           | 状态   | 依赖 | 说明                                                     |
 | --------------------------------------------------- | ------ | ---- | -------------------------------------------------------- |
 | G1D `input-password` 强度指示设计（`showStrength`） | `done` | —    | 能力扩展，非新 type；登记 improvement-analysis           |
-| G1I `input-password` 强度指示实现                   | `todo` | G1D  | 按交付铁律落地                                           |
+| G1I `input-password` 强度指示实现                   | `done` | G1D  | 按交付铁律落地                                           |
 | G2D inline-edit 落点裁决与设计                      | `todo` | —    | 先裁决 detail-field `editable` 扩展 vs 独立 type         |
 | G2I inline-edit 落地                                | `todo` | G2D  | 按 D 阶段裁决落点执行                                    |
 | G3D 声明式 context-menu 设计                        | `todo` | —    | 若出新 type → matrix 增行（human gate）                  |
@@ -197,7 +197,7 @@
 | Wave    | Work item                  | 状态   | Owner doc                                                                                  | 依赖 | Reuse                                                                               | Plan |
 | ------- | -------------------------- | ------ | ------------------------------------------------------------------------------------------ | ---- | ----------------------------------------------------------------------------------- | ---- |
 | 1（P1） | G1D strength 设计          | `done` | `docs/components/input-password/design.md` + `existing-components-improvement-analysis.md` | —    | input-password 预留字段                                                             | —    |
-| 1       | G1I strength 实现          | `todo` | 同上                                                                                       | G1D  | ui 新 primitive（ask-first）                                                        | —    |
+| 1       | G1I strength 实现          | `done` | 同上                                                                                       | G1D  | ui 新 primitive（ask-first）                                                        | —    |
 | 2（P2） | G2D inline-edit 落点+设计  | `todo` | `docs/components/detail-field/design.md`（或新 type design.md，按裁决）                    | —    | detail-field、输入原语                                                              | —    |
 | 2       | G2I inline-edit 落地       | `todo` | 按 G2D 裁决                                                                                | G2D  | 同上                                                                                | —    |
 | 2       | G3D context-menu 设计      | `todo` | `docs/components/context-menu/design.md`（新 type 时）或 layout 系 design 更新             | —    | ui ContextMenu、dropdown-button 协议；若裁出新 type → matrix 增行 human gate 先于 I | —    |
