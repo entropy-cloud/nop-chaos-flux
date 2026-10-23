@@ -79,7 +79,7 @@
 | MA6.2     | UX 视觉—content+dashboard+mobile+ai 页面视觉走查（含 AI 文案轻量抽查） | `done` | styling-system.md                                | M0                  | visual-page-quality-inspection-prompt.md               |
 | MA6.3     | UX 视觉—scheduling+domain 页面视觉走查                                 | `done` | theme-compatibility.md                           | M0                  | visual-page-quality-inspection-prompt.md               |
 | MA6.4     | UX 视觉—designer/office 界面视觉 + 全局主题一致性与 ui 原语易用性      | `done` | theme-compatibility.md                           | M0                  | ux-design-pattern-audit-prompt.md                      |
-| MA7.1     | 性能—可疑点扫描、重渲染热点、perf 阈值裁决                             | `todo` | renderer-runtime.md                              | M0                  | react19-best-practices-review.md                       |
+| MA7.1     | 性能—可疑点扫描、重渲染热点、perf 阈值裁决                             | `done` | renderer-runtime.md                              | M0                  | react19-best-practices-review.md                       |
 | MA7.2     | 安全—XSS/动态执行/依赖/浏览器 IO 边界                                  | `todo` | renderer-env.md                                  | M0                  | deep-audit-prompts.md                                  |
 | MA7.3     | 样式—契约合规、BEM 漂移、marker 完整性、暗色覆盖                       | `todo` | renderer-markers-and-selectors.md                | M0                  | deep-audit-prompts.md                                  |
 | MA8.1     | 文档—owner docs 与 live code 一致性审计                                | `todo` | `docs/context/source-of-truth-and-precedence.md` | M0                  | doc-evaluation.md                                      |
