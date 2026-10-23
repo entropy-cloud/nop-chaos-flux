@@ -81,7 +81,7 @@
 | MA6.4     | UX 视觉—designer/office 界面视觉 + 全局主题一致性与 ui 原语易用性      | `done`    | theme-compatibility.md                           | M0                  | ux-design-pattern-audit-prompt.md                      |
 | MA7.1     | 性能—可疑点扫描、重渲染热点、perf 阈值裁决                             | `done`    | renderer-runtime.md                              | M0                  | react19-best-practices-review.md                       |
 | MA7.2     | 安全—XSS/动态执行/依赖/浏览器 IO 边界                                  | `done`    | renderer-env.md                                  | M0                  | deep-audit-prompts.md                                  |
-| MA7.3     | 样式—契约合规、BEM 漂移、marker 完整性、暗色覆盖                       | `planned` | renderer-markers-and-selectors.md                | M0                  | deep-audit-prompts.md                                  |
+| MA7.3     | 样式—契约合规、BEM 漂移、marker 完整性、暗色覆盖                       | `done` | renderer-markers-and-selectors.md                | M0                  | deep-audit-prompts.md                                  |
 | MA8.1     | 文档—owner docs 与 live code 一致性审计                                | `todo`    | `docs/context/source-of-truth-and-precedence.md` | M0                  | doc-evaluation.md                                      |
 | MA8.2     | 运维—i18n 完整性 + deprecation 清理 + todo-exitless                    | `todo`    | `flux-guide/README.md`                           | M0                  | deprecated-feature-cleanup.md                          |
 | MA8.3     | 运维—CI guard 激活与工具基线有效性验证                                 | `todo`    | `docs/context/project-context.md`                | M0                  | deep-audit-prompts.md                                  |
