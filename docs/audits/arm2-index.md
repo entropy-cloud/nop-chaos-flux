@@ -1,7 +1,7 @@
 # Audit Remediation R2 Master Index (arm2-index)
 
 > Status: active（M0 / plan 653 初始化骨架；随各工作项产出滚动登记）
-> Last Updated: 2026-10-23（滚动：**MA8.1 文档契约审计收官**——P1 新增 **3** 条〔P1-MA8.1-001 quick-reference Data Source Schemas 块三重错误（type/action/resultMapping 全非 live——schema.ts:270 反证，01-quickstart 正确）/ -002 monitor 幻影文档族：README+16-monitor.md 整文件+13-testing.md 文档化不存在的 SchemaRenderer monitor prop（renderer-hooks 零命中、env.monitor 已移除 5ba737830）→ 按 13-testing 指引接入静默零事件 / -003 refreshDataSource Promise<boolean> vs live DataSourceRefreshOutcome（renderer-core.ts:347）〕，累计 **67** open；P2 ×4（含 quick-reference 可空性误述）+ P3 汇总 11（closure R1 M2 补录 A2 D4/D7/D8/D9）+ **漂移裁决 16/16 doc-stale**（01-quickstart 反证链）+ anchors 首跑 365 文档 0 命中（首轮基线）+ 架构文档 6 份强契约/决策质量全 pass（quick-reference/flux-guide 面为重灾区——恰为「代理以此为准」高杠杆文档）；watch 6（含 W3 代码注释缺陷归 code-batch、W6 同文档跨节失同步模式）。此前：M0 / MA1 / MA2 / MA3×18 / MA4×5 / MA5.1–5.6 / MA6.1–6.4 / MA7.1–7.3 收官）
+> Last Updated: 2026-10-23（滚动：**MA8.2 i18n+deprecation+todo 审计收官**——P0/P1 零立案；P2 ×2 新案〔P2-MA8.2-001 i18n 扫描器盲区治理：400 unused 中 ~71.5% 假阳性（237 wrapper 消费/39 模板/10 码表 file:line 实证）+ ~114 真死键从未治理（MA7.2 时 113）；-002 print 域 i18n 通道未接线——23+ 硬编码中文而 17 个 PRINT\_\* 键建好未用〕+ P3 ×4；deprecation 20/20 替代方案/docs 记录齐、批次要素 ~5/20 共性缺口、零双向漂移；todo 单命中=带裁决化石非 orphan、FIXME/XXX 真实开放 0；扫描器 live 1848/1448/400（+5 并发线新增）+ todo 1 基线钉死；执行者 open 轮 4 项裁决（单轨 DYNAMIC_KEY_MAPS 推荐/死键清单不出本轮/print 维持 P2/aria-label 分栏 a11y）；watch 6。累计 **67** open 不变（P0/P1 零新案；64 为 MA7.3 收口期陈旧读数，MA8.1 已 +3）。此前：M0 / MA1 / MA2 / MA3×18 / MA4×5 / MA5.1–5.6 / MA6.1–6.4 / MA7.1–7.3 / MA8.1 收官）
 > Roadmap: `docs/backlog/audit-remediation-r2-roadmap.md`（工作项状态的唯一权威 = 其 Work Item Status 表；本索引不携带状态，只登记报告、finding 与基线）
 > Mission: `missions/audit-remediation-r2.json`
 > M0 Plan: `docs/plans/653-audit-r2-m0-orchestration-baseline-plan.md`
@@ -93,7 +93,7 @@
 | MA7.2     | `docs/audits/2026-10-23-0847-arm2-MA7.2-security.md`                                     |
 | MA7.3     | `docs/audits/2026-10-23-0924-arm2-MA7.3-styling.md`                                      |
 | MA8.1     | `docs/audits/2026-10-23-1011-arm2-MA8.1-doc-contract.md`                                 |
-| MA8.2     | —                                                                                        |
+| MA8.2     | `docs/audits/2026-10-23-1103-arm2-MA8.2-i18n-deprecation.md`                             |
 | MA8.3     | —                                                                                        |
 | MA9.1     | —                                                                                        |
 | MA9.2     | —                                                                                        |
