@@ -1,6 +1,6 @@
 # 718 审计修复 R2·MR4.0：跨维度 P1 裁决与冲突修复
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-10-24
 > Source: `docs/backlog/audit-remediation-r2-roadmap.md` MR4.0（Dependencies MR1.0/MR2.0/MR3.0——三展开器已收官 `4acc19633`/`ddd6cb70d`/`0338bd23f`）；`docs/skills/discussion-grilling-prompt.md`（裁决方法：主张-质询-裁决三段记录）
 > Related: `docs/audits/arm2-index.md`（P1 索引区 71 open + 修复行指针区）、roadmap Cross-Cutting 6（报告归档纪律——ID 不可变）/8（修复去重）；先例 plan 711/713/715（R 行指针体系）
@@ -61,49 +61,49 @@
 
 ### Phase 1 - 系统性交叉排查
 
-Status: planned
+Status: completed
 Targets: 本 plan 补记、裁决区草稿
 
 - Item Types: `Decision | Proof`
 
-- [ ] 71 open finding 以描述锚点文件为键聚类扫描（同文件/同根因跨维度对）——A/B/C 之外的第 4 处排查，结论落字
-- [ ] 三案涉案 finding 行与 R 行现状逐一复核（指针、注记、行名）
+- [x] 71 open finding 以描述锚点文件为键聚类扫描（含裸文件名二扫）——结论：同文件组 4〔action-execution.ts 与 crud-renderer-load.ts 两组为同 R 行内共置非冲突；index.ts 泛名误报分属三包；three-canvas.tsx 1.5-001/4.3-005 同文件异缺陷=协同类案 D 无指针动作〕；语义同根对（案 A 异文件、案 B 锚点别名）为文件聚类盲区、已由语义评审覆盖——无第 4 处需裁决冲突，全记录落裁决区排查节
+- [x] 三案涉案 finding 行与 R 行现状逐一复核（002 `—`+注记 / 4.2-002 `R2.4` / 009 `R2.7` / 9.2-001 `R3.12`——draft review 亲核 + 执行者复核一致）
 
 Exit Criteria:
 
-- [ ] 排查结论可追溯（聚类证据）；无未登记交叉
+- [x] 排查结论可追溯（聚类证据）；无未登记交叉
 
 ### Phase 2 - 裁决落盘与指针动作
 
-Status: planned
+Status: completed
 Targets: `docs/audits/arm2-index.md`、`docs/backlog/audit-remediation-r2-roadmap.md`
 
 - Item Types: `Decision | Fix`
 
-- [ ] 新建 `## 跨维度裁决区`：裁决 A/B/C 记录（含 discussion-grilling 三段）+ 系统性排查记录
-- [ ] 裁决 A 指针动作：P1-MA5.2-002 修复行 `—`→`R3.4` + 注记更新（根因修复归 R3.4、测试守护归 R2.7/009）；R3.4 行追加归并注记；R2.7 行内注记更新
-- [ ] 裁决 B 指针动作：P1-MA4.2-002 修复行 `R2.4`→`R3.12` + 「族成员归并」注记；R2.4 行名收窄（003/004/005）
-- [ ] 裁决 C 记录（协调类，无指针动作）
-- [ ] grep 双侧复核（裁决区 ↔ 指针列 ↔ roadmap 行注记三侧一致）
+- [x] 新建 `## 跨维度裁决区`：裁决 A/B/C 记录（含 discussion-grilling 主张-质询-裁决三段）+ 系统性排查记录（含案 D 协同记录）+ 指针计数链节
+- [x] 裁决 A 指针动作：P1-MA5.2-002 修复行 `—`→`R3.4` + 注记更新（根因修复归 R3.4、测试守护归 R2.7/009）；R3.4 行追加归并注记；R2.7 行内注记更新
+- [x] 裁决 B 指针动作：P1-MA4.2-002 修复行 `R2.4`→`R3.12` + 「族成员归并」注记；R2.4 行名收窄（003/004/005）
+- [x] 裁决 C 记录（协调类，无指针动作）
+- [x] grep 双侧复核（裁决区 ↔ 指针列 ↔ roadmap 行注记三侧一致）——实测指针计数 R2.4×3/R2.7×3/R3.4×3/R3.12×2 与声明链逐项咬合；roadmap 案 A 注记 ×2（R3.4+R2.7）、案 B 注记 ×1（R2.4）
 
 Exit Criteria:
 
-- [ ] 裁决区三案 + 排查记录落字；指针动作完成且三侧一致；指针计数链：open 71 全有指针（70 原有 + 1 案 A 新回填）；R2.4 族 4→3；R3.4 族 2→3；R3.12 族 1→2；R2.7 不变；0 漂移
+- [x] 裁决区三案 + 排查记录落字；指针动作完成且三侧一致；指针计数链：open 71 全有指针（70 原有 + 1 案 A 新回填）；R2.4 族 4→3；R3.4 族 2→3；R3.12 族 1→2；R2.7 不变；0 漂移
 
 ### Phase 3 - 状态流转与收口
 
-Status: planned
+Status: completed
 Targets: roadmap MR4.0 行、本 plan、daily log
 
 - Item Types: `Proof`
 
-- [ ] draft review 通过后：MR4.0 `todo`→`planned` 翻转入激活提交，plan→`active`
-- [ ] closure audit（fresh subagent）approved 后：MR4.0 `planned`→`done`（sed 回读核验），plan→`completed`
-- [ ] daily log 追加；单次提交（显式路径；并发线不入 stage）
+- [x] draft review 通过后：MR4.0 `todo`→`planned` 翻转入激活提交，plan→`active`（c25727390）
+- [x] closure audit（fresh subagent）approved 后：MR4.0 `planned`→`done`（regex 定位替换 + 回读核验），plan→`completed`
+- [x] daily log 追加；单次提交（显式路径；并发线不入 stage）
 
 Exit Criteria:
 
-- [ ] roadmap 与 plan 状态流转一致；提交仅含 In Scope 文件
+- [x] roadmap 与 plan 状态流转一致；提交仅含 In Scope 文件
 
 ## Draft Review Record
 
@@ -114,13 +114,13 @@ Exit Criteria:
 
 ## Closure Gates
 
-- [ ] 裁决区落盘：A/B/C 三案 + 系统性排查记录
-- [ ] 指针动作完成（002→R3.4、4.2-002→R3.12）且三侧一致（裁决区/指针列/roadmap 行）
-- [ ] Phase 1 排查结论有聚类证据
-- [ ] 不存在被静默降级的 in-scope 项（三案全部有裁决记录；无第 4 处遗漏或已立案）
-- [ ] 由独立子代理（fresh session）执行的 closure-audit 已完成并记录证据
-- [ ] `pnpm typecheck`
-- [ ] `pnpm test`
+- [x] 裁决区落盘：A/B/C 三案 + 系统性排查记录（含案 D 协同）
+- [x] 指针动作完成（002→R3.4、4.2-002→R3.12）且三侧一致（裁决区/指针列/roadmap 行）——auditor 程序化复核分布 3/3/3/2 零漂移
+- [x] Phase 1 排查结论有聚类证据（auditor 独立脚本全量复聚——无第 5 组）
+- [x] 不存在被静默降级的 in-scope 项（三案全部有裁决记录；案 D 备查归入排查节）
+- [x] 由独立子代理（fresh session）执行的 closure-audit 已完成并记录证据
+- [x] `pnpm typecheck`（44/44 @ 04:1x 绿窗 + auditor turbo replay 同证）
+- [x] `pnpm test`（82/82 @ 04:12 绿窗；auditor 三跑——两红窗为 scheduling coverage-v8 报告期 ENOENT 零断言失败〔并发高载，工具链治理族在案面，m1 观察入 MV/MG 线索〕、run3 静止窗 exit 0 82/82 独立复现）
 
 > build/lint 按 guide 纯文档条款删除；保留 typecheck+test。
 
@@ -134,11 +134,13 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: （待收口）
+Status Note: MR4.0 收官——裁决区三案落盘（A kanban Ctrl+Z 同源→R3.4 canonical / B capability 族→R3.12 canonical / C 导入校验协调类）+ 系统性排查（71 open 聚类无第 5 组 + 案 D three-canvas 协同备查）+ 指针动作三侧一致（R2.4 4→3、R3.4 2→3、R3.12 1→2、R2.7 不变、71 全有指针零漂移）；零代码变更。
 
 Closure Audit Evidence:
 
-- Auditor / Agent:
-- Evidence:
+- Auditor / Agent: 独立 fresh-session 审查子代理 `agent_b1e95480`（2026-10-24 06:5x）
+- Evidence: R1 **`approved`**（8/8 PASS + 2 minor 备忘）——裁决区结构完整三段齐全、案 A/B 三侧一致程序化亲核、排查诚实（auditor 独立脚本复聚无第 5 组、5.3-001/8.3-002 未漏聚）、计数链 73=71+2 零漂移、零越界（delta git diff -w 甄别：本 plan 仅 arm2-index 2 行指针 + 裁决区 + roadmap 3 行 + plan 自身）、typecheck 44/44 + test 82/82 绿窗独立复现（两红窗如实归因 scheduling coverage-v8 ENOENT 并发高载零断言失败——m1 观察移交 MV/MG 工具链线索）；m2 计数措辞差无实质。
 
 Follow-up:
+
+- no remaining plan-owned work（裁决分工义务随裁决记录传递至 R3.4/R2.7/R3.12 修复执行）
