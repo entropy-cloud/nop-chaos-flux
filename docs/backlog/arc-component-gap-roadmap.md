@@ -35,22 +35,22 @@
 
 > **本文件唯一的动态状态区。** 状态词表：`proposed`（待人确认——工作项集合与优先序整体经人确认后才转 `todo`，沿用 `docs/components/roadmap.md` 词表）/ `todo` / `planned`（plan 草案审查通过）/ `done`（closure audit 通过）。**Wave 只是组织标签，不带状态。**
 
-| Work item                                           | 状态   | 依赖 | 说明                                                     |
-| --------------------------------------------------- | ------ | ---- | -------------------------------------------------------- |
-| G1D `input-password` 强度指示设计（`showStrength`） | `done` | —    | 能力扩展，非新 type；登记 improvement-analysis           |
-| G1I `input-password` 强度指示实现                   | `done` | G1D  | 按交付铁律落地                                           |
-| G2D inline-edit 落点裁决与设计                      | `todo` | —    | 先裁决 detail-field `editable` 扩展 vs 独立 type         |
-| G2I inline-edit 落地                                | `todo` | G2D  | 按 D 阶段裁决落点执行                                    |
-| G3D 声明式 context-menu 设计                        | `todo` | —    | 若出新 type → matrix 增行（human gate）                  |
-| G3I context-menu 落地                               | `todo` | G3D  |                                                          |
-| G4D 只读 code-block 落点裁决与设计                  | `todo` | —    | 裁决复用 code-editor 静态 pre / markdown 扩展 / 新 type  |
-| G4I code-block 落地                                 | `todo` | G4D  |                                                          |
-| G5D split-button 落点裁决与设计                     | `todo` | —    | 裁决 dropdown-button `variant="split"` 扩展 vs 独立 type |
-| G5I split-button 落地                               | `todo` | G5D  |                                                          |
-| G6D 列表重排（list-reorder）落点裁决与设计          | `todo` | —    | 裁决 `list` 能力扩展 vs 独立 type                        |
-| G6I 列表重排落地                                    | `todo` | G6D  |                                                          |
-| G7D image-compare 设计                              | `todo` | —    | 最低优先级波次                                           |
-| G7I image-compare 落地                              | `todo` | G7D  |                                                          |
+| Work item                                           | 状态   | 依赖 | 说明                                                                                                                                            |
+| --------------------------------------------------- | ------ | ---- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| G1D `input-password` 强度指示设计（`showStrength`） | `done` | —    | 能力扩展，非新 type；登记 improvement-analysis                                                                                                  |
+| G1I `input-password` 强度指示实现                   | `done` | G1D  | 按交付铁律落地                                                                                                                                  |
+| G2D inline-edit 落点裁决与设计                      | `done` | —    | 先裁决 detail-field `editable` 扩展 vs 独立 type〔勘误 2026-10-23，G2D 定稿名 `editMode`（'surface'\|'inline'），见 detail-field/design.md §2〕 |
+| G2I inline-edit 落地                                | `todo` | G2D  | 按 D 阶段裁决落点执行                                                                                                                           |
+| G3D 声明式 context-menu 设计                        | `todo` | —    | 若出新 type → matrix 增行（human gate）                                                                                                         |
+| G3I context-menu 落地                               | `todo` | G3D  |                                                                                                                                                 |
+| G4D 只读 code-block 落点裁决与设计                  | `todo` | —    | 裁决复用 code-editor 静态 pre / markdown 扩展 / 新 type                                                                                         |
+| G4I code-block 落地                                 | `todo` | G4D  |                                                                                                                                                 |
+| G5D split-button 落点裁决与设计                     | `todo` | —    | 裁决 dropdown-button `variant="split"` 扩展 vs 独立 type                                                                                        |
+| G5I split-button 落地                               | `todo` | G5D  |                                                                                                                                                 |
+| G6D 列表重排（list-reorder）落点裁决与设计          | `todo` | —    | 裁决 `list` 能力扩展 vs 独立 type                                                                                                               |
+| G6I 列表重排落地                                    | `todo` | G6D  |                                                                                                                                                 |
+| G7D image-compare 设计                              | `todo` | —    | 最低优先级波次                                                                                                                                  |
+| G7I image-compare 落地                              | `todo` | G7D  |                                                                                                                                                 |
 
 建议执行序：**G1 →（G2、G3、G4 可并行）→（G5、G6 可并行）→ G7**。`proposed` → `todo` 的人确认发生在本文激活时（§11 激活前置条件）。
 
@@ -58,20 +58,20 @@
 
 以下能力已存在，实现各 work item 时**不得重建**，只做组装与 renderer definition（基线均 live 实测）：
 
-| 能力                                                                                                                           | 出处                                                                                                                                                   | 供谁复用                                                        |
-| ------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------- |
-| ui `Skeleton` primitive（已导出）                                                                                              | `packages/ui/src/index.ts:52`                                                                                                                          | G1 之外的加载态（skeleton type 本身归 missing-components L7.1） |
-| ui `Avatar` / `Breadcrumb` / `ContextMenu` / `HoverCard` primitive（已导出）                                                   | `packages/ui/src/index.ts` 对应行                                                                                                                      | G3（右键菜单壳）；avatar/breadcrumb 本体归 5.2 指针             |
-| `env.confirm` / `env.notify` 宿主通道                                                                                          | notify 签名 `packages/flux-core/src/utils/renderer-env.ts:18`，消费点 `flux-runtime/src/runtime-owned-factories.ts:249`；confirm 走 action 层          | 5.3 拒绝 popconfirm 的替代依据                                  |
-| table 行拖拽排序底座                                                                                                           | `packages/flux-renderers-data/src/table-renderer/use-row-drag-sort.ts`                                                                                 | G6（列表重排的拖拽交互参考实现）                                |
-| `dropdown-button` 动作协议（items + action 派发 + 关闭）                                                                       | `flux-renderers-layout` W3b 既有                                                                                                                       | G3、G5                                                          |
-| `detail-field` / `detail-view` 只读对                                                                                          | `flux-renderers-form-advanced`                                                                                                                         | G2（editable 落点首选）                                         |
-| `text` 的 `maxLine` + `maxLineToggle` 展开/收起                                                                                | `docs/components/text/design.md:18,24`（含 `line-clamp-(--nop-line-count)` 机制）                                                                      | ExpandableText 对照项（§5.2 已覆盖）                            |
-| `code-editor` colorize 只读高亮 pre 模式（`colorize` prop，E3 已落地）+ CodeMirror 语言包（js/ts/json/md/python/sql/html/css） | `packages/flux-code-editor/src/code-editor-renderer.tsx:78,85`、`package.json` 依赖表、`docs/components/existing-components-improvement-roadmap.md:58` | G4（落点裁决的复用方一）                                        |
-| `diff-view` 行级语法高亮 adapter                                                                                               | `packages/flux-renderers-content/src/diff-view/adapters/`                                                                                              | G4（落点裁决的复用方二）                                        |
-| `chart`（recharts）+ `echarts` 双渲染器                                                                                        | `docs/backlog/echarts-integration-roadmap.md`                                                                                                          | Arc 13 图表对照项（§5.2 已覆盖，不 mint 图表 type）             |
-| `markdown` 代码块滚动容器（无高亮）                                                                                            | `packages/flux-renderers-content/src/markdown.tsx:136-137`                                                                                             | G4（现状事实与扩展点）                                          |
-| mobile `notice-bar` / `countdown` / `swipe-cell`                                                                               | `flux-renderers-mobile`                                                                                                                                | 5.2/5.3 对照指针                                                |
+| 能力                                                                                                                                                                                                       | 出处                                                                                                                                                   | 供谁复用                                                        |
+| ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------- |
+| ui `Skeleton` primitive（已导出）                                                                                                                                                                          | `packages/ui/src/index.ts:52`                                                                                                                          | G1 之外的加载态（skeleton type 本身归 missing-components L7.1） |
+| ui `Avatar` / `Breadcrumb` / `ContextMenu` / `HoverCard` primitive（已导出）                                                                                                                               | `packages/ui/src/index.ts` 对应行                                                                                                                      | G3（右键菜单壳）；avatar/breadcrumb 本体归 5.2 指针             |
+| `env.confirm` / `env.notify` 宿主通道                                                                                                                                                                      | notify 签名 `packages/flux-core/src/utils/renderer-env.ts:18`，消费点 `flux-runtime/src/runtime-owned-factories.ts:249`；confirm 走 action 层          | 5.3 拒绝 popconfirm 的替代依据                                  |
+| table 行拖拽排序底座                                                                                                                                                                                       | `packages/flux-renderers-data/src/table-renderer/use-row-drag-sort.ts`                                                                                 | G6（列表重排的拖拽交互参考实现）                                |
+| `dropdown-button` 动作协议（items + action 派发 + 关闭）                                                                                                                                                   | `flux-renderers-layout` W3b 既有                                                                                                                       | G3、G5                                                          |
+| `detail-field` / `detail-view` 只读对〔勘误 2026-10-23，G2D 执行时核实：detail-view 为 scope 级独立编辑复合字段（`detail-view/design.md:5`），并非只读——两字段真正差异是 name 绑定（字段级 vs scope 级）〕 | `flux-renderers-form-advanced`                                                                                                                         | G2（editMode 落点首选；暂定名 editable 已定稿 editMode）        |
+| `text` 的 `maxLine` + `maxLineToggle` 展开/收起                                                                                                                                                            | `docs/components/text/design.md:18,24`（含 `line-clamp-(--nop-line-count)` 机制）                                                                      | ExpandableText 对照项（§5.2 已覆盖）                            |
+| `code-editor` colorize 只读高亮 pre 模式（`colorize` prop，E3 已落地）+ CodeMirror 语言包（js/ts/json/md/python/sql/html/css）                                                                             | `packages/flux-code-editor/src/code-editor-renderer.tsx:78,85`、`package.json` 依赖表、`docs/components/existing-components-improvement-roadmap.md:58` | G4（落点裁决的复用方一）                                        |
+| `diff-view` 行级语法高亮 adapter                                                                                                                                                                           | `packages/flux-renderers-content/src/diff-view/adapters/`                                                                                              | G4（落点裁决的复用方二）                                        |
+| `chart`（recharts）+ `echarts` 双渲染器                                                                                                                                                                    | `docs/backlog/echarts-integration-roadmap.md`                                                                                                          | Arc 13 图表对照项（§5.2 已覆盖，不 mint 图表 type）             |
+| `markdown` 代码块滚动容器（无高亮）                                                                                                                                                                        | `packages/flux-renderers-content/src/markdown.tsx:136-137`                                                                                             | G4（现状事实与扩展点）                                          |
+| mobile `notice-bar` / `countdown` / `swipe-cell`                                                                                                                                                           | `flux-renderers-mobile`                                                                                                                                | 5.2/5.3 对照指针                                                |
 
 ## 4. Current Baseline（live 实测，2026-10-21）
 
@@ -102,8 +102,8 @@
 
 #### G2 inline-edit（点即编辑）
 
-- **必要性**：详情页字段级轻编辑、列表行内改名是企业应用常见交互（Arc `InlineEdit`）；AMIS 仅有表格 cell editable，flux 详情侧只有只读 `detail-field`/`detail-view` 对。用户要在"展示型页面"里改一个字段时，现状只能整表单弹窗，编辑成本高。评为 **P2**。
-- **一致性**：两个候选落点必须先裁决——(a) `detail-field` 增加 `editable` 能力（复用既有输入原语与校验链，type 数不增）；(b) 独立 type `inline-edit`（对齐 Arc 命名但偏离 flux 既有 detail 家族）。flux 命名/类型增殖约束（`naming-conventions.md`：新 type 归属需过主 roadmap 权威）使 (a) 为默认倾向；D 阶段一票裁决并给出被拒方理由。若裁出新 type，matrix 增行为 Implement 前置 human gate。
+- **必要性**：详情页字段级轻编辑、列表行内改名是企业应用常见交互（Arc `InlineEdit`）；AMIS 仅有表格 cell editable，flux 详情侧只有只读 `detail-field`/`detail-view` 对〔勘误 2026-10-23：detail-view 实为 scope 级独立**编辑**复合字段（缺的是 name 绑定），"只读对"表述失实；字段级 inline 编辑仍归绑定态 detail-field，见 `docs/components/detail-field/design.md` §2〕。用户要在"展示型页面"里改一个字段时，现状只能整表单弹窗，编辑成本高。评为 **P2**。
+- **一致性**：两个候选落点必须先裁决——(a) `detail-field` 增加 `editable`〔定稿名 `editMode`，勘误 2026-10-23〕能力（复用既有输入原语与校验链，type 数不增）；(b) 独立 type `inline-edit`（对齐 Arc 命名但偏离 flux 既有 detail 家族）。flux 命名/类型增殖约束（`naming-conventions.md`：新 type 归属需过主 roadmap 权威）使 (a) 为默认倾向；D 阶段一票裁决并给出被拒方理由。若裁出新 type，matrix 增行为 Implement 前置 human gate。
 - **裁决**：立项 G2D/G2I。Design 阶段先落点裁决，再出协议（触发方式 click/dblclick、编辑态原语选择、失焦/ESC/回车提交、disabled/只读态）。
 
 #### G3 声明式 context-menu（右键菜单）
@@ -198,7 +198,7 @@
 | ------- | -------------------------- | ------ | ------------------------------------------------------------------------------------------ | ---- | ----------------------------------------------------------------------------------- | ---- |
 | 1（P1） | G1D strength 设计          | `done` | `docs/components/input-password/design.md` + `existing-components-improvement-analysis.md` | —    | input-password 预留字段                                                             | —    |
 | 1       | G1I strength 实现          | `done` | 同上                                                                                       | G1D  | ui 新 primitive（ask-first）                                                        | —    |
-| 2（P2） | G2D inline-edit 落点+设计  | `todo` | `docs/components/detail-field/design.md`（或新 type design.md，按裁决）                    | —    | detail-field、输入原语                                                              | —    |
+| 2（P2） | G2D inline-edit 落点+设计  | `done` | `docs/components/detail-field/design.md`（或新 type design.md，按裁决）                    | —    | detail-field、输入原语                                                              | —    |
 | 2       | G2I inline-edit 落地       | `todo` | 按 G2D 裁决                                                                                | G2D  | 同上                                                                                | —    |
 | 2       | G3D context-menu 设计      | `todo` | `docs/components/context-menu/design.md`（新 type 时）或 layout 系 design 更新             | —    | ui ContextMenu、dropdown-button 协议；若裁出新 type → matrix 增行 human gate 先于 I | —    |
 | 2       | G3I context-menu 落地      | `todo` | 同 G3D                                                                                     | G3D  | 同上                                                                                | —    |
@@ -217,7 +217,7 @@
 
 - **G1D**：`showStrength` 协议设计（等级/配色/文案 i18n/a11y/与校验关系）；`existing-components-improvement-analysis.md` 登记；命名 pass（`naming-conventions.md` §2。〔勘误 2026-10-22，G1D 执行时就地附注：操作节应为 §5"新增字段审查 Checklist"，§2 是 shadcn 映射表〕）。
 - **G1I**：ui 强度条 primitive（如 D 裁定需要，触 `ui/src/index.ts` ask-first）+ renderer 字段接线 + focused 单测 + e2e + 交付铁律 3/5/6/8。
-- **G2D**：落点二选一裁决（`detail-field.editable` vs 独立 type）+ 协议（触发/提交/取消/只读降级）；若新 type → matrix 增行提案（human gate）。
+- **G2D**：落点二选一裁决（`detail-field.editable`〔定稿名 `editMode`，勘误 2026-10-23〕 vs 独立 type）+ 协议（触发/提交/取消/只读降级）；若新 type → matrix 增行提案（human gate）。
 - **G2I**：按裁决落地 + 测试 + 登记（铁律 2–8）。
 - **G3D**：挂载契约裁决（wrapper region / meta 属性 / 事件委托）+ 菜单项协议（复用 dropdown-button items 形状）+ matrix 增行提案（若新 type）。
 - **G3I**：按裁决落地；右键打开/键盘（Shift+F10/菜单键）/关闭与 a11y + 测试登记。
