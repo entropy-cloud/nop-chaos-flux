@@ -11,6 +11,26 @@
 - 样式契约现状（R2-2b 复核 DR-1，2026-09-24）：`.nop-markdown` 的元素样式矩阵物理寄居于 **form 包** `form-renderers.css`（出身是 markdown-editor preview），且矩阵**未覆盖 GFM table/td/th**（表格塌缩为文字堆，R2-2b-C1-45 P1）——与本文宣称的 remark-gfm 支持存在视觉层缺口；修复批落地前，GFM 表格/列表符号不保证有表格化呈现。跨包寄居的迁移评估归后续 plan。
 - 支持静态 Markdown 与表达式拼接后的字符串输入；`allowHtml` 默认关闭（标签按字面转义）。
 
+## 2a. code fence 语法高亮能力（G4D 裁决，实现归 G4I）
+
+### 落点裁决（三选一，plan `718-arc-g4d-code-block-design.md`，出处 `arc-component-gap-roadmap` §5.1 G4）
+
+| 候选                                                | 结论                   | 理由                                                                                                                                                                |
+| --------------------------------------------------- | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| (a) 独立声明场景复用 `code-editor` `colorize: true` | **采纳（双落点之一）** | E3 已落地、`ColorizeView` 已导出；零新 type 零代码，仅在 code-editor/design.md 补展示指引（lazy 编辑器包络代价声明在案）                                            |
+| (b) markdown code fence 高亮能力扩展                | **采纳（双落点之一）** | 内嵌场景缺口真实；能力扩展非新 type；底座复用 `ColorizeView`（新增 `flux-renderers-content → flux-code-editor` workspace 依赖，G4I 过 `pnpm check` 硬门禁并留论证） |
+| (c) 独立只读 type `code-block`                      | 拒绝                   | matrix 增行 human gate；与 (a) 同底座同形态仅名字不同，无独立契约边界                                                                                               |
+
+### `codeHighlight` 协议
+
+- schema：`codeHighlight?: boolean`（markdown 渲染器级**整文档开关**，默认 false——行为零变化；per-fence 粒度不在首版契约）。
+- 渲染：ReactMarkdown `code` 组件覆写，fence 块走高亮 pre（`data-code-highlight="true"`）；行内 code 不受影响。
+- 语言映射：fence 标注 → CodeMirror 语言（别名归一表归 flux-renderers-content 内新模块）；未知语言回退纯文本 pre（`fence-unknown-language`）。
+- **加载策略（硬条款）**：`ColorizeView` 顶层携带 CodeMirror + 全部语言包，markdown 属默认 bundle——G4I 须以 lazy（动态 import）接入；未声明 `codeHighlight` 时零增量加载。
+- 溢出：沿用 `nop-markdown` 容器既有 overflow 契约。
+- 行号/复制按钮：首版不做；复制语义走既有 copy action 链（button by-design）。
+- 命名 pass：采纳 `codeHighlight`（肯定式布尔）；拒绝 `highlightCode`（动宾倒置）、`syntaxHighlight`（丢 code 域限定）、`fenceHighlight`（实现细节入名）。
+
 ## 3. Flux 中的 renderer/type 定义
 
 - 实际 `type: 'markdown'`
