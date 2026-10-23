@@ -43,7 +43,7 @@
 | G2I inline-edit 落地                                | `todo` | G2D  | 按 D 阶段裁决落点执行                                    |
 | G3D 声明式 context-menu 设计                        | `done` | —    | 若出新 type → matrix 增行（human gate）                  |
 | G3I context-menu 落地                               | `done` | G3D  |                                                          |
-| G4D 只读 code-block 落点裁决与设计                  | `todo` | —    | 裁决复用 code-editor 静态 pre / markdown 扩展 / 新 type  |
+| G4D 只读 code-block 落点裁决与设计                  | `done` | —    | 裁决复用 code-editor 静态 pre / markdown 扩展 / 新 type  |
 | G4I code-block 落地                                 | `todo` | G4D  |                                                          |
 | G5D split-button 落点裁决与设计                     | `todo` | —    | 裁决 dropdown-button `variant="split"` 扩展 vs 独立 type |
 | G5I split-button 落地                               | `todo` | G5D  |                                                          |

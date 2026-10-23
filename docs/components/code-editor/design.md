@@ -104,7 +104,7 @@ E3 新增字段：
 
 - `colorize?: boolean`：只读静态语法高亮开关。`colorize:true` 且 `diffValue` 未设置时，渲染器**短路 EditorView/MergeView 创建**，改为用 `@lezer/highlight` `highlightTree` + `@codemirror/language` `HighlightStyle` 把 `value` 渲染为带高亮 token 的静态 `<pre>`（根节点带 `data-colorize` marker）。与 `readOnly`/`mode` 正交：`readOnly` 只把 editor 切到只读态但仍实例化完整 EditorView，`colorize` 则完全不实例化 editor。
 
-**colorize vs `readOnly` editor 选择指引**：
+**colorize vs `readOnly` editor 选择指引**（另见 G4D 展示形态指引：纯展示型代码片段的独立声明场景**直接使用 `colorize: true`**，不新增 `code-block` 类只读 type——裁决见 `docs/components/markdown/design.md` §2a 与 `arc-component-gap-roadmap` §5.1 G4；注意 colorize 与 `diffValue` 并存时 diff 优先，colorize 仅纯单值展示场景使用）：
 
 | 场景                                                       | 推荐                           | 理由                                              |
 | ---------------------------------------------------------- | ------------------------------ | ------------------------------------------------- |
