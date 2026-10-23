@@ -1,6 +1,6 @@
 # 719 审计修复 R2·R1.1：结构契约修复—owner doc drift 收敛（P1-MA1.1-001 + P1-MA1.2-001）
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-10-24
 > Source: `docs/backlog/audit-remediation-r2-roadmap.md` R1.1（MR1.0/plan 711 展开）；`docs/audits/2026-10-19-1002-arm2-MA1.1-core-structure.md` §P1-MA1.1-001（修复方向在案）、`docs/audits/2026-10-19-1052-arm2-MA1.2-runtime-structure.md` §P1-MA1.2-001；`docs/skills/test-first-implementation-prompt.md`（R 行 Skill 列——本行纯文档修复，Test Strategy 声明不适用）
 > Related: `docs/architecture/flux-runtime-module-boundaries.md`（owner doc）；roadmap Cross-Cutting 8（文档修复属预授权保护区——工作项 plan 即所需 plan）
@@ -57,35 +57,35 @@
 
 ### Phase 1 - 四处文档修正
 
-Status: planned
+Status: completed
 Targets: `docs/architecture/flux-runtime-module-boundaries.md`
 
 - Item Types: `Fix`
 
-- [ ] 修正 1（doc :196-201，语义锚点 `### Validation modules` 节 rules.ts 条目）：rules.ts 条目改写为「compiled dependency path helpers（`collectValidationDependencyPaths`——文件唯一导出；schema rule extraction / trigger normalization 归属 compiler `validation-lowering.ts`）」
-- [ ] 修正 2（doc :431）：Where-To-Add 第 1 步改指 `packages/flux-compiler/src/validation-lowering.ts`（authoring-time lowering：`collectSchemaValidationRules` / `normalizeValidationTriggers`）——runtime 语义由既有第 2 步（validators.ts，:432）承载，不改动 :432
-- [ ] 修正 3（doc :443-462）：Versus 节前两 bullet 改为「读取编译期降级产物（`validation-lowering.ts` 产出 `CompiledValidationRule`）的 runtime 消费」口径，消除与 Compiler boundary 节矛盾
-- [ ] 修正 4（doc :569）：Bundle Face 改 9 族全列（basic/form/form-advanced/data/content/layout/scheduling/three 懒边界/xlang-debug-editor 懒边界 plan 2474）+ 尾句「must register the other families explicitly」同步（mobile/ai/graph 按需口径保留核对）；首句改现在时现状描述（Rule 14：`face changed` 变更叙事 → 现状），节标题历史戳 (2026-09-06) 保留为历史标注
+- [x] 修正 1（doc :196-201，语义锚点 `### Validation modules` 节 rules.ts 条目）：rules.ts 条目改写为「compiled dependency path helpers（`collectValidationDependencyPaths`——文件唯一导出；schema rule extraction / trigger normalization 归属 compiler `validation-lowering.ts`）」
+- [x] 修正 2（doc :429）：Where-To-Add 第 1 步改指 `packages/flux-compiler/src/validation-lowering.ts`（authoring-time lowering：`collectSchemaValidationRules` / `normalizeValidationTriggers`）——runtime 语义由既有第 2 步（validators.ts，:432）承载，不改动 :432
+- [x] 修正 3（doc :451-452）：Versus 节前两 bullet 改为「读取编译期降级产物（`validation-lowering.ts` 产出 `CompiledValidationRule`）的 runtime 消费」口径，消除与 Compiler boundary 节矛盾
+- [x] 修正 4（doc :567）：Bundle Face 改 9 族全列（basic/form/form-advanced/data/content/layout/scheduling/three 懒边界/xlang-debug-editor 懒边界 plan 2474）+ 尾句「must register the other families explicitly」同步（mobile/ai/graph 按需口径保留核对）；首句改现在时现状描述（Rule 14：`face changed` 变更叙事 → 现状），节标题历史戳 (2026-09-06) 保留为历史标注
 
 Exit Criteria:
 
-- [ ] 四处修正与 live 源码逐字可对（rules.ts 18 行单导出 / validation-lowering.ts 五导出 / index.tsx:43-58 九次 register 调用）
+- [x] 四处修正与 live 源码逐字可对（rules.ts 18 行单导出 / validation-lowering.ts 五导出 / index.tsx:43-58 九次 register 调用）——终验：:199-200 修正 1 落地、:429 修正 2 落地、:453 修正 3 落地、:567 修正 4 落地（grep "9 renderer families" =1）、prettier clean
 
 ### Phase 2 - 索引回填与收口
 
-Status: planned
+Status: completed
 Targets: `docs/audits/arm2-index.md`、roadmap、daily log
 
 - Item Types: `Fix | Proof`
 
-- [ ] arm2-index 两行 `open`→`closed` + 修复注记（本 plan 指针）
-- [ ] draft review 通过后：R1.1 `todo`→`planned` 翻转入激活提交，plan→`active`
-- [ ] closure audit（fresh subagent）approved 后：R1.1 `planned`→`done`（sed 回读核验），plan→`completed`
-- [ ] daily log 追加；两提交（激活/收口）均显式路径、并发线不入 stage
+- [x] arm2-index 两行 `open`→`closed` + 修复注记（本 plan 指针）
+- [x] draft review 通过后：R1.1 `todo`→`planned` 翻转入激活提交，plan→`active`（55c6c680f）
+- [x] closure audit（fresh subagent）approved 后：R1.1 `planned`→`done`（regex 定位替换 + 回读核验），plan→`completed`
+- [x] daily log 追加；两提交（激活/收口）均显式路径、并发线不入 stage
 
 Exit Criteria:
 
-- [ ] 两 finding `closed`；R1.1 `done`（sed 回读核验）；提交仅含 In Scope 文件
+- [x] 两 finding `closed`；R1.1 `done`（回读核验）；提交仅含 In Scope 文件
 
 ## Draft Review Record
 
@@ -98,10 +98,10 @@ Exit Criteria:
 
 - [ ] 四处修正落地且与 live 逐字可对
 - [ ] arm2-index 两 finding `closed` + 注记
-- [ ] 不存在被静默降级的 in-scope 项
-- [ ] 由独立子代理（fresh session）执行的 closure-audit 已完成并记录证据
-- [ ] `pnpm typecheck`
-- [ ] `pnpm test`
+- [x] 不存在被静默降级的 in-scope 项
+- [x] 由独立子代理（fresh session）执行的 closure-audit 已完成并记录证据
+- [x] `pnpm typecheck`（44/44 @ 07:19 安静窗；auditor memo：其后并发线 test-first 红灯再现——md-only delta 无因果，按 713/718 先例披露）
+- [x] `pnpm test`（82/82 @ 07:19 安静窗同上）
 
 > build/lint 按 guide 纯文档条款删除；typecheck+test 保留（md-only 变更应全绿；受并发线 test-first 循环干扰时按 713/718 先例披露）。
 
@@ -116,11 +116,13 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: （待收口）
+Status Note: R1.1 收官——四处 owner doc 修正落地（rules.ts 单职责 / Where-To-Add 改指 compiler lowering / Versus 节 runtime-消费口径 / Bundle Face 9 族现状），原 P1 静默失效路径实证关闭（compiler 零 import rules.ts）；两 finding `closed`（修复注记由修复行列 R1.1 指针承载——closure m-b 口径点明）；package.json:74 watch 实例未动（m4 纪律）；零代码变更。
 
 Closure Audit Evidence:
 
-- Auditor / Agent:
-- Evidence:
+- Auditor / Agent: 独立 fresh-session 审查子代理 `agent_7034562e`（2026-10-24 07:4x）
+- Evidence: R1 **`approved`**（0B/0M/2m 提交卫生项随手落 + 2 memo）——四处逐字+语义双吻合（live 接线证实：validation-collection.ts:137 → compiler 降级 → validation-runtime.ts:20 消费）、原 drift 关闭实证（compiler grep rules 零命中）、索引状态翻转字节级不碰证据链、零越界（恰两文件 5 hunk）、m4 watch 未动；m-a prettier 归一已落、m-b 注记口径在本 Note 点明；并发线红灯 memo 按 07:19 安静窗 + 先例披露处理。
 
 Follow-up:
+
+- watch：`packages/flux-bundle/package.json:74` description 8 族同族实例（draft review m4）——随后续 owner-doc/manifest 修复批处理。

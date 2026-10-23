@@ -196,9 +196,7 @@ They should not become generic helper dumps.
 ### Validation modules
 
 - `packages/flux-runtime/src/validation/rules.ts`
-  - schema rule extraction
-  - trigger normalization
-  - compiled dependency path helpers
+  - compiled dependency path helpers (`collectValidationDependencyPaths` — the file's only export). Schema rule extraction and trigger normalization belong to the compiler, not here: see `packages/flux-compiler/src/validation-lowering.ts` in the Compiler boundary section.
 - `packages/flux-runtime/src/validation/message.ts`
   - default validation message construction
   - reads the global `MessageFormatter` from `@nop-chaos/flux-core/i18n-sink` (the only stateful read in validation)
@@ -428,7 +426,7 @@ Do not turn it into a mixed behavior registry for:
 
 For a new built-in sync rule:
 
-1. Add schema extraction in `packages/flux-runtime/src/validation/rules.ts` if the rule has schema syntax.
+1. Add schema extraction in `packages/flux-compiler/src/validation-lowering.ts` if the rule has schema syntax — authoring-time lowering lives there (`collectSchemaValidationRules` / `normalizeValidationTriggers` / `normalizeValidationVisibilityTriggers` → `CompiledValidationRule`); it is compiled into node output and consumed by the runtime.
 2. Add the validator implementation in `packages/flux-runtime/src/validation/validators.ts`.
 3. Add default messaging in `packages/flux-runtime/src/validation/message.ts` if needed.
 4. Add focused coverage in existing runtime validation suites such as `packages/flux-runtime/src/__tests__/validation-rules.test.ts`, `packages/flux-runtime/src/validation/validation-lifecycle-contracts.test.ts`, `packages/flux-runtime/src/validation/validators.test.ts`, or other colocated validation contract tests.
@@ -452,8 +450,8 @@ Keep code in `packages/flux-compiler/src/schema-compiler.ts` when it is primaril
 
 Keep code in `packages/flux-runtime/src/validation/` when it is primarily about validation semantics:
 
-- collecting rules from schema fields
-- normalizing validation triggers and visibility triggers
+- consuming the compiled validation rules produced by authoring-time lowering (`packages/flux-compiler/src/validation-lowering.ts` → `CompiledValidationRule`)
+- reading normalized triggers from compiled validation metadata (schema-side extraction and normalization live in the compiler)
 - building messages
 - shaping validation errors
 - implementing reusable rule checks
@@ -564,9 +562,9 @@ Workbench host families that publish namespaced providers through `ActionScope` 
 
 `spreadsheet-renderers` and `report-designer-renderers` now follow this baseline through package-local host action providers, matching the established flow/word host family pattern.
 
-## Bundle Default Registration Face (2026-09-06)
+## Bundle Default Registration Face (2026-09-06, current state)
 
-`@nop-chaos/flux` (flux-bundle) default facade face changed: `registerDefaultFluxRenderers` now registers **7 renderer families** — basic, form, form-advanced, data, content, layout, **scheduling** (kanban/calendar/gantt/barcode-input, via `@nop-chaos/flux-renderers-scheduling` workspace dep + `registerSchedulingRenderers`). The bundle `style.css` re-exports the scheduling package styles via `@import`; the `mobile`, `ai`, and `graph` families remain host-registered on demand. The scheduling package stays a devDependency of flux-bundle and is bundled (not externalized) — it introduces no new runtime package boundary for hosts; hosts embedding the facade get scheduling renderers by default and must register the other families explicitly.
+`@nop-chaos/flux` (flux-bundle) default facade registers **9 renderer families** in `registerDefaultFluxRenderers` — basic, form, form-advanced, data, content, layout, **scheduling** (kanban/calendar/gantt/barcode-input, via `@nop-chaos/flux-renderers-scheduling` workspace dep + `registerSchedulingRenderers`), **3d** (`registerThreeRenderers` — registration is synchronous while the three.js implementation loads lazily through `createLazyRendererComponent` on the first `three-canvas` node, so three.js never enters the main chunk), and **xlang-debug-editor** (`registerXlangDebugEditorRenderers`, plan 2474 — same lazy-boundary pattern; codemirror/lezer load on the first `xlang-debug-editor` node). The bundle `style.css` re-exports the scheduling package styles via `@import`; the `mobile`, `ai`, and `graph` families remain host-registered on demand. The scheduling package stays a devDependency of flux-bundle and is bundled (not externalized) — it introduces no new runtime package boundary for hosts; hosts embedding the facade get scheduling, 3d, and xlang-debug-editor renderers by default and must register the other families explicitly.
 
 ## Related Documents
 
