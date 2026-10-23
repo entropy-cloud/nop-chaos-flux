@@ -41,12 +41,12 @@
 
 ## Failure Paths
 
-| 可测场景编号    | 触发                | 行为                                           | 可重试 |
-| --------------- | ------------------- | ------------------------------------------- | ------ |
-| probe-undecided | 探针不可判别        | 记录原因 + MA9.4 转入候选                   | 是     |
-| audit-p0-found  | Rule 2 六类之一     | 即时通道                                    | 否     |
-| subagent-quota  | 限流/模型失败       | fresh 重启一次；再败执行者亲跑              | 是     |
-| round-overflow  | 单轮超上限          | **字母批拆分（MA9.2-a/-b，Cross-Cutting 5 预授权）** | 否     |
+| 可测场景编号    | 触发            | 行为                                                 | 可重试 |
+| --------------- | --------------- | ---------------------------------------------------- | ------ |
+| probe-undecided | 探针不可判别    | 记录原因 + MA9.4 转入候选                            | 是     |
+| audit-p0-found  | Rule 2 六类之一 | 即时通道                                             | 否     |
+| subagent-quota  | 限流/模型失败   | fresh 重启一次；再败执行者亲跑                       | 是     |
+| round-overflow  | 单轮超上限      | **字母批拆分（MA9.2-a/-b，Cross-Cutting 5 预授权）** | 否     |
 
 （"用户可见表现"列不适用——流程性失败路径。）
 
@@ -58,33 +58,33 @@
 
 ### Phase 1 - multi：信号收集 + 探针设计 → 执行
 
-Status: planned
+Status: completed
 Targets: `_tmp/arm2-ma92/round-{A,B}.md`、`_tmp/arm2-ma92/probes/`
 
 - Item Types: `Proof | Decision`
 
-- [ ] **Round A · 信号收集 + 探针设计**（子代理）：五信号源 + 定义字段漂移扫描 → ≥10 探针清单
-- [ ] **Round B · 探针执行**（子代理）：逐探针判别；清单外允许
-- [ ] **执行者对账**：判别复核；P1 live 复核；MG 候选归并
+- [x] **Round A · 信号收集 + 探针设计**（子代理）：五信号源 + 定义字段漂移扫描 → ≥10 探针清单
+- [x] **Round B · 探针执行**（子代理）：**15/15 全判别 + 2 清单外**（红 8/绿 4/不可判别 2/拆分 1）；P1 族 vitest 编译语义钉死；探针脚本/输出存档
+- [x] **执行者对账**：P1 族 signature/barcode 两成员亲读坐实；Round A 勘正采信（kanban 7/gantt 双通道）；MG 候选 2
 
 Exit Criteria:
 
-- [ ] ≥10 探针清单 + 判别证据落字
-- [ ] 分类/分级/归族 + MG 候选 + P1 复核实录
+- [x] 15 探针清单 + 17 判别证据（含清单外）落字
+- [x] 分类/分级/归族 + MG 候选 2 + P1 族升格复核实录
 
 ### Phase 2 - open：live 信号驱动开放式追问
 
-Status: planned
+Status: completed
 Targets: `_tmp/arm2-ma92/`（open 轮记录）、报告 deferred 节
 
 - Item Types: `Proof | Decision`
 
-- [ ] ≥2 轮追问，末轮显式停止
-- [ ] MR3 / MG 交叉线索分栏
+- [x] ≥2 轮追问（R1 族升格裁决 5 成员+语义钉死；R2 令牌倒置定级+MA7.3 判读修正），末轮显式停止
+- [x] MR3 / MG 交叉线索分栏（MR3 +P1-MA9.2-001+P2-002；MG +2 候选；MA7.3 +P2-003 判读修正勘误；MA9.4 +不可判别 2）
 
 Exit Criteria:
 
-- [ ] open ≥2 轮显式停止；P2/P3 入报告 deferred 附理由
+- [x] open ≥2 轮显式停止；P2/P3 入报告 deferred/watch 附理由
 
 ### Phase 3 - 报告落盘、arm2-index 登记与 BUILD_VERIFY
 
@@ -92,10 +92,10 @@ Status: planned
 
 - Item Types: `Proof | Decision`
 
-- [ ] 报告落盘（同构：探针清单 + 判别证据 + P1 记录 + MG 候选 + deferred + open 轮 + 收口补记）
-- [ ] arm2-index：MA9.2 行 + P1 行〔触发时〕+ Last Updated 滚动，grep 复核
-- [ ] daily log 追加（计数 = 报告实数）
-- [ ] BUILD_VERIFY `pnpm test` 登记（exit 0）+ typecheck/build/lint（同一运行登记复用于 Closure Gates）
+- [x] 报告落盘（`docs/audits/2026-10-23-1404-arm2-MA9.2-renderers-adversarial.md`：P1 ×1 族升格 + P2 ×2 + P3 族 + 绿 4 + 扫描器口径盲区 + watch 4 + open 两轮 + 收口补记）
+- [x] arm2-index：MA9.2 行 + P1-MA9.2-001 行 + Last Updated 滚动（累计 70），grep 复核
+- [x] daily log 追加（头部插入；计数 = 报告实数）
+- [x] BUILD_VERIFY `pnpm test` 登记（exit 0，82/82）+ typecheck/build/lint（44/44 ×3，exit 0；同一运行登记复用于 Closure Gates）
 - [ ] 清理 `_tmp/arm2-ma92/`（closure audit 通过后、提交前执行）
 
 Exit Criteria:
@@ -109,7 +109,7 @@ Status: planned
 
 - Item Types: `Proof`
 
-- [ ] draft review 通过后：**roadmap MA9.2 `todo`→`planned` 翻转必须入激活提交**（MA9.1 closure M1 勘误纪律——三例在案），plan→`active`
+- [x] draft review 通过后：**roadmap MA9.2 `todo`→`planned` 翻转必须入激活提交**（MA9.1 closure M1 勘误纪律——三例在案；激活提交 2f25d8e26 已含翻转，closure auditor 核实），plan→`active`
 - [ ] closure audit（fresh subagent）approved 后：roadmap MA9.2 `planned`→`done`（**行号 surgery + sed 回读核验**），plan→`completed`
 - [ ] 提交前零残留 grep + prettier + `_tmp` 已清 + 入库面 diff 仅 In Scope 文档
 - [ ] 单次提交（显式路径；并发线不入 stage；临时 index）

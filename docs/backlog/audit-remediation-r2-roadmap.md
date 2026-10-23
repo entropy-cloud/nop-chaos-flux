@@ -86,7 +86,7 @@
 | MA8.2     | 运维—i18n 完整性 + deprecation 清理 + todo-exitless                    | `done` | `flux-guide/README.md`                           | M0                  | deprecated-feature-cleanup.md                          |
 | MA8.3     | 运维—CI guard 激活与工具基线有效性验证                                 | `done` | `docs/context/project-context.md`                | M0                  | deep-audit-prompts.md                                  |
 | MA9.1     | 开放式—核心链路对抗审计（compile→scope→render→action）                 | `done` | flux-design-principles.md                        | M0                  | open-ended-adversarial-review-prompt.md                |
-| MA9.2     | 开放式—渲染器族对抗审计（跨簇信号驱动）                                | `planned` | flux-design-principles.md                        | M0                  | open-ended-adversarial-review-prompt.md                |
+| MA9.2     | 开放式—渲染器族对抗审计（跨簇信号驱动）                                | `done` | flux-design-principles.md                        | M0                  | open-ended-adversarial-review-prompt.md                |
 | MA9.3     | 开放式—designer+office 族对抗审计                                      | `todo` | flux-design-principles.md                        | M0                  | open-ended-adversarial-review-prompt.md                |
 | MA9.4     | 开放式—全仓端到端对抗审计（真实旅程/异常输入/并发）                    | `todo` | flux-design-principles.md                        | M0                  | open-ended-adversarial-review-prompt.md                |
 | MR1.0     | P1 修复展开器—结构+运行时（追加 R1.n 行）                              | `todo` | flux-runtime-module-boundaries.md                | MA1、MA2            | test-first-implementation-prompt.md                    |
