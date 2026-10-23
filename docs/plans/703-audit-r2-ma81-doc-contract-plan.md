@@ -1,6 +1,6 @@
 # 703 审计修复 R2·MA8.1：文档契约审计—architecture/quick-reference/flux-guide 抽样对照 live code
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-10-23
 > Source: `docs/backlog/audit-remediation-r2-roadmap.md` MA8.1；`docs/audits/arm2-scope-and-dimension-matrix.md` MA8.1 行（报告名注册 `*arm2-MA8.1-doc-contract.md`；`check:active-doc-code-anchors` + `docs/skills/doc-evaluation.md` 四问〔准确/强契约/决策质量/时效〕；漂移按 `docs/context/source-of-truth-and-precedence.md` 裁决）；owner doc `docs/architecture/`（自审域）
 > Related: matrix MA8 节、`docs/audits/arm2-index.md`、MA1–MA7 各报告（其中文档相关 finding 引用归并——如 MA7.3 dashboard/gantt §10 文档缺口已立案）
@@ -44,12 +44,12 @@
 
 ## Failure Paths
 
-| 可测场景编号    | 触发                | 行为                                           | 可重试 |
-| --------------- | ------------------- | ------------------------------------------- | ------ |
-| tool-failure    | 扫描器失效          | 归因后重跑或手动等价抽样留痕                | 是     |
-| audit-p0-found  | Rule 2 六类之一     | 即时通道                                    | 否     |
-| subagent-quota  | 限流/模型失败       | fresh 重启一次；再败执行者亲跑              | 是     |
-| round-overflow  | 单轮超上限          | **字母批拆分（MA8.1-a/-b，Cross-Cutting 5 预授权）** | 否     |
+| 可测场景编号   | 触发            | 行为                                                 | 可重试 |
+| -------------- | --------------- | ---------------------------------------------------- | ------ |
+| tool-failure   | 扫描器失效      | 归因后重跑或手动等价抽样留痕                         | 是     |
+| audit-p0-found | Rule 2 六类之一 | 即时通道                                             | 否     |
+| subagent-quota | 限流/模型失败   | fresh 重启一次；再败执行者亲跑                       | 是     |
+| round-overflow | 单轮超上限      | **字母批拆分（MA8.1-a/-b，Cross-Cutting 5 预授权）** | 否     |
 
 （"用户可见表现"列不适用——流程性失败路径。）
 
@@ -61,66 +61,66 @@
 
 ### Phase 1 - multi：anchors 扫描 + 抽样对照（预拆 A1/A2——closure review M2 裁定默认拆分）
 
-Status: planned
+Status: completed
 Targets: `_tmp/arm2-ma81/round-{A1,A2}.md`、`_tmp/arm2-ma81/tool-anchors.log`
 
 - Item Types: `Proof | Decision`
 
-- [ ] **Round A1 · 架构文档抽样对照**（子代理）：6 份核心架构文档四问评估（四问操作化定义见 Goals ②）
-- [ ] **Round A2 · quick-reference + flux-guide 抽样对照**（子代理）：quick-reference + ≥3 篇 flux-guide 同口径
-- [ ] **执行者 · 扫描器实跑**：`check:active-doc-code-anchors`（路径存在性检查器——**无 M0 在册基线可比，记录实测值作为本轮基线**）；anchors 命中与 A1/A2 漂移发现交叉
-- [ ] **执行者对账**：漂移裁决复核（按 source-of-truth-and-precedence.md）；P1 live 复核
+- [x] **Round A1 · 架构文档抽样对照**（子代理）：6 份全读 5051 行/82 断言（77 成立）；无 P1；6 drifts（P2 ×2 + P3 ×4）；四问全 pass 除准确性局部 drift
+- [x] **Round A2 · quick-reference + flux-guide 抽样对照**（子代理）：quick-reference 全读 1071 行/21 断言组 + flux-guide 3 篇/31 组；**P1 ×3** + P2 族 + P3 ×4；16 drifts 全 doc-stale
+- [x] **执行者 · 扫描器实跑**：365 文档验证、exit 0、零命中（首轮基线在案）；双盲区备案
+- [x] **执行者对账**：P1 三案实址复核（A2 引注路径偏移修正后全部立案）；漂移裁决 16/16 doc-stale 复核
 
 Exit Criteria:
 
-- [ ] anchors 复核 + 抽样评估表（每文档四问 + 代码引用对照）落字
-- [ ] 漂移裁决逐处落字；P1 复核实录
+- [x] anchors 复核 + 抽样评估表（每文档四问 + 代码引用对照）落字
+- [x] 漂移裁决逐处落字（16/16 doc-stale）；P1 复核实录
 
 ### Phase 2 - open：live 信号驱动开放式追问
 
-Status: planned
+Status: completed
 
 - Item Types: `Proof | Decision`
 
-- [ ] ≥2 轮追问，末轮显式停止
-- [ ] MR3 / 文档批 交叉线索分栏
+- [x] ≥2 轮追问（R1 P1 三案定址——A2 引注路径偏移修正；R2 漂移方向裁决 16/16 doc-stale + W6 跨节失同步模式立案），末轮显式停止
+- [x] MR3 / 文档批 交叉线索分栏（文档批 +全部 16 处修正 + 16-monitor.md 处置首位；code-batch +W3 代码注释缺陷；MA7.3 文档同步批并入；MG 零新增）
 
 Exit Criteria:
 
-- [ ] open ≥2 轮显式停止；P2/P3 入报告 deferred 附理由
+- [x] open ≥2 轮显式停止；P2/P3 入报告 deferred 附理由
 
 ### Phase 3 - 报告落盘、arm2-index 登记与 BUILD_VERIFY
 
-Status: planned
+Status: completed
 
 - Item Types: `Proof | Decision`
 
-- [ ] 报告落盘（同构：扫描器 + 抽样评估 + 漂移裁决 + P1 记录 + deferred + open 轮 + 收口补记）
-- [ ] arm2-index：MA8.1 行 + P1 行〔触发时〕+ Last Updated 滚动，grep 复核
-- [ ] daily log 追加（计数 = 报告实数）
-- [ ] BUILD_VERIFY `pnpm test` 登记（exit 0）+ typecheck/build/lint（同一运行登记复用于 Closure Gates）
-- [ ] 清理 `_tmp/arm2-ma81/`（closure audit 通过后、提交前执行）
+- [x] 报告落盘（`docs/audits/2026-10-23-1011-arm2-MA8.1-doc-contract.md`：P1 ×3 + P2 ×3 + P3 汇总 8 + 四问总评表 + watch 6 + open 两轮 + 收口补记）
+- [x] arm2-index：MA8.1 行 + P1-MA8.1-001/002/003 行 + Last Updated 滚动（累计 67；P2 ×4 + P3 ×11 为 closure R1 M2 补录后定稿数），grep 复核
+- [x] daily log 追加（头部插入；计数 = 报告实数）
+- [x] BUILD_VERIFY `pnpm test` 登记（exit 0，82/82）+ typecheck/build/lint（44/44 ×3，exit 0；同一运行登记复用于 Closure Gates）
+- [x] 清理 `_tmp/arm2-ma81/`（closure audit R1 通过后执行）
 
 Exit Criteria:
 
-- [ ] 报告与 arm2-index 逐条一致（grep 双侧命中）
-- [ ] BUILD_VERIFY exit 0 登记
+- [x] 报告与 arm2-index 逐条一致（grep：P1-MA8.1-001/002/003 双侧命中；P2 ×4/P3 ×11 补录后定稿）
+- [x] BUILD_VERIFY exit 0 登记（gate-\*.exit 全 0）
 
 ### Phase 4 - 收口与状态流转
 
-Status: planned
+Status: completed
 
 - Item Types: `Proof`
 
-- [ ] draft review 通过后：roadmap MA8.1 `todo`→`planned`，plan→`active`
-- [ ] closure audit（fresh subagent）approved 后：roadmap MA8.1 `planned`→`done`（**行号 surgery + sed 回读核验**），plan→`completed`
-- [ ] 提交前零残留 grep + prettier + `_tmp` 已清 + 入库面 diff 仅 In Scope 文档
-- [ ] 单次提交（显式路径；并发线不入 stage；临时 index）
+- [x] draft review 通过后：roadmap MA8.1 `todo`→`planned`，plan→`active`
+- [x] closure audit（fresh subagent `agent_cb46fc28`）R1 `issues`（0B/2M/3m——M1 roadmap MA8.1 激活翻转同遭并发线回写覆盖（HEAD 实录 todo，与 MA7.3 erratum 同根）→ 修复 planned 后随本 commit done；M2 A2 四条 drifts 静默丢失 → 补录 P2-007 + P3 ×3（P2 ×4/P3 ×11 定稿）+ 计数同步；3m 落地：watch 6 项全列、renderer-env.ts 路径勘误、 staged-index minefield 以 temp-index 纪律处置）approved 后：roadmap MA8.1 `planned`→`done`（行号 surgery + sed 回读核验），plan→`completed`
+- [x] 提交前零残留 grep + prettier + `_tmp` 已清 + 入库面 diff 仅 In Scope 文档
+- [x] 单次提交（显式路径；并发线不入 stage；临时 index）
 
 Exit Criteria:
 
-- [ ] roadmap 与 plan 状态流转一致（sed 回读核验）
-- [ ] 提交仅含 In Scope 文件
+- [x] roadmap 与 plan 状态流转一致（sed 回读核验）
+- [x] 提交仅含 In Scope 文件
 
 ## Draft Review Record
 
@@ -131,14 +131,14 @@ Exit Criteria:
 
 ## Closure Gates
 
-- [ ] arm2 报告落盘且 Phase 1–3 Exit Criteria 全部满足
-- [ ] arm2-index 登记与报告逐条一致
-- [ ] BUILD_VERIFY 全量 `pnpm test` 通过并登记
-- [ ] 不存在被静默降级的 in-scope 项（watch-only 附理由入台账）
-- [ ] 探针与临时配置已全部删除（`_tmp/arm2-ma81/` 清理）
-- [ ] roadmap Work Item Status MA8.1 行已流转 `done`（closure audit 通过后，sed 回读核验）
-- [ ] 由独立子代理（fresh session）执行的 closure-audit 已完成并记录证据
-- [ ] `pnpm typecheck` / `pnpm build` / `pnpm lint` / `pnpm test` 登记
+- [x] arm2 报告落盘且 Phase 1–3 Exit Criteria 全部满足
+- [x] arm2-index 登记与报告逐条一致
+- [x] BUILD_VERIFY 全量 `pnpm test` 通过并登记
+- [x] 不存在被静默降级的 in-scope 项（watch-only 附理由入台账）
+- [x] 探针与临时配置已全部删除（`_tmp/arm2-ma81/` 清理）
+- [x] roadmap Work Item Status MA8.1 行已流转 `done`（closure audit 通过后，sed 回读核验）
+- [x] 由独立子代理（fresh session）执行的 closure-audit 已完成并记录证据
+- [x] `pnpm typecheck`（44/44） / `pnpm build`（44/44） / `pnpm lint`（44/44） / `pnpm test`（82/82）登记（exit 0 ×4）
 
 ## Deferred But Adjudicated
 
@@ -150,11 +150,15 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: （待收口）
+Status Note: 文档契约审计收官（P1 ×3 新案〔quick-reference Data Source 三重错误 / monitor 幻影文档族 / refreshDataSource 签名过时——全部 quick-reference/flux-guide 面〕+ P2 ×4 + P3 ×11（closure R1 M2 补录定稿）+ **漂移裁决 16/16 doc-stale** + anchors 首跑 365 文档 0 命中 + 架构文档 6 份强契约/决策质量全 pass）；字母批裁定：预拆 A1/A2（review M2）；MA7.3 roadmap erratum 修复随本批（572519d1a + 本 commit 二段流转）；零入库变更核验通过（含文档只审不改）。可关闭。
 
 Closure Audit Evidence:
 
-- Auditor / Agent:
-- Evidence:
+- Auditor / Agent: 独立 fresh-session closure auditor `agent_cb46fc28`（R1）
+- Evidence: R1 **`issues`**（0B/2M/3m）→ 回修 → 全部落地。审计员独立复核：**P1 三案源码全证**（quick-reference.md:799-817 三重错误 vs schema.ts:270 + 01-quickstart 正确反证；renderer-hooks.ts monitor 零命中 + applyMonitor 零命中 + 5ba737830 移除 commit + flux-monitor.md intent-only；renderer-core.ts:347 outcome 签名）；doc-stale 抽检两处属实（renderer-api.ts:94-114 扁平 14 字段 + renderer-runtime.md :522 vs :621 同文档矛盾）；语料行数逐文档核实（5051 = 1611+547+886+354+1306+347）；gate 日志 exit 0 全核；zero-code-change 双跑核实（含 docs 域）。M1/M2 处置如上。
+
+Follow-up:
+
+- no remaining plan-owned work；P1-MA8.1-001/002/003 + P2 ×4 修复行在文档批（16-monitor.md 处置首位；quick-reference Data Source 块/Runtime 方法块重写）；code-batch +W3 代码注释缺陷；文档批治理项 +W5 跨节失同步模式；MA8.2（i18n+deprecation+todo）为下一工作项。
 
 Follow-up:
