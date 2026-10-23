@@ -65,6 +65,7 @@ describe('three-canvas renderer component (plan 465 Phase 5, mocked engine)', ()
     const el = container.querySelector('[data-testid="my-three"]');
     expect(el).not.toBeNull();
     expect(el?.classList.contains('three-canvas')).toBe(true);
+    expect(el?.classList.contains('nop-three-canvas')).toBe(true);
     expect(el?.classList.contains('extra-class')).toBe(true);
     expect(el?.getAttribute('data-three-scene-state')).toBe('ready');
   });

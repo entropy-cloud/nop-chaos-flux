@@ -141,7 +141,7 @@ export function ThreeCanvasRenderer(props: RendererComponentProps<ThreeCanvasSch
   return (
     <div
       ref={containerRef}
-      className={cn('three-canvas', className)}
+      className={cn('nop-three-canvas', 'three-canvas', className)}
       data-testid={testid}
       data-three-scene-state={isEmpty ? 'empty' : sceneState}
       aria-busy={!isEmpty && sceneState === 'loading'}

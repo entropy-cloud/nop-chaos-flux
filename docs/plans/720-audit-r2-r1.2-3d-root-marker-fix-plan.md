@@ -1,6 +1,6 @@
 # 720 审计修复 R2·R1.2：结构契约修复—3d 语义根 marker 补齐（P1-MA1.5-001）
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-10-24
 > Source: `docs/backlog/audit-remediation-r2-roadmap.md` R1.2（MR1.0/plan 711 展开）；`docs/audits/2026-10-19-1307-arm2-MA1.5-domain-structure.md` §P1-MA1.5-001（修复方向在案：根元素补 `nop-three-canvas` + 判别测试）；`docs/architecture/renderer-markers-and-selectors.md` §Root Marker Rules（`nop-` 前缀、仅身份、不编码 region/state、不内嵌布局色彩）
 > Related: live 锚点 `packages/flux-renderers-3d/src/renderer/three-canvas.tsx:144`（draft review 重钉，报告期 :125）；扫描器豁免盲区 = P2-MA1.5-002（本行不含，归 MG/MA8.3 工具面）
@@ -56,34 +56,34 @@
 
 ### Phase 1 - 判别测试先行（红）
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-3d/src/renderer/three-canvas.test.tsx`
 
 - Item Types: `Proof`
 
-- [ ] 唯一性预检：`nop-three-canvas` **代码面**（packages/ apps/ tests/）零命中（命名无冲突；docs 侧 4 处在案为审计/计划文档记载，不计）
-- [ ] 新增判别断言（新用例或 :62 用例内补）：根元素 `classList.contains('nop-three-canvas')` ——运行证实**红**（旧实现无 marker）
+- [x] 唯一性预检：`nop-three-canvas` **代码面**（packages/ apps/ tests/）零命中（命名无冲突；docs 侧 4 处在案为审计/计划文档记载，不计）
+- [x] 新增判别断言（:62 用例内补）：根元素 `classList.contains('nop-three-canvas')`——红证在案（旧实现 1 failed：'renders the container with scene-state marker…' ×）
 
 Exit Criteria:
 
-- [ ] 判别测试红在案（旧实现必挂实证）
+- [x] 判别测试红在案（旧实现必挂实证）
 
 ### Phase 2 - marker 实装（绿）与收口
 
-Status: planned
+Status: completed
 Targets: `three-canvas.tsx`、`docs/audits/arm2-index.md`、roadmap、daily log
 
 - Item Types: `Fix | Proof`
 
-- [ ] `three-canvas.tsx:144` className 改 `cn('nop-three-canvas', 'three-canvas', className)`
-- [ ] 判别测试转绿 + 既有 3d 套件全绿（含 .three-canvas 选择器兼容实证）
-- [ ] arm2-index P1-MA1.5-001 `open`→`closed` + 注记
-- [ ] draft review 通过后：R1.2 `todo`→`planned` 翻转入激活提交，plan→`active`；closure audit approved 后 R1.2 `planned`→`done`、plan→`completed`
-- [ ] daily log 追加；两提交显式路径、并发线不入 stage
+- [x] `three-canvas.tsx:144` className 改 `cn('nop-three-canvas', 'three-canvas', className)`
+- [x] 判别测试转绿 + 既有 3d 套件全绿（25 文件 216 测试；.three-canvas 选择器兼容实证）
+- [x] arm2-index P1-MA1.5-001 `open`→`closed` + 注记
+- [x] draft review 通过后：R1.2 `todo`→`planned` 翻转入激活提交，plan→`active`（cc0009123）；closure audit approved 后 R1.2 `planned`→`done`、plan→`completed`
+- [x] daily log 追加；两提交显式路径、并发线不入 stage
 
 Exit Criteria:
 
-- [ ] 判别测试绿；3d 包测试全绿；两 finding 状态一致；R1.2 `done` 回读核验
+- [x] 判别测试绿；3d 包测试全绿；两 finding 状态一致；R1.2 `done` 回读核验
 
 ## Draft Review Record
 
@@ -94,15 +94,15 @@ Exit Criteria:
 
 ## Closure Gates
 
-- [ ] 判别测试先红后绿在案（红证 + 绿证）
-- [ ] 既有 3d 套件全绿（无回归）
-- [ ] arm2-index P1-MA1.5-001 `closed` + 注记
-- [ ] 不存在被静默降级的 in-scope 项
-- [ ] 由独立子代理（fresh session）执行的 closure-audit 已完成并记录证据
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] 判别测试先红后绿在案（红证：旧实现 1 failed；绿证：216 passed）
+- [x] 既有 3d 套件全绿（无回归）
+- [x] arm2-index P1-MA1.5-001 `closed` + 注记
+- [x] 不存在被静默降级的 in-scope 项
+- [x] 由独立子代理（fresh session）执行的 closure-audit 已完成并记录证据
+- [x] `pnpm typecheck`（44/44 @ 07:39）
+- [x] `pnpm build`（44/44 @ 07:39）
+- [x] `pnpm lint`（44/44 @ 07:39）
+- [x] `pnpm test`（82/82 @ 07:39）
 
 ## Deferred But Adjudicated
 
@@ -114,11 +114,13 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: （待收口）
+Status Note: R1.2 收官——3d 根元素补 `nop-three-canvas` 语义 marker（裸类保留向后兼容），契约四条合规（auditor 逐条亲核），先红后绿证据链闭合（红证 1 failed → 绿证 216 passed，mtime 佐证断言先于实装）；P1-MA1.5-001 `closed`（注记由 R1.2 指针列承载——closure m2 口径对齐 R1.1 先例）；扫描器豁免（P2-MA1.5-002）与 owner doc 均未动（Non-Goals 纪律）；代码变更 2 行。
 
 Closure Audit Evidence:
 
-- Auditor / Agent:
-- Evidence:
+- Auditor / Agent: 独立 fresh-session 审查子代理 `agent_cca7d655`（2026-10-24 07:5x）
+- Evidence: R1 **`approved`**（8/8 PASS + 2m 口径对齐项）——实装/断言逐字、红绿链 mtime+逻辑双佐证、契约四条、独立复跑 3d 单包 25 文件 216 测试全绿、索引单列翻转、零越界、门禁诚实；m1 daily log 随收口真实落账（本提交）；m2 注记措辞对齐指针列先例。
 
 Follow-up:
+
+- watch：扫描器豁免盲区（P2-MA1.5-002）归 MG/MA8.3 工具面批。
