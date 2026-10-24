@@ -1,6 +1,6 @@
 # 722 审计修复 R2·R1.4：运行时修复—barcode 媒体 IO 治理（P1-MA2.3-001）
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-10-24
 > Source: `docs/backlog/audit-remediation-r2-roadmap.md` R1.4（MR1.0/plan 711 展开）；`docs/audits/2026-10-20-0335-arm2-MA2.3-content-mobile-domain-scheduling-ai-runtime.md` §P1-MA2.3-001；`docs/architecture/renderer-env.md`（INV-1/INV-2 + plan 512 optional-channel 先例 :20/:29/:259）；`docs/discussions/2026-09-26-host-channels-print-clipboard-download-toast-url.md`（先例契约）
 > Related: plan 711 Non-Blocking Follow-ups；roadmap Cross-Cutting 8（结构性变更人工确认）；guide When Closing 11（部分收敛标注）
@@ -63,35 +63,35 @@
 
 ### Phase 1 - 单点注入边界（段 1）
 
-Status: planned
+Status: completed
 Targets: utils/barcode-media-io.ts + 四消费文件 + 三测试文件
 
 - Item Types: `Fix | Proof`
 
-- [ ] 新建 `utils/barcode-media-io.ts`：`BarcodeMediaIO` 接口（getUserMedia / createBarcodeDetector〔含 ZXing ponyfill 回退形态〕/ online 快照订阅 / enumerateDevices+isSecureContext 探测四通道形状）+ `defaultBarcodeMediaIO`（各通道现行逻辑原样迁入）+ 模块头部 INV-1 在案裁决注记（援引提案文档：通道未裁定期内为在案治理点）；ZXing ponyfill 回退依赖的 wasmFetcher 须经边界注入传递（源自 env.fetcher，防硬连回浏览器 fetch 破坏已合规路径）
-- [ ] 四消费文件改经边界消费（hook/camera-utils 经参数或模块注入；detector-utils 工厂经边界；overlay 的 useSyncExternalStore 快照源改经边界订阅）
-- [ ] 判别探针先红：注入 spy IO + 全局访问计数监视，断言零全局访问——旧实现必红（红证落账）
-- [ ] 迁移实装后全绿：既有用例（13 + detector-utils + camera-utils）迁移 mock 至边界注入后全部通过（等价证明）
+- [x] 新建 `utils/barcode-media-io.ts`：`BarcodeMediaIO` 接口（getUserMedia / createBarcodeDetector〔含 ZXing ponyfill 回退形态〕/ online 快照订阅 / enumerateDevices+isSecureContext 探测四通道形状）+ `defaultBarcodeMediaIO`（各通道现行逻辑原样迁入）+ 模块头部 INV-1 在案裁决注记（援引提案文档：通道未裁定期内为在案治理点）；ZXing ponyfill 回退依赖的 wasmFetcher 须经边界注入传递（源自 env.fetcher，防硬连回浏览器 fetch 破坏已合规路径）
+- [x] 四消费文件改经边界消费（hook/camera-utils 模块注入；detector-utils 工厂经边界；overlay 快照源改经边界订阅；overlay 导入路径初版错置已就地修复）
+- [x] 判别探针先红：注入 spy IO + defineProperty 全局访问计数监视——红证在案（旧实现 spy 零消费、isAvailable false，1 failed）
+- [x] 迁移实装后全绿：barcode-input 12 文件 137 测试全绿（hook 主 mock 迁移 setBarcodeMediaIO 注入 + afterEach reset；detector-utils stubGlobal 经默认实现委托保持零改动；camera-utils.test defineProperty 同）
 
 Exit Criteria:
 
-- [ ] 四消费文件 grep 直调 `navigator.mediaDevices|window.BarcodeDetector|navigator.onLine|window.isSecureContext` = 0（唯一触点在边界模块默认实现）；红绿证据链在案；既有用例全绿
+- [x] 四消费文件 grep 直调 = 0（唯一触点在边界模块默认实现）；红绿证据链在案；既有用例全绿（137/137）
 
 ### Phase 2 - INV-2 提案与收口
 
-Status: planned
+Status: completed
 Targets: `docs/discussions/`、arm2-index、roadmap、daily log
 
 - Item Types: `Decision | Proof`
 
-- [ ] 提案文档：`env.mediaDevices?` optional 通道设计（沿 plan-512 契约结构：字段形状/capability check/宿主代理/四通道消费迁移路径），状态标注「待人审（Cross-Cutting 8）」
-- [ ] arm2-index P1-MA2.3-001 部分收敛注记（段 1 落地 + 提案指针；状态保持 `open` 待人审闭环）
-- [ ] draft review 通过后：R1.4 `todo`→`planned` 翻转入激活提交，plan→`active`；closure audit approved 后 R1.4 `planned`→`done`（部分收敛标注：env 通道待人审）+ plan→`completed`
+- [x] 提案文档：`env.mediaDevices?` optional 通道设计（沿 plan-512 契约结构：字段形状/capability check/宿主代理/四通道消费迁移路径），状态标注「待人审（Cross-Cutting 8）」
+- [x] arm2-index P1-MA2.3-001 部分收敛注记（段 1 落地 + 提案指针；状态保持 `open` 待人审闭环）
+- [x] draft review 通过后：R1.4 `todo`→`planned` 翻转入激活提交，plan→`active`（aae662aba）；closure audit approved 后 R1.4 `planned`→`done`（部分收敛标注：env 通道待人审）+ plan→`completed`
 - [ ] daily log 追加；两提交显式路径、并发线不入 stage
 
 Exit Criteria:
 
-- [ ] 提案文档落盘（待人审标注在）；finding `open`+注记与 R1.4 `done` 部分收敛标注一致（When Closing 11）；提交仅含 In Scope 文件
+- [x] 提案文档落盘（待人审标注在）；finding `open`+注记与 R1.4 `done` 部分收敛标注一致（When Closing 11）；提交仅含 In Scope 文件
 
 ## Draft Review Record
 
@@ -109,11 +109,11 @@ Exit Criteria:
 - [ ] arm2-index 部分收敛注记在（finding 保持 `open`）+ roadmap R1.4 `done` 部分收敛标注一致（When Closing 11）
 - [ ] 不存在被静默降级的 in-scope 项
 - [ ] owner-doc 交代在案（renderer-env.md 不改理由：通道未裁定期以边界+提案为在案治理）
-- [ ] 由独立子代理（fresh session）执行的 closure-audit 已完成并记录证据
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] 由独立子代理（fresh session）执行的 closure-audit 已完成并记录证据
+- [x] `pnpm typecheck`（43/44 @ 08:31——唯一失败 flux-renderers-content 归因并发 ARC 线未跟踪 WIP 测试 TS 错误，delta 甄别披露；scheduling 包 scoped 全净）
+- [x] `pnpm build`（44/44 @ 08:31）
+- [x] `pnpm lint`（44/44 @ 08:31）
+- [x] `pnpm test`（82/82 @ 08:31；barcode-input 12 文件 137 测试全绿 ×2〔执行者 + auditor 独立实跑〕；auditor 另证全 scheduling 115 文件 1086 测试全绿）
 
 ## Deferred But Adjudicated
 
@@ -126,11 +126,14 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: （待收口）
+Status Note: R1.4 收官（部分收敛口径）——段 1 四通道收敛单点注入边界 barcode-media-io.ts（6 原语 + INV-1 在案裁决注记 + 判别探针红绿链）+ 四消费迁移（hook 13 用例注入式迁移等价全绿）+ 段 2 INV-2 提案落盘待人审（Cross-Cutting 8 gate，RendererEnv 接口零变更）；arm2-index P1-MA2.3-001 保持 `open` + 部分收敛注记（人审闭环后转 closed——义务随提案与注记传递）；roadmap R1.4 `done` 部分收敛标注（When Closing 11）。
 
 Closure Audit Evidence:
 
-- Auditor / Agent:
-- Evidence:
+- Auditor / Agent: 独立 fresh-session 审查子代理 `agent_15e9d6a6`（2026-10-24 08:5x）
+- Evidence: R1 **`approved`**（8/8 PASS + 4 minor 措辞/覆盖观察）——边界模块结构/INV-1 注记/ponyfill 不入边界逐项亲读、四消费迁移+直调清零 grep 实证、探针红证机制必然+绿证 137/137 live 实跑（另证全 scheduling 115 文件 1086 测试全绿）、提案待人审标注在、flux-core 零变更（git diff 空，严于声明口径）、关闭会计三账一致（finding open ↔ 行 done 标注 ↔ plan completed）；4 minor 均为计数/措辞/覆盖面观察不阻塞。
 
 Follow-up:
+
+- env camera 通道实施（提案人审通过后）随独立 plan 落地；finding 转 closed 闭环义务随 arm2-index 注记传递。
+- 扫描器 camera 族盲区（P2 同源）归 MG/MA8.3 工具面批。

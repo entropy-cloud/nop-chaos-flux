@@ -1,6 +1,7 @@
 import { useRef, useState, useEffect, useCallback } from 'react';
 import { t } from '@nop-chaos/flux-i18n';
 import { checkCameraAvailability } from '../utils/camera-utils.js';
+import { barcodeMediaIO } from '../utils/barcode-media-io.js';
 
 interface BarcodeCameraState {
   isActive: boolean;
@@ -64,7 +65,7 @@ export function useBarcodeCamera(options?: UseBarcodeCameraOptions): UseBarcodeC
       if (signal.aborted) return;
 
       const currentOptions = optionsRef.current;
-      const stream = await navigator.mediaDevices.getUserMedia({
+      const stream = await barcodeMediaIO().getUserMedia({
         video: currentOptions?.videoConstraints ?? {
           facingMode: 'environment',
           width: { ideal: 1280 },

@@ -12,6 +12,7 @@ import type { WasmFetcher } from './utils/prepare-wasm-utils.js';
 import { createBarcodeQueueStore, enqueueItem, dequeueItem, clearQueue, markSubmitted, getPending, getAllItems } from './utils/barcode-queue-utils.js';
 import type { BarcodeFormat, BarcodeDetectResult } from './barcode-input.types.js';
 import { useFocusTrap } from '../shared/hooks/use-focus-trap.js';
+import { barcodeMediaIO } from './utils/barcode-media-io.js';
 
 // R3-U3: resolved inside the component — module-scope t() freezes the locale
 // at module-init time and survives runtime language switches.
@@ -83,7 +84,7 @@ export function BarcodeScannerOverlay(props: BarcodeScannerOverlayProps) {
     };
   };
 
-  const getOnlineSnapshot = () => navigator.onLine;
+  const getOnlineSnapshot = () => barcodeMediaIO().isOnline();
 
   const isOnline = useSyncExternalStore(subscribeOnline, getOnlineSnapshot, () => true);
   const camera = useBarcodeCamera({ videoRef });

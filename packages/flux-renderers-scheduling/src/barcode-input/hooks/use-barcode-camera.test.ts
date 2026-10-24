@@ -1,7 +1,8 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import { initFluxI18n } from '@nop-chaos/flux-i18n';
 import { useBarcodeCamera } from './use-barcode-camera.js';
+import { setBarcodeMediaIO, resetBarcodeMediaIO } from '../utils/barcode-media-io.js';
 
 // 2-17: camera error messages go through the i18n t() channel — pin the
 // locale so the assertions lock the translated (not hardcoded) strings.
@@ -17,10 +18,14 @@ function setupGetUserMediaMock() {
 
   const getUserMedia = vi.fn().mockResolvedValue(mockStream);
 
-  Object.defineProperty(navigator, 'mediaDevices', {
-    value: { getUserMedia },
-    configurable: true,
-    writable: true,
+  // R1.4 / plan 722: mock via the BarcodeMediaIO boundary injection (no global mutation).
+  setBarcodeMediaIO({
+    getUserMedia: (constraints) => getUserMedia(constraints),
+    getNativeBarcodeDetectorCtor: () => undefined,
+    isOnline: () => true,
+    isSecureContext: () => true,
+    supportsEnumerateDevices: () => true,
+    enumerateDevices: async () => [{ kind: 'videoinput' } as MediaDeviceInfo],
   });
 
   return { getUserMedia, mockStream };
@@ -29,6 +34,10 @@ function setupGetUserMediaMock() {
 describe('useBarcodeCamera', () => {
   beforeEach(() => {
     setupGetUserMediaMock();
+  });
+
+  afterEach(() => {
+    resetBarcodeMediaIO();
   });
 
   it('should initialize with isActive false and error null', () => {

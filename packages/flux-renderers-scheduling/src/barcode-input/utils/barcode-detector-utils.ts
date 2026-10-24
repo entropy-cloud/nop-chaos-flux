@@ -1,4 +1,5 @@
 import { createLazyLibLoader } from '@nop-chaos/flux-core';
+import { barcodeMediaIO } from './barcode-media-io.js';
 
 export type BarcodeFormat =
   | 'aztec' | 'code_39' | 'code_93' | 'code_128'
@@ -103,7 +104,7 @@ export function createBarcodeDetector(formats?: BarcodeFormat[]): {
   detect: (source: HTMLVideoElement | HTMLCanvasElement) => Promise<BarcodeDetectResult[]>;
   supportsSkewRetry: boolean;
 } {
-  const NativeDetector = typeof window !== 'undefined' ? (window as any).BarcodeDetector : undefined;
+  const NativeDetector = barcodeMediaIO().getNativeBarcodeDetectorCtor();
   const requested = formats ?? DEFAULT_FORMATS;
 
   if (typeof NativeDetector === 'function') {

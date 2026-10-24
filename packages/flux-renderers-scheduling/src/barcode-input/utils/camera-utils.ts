@@ -1,3 +1,5 @@
+import { barcodeMediaIO } from './barcode-media-io.js';
+
 export interface CameraAvailabilityResult {
   isAvailable: boolean;
   error?: string;
@@ -8,17 +10,18 @@ let cachedAvailability: CameraAvailabilityResult | null = null;
 export function checkCameraAvailability(): Promise<CameraAvailabilityResult> {
   if (cachedAvailability) return Promise.resolve(cachedAvailability);
 
-  if (typeof window === 'undefined' || !window.isSecureContext) {
+  const io = barcodeMediaIO();
+  if (!io.isSecureContext()) {
     cachedAvailability = { isAvailable: false, error: 'Camera requires HTTPS or localhost' };
     return Promise.resolve(cachedAvailability);
   }
 
-  if (typeof navigator === 'undefined' || !navigator.mediaDevices?.enumerateDevices) {
+  if (!io.supportsEnumerateDevices()) {
     cachedAvailability = { isAvailable: false, error: 'enumerateDevices not supported' };
     return Promise.resolve(cachedAvailability);
   }
 
-  return navigator.mediaDevices.enumerateDevices()
+  return io.enumerateDevices()
     .then((devices) => {
       const hasVideoInput = devices.some((d) => d.kind === 'videoinput');
       cachedAvailability = hasVideoInput
