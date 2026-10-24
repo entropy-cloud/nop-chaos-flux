@@ -118,6 +118,36 @@ const projectedSubmit = {
   ],
 };
 
+const inlineEdit = {
+  type: 'page',
+  body: [
+    {
+      type: 'form',
+      name: 'inlineEditForm',
+      data: { title: 'Quarterly Report', owner: 'Ada' },
+      body: [
+        {
+          type: 'detail-field',
+          name: 'title',
+          label: 'Title',
+          editMode: 'inline',
+          triggerLabel: 'Edit title inline',
+          content: [{ type: 'input-text', name: '__value', label: 'Title' }],
+        },
+        {
+          type: 'detail-field',
+          name: 'owner',
+          label: 'Owner',
+          editMode: 'inline',
+          triggerLabel: 'Edit owner inline',
+          content: [{ type: 'input-text', name: '__value', label: 'Owner' }],
+        },
+      ],
+      actions: [{ type: 'button', label: 'Save', onClick: { action: 'submitForm' } }],
+    },
+  ],
+};
+
 export function DetailFieldLabPage() {
   return (
     <MultiScenarioLabPage
@@ -140,6 +170,12 @@ export function DetailFieldLabPage() {
           description:
             'Edit the shipping object in the projected dialog, confirm, then submit the form; the echo asserts the committed value shape and that the draft never leaks before confirm.',
           schema: projectedSubmit,
+        },
+        {
+          title: 'Inline point-and-edit (editMode: inline)',
+          description:
+            'Click a value to edit it in place: the viewer turns into a single-line editor, Enter or blur commits (validate → transformOut → write back), Escape cancels without writing.',
+          schema: inlineEdit,
         },
       ]}
     />

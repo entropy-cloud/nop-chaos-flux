@@ -339,6 +339,44 @@ test.describe('detail-field renderer', () => {
 
     await expect(stage.getByText(/Grace Lovelace/)).toBeVisible({ timeout: 5_000 });
   });
+
+  test('inline edit: click value, type, Enter commits, Escape cancels without write', async ({
+    page,
+  }) => {
+    const lab = new ComponentLabHelper(page);
+    await lab.openRenderer('detail-field');
+
+    const slug = scenarioSlug('Inline point-and-edit (editMode: inline)');
+    const stage = lab.scenarioStage(slug);
+    await expect(stage).toBeVisible();
+    await expect(
+      stage.locator('[data-slot="detail-field-viewer"][data-editable="true"]').first(),
+    ).toContainText('Quarterly Report', { timeout: 5_000 });
+
+    const viewer = stage
+      .locator('[data-slot="detail-field-viewer"][data-editable="true"]')
+      .first();
+    await viewer.click();
+    const editor = stage.locator('[data-slot="detail-field-inline-editor"]').first();
+    await expect(editor).toBeVisible({ timeout: 5_000 });
+    await expect(editor).toBeFocused();
+    await editor.fill('Annual Report');
+    await editor.press('Enter');
+
+    await expect(
+      stage.locator('[data-slot="detail-field-viewer"][data-editable="true"]').first(),
+    ).toContainText('Annual Report', { timeout: 5_000 });
+    await expect(stage.locator('[data-slot="detail-field-inline-editor"]')).toHaveCount(0);
+
+    await viewer.click();
+    await expect(editor).toBeVisible({ timeout: 5_000 });
+    await editor.fill('Discarded Draft');
+    await editor.press('Escape');
+    await expect(
+      stage.locator('[data-slot="detail-field-viewer"][data-editable="true"]').first(),
+    ).toContainText('Annual Report', { timeout: 5_000 });
+    await expect(stage.locator('[data-slot="detail-field-inline-editor"]')).toHaveCount(0);
+  });
 });
 
 // ---------------------------------------------------------------------------

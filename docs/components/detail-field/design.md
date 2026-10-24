@@ -73,7 +73,7 @@ interface DetailFieldSchema extends BoundFieldSchemaBase {
 - 打开期间父字段挂 `summary-gate` 子契约（校验汇总门控）。
 - **`editMode: 'inline'`（arc-component-gap G2）**：
   - inline 草稿是**组件 local UI state**（不创建 draft form runtime，不写表单值直到提交成功）。
-  - 进入编辑：viewer 触发后按钮 busy（`aria-busy` + Spinner，同 surface `opening` 模式，openSequencer last-wins 防重入）→ `runTransformIn`（raw → 编辑器初值）落地后切入编辑态并自动聚焦；失败保持 viewer + `env.notify` warning（复用 open 失败上报模式）。
+  - 进入编辑：viewer 触发后按钮 busy（`aria-busy` + Spinner，同 surface `opening` 模式，openSequencer last-wins 防重入）→ `runTransformIn`（raw → 编辑器初值）落地后切入编辑态并自动聚焦；失败保持 viewer + `env.notify` warning（复用 open 失败上报模式）。预填约定：适配值 `String()` 化，`null/undefined` 空串；非标量（对象/数组）同样 `String()` 化（G2I 裁决：inline v1 定位 scalar 编辑，不做结构化预填）。
   - 提交（Enter 或 blur）：`runValidate`（validateValueAction，失败不提交、编辑态保持、焦点留编辑器）→ `transformOut` → `applyParentWriteback` → `settleParentValidation`（失败回滚 + 编辑态保持）→ `touchField` → 回 viewer（焦点还原）。`runValidate` 失败与 `settleParentValidation` 失败时显示内联错误（`data-slot="detail-field-inline-error"`，见 §10）+ `env.notify` warning（复用 confirm 失败上报模式）；编辑态保持期间错误持续可见。
   - 取消（Escape）：丢弃草稿回 viewer（不写回）。
   - 提交 in-flight（validate/transformOut/写回/收敛未落地）：二次 Enter/blur/Escape 一律忽略（confirmSequencer 同构守卫）。
