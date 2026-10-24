@@ -1,6 +1,6 @@
 # 725 审计修复 R2·R2.3：mutation 测量装置修复+重测（P1-MA4.5-001 + P1-MA4.1-009 同根）
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-10-24
 > Source: `docs/backlog/audit-remediation-r2-roadmap.md` R2.3（MR2.0/plan 713 展开，同根归并依据）；`docs/audits/2026-10-22-0045-arm2-MA4.5-e2e-mutation-tests.md` §P1-MA4.5-001（四层失效 + Fix direction ①②③④）；`docs/audits/2026-10-21-0415-arm2-MA4.1-core-runtime-tests.md` §P1-MA4.1-009（include mergeConfig 并集不生效，终裁 confirmed-and-broadened）；owner doc `docs/testing/known-good-baselines.md`
 > Related: arm2-index 工具基线区 `audit:mutants` 行（1.63% 基线 = 无效测量）；`stryker.runtime.conf.mjs`、`packages/flux-runtime/vitest.stryker.config.ts`；并发线 pnpm-lock 3 行 additive delta（披露并入）
@@ -59,7 +59,7 @@
 
 ### Phase 0 - 现状复现（红证）
 
-Status: planned
+Status: completed
 Targets: canary 注入 + 现装置实跑
 
 - Item Types: `Proof`
@@ -68,63 +68,63 @@ Targets: canary 注入 + 现装置实跑
 
 Exit Criteria:
 
-- [ ] 红证留痕：坏装置放行 canary 的实跑输出（Survived + testsCompleted）入 plan
+- [x] 红证留痕：坏装置实跑输出入 plan（255/255 Survived、0.41 tests/mutant、254/316 testsCompleted=0）
 
 ### Phase 1 - 装置修复（升级 + 配置固化）
 
-Status: planned
+Status: completed
 Targets: package.json、lock、两个 vitest.stryker config、stryker conf
 
 - Item Types: `Fix`
 
-- [ ] 升级 `@stryker-mutator/core`+`vitest-runner` ^10.1.1（pnpm install；lock 并发 3 行 delta 随提交披露）
+- [x] 升级 `@stryker-mutator/core`+`vitest-runner` ^10.1.1（+65/-20 包，1m28s；lock 并发 3 行 delta 随提交披露）；`/reports/` 入 .gitignore（json 报告产物目录）
 - [ ] `vitest.stryker.config.ts` include spread 修正（禁 mergeConfig 数组并集——改为显式 `test: { ...base.test, include: ['src/validation/*.test.ts'] }` 覆盖式替换（绕过 mergeConfig 数组并集；spread base include 会带回 `**/*` glob 并集——review R1 M1 勘正），以「dry-run 只收集 4 文件」为验收）
-- [ ] `stryker.runtime.conf.mjs` 固化 reporters 增 `'json'`（testsCompleted 探针依赖，review R1 m2）+ `disableBail: true` + runner `related:false`（10.x 键名落地时按 changelog 校正）+ sandbox/temp 解析（如需）
-- [ ] R1 绿证：canary 重新注入 → `pnpm audit:mutants` → canary **Killed** + dry-run 精确 4 文件 + json 无 testsCompleted=0 假 Survived → 复员
-- [ ] R2 确定性：装置绿后同口径连跑 3 次，分数极差 < 0.5pp（MA4.5 实测漂移机制复查）
+- [x] `stryker.runtime.conf.mjs` 固化 reporters `+'json'` + `disableBail: true`；〔执行注记：`related:false` 单列键在 10.1.1 实测无需——升级+include 修复后 per-mutant 执行数确定（0.41→5.08 恒定），9.x runner 内联 related 缺陷面随升级消除，未引入无效键〕
+- [x] R1 绿证：validators.ts 切片实跑 **177 killed / 79 survived / 61 nocov = 55.84%（covered 69.14%）、5.08 tests/mutant、12s**；canary 探针：email 函数（:202）EqualityOperator mutants :198/:204 **Killed（testsCompleted 3-5）**；**false-survivors 0**
+- [x] R2 确定性：3/3 连跑**逐位恒定**（55.84% / 177/79/61 / 5.08 tests/mutant——修复前装置在 0.28–217.85 间非确定漂移）
 
 Exit Criteria:
 
-- [ ] R1 红转绿 + R2 三连稳定留痕入 plan；devDep 升级无传递影响以 flux-runtime 包内 vitest 复验（全量四门归 Closure Gates，review R1 m4）
+- [x] R1 红转绿 + R2 三连稳定留痕入 plan；devDep 升级无传递影响以 flux-runtime 包内 vitest 复验（153 文件/1557 用例全绿；全量四门归 Closure Gates）
 
 ### Phase 2 - canary 棘轮脚本
 
-Status: planned
+Status: completed
 Targets: scripts/mutation/canary-selfcheck.mjs、package.json
 
 - Item Types: `Fix`
 
-- [ ] `canary-selfcheck.mjs`（json 探针口径：断言读 stryker json 报告 per-mutant testsCompleted）：程序化注入 canary（精确行替换）→ 跑 scoped stryker（mutate 收缩至 validators 单文件以控时长）→ 断言 canary killed **且** 全体 mutant 无 testsCompleted=0 假 Survived → 复员注入；任一不满足 exit 1 并打印诊断
-- [ ] `package.json` script `audit:mutants:canary`；脚本头注记用途（MV 门禁前置自检 + 防回退棘轮）
+- [x] `scripts/mutation/canary-selfcheck.mjs`：报告断言式（见 Phase 0 注记）——动态定位 `email(input)` 函数体窗口（至下一兄弟 validator，排除邻位 NoCoverage）→ scoped stryker 实跑 → 断言窗口内 EqualityOperator canaries 全 Killed/Timeout **且**全文件零 `Survived+testsCompleted=0`；任一不满足 exit 1
+- [x] `package.json` script `audit:mutants:canary`；脚本头注记用途（P1-MA4.5-001 fix direction ③ 棘轮 + 装置失效判别）
 
 Exit Criteria:
 
-- [ ] 脚本在修复后装置上 exit 0；人为破坏验证一次（如临时改回 disableBail 缺省或 canary 换成不可杀变异）→ exit 1 → 复员（棘轮自身有判别力）
+- [x] 两态验证：正常 **exit 0**（2 canaries killed, 0 false survivors across 317 mutants）；人为破坏 **exit 1**（email 比较符 `.length>0` 语义等价替换→窗口 canary 消失/掩蔽→「canary escaped: 1/3 not killed (line 204:Survived testsCompleted=5)」→复员）——棘轮判别力实证
 
 ### Phase 3 - 重测登记与收口
 
-Status: planned
+Status: completed
 Targets: stryker.formula conf、known-good-baselines、arm2-index、roadmap、daily log
 
 - Item Types: `Fix`
 
-- [ ] formula-engine 口径落地（`stryker.formula.conf.mjs` + `packages/flux-formula/vitest.stryker.config.ts`，mutate=src 核心、testFiles 同域；超时按 Failure Path 缩界）
-- [ ] 双口径正式测量各 1 轮 → 分数 + mutant 三元组 + canary 状态入册
-- [ ] `known-good-baselines.md` 新增 `## Mutation Baselines` 专节（表格：Date/Scope/Mutants/Killed/Score/Canary/Command/Commit/Boundary），节首注明边界句：mutation 基线为**时点测量记录**（装置/口径变更时刷新），豁免本文件全绿 Baselines 表的 Rules（:30-34）——防文档内规则冲突（review R1 m6）
-- [ ] arm2-index：工具基线区 `audit:mutants` 行勘正（1.63% 无效 → 新分数 + canary 自检在位）+ :166（4.5-001）/ :140（4.1-009）→ `closed` + 注记；Last Updated 滚动
-- [ ] roadmap R2.3 `planned`→`done`（IN closure commit；激活提交先行 `todo`→`planned`）；daily log 条目
+- [x] formula-engine 口径落地（`stryker.formula.conf.mjs` + `packages/flux-formula/vitest.stryker.config.ts` 同构覆盖式替换 + root 钉扎；`thresholds.break: null` registration-only；全程 3min 无需缩界）
+- [x] 双口径正式测量：**validation 全口径 493 mutants / 266 killed / 137 survived / 90 nocov = 53.96%（covered 66.00%）、8.88 tests/mutant、false-survivors 0、15s**；**formula 3190 / 2093 / 767 / 325 = 65.61%、44.83 tests/mutant、false-survivors 0、3min**；逐文件：rules.ts 10/10 NoCoverage（=MA4.1 P2-001 已登记 18 行零守护文件，独立行处置）、message.ts 31.48% 最弱已覆盖文件、registry.ts 100%
+- [x] `known-good-baselines.md` `## Mutation Baselines` 专节落地（边界句 + 三行基线表：validation 全口径 / validators canary 切片 / formula 口径，含命令+commit+边界列）
+- [x] arm2-index：工具基线区 `audit:mutants` 行复测登记追加（1.63% 作废→新基线数字+棘轮在位）+ :140（4.1-009）/ :166（4.5-001）→ `closed` + 注记；Last Updated 滚动（open 58→56）
+- [ ] roadmap R2.3 `planned`→`done`（IN closure commit；激活提交 3f9eeea09 已先行翻转）；daily log 条目（随收口落）
 
 Exit Criteria:
 
-- [ ] 双基线入册（分数非 0 且非 1.63% 遗留、canary PASS、命令可复跑）；arm2-index 双 finding `closed`；roadmap R2.15 不受影响仍 `todo`
+- [x] 双基线入册（53.96% / 65.61%，非 0 非 1.63% 遗留、canary PASS、命令可复跑）；arm2-index 双 finding `closed`（open 58→56）；roadmap R2.15 不受影响仍 `todo`
 
 ## Closure Gates
 
-- [ ] 全量门禁：typecheck / build / lint（44/44）+ test 82/82（升级 devDep 后复验，防 instrumenter 传递影响）
-- [ ] `pnpm check` 零新增红（并发线 console-baseline 归因口径沿 722/723/724 先例）
-- [ ] canary 棘轮两态验证留痕（正常 exit 0 + 人为破坏 exit 1）
-- [ ] 独立 closure audit（fresh sub-agent，输入=plan+diff summary+验证输出）：装置有效性复核（auditor 独立跑 canary）、基线可复跑性（命令+数字一致）、双 finding 闭环判定
-- [ ] 收口提交（flip `done` IN commit；记录复核结论）
+- [x] 全量门禁：typecheck 44/44 + build 44/44 + lint 44/44 + test 82/82（升级 devDep 后复验；flux-runtime 包内 153 文件/1557 用例）
+- [x] `pnpm check`：唯一红=并发 ARC 未提交 markdown-lab-page.tsx:30（本会话 R2.2 轮 stash 对照已证干净树零新红；本 plan 新文件零 baseline 命中）
+- [x] canary 棘轮两态验证留痕（正常 exit 0〔2 killed/0 false survivors〕+ 人为破坏 exit 1〔canary escaped〕；auditor 独立重演两态 byte-identical）
+- [x] 独立 closure audit（fresh sub-agent `agent_71006cc4`，输入=plan+diff summary+验证输出）：**approved** 0B/0M/2m（m1 tests/mutant 统计口径澄清句已并入收口提交、m2 门禁覆盖注记=收口提交复验）——checklist 1-8 全 PASS，auditor 独立重跑 canary（exit 0）+ 双口径实测（formula 65.61% 精确复现）+ 棘轮两态 byte-identical 重演
+- [x] 收口提交（flip `done` IN commit；记录复核结论）
 
 ## Deferred But Adjudicated
 
@@ -142,5 +142,7 @@ Exit Criteria:
 
 ## Closure
 
-- [x] R2 复审共识（PASS pass-with-minors）后激活提交（Status→`active` + roadmap R2.3 `todo`→`planned` IN commit）
+- [x] R2 复审共识（PASS pass-with-minors）后激活提交（Status→`active` + roadmap R2.3 `todo`→`planned` IN commit `3f9eeea09`）
+- [x] 执行 Phase 0-3 → Closure Gates 全过 → closure audit **approved**（`agent_71006cc4`，0B/0M/2m：m1 统计口径句、m2 门禁收口复验注记）→ 收口提交（Status→`completed`、flip `done` IN commit）
+- [x] Closure audit 记录：装置修复完整性（4 config 实读）、auditor 独立 canary exit 0 + 全口径 validation 53.96%/formula 65.61% 精确复现 + 棘轮两态重演；闭环判定 ①②③④ 全落位；include-union 修复结构性+经验性双证（4 文件收集/12s/testsCompleted≤130 不可能出自 153 文件并集）；零产品源码变更（git diff HEAD 空）；无 overclaim（3/3 恒定正确标注为切片口径）。
 - [ ] 执行 Phase 0-3 → Closure Gates 全过 → closure audit PASS → 收口提交（Status→`completed`、flip `done` IN commit、记录复核结论于本节）

@@ -11,10 +11,13 @@ export default {
   vitest: {
     configFile: 'packages/flux-runtime/vitest.stryker.config.ts',
   },
-  reporters: ['clear-text', 'progress'],
+  reporters: ['clear-text', 'progress', 'json'],
   tempDirName: '.stryker-tmp/runtime',
   cleanTempDir: 'always',
   coverageAnalysis: 'off',
+  // P1-MA4.5-001 fix direction ②: run every test per mutant (no first-failure
+  // bail) so per-mutant execution counts stay meaningful for the canary probe.
+  disableBail: true,
   thresholds: {
     high: 80,
     low: 60,
