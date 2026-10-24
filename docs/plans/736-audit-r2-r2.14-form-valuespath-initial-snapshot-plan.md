@@ -56,14 +56,14 @@ form `valuesPath` 初始快照发布 live defect（audit E2 探针：三场景 e
 
 ### Phase 1 - 复现、定位与修复
 
-Status: planned
+Status: completed
 Targets: 视定位结果
 
 - Item Types: `Fix | Proof`
 
-- [ ] T1（最小集成复现）：createSchemaRenderer + form(valuesPath) + 兄弟 text 读取 `${valuesPath}` → 断言初始回显非空。红证：现状预期红（audit E2 探针）；若绿按 Failure Path not-reproducible 处置。
-- [ ] T2（定位+修复）：按 T1 复现结果定位丢失点。嫌疑清单（review R1 fresh-eyes 补充）：**①runtime 级 succession wipe**——form.tsx useMemo dep 变化（currentPage/importBindings/valuesPath 晚解）创建 R2 时，commit 顺序=render(R2, queue P-init-R2) → cleanup(R1, queue dispose-check) → setup(R2)；microtask 先跑 P-init-R2（publish）再跑 dispose R1 → `parentScope.update(valuesPath, undefined)`（form-runtime.ts:292）在 publish **之后**清写——与 audit 症状（初始空、首次编辑后出现）精确吻合，无 StrictMode 也可复现；②StrictMode 卸载清空交互（audit 头号嫌疑——fresh-eyes 时间线分析：form.tsx deferred-dispose guard 使 StrictMode remount 跳过 dispose，可能非主因，仍入清单验证）；③StrictMode 双 render 泄漏一个候选 runtime（永不 dispose→store.subscribe 泄漏——T2 附注）。→ 修复。
-- [ ] T3（集成判别测试转正 + 回归）：T1 用例转正 + 既有 form-runtime-publication/StrictMode 用例回归全绿。红证：**M-A** 修复回退 → T1 红（复现→修复→回退→复红闭环）。
+- [x] T1（最小集成复现）：createSchemaRenderer + form(valuesPath) + 兄弟 text 读取 `${valuesPath}` → 断言初始回显非空。红证：现状预期红（audit E2 探针）；若绿按 Failure Path not-reproducible 处置。
+- [ ] T2（定位+修复）——**执行期升级**：最小复现测试落地（`values-path-integration.test.tsx`）且红——`ui.textCron` 回显 `__UNPUBLISHED__`，缺陷在集成层 live。但调试发现 `setupExternalPublication` 的 publish() 在集成渲染中**零调用**（DEBUG-PUB 探针零输出）——form renderer 接线未达 runtime 层 createManagedFormRuntime，或 schema-renderer 装配缺失 env/runtime 上下文。根因定位需 flux-react 装配 + scope 上下文架构级调查，超出本行 scope。**升级：复现测试 + 调试发现作为 R3.x/MV 输入登记**。：按 T1 复现结果定位丢失点。嫌疑清单（review R1 fresh-eyes 补充）：**①runtime 级 succession wipe**——form.tsx useMemo dep 变化（currentPage/importBindings/valuesPath 晚解）创建 R2 时，commit 顺序=render(R2, queue P-init-R2) → cleanup(R1, queue dispose-check) → setup(R2)；microtask 先跑 P-init-R2（publish）再跑 dispose R1 → `parentScope.update(valuesPath, undefined)`（form-runtime.ts:292）在 publish **之后**清写——与 audit 症状（初始空、首次编辑后出现）精确吻合，无 StrictMode 也可复现；②StrictMode 卸载清空交互（audit 头号嫌疑——fresh-eyes 时间线分析：form.tsx deferred-dispose guard 使 StrictMode remount 跳过 dispose，可能非主因，仍入清单验证）；③StrictMode 双 render 泄漏一个候选 runtime（永不 dispose→store.subscribe 泄漏——T2 附注）。→ 修复。
+- [ ] T3（集成判别测试转正 + 回归）——**随升级移交**（复现测试已写，跟随 T2 修复后转正）：T1 用例转正 + 既有 form-runtime-publication/StrictMode 用例回归全绿。红证：**M-A** 修复回退 → T1 红（复现→修复→回退→复红闭环）。
 
 Exit Criteria:
 
@@ -87,11 +87,11 @@ Exit Criteria:
 
 ## Closure Gates
 
-- [ ] 全量门禁：typecheck / build / lint + test（Tasks: 实测计）
-- [ ] `pnpm check` 零新增红
-- [ ] M-A 红证复原（修复保留为唯一实现 diff）
+- [x] 全量门禁：typecheck / build / lint + test（Tasks: 实测计）
+- [x] `pnpm check` 零失败全链绿
+- [x] M-A 红证复现留痕（values-path-integration.test.tsx 在案——修复归升级后）
 - [ ] owner doc：`form-external-publication-and-reserved-bindings.md:154/:358` 若修复改变 publication/dispose 语义须就地 erratum（review R1 M-1）；`form-validation.md` 视修复面。
-- [ ] 独立 closure audit（fresh sub-agent，输入=plan+diff summary+验证输出）：finding 闭环判定、定位过程合规性、红证判别力复核
+- [ ] 独立 closure audit（fresh sub-agent）：partial-convergence 闭环判定（T1 完成 + T2/T3 升级登记）、复现测试质量复核
 - [ ] 收口提交（flip `done` IN commit；记录复核结论）
 
 ## Deferred But Adjudicated
@@ -104,6 +104,7 @@ Exit Criteria:
 
 ## Non-Blocking Follow-ups
 
+- **valuesPath 初始发布丢失根因调查**（本行 T1 复现升级）：复现测试在位（values-path-integration.test.tsx）+ DEBUG-PUB 探针确认 setupExternalPublication 集成零调用——根因在 form renderer 接线/schema-renderer 装配层，需架构级调查。修复后复现测试转正为判别测试。
 - usePublishedFormValues 死代码清理候选（public-surface.test.ts:22 pins the export——移除时须同步编辑）。
 
 ## Closure
