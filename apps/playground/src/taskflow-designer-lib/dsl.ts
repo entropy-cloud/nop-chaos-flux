@@ -104,6 +104,14 @@ export function parseNopTaskDSL(
   dsl: NopTaskDSLInput,
   fallbackName?: string,
 ): { model: TaskFlowAuthoringModel } | null {
+  // P1-MA9.3-001 (plan 738): explicit kind must be 'taskflow' or 'nop-taskflow'
+  // (legacy format) — docs without kind are accepted for back-compat.
+  if (dsl.kind != null && dsl.kind !== '' && dsl.kind !== 'taskflow' && dsl.kind !== 'nop-taskflow') {
+    throw new Error(
+      `Unsupported DSL kind: "${dsl.kind}" (expected "taskflow", "nop-taskflow", or absent for legacy docs)`,
+    );
+  }
+
   if (!dsl.steps || !Array.isArray(dsl.steps)) return null;
 
   const unsupportedTypes = getUnsupportedStepTypes(dsl.steps);

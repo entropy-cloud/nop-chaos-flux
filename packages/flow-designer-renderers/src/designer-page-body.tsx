@@ -400,6 +400,11 @@ export function DesignerPageBody({
       onAutoLayout={handleAutoLayout}
       autoLayoutBusy={layoutBusy}
       readOnly={isReadOnly}
+      // P1-MA5.1-001: host snapshot overrides the toolbar selector subscription —
+      // statusSnapshot.canUndo tracks keyboard undo correctly while the toolbar's
+      // useDesignerSnapshotSelector may diverge between hosts.
+      canUndoOverride={statusSnapshot.canUndo}
+      canRedoOverride={statusSnapshot.canRedo}
     />
   );
   const header = resolvedTitle ? (

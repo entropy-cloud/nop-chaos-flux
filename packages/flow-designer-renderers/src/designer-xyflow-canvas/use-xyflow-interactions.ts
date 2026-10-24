@@ -49,6 +49,8 @@ export interface UseXyflowInteractionsResult {
   handleViewportChange(nextViewport: XyflowViewportChange): void;
   handleConnect(connection: Connection): void;
   handleReconnect: NonNullable<OnReconnect>;
+  /** P1-MA5.1-002: Escape cancels active drag (rollback to pre-drag positions) and clears multi-selection. */
+  handleEscape(): void;
 }
 
 export function useXyflowInteractions({
@@ -65,6 +67,9 @@ export function useXyflowInteractions({
   onCompleteReconnect,
   onViewportChange,
 }: UseXyflowInteractionsParams): UseXyflowInteractionsResult {
+  const dragStartPositionsRef = useRef<Map<string, { x: number; y: number }>>(new Map());
+  const selectedIdsRef = useRef<Set<string>>(new Set());
+
   const handleNodesChange = useCallback(
     (changes: NodeChange[]) => {
       onNodesChangeInternal(changes);
@@ -73,6 +78,30 @@ export function useXyflowInteractions({
         if (change.type === 'remove') {
           onDeleteNode(change.id, undefined);
           lastCommittedPositionsRef.current.delete(change.id);
+          dragStartPositionsRef.current.delete(change.id);
+          selectedIdsRef.current.delete(change.id);
+          continue;
+        }
+
+        if (change.type === 'select') {
+          if (change.selected) {
+            selectedIdsRef.current.add(change.id);
+          } else {
+            selectedIdsRef.current.delete(change.id);
+          }
+          continue;
+        }
+
+        // P1-MA5.1-002: capture pre-drag positions when a drag begins so
+        // Escape can roll back to the pre-drag state.
+        if (change.type === 'position' && change.dragging === true) {
+          if (!dragStartPositionsRef.current.has(change.id)) {
+            const current = lastCommittedPositionsRef.current.get(change.id);
+            if (current) {
+              const [x, y] = current.split(',').map(Number);
+              dragStartPositionsRef.current.set(change.id, { x: x ?? 0, y: y ?? 0 });
+            }
+          }
           continue;
         }
 
@@ -155,12 +184,41 @@ export function useXyflowInteractions({
     [onStartReconnect, onCompleteReconnect],
   );
 
+  // P1-MA5.1-002: Escape cancels active drag (rollback to pre-drag positions)
+  // and clears multi-selection.
+  const handleEscape = useCallback(() => {
+    // rollback active drag to pre-drag positions
+    const rollbacks: NodeChange[] = [];
+    for (const [id, start] of dragStartPositionsRef.current) {
+      rollbacks.push({
+        id,
+        type: 'position',
+        position: { x: start.x, y: start.y },
+        dragging: false,
+      } as NodeChange);
+    }
+    dragStartPositionsRef.current.clear();
+    if (rollbacks.length > 0) {
+      onNodesChangeInternal(rollbacks);
+    }
+
+    // clear multi-selection
+    const deselects: NodeChange[] = [];
+    for (const id of selectedIdsRef.current) {
+      deselects.push({ id, type: 'select', selected: false } as NodeChange);
+    }
+    if (deselects.length > 0) {
+      onNodesChangeInternal(deselects);
+    }
+  }, [onNodesChangeInternal]);
+
   return {
     handleNodesChange,
     handleEdgesChange,
     handleViewportChange,
     handleConnect,
     handleReconnect,
+    handleEscape,
   };
 }
 

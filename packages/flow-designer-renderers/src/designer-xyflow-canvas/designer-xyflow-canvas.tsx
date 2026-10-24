@@ -340,6 +340,17 @@ export function DesignerXyflowCanvas(props: DesignerXyflowCanvasProps) {
     onViewportChange,
   });
 
+  // P1-MA5.1-002: Escape cancels active drag + clears multi-selection
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        interactions.handleEscape();
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [interactions]);
+
   // plan 475 Phase 2 + plan 526 Phase 3：拖拽对齐辅助线——吸附位置经 position change
   // （dragging 中）回写本地节点层，不触发 moveNode 提交；网格吸附共存时对齐线优先
   // （对齐后位置覆盖网格舍入）。单节点拖拽与多选簇拖拽（selection-rect，不触发

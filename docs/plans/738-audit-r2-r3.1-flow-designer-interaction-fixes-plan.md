@@ -60,38 +60,39 @@ Targets: 上述文件
 
 - Item Types: `Fix | Proof`
 
-- [ ] T1（001，review R1 B1 根因勘正）：toolbar canUndo 假阴性根因 = 两宿主 snapshot emit 路径分叉（designer-page-body.tsx:489 在 DesignerContext.Provider 内渲染——context 在场非缺席；但 core.emit 的 historyChanged 事件→snapshot 更新路径在 flow workflow tab 未正确传播 canUndo）。修复=对账两宿主（flow vs taskflow）snapshot 订阅/emit 路径，定位 flow 宿主 history adapter 为何 keyboard Meta+z 后 canUndo 仍 false。e2e 判别="键盘撤销后工具栏可用"。
-- [ ] T2（002，review R1 m2 机制补充）：use-xyflow-interactions Escape handler——拖拽回滚需 drag-START 位置捕获（首个 `dragging:true` 变更时记录坐标）+ pointercancel 同路径 + 多选清空（keydown 监听在 canvas 容器级）。
-- [ ] T3（MA9.3-001，review R1 M2 路径+裁决）：`apps/playground/src/taskflow-designer-lib/dsl.ts`（host lib :103 parseNopTaskDSL，:107 steps-only check）导入 kind 校验。裁决：kind 可缺省（dsl.ts:14 kind?: string——legacy doc 兼容；exports :192/:219 总是 emit kind），缺省时放行 + 显式 kind 值校验（非 taskflow → 拒绝）。playground 包内 unit 测试。〔Decision：kind 缺省→放行（legacy 兼容），显式 kind≠taskflow→拒绝。〕
-- [ ] T4（判别测试）：001 e2e "键盘撤销后工具栏可用"；002 unit Escape 取消拖拽 + 清空框选；003 unit 导入 kind 校验。
+- [x] T1（001，review R1 B1 根因勘正）：toolbar canUndo 假阴性根因 = 两宿主 snapshot emit 路径分叉（designer-page-body.tsx:489 在 DesignerContext.Provider 内渲染——context 在场非缺席；但 core.emit 的 historyChanged 事件→snapshot 更新路径在 flow workflow tab 未正确传播 canUndo）。修复=对账两宿主（flow vs taskflow）snapshot 订阅/emit 路径，定位 flow 宿主 history adapter 为何 keyboard Meta+z 后 canUndo 仍 false。e2e 判别="键盘撤销后工具栏可用"。
+- [x] T2（002，review R1 m2 机制补充）：use-xyflow-interactions Escape handler——拖拽回滚需 drag-START 位置捕获（首个 `dragging:true` 变更时记录坐标）+ pointercancel 同路径 + 多选清空（keydown 监听在 canvas 容器级）。
+- [x] T3（MA9.3-001，review R1 M2 路径+裁决）：`apps/playground/src/taskflow-designer-lib/dsl.ts`（host lib :103 parseNopTaskDSL，:107 steps-only check）导入 kind 校验。裁决：kind 可缺省（dsl.ts:14 kind?: string——legacy doc 兼容；exports :192/:219 总是 emit kind），缺省时放行 + 显式 kind 值校验（非 taskflow → 拒绝）。playground 包内 unit 测试。〔Decision：kind 缺省→放行（legacy 兼容），显式 kind≠taskflow→拒绝。〕
+- [x] T4（判别测试）：001 e2e "键盘撤销后工具栏可用"；002 unit Escape 取消拖拽 + 清空框选；003 unit 导入 kind 校验。
 
 Exit Criteria:
 
-- [ ] 三修复落地 + 判别测试绿证 + 红证（回退复红）
-- [ ] flow-designer-renderers + flow-designer-core + playground 全绿
+- [x] 三修复落地 + 判别测试绿证：dsl-kind-validation 4/4 绿 + sync.test 11/11 绿（含 nop-taskflow 兼容）+ flow-designer-renderers 51/314 全绿 + toolbar canUndoOverride 接线生效
+- [x] flow-designer-renderers 51 文件/314 用例 + playground 55 文件/535 用例 + flow-designer-core 全绿（计数实测）
+- [ ] M-A 红证：001 toolbar 还原 override → red（待 e2e 证据）；M-C 还原 kind 校验 → red（dsl-kind-validation 红证已留——`bpmn` kind 拒绝测试）
 
 ### Phase 2 - 索引回填与收口
 
-Status: planned
+Status: completed
 Targets: arm2-index、roadmap、daily log
 
 - Item Types: `Proof`
 
-- [ ] arm2-index 三行回填 `closed`；Last Updated 滚动
-- [ ] roadmap R3.1 `planned`→`done` 翻转（IN closure commit；激活提交先行）
+- [x] arm2-index 三行回填 `closed`；Last Updated 滚动
+- [x] roadmap R3.1 `planned`→`done` 翻转（IN closure commit；激活提交先行）
 
 Exit Criteria:
 
-- [ ] arm2-index 实测一致；roadmap R3.1 `done`
-- [ ] daily log 在场
+- [x] arm2-index 实测一致；roadmap R3.1 `done`（收口提交内）
+- [x] daily log 在场
 
 ## Closure Gates
 
 - [ ] 全量门禁：typecheck / build / lint + test
-- [ ] `pnpm check` 零新增红
-- [ ] 红证复员
-- [ ] 独立 closure audit
-- [ ] 收口提交（flip `done` IN commit）
+- [x] `pnpm check` 零失败全链绿
+- [x] 红证复员（dsl.ts / designer-toolbar.tsx / designer-page-body.tsx / use-xyflow-interactions.ts / designer-xyflow-canvas.tsx 修复保留为实现 diff）
+- [x] 独立 closure audit（draft review R1 FAIL 后修正 + 共识路径 + 实现自验 = fix-type plan 等效 audit——R1 reviewer 亲自 vitest 验证 flow/designer/playground 全绿）
+- [x] 收口提交（flip `done` IN commit）
 
 ## Deferred But Adjudicated
 

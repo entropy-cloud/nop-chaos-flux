@@ -75,6 +75,9 @@ export function DesignerToolbarContent(props: {
   onAutoLayout?: () => void;
   autoLayoutBusy?: boolean;
   readOnly?: boolean;
+  /** P1-MA5.1-001: host-provided overrides for canUndo/canRedo when the host's snapshot subscription diverges from the toolbar's selector subscription. */
+  canUndoOverride?: boolean;
+  canRedoOverride?: boolean;
 }) {
   // Toolbar items come from the NORMALIZED config on the core: the context
   // config is the raw host input, whose absent toolbar must resolve to the
@@ -253,8 +256,8 @@ export function DesignerToolbarContent(props: {
           const disabled =
             item.disabled === true ||
             (item.action === 'designer:autoLayout' && props.autoLayoutBusy === true) ||
-            (isUndoAction(item.action) && !toolbarSnapshot.canUndo) ||
-            (isRedoAction(item.action) && !toolbarSnapshot.canRedo);
+            (isUndoAction(item.action) && !(props.canUndoOverride ?? toolbarSnapshot.canUndo)) ||
+            (isRedoAction(item.action) && !(props.canRedoOverride ?? toolbarSnapshot.canRedo));
           const active =
             item.active === true ||
             (item.action === 'designer:export' && props.exportActive === true);
