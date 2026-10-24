@@ -54,7 +54,10 @@ export function buildDashboardPanelFragment(panel: {
     ...(panel.props !== undefined && panel.props !== null && typeof panel.props === 'object'
       ? (panel.props as object)
       : {}),
-    ...(panel.source !== undefined ? { data: panel.source, source: panel.source } : {}),
+    // P1-MA4.5-003 (plan 735): data projection removed — table/chart renderers
+    // consume `source`, and projecting an undeclared `data` prop tripped
+    // unknown-property errors on every panel with a source.
+    ...(panel.source !== undefined ? { source: panel.source } : {}),
   } as unknown as BaseSchema;
 }
 

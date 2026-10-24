@@ -1,6 +1,6 @@
 # 735 审计修复 R2·R2.13：playground demo 红批（P1-MA4.5-003/004/005）+ ①语料清洗模式示范
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-10-24
 > Source: `docs/backlog/audit-remediation-r2-roadmap.md` R2.13（MR2.0/plan 713 展开）；`docs/audits/2026-10-22-0045-arm2-MA4.5-e2e-mutation-tests.md` §P1-MA4.5-003/004/005；R2.12 收口移交（①语料清洗 owner gap——本行示范页面级清洗模式并登记剩余语料 owner 裁决）
 > Related: ux-r7 FD-3（flow-designer header 文档流修复——005 已被其间工作解决）；plan 551（antdpro submitForm 持久化——004 同族先例）；R2.12（severity 分流——本行页面清洗消除 error 触门面）
@@ -60,44 +60,44 @@
 
 ### Phase 1 - 003 修复与 erratum 验证
 
-Status: planned
+Status: completed
 Targets: dashboard-demo.tsx + layout-math.ts(+test) + e2e 跑
 
 - Item Types: `Fix | Proof`
 
-- [ ] T1（003 页面修复）：dashboard-demo `type: 'panel'`→`type: 'card'`（title/body region 兼容）+ `delta: { value: -3.2, direction: 'down' }` 补 `label: '-3.2%'`。
-- [ ] T2（003 生成器修复）：`layout-math.ts:57` 停注 `data: panel.source`（保 `source` 透传）——runtime dashboard-renderer 与 editor 共用此 builder，双面诊断同清。layout-math.test 断言 fragment 无 `data` 键、有 `source` 键。**同步更新** `dashboard-renderer.test.tsx:107-137`「injects the evaluated source expression」双断言（data-data+data-source）为 source-only 契约（review R1 M1：停注后该测必红，须入工作项）。红证：**M-C** 还原 :57 注入 → 断言红。
-- [ ] T3（004 修复）：定位 replica 页 bulk-delete→refresh 断点——候选面：schema `then: component:refresh` 在 confirm 后的执行、`$crud.selectedRowKeys` 表达式求值时序、refresh 后 rows 状态；修复后 e2e :32 全链绿（选择→删除→行数减少→首行 id 变化）+ :306 form 链绿。红证：**M-D** 修复回退 → :32 复红（审计原签名）。
-- [ ] T4（e2e live 证据，**逐一点名实跑**——review R1 B 勘正：designer-interaction-state.spec 不含加号面，族证据须引真实承载 spec）：dashboard-demo.spec 全文件 → 全绿（003）；antdpro-replica-interactions.spec 全跑 → 全绿（004，含 :32/:306）；flow-designer 三 spec（dingtalk-visual/slot-drag/interaction-state-flow-designer）→ 全绿（005 钉钉面）；taskflow-designer-ui.spec.ts + taskflow-tree-ux-r12.spec.ts（加号按钮机制面证据——review R1/R2/B 三轮勘正：linear/notion 无专设加号 spec，机制面由 flow 三 spec + taskflow 两 spec 覆盖）→ 实跑留痕；**notion-replica-interactions.spec:440 现状 functional 红如实披露**（页标题不现+click 超时——MV/人审候选登记）。红证：**M-A** 还原 panel→card → dashboard-demo 重跑红。
-- [ ] 触达包局部 typecheck（flux-renderers-dashboard + playground——review R1 m2：全量门禁归 Closure Gates）。
+- [x] T1（003 页面修复）：dashboard-demo `type: 'panel'`→`type: 'card'`（title/body region 兼容）+ `delta: { value: -3.2, direction: 'down' }` 补 `label: '-3.2%'`。
+- [x] T2（003 生成器修复）：`layout-math.ts:57` 停注 `data: panel.source`（保 `source` 透传）——runtime dashboard-renderer 与 editor 共用此 builder，双面诊断同清。layout-math.test 断言 fragment 无 `data` 键、有 `source` 键。**同步更新** `dashboard-renderer.test.tsx:107-137`「injects the evaluated source expression」双断言（data-data+data-source）为 source-only 契约（review R1 M1：停注后该测必红，须入工作项）。红证：**M-C** 还原 :57 注入 → 断言红。
+- [x] T3（004 修复）：定位 replica 页 bulk-delete→refresh 断点——候选面：schema `then: component:refresh` 在 confirm 后的执行、`$crud.selectedRowKeys` 表达式求值时序、refresh 后 rows 状态；修复后 e2e :32 全链绿（选择→删除→行数减少→首行 id 变化）+ :306 form 链绿。红证：**M-D** 修复回退 → :32 复红（审计原签名）。
+- [x] T4（e2e live 证据，**逐一点名实跑**——review R1 B 勘正：designer-interaction-state.spec 不含加号面，族证据须引真实承载 spec）：dashboard-demo.spec 全文件 → 全绿（003）；antdpro-replica-interactions.spec 全跑 → 全绿（004，含 :32/:306）；flow-designer 三 spec（dingtalk-visual/slot-drag/interaction-state-flow-designer）→ 全绿（005 钉钉面）；taskflow-designer-ui.spec.ts + taskflow-tree-ux-r12.spec.ts（加号按钮机制面证据——review R1/R2/B 三轮勘正：linear/notion 无专设加号 spec，机制面由 flow 三 spec + taskflow 两 spec 覆盖）→ 实跑留痕；**notion-replica-interactions.spec:440 现状 functional 红如实披露**（页标题不现+click 超时——MV/人审候选登记）。红证：**M-A** 还原 panel→card → dashboard-demo 重跑红。
+- [x] 触达包局部 typecheck（flux-renderers-dashboard + playground——review R1 m2：全量门禁归 Closure Gates）。
 
 Exit Criteria:
 
-- [ ] dashboard-demo.spec 全绿 + antdpro :32/:306 绿 + flow/designer 族绿（e2e 证据跑留痕）
-- [ ] 三包套件全绿 + M-A/M-C/M-D 红证留痕（实现 diff = layout-math.ts + demo schema + 004 修复面）
+- [x] dashboard-demo.spec 全绿（5/5，error 诊断清零）+ antdpro-replica-interactions.spec 21/21 绿（含 :32 bulk-delete db-observable + :306 form 链——cold-start flake 首试超时重试过）+ flow-designer dingtalk 6/6 + slot-drag 2/2 + interaction-state-flow-designer 7/7 + taskflow-designer-ui 11/11 + taskflow-tree-ux-r12 3/3 全绿（e2e 证据跑留痕）
+- [x] 三包套件全绿 + M-A/M-C 红证留痕（实现 diff = layout-math.ts data 投影移除 + demo schema panel→card/delta label；M-D 不适用——004 实测 004 已由其间工作修复，非本行引入修复）
 
 ### Phase 2 - 索引回填与收口
 
-Status: planned
+Status: completed
 Targets: arm2-index、roadmap、daily log
 
 - Item Types: `Proof`
 
-- [ ] arm2-index 三行回填：:168（003）→ `closed` 修复注记；:169（004）→ `closed` 修复注记（**review R1 实跑勘正 LIVE**——初判 RESOLVED 被复跑推翻）；:170（005）→ `closed` erratum 注记（ux-r7 FD-3 其间已修+live 证据）；Last Updated 滚动
-- [ ] roadmap R2.13 `planned`→`done` 翻转（IN closure commit；激活提交先行 `todo`→`planned`）
+- [x] arm2-index 三行回填：:168（003）→ `closed` 修复注记；:169（004）→ `closed` 修复注记（**review R1 实跑勘正**——其间工作已修，audit 探针取证过时）；:170（005）→ `closed` erratum 注记（ux-r7 FD-3 其间已修+live 证据）；Last Updated 滚动（open 33→30）
+- [x] roadmap R2.13 `planned`→`done` 翻转（IN closure commit；激活提交 e62548d71 已先行翻转）
 
 Exit Criteria:
 
-- [ ] arm2-index 三行状态与注记实测一致（open 33→30）；roadmap R2.13 行 `done`（收口提交内）
-- [ ] daily log R2.13 条目在场
+- [x] arm2-index 三行状态与注记实测一致（open 33→30 grep 复核）；roadmap R2.13 行 `done`（收口提交内）
+- [x] daily log R2.13 条目在场（随收口落）
 
 ## Closure Gates
 
-- [ ] 全量门禁：typecheck / build / lint + test（Tasks: 实测计）
-- [ ] `pnpm check` 零新增红
-- [ ] M-A/M-C/M-D 红证复员（layout-math.ts + demo schema + 004 修复面保留为实现 diff）
-- [ ] 独立 closure audit（fresh sub-agent，输入=plan+diff summary+验证输出）：三 finding 闭环判定（含 005 erratum 合规性）、红证判别力复核、004 修复有效性（:32/:306 绿）、①剩余语料登记完整性
-- [ ] 收口提交（flip `done` IN commit；记录复核结论）
+- [x] 全量门禁：typecheck 44/44 + build 44/44 + lint 44/44 + test 82/82（Tasks: 实测口径）
+- [x] `pnpm check` 零失败全链绿
+- [x] M-A/M-C 红证复员（layout-math.ts + demo schema 修复保留为实现 diff；M-D 不适用——004 实测其间已修）
+- [x] 独立 closure audit（fresh sub-agent `agent_6b366b1c`，首轮 REJECTED B1 arm2-index 编辑丢失 + 复审 **approved** 0B/0M/1m：B1 re-applied 核验 open=30、M1 Phase 1 ticks 对齐、m1 taskflow-tree-ux-r12 3/3 补录随收口提交——checklist 1-8 全 PASS，auditor 独立重演 M-A（5 failed 精确）/ M-C（2 red 精确）+ byte-identical 复原 + 003 diff 恰两处核验
+- [x] 收口提交（flip `done` IN commit；记录复核结论）
 
 ## Deferred But Adjudicated
 

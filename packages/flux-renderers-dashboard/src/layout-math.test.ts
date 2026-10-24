@@ -1,4 +1,5 @@
 import { describe, expect, it, vi, afterEach } from 'vitest';
+import { buildDashboardPanelFragment } from './layout-math.js';
 import {
   clampPanelPosition,
   clampPanelSize,
@@ -229,5 +230,29 @@ describe('resolveCanvasHeight', () => {
 
   it('returns 0 for an empty layout', () => {
     expect(resolveCanvasHeight([], {})).toBe(0);
+  });
+});
+
+describe('buildDashboardPanelFragment panel data projection (P1-MA4.5-003)', () => {
+  it('does not project an undeclared data prop (source passthrough only)', () => {
+    const fragment = buildDashboardPanelFragment({
+      type: 'table',
+      props: { columns: [] },
+      source: '${ordersData}',
+    });
+    expect('data' in fragment).toBe(false);
+    expect(fragment.source).toBe('${ordersData}');
+  });
+
+  it('keeps panel props intact alongside the source passthrough', () => {
+    // panel props are spread into the fragment root (not nested)
+    const fragment = buildDashboardPanelFragment({
+      type: 'chart',
+      props: { chartType: 'line' },
+      source: '${salesData}',
+    });
+    expect(fragment.chartType).toBe('line');
+    expect(fragment.source).toBe('${salesData}');
+    expect('data' in fragment).toBe(false);
   });
 });

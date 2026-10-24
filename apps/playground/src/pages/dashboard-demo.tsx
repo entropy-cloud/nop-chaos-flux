@@ -34,7 +34,7 @@ const DEFAULT_LAYOUT_PANELS = [
     y: 0,
     w: 3,
     h: 2,
-    props: { value: '${orders}', delta: { value: -3.2, direction: 'down' }, formatter: { thousands: true, decimals: 0 } },
+    props: { value: '${orders}', delta: { value: -3.2, label: '-3.2%', direction: 'down' }, formatter: { thousands: true, decimals: 0 } },
   },
   {
     id: 'chart-sales',
@@ -165,7 +165,7 @@ export function DashboardDemoPage({ onBack }: DashboardDemoPageProps) {
               ],
             },
             {
-              type: 'panel',
+              type: 'card',
               title: 'Saved Layout (dashboard-editor:save → host persist)',
               body: [
                 { type: 'json-view', data: '${dashboardLayout}' },

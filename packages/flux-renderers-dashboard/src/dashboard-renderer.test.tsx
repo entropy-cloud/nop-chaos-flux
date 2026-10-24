@@ -104,7 +104,7 @@ describe('DashboardRenderer runtime layout', () => {
     expect(screen.getByText('hello-flux')).toBeTruthy();
   });
 
-  it('injects the evaluated source expression as the panel data prop', () => {
+  it('injects the evaluated source expression as the panel source prop (data projection removed per P1-MA4.5-003/plan 735)', () => {
     const SchemaRenderer = createDashboardSchemaRenderer();
     render(
       <SchemaRenderer
@@ -134,7 +134,10 @@ describe('DashboardRenderer runtime layout', () => {
       />,
     );
     const content = screen.getByTestId('panel-content');
-    expect(content.getAttribute('data-data')).toBe(JSON.stringify({ total: 42 }));
+    // P1-MA4.5-003/plan 735: the undeclared `data` projection was removed —
+    // panels consume `source` only (unknown-property errors on every
+    // source-bearing panel preceded the removal).
+    expect(content.getAttribute('data-data')).toBeNull();
     expect(content.getAttribute('data-source')).toBe(JSON.stringify({ total: 42 }));
   });
 
