@@ -50,7 +50,7 @@ interface DropdownButtonSchema {
 ## 7. 运行期状态归属
 
 - 打开态属于组件自身交互状态。
-- **split 模式**：主段点击 → `helpers.dispatch(mainAction, { scope: node.scope })`（同 items action 派发通道，`evaluationBindings` 不注入 item/index）；caret 段打开/关闭菜单（打开态共享既有 `open` state）。`trigger: 'hover'` 在 split 模式仅作用于 caret 段（主段 hover 不开菜单——误触发成本不对称）。`disabled` 为整体禁用（两段同时）。主段无 `mainAction` 时退化为"两段均开菜单"（分体视觉 + 合并行为，不报错）。
+- **split 模式**：主段点击 → 派发 `mainAction`（G5I 实现勘误：顶层 event 字段经编译通道以 `props.events.mainAction` 呈现并派发——非 `helpers.dispatch` 直读 raw ActionSchema；作用域同为 node scope，`evaluationBindings` 不注入 item/index）；caret 段打开/关闭菜单（打开态共享既有 `open` state）。`trigger: 'hover'` 在 split 模式仅作用于 caret 段（主段 hover 不开菜单——误触发成本不对称）。`disabled` 为整体禁用（两段同时）。主段无 `mainAction` 时退化为"两段均开菜单"（分体视觉 + 合并行为，不报错）。
 
 ## 8. 事件、动作与组件句柄能力
 
@@ -64,7 +64,7 @@ interface DropdownButtonSchema {
 
 - 根节点保留 `nop-dropdown-button` marker、`data-slot="dropdown-button-root"`。
 - 视觉层复用 `Button` 与 `DropdownMenu` 相关 primitive。
-- **split 模式 DOM（G5）**：根追加 `data-mode="split"`（未声明不输出）；两段包一层 `role="group"`（`data-slot="dropdown-button-group"`）；主段 `data-slot="dropdown-button-main"`（普通 button 语义，Enter/Space 派发）；caret 段 `data-slot="dropdown-button-caret-trigger"`（`aria-haspopup="menu"`，复用 DropdownMenuTrigger）；段间以 1px 分隔线衔接（视觉类，widget 自样式契约允许）。既有 `data-slot="dropdown-button-trigger"`/`caret` 仅存在于合并态，split 态不输出（判别锚点）。
+- **split 模式 DOM（G5）**：根追加 `data-mode="split"`（未声明不输出）；两段包一层 `role="group"`（`data-slot="dropdown-button-group"`）；主段 `data-slot="dropdown-button-main"`（普通 button 语义，Enter/Space 派发）；caret 段 `data-slot="dropdown-button-caret-trigger"`（`aria-haspopup="menu"`，复用 DropdownMenuTrigger）；段间以 1px 分隔线衔接（视觉类，widget 自样式契约允许）。既有 `data-slot="dropdown-button-trigger"`/`caret` 仅存在于合并态，split 态不输出（判别锚点；G5I 实现细化：split 态 caret 段的 chevron 图标不携带 slot 标记）。
 
 ## 11. 实现拆分建议
 

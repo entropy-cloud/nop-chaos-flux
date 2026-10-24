@@ -552,6 +552,28 @@ export const layoutRendererDefinitions: RegisteredRendererDefinition[] = [
         },
       },
       {
+        key: 'split',
+        kind: 'prop',
+        valueType: 'boolean',
+        contract: {
+          shape: { kind: 'boolean' },
+          displayName: 'Split',
+          description:
+            'Split mode: main segment dispatches mainAction, caret segment opens the menu. Defaults to false (merged single-trigger).',
+          editorType: 'switch',
+          defaultValue: false,
+        },
+      },
+      {
+        key: 'mainAction',
+        kind: 'event',
+        contract: {
+          displayName: 'Main Action',
+          description:
+            'Action dispatched by the main segment in split mode (split: true). Absent → main segment opens the menu.',
+        },
+      },
+      {
         key: 'label',
         kind: 'prop',
         contract: {

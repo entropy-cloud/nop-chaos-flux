@@ -67,6 +67,35 @@ test('button-group-host: single selection + onChange payload (host-bg-select)', 
   await assertTrackedPageErrors(page);
 });
 
+test('dropdown-button split mode: main segment dispatches mainAction, caret opens menu', async ({
+  page,
+}) => {
+  const lab = new ComponentLabHelper(page);
+  await lab.openRenderer('dropdown-button');
+
+  const slug = scenarioSlug('Split button (split + mainAction)');
+  const stage = lab.scenarioStage(slug);
+  await expect(stage).toBeVisible({ timeout: 10_000 });
+
+  const root = stage.locator('[data-slot="dropdown-button-root"][data-mode="split"]');
+  await expect(root).toBeVisible({ timeout: 10_000 });
+  await expect(stage.locator('[data-slot="dropdown-button-main"]')).toContainText('Save');
+  await expect(stage.locator('[data-slot="dropdown-button-trigger"]')).toHaveCount(0);
+
+  // Main segment dispatches mainAction immediately (menu stays closed).
+  await stage.locator('[data-slot="dropdown-button-main"]').click();
+  await expect(stage.getByText('split:saved')).toBeVisible({ timeout: 10_000 });
+  await expect(stage.locator('[data-slot="dropdown-menu-item"]')).toHaveCount(0);
+
+  // Caret segment opens the menu.
+  await stage.locator('[data-slot="dropdown-button-caret-trigger"]').click();
+  await expect(
+    page.locator('[data-slot="dropdown-menu-item"]').filter({ hasText: 'Save as draft' }),
+  ).toBeVisible({ timeout: 10_000 });
+
+  await assertTrackedPageErrors(page);
+});
+
 test('dropdown-button-host: CRUD row menu submits current row value (host-dd-row, bug 73 pattern)', async ({
   page,
 }) => {

@@ -35,15 +35,38 @@ const hoverDropdown = {
   ],
 };
 
+const splitButton = {
+  type: 'page',
+  body: [
+    {
+      type: 'dropdown-button',
+      testid: 'demo-dropdown-button-split',
+      label: 'Save',
+      variant: 'default',
+      split: true,
+      mainAction: { action: 'setValue', args: { path: 'splitSaved', value: true } },
+      items: [{ label: 'Save as draft' }, { label: 'Save a copy', destructive: true }],
+    },
+    { type: 'text', text: 'split:${splitSaved ? "saved" : "idle"}' },
+  ],
+};
+
 export function DropdownButtonLabPage() {
   return (
     <MultiScenarioLabPage
-      introDescription="Button with a dropdown menu of actions (click or hover trigger). Menu items carry action/onClick event fields (compiler-preserved); item clicks dispatch in the item scope and close the menu."
+      introDescription="Button with a dropdown menu of actions (click or hover trigger). Menu items carry action/onClick event fields (compiler-preserved); item clicks dispatch in the item scope and close the menu. split=true splits the control into a main action segment and a caret segment."
       scenarios={[
         {
           title: 'Basic dropdown menu actions',
           description: 'Click trigger opens the menu; item actions dispatch and close.',
           schema: basicDropdown,
+          data: {},
+        },
+        {
+          title: 'Split button (split + mainAction)',
+          description:
+            'split=true: clicking "Save" dispatches mainAction immediately; the caret segment opens the menu for secondary actions. Escape hatch: without mainAction the main segment opens the menu.',
+          schema: splitButton,
           data: {},
         },
         {

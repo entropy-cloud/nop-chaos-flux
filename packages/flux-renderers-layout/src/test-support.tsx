@@ -257,6 +257,11 @@ export function createLayoutSchemaRenderer(extra: RegisteredRendererDefinition[]
         { key: 'items', kind: 'prop' },
         { key: 'trigger', kind: 'prop' },
         { key: 'disabled', kind: 'prop', valueType: 'boolean' },
+        { key: 'side', kind: 'prop' },
+        { key: 'align', kind: 'prop' },
+        { key: 'sideOffset', kind: 'prop', valueType: 'number' },
+        { key: 'split', kind: 'prop', valueType: 'boolean' },
+        { key: 'mainAction', kind: 'event' },
       ],
     },
     {

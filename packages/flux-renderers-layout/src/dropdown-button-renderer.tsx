@@ -42,6 +42,8 @@ export function DropdownButtonRenderer(props: RendererComponentProps<DropdownBut
   const side = (schemaProps.side as 'top' | 'bottom' | 'left' | 'right' | undefined) ?? 'bottom';
   const align = (schemaProps.align as 'start' | 'center' | 'end' | undefined) ?? 'start';
   const sideOffset = typeof schemaProps.sideOffset === 'number' ? schemaProps.sideOffset : 4;
+  const split = schemaProps.split === true;
+  const hasMainAction = typeof props.events.mainAction === 'function';
 
   const label = resolveRendererSlotContent(props, 'label');
 
@@ -90,7 +92,19 @@ export function DropdownButtonRenderer(props: RendererComponentProps<DropdownBut
   }, []);
 
   const hoverOpenHandlers =
-    trigger === 'hover' && !disabled
+    trigger === 'hover' && !disabled && !split
+      ? {
+          onMouseEnter: () => {
+            cancelHoverClose();
+            setOpen(true);
+          },
+          onMouseLeave: scheduleHoverClose,
+        }
+      : {};
+  // Split mode: hover opens via the caret segment only (design.md §7 — the
+  // main segment must not open the menu on hover; asymmetric misfire cost).
+  const caretHoverHandlers =
+    trigger === 'hover' && !disabled && split
       ? {
           onMouseEnter: () => {
             cancelHoverClose();
@@ -145,6 +159,103 @@ export function DropdownButtonRenderer(props: RendererComponentProps<DropdownBut
     }
   });
 
+  const caretButton = (
+    <Button
+      type="button"
+      variant={variant as never}
+      size={size as never}
+      disabled={disabled}
+      data-slot={split ? 'dropdown-button-caret-trigger' : 'dropdown-button-trigger'}
+      data-disabled={disabled || undefined}
+      data-trigger={trigger}
+      aria-haspopup="menu"
+      aria-label={split ? (label ? String(label) : undefined) : undefined}
+      className={split ? 'rounded-l-none' : undefined}
+      {...caretHoverHandlers}
+    >
+      {Icon && !split ? (
+        <span data-slot="dropdown-button-icon" className="inline-flex shrink-0">
+          <Icon size={16} strokeWidth={1.8} aria-hidden="true" focusable="false" />
+        </span>
+      ) : null}
+      {!split ? <span data-slot="dropdown-button-label">{label}</span> : null}
+      <ChevronDownIcon
+        data-slot={split ? undefined : 'dropdown-button-caret'}
+        className="size-4 shrink-0 opacity-70"
+      />
+    </Button>
+  );
+
+  if (split) {
+    return (
+      <div
+        className={cn('nop-dropdown-button', props.meta.className)}
+        data-testid={props.meta.testid || undefined}
+        data-cid={props.meta.cid || undefined}
+        data-slot="dropdown-button-root"
+        data-mode="split"
+      >
+        <div role="group" data-slot="dropdown-button-group" className="inline-flex items-stretch">
+          <Button
+            type="button"
+            variant={variant as never}
+            size={size as never}
+            disabled={disabled}
+            data-slot="dropdown-button-main"
+            data-disabled={disabled || undefined}
+            className="rounded-r-none border-r border-input"
+            onClick={() => {
+              if (hasMainAction) {
+                void props.events.mainAction?.(
+                  { type: 'dropdown-button:main' },
+                  {
+                    event: { type: 'dropdown-button:main' },
+                    evaluationBindings: {},
+                    scope: props.node.scope,
+                  },
+                );
+              } else {
+                setOpen(true);
+              }
+            }}
+          >
+            {Icon ? (
+              <span data-slot="dropdown-button-icon" className="inline-flex shrink-0">
+                <Icon size={16} strokeWidth={1.8} aria-hidden="true" focusable="false" />
+              </span>
+            ) : null}
+            <span data-slot="dropdown-button-label">{label}</span>
+          </Button>
+          <DropdownMenu open={open} onOpenChange={setOpen}>
+            <DropdownMenuTrigger render={caretButton} />
+            <DropdownMenuContent side={side} align={align} sideOffset={sideOffset} {...hoverContentHandlers}>
+              {visibleItems.map((item, index) => {
+                const key =
+                  item.key !== undefined && item.key !== null && item.key !== ''
+                    ? String(item.key)
+                    : String(index);
+                const itemDisabled = item.disabled === true;
+                return (
+                  <DropdownMenuItem
+                    key={key}
+                    variant={item.destructive === true ? 'destructive' : 'default'}
+                    disabled={itemDisabled}
+                    data-slot="dropdown-menu-item"
+                    data-item-index={index}
+                    data-item-key={key}
+                    onClick={() => handleItemClick(item, index, itemDisabled)}
+                  >
+                    {item.label ?? key}
+                  </DropdownMenuItem>
+                );
+              })}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div
       className={cn('nop-dropdown-button', props.meta.className)}
@@ -154,31 +265,7 @@ export function DropdownButtonRenderer(props: RendererComponentProps<DropdownBut
       {...hoverOpenHandlers}
     >
       <DropdownMenu open={open} onOpenChange={setOpen}>
-        <DropdownMenuTrigger
-          render={
-            <Button
-              type="button"
-              variant={variant as never}
-              size={size as never}
-              disabled={disabled}
-              data-slot="dropdown-button-trigger"
-              data-disabled={disabled || undefined}
-              data-trigger={trigger}
-              aria-haspopup="menu"
-            >
-              {Icon ? (
-                <span data-slot="dropdown-button-icon" className="inline-flex shrink-0">
-                  <Icon size={16} strokeWidth={1.8} aria-hidden="true" focusable="false" />
-                </span>
-              ) : null}
-              <span data-slot="dropdown-button-label">{label}</span>
-              <ChevronDownIcon
-                data-slot="dropdown-button-caret"
-                className="size-4 shrink-0 opacity-70"
-              />
-            </Button>
-          }
-        />
+        <DropdownMenuTrigger render={caretButton} />
         <DropdownMenuContent side={side} align={align} sideOffset={sideOffset} {...hoverContentHandlers}>
           {visibleItems.map((item, index) => {
             const key =
