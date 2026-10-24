@@ -25,6 +25,7 @@ import {
 import { useInfiniteScroll } from './use-infinite-scroll.js';
 import { consumeLoadResult } from './infinite-load.js';
 import { useListWindowing } from './use-list-windowing.js';
+import { useListReorder } from './list-reorder.js';
 import { ListItemView } from './list-item-view.js';
 
 // Windowing gate (plan 2026-09-29-6): only infinite mode above this count
@@ -190,7 +191,60 @@ export function ListRenderer(props: ListOwner) {
   const visibleItems = computeVisibleItems(items, pagination);
   const lastDispatchedPageRef = useRef<number>(pagination.currentPage);
 
-  const { virtualRows, measureElement, listRootRef, windowBottomSpacerHeight } = useListWindowing(visibleItems, pagination);
+  const { virtualRows, measureElement, listRootRef, windowBottomSpacerHeight, windowingActive } =
+    useListWindowing(visibleItems, pagination);
+
+  // G6 (arc-component-gap): drag reorder with preconditions from design.md §4 —
+  // stable explicit keys, non-paged pagination, no windowing. A violation
+  // disables reorder entirely (zero handle DOM) and warns once per mount in dev.
+  const reorderRequested = schemaProps.reorderable === true;
+  const pagePaginated = pagination.enabled && pagination.mode === 'page';
+  const hasExplicitKeys = Boolean(
+    keyField &&
+      items.length > 0 &&
+      items.every((item) => {
+        const value =
+          item !== null && typeof item === 'object'
+            ? getIn(item as Record<string, unknown>, keyField)
+            : undefined;
+        return value !== undefined && value !== null && value !== '';
+      }),
+  );
+  const reorderGateViolation =
+    reorderRequested && (!hasExplicitKeys || pagePaginated || windowingActive);
+  const reorderWarnedRef = useRef(false);
+  useEffect(() => {
+    if (!reorderGateViolation || reorderWarnedRef.current || !isDevRuntime()) {
+      return;
+    }
+    reorderWarnedRef.current = true;
+    console.warn(
+      '[flux:list] reorderable requires stable explicit keys (keyField), non-paged pagination, and no windowing — reorder is disabled. ' +
+        `Violated by: ${[
+          !hasExplicitKeys ? 'missing-explicit-keys' : null,
+          pagePaginated ? 'paged-pagination' : null,
+          windowingActive ? 'windowing' : null,
+        ]
+          .filter(Boolean)
+          .join(', ')}.`,
+    );
+  }, [hasExplicitKeys, pagePaginated, reorderGateViolation, windowingActive]);
+  const reorderActive = reorderRequested && !reorderGateViolation;
+  const reorderKeys = reorderActive
+    ? visibleItems.map((item, index) => toListItemKey(item, keyField, index))
+    : [];
+  const reorder = useListReorder({
+    enabled: reorderActive,
+    items: reorderActive ? visibleItems : [],
+    keys: reorderKeys,
+    onReorder: (payload) => {
+      void props.events.onReorder?.(payload, {
+        scope: props.node.scope,
+        event: payload,
+        evaluationBindings: payload,
+      });
+    },
+  });
 
   // opt-row-selection-clash: an explicit optionRow.value binding exclusively
   // drives the row state markers; warn once in dev when it coexists with the
@@ -502,6 +556,15 @@ export function ListRenderer(props: ListOwner) {
             onSelect={handleSelect}
             isLast={index === visibleItems.length - 1}
             isMobile={isMobile}
+            reorder={
+              reorderActive
+                ? {
+                    handleProps: reorder.handleProps(itemKey, index),
+                    dragging: reorder.isDragging(itemKey),
+                    over: reorder.isOver(itemKey),
+                  }
+                : undefined
+            }
             optionRow={
               optionRowActive
                 ? {

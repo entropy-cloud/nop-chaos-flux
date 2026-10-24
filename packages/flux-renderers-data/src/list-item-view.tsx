@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from 'react';
+import { GripVertical } from 'lucide-react';
 import { cn } from '@nop-chaos/ui';
 import type { ScopeRef } from '@nop-chaos/flux-core';
 import { getOptionRowStateAttributes } from '@nop-chaos/flux-react';
 import { asReactNode, type ListOwner, type ListItemOptionRowState } from './list-renderer.js';
 import type { ListSelectionMode } from './schemas.js';
+import type { ListReorderHandleProps } from './list-reorder.js';
 
 // Uncompiled-host locality (H10 precedent in table-data-row-render): without
 // this memo a selection click re-rendered every mounted item. instancePath is
@@ -13,7 +15,20 @@ export const ListItemView = React.memo(
   React.forwardRef<HTMLDivElement, ListItemViewProps>(function ListItemView(props, rowRef) {
     return <ListItemViewBase {...props} rowRef={rowRef} />;
   }),
-  (prev, next) =>
+  (prev, next) => {
+  // G6: reorder handle identity changes when drag state or the underlying
+  // collection changes — the comparator must not memo it away.
+  const reorderEqual =
+    prev.reorder === next.reorder ||
+    (prev.reorder !== undefined &&
+      next.reorder !== undefined &&
+      prev.reorder.dragging === next.reorder.dragging &&
+      prev.reorder.over === next.reorder.over &&
+      prev.reorder.handleProps === next.reorder.handleProps);
+  if (!reorderEqual) {
+    return false;
+  }
+  return (
   prev.item === next.item &&
   prev.index === next.index &&
   prev.itemKey === next.itemKey &&
@@ -41,7 +56,10 @@ export const ListItemView = React.memo(
     prev.optionRow.selected === next.optionRow.selected &&
     prev.optionRow.disabled === next.optionRow.disabled &&
     prev.optionRow.selectedClass === next.optionRow.selectedClass
-  ));
+    )
+  );
+  },
+);
 
 interface ListItemViewProps {
   owner: ListOwner;
@@ -56,10 +74,16 @@ interface ListItemViewProps {
   isMobile: boolean;
   /** D1 option-row contract; undefined = not declared (legacy output). */
   optionRow?: ListItemOptionRowState;
+  /** G6 reorder contract; undefined = reorder disabled (zero handle DOM). */
+  reorder?: {
+    handleProps: ListReorderHandleProps;
+    dragging: boolean;
+    over: boolean;
+  };
 }
 
 function ListItemViewBase(props: ListItemViewProps & { rowRef?: React.Ref<HTMLDivElement> }) {
-  const { owner, item, index, itemKey, instancePath, selectionMode, selected, onSelect, isLast, isMobile, optionRow, rowRef } = props;
+  const { owner, item, index, itemKey, instancePath, selectionMode, selected, onSelect, isLast, isMobile, optionRow, reorder, rowRef } = props;
   const helpers = owner.helpers;
   const [itemScope] = useState<ScopeRef>(() => helpers.createScope({ item, index }));
 
@@ -77,6 +101,15 @@ function ListItemViewBase(props: ListItemViewProps & { rowRef?: React.Ref<HTMLDi
       helpers.disposeScope(itemScope.id);
     };
   }, [helpers, itemScope.id]);
+
+  const reorderHandle = reorder ? (
+    <span
+      {...reorder.handleProps}
+      className="mr-2 inline-flex shrink-0 cursor-grab items-center text-muted-foreground"
+    >
+      <GripVertical size={14} aria-hidden="true" focusable="false" />
+    </span>
+  ) : null;
 
   const content = owner.regions.item
     ? asReactNode(
@@ -128,6 +161,8 @@ function ListItemViewBase(props: ListItemViewProps & { rowRef?: React.Ref<HTMLDi
       data-index={index}
       data-slot="list-item"
       data-item-key={itemKey}
+      data-dragging={reorder?.dragging ? 'true' : undefined}
+      data-drag-over={reorder?.over ? 'true' : undefined}
       data-option-row={optionRowActive ? 'true' : undefined}
       data-state={optionRowState?.['data-state']}
       data-selected={selected || undefined}
@@ -149,6 +184,7 @@ function ListItemViewBase(props: ListItemViewProps & { rowRef?: React.Ref<HTMLDi
       onClick={interactive ? handleClick : undefined}
       onKeyDown={interactive ? handleKeyDown : undefined}
     >
+      {reorderHandle}
       {content}
     </div>
   );

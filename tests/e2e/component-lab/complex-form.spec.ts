@@ -382,6 +382,44 @@ test.describe('detail-field renderer', () => {
 // ---------------------------------------------------------------------------
 // detail-view
 // ---------------------------------------------------------------------------
+test.describe('list renderer', () => {
+  test('reorderable: keyboard ArrowDown reorders and echo reflects host write-back', async ({
+    page,
+  }) => {
+    const lab = new ComponentLabHelper(page);
+    await lab.openRenderer('list');
+
+    const slug = scenarioSlug('Reorderable list (reorderable + onReorder)');
+    const stage = lab.scenarioStage(slug);
+    await expect(stage).toBeVisible({ timeout: 10_000 });
+    await expect(stage).toContainText('Alpha', { timeout: 10_000 });
+
+    const handles = stage.locator('[data-slot="list-item-drag-handle"]');
+    await expect(handles).toHaveCount(3);
+
+    // Keyboard reorder is deterministic under HTML5 DnD drag; use it for the
+    // programmatic assertion (design.md §8 per-move commit contract).
+    await handles.first().press('ArrowDown');
+    await expect(stage.getByText('order:Beta > Alpha > Gamma')).toBeVisible({
+      timeout: 10_000,
+    });
+
+    // Alpha now sits at index 1 — press its handle (fresh query after re-render).
+    const alphaHandle = stage
+      .locator('[data-slot="list-item"]')
+      .filter({ hasText: 'Alpha' })
+      .locator('[data-slot="list-item-drag-handle"]');
+    await alphaHandle.press('ArrowDown');
+    await expect(stage.getByText('order:Beta > Gamma > Alpha')).toBeVisible({
+      timeout: 10_000,
+    });
+
+    // Drag handles expose the §10 markers; merged absence regression is covered
+    // by unit pins, here we assert the handle slot exists only when enabled.
+    await expect(stage.locator('[data-dragging="true"]')).toHaveCount(0);
+  });
+});
+
 test.describe('detail-view renderer', () => {
   test('read: viewer slot shows initial report data', async ({ page }) => {
     const lab = new ComponentLabHelper(page);

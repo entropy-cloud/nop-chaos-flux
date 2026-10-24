@@ -208,6 +208,7 @@ export const enUS: Resource = {
       clearSelection: 'Clear selection',
     },
     list: {
+      dragToReorder: 'Drag to reorder',
       loadingMore: 'Loading more...',
       noMore: 'No more data',
       loadFailed: 'Load failed. Click to retry',

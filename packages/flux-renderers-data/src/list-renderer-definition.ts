@@ -179,6 +179,36 @@ export const listRendererDefinition: RegisteredRendererDefinition = {
       },
     },
     {
+      key: 'reorderable',
+      kind: 'prop',
+      valueType: 'boolean',
+      contract: {
+        shape: { kind: 'boolean' },
+        displayName: 'Reorderable',
+        description:
+          'Drag-reorder switch (defaults to false). Gated: requires stable explicit keys, non-paged pagination, and no windowing — violations disable reorder with a dev warning (design.md §4).',
+        editorType: 'switch',
+        defaultValue: false,
+      },
+    },
+    {
+      key: 'onReorder',
+      kind: 'event',
+      contract: {
+        displayName: 'On Reorder',
+        description:
+          'Dispatched after a reorder drop or keyboard move. Payload: { type, items, keys }. Host writes scope `items` back (design.md §8).',
+        payload: {
+          kind: 'object',
+          fields: {
+            type: { kind: 'string' },
+            items: { kind: 'array', item: { kind: 'unknown' } },
+            keys: { kind: 'array', item: { kind: 'string' } },
+          },
+        },
+      },
+    },
+    {
       key: 'onPageChange',
       kind: 'event',
       contract: {

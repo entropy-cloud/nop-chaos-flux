@@ -206,6 +206,7 @@ export const zhCN: Resource = {
       clearSelection: '取消选择',
     },
     list: {
+      dragToReorder: '拖拽以调整顺序',
       loadingMore: '加载更多...',
       noMore: '没有更多了',
       loadFailed: '加载失败，点击重试',
