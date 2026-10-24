@@ -1,6 +1,6 @@
 # 724 审计修复 R2·R2.2：契约补测—运行时交接面+react（P1-MA4.1-005/006/007 + P1-MA4.2-001）
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-10-24
 > Source: `docs/backlog/audit-remediation-r2-roadmap.md` R2.2（MR2.0/plan 713 展开，归并依据「compiler→runtime→react 接缝同验证路径」）；`docs/audits/2026-10-21-0415-arm2-MA4.1-core-runtime-tests.md` §P1-MA4.1-005/006/007；`docs/audits/2026-10-21-1330-arm2-MA4.2-basic-tests.md` §P1-MA4.2-001（各含最小补强规格）；owner doc `docs/architecture/renderer-runtime.md` :241（structuralWhen 守卫职责）、:230/:250/:682（meta 投影）
 > Related: bug notes `docs/bugs/51-structuralwhen-runtime-react-handoff-contract-fix.md`、`docs/bugs/30-form-runtime-setvalue-setlastchange-missing-rerender-fix.md`、`docs/bugs/163-import-overlay-captures-schema-event-setValue-writes.md`；Cross-Cutting 11（判别纪律）；先例 plan 723（R2.1 同构契约补测全链）
@@ -59,45 +59,46 @@
 
 ### Phase 1 - 四测试落地（005/006/4.2-001 先红〔变异〕后绿；007 先绿〔现状〕再反向红）
 
-Status: pending
+Status: completed
 Targets: 四测试文件
 
 - Item Types: `Proof`
 
-- [ ] T1（005，flux-react 集成，真 createSchemaRenderer 编译链）：**A** 静态 `when: false` 节点不渲染且挂载探针（自定义 renderer useEffect 记 mount）零次；**B** 控制组 `when: true` 渲染且 mount=1；**C** 表达式 `when: '${gate}'` 初值 false 不渲染 → 经 form setValue 翻转后出现（reactive 回落分支 live）。红证：**M-A** `node-runtime.ts:187-196` 短路 `structuralWhen` 判定为 `true`（bug51 用户可见本体「when:false 仍渲染」）→ A/C 红；**M-B** `node-renderer-resolved.tsx:436` 删 `when === false` 合取项（react 消费面）→ A 红。
-- [ ] T2（006，flux-runtime 单测，真 createManagedFormRuntime，沿 bug-validate-overwrite.test.ts 装配惯用法）：**A** `setValue('name','a')` → snap1 = `form.scope.store.getLastChange()`；`setValue('name','b')` → snap2；断言 `snap2 !== snap1`（引用 identity）+ revision 递增 + paths=['name']；**B** `setValues` 两次同样断言 identity 变化（bug30 note 点名双路径）。红证：**M-A** 删 `form-runtime.ts:555-558` setValue 内 `setLastChange({...})` 块 → A 红；**M-B** 删 `form-runtime-values.ts:108` executeSetValues 内 setLastChange 调用 → B 红。
-- [ ] T3（007，flux-react characterization，真编译链 + importLoader 惯用法沿 scope-and-reactivity-imports.test.tsx）：**A** 控制组（无 xui:imports）event-text 节点 onClick `{action:'setValue', args:{path:'summary.name', value:'fired'}}` → 兄弟 `${summary.name}` 文本变 'fired'（证 harness 能探测透传，钉子不空转）；**B** 现状钉（容器带 `'xui:imports': [{from:'demo-lib', as:'demo'}]`，写节点与读节点均在容器内）→ 点击后兄弟文本**保持种子值**（写被 overlay ownStore 捕获，缺陷-open 特征行为）。文件头+断言处显式注记：钉的是 HEAD `8ae2e4ded` 的缺陷-open 现状（bug163），修复落地时本测试应随 R2.15 改钉正确语义。反向红证：**M-C** 临时落地修复方向（`runtime-factory.ts` createChildScope 增 `update: (path, value) => parent.update(path, value)` 委托，委托钩子 `scope.ts:440` 在 API 上可行）→ B 翻红（文本变 'fired'）→ 复员。先跑探针确认 B 现状成立（Failure Paths contract-gap 检查），再落钉。
-- [ ] T4（4.2-001，flux-react 集成）：同页四普通节点——`visible:false`/`hidden:true`/`when:false`（mount 探针 renderer）+ 可见控制——断言三个 gated 文本均不存在、探针 mount 恰 1（仅控制组）、容器查询零命中。红证：**M-D** `node-renderer-resolved.tsx:436` gate 反转（恒 false，即移除 gate）→ 红（节点渲染 + mount 增至 4）。
+- [x] T1（005，flux-react 集成，真 createSchemaRenderer 编译链）：**A** 静态 `when: false` 节点不渲染且挂载探针（自定义 renderer useEffect 记 mount）零次；**B** 控制组 `when: true` 渲染且 mount=1；**C** 表达式 `when: '${gate}'` 初值 false 不渲染 → 经 form setValue 翻转后出现（reactive 回落分支 live）。红证：**M-A** `node-runtime.ts:187-196` 短路 `structuralWhen` 判定为 `true`（bug51 用户可见本体「when:false 仍渲染」）→ A/C 红；**M-B** `node-renderer-resolved.tsx:436` 删 `when === false` 合取项（react 消费面）→ A 红。〔执行注记：规格原写「event-text 节点 onClick」——实测 `test-support-core.tsx` 的 eventTextRenderer 不接线 `props.events`（事件接线是 renderer 侧职责，event-prevention.test.tsx 惯用法），C 组改用本地 gate-flip-writer renderer 自接线；api-shape Failure Path 消化〕
+- [x] T2（006，flux-runtime 单测，真 createManagedFormRuntime，沿 bug-validate-overwrite.test.ts 装配惯用法）：**A** `setValue('name','a')` → snap1 = `getLastChange()`；`setValue('name','b')` → snap2；断言 `snap2 !== snap1`（引用 identity）+ revision 递增 + paths=['name']；**B** `setValues` 两次同样断言 identity 变化（bug30 note 点名双路径）。红证：**M-A** 删 `form-runtime.ts:555-558` setValue 内 `setLastChange({...})` 块 → A 红；**M-B** 删 `form-runtime-values.ts:108` executeSetValues 内 setLastChange 调用 → B 红。〔执行注记：`executeValidationRule`/`validateRule` 为必填入参、`scope.store` 为可空类型——按 TS strict 装配补齐（no-op validator + lastChangeOf 守卫助手），红证不受影响〕
+- [x] T3（007，flux-react characterization，真编译链 + importLoader 惯用法沿 scope-and-reactivity-imports.test.tsx）：**A** 控制组（无 xui:imports）writer 节点 onClick `{action:'setValue', args:{path:'summary.name', value:'fired'}}` → 兄弟 `${summary.name}` 文本变 'fired'（证 harness 能探测透传，钉子不空转）；**B** 现状钉（容器带 `'xui:imports': [{from:'demo-lib', as:'demo'}]`，写节点与读节点均在容器内）→ 点击后兄弟文本**保持种子值**（写被 overlay ownStore 捕获，缺陷-open 特征行为）。文件头+断言处显式注记：钉的是 HEAD `8ae2e4ded` 的缺陷-open 现状（bug163），修复落地时本测试应随 R2.15 改钉正确语义。反向红证：**M-C** 临时落地修复方向（`runtime-factory.ts` createChildScope 增 `update: (path, value) => parent.update(path, value)` 委托，委托钩子 `scope.ts:440` 在 API 上可行）→ B 翻红（文本变 'fired'）→ 复员。先跑探针确认 B 现状成立（Failure Paths contract-gap 检查），再落钉。〔执行注记：container renderer 复用 `scope-and-reactivity.test-support.js` 的 containerRenderer；writer 同 T1 改本地自接线〕
+- [x] T4（4.2-001，flux-react 集成）：同页四普通节点——`visible:false`/`hidden:true`/`when:false`（mount 探针 renderer）+ 可见控制——断言三个 gated 文本均不存在、探针 mount 恰 1（仅控制组）、容器查询零命中。红证：**M-D** `node-renderer-resolved.tsx:436` gate 反转（恒 false，即移除 gate）→ 红（节点渲染 + mount 增至 4）。
 
 Exit Criteria:
 
-- [ ] 四测试绿证 + 五红证留痕：T1 M-A 红 ≥2 / M-B 红 ≥1；T2 M-A 红 ≥2（A 两断言）/ M-B 红 ≥1；T3 M-C 红 1（B 组翻红，A 控制组不受影响）；T4 M-D 红 ≥2——全部复员后 flux-react + flux-runtime 套件全绿（计数实测填入）
-- [ ] T3 探针先证现状成立（contract-gap 门通过）
+- [x] 四测试绿证（7 用例：T1×2 / T2×2 / T3×2 / T4×1）+ 五红证留痕（实测，变异均 git checkout 复员，实现文件 diff 空）：**M-A** 红 2（T1 A+C 全红）；**M-B** 红 2（T1 A+C）；**T2 M-A** 红 1（setValue 用例红、setValues 用例保持绿）；**T2 M-B** 红 1（setValues 用例红、setValue 用例保持绿——M-A/M-B 交叉击杀，判别力干净）；**M-C** 红 1（T3 B 钉翻红，A 控制组不受影响——反向红证按计划成立）；**M-D** 红 1（T4）。原计划「T2 M-A 红 ≥2（A 两断言）」按用例计数勘正：两断言同处一个 `it`，判别力以用例级红为准（沿 723 closure m1 勘正先例）
+- [x] T3 探针先证现状成立（contract-gap 门通过：B 组点击后 'fired' 零出现、'Original' 存留，激活提交 `6516230ae` 后复核）
+- [x] 套件全绿（pnpm --filter 正确 cwd 口径）：flux-react 82 文件/651 用例、flux-runtime 153 文件/1557 用例（1 skip 既有）——〔执行注记：repo 根 `--root packages/flux-react` 直调会使 cwd 相对路径的 source-pin 测试（rm7-raw-read-migration readFileSync 'src/schema-renderer.tsx'）误红，属调用口径非实现回归，stash 对照核实〕
 
 ### Phase 2 - 索引回填、successor 归属与收口
 
-Status: pending
+Status: completed
 Targets: arm2-index、roadmap、daily log
 
 - Item Types: `Proof`
 
-- [ ] roadmap 追加 **R2.15** 行：「运行时修复—imports overlay 写透传+通知链（P1-MA4.1-007 缺陷本体 bug163：overlay update 父委托 + bug163 诊断第 2 层通知链根因；T3 钉子随行改钉正确语义）」 owner `renderer-runtime.md`、Source `MR2.0`、Prompt `test-first-implementation-prompt.md`——位置紧随 R2.14 行
-- [ ] arm2-index 四行回填：136（005）/137（006）/141（4.2-001）→ `closed` + 修复行指针更新；138（007）→ `closed` + 行内注记「守护钉子落地（characterization，HEAD 8ae2e4ded 现状）；缺陷本体仍 open（bug163），successor=roadmap R2.15（方向：overlay update 父委托 + 通知链根因，bug163 Successor Required 节）」；Last Updated 滚动
-- [ ] roadmap R2.2 `planned`→`done` 翻转（IN closure commit；激活提交先行翻转 `todo`→`planned`）
+- [x] roadmap 追加 **R2.15** 行：「运行时修复—imports overlay 写透传+通知链（P1-MA4.1-007 缺陷本体 bug163：overlay update 父委托 + bug163 诊断第 2 层通知链根因；T3 钉子随行改钉正确语义）」 owner `renderer-runtime.md`、Source `MR2.0`、Prompt `test-first-implementation-prompt.md`——位置紧随 R2.14 行
+- [x] arm2-index 四行回填：136（005）/137（006）/141（4.2-001）→ `closed` + 修复行指针更新；138（007）→ `closed` + 行内注记「守护钉子落地（characterization，HEAD 8ae2e4ded 现状）；缺陷本体仍 open（bug163），successor=roadmap R2.15（方向：overlay update 父委托 + 通知链根因，bug163 Successor Required 节）」；Last Updated 滚动
+- [x] roadmap R2.2 `planned`→`done` 翻转（IN closure commit；激活提交先行翻转 `todo`→`planned`）
 
 Exit Criteria:
 
-- [ ] arm2-index :136/:137/:138/:141 状态与注记实测一致（grep 复核）
-- [ ] roadmap R2.15 行在场且紧跟 R2.14；R2.2 行 `done`（收口提交内）
-- [ ] daily log `docs/logs/2026/10-24.md` R2.2 条目在场（四测试 + 五红证 + 门禁计数 + 诚实边界注记 + R2.15 登记说明）
+- [x] arm2-index :136/:137/:138/:141 状态与注记实测一致（grep 复核——open P1 行 62→58 程序化验证，auditor 独立复核一致）
+- [x] roadmap R2.15 行在场且紧跟 R2.14（:112，列对齐归一 m1 已并入收口提交）；R2.2 行 `done`（收口提交内）
+- [x] daily log `docs/logs/2026/10-24.md` R2.2 条目在场（四测试 + 五红证 + 门禁计数 + 诚实边界注记 + R2.15 登记说明）
 
 ## Closure Gates
 
-- [ ] 全量门禁：typecheck / build / lint 全包（44/44）+ test 全套件绿（并发线 delta 归因口径沿 722/723 先例）
-- [ ] `pnpm check`：零新增红（超出已登记 pre-existing 红名单即停）
-- [ ] 五红证全部复员（`git diff` 实现文件为空）
-- [ ] 独立 closure audit（fresh sub-agent，输入=plan+diff summary+验证输出）：四 finding 闭环判定、红证判别力复核（变异机制指向旧实现缺陷面）、007 characterization 不越权确认（零实现变更、缺陷-open 注记在场、successor=R2.15 在场）
-- [ ] 收口提交（flip `done` IN commit；full-green 状态入提交信息）
+- [x] 全量门禁：typecheck 44/44 + build 44/44 + lint 44/44 + test 82/82 exit 0（并发线 delta 归因口径沿 722/723 先例）
+- [x] `pnpm check`：零新增红（唯一红 check:console-baseline 命中并发 ARC 未提交 markdown-lab-page.tsx:30，stash 对照证明干净树 "no new hits"；oversized 3 = 已登记豁免）
+- [x] 五红证全部复员（五个实现文件 git diff HEAD 空——auditor 独立复核 + auditor 自身 4 变异重演后各自复员）
+- [x] 独立 closure audit（fresh sub-agent `agent_fca67bbb`，输入=plan+diff summary+验证输出）：**approved** 0B/0M/1 cosmetic（m1 R2.15 行管道对齐，已归一）——checklist 1-8 全 CONFIRMED，4/6 变异独立重演同色
+- [x] 收口提交（flip `done` IN commit；full-green 状态入提交信息）
 
 ## Deferred But Adjudicated
 
@@ -115,5 +116,6 @@ Exit Criteria:
 
 ## Closure
 
-- [ ] R2 复审共识（PASS）后激活提交（Status→`active` + roadmap R2.2 `todo`→`planned` IN commit）
-- [ ] 执行 Phase 1/2 → Closure Gates 全过 → closure audit PASS → 收口提交（Status→`completed`、flip `done` IN commit、记录复核结论于本节）
+- [x] R2 复审共识（PASS）后激活提交（Status→`active` + roadmap R2.2 `todo`→`planned` IN commit `6516230ae`）
+- [x] 执行 Phase 1/2 → Closure Gates 全过 → closure audit **approved**（`agent_fca67bbb`，0B/0M/1 cosmetic m1 已归一）→ 收口提交（Status→`completed`、flip `done` IN commit、full-green 入提交信息）
+- [x] Closure audit 记录：四 finding 闭环（005/006/4.2-001 守卫落地；007 守护钉子落地+本体 open 归 R2.15）；变异判别力独立重演 4/6 同色（M-A 红 2 / T2 M-A 红 1 交叉干净 / M-C 反向红证翻红 / M-D 红 1）；零实现变更复核（五文件 diff 空）；arm2-index open 62→58 程序化验证；T2 identity 断言=快照键判别机制确认（node-renderer-resolved.tsx:119-121）；T3 控制组非空转 + M-C 反证非空洞；T4 mount 探针 useEffect 挂载语义确认；与 scope-composite-chain / imports 既有测试无语义冲突。
