@@ -1,6 +1,6 @@
 # 732 审计修复 R2·R2.10：契约补测—platform 族（P1-MA4.4-007/008/009）
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-10-24
 > Source: `docs/backlog/audit-remediation-r2-roadmap.md` R2.10（MR2.0/plan 713 展开）；`docs/audits/2026-10-21-2001-arm2-MA4.4-designer-office-tests.md` §P1-MA4.4-007/008/009（各含最小补强规格）；owner doc `docs/architecture/styling-system.md`（007 tokens↔preset 闭合承诺）
 > Related: bug 19 家族（008 已复发一次 d5ae387）/ bug 118 姊妹例（009 diff-view 有回归测试 code-editor 无）；先例 plan 723-731（同构契约补测链）
@@ -55,42 +55,44 @@
 
 ### Phase 1 - 三测试落地（各先红后绿）
 
-Status: planned
+Status: completed
 Targets: 三测试文件
 
 - Item Types: `Proof`
 
-- [ ] T1（007，closure.test.ts，跨包 import + fs 读 tokens 主源）：经 `nopTailwindPreset.theme!.extend!` 访问 backgroundColor/borderRadius/boxShadow 映射（review R1 M1：baseThemeExtension 模块内私有，无直接导出；惯用法 index.test.ts 先例）→ 收集全部 `var(--x)` 名 → fs 读 `packages/theme-tokens/src/styles.css`（`new URL('../../theme-tokens/src/styles.css', import.meta.url)`，styles.test.ts:5 fs 惯用法先例）断言每名有定义（≥1 出现即满足，review R1 m3）。红证：**M-A** 删 `--surface-ghost` 全部主题块定义（5 处全删，或按 m3 口径断言 ≥1 语义下任一残留即不红——取全删口径）→ 红。
-- [ ] T2（008，toolbar-button.test.tsx）：渲染 ToolbarButton 于包裹 label 内 → 断言 label 内无 `<button>` 后代（span 渲染）+ ToolbarButton aria/onClick 透传；再经 CodeEditorRenderer 集成断言 label 关联面（`<label>` 为 FieldFrame 根标签 field-frame.tsx:201——toolbar 按钮 :463/:478 为其后代；harness 先例 code-editor.integration.test.tsx——review R1 m2）。红证：**M-B** toolbar-button `render={<span/>}` 改 `render={<button/>}` → 红。
-- [ ] T3（009，use-code-mirror-controlled.test.tsx，**真实 EditorView** happy-dom 惯用法（review R1 M2：`__tests__/base-extensions.test.tsx:9-18` 先例——use-code-mirror.test.tsx 的 @codemirror mock 无 selection 不可选）；环境= happy-dom 非 jsdom）：装配 useCodeMirror（containerRef 挂载）→ 初始 'A' → rerender 换 'B' → editorView 内容 'B'；置光标 head=1 → rerender 换同长 'C' → 内容 'C' 且 `state.selection.main.head` 保持 1（选区保持语义）。红证：**M-C** 删 :104-115 同步 effect（含 :110 回声闩——review R1 m1：闩单独删除不翻红〔同长替换 head 保持〕，整体删除为选定变异面）→ 内容 stale 红。
+- [x] T1（007，closure.test.ts，跨包 import + fs 读 tokens 主源）：经 `nopTailwindPreset.theme!.extend!` 访问 backgroundColor/borderRadius/boxShadow 映射（review R1 M1：baseThemeExtension 模块内私有，无直接导出；惯用法 index.test.ts 先例）→ 收集全部 `var(--x)` 名 → fs 读 `packages/theme-tokens/src/styles.css`（`new URL('../../theme-tokens/src/styles.css', import.meta.url)`，styles.test.ts:5 fs 惯用法先例）断言每名有定义（≥1 出现即满足，review R1 m3）。红证：**M-A** 删 `--surface-ghost` 全部主题块定义（5 处全删，或按 m3 口径断言 ≥1 语义下任一残留即不红——取全删口径）→ 红。
+- [x] T2（008，toolbar-button.test.tsx）：渲染 ToolbarButton 于包裹 label 内 → 断言 label 内无 `<button>` 后代（span 渲染）+ ToolbarButton aria/onClick 透传；再经 CodeEditorRenderer 集成断言 label 关联面（`<label>` 为 FieldFrame 根标签 field-frame.tsx:201——toolbar 按钮 :463/:478 为其后代；harness 先例 code-editor.integration.test.tsx——review R1 m2）。红证：**M-B** toolbar-button `render={<span/>}` 改 `render={<button/>}` → 红。
+- [x] T3（009，use-code-mirror-controlled.test.tsx，**真实 EditorView** happy-dom 惯用法（review R1 M2）+ Host 组件挂 editorRef〔renderHook 不渲染 ref 宿主〕）：三用例——①外部 value 变更 → 内容更新；②**回声闩钉**（受控回路：typing→onChange→父回显→闩 currentDoc===incoming 跳过重派发→光标 5 不动）；③**缺口登记**：真外部变更全文替换后光标塌缩至 0——审计承诺的选区保持对真外部变更**未实现**（钉当前语义 + 缺口登记 Non-Blocking Follow-ups，不钉期望行为）。红证：**M-C** 删同步 effect 红 2（①③红、②回声闩用例绿——模型→编辑器方向判别精确）。
+
+- [x] T2 执行补记：integration 腿（真 schema 渲染）在 M-B 下**未**翻红（工具栏渲染面窄于 label 全域）——单元双腿为红证载体，integration 腿=接线面文档化（不承担判别）。
 
 Exit Criteria:
 
-- [ ] 三测试绿证 + 三红证留痕（实测计数填入；变异复员，实现文件 diff 空）
-- [ ] tailwind-preset + flux-code-editor + ui（如涉）套件全绿（pnpm --filter 正确 cwd 口径，计数实测）
+- [x] 三测试绿证 + 三红证留痕：**M-A** 红 1（--surface-ghost 5 处改名→缺失精确上报）/ **M-B** 红 2（label 内 button 复活 + 透传断言）/ **M-C** 红 2（①③红、②绿——方向判别精确）——变异均复员，实现文件 diff 空
+- [x] 套件全绿：tailwind-preset、flux-code-editor、page-designer-renderers 等实测见 Phase 2 前终验（计数填入门禁节）
 
 ### Phase 2 - 索引回填与收口
 
-Status: planned
+Status: completed
 Targets: arm2-index、roadmap、daily log
 
 - Item Types: `Proof`
 
-- [ ] arm2-index 三行回填：:161（007）/:162（008）/:163（009）→ `closed` + 注记；Last Updated 滚动
-- [ ] roadmap R2.10 `planned`→`done` 翻转（IN closure commit；激活提交先行 `todo`→`planned`）
+- [x] arm2-index 三行回填：:161（007）/:162（008）/:163（009）→ `closed` + 注记；Last Updated 滚动（open 39→36）
+- [x] roadmap R2.10 `planned`→`done` 翻转（IN closure commit；激活提交 d409d9eea 已先行翻转）
 
 Exit Criteria:
 
-- [ ] arm2-index 三行状态与注记实测一致（open 39→36）；roadmap R2.10 行 `done`（收口提交内）
-- [ ] daily log R2.10 条目在场
+- [x] arm2-index 三行状态与注记实测一致（open 39→36 grep 复核）；roadmap R2.10 行 `done`（收口提交内）
+- [x] daily log R2.10 条目在场（随收口落）
 
 ## Closure Gates
 
-- [ ] 全量门禁：typecheck / build / lint + test（任务数以实测为准，review R1 m4：以 turbo 输出 Tasks: N successful 计）
-- [ ] `pnpm check` 零新增红
-- [ ] 三红证全部复员（实现文件 `git diff HEAD` 空）
-- [ ] 独立 closure audit（fresh sub-agent，输入=plan+diff summary+验证输出）：三 finding 闭环判定、红证判别力复核（auditor 独立重演至少 2 个变异）
-- [ ] 收口提交（flip `done` IN commit；记录复核结论）
+- [x] 全量门禁：typecheck 44/44 + build 44/44 + lint 44/44 + test 82/82（Tasks: 实测口径）
+- [x] `pnpm check` 零失败全链绿
+- [x] 三红证全部复员（toolbar-button.tsx / use-code-mirror.ts git checkout 复员；styles.css 改名复员）
+- [x] 独立 closure audit（fresh sub-agent `agent_7a764887`，输入=plan+diff summary+验证输出）：**approved** 0B/0M/0m（全项干净）——checklist 1-8 全 PASS，auditor 独立重演 M-A（缺失精确上报）+ M-C（红 2、②回声闩绿——方向判别精确）+ open 36 程序化验证 + 17 变量分解核验（6 surface+4 radius+7 shadow）
+- [x] 收口提交（flip `done` IN commit；记录复核结论）
 
 ## Deferred But Adjudicated
 
@@ -103,9 +105,11 @@ Exit Criteria:
 
 ## Non-Blocking Follow-ups
 
-- 无（007/008/009 最小补强即全量规格）。
+- **选区保持缺口候选（执行期发现，升级裁决留 closure audit/MV）**：code-editor 外部 value 变更（真外部、非回显）后光标塌缩至 0——审计承诺「外部 value 变更→编辑器内容更新且光标/选区保持」的后半未实现（T3 用例③实测 head=0）。方向：sync dispatch 携带 selection 映射。T3 用例③钉当前语义，不静默吸收。
 
 ## Closure
 
-- [x] R1 共识路径（reviewer 列明 B1/M1/M2/m1-m4 修复清单）后激活提交（Status→`active` + roadmap R2.10 `todo`→`planned` IN commit）
+- [x] R1 共识路径（reviewer 列明 B1/M1/M2/m1-m4 修复清单）后激活提交（Status→`active` + roadmap R2.10 `todo`→`planned` IN commit `d409d9eea`）
+- [x] 执行 Phase 1/2 → Closure Gates 全过 → closure audit **approved**（`agent_7a764887`，0B/0M/0m）→ 收口提交（Status→`completed`、flip `done` IN commit）
+- [x] Closure audit 记录：M-A/M-C 独立重演同色（缺失精确上报/方向判别精确）+ 复员 diff 空 + open 36 程序化验证 + 17 变量分解核验 + 选区保持缺口登记三处在案（test 注释/plan/roadmap 线索分栏）不静默吸收。
 - [ ] 执行 Phase 1/2 → Closure Gates 全过 → closure audit PASS → 收口提交（Status→`completed`、flip `done` IN commit、记录复核结论于本节）
