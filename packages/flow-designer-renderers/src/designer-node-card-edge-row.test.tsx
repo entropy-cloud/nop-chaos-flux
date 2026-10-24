@@ -192,7 +192,7 @@ describe('designer-node-card renderer', () => {
     const card = container.querySelector('.nop-designer-node-card') as HTMLElement;
     expect(card.getAttribute('data-active')).toBe('true');
     expect(card.getAttribute('data-selected')).toBe('true');
-    expect(card.className).toContain('nop-designer-node-card--active');
+    expect(card.className).not.toContain('nop-designer-node-card--active');
   });
 
   it('degrades to an empty placeholder without throwing when nodeId is missing (node-card-missing / node-card-no-id)', () => {
@@ -245,6 +245,8 @@ describe('designer-edge-row renderer', () => {
     expect(row?.textContent).toContain('Task Node');
     expect(row?.textContent).toContain('End Node');
     expect(row?.textContent).toContain('Default Edge');
+    expect(row?.className).not.toContain('nop-designer-edge-row--active');
+    expect(row?.className).not.toContain('nop-designer-edge-row__');
   });
 
   it('dispatches selectEdge command on click (focus edge)', () => {

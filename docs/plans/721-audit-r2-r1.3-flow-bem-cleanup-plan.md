@@ -1,6 +1,6 @@
 # 721 审计修复 R2·R1.3：结构契约修复—flow-designer BEM 清理与测试锚点同步（P1-MA1.7-001）
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-10-24
 > Source: `docs/backlog/audit-remediation-r2-roadmap.md` R1.3（MR1.0/plan 711 展开）；`docs/audits/2026-10-19-1431-arm2-MA1.7-designer-structure.md` §P1-MA1.7-001；`docs/architecture/renderer-markers-and-selectors.md`（State Rules :242、内部区域规则 :196 明文禁止 BEM）+ `docs/architecture/styling-system.md` :479（「Do not introduce new BEM-style internal region classes」）；合规通道 = `data-*` 状态属性 + `data-slot` 内部区域
 > Related: live 盘点（本 plan Current Baseline）；ARC 716/717 线不改 flow-designer 文件（冲突预检通过）
@@ -56,34 +56,34 @@
 
 ### Phase 1 - 判别测试先行（红）
 
-Status: planned
+Status: completed
 Targets: `designer-node-card-edge-row.test.tsx`
 
 - Item Types: `Proof`
 
-- [ ] :195 断言替换为违规不存在断言（`not.toContain('nop-designer-node-card--active')`；:193 既有 data-active 正通道断言保留不重复）+ 用例尾部新增 edge-row 侧同类不存在断言；运行证实**红**（旧实现含违规类）
+- [x] :195 断言替换为违规不存在断言（`not.toContain('nop-designer-node-card--active')`；:193 既有 data-active 正通道断言保留不重复）+ 用例尾部新增 edge-row 侧同类不存在断言；运行证实**红**（旧实现含违规类）
 
 Exit Criteria:
 
-- [ ] 判别测试红在案
+- [x] 判别测试红在案（1 failed：'reflects active/selected selection state as data attributes' ×）
 
 ### Phase 2 - 清除实装（绿）与收口
 
-Status: planned
+Status: completed
 Targets: 两 tsx + `scripts/visual-quality/interactions.mjs` + arm2-index + roadmap + daily log
 
 - Item Types: `Fix | Proof`
 
-- [ ] node-card 9 处：3 修饰符删除；6 `__` 类转 `data-slot="node-card-{icon|info|title|meta|position|state}"`
-- [ ] edge-row 7 处：3 修饰符删除；4 `__` 类转 `data-slot="edge-row-{flow|source|arrow|target}"`
-- [ ] `scripts/visual-quality/interactions.mjs:24` waitFor 选择器 `.nop-designer-node-card--active` → `[data-active="true"]`
-- [ ] 判别断言转绿 + flow-designer-renderers 套件全绿
-- [ ] arm2-index P1-MA1.7-001 `closed` + 注记
+- [x] node-card 9 处：3 修饰符删除；6 `__` 类转 `data-slot="node-card-{icon|info|title|meta|position|state}"`
+- [x] edge-row 7 处：3 修饰符删除；4 `__` 类转 `data-slot="edge-row-{flow|source|arrow|target}"`
+- [x] `scripts/visual-quality/interactions.mjs:24` waitFor 选择器 `.nop-designer-node-card--active` → `[data-active="true"]`
+- [x] 判别断言转绿 + flow-designer-renderers 套件全绿（50 文件 311 测试）
+- [x] arm2-index P1-MA1.7-001 `closed` + 注记（指针列承载）
 - [ ] 激活提交（draft review 后）/ closure audit approved 后收口提交（含 R1.3 `done` 翻转、plan `completed`、daily log）
 
 Exit Criteria:
 
-- [ ] 16 处零残留（grep 断言）；套件全绿；R1.3 `done` 回读核验
+- [x] 16 处零残留（grep 实证 0）；套件全绿；R1.3 `done` 回读核验
 
 ## Draft Review Record
 
@@ -95,16 +95,16 @@ Exit Criteria:
 
 ## Closure Gates
 
-- [ ] 判别测试先红后绿在案
-- [ ] 16 处违规零残留（grep 实证）
-- [ ] flow-designer-renderers 套件全绿
-- [ ] arm2-index P1-MA1.7-001 `closed`
-- [ ] 不存在被静默降级的 in-scope 项
-- [ ] 由独立子代理（fresh session）执行的 closure-audit 已完成并记录证据
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] 判别测试先红后绿在案（红证 1 failed → 绿证 311 passed）
+- [x] 16 处违规零残留（grep 实证 0）
+- [x] flow-designer-renderers 套件全绿
+- [x] arm2-index P1-MA1.7-001 `closed`
+- [x] 不存在被静默降级的 in-scope 项
+- [x] 由独立子代理（fresh session）执行的 closure-audit 已完成并记录证据
+- [x] `pnpm typecheck`（scoped 本包 tsc/build/eslint 全净 @ 08:0x；全仓 43/44 唯一失败 flux-renderers-content 归因并发 ARC G4I 线未跟踪 WIP 测试文件 TS 错误——delta 甄别披露）
+- [x] `pnpm build`（scoped 全净同上）
+- [x] `pnpm lint`（scoped 全净同上）
+- [x] `pnpm test`（本包 50 文件 311 测试全绿 ×2〔执行者 + auditor 独立复跑〕；全仓 74/78 红窗同上披露）
 
 ## Deferred But Adjudicated
 
@@ -116,11 +116,13 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: （待收口）
+Status Note: R1.3 收官——16 处 BEM 违规清零（6 修饰符删除·合规 data-\* 属性承载 / 10 `__` 类转 data-slot 保留区域寻址）、唯一测试锚点 :195 转判别式 + edge-row 侧双断言、visual matrix 注册表选择器同步（draft review M1 揪出的隐藏消费点）；P1-MA1.7-001 `closed`（指针列承载）；代码变更 2 文件类级 + 1 断言 + 1 选择器。
 
 Closure Audit Evidence:
 
-- Auditor / Agent:
-- Evidence:
+- Auditor / Agent: 独立 fresh-session 审查子代理 `agent_bf91290d`（2026-10-24 08:1x）
+- Evidence: R1 **`approved`**（8/8 PASS + 0 findings）——16 处零残留（含全仓代码面复扫仅剩设计产物 not.toContain 断言）、data-slot 6+4 落点逐字、判别链完整、interactions.mjs 单行变更实证、独立复跑 50/311 全绿、索引单列翻转、零越界（并发 ARC G4I content 线 6 文件 + pnpm-lock 甄别归属）；scoped 三门禁全净。
 
 Follow-up:
+
+- fd-alignment-guide--v/h 与 react-flow\_\_edge-animated 不在 16 处范围（MA7.3 P3 deferred / 第三方类），无遗留。

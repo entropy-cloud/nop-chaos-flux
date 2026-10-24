@@ -21,7 +21,7 @@ export const INTERACTIONS = {
     { action: 'clickText', text: '节点/边摘要' },
     { action: 'waitFor', selector: '[data-testid="summary-node-task"]' },
     { action: 'clickText', text: 'Task Node' },
-    { action: 'waitFor', selector: '.nop-designer-node-card--active' },
+    { action: 'waitFor', selector: '[data-active="true"]' },
   ],
   // --- R2-1a complex pages (waitFor anchor + primary overlay where the
   // walkthrough wave reports confirmed a programmatically drivable one) ---
