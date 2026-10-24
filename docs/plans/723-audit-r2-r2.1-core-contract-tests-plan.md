@@ -1,6 +1,6 @@
 # 723 审计修复 R2·R2.1：契约补测—core 簇（P1-MA4.1-001/002/003/004/008）
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-10-24
 > Source: `docs/backlog/audit-remediation-r2-roadmap.md` R2.1（MR2.0/plan 713 展开）；`docs/audits/2026-10-21-0415-arm2-MA4.1-core-runtime-tests.md` §P1-MA4.1-001/002/003/004/008（各含最小补强规格）；owner doc `docs/architecture/flux-core.md` :522-523、`docs/architecture/action-scope-and-imports.md` :924
 > Related: Cross-Cutting 11（判别纪律）；先例 plan 719-722（R 行修复全链）
@@ -58,30 +58,30 @@
 
 ### Phase 1 - 五测试落地（各先红后绿）
 
-Status: planned
+Status: completed
 Targets: 四测试文件
 
 - Item Types: `Proof`
 
-- [ ] T1（4.1-001）：family 钉扎四断言——entry 无 defaultSchema 时 family 工厂以 `entry.type` 调用产出；entry 自带 defaultSchema 覆盖 family；sourcePackage 经 familyRest 透传；entry 字段胜 familyRest 同名。红证变异：删 :33-36 `?? (familyDefaultSchema ? familyDefaultSchema(entry.type) : undefined)` 分支。
-- [ ] T2（4.1-002）：含宿主命名空间（`getFormulaNamespaces` 返回 `$Arr`）的 expressionCompiler 注入编译 → `createFormulaAwareCompileSymbolTable` 符号表解析 `$Arr` 成功、无 unknown-import-alias 诊断。红证变异：播种循环删除。
-- [ ] T3（4.1-003）：runNamedAction 三分支——纯名+resolved 走 invokeNamespacedAction（断言 invocation 形状 + namespace/sourceScopeId/providerKind 元数据）；冒号名 undefined；未 resolve undefined。红证变异：删 resolve 早退或删元数据附着。
-- [ ] T4（4.1-004，行为级断言——沿既有 `action-dispatcher-routing.test.ts:267-293` 惯用法：actionScope mock 注入 + createMockAdapter 的 invokeNamespacedAction vi.fn，不做模块内 spy）：同名 built-in + named provider 在场 → built-in 结果返回且 adapter.invokeNamespacedAction 零调用。红证变异：调换 runBuiltInAction/runNamedAction 顺序（named 胜出即红）。
-- [ ] T5（4.1-008，经 runSingleAction catch 路径构造 caught-failure——WeakSet 模块私有经 adapter 抛错进入）：**A** caught + onActionError/plugin.onError 在场 → notify 零调用（既有传递性 pin 的显式回归钉）；**B** caught + 无任何诊断通道 → `notify('error', describeActionFailure(...))` 恰一次（真缺口）；**C** returned 失败（ok:false 非 caught）+ 有通道 → notify 仍发（WeakSet 作用域反向 pin）。红证：B 的判别变异=守卫改无条件早退；C 的判别变异=删 `caughtFailureResults.has()` 合取项（两变异分别使 B/C 红）。
+- [x] T1（4.1-001）：family 钉扎四断言——entry 无 defaultSchema 时 family 工厂以 `entry.type` 调用产出；entry 自带 defaultSchema 覆盖 family；sourcePackage 经 familyRest 透传；entry 字段胜 familyRest 同名。红证变异：删 :33-36 `?? (familyDefaultSchema ? familyDefaultSchema(entry.type) : undefined)` 分支。
+- [x] T2（4.1-002）：含宿主命名空间（`getFormulaNamespaces` 返回 `$Arr`）的 expressionCompiler 注入编译 → `createFormulaAwareCompileSymbolTable` 符号表解析 `$Arr` 成功、无 unknown-import-alias 诊断。红证变异：播种循环删除。
+- [x] T3（4.1-003）：runNamedAction 三分支——纯名+resolved 走 invokeNamespacedAction（断言 invocation 形状 + namespace/sourceScopeId/providerKind 元数据）；冒号名 undefined；未 resolve undefined。红证变异：交付记录采用「删冒号早退」（有判别力）；「删元数据附着」变体在补强 result 元数据断言后（closure m3）同样有判别力。
+- [x] T4（4.1-004，行为级断言——沿既有 `action-dispatcher-routing.test.ts:267-293` 惯用法：actionScope mock 注入 + createMockAdapter 的 invokeNamespacedAction vi.fn，不做模块内 spy）：同名 built-in + named provider 在场 → built-in 结果返回且 adapter.invokeNamespacedAction 零调用。红证变异：调换 runBuiltInAction/runNamedAction 顺序（named 胜出即红）。
+- [x] T5（4.1-008，经 runSingleAction catch 路径构造 caught-failure——WeakSet 模块私有经 adapter 抛错进入）：**A** caught + onActionError/plugin.onError 在场 → notify 零调用（既有传递性 pin 的显式回归钉）；**B** caught + 无任何诊断通道 → `notify('error', describeActionFailure(...))` 恰一次（真缺口）；**C** returned 失败（ok:false 非 caught）+ 有通道 → notify 仍发（WeakSet 作用域反向 pin）。红证：B 的判别变异=守卫改无条件早退；C 的判别变异=删 `caughtFailureResults.has()` 合取项（两变异分别使 B/C 红）。
 
 Exit Criteria:
 
-- [ ] 五测试绿证（现实现）+ 五红证（变异）留痕；四文件进入各自包套件全绿
+- [x] 五测试绿证 + 五红证留痕：T1 变异 1 failed〔closure m1 订正:实删 :33-36 分支红 1;『2 failed』对应恒走 family 工厂变体〕/ T2 变异 1 failed / T3 变异 1 failed / T4 变异 1 failed / T5 双变异（B 2 failed、C 1 failed）——全部复员后三包套件全绿（flux-core 52/728、flux-compiler 44/575、flux-action-core 22/239）
 
 ### Phase 2 - 索引回填与收口
 
-Status: planned
+Status: completed
 Targets: arm2-index、roadmap、daily log
 
 - Item Types: `Fix | Proof`
 
-- [ ] arm2-index 五行 `open`→`closed` + 注记（测试文件指针）；**4.1-008 行就地勘误**（guide Closure Rule 12：「删守卫零测试变红」定性部分推翻——has-channel 分支既有传递性覆盖在案，真缺口为 caught+无通道兜底与反向 pin，随本 plan 补齐）
-- [ ] draft review 通过后：R2.1 `todo`→`planned` 翻转入激活提交，plan→`active`；closure audit approved 后 R2.1 `planned`→`done`、plan→`completed`
+- [x] arm2-index 五行 `open`→`closed` + 注记（指针列承载）；**4.1-008 行就地勘误**（已落）（guide Closure Rule 12：「删守卫零测试变红」定性部分推翻——has-channel 分支既有传递性覆盖在案，真缺口为 caught+无通道兜底与反向 pin，随本 plan 补齐）
+- [x] draft review 通过后：R2.1 `todo`→`planned` 翻转入激活提交，plan→`active`（fa74a3751）；closure audit approved 后 R2.1 `planned`→`done`、plan→`completed`
 - [ ] daily log 追加；两提交显式路径、并发线不入 stage
 
 Exit Criteria:
@@ -98,15 +98,15 @@ Exit Criteria:
 
 ## Closure Gates
 
-- [ ] 五测试落地且红绿证据链在案
-- [ ] flux-core/flux-compiler/flux-action-core 各包套件全绿
-- [ ] arm2-index 五行 `closed`
-- [ ] 不存在被静默降级的 in-scope 项
-- [ ] 由独立子代理（fresh session）执行的 closure-audit 已完成并记录证据
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] 五测试落地且红绿证据链在案（五红证输出 + 绿证三包全绿）
+- [x] flux-core/flux-compiler/flux-action-core 各包套件全绿
+- [x] arm2-index 五行 `closed` + 4.1-008 勘误
+- [x] 不存在被静默降级的 in-scope 项
+- [x] 由独立子代理（fresh session）执行的 closure-audit 已完成并记录证据（auditor 独立重演 4 变异全部证红复员干净 + 三包实跑全绿）
+- [x] `pnpm typecheck`（44/44 @ 09:45——修复新测试 2 处类型错误后）
+- [x] `pnpm build`（44/44 @ 09:45）
+- [x] `pnpm lint`（44/44 @ 09:45——fix 1 unused arg 后）
+- [x] `pnpm test`（82/82 @ 09:45 终验记录）
 
 ## Deferred But Adjudicated
 
@@ -118,11 +118,13 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: （待收口）
+Status Note: R2.1 收官——五契约测试落地（T1 builder 钉扎 4 断言 / T2 播种链 3 用例含负控与 legacy / T3 runNamedAction 三分支含元数据断言〔closure m3 补强〕/ T4 优先序行为级 / T5 三断言 A/B/C 双变异配对），五红证独立复演全部证红复员干净（auditor），实现零变更，五 finding `closed` + 4.1-008 就地勘误。
 
 Closure Audit Evidence:
 
-- Auditor / Agent:
-- Evidence:
+- Auditor / Agent: 独立 fresh-session 审查子代理 `agent_3004b0c6`（2026-10-24 09:5x）
+- Evidence: R1 **`approved`**（0B/0M/3m 全部随手落地）——五测试与规格逐字、4 变异独立重演证红（T2 播种/T5-C 合取/T5-B 守卫/T1 fallback）+ 复员干净、实现零变更（五契约目标文件 diff 空）、三包实跑全绿（728/575/239）、门禁 44×3+82 复现一致；m1 红证计数订正、m2 红证菜单注记、m3 元数据断言补强均已落字。
 
 Follow-up:
+
+- no remaining plan-owned work。
