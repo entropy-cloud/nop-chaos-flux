@@ -159,3 +159,51 @@ describe('bindPrintTemplate - printDate and value formats', () => {
     expect((result.template.elements[0] as BoundPrintElement).boundRows).toEqual([{ 金额: '¥3.00' }]);
   });
 });
+
+describe('bindPrintTemplate - error classification emission points (P1-MA4.4-011)', () => {
+  it('a: text exec-time EVAL fires when the expression compiles but throws with no missing paths', () => {
+    // dangerous member key: passes compile, throws at exec, missingPaths empty
+    // (unknown-path expressions co-fire onUndefinedVariable -> PATH_MISSING instead)
+    const result = bindPrintTemplate(
+      template([element({ type: 'text', id: 't1', text: '${obj.constructor}' }) as PrintTextElement]),
+      { obj: {} },
+      { env },
+    );
+    expect(result.diagnostics.map((d) => d.code)).toContain('PRINT_BIND_EVAL');
+    const evalDiag = result.diagnostics.find((d) => d.code === 'PRINT_BIND_EVAL');
+    expect(evalDiag?.level).toBe('error');
+    expect(evalDiag?.elementId).toBe('t1');
+  });
+
+  it('b: table compile-time SYNTAX fires for an illegal table source expression', () => {
+    const table = element({
+      type: 'table',
+      id: 'tab1',
+      source: '${rows +}',
+      columns: [{ field: 'name', label: 'Name', width: 40 }],
+    }) as PrintTableElement;
+    const result = bindPrintTemplate(template([table]), { rows: [] }, { env });
+
+    expect(result.diagnostics.map((d) => d.code)).toContain('PRINT_BIND_SYNTAX');
+    const syntaxDiag = result.diagnostics.find((d) => d.code === 'PRINT_BIND_SYNTAX');
+    expect(syntaxDiag?.level).toBe('error');
+    expect(syntaxDiag?.elementId).toBe('tab1');
+  });
+
+  it('c: table exec-time EVAL fires when the source compiles but evaluation throws', () => {
+    const table = element({
+      type: 'table',
+      id: 'tab1',
+      // compiles to a member access; executing against empty scope throws
+      // (raw env passthrough — no undefined-variable hook on this path)
+      source: 'user.name',
+      columns: [{ field: 'name', label: 'Name', width: 40 }],
+    }) as PrintTableElement;
+    const result = bindPrintTemplate(template([table]), {}, { env });
+
+    expect(result.diagnostics.map((d) => d.code)).toContain('PRINT_BIND_EVAL');
+    const evalDiag = result.diagnostics.find((d) => d.code === 'PRINT_BIND_EVAL');
+    expect(evalDiag?.level).toBe('error');
+    expect(evalDiag?.elementId).toBe('tab1');
+  });
+});

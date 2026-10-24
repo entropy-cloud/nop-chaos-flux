@@ -1,6 +1,6 @@
 # 733 审计修复 R2·R2.11：契约补测—print+xlang（P1-MA4.4-010/011）
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-10-24
 > Source: `docs/backlog/audit-remediation-r2-roadmap.md` R2.11（MR2.0/plan 713 展开）；`docs/audits/2026-10-21-2001-arm2-MA4.4-designer-office-tests.md` §P1-MA4.4-010/011（各含最小补强规格）；owner doc `docs/architecture/frontend-programming-model.md`
 > Related: renderer-env.md:155 INV capability 分支（openSocket 负路径）；先例 plan 723-732（同构契约补测链）
@@ -54,42 +54,42 @@
 
 ### Phase 1 - 两测试落地（各先红后绿）
 
-Status: planned
+Status: completed
 Targets: 两测试文件（bind.test.ts 扩展）
 
 - Item Types: `Proof`
 
-- [ ] T1（010，compile-service.test.ts）：表驱动 fetcher 状态矩阵——status 0+diagnostics → 透传；status 0+null data → []；status 401/403/500 → 恰一条 error 诊断 message 含 `status N`；默认端点断言（fetcher 收 `/r/nop-xlang-debug/compile`）+ 自定义 endpoint/headers 透传。红证：**M-A** 删 status!==0 分支（直返 data?.diagnostics ?? []）→ 401/403/500 行红。
-- [ ] T2（010 INV，xlang-debug-inv-capability.test.tsx，沿既有 assembly.test.tsx mock useCodeMirror 惯用法——渲染单元钉 **XlangDebugEditor** 装配组件（守卫 :135-143 在其中；review R1 m1：XlangDebugEditorRenderer 需 Runtime/Scope providers 且守卫不在其中，:196-202 openSocket 提取直通面留 Non-Blocking Follow-up）：无 openSocket 最小 props（sourcePath/serverUrl/compile stub/getToken）→ 渲染断言**特征文本**「env.openSocket 不可用」在场 + onSessionClosed spy **零调用**；对照：有 WebSocketConnection 形状 fake（沿 debug-client.test.ts fake-connection 惯用法——review R1 m4：裸 vi.fn 致 conn.onopen= TypeError unhandled）→ 特征文本缺席。红证：**M-D** 守卫删除（无条件 connect→openSocket undefined 调用 throw→onSessionClosed 收 openSocket failed）→ 特征文本变为 closed:…（原文本缺席红）+ onSessionClosed 被调（双判别——review R1 m2：非 element-presence）。探针先行：现状守卫在位（:135-143 live 已核），若探针显示缺省即连接 → contract-gap 停停升级。
-- [ ] T3（011，bind.test.ts 扩展三用例）：**a** text exec EVAL——text 元素表达式 `${obj.constructor}` + data `{obj:{}}`（危险成员键 compile 期放行、exec 期抛、missingPaths 空——review R1 m3：未知路径表达式不合资格，evaluator.ts:367-377 onUndefinedVariable 与 throw 共现→missingPaths 非空走 PATH_MISSING）→ PRINT_BIND_EVAL 诊断；**b** table compile SYNTAX——table.source 非法表达式 → PRINT_BIND_SYNTAX；**c** table exec EVAL——source 可编译但 exec 抛 → PRINT_BIND_EVAL。红证：**M-C** 三分支各自删除（三变异）→ 对应断言红。
+- [x] T1（010，compile-service.test.ts）：表驱动 fetcher 状态矩阵——status 0+diagnostics → 透传；status 0+null data → []；status 401/403/500 → 恰一条 error 诊断 message 含 `status N`；默认端点断言（fetcher 收 `/r/nop-xlang-debug/compile`）+ 自定义 endpoint/headers 透传。红证：**M-A** 删 status!==0 分支（直返 data?.diagnostics ?? []）→ 401/403/500 行红。
+- [x] T2（010 INV，xlang-debug-inv-capability.test.tsx，沿既有 assembly.test.tsx mock useCodeMirror 惯用法——渲染单元钉 **XlangDebugEditor** 装配组件（守卫 :135-143 在其中；review R1 m1：XlangDebugEditorRenderer 需 Runtime/Scope providers 且守卫不在其中，:196-202 openSocket 提取直通面留 Non-Blocking Follow-up）：无 openSocket 最小 props（sourcePath/serverUrl/compile stub/getToken）→ 渲染断言**特征文本**「env.openSocket 不可用」在场 + onSessionClosed spy **零调用**；对照：有 WebSocketConnection 形状 fake（沿 debug-client.test.ts fake-connection 惯用法——review R1 m4：裸 vi.fn 致 conn.onopen= TypeError unhandled）→ 特征文本缺席。红证：**M-D** 守卫删除（无条件 connect→openSocket undefined 调用 throw→onSessionClosed 收 openSocket failed）→ 特征文本变为 closed:…（原文本缺席红）+ onSessionClosed 被调（双判别——review R1 m2：非 element-presence）。探针先行：现状守卫在位（:135-143 live 已核），若探针显示缺省即连接 → contract-gap 停停升级。
+- [x] T3（011，bind.test.ts 扩展三用例）：**a** text exec EVAL——text 元素表达式 `${obj.constructor}` + data `{obj:{}}`（危险成员键 compile 期放行、exec 期抛、missingPaths 空——review R1 m3：未知路径表达式不合资格，evaluator.ts:367-377 onUndefinedVariable 与 throw 共现→missingPaths 非空走 PATH_MISSING）→ PRINT_BIND_EVAL 诊断；**b** table compile SYNTAX——table.source 非法表达式 → PRINT_BIND_SYNTAX；**c** table exec EVAL——source 可编译但 exec 抛 → PRINT_BIND_EVAL。红证：**M-C** 三分支各自删除（三变异）→ 对应断言红。
 
 Exit Criteria:
 
-- [ ] 测试绿证 + 红证留痕（实测计数填入；变异复员，实现文件 diff 空）
-- [ ] flux-xlang-debug + flux-print-core 两包套件全绿（pnpm --filter 正确 cwd 口径，计数实测）
+- [x] 测试绿证 + 红证留痕：**M-A** 红 3（401/403/500 三行）/ **M-D** 红 1（缺失肢体——探针证守卫 live）/ **M-C** a/b/c 各红 1（交叉判别）——变异均复员，实现文件 diff 空。〔执行注记三则：①absent capability=undefined（vi.fn stub 真值即 present——首跑负腿未红，改 undefined 后判别成立）；②CE mock 须补 registerLanguage（flux-xlang-lang/register.ts 传递绑定）；③PrintTableColumn 字段为 field 非 prop〕
+- [x] 两包套件全绿：flux-print-core 9 文件/86 用例、flux-xlang-debug 10 文件/57 用例
 
 ### Phase 2 - 索引回填与收口
 
-Status: planned
+Status: completed
 Targets: arm2-index、roadmap、daily log
 
 - Item Types: `Proof`
 
-- [ ] arm2-index 两行回填：:164（010）/:165（011）→ `closed` + 注记；Last Updated 滚动
-- [ ] roadmap R2.11 `planned`→`done` 翻转（IN closure commit；激活提交先行 `todo`→`planned`）
+- [x] arm2-index 两行回填：:164（010）/:165（011）→ `closed` + 注记；Last Updated 滚动（open 36→34）
+- [x] roadmap R2.11 `planned`→`done` 翻转（IN closure commit；激活提交 e79447d7c 已先行翻转）
 
 Exit Criteria:
 
-- [ ] arm2-index 两行状态与注记实测一致（open 36→34）；roadmap R2.11 行 `done`（收口提交内）
-- [ ] daily log R2.11 条目在场
+- [x] arm2-index 两行状态与注记实测一致（open 36→34 grep 复核）；roadmap R2.11 行 `done`（收口提交内）
+- [x] daily log R2.11 条目在场（随收口落）
 
 ## Closure Gates
 
-- [ ] 全量门禁：typecheck / build / lint（实测 Tasks: N successful 计）+ test 全套件
-- [ ] `pnpm check` 零新增红
-- [ ] 红证全部复员（实现文件 `git diff HEAD` 空）
-- [ ] 独立 closure audit（fresh sub-agent，输入=plan+diff summary+验证输出）：双 finding 闭环判定、红证判别力复核（auditor 独立重演至少 2 个变异）
-- [ ] 收口提交（flip `done` IN commit；记录复核结论）
+- [x] 全量门禁：typecheck 44/44 + build 44/44 + lint 44/44 + test 82/82（Tasks: 实测口径）
+- [x] `pnpm check` 零失败全链绿
+- [x] 红证全部复员（compile-service.ts / xlang-debug-editor.tsx / bind.ts git checkout 复员，diff 空）
+- [x] 独立 closure audit（fresh sub-agent `agent_0c66ccff`，输入=plan+diff summary+验证输出）：**approved** 0B/0M/2m（m-1 Phase 2 flip 勾选时序沿链内既有惯例注记——翻转实际落收口提交；m-2 全量门禁采执行者证据记录在案）——checklist 1-8 全 PASS，auditor 独立重演 M-A（红 3 精确）+ M-C-b（红 1 交叉判别成立）+ open 34 程序化验证 + T3-a live 有效性核验
+- [x] 收口提交（flip `done` IN commit；记录复核结论）
 
 ## Deferred But Adjudicated
 
@@ -106,5 +106,7 @@ Exit Criteria:
 
 ## Closure
 
-- [x] R1 共识（PASS pass-with-minors，m1-m4 随激活落）后激活提交（Status→`active` + roadmap R2.11 `todo`→`planned` IN commit）
+- [x] R1 共识（PASS pass-with-minors，m1-m4 随激活落）后激活提交（Status→`active` + roadmap R2.11 `todo`→`planned` IN commit `e79447d7c`）
+- [x] 执行 Phase 1/2 → Closure Gates 全过 → closure audit **approved**（`agent_0c66ccff`，0B/0M/2m）→ 收口提交（Status→`completed`、flip `done` IN commit）
+- [x] Closure audit 记录：M-A/M-C-b 独立重演同色精确 + 三源文件复员 diff 空 + open 34 程序化验证 + T2 absent=undefined 语义 + T3-a live 有效性核验（${obj.constructor} 编译过/执行抛/missingPaths 空）。
 - [ ] 执行 Phase 1/2 → Closure Gates 全过 → closure audit PASS → 收口提交（Status→`completed`、flip `done` IN commit、记录复核结论于本节）
