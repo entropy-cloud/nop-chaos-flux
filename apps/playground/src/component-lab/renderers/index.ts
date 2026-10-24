@@ -83,6 +83,7 @@ export { MarkdownLabPage } from './markdown-lab-page';
 export { HtmlLabPage } from './html-lab-page';
 export { JsonViewLabPage } from './json-view-lab-page';
 export { LinkLabPage } from './link-lab-page';
+export { ImageCompareLabPage } from './image-compare-lab-page';
 export { ImageLabPage } from './image-lab-page';
 export { CardLabPage } from './card-lab-page';
 export { CardsLabPage } from './cards-lab-page';

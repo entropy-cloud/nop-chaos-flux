@@ -420,6 +420,37 @@ test.describe('list renderer', () => {
   });
 });
 
+test.describe('image-compare renderer', () => {
+  test('compare slider: DOM anchors, keyboard moves divider position', async ({ page }) => {
+    const lab = new ComponentLabHelper(page);
+    await lab.openRenderer('image-compare');
+
+    const slug = scenarioSlug('Horizontal compare slider');
+    const stage = lab.scenarioStage(slug);
+    await expect(stage).toBeVisible({ timeout: 10_000 });
+
+    const root = stage.locator('[data-slot="image-compare-root"][data-orientation="horizontal"]');
+    await expect(root).toBeVisible({ timeout: 10_000 });
+    for (const slot of [
+      'image-compare-after',
+      'image-compare-before',
+      'image-compare-divider',
+      'image-compare-handle',
+    ]) {
+      await expect(root.locator(`[data-slot="${slot}"]`)).toHaveCount(1);
+    }
+
+    const handle = root.locator('[data-slot="image-compare-handle"]');
+    await expect(handle).toHaveAttribute('role', 'slider');
+    await expect(handle).toHaveAttribute('aria-valuenow', '50');
+
+    await handle.press('ArrowRight');
+    await expect(handle).toHaveAttribute('aria-valuenow', '51', { timeout: 10_000 });
+    await handle.press('End');
+    await expect(handle).toHaveAttribute('aria-valuenow', '100', { timeout: 10_000 });
+  });
+});
+
 test.describe('detail-view renderer', () => {
   test('read: viewer slot shows initial report data', async ({ page }) => {
     const lab = new ComponentLabHelper(page);

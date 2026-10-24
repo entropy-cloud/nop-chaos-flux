@@ -25,6 +25,7 @@ afterEach(() => {
 });
 
 const TYPES = [
+  'image-compare',
   'separator',
   'spinner',
   'progress',
@@ -48,7 +49,7 @@ const TYPES = [
 ] as const;
 
 describe('contentRendererDefinitions', () => {
-  it('declares 19 renderer definitions for the content family (W1a + W1b + W2a + W3c + W4a + G-A result)', () => {
+  it('declares 20 renderer definitions for the content family (W1a + W1b + W2a + W3c + W4a + G-A result)', () => {
     expect(contentRendererDefinitions.map((d) => d.type).sort()).toEqual([...TYPES].sort());
   });
 

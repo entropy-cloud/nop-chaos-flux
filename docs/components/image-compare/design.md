@@ -17,7 +17,7 @@
 | (b) `image` 能力扩展（`compareSrc` 字段） | 拒绝     | 单一展示控件被注入第二数据源 + 拖拽交互状态，字段面/渲染路径分叉过半；对照 G5（dropdown-button 分体，协议 90% 复用）不成立——这里无既有协议可复用                               |
 | (c) 宿主组合（两个 image + 宿主脚本）     | 拒绝     | 分隔线裁切需要双层同步几何（clip-path + 拖拽状态），宿主自拼绕开低代码一致渲染——正是 roadmap G7 立项的缺口本体                                                                 |
 
-- **matrix 门禁**：新 type 经 CC2——matrix 增行提案（`proposed`）已随本设计提交，**`proposed`→retained 的 flip 归人工确认**，flip 落地前 G7I 不得激活。
+- **matrix 门禁**：新 type 经 CC2——matrix 增行提案已随本设计提交，flip 归人工确认（G7I 实现勘误：flip 目标状态为词表内 `runtime`，本文初稿误写 `retained`——词表无该态；已获人工批准 flip 为 `runtime`，G7I 解冻）。
 
 ## 3. Flux 中的 renderer/type 定义
 
@@ -43,7 +43,7 @@ interface ImageCompareSchema extends BaseSchema {
 }
 ```
 
-- `before`/`after`/`alt`: `value`；`defaultPosition`/`orientation`: `prop`（`defaultPosition` clamp 到 [0,100]）。
+- `before`/`after`/`alt`: `value`（语义分类；definition 落位按 image 家族先例登记为 `prop`）；`defaultPosition`/`orientation`: `prop`（`defaultPosition` clamp 到 [0,100]）。G7I 实现注记：`before`/`after` 实现为可选（缺省/加载失败优雅落入 error 占位），较本节必填标注宽松。
 - 分隔线运行时位置 = 组件 local UI state（不写 scope、无受控通道——首版无回写需求）。
 
 ## 5. 字段分类
@@ -58,7 +58,7 @@ interface ImageCompareSchema extends BaseSchema {
 
 - 分隔线位置（百分比）为组件 local UI state；`defaultPosition` 仅播种。
 - 拖拽：pointer 事件（`onPointerDown` on handle/容器 + `setPointerCapture` + `onPointerMove`）；位置按容器 boundingRect 换算百分比并 clamp [0,100]。
-- 键盘：handle `role="slider"` + `aria-label`（handle 自身可访问名，独立于双图 `alt`）+ `aria-valuemin/max/now`（0-100）；方向键按模式成对——horizontal：ArrowLeft/ArrowRight ±1；vertical：ArrowUp/ArrowDown ±1；PageUp/PageDown ±10（沿轴向）；Home/End 0/100。
+- 键盘：handle `role="slider"` + `aria-label`（handle 自身可访问名，由 `alt` 派生为 "<alt> divider"——独立于 img 的 alt 复用）+ `aria-valuemin/max/now`（0-100）；方向键按模式成对——horizontal：ArrowLeft/ArrowRight ±1；vertical：ArrowUp/ArrowDown ±1；PageUp/PageDown ±10（沿轴向）；Home/End 0/100。
 - 触摸：pointer events 天然覆盖。
 - 图片加载失败：复用 `image` 的错误降级约定（失败侧显示占位错误文案，不阻断另一侧）。
 - 双图加载独立（各自 onLoad/onError），加载中显示既有骨架/占位样式。

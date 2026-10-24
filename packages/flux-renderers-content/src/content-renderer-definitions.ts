@@ -7,6 +7,7 @@ import { CardsRenderer } from './cards-renderer.js';
 import { CarouselRenderer } from './carousel.js';
 import { EmptyRenderer } from './empty.js';
 import { HtmlRenderer } from './html.js';
+import { ImageCompareRenderer } from './image-compare.js';
 import { ImageRenderer } from './image.js';
 import { JsonViewRenderer } from './json-view.js';
 import { LinkRenderer } from './link.js';
@@ -196,6 +197,33 @@ export const contentRendererDefinitions: RegisteredRendererDefinition[] = [
       { key: 'rel', kind: 'prop' },
       { key: 'download', kind: 'prop' },
       { key: 'onClick', kind: 'event' },
+    ],
+  }),
+  defineContentRenderer({
+    type: 'image-compare',
+    displayName: 'Image Compare',
+    category: 'content',
+    component: ImageCompareRenderer,
+    fields: [
+      { key: 'before', kind: 'prop' },
+      { key: 'after', kind: 'prop' },
+      { key: 'defaultPosition', kind: 'prop', valueType: 'number' },
+      { key: 'alt', kind: 'prop' },
+      {
+        key: 'orientation',
+        kind: 'prop',
+        contract: {
+          displayName: 'Orientation',
+          shape: {
+            kind: 'union',
+            anyOf: [
+              { kind: 'literal', value: 'horizontal' },
+              { kind: 'literal', value: 'vertical' },
+            ],
+          },
+          defaultValue: 'horizontal',
+        },
+      },
     ],
   }),
   defineContentRenderer({

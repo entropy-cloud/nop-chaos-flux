@@ -2,6 +2,7 @@
 
 > Created: 2026-10-21（用户下达：基于 Arc 组件体系对照新增 roadmap 负责补充控件——先设计、后实现；每个控件必须给出必要性与整体一致性分析；成稿后经独立子 agent 反复审查至共识方可激活）
 > Status: **active**（2026-10-22 经用户执行指令激活——指令即 §11 激活前置条件 2 的人确认；详见 §11）
+> **closed**（2026-10-24 全表 14/14 work item done——G7I 为末项，CC2 门禁经用户批准解除后落地。本文转入归档态，状态区不再演化。）
 > 拟制与共识流程：`docs/skills/roadmap-and-mission-authoring-with-consensus-review.md`
 > Mission: `missions/arc-component-gap.json`
 > Sources:
@@ -50,7 +51,7 @@
 | G6D 列表重排（list-reorder）落点裁决与设计          | `done` | —    | 裁决 `list` 能力扩展 vs 独立 type〔裁决 2026-10-24：`reorderable`+`onReorder`（暂定名 `reorderMode` 否决，见 list/design.md §2）closure audit approved，plan 726；本行 todo→done 补记——G6D closure commit 时 §2 行替换因表格对齐未命中而漏翻，§6 已翻，随 G7D closure commit 一并补正〕 |
 | G6I 列表重排落地                                    | `done` | G6D  | 按 D 阶段裁决落点执行（closure audit R1 fail→R2 approved，plan 727）                                                                                                                                                                                                                    |
 | G7D image-compare 设计                              | `done` | —    | 最低优先级波次〔裁决 2026-10-24：新 type `image-compare`，matrix `proposed` 增行提案——CC2 人工 flip 门禁，flip 前 G7I 冻结；closure audit approved，plan 728〕                                                                                                                          |
-| G7I image-compare 落地                              | `todo` | G7D  |                                                                                                                                                                                                                                                                                         |
+| G7I image-compare 落地                              | `done` | G7D  | **CC2 人工门禁已解除**（用户 2026-10-24 批准 flip，matrix 行→`runtime`）；closure audit approved（plan 729，0B/0M/4m）                                                                                                                                                                  |
 
 建议执行序：**G1 →（G2、G3、G4 可并行）→（G5、G6 可并行）→ G7**。`proposed` → `todo` 的人确认发生在本文激活时（§11 激活前置条件）。
 
@@ -211,7 +212,7 @@
 | 3       | G6D list-reorder 落点+设计 | `done` | `docs/components/list/design.md`（§2 决策 + §4 门控 + §8 payload）                                                          | —    | use-row-drag-sort                                                                   | [726](../plans/726-arc-g6d-list-reorder-design-plan.md)      |
 | 3       | G6I list-reorder 落地      | `done` | 按 G6D 裁决                                                                                                                 | G6D  | 同上                                                                                | [727](../plans/727-arc-g6i-list-reorder-implement-plan.md)   |
 | 4（P3） | G7D image-compare 设计     | `done` | `docs/components/image-compare/design.md`（新 type）                                                                        | —    | content media 家族                                                                  | [728](../plans/728-arc-g7d-image-compare-design-plan.md)     |
-| 4       | G7I image-compare 落地     | `todo` | 同 G7D（**CC2 人工门禁：matrix `image-compare` 行 proposed→retained flip 待人工确认，flip 前不得激活**）                    | G7D  | 同上                                                                                | —                                                            |
+| 4       | G7I image-compare 落地     | `done` | `docs/components/image-compare/design.md`（新 type）                                                                        | G7D  | 同上                                                                                | [729](../plans/729-arc-g7i-image-compare-implement-plan.md)  |
 
 ## 7. Phase Details（交付范围，短清单）
 

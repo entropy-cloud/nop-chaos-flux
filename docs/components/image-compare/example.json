@@ -1,0 +1,8 @@
+{
+  "type": "image-compare",
+  "before": "https://example.com/assets/photo-before.png",
+  "after": "https://example.com/assets/photo-after.png",
+  "alt": "修图前后对比",
+  "defaultPosition": 50,
+  "orientation": "horizontal"
+}
