@@ -197,6 +197,8 @@ export interface MarkdownSchema extends BaseSchema {
   src?: string;
   /** 是否允许内嵌 HTML（默认 false 转义；开启时同样过 sanitize 门禁） */
   allowHtml?: boolean;
+  /** code fence 语法高亮开关（G4I：渲染器级整文档开关，默认 false 行为零变化；见 markdown/design.md §2a） */
+  codeHighlight?: boolean;
   /** 空态（value-or-region） */
   empty?: SchemaInput;
 }

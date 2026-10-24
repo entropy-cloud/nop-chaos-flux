@@ -248,6 +248,7 @@ export const contentRendererDefinitions: RegisteredRendererDefinition[] = [
       { key: 'content', kind: 'prop' },
       { key: 'src', kind: 'prop' },
       { key: 'allowHtml', kind: 'prop', valueType: 'boolean' },
+      { key: 'codeHighlight', kind: 'prop', valueType: 'boolean' },
       { key: 'empty', kind: 'value-or-region', regionKey: 'empty' },
     ],
   }),

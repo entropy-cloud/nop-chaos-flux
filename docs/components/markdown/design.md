@@ -24,7 +24,7 @@
 ### `codeHighlight` 协议
 
 - schema：`codeHighlight?: boolean`（markdown 渲染器级**整文档开关**，默认 false——行为零变化；per-fence 粒度不在首版契约）。
-- 渲染：ReactMarkdown `code` 组件覆写，fence 块走高亮 pre（`data-code-highlight="true"`）；行内 code 不受影响。
+- 渲染：ReactMarkdown **`pre` 组件覆写**（G4I 实现勘误 2026-10-24：react-markdown v10 的 `code` 组件无 `inline` prop、bare fence 无 language className，`code` 覆写会误判行内码；`pre` 是 fenced block 的可靠判定载体），fence 块走高亮 pre（`data-code-highlight="true"`）；行内 code 不受影响。
 - 语言映射：fence 标注 → CodeMirror 语言（别名归一表归 flux-renderers-content 内新模块）；未知语言回退纯文本 pre（`fence-unknown-language`）。
 - **加载策略（硬条款）**：`ColorizeView` 顶层携带 CodeMirror + 全部语言包，markdown 属默认 bundle——G4I 须以 lazy（动态 import）接入；未声明 `codeHighlight` 时零增量加载。
 - 溢出：沿用 `nop-markdown` 容器既有 overflow 契约。

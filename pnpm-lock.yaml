@@ -790,6 +790,9 @@ importers:
 
   packages/flux-renderers-content:
     dependencies:
+      '@nop-chaos/flux-code-editor':
+        specifier: workspace:*
+        version: link:../flux-code-editor
       '@nop-chaos/flux-core':
         specifier: workspace:*
         version: link:../flux-core
