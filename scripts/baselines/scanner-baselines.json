@@ -1,7 +1,7 @@
 {
   "_header": {
     "description": "Numeric baselines for the seven high-risk advisory scanners. A count above the baseline fails check:scanner-baselines (new suspects must be fixed or the baseline consciously re-registered).",
-    "lastUpdated": "2026-10-18",
+    "lastUpdated": "2026-10-24",
     "reRegistrationNotes": [
       "2026-10-06 plan 528: 716 -> 717。+1 = report-field-panel.tsx setFieldDragGhost 的降级 catch（宿主 setDragImage 抛 Not implemented 时移除 ghost 回落浏览器默认拖拽截图——catch 体为 UI 降级而非错误吞噬；试图像 toast/throw 等结构化信号注入均为伪语义，故有意识注册）。",
       "2026-10-06 plan 529: styling 222 -> 240、audit 717 -> 737。来源 flux-renderers-ai/src/styles.css 新增选择器（思考态三点 ai-bubble-loading-dots、用户操作栏 ai-user-actions、tool 角色面、气泡暗色投影——与该文件既有 data-slot 键控组织同模式）+ user-edit.tsx copy 降级 catch（剪贴板失败保持 pre-copy 态，与 assistant-actions 既有注册形态一致）+ 移行重计（sender/index/tool-call 既有 void/catch 行号位移在按行号 diff 中呈新增）。",
@@ -15,13 +15,14 @@
       "2026-10-19 plan 665 (M7 滚轮家族): discover-audit-suspects 734 -> 754 (+20)、find-async-without-failure-path 338 -> 342 (+4)、find-react19-optimization-candidates 650 维持（曾 +39 后清零，见下）。三族同源，全部位于 flux-renderers-mobile 新增 5 渲染器（picker-view/wheel-picker/wheel-date-picker/wheel-time-picker/wheel-cascader）：①async +4 = confirm 处理器中能力守卫的 `void form.validateField(name, 'change')`（ValidationScopeRuntime 无此方法——按 plan 665 review m4 以能力探测调用，触发即交由表单内部失败路径）；②audit +20 = 4 处 validateField + 12 处 FieldFrame 字段包裹形态（import/开/闭标签 × 4 文件——FieldFrame 是 flux-react 官方字段壳，mobile 包经它接入表单 label/name 契约）+ 4 处包 CSS wheel 调色板规则（bare-data-slot-selector 分桶，MA-06/NEW-MM-06 豁免通道；与 styling +4 同源双计）；③find-react19-optimization-candidates 650 维持——家族曾 +39（新组件 useCallback/useMemo 冗余），已按 `redundant-use-callback` 指引与 AGENTS React19-first 规则改为普通函数（Compiler 接管记忆化），全量回落到基线内零新增。无未处理异步失败路径。",
       "2026-10-19 plan 666 (M8 底部面板组): find-styling-suspects 244 -> 247 (+3 = floating-panel/bubble/handle 包 CSS 调色板规则，MA-06/NEW-MM-06 豁免通道同族)、discover-audit-suspects 754 -> 757 (+3 = styles.css 3 条 floating 包 CSS 调色板规则（bare-data-slot-selector 分桶，与 styling +3 同源双计）；action-sheet.tsx 零 suspect)、find-react19-optimization-candidates 650 -> 656 (+6 = action-sheet 4 处 redundant-use-callback 改普通函数后回落、floating-panel 1 处 exhaustive-deps 强制 useCallback、ui/sheet.tsx:62 gestureContext useMemo 1 处；构成： action-sheet 与 floating-panel/bubble 中 exhaustive-deps 强制的 useCallback/useMemo——applyHeight 为 effect 依赖、anchors/items/bounds 为 useCallback 依赖，非冗余记忆化；action-sheet 的 4 处冗余 useCallback 已按 redundant-use-callback 指引改普通函数后回落)。无未处理异步失败路径。",
       "2026-10-20 plan 667 (M9 图像与手写): find-react19-optimization-candidates 656 -> 657 (+1 = image-viewer.tsx 受控 effect 对 window.innerWidth/innerHeight 的读取，exhaustive-deps 语义下保留；其余 6 处 useCallback 候选已按 redundant-use-callback 指引改普通函数回落)。无未处理异步失败路径；R2 补记：image-viewer 字面色迁包 CSS 后 find-styling-suspects 247 -> 249 (+2 = image-viewer bg/indicator 调色板规则)、discover-audit-suspects 757 -> 759 (+2 同源双计)。无未处理异步失败路径；R2 补记：plan 668 index-bar 落地后 react19 657 -> 661 (+4 = index-bar locate 链 useCallback 候选，同族)；R2 补记：index-bar 字面色迁包 CSS 后 find-styling-suspects 249 -> 252 (+3 = index-bar key/active/bubble 调色板规则)、discover-audit-suspects 759 -> 762 (+3 同源双计含 data-selected/data-index-key 属性选择器)。无未处理异步失败路径。\"",
-      "2026-10-20 plan 669 (M11 安全输入组): find-react19-optimization-candidates 661 -> 663 (+2 = number-keyboard 受控 open 同步 effect 与乱序洗牌 effect 的信息级候选，语义必要保留)。无未处理异步失败路径；R2 补记：number-keyboard 锌字面 key 类改包 CSS data-slot 规则后 find-styling-suspects 252 -> 255 (+3 = key fg/divider 规则)、discover-audit-suspects 762 -> 765 (+3 同源双计)。无未处理异步失败路径。\""
+      "2026-10-20 plan 669 (M11 安全输入组): find-react19-optimization-candidates 661 -> 663 (+2 = number-keyboard 受控 open 同步 effect 与乱序洗牌 effect 的信息级候选，语义必要保留)。无未处理异步失败路径；R2 补记：number-keyboard 锌字面 key 类改包 CSS data-slot 规则后 find-styling-suspects 252 -> 255 (+3 = key fg/divider 规则)、discover-audit-suspects 762 -> 765 (+3 同源双计)。无未处理异步失败路径。\"",
+      "R2.5 cycle (2026-10-24): discover-audit-suspects 765->772 (+7) / find-test-global-leaks 108->115 (+7) — 同源同族：plan 727 新增两测试文件的测试基建形态命中（carousel-autoplay-lifecycle.test.tsx 可变模块级 mock 槽（intervalCalls/clearedIds/intervalCallback/reducedMotionChangeListeners 等 harness 控制面，与既有 carousel-autoplay.test.tsx 同构但既有文件已在基数内）+ three-canvas-lifecycle 新 describe 的 buildProps 就地对象；test-global-leaks 按模块级 let 计数）。纯测试 harness 面，零产品代码新增 suspect。surgical 手改单值，未走 --update-baselines（09ed6e5b6 先例）。"
     ]
   },
   "scanners": {
     "find-styling-suspects": 255,
-    "discover-audit-suspects": 765,
-    "find-test-global-leaks": 108,
+    "discover-audit-suspects": 772,
+    "find-test-global-leaks": 115,
     "find-todo-exitless": 1,
     "find-as-any-casts": 41,
     "find-async-without-failure-path": 342,

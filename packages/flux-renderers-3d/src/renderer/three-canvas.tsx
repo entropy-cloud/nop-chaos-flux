@@ -35,6 +35,10 @@ export function ThreeCanvasRenderer(props: RendererComponentProps<ThreeCanvasSch
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [retryKey, setRetryKey] = useState(0);
   const [sceneState, setSceneState] = useState<SceneLifecycleState>('loading');
+  // P1-MA4.3-005: events.onReady 派发守卫——每 engine 生命周期至多一次；
+  // error 终态（同挂载内已入 error）后 ready 不再派发（场景从未就绪）。
+  const onReadyDispatchedRef = useRef(false);
+  const sceneErroredRef = useRef(false);
   // plan 533 D1 Phase 2：错误码（webgl-unavailable 与加载失败差异化降级）；retry 清理。
   const [errorCode, setErrorCode] = useState<string | null>(null);
   // plan 473 (V3-F4): GLTF 加载进度（0..1 | null 不确定态），rAF 合流防 onProgress 高频重渲
@@ -62,6 +66,7 @@ export function ThreeCanvasRenderer(props: RendererComponentProps<ThreeCanvasSch
     reloadKey: retryKey,
     debugHandleKey: testid,
     onError: (event) => {
+      sceneErroredRef.current = true;
       setErrorCode(event.code);
       setSceneState('error');
       if (events?.onError && typeof events.onError === 'object') {
@@ -121,8 +126,22 @@ export function ThreeCanvasRenderer(props: RendererComponentProps<ThreeCanvasSch
   useEffect(() => {
     if (!engine) return;
     // error 是挂载周期终态（组件不卸载不恢复），ready 不覆盖
-    return engine.onReady(() => setSceneState((current) => (current === 'error' ? current : 'ready')));
-  }, [engine]);
+    onReadyDispatchedRef.current = false;
+    return engine.onReady(() => {
+      setSceneState((current) => (current === 'error' ? current : 'ready'));
+      if (sceneErroredRef.current || onReadyDispatchedRef.current) {
+        return;
+      }
+      onReadyDispatchedRef.current = true;
+      if (events?.onReady && typeof events.onReady === 'object') {
+        void props.helpers.dispatch(events.onReady, {
+          event: createNormalizedActionEvent({ type: 'scene:ready' }),
+        });
+      }
+    });
+    // events.onReady / helpers 入 deps：identity 变化时重订阅，once-ref 保证
+    // 每 engine 生命周期仍至多一次派发（P1-MA4.3-005）。
+  }, [engine, events?.onReady, props.helpers]);
 
   // plan 533 D1 Phase 2：domElement aria-label 后置设置（engine 侧 role/tabIndex 已在 init 落地）。
   useEffect(() => {

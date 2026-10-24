@@ -1,6 +1,6 @@
 # 727 审计修复 R2·R2.5：契约补测—content+3d（P1-MA4.3-001 + P1-MA4.3-005 live defect 修复）
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-10-24
 > Source: `docs/backlog/audit-remediation-r2-roadmap.md` R2.5（MR2.0/plan 713 展开，单条包合并依据）；`docs/audits/2026-10-21-1524-arm2-MA4.3-content-domain-tests.md` §P1-MA4.3-001（interval 生命周期三契约）+ §P1-MA4.3-005（三方漂移 live defect，最小补强=**修复（ready 时 dispatch）+ unit**）；owner doc `docs/architecture/renderer-runtime.md`（事件桥接惯例 createNormalizedActionEvent + helpers.dispatch）
 > Related: 先例 plan 723/724/726（同构契约补测链）；4.3-005 与 MA4.2 P1-002 capability 漂移族姊妹例（声明↔注册↔派发一致性）
@@ -56,47 +56,47 @@
 
 ### Phase 1 - 补测与修复落地（各先红后绿）
 
-Status: planned
+Status: completed
 Targets: 两测试文件 + three-canvas.tsx
 
 - Item Types: `Fix`
 
-- [ ] T1（001，content unit，沿 carousel-autoplay.test.tsx mock 惯用法）：**A 量** interval:2500 → setInterval 收集的 delay 实参 === 2500；无 interval 配置 → delay === 5000（DEFAULT_INTERVAL）；**B 命** mount→unmount→mount → setInterval 恰 2 次调用（每挂载恰一注册，无跨挂载累积）+ 同挂载内不变式（start 单槽守卫）；**C 清理** unmount → clearInterval 收到该 id，此后 fireTick → scrollNext 零调用；**D 链** FakeApi.scrollNext 驱动 snap 前进 + 发 select → onChange 事件派发（props.events.onChange spy 收到，非纯 spy 断链）。红证：**M-A** stub 恢复丢 delay 实参（旧 harness 状）→ A 红。
-- [ ] T2（005 修复，three-canvas.tsx onReady 回调：setSceneState 后 dispatch `events.onReady`（object guard）`createNormalizedActionEvent({type:'scene:ready'})`，沿 :65-76 onError 惯例）：unit（既有 three-canvas 测试惯用法/lifecycle harness）——mock engine 触发 onReady → helpers.dispatch 恰一次 + `scene:ready` 事件载荷；**error 终态不覆盖**（先 error 后 ready → sceneState 保持 error 且不派发）；ready 不重复派发（二次 onReady 触发——engine 语义单次，防御断言按 mock 双触发只派发一次口径，Failure Path flake 口径）。红证：**M-B** 回退修复（onReady 回调仅 setSceneState）→ 派发断言红。
+- [x] T1（001，content unit，沿 carousel-autoplay.test.tsx mock 惯用法）：**A 量** interval:2500 → setInterval 收集的 delay 实参 === 2500；无 interval 配置 → delay === 5000（DEFAULT_INTERVAL）；**B 命** mount→unmount→mount → setInterval 恰 2 次调用（每挂载恰一注册，无跨挂载累积）+ 同挂载内不变式（start 单槽守卫）；**C 清理** unmount → clearInterval 收到该 id，此后 fireTick → scrollNext 零调用；**D 链** FakeApi.scrollNext 驱动 snap 前进 + 发 select → onChange 事件派发（props.events.onChange spy 收到，非纯 spy 断链）。红证：**M-A** stub 恢复丢 delay 实参（旧 harness 状）→ A 红。
+- [x] T2（005 修复+unit，扩展 three-canvas-lifecycle.test.tsx 新 describe ×2）：**派发恰一次**（mock 注册即回放 ready——loadModels 即刻 readyEmitted；重放 readyCallbacks 仍恰一次=once-ref 生效）+ `scene:ready` 载荷断言；**error 后 onReady 不再派发**（simulateError 入 error 终态 → ready 重放零新增派发，post-error slice 断言；执行注记：mock 注册即回放序使「先 error 后 ready」不可构造，error-前合法 ready 派发不计违例）。修复实现：onReadyDispatchedRef（每 engine 重置）+ sceneErroredRef（error 终态）双守卫 + deps 含 events.onReady/props.helpers（lint exhaustive-deps 合规，重订阅由 once-ref 保单次——Deferred m1 措辞的执行期落地：lint 强制新鲜度 ref 化而非闭包捕获，api-shape Failure Path 消化）。红证：**M-B** 回退修复 → 双派发断言红 2 → 复员（git checkout 连 fix 一并清除后重新落回，复员/重落双核）
 
 Exit Criteria:
 
-- [ ] 双测试绿证 + 双红证留痕（实测计数填入；变异复员后 005 修复保留为唯一实现 diff）
-- [ ] content + 3d 两包套件全绿（pnpm --filter 正确 cwd 口径，计数实测）
+- [x] 双测试绿证 + 双红证留痕：**M-A** 红 1（量断言，B/C/D 保持绿——判别面精确）；**M-B** 红 2（双派发断言）——复员后 005 修复保留为唯一实现 diff（three-canvas.tsx：onReady 回调 + 双 ref + deps 行）
+- [x] content 48 文件/374 用例 + 3d 25 文件/218 用例全绿
 
 ### Phase 2 - 索引回填与收口
 
-Status: planned
+Status: completed
 Targets: arm2-index、roadmap、daily log
 
 - Item Types: `Proof`
 
-- [ ] arm2-index 两行回填：:146（001）/:150（005）→ `closed` + 注记（005 注明 live defect 已修+unit）；Last Updated 滚动
-- [ ] roadmap R2.5 `planned`→`done` 翻转（IN closure commit；激活提交先行 `todo`→`planned`）
+- [x] arm2-index 两行回填：:146（001）/:150（005）→ `closed` + 注记（005 含 MA5.5 同块双证回填，m-b 义务落地：:56 + scene-manager.ts:331 双源归属）；Last Updated 滚动（open 53→51）
+- [x] roadmap R2.5 `planned`→`done` 翻转（IN closure commit；激活提交 dce7abf5c 已先行翻转）
 
 Exit Criteria:
 
-- [ ] arm2-index 两行状态与注记实测一致（open 53→51）；roadmap R2.5 行 `done`（收口提交内）
-- [ ] daily log R2.5 条目在场
+- [x] arm2-index 两行状态与注记实测一致（open 53→51 grep 复核）；roadmap R2.5 行 `done`（收口提交内）
+- [x] daily log R2.5 条目在场（随收口落）
 
 ## Closure Gates
 
-- [ ] 全量门禁：typecheck / build / lint（44/44）+ test 82/82
-- [ ] `pnpm check` 零新增红（knip-baseline 已登记口径沿 726）
-- [ ] 双红证全部复员（001 无实现 diff；005 修复保留为唯一实现 diff——`git diff HEAD` 仅 three-canvas.tsx onReady 回调及其终态守卫所需最小改动）
-- [ ] 独立 closure audit（fresh sub-agent，输入=plan+diff summary+验证输出）：双 finding 闭环判定、红证判别力复核（auditor 独立重演）、005 修复面最小性确认（仅 onReady 回调，无越权）
-- [ ] 收口提交（flip `done` IN commit；记录复核结论）
+- [x] 全量门禁：typecheck 44/44 + build 44/44 + lint 44/44 + test 82/82（lint 修复：three-canvas effect deps 入 events.onReady/helpers）
+- [x] `pnpm check` 全链绿 exit 0（scanner-baselines +7/+7 登记：新测试文件 harness 控制面形态命中，reRegistrationNotes 注记，09ed6e5b6 手改先例）
+- [x] 双红证全部复员（001 无实现 diff；005 修复保留为唯一实现 diff——three-canvas.tsx onReady 回调 + 双 ref 声明 + deps 行，即「回调及其终态守卫所需最小改动」口径内）
+- [x] 独立 closure audit（fresh sub-agent `agent_a5018116`，输入=plan+diff summary+验证输出）：**approved** 0B/0M/2m（m1 :99 deps 措辞 touch-up 随收口提交、m2 转述计数差异注记非 repo 层）——checklist 1-8 全 PASS，auditor 独立重演 M-A/M-B 双变异（字节级复员 cmp 核验）+ open 51 程序化验证 + check:scanner-baselines within baseline
+- [x] 收口提交（flip `done` IN commit；记录复核结论）
 
 ## Deferred But Adjudicated
 
 - **MA5.5 IS-three-002 onError「同块」处置**（review R1 M3）：arm2-index :150 行载 MA5.5 注记「IS-three-002 疑 onError 同块同死随修复一并验证」——经核 `three-canvas-lifecycle.test.tsx:56` 既有用例已 refute 该疑点（model-load-failed 经 onError 回调达 `scene:error` 状态面，onError 派发既有守护在位），本 plan 不扩 T2 断言面；收口时回填 ：150 注记「IS-three-002 同块疑点经 lifecycle 用例证伪，onError 派发守护在位」。Classification: watch-only residual。Why Not Blocking Closure: 既有用例已覆盖疑点面，无新增缺口。Successor Required: 否。
 
-- **005 修复闭包新鲜度**：effect deps [engine] 闭包捕获 mount 时 events（schema 派生 ActionSchema 静态，节点实例内不变，events 新鲜度不引入 ref 层）——沿既有 onReady/onError 简洁口径；「触发一次 + error 终态不覆盖」断言所需的最小终态守卫（sceneState 函数式更新已承载）不视为 ref 膨胀；若未来 events 动态化需随 family 行重审。Why Not Blocking Closure: 静态 schema 下闭包捕获等价。Successor Required: 否。
+- **005 修复闭包新鲜度**：effect deps 最终落地为 `[engine, events?.onReady, props.helpers]`（lint exhaustive-deps 合规口径；重订阅由 once-ref 保单次派发，见 T2 执行注记）；「触发一次 + error 终态不覆盖」断言所需的最小守卫以 ref/flag 承载（review R2 m-a 就地修正：sceneState 函数式更新仅承载状态不覆盖半边，dispatch 抑制与单次语义需 onReadyDispatchedRef/sceneErroredRef 最小 ref，:91 条款已授权）；若未来 events 动态化需随 family 行重审。Why Not Blocking Closure: 静态 schema 下闭包捕获等价。Successor Required: 否。
 - **001 loop:false 转发语义**：loop 经 embla opts（:249）转发属 embla 库行为面，audit 最小补强未列——不在本 plan 断言面。Classification: out-of-scope improvement。Why Not Blocking Closure: 非审计规格面。Successor Required: 否。
 
 ## Draft Review Record
@@ -110,5 +110,7 @@ Exit Criteria:
 
 ## Closure
 
-- [x] R2 共识（pass-with-minors，m-a/m-b 执行期义务在案）后激活提交（Status→`active` + roadmap R2.5 `todo`→`planned` IN commit）
+- [x] R2 共识（pass-with-minors，m-a/m-b 执行期义务在案）后激活提交（Status→`active` + roadmap R2.5 `todo`→`planned` IN commit `dce7abf5c`）
+- [x] 执行 Phase 1/2 → Closure Gates 全过 → closure audit **approved**（`agent_a5018116`，0B/0M/2m）→ 收口提交（Status→`completed`、flip `done` IN commit）
+- [x] Closure audit 记录：修复最小性（3 hunks 恰为回调+refs+deps）；M-A/M-B 独立重演同色（量断言精确判别 / 双派发断言）+ 字节级复员；:150 MA5.5 双源回填 live 核验（lifecycle :56 + scene-manager.ts:331）；scanner 登记 within baseline；m-a 义务（ref-based guard 措辞）落地核验一致。
 - [ ] 执行 Phase 1/2 → Closure Gates 全过 → closure audit PASS → 收口提交（Status→`completed`、flip `done` IN commit、记录复核结论于本节）
