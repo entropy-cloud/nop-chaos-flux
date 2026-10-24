@@ -11,6 +11,7 @@
     "audit:knip:playground": "knip --config knip.json --workspace ./apps/playground",
     "audit:mutants": "stryker run stryker.runtime.conf.mjs --plugins @stryker-mutator/vitest-runner",
     "audit:mutants:canary": "node scripts/mutation/canary-selfcheck.mjs",
+    "audit:mutants:formula": "stryker run stryker.formula.conf.mjs --plugins @stryker-mutator/vitest-runner",
     "audit:react-doctor": "npx react-doctor@latest . --verbose -y",
     "audit:semgrep": "semgrep --config .semgrep.yml .",
     "build": "turbo run build",
