@@ -1,6 +1,16 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { renderHook } from '@testing-library/react';
 import { useGanttDrag } from './use-gantt-drag.js';
+import { GanttStore } from '../gantt-store.js';
+import { UndoStack, UpdateTaskCommand } from '../undo-stack.js';
+import type { GanttTaskData } from '../gantt.types.js';
+
+// gantt-editor.test.tsx:11 idiom: real store with cellWidth + parsed tasks
+function createRealStore(tasks: GanttTaskData[]) {
+  const store = new GanttStore({ cellWidth: 40 });
+  store.parse(tasks, []);
+  return store;
+}
 
 const mockStore = {
   cellWidth: 40,
@@ -352,5 +362,68 @@ describe('useGanttDrag', () => {
     document.dispatchEvent(new PointerEvent('pointermove', { clientX: 180, clientY: 200 }));
 
     expect(document.querySelector('.nop-gantt-bar-ghost')).toBeNull();
+  });
+});
+
+describe('useGanttDrag x real UndoStack (P1-MA4.3-007: production push-point wiring)', () => {
+  afterEach(() => {
+    document.body.innerHTML = '';
+  });
+
+  it('move commit with a real undoStack pushes an UpdateTaskCommand and undo rolls the dates back', () => {
+    const store = createRealStore([
+      { id: 't1', text: 'Task', start: '2026-01-01', end: '2026-01-10' },
+    ]);
+    const stack = new UndoStack();
+    const pushSpy = vi.spyOn(stack, 'push');
+    const containerRef = { current: document.createElement('div') };
+    const { result } = renderHook(() =>
+      useGanttDrag(store as any, containerRef, undefined, stack),
+    );
+    const target = createTarget();
+
+    target.addEventListener('pointerdown', (e: PointerEvent) => {
+      result.current.onPointerDown(e, 't1', 'move');
+    });
+    // cellWidth 40: clientX 100 -> 180 = +2 days
+    target.dispatchEvent(new PointerEvent('pointerdown', { clientX: 100, clientY: 200, bubbles: true }));
+    document.dispatchEvent(new PointerEvent('pointermove', { clientX: 180, clientY: 200 }));
+    document.dispatchEvent(new PointerEvent('pointerup', { clientX: 180, clientY: 200 }));
+
+    expect(pushSpy).toHaveBeenCalledTimes(1);
+    expect(pushSpy.mock.calls[0][0]).toBeInstanceOf(UpdateTaskCommand);
+    expect(store.tasks.get('t1')!.start).toBe('2026-01-03');
+    expect(store.tasks.get('t1')!.end).toBe('2026-01-12');
+
+    stack.undo();
+    expect(store.tasks.get('t1')!.start).toBe('2026-01-01');
+    expect(store.tasks.get('t1')!.end).toBe('2026-01-10');
+  });
+
+  it('resize-end commit with a real undoStack also records and rolls back', () => {
+    const store = createRealStore([
+      { id: 't1', text: 'Task', start: '2026-01-01', end: '2026-01-10' },
+    ]);
+    const stack = new UndoStack();
+    const pushSpy = vi.spyOn(stack, 'push');
+    const containerRef = { current: document.createElement('div') };
+    const { result } = renderHook(() =>
+      useGanttDrag(store as any, containerRef, undefined, stack),
+    );
+    const target = createTarget();
+
+    target.addEventListener('pointerdown', (e: PointerEvent) => {
+      result.current.onPointerDown(e, 't1', 'resize-end');
+    });
+    target.dispatchEvent(new PointerEvent('pointerdown', { clientX: 100, clientY: 200, bubbles: true }));
+    document.dispatchEvent(new PointerEvent('pointermove', { clientX: 140, clientY: 200 }));
+    document.dispatchEvent(new PointerEvent('pointerup', { clientX: 140, clientY: 200 }));
+
+    expect(pushSpy).toHaveBeenCalledTimes(1);
+    expect(pushSpy.mock.calls[0][0]).toBeInstanceOf(UpdateTaskCommand);
+    expect(store.tasks.get('t1')!.end).toBe('2026-01-11');
+
+    stack.undo();
+    expect(store.tasks.get('t1')!.end).toBe('2026-01-10');
   });
 });

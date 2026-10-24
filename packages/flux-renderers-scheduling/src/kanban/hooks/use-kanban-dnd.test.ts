@@ -331,3 +331,83 @@ describe('useKanbanDnd lifecycle - 14-02', () => {
     );
   });
 });
+
+describe('useKanbanDnd WIP strict card-target bypass (P1-MA4.3-006)', () => {
+  it('card drop target inside a wip-over-limit column rejects card sources (live-read guard)', () => {
+    const onBoardChange = vi.fn();
+    const wipOverLimitColumns = new Set(['col2']);
+    const { result } = renderHook(() =>
+      useKanbanDnd({ boardData: sampleBoard, onBoardChange, wipOverLimitColumns }),
+    );
+
+    act(() => {
+      const el = document.createElement('div');
+      const cleanup = result.current.registerCard(el, 'card3', 'col2', 0);
+      cleanup();
+    });
+
+    const cardTarget = capturedDropTargets.find(
+      (dt) => dt.getData?.().type === 'kanban-card-target',
+    );
+    expect(cardTarget).toBeDefined();
+    expect(
+      cardTarget!.canDrop?.({
+        source: { data: { type: 'kanban-card', cardId: 'card1', columnId: 'col1' } },
+      }),
+    ).toBe(false);
+  });
+
+  it('onDrop resolving to a card target inside an over-limit column is rejected (board unchanged, no move event)', () => {
+    const onBoardChange = vi.fn();
+    const onCardMove = vi.fn();
+    const wipOverLimitColumns = new Set(['col2']);
+    renderHook(() =>
+      useKanbanDnd({ boardData: sampleBoard, onBoardChange, onCardMove, wipOverLimitColumns }),
+    );
+
+    act(() => {
+      capturedMonitor.onDrop?.({
+        source: { data: { type: 'kanban-card', cardId: 'card1', columnId: 'col1', cardIndex: 0 } },
+        location: {
+          current: {
+            dropTargets: [
+              { data: { columnId: 'col2', dropIndex: 1, cardIndex: 0, type: 'kanban-card-target' } },
+            ],
+          },
+        },
+      });
+    });
+
+    expect(onBoardChange).not.toHaveBeenCalled();
+    expect(onCardMove).not.toHaveBeenCalled();
+  });
+
+  it('control: dropping on a card target in a non-over-limit column still moves', () => {
+    const onBoardChange = vi.fn();
+    const onCardMove = vi.fn();
+    const wipOverLimitColumns = new Set(['col2']);
+    renderHook(() =>
+      useKanbanDnd({ boardData: sampleBoard, onBoardChange, onCardMove, wipOverLimitColumns }),
+    );
+
+    // card3 lives in col2; moving it to col1 (not over-limit) must go through
+    act(() => {
+      capturedMonitor.onDrop?.({
+        source: { data: { type: 'kanban-card', cardId: 'card3', columnId: 'col2', cardIndex: 0 } },
+        location: {
+          current: {
+            dropTargets: [
+              { data: { columnId: 'col1', dropIndex: 0, cardIndex: 0, type: 'kanban-card-target' } },
+            ],
+          },
+        },
+      });
+    });
+
+    expect(onBoardChange).toHaveBeenCalledTimes(1);
+    expect(onCardMove).toHaveBeenCalledTimes(1);
+    expect(onCardMove.mock.calls[0][0]).toEqual(
+      expect.objectContaining({ cardId: 'card3', fromColumnId: 'col2', toColumnId: 'col1', overLimit: false }),
+    );
+  });
+});

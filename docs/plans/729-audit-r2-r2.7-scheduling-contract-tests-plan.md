@@ -1,6 +1,6 @@
 # 729 审计修复 R2·R2.7：契约补测+scheduling（P1-MA4.3-006 live defect 修复 / 007 / 009）
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-10-24
 > Source: `docs/backlog/audit-remediation-r2-roadmap.md` R2.7（MR2.0/plan 713 展开；MR4.0/plan 718 案 A：009 根因修复归 R3.4/5.2-002，本行守测试面）；`docs/audits/2026-10-21-1524-arm2-MA4.3-content-domain-tests.md` §P1-MA4.3-006/007/009（各含最小补强规格；006 判别前置「先证旁路存在」）；owner doc `docs/architecture/renderer-runtime.md`
 > Related: MA5.5 IS-three-002 同块先例（727 双证回填）；4.3-007 与 MA5.2 改判注记（测试接线补强随行）；先例 plan 723-728（同构契约补测链）
@@ -59,43 +59,43 @@
 
 ### Phase 1 - 探针、修复与三测试落地
 
-Status: planned
+Status: completed
 Targets: use-kanban-dnd.ts + 三测试文件
 
 - Item Types: `Fix | Proof`
 
-- [ ] T0（006 探针，contract-gap 门）：capturedDropTargets 卡片目标 canDrop 直调（wipSet 含目标列）→ 断言现状 **true**（旁路 live 证实）→ 进修复；若 false 则 Failure Path contract-gap 停。
-- [ ] T1（006 修复+钉）：card canDrop 补 `stateRef.current.wipOverLimitColumns` 排除（columnId 同参）→（双重守卫：canDrop live 读 + onDrop 解析后超限拒绝，两守卫同落）**A** 卡片目标 canDrop（超限列）false；**B** onDrop 内层解析卡片目标（超限列）→ board 不变 + onCardMove 零调用。红证：**M-A** 回退双重守卫（两处同撤）→ A/B 皆红（旁路复活，判别面覆盖两守卫）。
-- [ ] T2（007，use-gantt-drag.test.ts 扩展）：真实 `new UndoStack()` 传第 4 参（renderHook 直传）+ **真实 store**（沿 gantt-editor.test.tsx:123-143 createStore/tasks.get 惯用法——review R1 m2：既有 harness mockStore.updateTask 为裸 vi.fn 无变更语义）→ 驱动拖拽 commit（pointerdown clientX 100 → pointerup 180，cellWidth 40 → dayDelta 2 命中 :120 move 分支）→ 断言：`vi.spyOn(stack,'push')` 捕获 `instanceof UpdateTaskCommand`（commands 私有无 peek——review R1 m1：canUndo 为 getter 非方法）+ `stack.undo` 后 `store.tasks.get` 值回滚。红证：**M-B** 删 :120 push → spy 断言红。
-- [ ] T3（009，kanban-undo-consumption.test.tsx 新建，沿 kanban-handle harness）：KanbanBoard + handle moveCard（card1 col1→col2）→ 聚焦板内元素（activeElement 门）→ `fireEvent.keyDown(window, {ctrlKey:true, key:'z'})` → 断言 card1 `data-column-id` 复原 col1。红证：**M-C** 键盘消费用例即判别器（若 undo 按钮路径在而键盘链断则本用例红——按 Failure Path defect-found 处置）。
-- [ ] T4（009 e2e 补完，kanban-demo.spec.ts:66）：真实指针拖拽首卡至他列（新写代码，鼠标序沿已提交先例 tests/e2e/scheduling-visual-tokens.spec.ts 的 mouse.down/move 惯用法——review R1 m3：\_tmp 探针不入库不作出处引用）→ 断言 data-column-id 变更 → keyboard Control+Z → 断言复原；保留原 pageerrors 门。
+- [x] T0（006 探针，contract-gap 门）：capturedDropTargets 卡片目标 canDrop 直调（wipSet 含目标列）→ 断言现状 **true**（旁路 live 证实）→ 进修复；若 false 则 Failure Path contract-gap 停。
+- [x] T1（006 修复+钉）：card canDrop 补 `stateRef.current.wipOverLimitColumns` 排除（columnId 同参）→（双重守卫：canDrop live 读 + onDrop 解析后超限拒绝，两守卫同落）**A** 卡片目标 canDrop（超限列）false；**B** onDrop 内层解析卡片目标（超限列）→ board 不变 + onCardMove 零调用。红证：**M-A** 回退双重守卫（两处同撤）→ A/B 皆红（旁路复活，判别面覆盖两守卫）。
+- [x] T2（007，use-gantt-drag.test.ts 扩展）：真实 `new UndoStack()` 传第 4 参（renderHook 直传）+ **真实 store**（沿 gantt-editor.test.tsx:123-143 createStore/tasks.get 惯用法——review R1 m2：既有 harness mockStore.updateTask 为裸 vi.fn 无变更语义）→ 驱动拖拽 commit（pointerdown clientX 100 → pointerup 180，cellWidth 40 → dayDelta 2 命中 :120 move 分支）→ 断言：`vi.spyOn(stack,'push')` 捕获 `instanceof UpdateTaskCommand`（commands 私有无 peek——review R1 m1：canUndo 为 getter 非方法）+ `stack.undo` 后 `store.tasks.get` 值回滚。红证：**M-B** 删 :120 push → spy 断言红。
+- [x] T3（009，kanban-undo-consumption.test.tsx 新建，沿 kanban-handle harness）：KanbanBoard + handle moveCard（card1 col1→col2）→ 聚焦板内元素（activeElement 门）→ `fireEvent.keyDown(window, {ctrlKey:true, key:'z'})` → 断言 card1 `data-column-id` 复原 col1。红证：**M-C** 键盘消费用例即判别器（若 undo 按钮路径在而键盘链断则本用例红——按 Failure Path defect-found 处置）。
+- [x] T4（009 e2e 补完，kanban-demo.spec.ts:66——**B1 勘正**：test.fail 移入测试体内〔describe 级注解波及整组 7 用例，全文件实跑 4 用例误标 expected-fail 文件红〕；焦点门措辞降为主要假设 + R3.4 交接探 activeElement）：真实指针拖拽首卡至他列（新写代码，鼠标序沿已提交先例 tests/e2e/scheduling-visual-tokens.spec.ts 的 mouse.down/move 惯用法——review R1 m3：\_tmp 探针不入库不作出处引用）→ 断言 data-column-id 变更 → keyboard Control+Z → 断言复原；保留原 pageerrors 门。
 
 Exit Criteria:
 
-- [ ] 探针留痕 + 三测试绿证 + 三红证留痕（006 修复保留为唯一实现 diff；变异复员）
-- [ ] scheduling 包套件全绿 + kanban-demo.spec.ts 单文件 e2e 绿（计数实测）
+- [x] 探针留痕（旁路 live：卡片目标 canDrop true）+ 测试绿证（dnd 18/18、gantt 21/21、消费链 3/3）+ 三红证留痕：**M-A** 双守卫同撤红 2 / **M-B** 删 :120 push 红 1（resize 分支 :129 不受扰——分支级交叉判别）/ **M-C** T3 自证判别器（组件级 live 未触发 defect-found）——006 修复保留为唯一实现 diff
+- [x] scheduling 116 文件/1094 用例全绿 + kanban-demo.spec.ts e2e 绿（test.fail() 棘轮计 expected-failure；**T4 证实 e2e 级焦点门断点**：拖拽生效但 Ctrl+Z 不复原——组件级 integration 过而页面级断，升级输入已入 arm2-index :154 注记 + test.fail 注释，归 R3.4）
 
 ### Phase 2 - 索引回填与收口
 
-Status: planned
+Status: completed
 Targets: arm2-index、roadmap、daily log
 
 - Item Types: `Proof`
 
-- [ ] arm2-index 三行回填：:151（006）/:152（007）/:154（009）→ `closed` + 注记（009 附案 A 分工注记 + e2e 补完；若 defect-found 触发则 009 注记升级 R3.4 输入）；Last Updated 滚动
-- [ ] roadmap R2.7 `planned`→`done` 翻转（IN closure commit；激活提交先行 `todo`→`planned`）
+- [x] arm2-index 三行回填：:151（006）/:152（007）/:154（009）→ `closed` + 注记（009 含 defect-found e2e 级证实 + test.fail 棘轮 + R3.4 归属）；Last Updated 滚动（open 48→45）
+- [x] roadmap R2.7 `planned`→`done` 翻转（IN closure commit；激活提交 19fe90bac 已先行翻转）
 
 Exit Criteria:
 
-- [ ] arm2-index 三行状态与注记实测一致（open 48→45）；roadmap R2.7 行 `done`（收口提交内）
-- [ ] daily log R2.7 条目在场
+- [x] arm2-index 三行状态与注记实测一致（open 48→45 grep 复核）；roadmap R2.7 行 `done`（收口提交内）
+- [x] daily log R2.7 条目在场（随收口落）
 
 ## Closure Gates
 
-- [ ] 全量门禁：typecheck / build / lint（44/44）+ test 82/82
-- [ ] `pnpm check` 零新增红（已登记口径沿 725-728）
-- [ ] e2e：kanban-demo.spec.ts 全文件绿（收口前复跑）
-- [ ] 独立 closure audit（fresh sub-agent，输入=plan+diff summary+验证输出）：三 finding 闭环判定、红证判别力复核（auditor 独立重演）、006 修复面最小性、009 案 A 分工不越权确认
+- [x] 全量门禁：typecheck 44/44 + build 44/44 + lint 44/44 + test 82/82
+- [x] `pnpm check` 零失败全链绿
+- [x] e2e：kanban-demo.spec.ts **全文件实跑 exit 0**（全文件 7 用例实跑 exit 0：4 clean passed + 1 test.fail 体内棘轮 expected-failure〔Playwright 将 expected-failure 计入 passed 桶〕+ 2 既有慢加载 flaky 重试过——closure audit B1 勘正后 in-body 注解复跑；describe 级注解会波及整组已修正；review R2 m3 计数分解勘正）
+- [x] 独立 closure audit（fresh sub-agent `agent_b5c515bf`，输入=plan+diff summary+验证输出）：首轮 **REJECTED**（B1 test.fail describe 级注解波及整组+全文件绿声称系子集运行假象；m1 焦点门措辞）→ in-body 移注+全文件实跑 exit 0+措辞同步 → 复审 **APPROVED**（0B/0M/2m 残留 m1'/m3 随收口提交）——checklist 1-8：M-A/M-B 独立重演 md5 byte-identical 复原、修复 diff 恰两守卫 9 行、open 45 程序化验证、案 A 分工不越权确认
 - [ ] 收口提交（flip `done` IN commit；记录复核结论）
 
 ## Deferred But Adjudicated

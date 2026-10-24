@@ -63,7 +63,18 @@ test.describe('Kanban Board Demo', () => {
     await assertTrackedPageErrors(page);
   });
 
+  // P1-MA4.3-009 / R3.4 (MR4.0 Case A): this completed body establishes the
+  // keyboard Ctrl+Z consumption is gated out on the real page — the drag
+  // moves the card (col-todo -> col-progress) but Ctrl+Z does not restore it
+  // (component-level integration passes; leading hypothesis: the page-level
+  // focus gate after drag re-render — verify activeElement at the R3.4
+  // handoff). NOTE: the test.fail() modifier MUST live inside the test body
+  // (describe-scope modifiers annotate every test in the group). The ratchet:
+  // while the defect is live this body fails as expected (suite stays green);
+  // when R3.4 lands the root-cause fix the body passes and the inverted
+  // expectation turns red until this annotation is removed.
   test('programmatic card move via evaluate verifies undo', async ({ page }) => {
+    test.fail(true, 'kanban keyboard Ctrl+Z consumption gated out on the real page — root cause owned by R3.4/5.2-002');
     await page.goto('/#/kanban', { waitUntil: 'commit' });
     await expect(page.locator('[data-slot="kanban"]')).toBeVisible({ timeout: 15_000 });
 
@@ -73,11 +84,42 @@ test.describe('Kanban Board Demo', () => {
     });
     expect(initialCardIds.length).toBe(8);
 
-    const cardInCol1 = await page.evaluate(() => {
-      const card = document.querySelector('[data-slot="kanban-card"]');
-      return card ? card.getAttribute('data-card-id') : null;
-    });
-    expect(cardInCol1).toBeTruthy();
+    // P1-MA4.3-009: the shell of this test previously only read card ids.
+    // Complete the promised chain: real pointer drag of the first 待办 card
+    // into the second column, then keyboard Ctrl+Z restores column ownership.
+    const firstCard = page.locator('[data-slot="kanban-card"]').first();
+    const draggedCardId = await firstCard.getAttribute('data-card-id');
+    expect(draggedCardId).toBeTruthy();
+    const columnOf = (cardId: string) =>
+      page.evaluate((id) => {
+        const card = document.querySelector(`[data-card-id="${id}"]`);
+        return card?.closest('[data-column-id]')?.getAttribute('data-column-id') ?? null;
+      }, cardId);
+    const fromColumnId = await columnOf(draggedCardId!);
+    expect(fromColumnId).toBeTruthy();
+
+    // real pointer drag of the first card into the second column
+    const cardBox = await firstCard.boundingBox();
+    const targetColumn = page.locator('[data-slot="kanban-column"]').nth(1);
+    const targetBox = await targetColumn.boundingBox();
+    expect(cardBox).toBeTruthy();
+    expect(targetBox).toBeTruthy();
+
+    await page.mouse.move(cardBox!.x + cardBox!.width / 2, cardBox!.y + 10);
+    await page.mouse.down();
+    await page.mouse.move(targetBox!.x + targetBox!.width / 2, targetBox!.y + 60, { steps: 12 });
+    await page.mouse.up();
+    await page.waitForTimeout(400);
+
+    const movedColumnId = await columnOf(draggedCardId!);
+    expect(movedColumnId).not.toBe(fromColumnId);
+
+    // keyboard Ctrl+Z consumes the undo command (focus lives inside the board
+    // after the pointer interaction) — column ownership must restore.
+    await page.keyboard.press('Control+z');
+    await page.waitForTimeout(400);
+
+    expect(await columnOf(draggedCardId!)).toBe(fromColumnId);
     await assertTrackedPageErrors(page);
   });
 

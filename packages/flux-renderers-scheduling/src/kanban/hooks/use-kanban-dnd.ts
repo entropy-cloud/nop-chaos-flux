@@ -91,6 +91,11 @@ export function useKanbanDnd({ boardData, onBoardChange, onCardMove, wipOverLimi
         });
 
         const { boardData: currentBoard, onBoardChange: changeBoard, onCardMove: moveEvent, wipOverLimitColumns: wipSet } = stateRef.current;
+        // P1-MA4.3-006 第二重守卫：onDrop 解析（内层卡片目标优先）后仍拒绝
+        // 超限列——canDrop 与 onDrop 双防，杜绝任何解析路径旁路整列排除。
+        if (wipSet?.has(toColumnId)) {
+          return;
+        }
         const newBoard = moveCard(currentBoard, cardId, toColumnId, toIndex);
 
         const fromCol = currentBoard[fromColumnId];
@@ -129,6 +134,10 @@ export function useKanbanDnd({ boardData, onBoardChange, onCardMove, wipOverLimi
         }),
         canDrop({ source }) {
           if (source.data.type !== 'kanban-card') return false;
+          // P1-MA4.3-006: WIP strict 整列排除对卡片粒度目标同样生效
+          // （live 读 stateRef，防注册时快照过期）
+          const { wipOverLimitColumns: cardWipSet } = stateRef.current;
+          if (cardWipSet?.has(columnId)) return false;
           return true;
         },
         onDrag({ location, self }) {
