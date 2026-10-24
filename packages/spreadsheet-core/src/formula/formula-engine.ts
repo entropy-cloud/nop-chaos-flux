@@ -21,8 +21,20 @@ const ERROR_DIV0 = '#DIV/0!';
 const ERROR_REF = '#REF!';
 const ERROR_PARSE = '#ERROR!';
 
+// P1-MA4.4-005: 错误值枚举匹配（原前缀/后缀谓词漏判 #NAME? 与 #N/A）。
+// 集合 = 引擎产出全集（#CIRC!/#NAME?/#DIV/0!/#REF!/#ERROR!/#VALUE!）∪ Excel 兼容面（#N/A）。
+const FORMULA_ERROR_VALUES = new Set([
+  '#CIRC!',
+  '#NAME?',
+  '#N/A',
+  '#DIV/0!',
+  '#REF!',
+  '#ERROR!',
+  '#VALUE!',
+]);
+
 export function isFormulaError(value: FormulaValue): value is string {
-  return typeof value === 'string' && value.startsWith('#') && value.endsWith('!');
+  return typeof value === 'string' && FORMULA_ERROR_VALUES.has(value);
 }
 
 interface Token {
