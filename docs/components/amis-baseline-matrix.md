@@ -23,6 +23,7 @@ Single-component contract details still belong to `docs/components/<type>/design
 
 | Status                    | Meaning                                                                                                                   |
 | ------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| `proposed`                | CC2 人工门禁态（arc-component-gap 线引入）：增行提案已落 owner doc，待人工 flip 为正式状态；不得由 AI 置为其他状态。      |
 | `runtime`                 | Renderer is registered in the current repo and has an owner doc plus example.                                             |
 | `targetContract`          | Owner doc and example exist, but runtime implementation is not yet registered as a general renderer.                      |
 | `declaredButUnregistered` | Owner doc and example exist, and a schema or contract entry exists, but the renderer is intentionally not registered yet. |
@@ -178,21 +179,22 @@ Notes:
 
 ### 6. Flux-Only Domain Components
 
-| Flux component           | Role                          | AMIS source | Status    | Owner doc                                          |
-| ------------------------ | ----------------------------- | ----------- | --------- | -------------------------------------------------- |
-| `designer-page`          | Flow Designer host renderer   | none        | `runtime` | `docs/components/designer-page/design.md`          |
-| `designer-field`         | designer field renderer       | none        | `runtime` | `docs/components/designer-field/design.md`         |
-| `designer-canvas`        | designer canvas bridge        | none        | `runtime` | `docs/components/designer-canvas/design.md`        |
-| `designer-palette`       | designer palette renderer     | none        | `runtime` | `docs/components/designer-palette/design.md`       |
-| `designer-node-card`     | designer node-card contract   | none        | `runtime` | `docs/components/designer-node-card/design.md`     |
-| `designer-edge-row`      | designer edge-row contract    | none        | `runtime` | `docs/components/designer-edge-row/design.md`      |
-| `report-inspector-shell` | report inspector shell        | none        | `runtime` | `docs/components/report-inspector-shell/design.md` |
-| `report-inspector`       | report inspector              | none        | `runtime` | `docs/components/report-inspector/design.md`       |
-| `report-field-panel`     | report field panel            | none        | `runtime` | `docs/components/report-field-panel/design.md`     |
-| `report-toolbar`         | report toolbar                | none        | `runtime` | `docs/components/report-toolbar/design.md`         |
-| `report-designer-page`   | report-designer host renderer | none        | `runtime` | `docs/components/report-designer-page/design.md`   |
-| `spreadsheet-page`       | spreadsheet host renderer     | none        | `runtime` | `docs/components/spreadsheet-page/design.md`       |
-| `word-editor-page`       | word-editor host renderer     | none        | `runtime` | `docs/components/word-editor-page/design.md`       |
+| Flux component           | Role                                                                                                                                             | AMIS source | Status    | Owner doc                                          |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------ | ----------- | --------- | -------------------------------------------------- |
+| `image-compare`          | before/after dual-image compare slider（arc-component-gap G7；人工批准 flip 2026-10-24，G7I plan `729-arc-g7i-image-compare-implement-plan.md`） | none        | `runtime` | `docs/components/image-compare/design.md`          |
+| `designer-page`          | Flow Designer host renderer                                                                                                                      | none        | `runtime` | `docs/components/designer-page/design.md`          |
+| `designer-field`         | designer field renderer                                                                                                                          | none        | `runtime` | `docs/components/designer-field/design.md`         |
+| `designer-canvas`        | designer canvas bridge                                                                                                                           | none        | `runtime` | `docs/components/designer-canvas/design.md`        |
+| `designer-palette`       | designer palette renderer                                                                                                                        | none        | `runtime` | `docs/components/designer-palette/design.md`       |
+| `designer-node-card`     | designer node-card contract                                                                                                                      | none        | `runtime` | `docs/components/designer-node-card/design.md`     |
+| `designer-edge-row`      | designer edge-row contract                                                                                                                       | none        | `runtime` | `docs/components/designer-edge-row/design.md`      |
+| `report-inspector-shell` | report inspector shell                                                                                                                           | none        | `runtime` | `docs/components/report-inspector-shell/design.md` |
+| `report-inspector`       | report inspector                                                                                                                                 | none        | `runtime` | `docs/components/report-inspector/design.md`       |
+| `report-field-panel`     | report field panel                                                                                                                               | none        | `runtime` | `docs/components/report-field-panel/design.md`     |
+| `report-toolbar`         | report toolbar                                                                                                                                   | none        | `runtime` | `docs/components/report-toolbar/design.md`         |
+| `report-designer-page`   | report-designer host renderer                                                                                                                    | none        | `runtime` | `docs/components/report-designer-page/design.md`   |
+| `spreadsheet-page`       | spreadsheet host renderer                                                                                                                        | none        | `runtime` | `docs/components/spreadsheet-page/design.md`       |
+| `word-editor-page`       | word-editor host renderer                                                                                                                        | none        | `runtime` | `docs/components/word-editor-page/design.md`       |
 
 ### 7. Flux-Only Form Component Families
 

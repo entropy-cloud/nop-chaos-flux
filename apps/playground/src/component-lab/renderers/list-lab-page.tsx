@@ -202,6 +202,32 @@ export function ListLabPage() {
       introDescription="Ordered collection renderer: iterates a single items array through an item region, with an empty state, local controlled selection (single / multiple / none), opt-in pagination (local/scope/controlled ownership + clamp), and infinite-scroll (bottom load-more via sentinel)."
       scenarios={[
         {
+          title: 'Reorderable list (reorderable + onReorder)',
+          description:
+            'reorderable=true renders a drag handle per item; drag a handle onto another item (or use ArrowUp/ArrowDown on the handle) and the list dispatches onReorder — the echo reflects the host write-back of the new order.',
+          schema: {
+            type: 'page',
+            body: [
+              {
+                type: 'list',
+                keyField: 'id',
+                reorderable: true,
+                onReorder: { action: 'setValue', args: { path: 'rows', value: '${items}' } },
+                items: '${rows}',
+                item: { type: 'text', text: '${$slot.item.label}' },
+              },
+              { type: 'text', text: 'order:${rows.map((x) => x.label).join(" > ")}' },
+            ],
+          },
+          data: {
+            rows: [
+              { id: 'a', label: 'Alpha' },
+              { id: 'b', label: 'Beta' },
+              { id: 'c', label: 'Gamma' },
+            ],
+          },
+        },
+        {
           title: 'Collection with item template',
           description:
             'The item region instantiates once per entry with per-item scope ($slot.item / $slot.index).',

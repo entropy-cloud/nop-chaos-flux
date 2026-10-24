@@ -1,88 +1,82 @@
-import { t } from '@nop-chaos/flux-i18n';
 import { cn } from '@nop-chaos/ui';
+import { t } from '@nop-chaos/flux-i18n';
 
-type PasswordStrengthLevel = 'weak' | 'fair' | 'good' | 'strong';
+type PasswordStrengthLevel = 0 | 1 | 2 | 3 | 4;
 
-const LEVEL_ORDER: PasswordStrengthLevel[] = ['weak', 'fair', 'good', 'strong'];
-
-const LEVEL_SEGMENT_CLASS: Record<PasswordStrengthLevel, string> = {
-  weak: 'bg-destructive',
-  fair: 'bg-warning',
-  good: 'bg-muted-foreground',
-  strong: 'bg-success',
+const LEVEL_TEXT_KEYS: Record<PasswordStrengthLevel, string> = {
+  0: 'flux.common.passwordStrengthTooShort',
+  1: 'flux.common.passwordStrengthWeak',
+  2: 'flux.common.passwordStrengthFair',
+  3: 'flux.common.passwordStrengthGood',
+  4: 'flux.common.passwordStrengthStrong',
 };
 
-const LEVEL_LABEL_CLASS: Record<PasswordStrengthLevel, string> = {
-  weak: 'text-destructive',
-  fair: 'text-warning',
-  good: 'text-muted-foreground',
-  strong: 'text-success',
+const LEVEL_FILL_CLASS: Record<PasswordStrengthLevel, string> = {
+  0: 'bg-destructive',
+  1: 'bg-destructive',
+  2: 'bg-warning',
+  3: 'bg-success',
+  4: 'bg-success',
 };
 
-const LEVEL_LABEL_KEY: Record<PasswordStrengthLevel, string> = {
-  weak: 'flux.common.pwdStrengthWeak',
-  fair: 'flux.common.pwdStrengthFair',
-  good: 'flux.common.pwdStrengthGood',
-  strong: 'flux.common.pwdStrengthStrong',
-};
-
-// docs/components/input-password/design.md §4a: strong is evaluated before
-// good's "len ≥ 10 with 2 classes" branch; both branches reach fair otherwise.
-export function computePasswordStrength(value: string | undefined | null): PasswordStrengthLevel | null {
-  if (typeof value !== 'string' || value.length === 0) {
-    return null;
+/**
+ * Strength level of a non-empty password (docs/components/input-password/design.md §4).
+ * Length reads JS `.length` (UTF-16 code units): empty → 0 (renderer hides the meter),
+ * length < 6 → 0 (too short), otherwise max(1, met-criteria count) with criteria
+ * length ≥ 8 / both letter cases / digit / non-alphanumeric symbol.
+ */
+export function computePasswordStrengthLevel(value: string): PasswordStrengthLevel {
+  if (value.length === 0 || value.length < 6) {
+    return 0;
   }
-  const length = value.length;
-  let classes = 0;
-  if (/[a-z]/.test(value)) classes += 1;
-  if (/[A-Z]/.test(value)) classes += 1;
-  if (/[0-9]/.test(value)) classes += 1;
-  if (/[^A-Za-z0-9]/.test(value)) classes += 1;
-  if (length < 8 || classes <= 1) {
-    return 'weak';
+  let count = 0;
+  if (value.length >= 8) {
+    count += 1;
   }
-  if (length >= 12 && classes >= 3) {
-    return 'strong';
+  if (/[a-z]/.test(value) && /[A-Z]/.test(value)) {
+    count += 1;
   }
-  if ((length >= 8 && classes >= 3) || (length >= 10 && classes >= 2)) {
-    return 'good';
+  if (/[0-9]/.test(value)) {
+    count += 1;
   }
-  return 'fair';
+  if (/[^a-zA-Z0-9]/.test(value)) {
+    count += 1;
+  }
+  return Math.max(1, count) as PasswordStrengthLevel;
 }
 
-export function PasswordStrengthMeter(props: { level: PasswordStrengthLevel; describedById?: string }) {
-  const levelIndex = LEVEL_ORDER.indexOf(props.level) + 1;
+export function PasswordStrengthMeter({ value }: { value: string }) {
+  const level = computePasswordStrengthLevel(value);
+  const filled = Math.max(1, level);
+  const levelText = t(LEVEL_TEXT_KEYS[level]);
+
   return (
     <div
+      className="nop-input-password-strength flex items-center gap-2"
       data-slot="input-password-strength"
       role="meter"
-      aria-label={t('flux.common.pwdStrengthLabel')}
+      aria-label={t('flux.common.passwordStrength')}
       aria-valuemin={0}
       aria-valuemax={4}
-      aria-valuenow={levelIndex}
-      className="mt-1.5 flex items-center gap-2"
+      aria-valuenow={level}
+      aria-valuetext={levelText}
     >
-      <div className="flex flex-1 gap-1">
-        {LEVEL_ORDER.map((level) => {
-          const active = LEVEL_ORDER.indexOf(level) < levelIndex;
-          return (
-            <span
-              key={level}
-              data-slot="input-password-strength-segment"
-              data-level={level}
-              data-active={active ? 'true' : 'false'}
-              className={cn('h-1 flex-1 rounded-full bg-muted', active && LEVEL_SEGMENT_CLASS[props.level])}
-            />
-          );
-        })}
-      </div>
+      {Array.from({ length: 4 }, (_, index) => (
+        <span
+          key={index}
+          data-slot="input-password-strength-segment"
+          aria-hidden
+          className={cn(
+            'h-1 flex-1 rounded-full',
+            index < filled ? LEVEL_FILL_CLASS[level] : 'bg-muted',
+          )}
+        />
+      ))}
       <span
-        id={props.describedById}
         data-slot="input-password-strength-label"
-        aria-live="polite"
-        className={cn('text-xs', LEVEL_LABEL_CLASS[props.level])}
+        className="text-xs text-muted-foreground tabular-nums"
       >
-        {t(LEVEL_LABEL_KEY[props.level])}
+        {levelText}
       </span>
     </div>
   );

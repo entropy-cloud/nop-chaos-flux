@@ -5,6 +5,5 @@
   "placeholder": "请输入密码",
   "required": true,
   "minLength": 8,
-  "revealPassword": true,
   "showStrength": true
 }

@@ -73,6 +73,8 @@ export interface DetailFieldSchema extends BoundFieldSchemaBase {
   content: SchemaInput;
   surface?: DetailSurfaceConfig;
   triggerLabel?: string;
+  /** 编辑形态：`surface`（默认，弹窗 draft form）| `inline`（点即编辑） */
+  editMode?: 'surface' | 'inline';
   transformInAction?: ActionSchema | ActionSchema[];
   transformOutAction?: ActionSchema | ActionSchema[];
   validateValueAction?: ActionSchema | ActionSchema[];

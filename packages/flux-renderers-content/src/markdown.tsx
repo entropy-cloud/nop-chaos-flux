@@ -12,7 +12,21 @@ import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
 import { cn, Spinner } from '@nop-chaos/ui';
 import { sanitizeHtml } from './sanitize.js';
+import { HighlightedFence } from './markdown-code-highlight.js';
 import type { MarkdownSchema } from './schemas.js';
+
+function extractText(node: React.ReactNode): string {
+  if (typeof node === 'string') {
+    return node;
+  }
+  if (Array.isArray(node)) {
+    return node.map(extractText).join('');
+  }
+  if (React.isValidElement(node)) {
+    return extractText((node.props as { children?: React.ReactNode }).children);
+  }
+  return '';
+}
 
 export function MarkdownRenderer(props: RendererComponentProps<MarkdownSchema>) {
   const env = useRendererEnv();
@@ -27,6 +41,7 @@ export function MarkdownRenderer(props: RendererComponentProps<MarkdownSchema>) 
       ? slotProps.src
       : undefined;
   const allowHtml = slotProps.allowHtml === true;
+  const codeHighlight = slotProps.codeHighlight === true;
 
   const [fetchedContent, setFetchedContent] = React.useState<string | undefined>(undefined);
   const [fetchError, setFetchError] = React.useState(false);
@@ -137,7 +152,35 @@ export function MarkdownRenderer(props: RendererComponentProps<MarkdownSchema>) 
       // GFM tables and code blocks scroll instead of blowing out the layout.
       className={cn('nop-markdown max-w-full overflow-x-auto', props.meta.className)}
     >
-      <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={rehypePlugins}>
+      <ReactMarkdown
+        remarkPlugins={[remarkGfm]}
+        rehypePlugins={rehypePlugins}
+        components={
+          codeHighlight
+            ? {
+                // fenced blocks are the only children of <pre> in the mdast
+                // render tree — reliable block detection under react-markdown
+                // v10 (the `code` component no longer receives an `inline`
+                // flag, and bare fences carry no language className).
+                pre({ children }) {
+                  const codeElement = React.Children.toArray(children).find(
+                    (child) =>
+                      React.isValidElement(child) &&
+                      ((child.props as { className?: string }).className?.includes('language-') === true ||
+                        child.type === 'code'),
+                  );
+                  if (!React.isValidElement(codeElement)) {
+                    return <pre>{children}</pre>;
+                  }
+                  const className = String((codeElement.props as { className?: string }).className ?? '');
+                  const tag = /language-([\w-]+)/.exec(className)?.[1];
+                  const code = extractText((codeElement.props as { children?: React.ReactNode }).children);
+                  return <HighlightedFence code={code} tag={tag} />;
+                },
+              }
+            : undefined
+        }
+      >
         {source}
       </ReactMarkdown>
     </div>

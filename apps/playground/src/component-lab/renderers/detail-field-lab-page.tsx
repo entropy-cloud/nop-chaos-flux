@@ -118,18 +118,33 @@ const projectedSubmit = {
   ],
 };
 
-const inlineEditableField = {
-  type: 'form',
-  data: { nickname: 'Pilot' },
+const inlineEdit = {
+  type: 'page',
   body: [
     {
-      type: 'detail-field',
-      name: 'nickname',
-      label: 'Nickname',
-      editable: true,
-      content: [{ type: 'input-text', name: 'nickname', label: 'Nickname' }],
+      type: 'form',
+      name: 'inlineEditForm',
+      data: { title: 'Quarterly Report', owner: 'Ada' },
+      body: [
+        {
+          type: 'detail-field',
+          name: 'title',
+          label: 'Title',
+          editMode: 'inline',
+          triggerLabel: 'Edit title inline',
+          content: [{ type: 'input-text', name: '__value', label: 'Title' }],
+        },
+        {
+          type: 'detail-field',
+          name: 'owner',
+          label: 'Owner',
+          editMode: 'inline',
+          triggerLabel: 'Edit owner inline',
+          content: [{ type: 'input-text', name: '__value', label: 'Owner' }],
+        },
+      ],
+      actions: [{ type: 'button', label: 'Save', onClick: { action: 'submitForm' } }],
     },
-    { type: 'text', text: '${nickname ? "Live: " + nickname : ""}' },
   ],
 };
 
@@ -151,16 +166,16 @@ export function DetailFieldLabPage() {
           schema: addressDetailField,
         },
         {
-          title: 'Inline editing (editable)',
-          description:
-            'editable: true turns the viewer into click-to-edit: click the value, type, then Enter or blur to commit (Escape cancels). No dialog is opened.',
-          schema: inlineEditableField,
-        },
-        {
           title: 'Projected dialog edit submit (bug 73 pattern)',
           description:
             'Edit the shipping object in the projected dialog, confirm, then submit the form; the echo asserts the committed value shape and that the draft never leaks before confirm.',
           schema: projectedSubmit,
+        },
+        {
+          title: 'Inline point-and-edit (editMode: inline)',
+          description:
+            'Click a value to edit it in place: the viewer turns into a single-line editor, Enter or blur commits (validate → transformOut → write back), Escape cancels without writing.',
+          schema: inlineEdit,
         },
       ]}
     />

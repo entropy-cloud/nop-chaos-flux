@@ -308,7 +308,7 @@ UI primitive 对齐补充规则：
 
 **内容 / 反馈 / 多媒体（`flux-renderers-content`）**
 
-- `separator`、`spinner`、`progress`、`empty`、`card`、`link`、`image`、`json-view`、`markdown`、`html`、`cards`、`alert`、`mapping`、`status`、`audio`、`video`、`carousel`、`qrcode`、`diff-view`
+- `separator`、`spinner`、`progress`、`empty`、`card`、`link`、`image`、`image-compare`、`json-view`、`markdown`、`html`、`cards`、`alert`、`mapping`、`status`、`audio`、`video`、`carousel`、`qrcode`、`diff-view`
 
 **布局 / 流程 / 动作（`flux-renderers-layout`）**
 

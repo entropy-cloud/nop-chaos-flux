@@ -17,6 +17,27 @@ const basicMarkdown = {
   ],
 };
 
+const codeHighlightSchema = {
+  type: 'markdown',
+  codeHighlight: true,
+  content: [
+    '## Code highlight',
+    '',
+    'Fenced blocks render through the CodeMirror colorize base:',
+    '',
+    '```js',
+    'const answer = 42;',
+    'export default answer;',
+    '```',
+    '',
+    'Unknown languages fall back to a plain text pre:',
+    '',
+    '```whitespace',
+    'v .v .v',
+    '```',
+  ].join('\n'),
+};
+
 export function MarkdownLabPage() {
   return (
     <MultiScenarioLabPage
@@ -34,6 +55,12 @@ export function MarkdownLabPage() {
             'C6.1 Phase 3: the content prop is scope-bound; switching it to a payload containing <script> must be stripped on the UPDATE path too (allowHtml on) — no XSS executes in a real browser.',
           schema: c6c1MarkdownSanitizeSchema,
           data: { mdContent: '## Safe\n\n<b>bold ok</b>' },
+        },
+        {
+          title: 'Code fence syntax highlighting (codeHighlight)',
+          description:
+            'codeHighlight: true renders fenced blocks through the shared colorize base (lazy-loaded); unknown languages fall back to a plain text pre. Inline code is unaffected.',
+          schema: codeHighlightSchema,
         },
         {
           title: 'Host remote src markdown via env.fetcher (C6.1)',

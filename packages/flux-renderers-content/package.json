@@ -18,13 +18,14 @@
     }
   },
   "dependencies": {
+    "@nop-chaos/flux-code-editor": "workspace:*",
     "@nop-chaos/flux-core": "workspace:*",
     "@nop-chaos/flux-i18n": "workspace:*",
     "@nop-chaos/flux-react": "workspace:*",
     "@nop-chaos/ui": "workspace:*",
-    "qrcode": "^1.5.4",
     "diff-match-patch": "^1.0.5",
-    "lowlight": "^3.1.0"
+    "lowlight": "^3.1.0",
+    "qrcode": "^1.5.4"
   },
   "peerDependencies": {
     "dompurify": "^3.4.11",

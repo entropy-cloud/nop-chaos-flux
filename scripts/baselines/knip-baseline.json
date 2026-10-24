@@ -23,6 +23,7 @@
     "flux-guide/flux-types/common.d.ts",
     "flux-guide/flux-types/index.ts",
     "flux-guide/flux-types/schema.d.ts",
+    "flux-guide/scripts/validate-pages-setup-docs-components.mjs",
     "packages/flux-renderers-form-advanced/src/detail-view/detail-view-transform.test-support.tsx",
     "packages/flux-renderers-industrial/src/test-support/editor-mock.ts",
     "scripts/analyze-variant-vocabulary.mjs",
@@ -39,7 +40,7 @@
     "stryker.runtime.conf.mjs",
     "tests/e2e/_debug-lab.mjs",
     "tests/e2e/flux-bundle-built-dist/main.tsx",
-    "flux-guide/scripts/validate-pages-setup-docs-components.mjs"
+    "tests/e2e/xlang-debug-mock-server.mjs"
   ],
   "exports": [
     "flux-guide/scripts/shared.mjs#REGISTER_PACKAGES",
@@ -189,6 +190,7 @@
     "packages/flux-renderers-form/src/renderers/date/date-utils.ts#DEFAULT_DATETIME_SECONDS_FORMAT",
     "packages/flux-renderers-form/src/renderers/date/date-utils.ts#dateToPeriod",
     "packages/flux-renderers-form/src/renderers/hidden-renderer.tsx#validateHiddenFieldSchema",
+    "packages/flux-renderers-form/src/renderers/input-group-field-control.tsx#mergeAriaSpace",
     "packages/flux-renderers-form/src/renderers/input.tsx#inputEnhancementFieldRules",
     "packages/flux-renderers-form/src/renderers/input.tsx#textareaEnhancementFieldRules",
     "packages/flux-renderers-form/src/renderers/mobile-touch-utils.ts#MOBILE_CHOICE_STACK_THRESHOLD",
@@ -384,8 +386,7 @@
     "tests/e2e/helpers/form-actions-alignment.ts#assertDialogFooterAlignment",
     "tests/e2e/helpers/measure-perf.ts#measureTiming",
     "tests/e2e/helpers/visual-contrast.ts#samplePageRegionContrast",
-    "tests/e2e/helpers/visual-contrast.ts#srgbChannelToLinear",
-    "packages/flux-renderers-form/src/renderers/input-group-field-control.tsx#mergeAriaSpace"
+    "tests/e2e/helpers/visual-contrast.ts#srgbChannelToLinear"
   ],
   "types": [
     "packages/flow-designer-core/src/core/config-migration.ts#NormalizedDesignerConfig",
@@ -460,7 +461,9 @@
     "packages/flux-formula/src/registry.ts#FormulaFunctionMeta",
     "packages/flux-formula/src/registry.ts#FormulaInvokeMode",
     "packages/flux-print-renderers/src/renderer-definitions.tsx#PrintElementRendererProps",
+    "packages/flux-react/src/context-menu-surface.tsx#ContextMenuItemSchema",
     "packages/flux-react/src/keyboard.ts#ChordFeedResult",
+    "packages/flux-react/src/schema-diagnostics-reporter.ts#SchemaDiagnosticReporter",
     "packages/flux-react/src/structural-loop-provider.tsx#StructuralLoopProviderProps",
     "packages/flux-react/src/use-source-value.ts#SourceValueState",
     "packages/flux-renderers-3d/src/ai/schema-generator.ts#GenerateFromPromptInput",
@@ -486,6 +489,7 @@
     "packages/flux-renderers-3d/src/engine/scene-manager.ts#ControlsFactory",
     "packages/flux-renderers-3d/src/engine/scene-manager.ts#RendererFactory",
     "packages/flux-renderers-3d/src/renderer/hooks/use-binding-bridge.ts#UseBindingBridgeArgs",
+    "packages/flux-renderers-3d/src/renderer/hooks/use-data-sources.ts#UseDataSourcesArgs",
     "packages/flux-renderers-3d/src/renderer/hooks/use-scene-manager.ts#UseSceneManagerArgs",
     "packages/flux-renderers-3d/src/renderer/hooks/use-three-events.ts#UseThreeEventsArgs",
     "packages/flux-renderers-3d/src/schemas.ts#BindingTargetType",
@@ -640,6 +644,7 @@
     "packages/flux-renderers-form/src/renderers/date/date-utils.ts#PeriodComponents",
     "packages/flux-renderers-form/src/renderers/date/stepper-button.tsx#StepperButtonProps",
     "packages/flux-renderers-form/src/renderers/form-load-action.ts#FormLoadActionState",
+    "packages/flux-renderers-form/src/renderers/form-load-action.ts#FormLoadState",
     "packages/flux-renderers-form/src/renderers/input-suggest.tsx#InputSuggestApi",
     "packages/flux-renderers-form/src/renderers/input-suggest.tsx#InputSuggestConfig",
     "packages/flux-renderers-form/src/renderers/input-suggest.tsx#SuggestionItem",
@@ -952,9 +957,7 @@
     "tests/e2e/helpers/visual-contrast.ts#DecodedPng",
     "tests/e2e/helpers/visual-contrast.ts#Rect",
     "tests/e2e/helpers/visual-contrast.ts#RegionContrast",
-    "tests/e2e/helpers/visual-theme.ts#ThemeMode",
-    "packages/flux-react/src/schema-diagnostics-reporter.ts#SchemaDiagnosticReporter",
-    "packages/flux-renderers-form/src/renderers/form-load-action.ts#FormLoadState"
+    "tests/e2e/helpers/visual-theme.ts#ThemeMode"
   ],
   "dependencies": [],
   "devDependencies": [

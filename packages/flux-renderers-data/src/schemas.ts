@@ -342,7 +342,17 @@ export interface ListSchema extends BaseSchema {
   paginationStatePath?: string;
   /** Optional separate scope path for pageSize (scope ownership). */
   pageSizeStatePath?: string;
+  /**
+   * Drag-reorder switch (defaults to false — absent means zero drift). When
+   * true, each item renders a drag handle; drops dispatch `onReorder`.
+   * Gated: requires stable explicit keys, non-paged pagination, and no
+   * windowing (design.md §4) — violations disable reorder entirely with a dev
+   * warning.
+   */
+  reorderable?: boolean;
   onItemClick?: ActionSchema | ActionSchema[];
+  /** Dispatched after a reorder drop / keyboard move (design.md §8). Host writes scope `items` back. */
+  onReorder?: ActionSchema | ActionSchema[];
   onSelectionChange?: ActionSchema | ActionSchema[];
   /** Dispatched when the list's resolved current page changes. Payload: { currentPage, pageSize, totalPages, total }. */
   onPageChange?: ActionSchema | ActionSchema[];

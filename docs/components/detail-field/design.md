@@ -9,12 +9,15 @@
 
 - 对应 AMIS 的 `dialog` + 表单字段组合模式（"编辑详情"工作流）。
 - Flux 收敛为独立 `detail-field` type：**值 owner = 父表单字段**；编辑态归内部 draft form（确认写回 / 取消丢弃）。
-- **inline-edit（点即编辑）落点裁决（G2D，2026-10-24，plan `713-arc-g2d-inline-edit-design.md`，出处 `arc-component-gap-roadmap` §5.1 G2）**：
 
-  | 候选                                 | 结论     | 理由                                                                                                                                                                                                                                                                                                                          |
-  | ------------------------------------ | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-  | (a) `detail-field.editable` 能力扩展 | **采纳** | 写回/校验管线（`applyParentWriteback`/`settleParentValidation`/回滚/`compileDetailValueAdaptationAction`）已函数化在 renderer 内，内联路径零耦合复用（无 draft form / summary-gate 依赖，`useDetailChildValidationContract` 以 `active: open` 门控、内联不开 draft 不激活）；type 数不增，符合能力扩展优先口径（G1/G5/G6 同） |
-  | (b) 独立 type `inline-edit`          | 拒绝     | 新 retained type 需 matrix 增行（human gate，`amis-baseline-matrix.md`）；且会复制整条写回/校验编排；交互差异（无 surface 的原位编辑）可在既有 viewer 槽内以能力开关表达，不构成独立契约边界                                                                                                                                  |
+### Flux 决策表
+
+> 按命名基线 X5 式范本（`docs/references/naming-conventions.md` §与 X5 的关系）新增；主语为 Flux。列：`能力 | 采纳 | 不采纳 | 理由`。
+
+| 能力                                 | 采纳                                                                                                                                                                                                        | 不采纳                                           | 理由                                                                                                                                                                                                                                                                    |
+| ------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 编辑形态（arc-component-gap G2）     | **实现**：`editMode?: 'surface' \| 'inline'`——`surface`（默认，现状弹窗）之外新增 `inline` 点即编辑（见 §4/§7/§10）                                                                                         | 独立 type `inline-edit`                          | name 绑定、写回双通道（`applyParentWriteback`）、adaptation 链（transformIn/validate/transformOut）、校验收敛回滚、presentation 门控在两方案中完全相同——独立 type 仅 surface 壳不同，机制复用率 ~80%，属 type 增殖且需 matrix human gate；detail 家族语义内含轻编辑形态 |
+| Arc `InlineEdit` 对照（inline 模式） | 采纳：点即编辑、Enter 提交、Escape 回滚、提交失败编辑态保持（Arc 为提交失败**退出**编辑态 + failed 横幅 + 重试，`inline-edit.tsx:258-268`——flux 与 surface confirm 失败语义同构、避免输入丢失，裁定为保持） | `multiline`（多行内容仍走 surface）；motion 动效 | 多行超出字段级轻编辑定位（scalar 单行）；本仓无动效引擎（arc-component-gap §5.4 动效边界）                                                                                                                                                                              |
 
 ## 3. Flux 中的 renderer/type 定义
 
@@ -44,38 +47,17 @@ interface DetailFieldSchema extends BoundFieldSchemaBase {
   validateValueAction?: ActionSchema | ActionSchema[];
   /** 编辑确认时的转换（draft → committed） */
   transformOutAction?: ActionSchema | ActionSchema[];
-  /** 点即编辑（G2D 协议，实现归 G2I）：true 时 viewer 原位可编辑，不渲染触发按钮与 surface */
-  editable?: boolean;
-  /** 内联编辑触发方式（仅 editable: true 消费），默认 'click' */
-  editTrigger?: 'click' | 'dblclick';
+  /** 编辑形态：`surface`（默认，弹窗 draft form）| `inline`（点即编辑，见 §7/§10；arc-component-gap G2 新增） */
+  editMode?: 'surface' | 'inline';
 }
 ```
 
 `DetailSurfaceConfig`：`{ mode?: 'dialog'|'drawer'; title?: string; size?: string; placement?: 'left'|'right'|'top'|'bottom' }`。
 
-### 4a. `editable` 点即编辑协议（G2D 设计，实现归 G2I）
-
-**触发与点击目标**：`editTrigger` 默认 `click`（可 `dblclick`）；命中区为 `detail-field-viewer` 容器；viewer 内可交互子内容（button/a/input/select/textarea/label）点击不触发编辑（G2I 实现为 `closest()` 排除，行为等价于 stopPropagation 优先）。
-
-**编辑态**：viewer 原位替换为单行 `Input`（首版固定），`aria-label` 沿用字段 label，初始显示值 = viewer 同源（`String(fieldValue)`），聚焦并全选。
-
-**值适配裁决**：内联路径首版仅承诺**标量契约**——提交时 workingValue = 原始字符串。`editable: true` 与 `transformInAction`/`transformOutAction`/`validateValueAction` 任一同时声明时 `editable` 无效、走既有 dialog 路径（首版不支持内联×适配组合）。
-
-**提交**：Enter 或 blur 且值变更 → 校验（互斥裁决下仅 parent 校验链 `settleParentValidation`；`validateValueAction` 分支因 editable×transform\* 互斥在内联路径不可达）→ `applyParentWriteback` → `settleParentValidation`；校验/写回失败保留编辑态并显示错误（复用既有错误发布通道）。值未变 blur 直接回 viewer（不触发管线）。
-
-**取消**：ESC 丢弃修改回 viewer，不触发任何写回。
-
-**降级**：`meta.disabled` / `props.readOnly` 时 viewer 静态展示，触发不生效。
-
-**与 dialog 路径互斥**：`editable: true` 时不渲染 `triggerLabel` 触发按钮与 surface；`triggerLabel` 仅 dialog 路径消费。`editTrigger` 仅 `editable: true` 消费。
-
-**DOM marker / a11y**：编辑态容器 `data-slot="detail-field-inline-editor"`；错误经既有 `aria-describedby` 错误链（FieldFrame）。
-
 ## 5. 字段分类
 
 - `viewer`、`content`: `region`
-- `editable`: `value`（boolean，肯定式）；`editTrigger`: `value`
-- `name`、`triggerLabel`、`surface`、`transformInAction`、`transformOutAction`、`validateValueAction`: `value`（adaptation action 经 `compileDetailValueAdaptationAction` 编译）
+- `name`、`triggerLabel`、`surface`、`editMode`、`transformInAction`、`transformOutAction`、`validateValueAction`: `value`（adaptation action 经 `compileDetailValueAdaptationAction` 编译）
 - `label`/`hint`/`description`: `value-or-region`
 
 ## 6. regions 与 slot 约定
@@ -89,7 +71,14 @@ interface DetailFieldSchema extends BoundFieldSchemaBase {
 - 打开时：`transformIn` → `buildDetailDraftInitialValues` → 创建 `detail-field-draft:*` form runtime。
 - 确认：`draftForm.validateAll('submit')` → `validateValueAction`（错误经 `publishValidateResultErrors` / `applyExternalErrors` 发布）→ `transformOut` → `applyParentWriteback`（`parentForm.setValue(name, value)` 或 `parentScope.update(name, value)`）→ `settleParentValidation`（commit/subtree 校验，失败回滚）→ `touchField(name)` → 关闭。
 - 打开期间父字段挂 `summary-gate` 子契约（校验汇总门控）。
-- `editable` 内联路径（G2D 协议）：不创建 draft form runtime，不激活 summary-gate（`useDetailChildValidationContract` 以 `active: open` 门控）；编辑中值仅存在于编辑态 Input 的 local state，提交才写回父表单。
+- **`editMode: 'inline'`（arc-component-gap G2）**：
+  - inline 草稿是**组件 local UI state**（不创建 draft form runtime，不写表单值直到提交成功）。
+  - 进入编辑：viewer 触发后按钮 busy（`aria-busy` + Spinner，同 surface `opening` 模式，openSequencer last-wins 防重入）→ `runTransformIn`（raw → 编辑器初值）落地后切入编辑态并自动聚焦；失败保持 viewer + `env.notify` warning（复用 open 失败上报模式）。预填约定：适配值 `String()` 化，`null/undefined` 空串；非标量（对象/数组）同样 `String()` 化（G2I 裁决：inline v1 定位 scalar 编辑，不做结构化预填）。
+  - 提交（Enter 或 blur）：`runValidate`（validateValueAction，失败不提交、编辑态保持、焦点留编辑器）→ `transformOut` → `applyParentWriteback` → `settleParentValidation`（失败回滚 + 编辑态保持）→ `touchField` → 回 viewer（焦点还原）。`runValidate` 失败与 `settleParentValidation` 失败时显示内联错误（`data-slot="detail-field-inline-error"`，见 §10）+ `env.notify` warning（复用 confirm 失败上报模式）；编辑态保持期间错误持续可见。
+  - 取消（Escape）：丢弃草稿回 viewer（不写回）。
+  - 提交 in-flight（validate/transformOut/写回/收敛未落地）：二次 Enter/blur/Escape 一律忽略（confirmSequencer 同构守卫）。
+  - 编辑中外部值到达：编辑态不追踪外部更新，提交以提交值为准。
+  - 不可进入门控 = `presentation.interactive`（`!disabled && !readOnly`）。**较 surface 的分歧行为**：surface 下 readOnly 仍可打开弹窗（只读预览 + close-only footer），inline 下 readOnly 直接不可进入（无只读编辑形态可展示）。
 
 ## 8. 事件、动作与组件句柄能力
 
@@ -107,18 +96,17 @@ interface DetailFieldSchema extends BoundFieldSchemaBase {
 - viewer 区 `data-slot="detail-field-viewer"`；触发按钮 `aria-label={triggerLabel}`。
 - surface：Dialog（sm/default/lg/xl）或 Drawer（placement 默认 bottom）；`data-slot="detail-field-surface-body"`、`data-slot="detail-field-draft-body"`、`data-slot="detail-field-draft-error"`（`role="status"` + `aria-live="assertive"`）。
 - `data-slot="field-control"` 由 FieldFrame 输出（`wrap: true`），根节点不再重复（plan-2026-08-05-1359-1 Phase 3 裁决）。
-- `editable: true` 编辑态输出 `data-slot="detail-field-inline-editor"`（G2D 协议，见 §4a）；内联错误节点 `data-slot="detail-field-inline-error"`（`role="alert"`，id `${name}-inline-error`，input `aria-describedby` 指向）。
+- **inline 模式（`editMode: 'inline'`）**：viewer `data-slot="detail-field-viewer"` 维持并追加 `data-editable="true"`；viewer 以按钮语义渲染（可点击 / Enter / Space，`aria-label` = `triggerLabel`）；编辑器 `data-slot="detail-field-inline-editor"`（单行 Input，自动聚焦）；内联错误 `data-slot="detail-field-inline-error"`（`role="status"` + `aria-live="assertive"`，与 draft-error 家族约定取齐）；根 marker `nop-detail-field` 不变。DOM 属性 `data-editable` 与 schema 字段 `editMode` 分属两层，命名差异系历史裁决（R3 观察项记录）。
 
 ## 11. 实现拆分建议
 
 - **渲染层**：`DetailFieldRenderer`（viewer + trigger + surface 编排）+ `DetailSurface`（dialog/drawer 壳与 footer 状态机）。
 - **值适配**：`value-adaptation-helper.ts`（transformIn/validate/transformOut 执行与错误发布）为公共 helper。
 - **写回**：`applyParentWriteback`/`settleParentValidation`/回滚逻辑独立成函数，便于 `detail-view` 复用（对称实现）。
-- **内联编辑**（G2I）：`editable` 分支在 `DetailFieldRenderer` 内复用写回管线，不引入新 surface；editable×transform\* 互斥裁决见 §4a。
 
 ## 12. 风险、取舍与后续阶段
 
 - 主要风险是与 `detail-view` 重复建模——draft form / surface / 值适配机制已共享（`detail-surface.tsx`、`value-adaptation-helper.ts`）。
+- `editMode: 'inline'`（arc-component-gap G2）：落点裁决为能力扩展而非独立 type（§2 决策表，被拒方理由成文）；inline 模式不使用 draft form / surface / summary-gate 机制（单字段就地编辑，父级校验由 `settleParentValidation` 直接收敛），两种编辑形态共享 adaptation 链与写回链。inline 的 readOnly 不可进入是较 surface 的新增分歧（surface 只读可开弹窗预览）——理由：inline 无只读编辑形态可展示。`'surface'` 枚举值与兄弟 schema 字段名 `surface`（弹窗配置对象）同词异义，保留（语义 = "经 surface 编辑"，与 `surface.mode: 'dialog'|'drawer'` 正交）。
 - draft 编辑期间父表单校验汇总（summary-gate）为防呆设计，需保持契约冻结（detail-field-basic.test.tsx + draft 校验测试）。
 - readOnly 模式只读渲染 + close-only footer（无确认按钮）。
-- `editable` 命名 pass（G2D，对照 `docs/references/naming-conventions.md`）：采纳 `editable`（肯定式布尔，`disabled`/`readOnly` 同族）与 `editTrigger`（camelCase，'click'|'dblclick'）；拒绝 `inlineEdit`（把交互范式而非能力写进字段名）、`clickToEdit`（把默认触发方式写死进名）、`editOn`（介词歧义）。风险：`editTrigger` 与 `triggerLabel` 语义邻近（触发方式 vs 触发按钮文案），schema 文档需并列说明；editable×transform\* 互斥是首版契约约束，放开需独立 plan。

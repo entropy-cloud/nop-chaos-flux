@@ -79,7 +79,7 @@ const revealPasswordForm = {
   ],
 };
 
-const strengthForm = {
+const showStrengthForm = {
   type: 'page',
   body: [
     {
@@ -89,9 +89,10 @@ const strengthForm = {
         {
           type: 'input-password',
           name: 'password',
-          label: 'Password with strength meter',
+          label: 'Password strength',
           placeholder: 'Type to see the strength meter',
           showStrength: true,
+          revealPassword: true,
         },
       ],
       actions: [{ type: 'button', label: 'Submit', onClick: { action: 'submitForm' } }],
@@ -102,7 +103,7 @@ const strengthForm = {
 export function InputPasswordLabPage() {
   return (
     <MultiScenarioLabPage
-      introDescription="Password input with masked characters. Supports the reveal toggle (E2a-bis) and the four-level showStrength meter (weak/fair/good/strong); confirmation affordances remain separate enhancements."
+      introDescription="Password input with masked characters: standard password semantics, confirm-password validation, the reveal toggle, and the showStrength meter (four segments + level word, local rule-based scoring)."
       scenarios={[
         {
           title: 'Basic password field',
@@ -123,10 +124,10 @@ export function InputPasswordLabPage() {
           schema: revealPasswordForm,
         },
         {
-          title: 'Strength meter',
+          title: 'Password strength meter',
           description:
-            'showStrength: true renders a four-segment meter below the input (weak/fair/good/strong) driven by length and character-class rules. It is display-only feedback and does not participate in validation.',
-          schema: strengthForm,
+            'showStrength: true renders a four-segment meter with a level word under the input. Scoring is local and rule-based (too short / weak / fair / good / strong); the meter is display-only feedback and never writes to the form value.',
+          schema: showStrengthForm,
         },
       ]}
     />

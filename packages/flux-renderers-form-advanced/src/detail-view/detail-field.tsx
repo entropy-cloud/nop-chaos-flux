@@ -14,7 +14,7 @@ import {
   useScopeSelector,
   useCurrentFormState,
 } from '@nop-chaos/flux-react';
-import { Button, cn, Input, Spinner } from '@nop-chaos/ui';
+import { Button, Input, cn, Spinner } from '@nop-chaos/ui';
 import type { DetailFieldSchema } from '../composite-field/composite-schemas.js';
 import { formFieldRules, useFieldPresentation } from '@nop-chaos/flux-renderers-form';
 import { t } from '@nop-chaos/flux-i18n';
@@ -61,15 +61,6 @@ export function DetailFieldRenderer(props: RendererComponentProps<DetailFieldSch
     schemaProps.triggerLabel ?? t('flux.common.editItem', { item: fieldLabel }),
   );
   const validationMessage = t('flux.common.detailDraftValidationError');
-  const hasAdaptationActions = Boolean(
-    schemaProps.transformInAction ||
-      schemaProps.transformOutAction ||
-      schemaProps.validateValueAction,
-  );
-  // §4a mutual exclusion: editable degrades to the dialog path when any value
-  // adaptation action is declared (inline contract is scalar-only).
-  const inlineEditable = schemaProps.editable === true && !hasAdaptationActions;
-  const editTrigger = schemaProps.editTrigger ?? 'click';
   const openFailureMessage = t('flux.common.saveFailed');
   const confirmFailureMessage = t('flux.common.saveFailed');
 
@@ -120,54 +111,6 @@ export function DetailFieldRenderer(props: RendererComponentProps<DetailFieldSch
   // [G2-R6-视角6-01] baseline the dirty check against the values the draft opened with.
   const draftInitialValuesRef = React.useRef<Record<string, unknown>>({});
 
-  const [inlineEditing, setInlineEditing] = React.useState(false);
-  const [inlineDraft, setInlineDraft] = React.useState('');
-  const [inlineError, setInlineError] = React.useState<string | null>(null);
-  const inlineCommitTokenRef = React.useRef(0);
-  const pendingInlineCommitTokenRef = React.useRef(0);
-
-  function beginInlineEdit() {
-    if (!inlineEditable || presentation.effectiveDisabled || readOnly) return;
-    setInlineDraft(fieldValue !== undefined && fieldValue !== null ? String(fieldValue) : '');
-    setInlineError(null);
-    setInlineEditing(true);
-  }
-
-  function cancelInlineEdit() {
-    inlineCommitTokenRef.current += 1;
-    setInlineEditing(false);
-  }
-
-  async function commitInlineEdit() {
-    if (!inlineEditing || readOnly) return;
-    const token = ++inlineCommitTokenRef.current;
-    const next = inlineDraft;
-    const original = readCurrentParentValue();
-    const originalText = original !== undefined && original !== null ? String(original) : '';
-
-    if (next === originalText) {
-      setInlineEditing(false);
-      return;
-    }
-
-    applyParentWriteback(next);
-    // touch regardless of outcome so a validation failure is visible through
-    // the FieldFrame error chain (showError is touched-gated).
-    parentForm?.touchField(name);
-    const ok = await settleParentValidation(setInlineError);
-
-    if (!ok) {
-      // rollback runs even if the user pressed Escape while the commit was in
-      // flight (token mismatch) — a failed value must never persist.
-      await rollbackParentWriteback(original);
-      if (token !== inlineCommitTokenRef.current) return;
-      return;
-    }
-
-    if (token !== inlineCommitTokenRef.current) return;
-    setInlineEditing(false);
-  }
-
   const childOwnerId = React.useMemo(
     () => `detail-field:${props.id}:${name || 'value'}`,
     [props.id, name],
@@ -188,7 +131,9 @@ export function DetailFieldRenderer(props: RendererComponentProps<DetailFieldSch
     node: props.node,
   });
 
-  async function settleParentValidation(onError?: (message: string) => void): Promise<boolean> {
+  async function settleParentValidation(
+    reportError: (message: string) => void = setDraftErrorSafe,
+  ): Promise<boolean> {
     if (!hasName) {
       return true;
     }
@@ -204,9 +149,7 @@ export function DetailFieldRenderer(props: RendererComponentProps<DetailFieldSch
     }
 
     if (!result.ok) {
-      const message = result.errors[0]?.message ?? validationMessage;
-      setDraftErrorSafe(message);
-      onError?.(message);
+      reportError(result.errors[0]?.message ?? validationMessage);
       return false;
     }
 
@@ -230,11 +173,14 @@ export function DetailFieldRenderer(props: RendererComponentProps<DetailFieldSch
     parentScope?.update(name, value);
   }
 
-  async function rollbackParentWriteback(previousValue: unknown) {
+  async function rollbackParentWriteback(
+    previousValue: unknown,
+    reportError: (message: string) => void = setDraftErrorSafe,
+  ) {
     applyParentWriteback(previousValue);
 
     if (parentForm || parentValidationOwner) {
-      await settleParentValidation();
+      await settleParentValidation(reportError);
     }
   }
 
@@ -385,95 +331,233 @@ export function DetailFieldRenderer(props: RendererComponentProps<DetailFieldSch
   const viewerContent = resolveRendererSlotContent(props, 'viewer');
   const editContent = resolveRendererSlotContent(props, 'content');
 
+  const inlineMode = schemaProps.editMode === 'inline';
+  const [inlinePhase, setInlinePhase] = React.useState<'idle' | 'opening' | 'editing' | 'confirming'>(
+    'idle',
+  );
+  const [inlineDraft, setInlineDraft] = React.useState('');
+  const [inlineError, setInlineError] = React.useState<string | undefined>(undefined);
+  const inlineBusyRef = React.useRef(false);
+  const inlineViewerRef = React.useRef<HTMLButtonElement | null>(null);
+  const inlineEditorRef = React.useRef<HTMLInputElement | null>(null);
+  const inlinePrevPhaseRef = React.useRef(inlinePhase);
+
+  React.useEffect(() => {
+    if (inlinePrevPhaseRef.current === inlinePhase) return;
+    inlinePrevPhaseRef.current = inlinePhase;
+    if (inlinePhase === 'editing') {
+      inlineEditorRef.current?.focus();
+    } else if (inlinePhase === 'idle') {
+      inlineViewerRef.current?.focus();
+    }
+  }, [inlinePhase]);
+
+  async function handleInlineOpen() {
+    if (!hasName || !presentation.interactive || inlineBusyRef.current) return;
+
+    const openToken = openSequencer.nextToken();
+    inlineBusyRef.current = true;
+    setInlineError(undefined);
+    setInlinePhase('opening');
+
+    try {
+      const adaptedValue = await runTransformIn(
+        schemaProps.transformInAction,
+        { rawValue: fieldValue, name, readOnly },
+        runAdaptationAction,
+      );
+
+      if (!mountedRef.current || !openSequencer.isCurrent(openToken)) return;
+
+      inlineBusyRef.current = false;
+      setInlineDraft(
+        adaptedValue === null || adaptedValue === undefined ? '' : String(adaptedValue),
+      );
+      setInlinePhase('editing');
+    } catch (error) {
+      if (mountedRef.current && openSequencer.isCurrent(openToken)) {
+        inlineBusyRef.current = false;
+        setInlinePhase('idle');
+        reportOpenFailure(error);
+        throw error;
+      }
+    }
+  }
+
+  async function handleInlineCommit() {
+    if (!hasName || inlineBusyRef.current) return;
+
+    const confirmToken = confirmSequencer.nextToken();
+    inlineBusyRef.current = true;
+    setInlineError(undefined);
+    setInlinePhase('confirming');
+
+    const backToEditing = () => {
+      inlineBusyRef.current = false;
+      setInlinePhase('editing');
+    };
+
+    const reportInlineSettleFailure = (message: string) => {
+      setInlineError(message);
+      runtime?.env?.notify?.('warning', message);
+    };
+
+    try {
+      const workingValue = inlineDraft;
+
+      const validation = await runValidate(
+        schemaProps.validateValueAction,
+        { workingValue, originalValue: fieldValue, name },
+        runAdaptationAction,
+      );
+
+      if (!mountedRef.current || !confirmSequencer.isCurrent(confirmToken)) return;
+
+      if (parentForm) {
+        publishValidateResultErrors(validation, name, parentForm);
+      } else if (parentValidationOwner) {
+        parentValidationOwner.applyExternalErrors({
+          sourceId: `value-adaptation:${name}`,
+          errors: validation.valid
+            ? []
+            : (validation.issues ?? []).map((issue) => ({
+                path: issue.path ? `${name}.${issue.path}` : name,
+                message: issue.message,
+                rule: 'async',
+                sourceKind: 'runtime-overlay',
+              })),
+          replace: true,
+        });
+      }
+
+      if (!validation.valid) {
+        const issueMessage = validation.issues?.[0]?.message ?? validationMessage;
+        setInlineError(issueMessage);
+        runtime?.env?.notify?.('warning', issueMessage);
+        backToEditing();
+        return;
+      }
+
+      const writeback = await runTransformOut(
+        schemaProps.transformOutAction,
+        { workingValue, originalValue: fieldValue, name, readOnly },
+        runAdaptationAction,
+      );
+
+      if (!mountedRef.current || !confirmSequencer.isCurrent(confirmToken)) return;
+
+      const previousValue = readCurrentParentValue();
+
+      applyParentWriteback(writeback);
+
+      const fieldValidationResult = await settleParentValidation(reportInlineSettleFailure);
+
+      if (!mountedRef.current || !confirmSequencer.isCurrent(confirmToken)) return;
+
+      if (!fieldValidationResult) {
+        await rollbackParentWriteback(previousValue, reportInlineSettleFailure);
+
+        if (!mountedRef.current || !confirmSequencer.isCurrent(confirmToken)) return;
+
+        backToEditing();
+        return;
+      }
+
+      parentForm?.touchField(name);
+
+      inlineBusyRef.current = false;
+      setInlinePhase('idle');
+      setInlineDraft('');
+    } catch (error) {
+      if (mountedRef.current && confirmSequencer.isCurrent(confirmToken)) {
+        logDetailFieldAsyncError('confirm', error);
+        const message = toAsyncFailureMessage(error, confirmFailureMessage);
+        setInlineError(message);
+        runtime?.env?.notify?.('warning', message);
+        backToEditing();
+      }
+    }
+  }
+
+  function handleInlineCancel() {
+    if (inlineBusyRef.current) return;
+    setInlineDraft('');
+    setInlineError(undefined);
+    setInlinePhase('idle');
+  }
+
   return (
     <>
       <div className={cn('nop-detail-field', props.meta.className)}>
-        {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions -- interactive face (role/tabIndex/onKeyDown Enter-Space) is conditional on inlineEditable; the rule cannot see the conditional role expression (table-quick-edit-cell precedent) */}
-        <div
-          data-slot="detail-field-viewer"
-          role={
-            inlineEditable && !inlineEditing && !presentation.effectiveDisabled && !readOnly
-              ? 'button'
-              : undefined
-          }
-          tabIndex={
-            inlineEditable && !inlineEditing && !presentation.effectiveDisabled && !readOnly ? 0 : undefined
-          }
-          onKeyDown={
-            inlineEditable && !inlineEditing && !presentation.effectiveDisabled && !readOnly
-              ? (event) => {
-                  if (event.key === 'Enter' || event.key === ' ') {
-                    event.preventDefault();
-                    beginInlineEdit();
-                  }
-                }
-              : undefined
-          }
-          onClick={(event) => {
-            if (editTrigger !== 'click') return;
-            const target = event.target as HTMLElement;
-            if (target.closest('button, a, input, select, textarea, label')) return;
-            beginInlineEdit();
-          }}
-          onDoubleClick={(event) => {
-            if (editTrigger !== 'dblclick') return;
-            const target = event.target as HTMLElement;
-            if (target.closest('button, a, input, select, textarea, label')) return;
-            beginInlineEdit();
-          }}
-        >
-          {inlineEditing ? (
-            <div data-slot="detail-field-inline-editor">
+        {inlineMode ? (
+          inlinePhase === 'editing' || inlinePhase === 'confirming' ? (
+            <span>
               <Input
-                ref={(el) => {
-                  el?.focus();
-                  el?.select();
-                }}
+                ref={inlineEditorRef}
+                data-slot="detail-field-inline-editor"
+                aria-label={triggerLabel}
+                aria-busy={inlinePhase === 'confirming' || undefined}
                 value={inlineDraft}
-                aria-label={fieldLabel}
-                aria-invalid={inlineError ? true : undefined}
-                aria-describedby={inlineError ? `${name}-inline-error` : undefined}
-                disabled={presentation.effectiveDisabled}
+                disabled={inlinePhase === 'confirming'}
                 onChange={(event) => setInlineDraft(event.target.value)}
-                onBlur={() => {
-                  if (inlineCommitTokenRef.current === pendingInlineCommitTokenRef.current) {
-                    commitInlineEdit().catch((error) => {
-                      logDetailFieldAsyncError('confirm', error);
-                    });
-                  }
-                }}
                 onKeyDown={(event) => {
                   if (event.key === 'Enter') {
                     event.preventDefault();
-                    pendingInlineCommitTokenRef.current = ++inlineCommitTokenRef.current;
-                    commitInlineEdit().catch((error) => {
-                      logDetailFieldAsyncError('confirm', error);
-                    });
+                    handleInlineCommit();
                   } else if (event.key === 'Escape') {
                     event.preventDefault();
-                    cancelInlineEdit();
+                    handleInlineCancel();
                   }
+                }}
+                onBlur={() => {
+                  handleInlineCommit();
                 }}
               />
               {inlineError ? (
-                <div
-                  id={`${name}-inline-error`}
+                <span
                   data-slot="detail-field-inline-error"
-                  role="alert"
+                  role="status"
+                  aria-live="assertive"
                 >
                   {inlineError}
-                </div>
+                </span>
               ) : null}
-            </div>
+            </span>
           ) : (
-            viewerContent ?? (
+            <button
+              type="button"
+              ref={inlineViewerRef}
+              data-slot="detail-field-viewer"
+              data-editable="true"
+              aria-label={triggerLabel}
+              aria-busy={inlinePhase === 'opening' || undefined}
+              disabled={!hasName || !presentation.interactive}
+              onClick={() => {
+                handleInlineOpen().catch((error) => {
+                  logDetailFieldAsyncError('open', error);
+                });
+              }}
+            >
+              {inlinePhase === 'opening' ? (
+                <Spinner className="size-4" aria-hidden="true" />
+              ) : null}
+              {viewerContent ?? (
+                <span>
+                  {fieldValue !== undefined && fieldValue !== null ? String(fieldValue) : '—'}
+                </span>
+              )}
+            </button>
+          )
+        ) : (
+          <div data-slot="detail-field-viewer">
+            {viewerContent ?? (
               <span>
                 {fieldValue !== undefined && fieldValue !== null ? String(fieldValue) : '—'}
               </span>
-            )
-          )}
-        </div>
-        {!presentation.effectiveDisabled && !inlineEditable && (
+            )}
+          </div>
+        )}
+        {!inlineMode && !presentation.effectiveDisabled && (
           <Button
             type="button"
             variant="outline"
@@ -492,7 +576,6 @@ export function DetailFieldRenderer(props: RendererComponentProps<DetailFieldSch
           </Button>
         )}
       </div>
-      {!inlineEditable && (
       <DetailSurface
         open={open}
         mode={surfaceMode}
@@ -522,7 +605,6 @@ export function DetailFieldRenderer(props: RendererComponentProps<DetailFieldSch
           {editContent}
         </DetailDraftBody>
       </DetailSurface>
-      )}
     </>
   );
 }
@@ -563,8 +645,7 @@ export const detailFieldRendererDefinition: RegisteredRendererDefinition<DetailF
     { key: 'content', kind: 'region', regionKey: 'content' },
     ...formFieldRules,
     { key: 'triggerLabel', kind: 'prop' },
-    { key: 'editable', kind: 'prop', valueType: 'boolean' },
-    { key: 'editTrigger', kind: 'prop' },
+    { key: 'editMode', kind: 'prop' },
     { key: 'readOnly', kind: 'prop' },
     { key: 'surface', kind: 'prop' },
     { key: 'transformInAction', kind: 'prop', compile: compileDetailValueAdaptationAction },

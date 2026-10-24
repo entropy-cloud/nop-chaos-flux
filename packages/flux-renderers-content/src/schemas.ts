@@ -176,6 +176,20 @@ export interface ImageSchema extends BaseSchema {
   onLoadError?: ActionSchema | ActionSchema[];
 }
 
+
+export interface ImageCompareSchema extends BaseSchema {
+  type: 'image-compare';
+  /** 前图（overlay 层，随分隔线裁切显示） */
+  before?: SchemaValue;
+  /** 后图（base 层，完整显示） */
+  after?: SchemaValue;
+  /** 分隔线初始位置（0-100 百分比，默认 50；初始播种，非 reactive） */
+  defaultPosition?: number;
+  /** alt 文案（双图共用；无障碍基线） */
+  alt?: string;
+  /** 分隔线拖拽方向：horizontal（默认，左右对比）| vertical（上下对比） */
+  orientation?: 'horizontal' | 'vertical';
+}
 export interface JsonViewSchema extends BaseSchema {
   type: 'json-view';
   /** 待展示的 JSON 数据（任意可序列化值） */
@@ -197,6 +211,8 @@ export interface MarkdownSchema extends BaseSchema {
   src?: string;
   /** 是否允许内嵌 HTML（默认 false 转义；开启时同样过 sanitize 门禁） */
   allowHtml?: boolean;
+  /** code fence 语法高亮开关（G4I：渲染器级整文档开关，默认 false 行为零变化；见 markdown/design.md §2a） */
+  codeHighlight?: boolean;
   /** 空态（value-or-region） */
   empty?: SchemaInput;
 }

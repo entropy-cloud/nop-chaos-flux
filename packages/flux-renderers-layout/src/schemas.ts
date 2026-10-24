@@ -260,6 +260,19 @@ export interface DropdownButtonSchema extends BaseSchema {
   sideOffset?: number;
   /** Disabled flag */
   disabled?: boolean;
+  /**
+   * Split mode (defaults to `false` — absent means the current merged
+   * single-trigger behavior with zero drift): the main segment dispatches
+   * `mainAction`, the caret segment opens the menu. See design.md §4/§7.
+   */
+  split?: boolean;
+  /**
+   * Action dispatched by the main segment in split mode (consumed only when
+   * `split` is true; declared as an `event` definition field, delivered via
+   * `props.events.mainAction`). When absent the main segment degrades to
+   * opening the menu.
+   */
+  mainAction?: ActionSchema | ActionSchema[];
 }
 
 // ───────────────────────────── W4b Steps ─────────────────────────────

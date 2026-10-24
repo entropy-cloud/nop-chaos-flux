@@ -3,27 +3,27 @@
 ## 1. 组件定位
 
 - `input-password` 是 `input-text` 的密码语义特化版。
-- 它主要区别在输入类型、安全显示策略和增强能力（reveal 已落地、strength 已设计待实现）。
+- 它主要区别在输入类型、安全显示策略和后续可能的 reveal/strength 能力。
 
 ## 2. 与 AMIS 或既有产品的能力对照
 
 - amis 仅作参考之一，**非标尺**。能力裁决与决策表见 `input-text/design.md` §2 Flux 决策表（本组件沿用）。
 - 当前最小能力与 `input-text` 一致。
 - `minLength`/`maxLength`/`pattern` 同 input-text，已实现（双重生效：编译期 `collectSchemaValidationRules` 收集为 validation rule + `createInputRenderer` 透传原生 `<input>` 属性）。详见 `input-text/design.md` §2、§3。
-- 显示切换已由 E2a-bis 落地；强度指示已由 G1D 完成设计（§4a，实现归 G1I）；自动生成密码仍属后续增强，不在本文档固化成复杂协议。
+- 显示切换（已实现）与自动生成密码属于后续增强，不应在首版文档里直接固化成复杂协议；强度提示契约已定稿（`showStrength`，实现随 arc-component-gap G1I 落地，见 §2/§4/§10）。
 - **revealPassword 显示切换** 由 E2a-bis 工作项落地（基础能力，amis 默认开启；`revealPassword: true` 启用，详见 §2/§7/§10）。
 
 ### Flux 决策表
 
 > Flux 决策主语。文本输入族共享面（`name`/`placeholder`/`required`/`minLength`/`maxLength`/`pattern` 双重生效/prefix/suffix/clearable/trimContents/showCounter/autoComplete（suggest）/nativeAutoComplete/input-mask/amis `addOn`/amis `transform`/amis `borderMode`/amis `clearValueOnEmpty`/amis 组件级 `api`）见 `input-text/design.md` §2 Flux 决策表，本表只列 input-password **特化差异**。命名对齐 X3 基线（`docs/references/naming-conventions.md`）。列：`能力 | 采纳 | 不采纳 | 理由`。
 
-| 能力                      | 采纳                                                                                                                                                                                                            | 不采纳             | 理由                                                                                                                                                                                   |
-| ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| HTML input type           | **实现**：`type='input-password'` → 渲染 `<input type="password">`                                                                                                                                              | —                  | 密码语义特化；浏览器原生密码输入/凭据管理集成                                                                                                                                          |
-| `revealPassword` 显示切换 | **实现**：`revealPassword: true` 时在 InputGroup inline-end addon 渲染 reveal toggle 按钮（Eye/EyeOff），点击切换 `<input type="password">` ↔ `<input type="text">`                                             | —                  | 基础能力，amis 默认开启；明文状态为 `local` UI state，不写入表单值（见 §7）。字段加在共享 `InputSchema`，但仅 input-password renderer 消费（input-text/email 即便声明也不渲染 toggle） |
-| 密码强度指示              | **已设计（G1D，2026-10-24）**：`showStrength: true` 启用强度条；能力扩展非新 type，实现归 G1I（`docs/plans/710-arc-g1d-password-strength-design.md`，出处 `docs/backlog/arc-component-gap-roadmap.md` §5.1 G1） | —                  | 注册/改密表单高频能力（Arc `password-strength` 对照）；此前"暂不实现"裁定由 G1D 翻转，规则优先经辅助渲染层接入的原口径由本协议承接                                                     |
-| 自动生成密码              | —                                                                                                                                                                                                               | **不采纳**（首版） | 引入随机生成逻辑耦合，后续如有需要按独立 feature plan 评估                                                                                                                             |
-| 密码管理器专用字段        | —                                                                                                                                                                                                               | **不采纳**         | 浏览器原生 `autocomplete="current-password"`/`"new-password"` 已覆盖（见 input-text `nativeAutoComplete` 实现）；不在 schema 平行发明                                                  |
+| 能力                      | 采纳                                                                                                                                                                | 不采纳                           | 理由                                                                                                                                                                                   |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| HTML input type           | **实现**：`type='input-password'` → 渲染 `<input type="password">`                                                                                                  | —                                | 密码语义特化；浏览器原生密码输入/凭据管理集成                                                                                                                                          |
+| `revealPassword` 显示切换 | **实现**：`revealPassword: true` 时在 InputGroup inline-end addon 渲染 reveal toggle 按钮（Eye/EyeOff），点击切换 `<input type="password">` ↔ `<input type="text">` | —                                | 基础能力，amis 默认开启；明文状态为 `local` UI state，不写入表单值（见 §7）。字段加在共享 `InputSchema`，但仅 input-password renderer 消费（input-text/email 即便声明也不渲染 toggle） |
+| 密码强度指示              | **实现**：`showStrength: true` 时在输入框下方渲染强度条（meter）：4 段 + 等级词，本地规则计分（见 §4/§10），纯展示反馈                                              | Arc 规则勾选清单 UI、motion 动效 | 规则清单属组合层职责，非 renderer 最小能力（`design.md` 首版原则）；本仓无动效引擎，过渡走 styling-system 现有约定（arc-component-gap §5.4 动效边界）；熵计算依赖零新增                |
+| 自动生成密码              | —                                                                                                                                                                   | **不采纳**（首版）               | 引入随机生成逻辑耦合，后续如有需要按独立 feature plan 评估                                                                                                                             |
+| 密码管理器专用字段        | —                                                                                                                                                                   | **不采纳**                       | 浏览器原生 `autocomplete="current-password"`/`"new-password"` 已覆盖（见 input-text `nativeAutoComplete` 实现）；不在 schema 平行发明                                                  |
 
 ## 3. Flux 中的 renderer/type 定义
 
@@ -37,50 +37,15 @@
 - 沿用 `InputSchema`。
 - `revealPassword?: boolean`（E2a-bis 新增，字段加在共享 `InputSchema`）—— `true` 时启用 reveal toggle；仅 input-password renderer 消费。
 - E3 suggest 字段（`suggestSource`/`suggestDebounce`/`suggestTrigger`/`suggestMinInputLength`/`suggestTemplate`/`suggestEmpty`）声明在共享 `InputSchema`，input-password renderer 共享消费（走 data-source composition 模式 A，详见 `input-text/design.md` §4 E3 新增字段）。密码字段的远程建议场景较少，但契约共享以保证输入族一致性。
-- **strength（G1D 已设计，实现归 G1I）**：`showStrength?: boolean`（字段加在共享 `InputSchema`，与 `revealPassword` 同一先例——仅 input-password renderer 消费，input-text/email 即便声明也不渲染强度条）。完整协议见 §4a。
-
-### 4a. `showStrength` 强度指示协议（G1D 设计，实现归 G1I）
-
-**字段**：`showStrength?: boolean`（共享 `InputSchema`，仅 input-password renderer 消费）。命名 pass 结论见 §4b。
-
-**评分规则**（纯 renderer 内派生，无第三方依赖、无异步）：
-
-- 字符类别四类：小写 / 大写 / 数字 / 符号（非字母数字可打印字符）。
-- `weak`：长度 < 8，或仅含 1 个字符类别。
-- `fair`：长度 ≥ 8 且含 2 个字符类别。
-- `good`：长度 ≥ 8 且含 3 个字符类别；或长度 ≥ 10 且含 2 类。
-- `strong`：长度 ≥ 12 且含 3 个及以上字符类别（≥3）。
-- 空值：不渲染整个强度行（无轨道、无文案）。
-
-**四档配色语义**（一律走语义 token，禁止 raw emerald/amber 类；badge/button-status 测试已强制状态色走 token）：
-
-| 档位   | token                                                                                                  | 文案 i18n key（`flux.common.*`，camelCase，先例 `showPassword`/`hidePassword`） |
-| ------ | ------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------- |
-| weak   | `--destructive`                                                                                        | `flux.common.pwdStrengthWeak`                                                   |
-| fair   | `--warning`                                                                                            | `flux.common.pwdStrengthFair`                                                   |
-| good   | `--secondary`（G1I 勘误：live 主题无 plain `--color-secondary` 映射，实现落 `muted-foreground` token） | `flux.common.pwdStrengthGood`                                                   |
-| strong | `--success`                                                                                            | `flux.common.pwdStrengthStrong`                                                 |
-
-强度条文案标签的可见文本 i18n key：`flux.common.pwdStrengthLabel`（"Password strength"）。
-
-**落位与 DOM marker**：强度条渲染在 `InputGroup` **下方独立行**（不在 inline-end addon 内——addon 已承载 suffix → counter → clear → reveal 四元素，强度属状态展示行，与 description/error 同侧）。结构：
-
-- 根：`<div data-slot="input-password-strength">`（4 段轨道，每段 `<span data-slot="input-password-strength-segment" data-level="weak|fair|good|strong" data-active="true|false">`）。
-- 文案：`<span data-slot="input-password-strength-label">`（i18n 文案，随档位变色）。
-
-**a11y**：
-
-- 轨道容器 `role="meter"` + `aria-label={pwdStrengthLabel}` + `aria-valuemin=0` / `aria-valuemax=4` / `aria-valuenow={1..4}`（档位序号）。
-- `<input>` 增加 `aria-describedby` 指向 label 元素 id（与既有 description/error describedby 链拼接，不覆盖）；label 元素 `aria-live="polite"`（输入过程中档位变化播报）。
-
-**与校验链的关系**：强度指示是**纯展示性反馈**，不参与 validation rule 收集、不产生错误态、不阻断提交；`pattern` / `required` / minLength 等校验照常独立生效（强度高 + `pattern` 失败时强度条与校验错误并存，见 Failure Path）。`disabled` / `readOnly` 时强度条随当前值静态展示。
-
-### 4b. 命名 pass（对照 `docs/references/naming-conventions.md` §1/§2）
-
-- **采纳 `showStrength`**：肯定式布尔（与 `showCounter`/`clearable`/`searchable` 同式）；该字段名系 G1D 之前本文档 §4 的既存预留（"优先使用 `showStrength` 这类直接语义字段"），roadmap §5.1 G1 一致性分析确认沿用。
-- 拒绝 `strengthIndicator` / `strengthMeter`：把 UI 呈现形态写进 schema 名，违反"直接语义字段"预留口径。
-- 拒绝 `passwordStrength`：组件本身即 password，前缀冗余；且该词指"强度的值"（名词），而字段语义是"是否显示"（开关）。
-- 拒绝 `strengthLevel`（数字 0–4 输入）：强度是 renderer 派生结果不是作者输入，禁止组件级受控覆盖。
+- `showStrength?: boolean`（arc-component-gap G1 新增，字段加在共享 `InputSchema`）——`true` 时启用强度条；仅 input-password renderer 消费（`revealPassword` 同款先例：schema 层不阻止 input-text/email 声明，但只有 input-password renderer 渲染）。等级阈值与文案首版固定，不做 schema 化（同 reveal icon 先例 §12）。
+- **强度等级算法**（本地确定性规则计分，value 的纯函数）：
+  - 值为空 → 强度条整体不渲染；
+  - 非空且长度 < 6 → level 0（太短）；
+  - 否则 level = max(1, 满足计数)，计数四条目：长度 ≥ 8 / 同时含小写与大写字母 / 含数字 / 含符号（非字母数字字符）；计数 0–4 → level 落在 1–4。长度读法 = JS `.length`（UTF-16 code units）。
+- **meter 解剖**：固定 4 段；填充段数 = max(1, level)（level 0 与 level 1 同为 1 段填充，由等级词与 `aria-valuenow` 区分）；所有填充段统一取当前 level 的颜色，未填充段 `bg-muted`。
+- **颜色语义**（等级 → 语义 token 工具类，禁原始色板色号）：level 0–1 `bg-destructive`、level 2 `bg-warning`、level 3–4 `bg-success`（对应 `@nop-chaos/theme-tokens` 的 `--destructive`/`--warning`/`--success` 族，与 alert renderer 语义色用法同源）。
+- **a11y**：meter 容器 `role="meter"` + `aria-valuemin={0}` + `aria-valuemax={4}` + `aria-valuenow={level}` + `aria-valuetext`=等级词，`aria-label` 走 `flux.common.passwordStrength`（不可见）。**不改** input 的 `aria-describedby`——该链归 field frame 错误引用所有（有 pin 测试），强度条以 DOM 顺序紧随输入框成为可及读出。
+- **与校验的关系**：强度条是纯展示反馈，不参与校验、不阻塞提交、不写表单值；强度策略强制走 `pattern`/`validate`（校验链既有职责）。`showStrength` 与 `pattern` 相互独立：声明 `pattern` 不影响等级计算，强度条不计入 `required`/`pattern` 的任何校验结论。
 
 ## 5. 字段分类
 
@@ -95,6 +60,7 @@
 - 字段值归 form runtime。
 - `revealPassword` 的明文态（`<input type>` 切换）是 **local UI state**（`useState`），不写入表单值，不调用 `handlers.onChange`，不参与提交；toggle 仅改变原生 input type。
 - `revealPassword` toggle 的可点击态跟随 `presentation.interactive`（与 clearable 同源）；disabled / readOnly 时 reveal button `disabled`，点击无响应。
+- `showStrength` 的强度等级是**渲染期派生值**（当前 value 的纯函数），不是 local state、不写表单值、不触发 `onChange`/`handlers`；值变化时随渲染直接重算。强度条是只读展示（无交互面），disabled / readOnly 态照常渲染（它是值的读出，不是控件）。
 
 ## 8. 事件、动作与组件句柄能力
 
@@ -103,13 +69,15 @@
 ## 9. 数据源、表达式、导入能力接入点
 
 - `placeholder`、`disabled` 等可接表达式。
-- 密码强度反馈不走 validation 通道：`showStrength` 强度条为纯展示派生（§4a）；安全策略类强校验仍归 validation rule（`pattern` 等）。
+- 密码强度**规则强制**优先通过验证接入（`pattern`/`validate` 既有链）；`showStrength` 强度条是**纯展示辅助渲染层**（见 §4），二者独立、互不依赖。
 
 ## 10. 样式与 DOM marker 约定
 
 - 输出 `nop-input-password` marker（控件根，随增强路径切换保持），并复用共享 field frame。
 - `revealPassword: true` 时包裹 `InputGroup`（即便无其他增强），reveal toggle 渲染在 inline-end addon，DOM marker：`<button data-slot="input-password-reveal">`（含 `aria-pressed`/`aria-label`）。end addon 子元素顺序：suffix → counter → clear button → reveal button。
 - reveal button 用 `InputGroupButton`（ghost, `icon-xs`）+ `Eye`/`EyeOff`（lucide-react）；`aria-pressed={revealed}`，`aria-label` 随态切换（`Show password` / `Hide password`）。
+- `showStrength: true` 时在输入框（组）下方整行渲染强度条，marker：容器 `nop-input-password-strength` + `data-slot="input-password-strength"`（`role="meter"`）；`data-slot="input-password-strength-segment"`（4 段，aria-hidden）；`data-slot="input-password-strength-label"`（等级词，同值兼 `aria-valuetext`）。widget 自绘（renderer 包内实现，不新增 ui primitive）。
+- 强度 i18n key：`flux.common.passwordStrength`（meter `aria-label`）+ `flux.common.passwordStrengthTooShort` / `passwordStrengthWeak` / `passwordStrengthFair` / `passwordStrengthGood` / `passwordStrengthStrong`（等级词，zh：密码强度/太短/弱/一般/良好/强；en：Password strength/Too short/Weak/Fair/Good/Strong）。
 
 ## 11. 实现拆分建议
 
@@ -117,8 +85,8 @@
 
 ## 12. 风险、取舍与后续阶段
 
-- reveal、password manager 集成等增强功能需要谨慎引入，避免把密码输入演变为复杂 widget。（勘误：原文将 strength 与上述增强并列为"需谨慎引入"；G1D 已裁决 strength 以最小协议落地，见 §4a，历史表述不再成立。）
-- `revealPassword` 字段加在共享 `InputSchema` 是为复用 E2a `inputEnhancementFieldRules` + renderer 层分支的一致性，代价是 input-text/email schema 也能声明该字段；约束为"仅 input-password renderer 消费"，schema 层不阻止（Failure Path `e2abis-reveal-non-password`）。
+- reveal、strength、password manager 集成等增强功能需要谨慎引入，避免把密码输入演变为复杂 widget。
+- `showStrength`（arc-component-gap G1）首版固定：4 段 meter、规则计分算法（§4）、语义 token 三色带、五级 i18n 词表均不做 schema 化——宿主要求不同强度策略时走 `validate` 自定义校验，不改强度条。强度计分为本地启发式，不承诺安全强度结论（安全策略仍是后端/校验层职责）；对照 Arc `password-strength`：不采纳其规则勾选清单与 motion 动效（无动效引擎，§12 首条）。
 - `revealPassword` 明文态为组件 local state，**不持久化**（组件卸载/重新挂载后回到 `password`）、**不写入表单值**（切换 toggle 不触发 `onChange`，提交值始终是密码字符串本身）。
-- `showStrength` 强度评分为**纯派生值**（每轮渲染由当前值即时计算），不引入 local state、不写入表单值、不参与提交与校验（§4a）。
+- `revealPassword` 字段加在共享 `InputSchema` 是为复用 E2a `inputEnhancementFieldRules` + renderer 层分支的一致性，代价是 input-text/email schema 也能声明该字段；约束为"仅 input-password renderer 消费"，schema 层不阻止（Failure Path `e2abis-reveal-non-password`）。
 - reveal toggle 的自定义 icon / 文案 / 位置 schema 首版固定（Eye/EyeOff + inline-end addon），自定义归 E3。

@@ -29,8 +29,8 @@ import {
   radioGroupSpecificContracts,
   selectSpecificContracts,
 } from './input-contracts.js';
-import { InputGroupFieldControl, mergeAriaSpace } from './input-group-field-control.js';
-import { computePasswordStrength, PasswordStrengthMeter } from './input-password-strength.js';
+import { InputGroupFieldControl } from './input-group-field-control.js';
+import { PasswordStrengthMeter } from './input-password-strength.js';
 import type {
   InputSchema,
 } from '../schemas.js';
@@ -139,15 +139,12 @@ export function createInputRenderer(inputType: string) {
     });
 
     const revealEnabled = inputType === 'password' && props.props.revealPassword === true;
-    const strengthEnabled = inputType === 'password' && props.props.showStrength === true;
-    const strengthLevel = strengthEnabled ? computePasswordStrength(inputValue) : null;
-    const strengthLabelId = strengthEnabled && strengthLevel && name ? `${name}-strength` : undefined;
-    const strengthSlot =
-      strengthEnabled && strengthLevel ? (
-        <PasswordStrengthMeter level={strengthLevel} describedById={strengthLabelId} />
-      ) : null;
     const [revealed, setRevealed] = useState(false);
     const actualInputType = revealEnabled && revealed ? 'text' : inputType;
+
+    const strengthEnabled = inputType === 'password' && props.props.showStrength === true;
+    const strengthSlot =
+      strengthEnabled && inputValue.length > 0 ? <PasswordStrengthMeter value={inputValue} /> : null;
 
     const suggest = useInputSuggest({
       config: {
@@ -235,7 +232,7 @@ export function createInputRenderer(inputType: string) {
     ) : null;
 
     const hasInlineEndSlot = Boolean(suffix) || clearable || showCounter || revealEnabled;
-    const needsInputGroup = Boolean(prefix) || hasInlineEndSlot || strengthEnabled;
+    const needsInputGroup = Boolean(prefix) || hasInlineEndSlot;
 
     const inputMode = resolveInputMode(inputType, props.props.inputMode);
 
@@ -251,7 +248,7 @@ export function createInputRenderer(inputType: string) {
       'aria-label': String((props.props.label ?? name) || '') || undefined,
       'aria-required': props.props.required ? true : undefined,
       'aria-invalid': presentation.showError ? true : undefined,
-      'aria-describedby': mergeAriaSpace(describedBy, strengthLabelId),
+      'aria-describedby': describedBy,
       'aria-errormessage': errorMessageId,
       placeholder: props.props.placeholder ? String(props.props.placeholder) : undefined,
       onFocus: (event) => {
@@ -276,12 +273,23 @@ export function createInputRenderer(inputType: string) {
     const rootMarker = `nop-input-${inputType}`;
 
     if (!needsInputGroup) {
+      const bareControl = <Input {...sharedInputProps} className={cn(rootMarker, props.meta.className)} />;
+      // Wrapper stays mounted for the whole strengthEnabled lifetime: swapping
+      // bare input ↔ wrapped div across empty/non-empty transitions would
+      // remount the input and detach it mid-interaction.
       return suggest.wrap(
-        <Input {...sharedInputProps} className={cn(rootMarker, props.meta.className)} />,
+        strengthEnabled ? (
+          <div>
+            {bareControl}
+            {strengthSlot}
+          </div>
+        ) : (
+          bareControl
+        ),
       );
     }
 
-    return suggest.wrap(
+    const groupControl = (
       <InputGroupFieldControl
         className={cn('nop-input-group', rootMarker, props.meta.className)}
         inputProps={sharedInputProps}
@@ -291,8 +299,18 @@ export function createInputRenderer(inputType: string) {
         showClearButton={showClearButton}
         onClear={handleClear}
         revealSlot={revealSlot}
-        strengthSlot={strengthSlot}
-      />,
+      />
+    );
+
+    return suggest.wrap(
+      strengthEnabled ? (
+        <div>
+          {groupControl}
+          {strengthSlot}
+        </div>
+      ) : (
+        groupControl
+      ),
     );
   };
 }

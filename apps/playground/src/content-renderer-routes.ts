@@ -56,6 +56,14 @@ export const CONTENT_RENDERER_ROUTES: RendererRouteEntry[] = [
       'Image display with object-fit, lazy loading, preview, error fallback + retry, and fetcher-backed auth mode.',
   },
   {
+    id: 'image-compare',
+    title: 'Image Compare',
+    category: 'content',
+    sourcePackage: '@nop-chaos/flux-renderers-content',
+    description:
+      'Before/after dual-image compare slider with clip-path reveal, pointer drag and slider-role keyboard control.',
+  },
+  {
     id: 'card',
     title: 'Card',
     category: 'layout',
