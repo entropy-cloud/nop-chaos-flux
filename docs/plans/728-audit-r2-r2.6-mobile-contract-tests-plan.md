@@ -1,6 +1,6 @@
 # 728 审计修复 R2·R2.6：契约补测—mobile 族（P1-MA4.3-002/003/004）
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-10-24
 > Source: `docs/backlog/audit-remediation-r2-roadmap.md` R2.6（MR2.0/plan 713 展开）；`docs/audits/2026-10-21-1524-arm2-MA4.3-content-domain-tests.md` §P1-MA4.3-002/003/004（各含最小补强规格）；owner doc `docs/architecture/renderer-runtime.md`
 > Related: M8-M11 新组件覆盖双峰族；先例 plan 723/724/726/727（同构契约补测链）
@@ -56,46 +56,46 @@
 
 ### Phase 1 - 三测试落地（各先红后绿）
 
-Status: planned
+Status: completed
 Targets: 三测试文件 + package.json devDep
 
 - Item Types: `Proof`
 
-- [ ] T1（002，wheel-time-picker.test.tsx，沿 family harness 惯用法）：**A** `wheelTimeColumns(5)` 纯断言（2 列、24 时、分钟 12 格 0..55 步进 5）+ minuteStep=5 组件 popup DOM 分钟列行数/首标签；**B** 值链：初始 '08:30' → trigger 开弹层 → 分钟列 drag 一格（-44px → +1 步进 35）→ confirm → onConfirm payload `{type:'confirm', value:'08:35'}` + 弹层关闭。红证：**M-A** wheel-time-picker.tsx:17 minuteStep 归一恒 1（`typeof slotProps.minuteStep === 'number' ? 1 : 1` 形态）→ A 步进列断言红。
-- [ ] T2（003，wheel-time-picker-form-write.test.tsx，真 form owner integration）：createSchemaRenderer([...formRendererDefinitions, ...mobileRendererDefinitions]) + schema `form(data:{time:'08:30'}) > wheel-time-picker{name:'time', required}` + 自定义 store 探针 renderer（useCurrentFormState 读 values.time 与 fieldStates）；trigger → 弹层 → 分钟 drag 一格 → confirm → 断言 store `values.time === '08:35'`（写入生效，硬断言）+ **fieldStates['time'] === undefined**（诚实钉住 no-op 语义——review R1 M1 勘正：wheel-time-picker 无 validation contributor，required 属 FieldFrame 展示位，validateField 早退无状态提交，store.setValue 只写 values）。红证：**M-B** wheel-time-picker.tsx:41 写入分支短路（`if (false && slotProps.name && form)`）→ store 值断言红。
-- [ ] T3（004，image-viewer-pinch.test.tsx，沿 image-viewer.test.tsx harness）：双指 touch 序——touchStart 双触点 **必须带 distinct identifier（0/1）**（review R1 M2：无 identifier 则 pointers Map 单键碰撞、size 恒 1、resolveGesture 永不 pinch）(100,300)+(300,300)（distance 200）→ touchMove 张开至 identifier 0/1 (50,300)+(350,300)（distance 400）→ 断言 `data-scale` ≈ 2（>1 即缩放生效；夹取 MAX_SCALE=4）；**边界**：继续张开至 distance 1200 → data-scale 夹取 4（clampScale）；touchEnd → 双指复位。红证：**M-C**（review R1 M3 外科化：仅 onTouchMove 的 `pointers.current.set(...)` 置 no-op——touchStart 照常 populate，pinchStart distance 200 冻结 → move 不更新 → requested 恒 1；若双 set 全禁将连带杀死 count===1 分支、既有 pull-down/paging 用例红，违审计「现有测试仍全绿」前提）→ 新测试 data-scale 恒 1 红、既有 9 例全绿（判别面精确）。
+- [x] T1（002，wheel-time-picker.test.tsx，沿 family harness 惯用法）：**A** `wheelTimeColumns(5)` 纯断言（2 列、24 时、分钟 12 格 0..55 步进 5）+ minuteStep=5 组件 popup DOM 分钟列行数/首标签；**B** 值链：初始 '08:30' → trigger 开弹层 → 分钟列 drag 一格（-44px → +1 步进 35）→ confirm → onConfirm payload `{type:'confirm', value:'08:35'}` + 弹层关闭。红证：**M-A** wheel-time-picker.tsx:17 minuteStep 归一恒 1（`typeof slotProps.minuteStep === 'number' ? 1 : 1` 形态）→ A 步进列断言红。
+- [x] T2（003，wheel-time-picker-form-write.test.tsx，真 form owner integration）：createSchemaRenderer([...basic, ...form, ...mobile defs]) + schema `form(data:{time:''}) 根节点 > wheel-time-picker{name:'time', minuteStep:5}` + 自定义 store 探针 renderer（useCurrentFormState 读 values.time 与 fieldStates）；trigger → 弹层 → 分钟列 7 行 drag（00→35 单手势）→ confirm → 断言 store `values.time === '00:35'`（写入生效，硬断言）+ fieldState `{dirty:true}` 错误面空（校验状态真实触达语义——review R1 M1 勘正 + 执行期实测再修正：validateField 建 dirty 条目而非 no-op）。红证：**M-B** wheel-time-picker.tsx:41 写入分支短路 → store 值断言红。〔执行注记三则（api-shape Failure Path 消化）：①harness 惯用法=form 作根节点 + createDefaultEnv + i18n init（form 包 form-focus-first-error.test.tsx 先例）；②**schema `value` 不达 slotProps**（实测编译 props bag 对命名字段省略 value 通道，组件未注册为 field 故无注入通道 → 草稿起 [0,0]，初始值显示缺口为独立潜伏缺陷候选——升级裁决留 closure audit/MV，见 Non-Blocking Follow-ups）；③validateField 实测建 fieldState `{dirty:true}`（无 contributor→无错误）〕
+- [x] T3（004，image-viewer-pinch.test.tsx，沿 image-viewer.test.tsx harness）：双指 touch 序——touchStart 双触点 **必须带 distinct identifier（0/1）**（review R1 M2：无 identifier 则 pointers Map 单键碰撞、size 恒 1、resolveGesture 永不 pinch）(100,300)+(300,300)（distance 200）→ touchMove 张开至 identifier 0/1 (50,300)+(450,300)（distance 400）→ 断言 `data-scale` ≈ 2（>1 即缩放生效；夹取 MAX_SCALE=4）；**边界**：继续张开至 distance 900（request 4.5x）→ data-scale 夹取 4（clampScale）；touchEnd → 双指复位。红证：**M-C**（review R1 M3 外科化：仅 onTouchMove 的 `pointers.current.set(...)` 置 no-op——touchStart 照常 populate，pinchStart distance 200 冻结 → move 不更新 → requested 恒 1；若双 set 全禁将连带杀死 count===1 分支、既有 pull-down/paging 用例红，违审计「现有测试仍全绿」前提）→ 新测试 data-scale 恒 1 红、既有 9 例全绿（判别面精确）。
 
 Exit Criteria:
 
-- [ ] 三测试绿证 + 三红证留痕（实测计数填入；变异均复员，实现文件 diff 空——003 的 devDep 为唯一 package.json diff）
-- [ ] mobile 包套件全绿（pnpm --filter 正确 cwd 口径，计数实测）
+- [x] 三测试绿证 + 三红证留痕：**M-A** 红 2（格断言+步进链双红——判别面超预期）/ **M-B** 红 1（store 值断言）/ **M-C** 红 2 新测试 + 既有 9 例全绿（外科化精确判别，审计前提逐字复现）——变异均复员，实现文件 diff 空；devDeps 三笔（flux-renderers-form/basic + flux-formula，003 integration 与 formulaCompiler 必填入参）
+- [x] mobile 包套件全绿：37 文件/381 用例
 
 ### Phase 2 - 索引回填与收口
 
-Status: planned
+Status: completed
 Targets: arm2-index、roadmap、daily log
 
 - Item Types: `Proof`
 
-- [ ] arm2-index 三行回填：:147（002）/:148（003）/:149（004）→ `closed` + 注记（含红证机制）；Last Updated 滚动
-- [ ] roadmap R2.6 `planned`→`done` 翻转（IN closure commit；激活提交先行 `todo`→`planned`）
+- [x] arm2-index 三行回填：:147（002）/:148（003）/:149（004）→ `closed` + 注记（含红证机制 + value-通道缺口候选）；Last Updated 滚动（open 51→48）
+- [x] roadmap R2.6 `planned`→`done` 翻转（IN closure commit；激活提交 d3ca9148b 已先行翻转）
 
 Exit Criteria:
 
-- [ ] arm2-index 三行状态与注记实测一致（open 51→48）；roadmap R2.6 行 `done`（收口提交内）
-- [ ] daily log R2.6 条目在场
+- [x] arm2-index 三行状态与注记实测一致（open 51→48 grep 复核）；roadmap R2.6 行 `done`（收口提交内）
+- [x] daily log R2.6 条目在场（随收口落）
 
 ## Closure Gates
 
-- [ ] 全量门禁：typecheck / build / lint（44/44）+ test 82/82
-- [ ] `pnpm check` 零新增红（scanner/knip 已登记口径沿 725-727；devDep 新增对 knip 的 unlisted/dep 影响核验）
-- [ ] 三红证全部复员（实现文件 `git diff HEAD` 空）
-- [ ] 独立 closure audit（fresh sub-agent，输入=plan+diff summary+验证输出）：三 finding 闭环判定、红证判别力复核（auditor 独立重演至少 2 个变异）、零实现变更确认
-- [ ] 收口提交（flip `done` IN commit；记录复核结论）
+- [x] 全量门禁：typecheck 44/44 + build 44/44 + lint 44/44 + test 82/82
+- [x] `pnpm check` 零失败全链绿（devDeps 三笔由新测试文件真实 import，knip unused-dep 不触发；沿 725-727 已登记口径）
+- [x] 三红证全部复员（wheel-time-picker.tsx / image-viewer.tsx git diff HEAD 空）
+- [x] 独立 closure audit（fresh sub-agent `agent_b7934cec`，输入=plan+diff summary+验证输出）：**approved** 0B/0M/2m（m1 T2 条目文本与落地实态 reconciled 随收口提交、m2 距离算术注释 touch-up 随收口提交）——checklist 1-8 全 PASS，auditor 独立重演全部 3 变异（M-A 红 2/M-B 红 1/M-C 红 2+9 绿）+ open 48 程序化验证 + check 全链 exit 0
+- [x] 收口提交（flip `done` IN commit；记录复核结论）
 
 ## Deferred But Adjudicated
 
-- **003 校验状态断言深度**（review R1 M1 勘正后重述）：wheel-time-picker 无 validation contributor（validation-collection.ts :120 门排除），required 属 FieldFrame 展示位非编译规则——validateField('time','change') 为 no-op 且不产生 fieldStates 条目。断言面：store 值硬断言 + `fieldStates['time'] === undefined` 诚实钉住 no-op 语义；校验管道 live 性由同 harness 既有 form 字段面承担（非本测试构造完整校验模型）。Classification: watch-only residual。Why Not Blocking Closure: 审计最小补强核心=写入正路径（store 值），校验状态以真实语义（无 contributor→无条目）钉住而非假绿。Successor Required: 否。
+- **003 校验状态断言深度**（执行期再修正，以实测为准）：wheel-time-picker 无 validation contributor，但 validateField 会为写入字段建 fieldState `{dirty:true}`（无错误）——断言面=store 值硬断言 + dirty 标记 + 错误面空（校验管道真实触达证据）。Classification: watch-only residual。Why Not Blocking Closure: 审计最小补强核心=写入正路径，校验状态以真实触达语义钉住。Successor Required: 否。
 - **004 e2e 双指**：审计证据段提及 e2e 也无双指——本行补组件级 integration 即最小补强；e2e 手势属 e2e-standards 范畴（R2.12/R2.13 门禁行）。Classification: out-of-scope improvement。Why Not Blocking Closure: 组件级已钉编排契约。Successor Required: 否。
 
 ## Draft Review Record
@@ -105,7 +105,7 @@ Exit Criteria:
 
 ## Non-Blocking Follow-ups
 
-- 无（002/003/004 最小补强即全量规格）。
+- **潜伏缺陷候选（执行期发现，升级裁决留 closure audit/MV）**：命名字段表单渲染下，schema `value` 不达 wheel-time-picker slotProps（编译 props bag 省略 value 通道——表单拥有 value 通道，组件未注册为 field 无注入通道），初始值显示与草稿回填在真实表单使用中失效（diagnostic 实测：slotProps={disabled,type,name,label,minuteStep,placeholder} 无 value）。方向：组件注册 field 贡献者或读 form 值回填。非本行范围（写入路径 live 正常），不静默吸收。
 
 ## Closure
 
