@@ -170,7 +170,8 @@ export function normalizeNodeInput(
 
   // Plan 595: when the strict-validation switch is on, the render path runs the
   // compiler's diagnostics pass for real — every diagnostic goes out through
-  // `env.reportSchemaDiagnostics` (fallback `console.error`). Lowering stays
+  // `env.reportSchemaDiagnostics` (fallback routes by severity: error ->
+  // console.error, warning/info -> console.warn — P1-MA4.5-002). Lowering stays
   // tolerant (`continueOnError: true` — honest degradation for unknown types is
   // a feature, e.g. the condition-builder's broken-editor drop); fail-fast is a
   // post-compile check on the collected error diagnostics instead, so it never

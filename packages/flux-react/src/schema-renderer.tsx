@@ -62,7 +62,8 @@ function CompiledSchemaTree(props: {
   // full schema recompile on every host render. Compilation failure is reported
   // from an effect (where reading props.env is legal) so the memo stays pure.
   // Plan 595: strict renders run the compiler diagnostics pass — diagnostics go
-  // out through `env.reportSchemaDiagnostics` (fallback console.error); in
+  // out through `env.reportSchemaDiagnostics` (fallback routes by severity:
+  // error -> console.error, warning/info -> console.warn — P1-MA4.5-002); in
   // fail-fast environments (VITEST/PLAYWRIGHT/fail flag) collected error
   // diagnostics turn the compile into an error result after the fact, which the
   // catch below surfaces through reportImportFailure/env.notify. Lowering stays
