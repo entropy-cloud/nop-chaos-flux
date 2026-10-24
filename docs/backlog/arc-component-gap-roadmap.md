@@ -207,7 +207,7 @@
 | 2       | G4I code-block 落地        | `done` | 按 G4D 裁决                                                                                                                 | G4D  | 同上                                                                                | [719](../plans/719-arc-g4i-code-block-implement.md)          |
 | 3（P2） | G5D split-button 落点+设计 | `done` | `docs/components/dropdown-button/design.md`（§2 决策表 + §4 split 协议）                                                    | —    | dropdown-button 协议                                                                | [724](../plans/724-arc-g5d-split-button-design-plan.md)      |
 | 3       | G5I split-button 落地      | `done` | 按 G5D 裁决                                                                                                                 | G5D  | 同上                                                                                | [725](../plans/725-arc-g5i-split-button-implement-plan.md)   |
-| 3       | G6D list-reorder 落点+设计 | `todo` | `docs/components/list/design.md`（或新 type）                                                                               | —    | use-row-drag-sort                                                                   | —                                                            |
+| 3       | G6D list-reorder 落点+设计 | `done` | `docs/components/list/design.md`（§2 决策 + §4 门控 + §8 payload）                                                          | —    | use-row-drag-sort                                                                   | [726](../plans/726-arc-g6d-list-reorder-design-plan.md)      |
 | 3       | G6I list-reorder 落地      | `todo` | 按 G6D 裁决                                                                                                                 | G6D  | 同上                                                                                | —                                                            |
 | 4（P3） | G7D image-compare 设计     | `todo` | `docs/components/image-compare/design.md`（新 type 时）                                                                     | —    | content media 家族                                                                  | —                                                            |
 | 4       | G7I image-compare 落地     | `todo` | 同 G7D                                                                                                                      | G7D  | 同上                                                                                | —                                                            |
@@ -226,7 +226,7 @@
 - **G4I**：按裁决落地 + 测试登记。
 - **G5D**：落点二选一（`dropdown-button variant="split"` vs ui primitive+新 type）+ 协议（主/次触发、禁用分裂态、键盘）。
 - **G5I**：按裁决落地 + 测试登记。
-- **G6D**：落点二选一（`list.reorderMode` vs 新 type）+ 与 combo/input-table 排序能力边界声明 + 协议（手柄/键盘排序/受控值）。
+- **G6D**：落点二选一（`list.reorderMode` vs 新 type——勘误 2026-10-24 plan 726：定名 `reorderable` 直接语义 boolean，`reorderMode` 暂定名否决）+ 与 combo/input-table 排序能力边界声明 + 协议（手柄/键盘排序/受控值）。
 - **G6I**：按裁决落地（复用拖拽底座）+ 测试登记。
 - **G7D**：双图输入协议、交互（拖动/键盘/触摸）、降级（单图/加载失败）设计。
 - **G7I**：落地 + Playwright 程序化断言（canvas/视觉类）+ 测试登记。
