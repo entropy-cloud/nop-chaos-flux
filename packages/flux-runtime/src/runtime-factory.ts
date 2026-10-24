@@ -341,6 +341,17 @@ export function createRendererRuntime(input: {
         store,
         isolate: options?.isolate,
         source: options?.source,
+        // P1-MA4.1-007 / bug 163 (plan 737): imports overlay scopes delegate
+        // writes to the parent — the overlay is transparent for writes so
+        // schema-event setValue reaches the hosting scope. Other child scopes
+        // (dialogs/drawers) retain write isolation.
+        ...(options?.delegateWrites
+          ? {
+              update: (path: string, value: unknown) => {
+                parent.update(path, value);
+              },
+            }
+          : {}),
         onDispose: () => {
           ownedScopeDisposers.delete(scopeId);
         },

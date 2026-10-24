@@ -86,7 +86,7 @@ export function createHostProjectionScope(input: {
   createChildScope: (
     parent: ScopeRef,
     patch: Record<string, unknown>,
-    options?: { scopeKey?: string; pathSuffix?: string; isolate?: boolean },
+    options?: { scopeKey?: string; pathSuffix?: string; isolate?: boolean; delegateWrites?: boolean },
   ) => ScopeRef;
 }): HostProjectionScopeRef {
   let disposed = false;

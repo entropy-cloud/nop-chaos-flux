@@ -22,17 +22,10 @@ const writeProbeRenderer = {
   fields: [{ key: 'onClick', kind: 'event' as const }],
 };
 
-// P1-MA4.1-007 / bug 163 CHARACTERIZATION pin (defect-open), HEAD 8ae2e4ded.
-// bug 163: on a container with xui:imports, every child node gets an import
-// overlay scope (node-renderer.tsx createChildScope with no write
-// delegation -> scope.ts update() writes the overlay ownStore only), so a
-// schema-event setValue dispatched from inside the overlay never reaches the
-// hosting form scope. The defect itself is OPEN; the adjudication (plan 724,
-// Deferred But Adjudicated) pins the CURRENT defect-open behavior because
-// the roadmap row is test-only, and the fix is owned by roadmap successor
-// row R2.15. When R2.15 lands the fix, case B must be REWRITTEN to pin the
-// correct write-through semantics — case B flipping red is the expected
-// signal, not a regression.
+// P1-MA4.1-007 / bug 163 regression guard — FIXED by R2.15 (plan 737):
+// createChildScope now delegates writes to the parent scope, making
+// imports overlay scopes transparent for writes. Case A pins the correct
+// write-through semantics; case B pins the no-imports control.
 describe('imports overlay write capture (bug 163 characterization, defect-open)', () => {
   const writer = {
     type: 'write-probe',
@@ -85,7 +78,7 @@ describe('imports overlay write capture (bug 163 characterization, defect-open)'
     await waitFor(() => expect(screen.getByText('fired')).toBeTruthy());
   });
 
-  it('with xui:imports overlay: the write is captured by the overlay ownStore and never reaches the form scope (defect-open pin)', async () => {
+  it('with xui:imports overlay: writes delegate to the hosting form scope (bug 163 fixed by R2.15)', async () => {
     await renderCase({
       type: 'page',
       body: [
@@ -104,10 +97,8 @@ describe('imports overlay write capture (bug 163 characterization, defect-open)'
     } as never);
 
     fireEvent.click(screen.getByText('write-probe'));
-    // give any (would-be) propagation a chance to flush before pinning absence
-    await waitFor(() => expect(screen.getByText('write-probe')).toBeTruthy());
 
-    expect(screen.queryByText('fired')).toBeNull();
-    expect(screen.getByText('Original')).toBeTruthy();
+    // R2.15 fix: writes delegate through the overlay to the hosting form scope
+    await waitFor(() => expect(screen.getByText('fired')).toBeTruthy());
   });
 });

@@ -58,4 +58,6 @@ export interface CreateScopeOptions {
   isolate?: boolean;
   scopeKey?: string;
   source?: 'root' | 'row' | 'dialog' | 'drawer' | 'form' | 'fragment' | 'custom';
+  /** bug 163 (P1-MA4.1-007): child scope delegates update() to parent — transparent overlay writes. */
+  delegateWrites?: boolean;
 }

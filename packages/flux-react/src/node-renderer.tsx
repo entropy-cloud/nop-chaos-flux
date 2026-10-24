@@ -195,6 +195,9 @@ export const NodeRenderer = memo(function NodeRenderer(props: {
       return runtime.createChildScope(props.scope, importBindings, {
         pathSuffix: 'imports',
         scopeKey: `${props.node.id}:imports`,
+        // P1-MA4.1-007 / bug 163 (plan 737): imports overlay delegates writes
+        // to the hosting scope — schema-event setValue must reach the parent.
+        delegateWrites: true,
       });
     },
     [runtime, props.scope, importBindings, props.node.id],

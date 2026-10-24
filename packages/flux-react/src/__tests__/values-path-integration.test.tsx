@@ -42,7 +42,7 @@ const echoRenderer = {
 } as never;
 
 describe('form valuesPath initial snapshot publication (P1-MA4.5-006)', () => {
-  it.skip('initial data reaches the valuesPath read face without user interaction', () => {
+  it('initial data reaches the valuesPath read face without user interaction', () => {
     const SchemaRenderer = createSchemaRenderer([
       pageRenderer,
       formRenderer,
