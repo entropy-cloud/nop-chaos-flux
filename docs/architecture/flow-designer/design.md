@@ -276,14 +276,16 @@ interface DesignerPageSchema {
 
 只做 node 级 role 不足以支撑复杂设计器，因此一开始就支持 port 级建模。
 
-连接校验顺序：
+连接校验（当前实现面，`core/constraints.ts` validateEdgeConnection——P1-MA4.4-003
+裁决收窄：§8 原六步校验清单中端口方向/roles 匹配/maxConnections/edgeType 约束
+尚未实现，`PortConfig.roles/direction/maxConnections` 为预留建模字段零消费；
+未实现步作为候选登记于 plan 730 Non-Blocking Follow-ups + audit-remediation-r2-roadmap R2.8 行注记（MV/人审输入），不在此承诺）：
 
-1. 校验 source port / target port 是否存在
-2. 校验端口方向是否正确
-3. 校验 port roles 是否匹配
-4. 若 port 未定义 role，则回退到 node role
-5. 校验 maxConnections、self loop、multi edge、黑名单规则
-6. 校验 edgeType 约束
+1. 校验 source/target 节点是否存在（EDGE_MISSING_NODE_ERROR）
+2. 校验 self loop（`rules.allowSelfLoop`，默认 false——EDGE_SELF_LOOP_ERROR）
+3. 校验 multi edge 重复连接（`rules.allowMultiEdge`，默认 true——EDGE_DUPLICATE_ERROR）
+
+判别测试：`packages/flow-designer-core/src/core/constraints.test.ts`。
 
 这样可以支持：
 

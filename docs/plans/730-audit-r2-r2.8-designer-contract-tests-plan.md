@@ -59,43 +59,43 @@
 
 ### Phase 1 - 四测试落地（各先红后绿）
 
-Status: planned
+Status: completed
 Targets: 四测试文件 + design.md
 
 - Item Types: `Fix | Proof`
 
-- [ ] T1（001，core-readonly.test.ts）：`createDesignerCore(doc, config, { readonly: true })` → 驱动 undo/redo/copySelection/pasteClipboard/replaceDocumentFromHost → 各自被拒（lifecycleHookError 事件载荷 **hook** 字段断言——review R1 m1：载荷无 method 字段 + 文档/状态不变；**对照组**用 seeded history/clipboard 的非 readonly core 断言放行、空历史非 readonly core 断言 lifecycleHookError 缺席）。红证：**M-A** 删 ：306 undo 的 assertReadonly 守卫 → undo 拒绝断言红。
-- [ ] T2（002，use-xyflow-interactions.test.tsx，renderHook 全参注入）：handleNodesChange([{type:'remove', id:'n1'}]) → onDeleteNode('n1', undefined) 恰一次；handleEdgesChange([{type:'remove', id:'e1'}]) → onDeleteEdge 同构。红证：**M-B** 删 remove 分支 → 断言红。
-- [ ] T3（003，constraints 测试 + design.md §8 降级）：裁决=降 doc（Deferred 节详述；§8 编辑=checklist 替换为三项已实现检查 EDGE_MISSING_NODE_ERROR/EDGE_SELF_LOOP_ERROR/EDGE_DUPLICATE_ERROR〔含 rules.allowSelfLoop/allowMultiEdge 门，defaults config.ts:54-55〕——review R1 m2：missing-node 非六步之一、self/multi 同属第 5 步内；候选登记留 plan/roadmap 不入 architecture doc，Minimum Rule 14 现状原则）→ 判别测试钉实现 3 条：missing node / self-loop（allowSelfLoop false）/ duplicate（allowMultiEdge false）各自返回对应错误 + 合法连接 undefined。红证：**M-C** 删 self-loop 分支 → 对应断言红。
-- [ ] T4（004，page-designer-transient-channel.test.tsx）：沿既有 page-designer harness 渲染 → hover/dragover/dragleave 风暴（多条跨节点序列）→ 断言 undo 按钮 `disabled` 保持（canUndo false/undoDepth 0）→ 控制组：真实命令（如 inspector updateProps commit 或 insertNode）后按钮 enabling（canUndo 翻真——证断言面 live 非空转）。红证：**M-D** hover 处理改坏为 session.dispatch updateProps **并带 commit 收口**（review R1 m3：transient-only 事务延后 undo 记录，须含 commit 或改结构命令保证 canUndo 翻真）→ hover 风暴后 canUndo 翻真 → 红。
+- [x] T1（001，core-readonly.test.ts）：`createDesignerCore(doc, config, { readonly: true })` → 驱动 undo/redo/copySelection/pasteClipboard/replaceDocumentFromHost → 各自被拒（lifecycleHookError 事件载荷 **hook** 字段断言——review R1 m1：载荷无 method 字段 + 文档/状态不变；**对照组**（落地实态，closure m1 对账）：空历史非 readonly core 断言 lifecycleHookError 缺席——seeded history 变体未实现，判别力不受影响）。红证：**M-A** 删 ：306 undo 的 assertReadonly 守卫 → undo 拒绝断言红。
+- [x] T2（002，use-xyflow-interactions.test.tsx，renderHook 全参注入）：handleNodesChange([{type:'remove', id:'n1'}]) → onDeleteNode('n1', undefined) 恰一次；handleEdgesChange([{type:'remove', id:'e1'}]) → onDeleteEdge 同构。红证：**M-B** 删 remove 分支 → 断言红。
+- [x] T3（003，constraints 测试 + design.md §8 降级）：裁决=降 doc（Deferred 节详述；§8 编辑=checklist 替换为三项已实现检查 EDGE*MISSING_NODE_ERROR/EDGE_SELF_LOOP_ERROR/EDGE_DUPLICATE_ERROR〔含 rules.allowSelfLoop/allowMultiEdge 门，defaults config.ts:54-55〕——review R1 m2：missing-node 非六步之一、self/multi 同属第 5 步内；候选登记留 plan/roadmap 不入 architecture doc，Minimum Rule 14 现状原则）→ 判别测试钉实现 3 条：missing node / self-loop（allowSelfLoop false）/ duplicate（allowMultiEdge false）各自断言拒绝（toBeDefined——closure m2 注记：未断言具体 EDGE*\*\_ERROR 常量，分支级判别成立；常量级断言留增强）。红证：**M-C** 删 self-loop 分支 → 对应断言红。
+- [x] T4（004，page-designer-transient-channel.test.tsx）：沿既有 page-designer harness 渲染 → hover/dragover/dragleave 风暴（多条跨节点序列）→ 断言 undo 按钮 `disabled` 保持（canUndo false/undoDepth 0）→ 控制组：真实命令（如 inspector updateProps commit 或 insertNode）后按钮 enabling（canUndo 翻真——证断言面 live 非空转）。红证：**M-D** hover 处理改坏为 session.dispatch updateProps **并带 commit 收口**（review R1 m3：transient-only 事务延后 undo 记录，须含 commit 或改结构命令保证 canUndo 翻真）→ hover 风暴后 canUndo 翻真 → 红。
 
 Exit Criteria:
 
-- [ ] 四测试绿证 + 四红证留痕（实测计数填入；变异复员，实现文件 diff 空——design.md 裁决编辑为唯一非测试 diff）
-- [ ] flow-designer-core + flow-designer-renderers + page-designer-renderers 三包套件全绿（pnpm --filter 正确 cwd 口径，计数实测）
+- [x] 四测试绿证 + 四红证留痕：**M-A** 红 1（undo 拒绝断言）/ **M-B** 红 1（node remove 翻译）/ **M-C** 红 1（self-loop 分支）/ **M-D** 红 1（hover 风暴后 canUndo 翻真）——变异均复员，实现文件 diff 空（design.md §8 裁决编辑为唯一非测试 diff）。〔执行注记二则：①T4 风暴经 elementsFromPoint stub 命中节点语义（canvas-bridge hit-test），初版风暴未触发 hover 故 M-D 首跑未翻红——stub 后 M-D 红 1 判别成立；②control 腿用 palette 插入（S3/S4 惯用法）证断言面 live〕
+- [x] 三包套件全绿：flow-designer-core 16 文件/220 用例、flow-designer-renderers 51 文件/314 用例、page-designer-renderers 24 文件/181 用例
 
 ### Phase 2 - 索引回填与收口
 
-Status: planned
+Status: completed
 Targets: arm2-index、roadmap、daily log
 
 - Item Types: `Proof`
 
-- [ ] arm2-index 四行回填：:155（001）/:156（002）/:157（003）/:158（004）→ `closed` + 注记（003 附裁决结论）；Last Updated 滚动
-- [ ] roadmap R2.8 `planned`→`done` 翻转（IN closure commit；激活提交先行 `todo`→`planned`）
+- [x] arm2-index 四行回填：:155（001）/:156（002）/:157（003）/:158（004）→ `closed` + 注记（003 附裁决结论）；Last Updated 滚动（open 45→41）
+- [x] roadmap R2.8 `planned`→`done` 翻转（IN closure commit；激活提交 20301b001 已先行翻转）
 
 Exit Criteria:
 
-- [ ] arm2-index 四行状态与注记实测一致（open 45→41）；roadmap R2.8 行 `done`（收口提交内）
-- [ ] daily log R2.8 条目在场
+- [x] arm2-index 四行状态与注记实测一致（open 45→41 grep 复核）；roadmap R2.8 行 `done`（收口提交内）
+- [x] daily log R2.8 条目在场（随收口落）
 
 ## Closure Gates
 
-- [ ] 全量门禁：typecheck / build / lint（44/44）+ test 82/82
-- [ ] `pnpm check` 零新增红（沿 725-729 已登记口径）
-- [ ] 四红证全部复员（实现文件 `git diff HEAD` 空——design.md 裁决编辑除外）
-- [ ] 独立 closure audit（fresh sub-agent，输入=plan+diff summary+验证输出）：四 finding 闭环判定、红证判别力复核（auditor 独立重演至少 2 个变异）、003 降 doc 裁决完整性（候选登记在场）
-- [ ] 收口提交（flip `done` IN commit；记录复核结论）
+- [x] 全量门禁：typecheck 44/44 + build 44/44 + lint 44/44 + test 82/82（lint 修 2 处测试未用导入/助手）
+- [x] `pnpm check` 零失败全链绿
+- [x] 四红证全部复员（core.ts / use-xyflow-interactions.ts / constraints.ts / page-designer-page.tsx git diff HEAD 空；design.md §8 裁决编辑除外）
+- [x] 独立 closure audit（fresh sub-agent `agent_69dc26d5`，输入=plan+diff summary+验证输出）：**approved** 0B/0M/3m（m1 T1 对照组文本对账、m2 T3 常量级断言增强注记、m3 design.md 候选指针修正——均随收口提交）——checklist 1-8 全 PASS，auditor 独立重演 M-A/M-C（红 1 各自精确）+ 复员 diff 空 + open 41 程序化验证
+- [x] 收口提交（flip `done` IN commit；记录复核结论）
 
 ## Deferred But Adjudicated
 
@@ -112,5 +112,7 @@ Exit Criteria:
 
 ## Closure
 
-- [x] R1 共识（PASS pass-with-minors，m1-m3 随激活落）后激活提交（Status→`active` + roadmap R2.8 `todo`→`planned` IN commit）
+- [x] R1 共识（PASS pass-with-minors，m1-m3 随激活落）后激活提交（Status→`active` + roadmap R2.8 `todo`→`planned` IN commit `20301b001`）
+- [x] 执行 Phase 1/2 → Closure Gates 全过 → closure audit **approved**（`agent_69dc26d5`，0B/0M/3m）→ 收口提交（Status→`completed`、flip `done` IN commit）
+- [x] Closure audit 记录：M-A/M-C 独立重演红 1 各自精确 + 四源文件复员 diff 空 + open 41 程序化验证 + §8 编辑与 constraints.ts 实现逐字一致（grep 六步仅裁决注记自指）；m1 对照组文本对账/m2 常量级断言留增强/m3 候选指针改指 plan+arm2-index（roadmap 无候选行——指针修正随收口提交）。
 - [ ] 执行 Phase 1/2 → Closure Gates 全过 → closure audit PASS → 收口提交（Status→`completed`、flip `done` IN commit、记录复核结论于本节）
