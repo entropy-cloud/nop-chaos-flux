@@ -152,6 +152,15 @@ export function XlangDebugEditor(props: XlangDebugEditorProps) {
       <div className="xlang-debug-editor-main">
         <div ref={editorRef} />
       </div>
+      {/* P1-MA5.1-006 (plan 740): connection state bar — server disconnect is
+          now visible via polling client.connectionState(). */}
+      <div className="xlang-debug-status-bar" data-testid="xlang-debug-connection-state">
+        <span
+          className={`xlang-debug-state xlang-debug-state-${client.connectionState()}`}
+        >
+          {client.connectionState()}
+        </span>
+      </div>
       {/* plan 621 审计 B8：getSourcePath 面板零消费——620 残留 prop 摘除 */}
       <DebugPanel store={store} client={client} />
     </div>

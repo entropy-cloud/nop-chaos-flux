@@ -108,7 +108,10 @@ export function TimelineTab(props: {
     return () => window.removeEventListener('resize', measure);
   }, [virtualizationEnabled]);
 
-  const resetKey = `${activeTimelineEvents.length}:${errorsOnly ? 'errors' : 'all'}:${searchText}:${filters.join(',')}`;
+  // P1-MA5.1-004 (plan 740): resetKey must NOT include event count — new
+  // timeline events arriving during playback would force scrollTop to 0,
+  // making history review impossible. Only reset on filter/search changes.
+  const resetKey = `${errorsOnly ? 'errors' : 'all'}:${searchText}:${filters.join(',')}`;
 
   useEffect(() => {
     if (virtualListRef.current) {

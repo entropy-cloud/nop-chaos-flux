@@ -1,0 +1,48 @@
+/* P1-MA5.1-005 (plan 740): xlang-debug panel styles — the entire debug face
+ * had zero CSS rules, making debug state (suspended/breakpoints/errors)
+ * visually indistinguishable. This file provides the minimum viable styles
+ * for the debug panel and connection state feedback (P1-MA5.1-006). */
+
+.xlang-debug-connect-error {
+  padding: 8px 12px;
+  margin: 4px 0;
+  border: 1px solid var(--destructive, #ef4444);
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--destructive, #ef4444) 10%, transparent);
+  color: var(--destructive, #ef4444);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.xlang-debug-editor-main {
+  min-height: 200px;
+  border: 1px solid var(--border, #e2e8f0);
+  border-radius: 4px;
+  overflow: auto;
+}
+
+.xlang-debug-status-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 8px;
+  font-size: 12px;
+  color: var(--muted-foreground, #64748b);
+  border-top: 1px solid var(--border, #e2e8f0);
+}
+
+.xlang-debug-status-bar .xlang-debug-state {
+  font-weight: 600;
+}
+
+.xlang-debug-state-connected {
+  color: var(--chart-1, #22c55e);
+}
+
+.xlang-debug-state-disconnected {
+  color: var(--destructive, #ef4444);
+}
+
+.xlang-debug-state-suspended {
+  color: var(--chart-4, #f59e0b);
+}
