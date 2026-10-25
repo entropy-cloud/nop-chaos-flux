@@ -115,7 +115,7 @@ describe('dashboard domain adapter integration with editor-core', () => {
     });
     const result = core.commit();
     expect(result.serialized).toBe(
-      JSON.stringify([panel('a', { x: 1, title: 'KPI' })]),
+      JSON.stringify({ panels: [panel('a', { x: 1, title: 'KPI' })] }),
     );
   });
 

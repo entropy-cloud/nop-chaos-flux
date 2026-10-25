@@ -227,8 +227,8 @@ describe('DashboardEditorRenderer selection & editing flows', () => {
     const payload = (saveCall![1] as { event?: { serialized?: string } }).event as {
       serialized: string;
     };
-    const panels = JSON.parse(payload.serialized);
-    expect(panels).toHaveLength(3);
+    const panels = JSON.parse(payload.serialized) as { panels: unknown[] };
+    expect(panels.panels).toHaveLength(3);
   });
 
   it('mode toggle switches to preview rendering the runtime dashboard', () => {

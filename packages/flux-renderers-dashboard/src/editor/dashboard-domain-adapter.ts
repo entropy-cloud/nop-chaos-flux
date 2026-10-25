@@ -120,7 +120,10 @@ export function createDashboardDomainAdapter(): EditorDomainAdapter<
   return {
     kind: 'dashboard',
     load: () => emptyDashboardDocument(),
-    serialize: (doc) => JSON.stringify(doc.panels),
+    // P1-MA5.5-002 (plan 744): wrap in {panels} — the runtime dashboard
+    // renderer expects {panels:[...]} not a bare array. The bare-array
+    // output caused Save round-trip to clear all panels (data loss).
+    serialize: (doc) => JSON.stringify({ panels: doc.panels }),
     validate: (doc) => {
       const problems: string[] = [];
       if (!Array.isArray(doc.panels)) {

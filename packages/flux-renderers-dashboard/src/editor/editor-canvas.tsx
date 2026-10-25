@@ -220,7 +220,10 @@ export function EditorCanvas({
                 name: resolvePanelDisplayName(panel, (key) => t(key), palette),
               })}
               className={cn(
-                'group absolute flex min-h-0 flex-col overflow-hidden rounded-xl border bg-card shadow-sm focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none',
+                // P1-MA5.5-001 (plan 744): overflow-visible — overflow-hidden
+                // clipped the resize handles (which extend past the panel edge
+                // via translate), causing 6/8 handle dead zones.
+                'group absolute flex min-h-0 flex-col rounded-xl border bg-card shadow-sm focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none',
                 selected
                   ? 'border-primary ring-2 ring-primary/60'
                   : 'border-border hover:border-primary/50',
