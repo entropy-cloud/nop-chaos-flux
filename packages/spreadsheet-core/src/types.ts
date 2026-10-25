@@ -109,6 +109,7 @@ export interface CellDocument {
   protected?: boolean;
   richText?: unknown;
   numberFormat?: string;
+  raw?: Record<string, unknown>;
 }
 
 export interface CellStyle {

@@ -30,7 +30,7 @@ interface ReportDesignerPageSchema {
   document: ReportTemplateDocumentInput;
   config: ReportDesignerConfig;
   profile?: ReportDesignerProfile;
-  adapters?: ReportDesignerAdapterConfig;
+  adapters?: Partial<ReportDesignerAdapterRegistry>;
   statusPath?: string;
   toolbar?: SchemaInput;
   fieldPanel?: SchemaInput;
@@ -187,53 +187,62 @@ interface RangeMetaDocument {
 
 ## 5. ReportDesignerConfig
 
+> 2026-10-26（plan 749）收敛到 live baseline：本节原描述的 `$schema`/`version`/`expressions`/`adapters` 与 live `packages/report-designer-core/src/types.ts` 的 `ReportDesignerConfig` 不符，已按 live 形态改写。表达式编辑器与 adapter 的绑定走 `ReportDesignerProfile`（`packages/report-designer-core/src/adapters.ts`），不走 config。
+
 ```ts
 interface ReportDesignerConfig {
-  $schema?: string;
-  version: string;
-  kind: string;
-  fieldSources?: FieldSourceConfig[];
-  inspector?: ReportInspectorConfig;
-  preview?: ReportPreviewConfig;
-  expressions?: ExpressionEditorBindingConfig;
-  adapters?: ReportDesignerAdapterConfig;
-  features?: ReportDesignerFeatures;
+  kind?: string;
+  fieldSources?: FieldSourceSnapshot[];
+  maxUndoDepth?: number;
+  features?: {
+    fieldPanel?: boolean;
+    inspector?: boolean;
+    preview?: boolean;
+    expressionEditor?: boolean;
+    dragFieldToCell?: boolean;
+    dragFieldToRange?: boolean;
+    customPropertyPanels?: boolean;
+  };
+  inspector?: {
+    mode?: 'panel' | 'drawer';
+    body?: SchemaInput;
+    byTarget?: Partial<Record<ReportSelectionTargetKind, SchemaInput>>;
+    byProfile?: Record<string, Partial<Record<ReportSelectionTargetKind, SchemaInput>>>;
+  };
+  preview?: {
+    provider?: string;
+  };
 }
 ```
 
 说明:
 
 - `kind` 用于标识报表模板类型或 profile，例如 `generic-report`、`nop-report`
-- `fieldSources` 定义左侧字段面板的 canonical config surface
-- `inspector` 定义右侧属性面板如何匹配与渲染
-- `preview` 定义预览集成边界
-- `expressions` 定义表达式编辑器适配入口
+- `fieldSources` 为左侧字段面板的静态快照来源（动态来源走 `FieldSourceProvider` adapter，见 §6）
+- `inspector` 定义右侧属性面板如何匹配与渲染（mode、默认 body、按 target kind / 按 profile 的 schema 表）
+- `preview` 定义预览集成的 provider 选择
+- `features` 为各能力开关（字段面板、inspector、预览、表达式编辑器、拖放等）
 
 ## 6. 字段源配置
 
+live 载体为 `FieldSourceSnapshot`（`packages/report-designer-core/src/types.ts`）:
+
 ```ts
-interface FieldSourceConfig {
+interface FieldSourceSnapshot {
   id: string;
   label: string;
-  description?: string;
-  mode?: 'tree' | 'list';
+  groups: FieldGroupSnapshot[];
   provider?: string;
-  groups?: FieldGroupConfig[];
-  itemTemplate?: SchemaInput;
-  dragPayload?: {
-    type: string;
-    include?: string[];
-  };
 }
 
-interface FieldGroupConfig {
+interface FieldGroupSnapshot {
   id: string;
   label: string;
-  fields: FieldItemConfig[];
-  expanded?: boolean;
+  fields: FieldItemSnapshot[];
+  expanded: boolean;
 }
 
-interface FieldItemConfig {
+interface FieldItemSnapshot {
   id: string;
   label: string;
   path?: string;
@@ -281,29 +290,23 @@ interface ReportInspectorConfig {
 
 ## 8. preview 配置
 
+live 形态（`ReportDesignerConfig.preview`）:
+
 ```ts
 interface ReportPreviewConfig {
   provider?: string;
-  action?: Record<string, unknown>;
-  modes?: Array<'inline' | 'dialog' | 'replace-page' | 'download'>;
 }
 ```
 
 说明:
 
-- 通用设计器只定义 preview 触发边界
+- 通用设计器只定义 preview 触发边界（`preview.provider`，可被 `ReportDesignerProfile.previewId` 覆盖）
+- 文档早期描述的 `action` / `modes` 字段未在 live 类型中落地，已移除
 - 不内建 `nop-report` 的预览返回格式
 
-## 9. 表达式编辑器绑定配置
+## 9. 表达式编辑器绑定
 
-根据前置决定，当前文档只定义表达式编辑器适配接口，不固定表达式语言协议。
-
-```ts
-interface ExpressionEditorBindingConfig {
-  adapter: string;
-  fieldKinds?: string[];
-}
-```
+当前文档只定义表达式编辑器适配接口（见 §10），不固定表达式语言协议。live 绑定入口是 `ReportDesignerProfile.expressionEditorId`（`packages/report-designer-core/src/adapters.ts`）：profile 声明表达式编辑器 adapter id，运行时从 registry 的 `expressions` map 解析。文档早期描述的 `ExpressionEditorBindingConfig` config 形态未在 live 类型中落地，已移除。
 
 属性面板中的字段若标记为表达式类输入，则通过该 adapter 渲染。
 

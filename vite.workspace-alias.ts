@@ -197,6 +197,9 @@ export const workspacePackageAliases: Record<string, string> = {
   '@nop-chaos/report-designer-core': fileURLToPath(
     new URL('./packages/report-designer-core/src/index.ts', import.meta.url),
   ),
+  '@nop-chaos/report-designer-nop-report': fileURLToPath(
+    new URL('./packages/report-designer-nop-report/src/index.ts', import.meta.url),
+  ),
   '@nop-chaos/report-designer-renderers/report-field-panel.css': fileURLToPath(
     new URL('./packages/report-designer-renderers/src/report-field-panel.css', import.meta.url),
   ),

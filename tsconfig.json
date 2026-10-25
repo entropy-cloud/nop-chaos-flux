@@ -39,6 +39,7 @@
     { "path": "./packages/spreadsheet-renderers" },
     { "path": "./packages/report-designer-core" },
     { "path": "./packages/report-designer-renderers" },
+    { "path": "./packages/report-designer-nop-report" },
     { "path": "./packages/flux-print-core" },
     { "path": "./packages/flux-print-renderers" },
     { "path": "./packages/word-editor-core" },
