@@ -62,6 +62,24 @@ export function createPageDesignerDomainAdapter(registry: PageDesignerSessionOpt
         if (!knownTypes.has(node.type)) {
           errors.push(`unknown renderer type "${node.type}" at ${path || '/'}`);
         }
+        // P1-MA9.4-001 (plan 739): body/region must be array or absent —
+        // string/number body is a malformed import that previously passed
+        // validation and silently emptied the canvas.
+        if (
+          'body' in node &&
+          node.body != null &&
+          !Array.isArray(node.body) &&
+          typeof node.body !== 'object'
+        ) {
+          errors.push(`invalid region node at ${path}/body: body must be an array of schema nodes`);
+        }
+        if (
+          'props' in node &&
+          node.props != null &&
+          (typeof node.props !== 'object' || Array.isArray(node.props))
+        ) {
+          errors.push(`invalid property value at ${path}/props: props must be an object`);
+        }
       }
       return errors.length > 0 ? { ok: false, errors } : { ok: true };
     },
