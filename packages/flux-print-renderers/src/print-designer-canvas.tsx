@@ -223,7 +223,7 @@ export function PrintDesignerCanvas({ controller, className }: PrintDesignerCanv
   const rulerTicks = buildRulerTicks(Math.max(paper.width, paper.height));
 
   return (
-    <div className={cn('nop-print-canvas', className)} data-testid="print-designer-canvas">
+    <div className={cn('nop-print-canvas overflow-auto', className)} data-testid="print-designer-canvas">
       <div className="nop-print-canvas-ruler-corner" style={{ width: RULER_SIZE_PX, height: RULER_SIZE_PX }} />
       <div className="nop-print-canvas-ruler-top" style={{ height: RULER_SIZE_PX, marginLeft: RULER_SIZE_PX, width: widthPx }}>
         {rulerTicks.filter((tick) => tick <= paper.width).map((tick) => (

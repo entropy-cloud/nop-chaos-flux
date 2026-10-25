@@ -34,19 +34,22 @@ function buildOptionSignature(option: PivotTableConstructorOptions): string {
   return JSON.stringify(rest);
 }
 
-/** 主题响应：监听 document root class 变化（`.dark` 切换）→ 重解析 CSS 变量（map 先例）。 */
+/** 主题响应：监听 document root class **和** data-theme/data-mode attribute 变化 → 重解析 CSS 变量。 */
 function usePivotTheme(): DesignTokenThemeInput {
   const [tokens, setTokens] = useState<DesignTokenThemeInput>(() => resolveDesignTokens());
   useEffect(() => {
     if (typeof MutationObserver === 'undefined' || typeof document === 'undefined') {
       return;
     }
+    // P1-MA6.2-001 (plan 746): watch data-theme/data-mode attributes in addition
+    // to .dark class — the playground theme system uses setAttribute, not class
+    // toggling (tailwind-preset index.ts:141 records the class-selector migration).
     const observer = new MutationObserver(() => {
       setTokens(resolveDesignTokens());
     });
     observer.observe(document.documentElement, {
       attributes: true,
-      attributeFilter: ['class'],
+      attributeFilter: ['class', 'data-theme', 'data-mode'],
     });
     return () => observer.disconnect();
   }, []);

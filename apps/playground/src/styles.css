@@ -601,3 +601,26 @@ body {
 .nop-code-editor:not([data-has-toolbar]) > [data-slot='code-editor-toolbar'] {
   display: none;
 }
+
+/* P1-MA6.1-001 (plan 746): JsonViewer dark theme overrides — react-json-view-lite
+ * defaultStyles hardcode light colors; these overrides use CSS variables for
+ * dark-theme compatibility. Scoped under .dark. */
+.dark .json-viewer {
+  background-color: var(--card);
+  color: var(--card-foreground);
+}
+.dark .json-viewer .json-view-lite-basic-children {
+  border-left: 1px solid var(--border);
+}
+.dark .json-viewer .json-view-lite-label {
+  color: var(--primary);
+}
+.dark .json-viewer .json-view-lite-string-value {
+  color: var(--chart-2, #a6e3a1);
+}
+.dark .json-viewer .json-view-lite-number-value {
+  color: var(--chart-4, #fab387);
+}
+.dark .json-viewer .json-view-lite-boolean-value {
+  color: var(--chart-3, #f9e2af);
+}
