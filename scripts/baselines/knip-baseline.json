@@ -5,7 +5,7 @@
     "lastUpdated": "2026-10-24",
     "counts": {
       "files": 22,
-      "exports": 344,
+      "exports": 345,
       "types": 571,
       "dependencies": 0,
       "devDependencies": 18,
@@ -17,7 +17,8 @@
       "plan 624 (2026-10-17): surgical shrink to live knip identities (exports -85, types -18, dep -1 [flux-renderers-mobile#@nop-chaos/flux-react — false-positive erratum, consumed via src/test-support.ts since c11731169], devDeps -2 [flux-bundle#@nop-chaos/flux-i18n removed from manifest; one stale entry]; +5 peer-backing devDeps registered (flux-bundle i18next/react-i18next, scheduling ical.js/jspdf/xlsx — isolation-install backing with zero src imports by design, plan 624 D2); counts.exports corrected 430->list length (off-by-one since 2026-10-15); narrative unlisted 30->35 synced. NOT updated via --update-baselines (09ed6e5b6 precedent). Open hit left unregistered: apps/playground#@nop-chaos/flux-xlang-lang — concurrent plan 621 session ownership.",
       "plan 624 D5 (2026-10-17): root devDeps i18next/react-i18next removed (zero refs repo-wide) — their baseline entries shrunk in the same pass; three/@types/three KEPT (sole consumer scripts/three-perf/bench-scene-graph.mjs manual benchmark — script disposition is separate follow-up); @stryker-mutator/vitest-runner KEPT (audit:mutants loads it via stryker.runtime.conf.mjs --plugins).",
       "plan 624 D2 Decision amendment (2026-10-17): flux-bundle @nop-chaos/ui peer RESTORED (it is a pinned host-owned-peer contract asserted by src/index.test.tsx toMatchObject — removal flipped the contract test red) and given devDep workspace:* backing; the backing devDep itself registers here (zero src imports by design). Peer-backing registrations now total 6.",
-      "R2.4 cycle (2026-10-24): +2 types registered (surgical, not --update-baselines) — R1.4/plan 722 barcode-media-io injection-seam public API (BarcodeMediaIO consumed via defaultBarcodeMediaIO/setBarcodeMediaIO factory values, NativeBarcodeDetectorCtor backing the feature-detect seam; type imports land with INV-2 env-channel consumers, proposal pending human gate). These hits surfaced only now because check:console-baseline (earlier in the chain) failed on concurrent ARC WIP in R2.1-R2.3 windows and masked downstream steps; stryker.formula.conf.mjs registered in files (same disposition as stryker.runtime.conf.mjs — knip does not resolve stryker CLI config args as entries; audit:mutants:formula script added for consistency). counts.types resynced to live list length (drifted 567 vs actual)."
+      "R2.4 cycle (2026-10-24): +2 types registered (surgical, not --update-baselines) — R1.4/plan 722 barcode-media-io injection-seam public API (BarcodeMediaIO consumed via defaultBarcodeMediaIO/setBarcodeMediaIO factory values, NativeBarcodeDetectorCtor backing the feature-detect seam; type imports land with INV-2 env-channel consumers, proposal pending human gate). These hits surfaced only now because check:console-baseline (earlier in the chain) failed on concurrent ARC WIP in R2.1-R2.3 windows and masked downstream steps; stryker.formula.conf.mjs registered in files (same disposition as stryker.runtime.conf.mjs — knip does not resolve stryker CLI config args as entries; audit:mutants:formula script added for consistency). counts.types resynced to live list length (drifted 567 vs actual).",
+      "R3.11 (2026-10-24): +1 file (tests/e2e/xlang-debug-mock-server.mjs — playwright spawn reference invisible to knip) + 1 export (flux-renderers-3d UseDataSourcesArgs — exported type never referenced, never baselined since 2026-09-16 introduction). Both are standing dual-source reds documented in arm2-index M0/MA8.3. Surgical hand-edit per 09ed6e5b6 precedent."
     ]
   },
   "files": [
@@ -109,6 +110,7 @@
     "packages/flux-react/src/test-support-runtime.tsx#compositeProbeRenderer",
     "packages/flux-react/src/test-support-runtime.tsx#createScope",
     "packages/flux-renderers-3d/src/engine/label-sprite.ts#__labelSpriteCanvasPathIgnored",
+    "packages/flux-renderers-3d/src/index.tsx#UseDataSourcesArgs",
     "packages/flux-renderers-ai/src/adapters/__tests__/use-conversation-test-helpers.ts#vi",
     "packages/flux-renderers-ai/src/engine/snapshot-cache-detection.ts#isAdapterCaching",
     "packages/flux-renderers-ai/src/engine/tool-execution.ts#normalizeToolResult",

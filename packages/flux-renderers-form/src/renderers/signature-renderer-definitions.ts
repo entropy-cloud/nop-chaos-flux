@@ -33,6 +33,17 @@ export const inputSignatureRendererDefinition: RegisteredRendererDefinition = {
       displayName: 'Reset',
       description: 'Restore the field value to its current bound value.',
     },
+    // P1-MA9.2-001 (plan 748): align declarations with SIGNATURE_METHODS.
+    {
+      handle: 'undo',
+      displayName: 'Undo',
+      description: 'Undo the last stroke.',
+    },
+    {
+      handle: 'export',
+      displayName: 'Export',
+      description: 'Export the current signature as a PNG data URL.',
+    },
   ],
   wrap: true,
   component: InputSignatureRenderer,

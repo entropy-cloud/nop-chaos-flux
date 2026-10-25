@@ -7,5 +7,6 @@ runContractHonestyGuardSuite({
   definitions: formRendererDefinitions,
   srcDir: `${import.meta.dirname}/..`,
   capabilityProbe: false,
-  discoveryBaseline: { renderers: 31, eventKeys: 6, capabilityHandles: 74 },
+  // P1-MA9.2-001 (plan 748): capabilityHandles 74->76 (signature undo/export declarations added).
+discoveryBaseline: { renderers: 31, eventKeys: 6, capabilityHandles: 76 },
 });

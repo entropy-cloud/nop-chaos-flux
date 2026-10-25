@@ -260,6 +260,16 @@ export const schedulingRendererDefinitions: RegisteredRendererDefinition[] = [
     sourcePackage: '@nop-chaos/flux-renderers-scheduling',
     defaultSchema: { type: 'calendar', view: 'month' },
     component: Calendar,
+    // P1-MA9.2-001 (plan 748): capability declarations aligned with useImperativeHandle.
+    componentCapabilityContracts: [
+      { handle: 'goNext', displayName: 'Next', description: 'Navigate to the next period.' },
+      { handle: 'goPrev', displayName: 'Previous', description: 'Navigate to the previous period.' },
+      { handle: 'goToday', displayName: 'Today', description: 'Navigate to today.' },
+      { handle: 'setView', displayName: 'Set View', description: 'Switch the calendar view (month/week/day).' },
+      { handle: 'scrollToDate', displayName: 'Scroll To Date', description: 'Scroll the calendar to the given date.' },
+      { handle: 'exportToPNG', displayName: 'Export PNG', description: 'Export the calendar as a PNG image.' },
+      { handle: 'exportToPrint', displayName: 'Export Print', description: 'Export the calendar for printing.' },
+    ],
     fields: [
       {
         key: 'view',
@@ -398,6 +408,15 @@ export const schedulingRendererDefinitions: RegisteredRendererDefinition[] = [
     sourcePackage: '@nop-chaos/flux-renderers-scheduling',
     defaultSchema: { type: 'barcode-input', name: 'barcode' },
     component: BarcodeInputRenderer,
+    // P1-MA9.2-001 (plan 748): capability declarations aligned with barcode-input handle methods.
+    componentCapabilityContracts: [
+      { handle: 'clear', displayName: 'Clear', description: 'Clear the current barcode value.' },
+      { handle: 'reset', displayName: 'Reset', description: 'Reset the scanner to its initial state.' },
+      { handle: 'focus', displayName: 'Focus', description: 'Focus the barcode input.' },
+      { handle: 'scanNow', displayName: 'Scan Now', description: 'Trigger an immediate barcode scan.' },
+      { handle: 'stopScan', displayName: 'Stop Scan', description: 'Stop the active barcode scan.' },
+      { handle: 'resetWasmPromise', displayName: 'Reset WASM', description: 'Reset the WASM barcode detector promise.' },
+    ],
     fields: barcodeInputFieldRules,
     validation: createBarcodeInputFieldValidation(),
     wrap: false,

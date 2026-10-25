@@ -11,6 +11,13 @@ export const dashboardEditorRendererDefinition: RegisteredRendererDefinition = {
   rendererClass: 'domain-host-renderer',
   component: DashboardEditorRenderer,
   hostContract: dashboardEditorHostContract,
+  // P1-MA9.2-001 (plan 748): capability declarations aligned with editor-core undo/redo/save.
+  componentCapabilityContracts: [
+    { handle: 'undo', displayName: 'Undo', description: 'Undo the last editor operation.' },
+    { handle: 'redo', displayName: 'Redo', description: 'Redo the last undone editor operation.' },
+    { handle: 'save', displayName: 'Save', description: 'Serialize and persist the dashboard layout.' },
+    { handle: 'setMode', displayName: 'Set Mode', description: 'Switch between edit and preview mode.' },
+  ],
   fields: [
     {
       key: 'layout',
