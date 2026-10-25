@@ -119,6 +119,21 @@ export function SpreadsheetGrid({
   const scrollRafRef = useRef<number | null>(null);
   const keyboardCellRef = useRef<{ row: number; col: number }>(selectedCell ?? { row: 0, col: 0 });
 
+  // P1-MA5.3-001 (plan 742): after cell edit commits (editingCell -> null),
+  // refocus the grid scroll container so keyboard interactions (arrows,
+  // Ctrl+Z, typing) continue working. Without this, focus falls to <body>
+  // and the entire grid keyboard face goes dark.
+  const prevEditingRef = useRef(false);
+  useEffect(() => {
+    const isEditing = editingCell != null;
+    if (prevEditingRef.current && !isEditing) {
+      requestAnimationFrame(() => {
+        scrollRef.current?.focus();
+      });
+    }
+    prevEditingRef.current = isEditing;
+  }, [editingCell]);
+
   useEffect(() => {
     keyboardCellRef.current = selectedCell ?? { row: 0, col: 0 };
   }, [selectedCell]);
