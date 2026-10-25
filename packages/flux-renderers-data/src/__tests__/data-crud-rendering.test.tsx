@@ -172,7 +172,8 @@ describe('CRUD renderer', () => {
 
     expect(screen.getByText('Query filters')).toBeTruthy();
     expect(document.querySelector('[data-slot="form-actions"]')).toBeTruthy();
-    expect(screen.getByRole('button', { name: 'Search' })).toBeTruthy();
+    expect(screen.getByText('Search', { selector: '[data-slot="form-actions"] button' })).toBeTruthy();
+    expect(document.querySelector('[data-slot="crud-query-search"]')).toBeTruthy();
   });
 
   it('renders footer toolbar and toolbar layout blocks', async () => {

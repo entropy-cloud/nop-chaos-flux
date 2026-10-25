@@ -41,6 +41,7 @@ import { resolvePaginationMode, isAtLastPage } from './crud-query-region.js';
 import { useInfiniteScroll } from './use-infinite-scroll.js';
 import { asReactNode, delegateTableRendererProps, resolveCrudSlotContent } from './crud-renderer-delegate.js';
 import { useCrudFilterToggle } from './use-crud-filter-toggle.js';
+import { CrudQueryActions } from './crud-query-actions.js';
 import { useCrudQueryFormScope } from './use-crud-query-form-scope.js';
 import { useCrudUrlSync } from './use-crud-url-sync.js';
 import { CrudListPagination } from './crud-list-pagination.js';
@@ -588,36 +589,17 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
             {asReactNode(
               props.regions.queryFormRegion?.render({ pathSuffix: 'queryForm', scope: queryFormScope }),
             )}
-            {/* P1-MA5.4-001 (plan 743): synthesize query submit/reset actions —
-                AMIS-style query form must be reachable (Enter was a no-op and
-                zero-result empty state unreachable without explicit actions). */}
-            <div className="flex items-center gap-2 mt-2" data-slot="crud-query-actions">
-              <button
-                type="button"
-                data-slot="crud-query-search"
-                className="inline-flex items-center justify-center rounded-md px-3 py-1.5 text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90"
-                onClick={() => {
-                  if (loadResult) {
-                    loadResult.reload();
-                  }
-                }}
-              >
-                {t('flux.crud.search')}
-              </button>
-              <button
-                type="button"
-                data-slot="crud-query-reset"
-                className="inline-flex items-center justify-center rounded-md px-3 py-1.5 text-sm font-medium border hover:bg-muted"
-                onClick={() => {
-                  queryFormScope?.update('*', {});
-                  if (loadResult) {
-                    loadResult.reload();
-                  }
-                }}
-              >
-                {t('flux.crud.reset')}
-              </button>
-            </div>
+            <CrudQueryActions
+              hasQueryForm
+              onSearch={() => {
+                if (loadResult) {
+                  void handleQuerySubmitForHandle();
+                }
+              }}
+              onReset={() => {
+                void handleQueryReset();
+              }}
+            />
           </div>
         </div>
       ) : null}

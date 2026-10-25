@@ -79,7 +79,7 @@ describe('CRUD query and pagination', () => {
     fireEvent.change(input!, { target: { value: 'Ali' } });
 
     fireEvent.click(
-      screen.getByRole('button', { name: t('flux.common.search') }),
+      screen.getByText(t('flux.common.search'), { selector: '[data-slot="crud-query-search"]' }),
     );
     await waitFor(() => {
       expect(screen.getByText('Query: Ali')).toBeTruthy();
@@ -88,7 +88,7 @@ describe('CRUD query and pagination', () => {
     });
 
     fireEvent.click(
-      screen.getByRole('button', { name: t('flux.common.reset') }),
+      screen.getByText(t('flux.common.reset'), { selector: '[data-slot="crud-query-reset"]' }),
     );
     await waitFor(() => {
       expect(screen.getByText('Query: none')).toBeTruthy();
@@ -130,7 +130,7 @@ describe('CRUD query and pagination', () => {
 
     fireEvent.change(input, { target: { value: 'Ali' } });
     fireEvent.click(
-      screen.getByRole('button', { name: t('flux.common.search') }),
+      screen.getByText(t('flux.common.search'), { selector: '[data-slot="crud-query-search"]' }),
     );
 
     await waitFor(() => {
@@ -141,7 +141,7 @@ describe('CRUD query and pagination', () => {
 
     fireEvent.change(input, { target: { value: '' } });
     fireEvent.click(
-      screen.getByRole('button', { name: t('flux.common.search') }),
+      screen.getByText(t('flux.common.search'), { selector: '[data-slot="crud-query-search"]' }),
     );
 
     await waitFor(() => {
@@ -233,7 +233,7 @@ describe('CRUD query and pagination', () => {
 
     fireEvent.change(input, { target: { value: 'Ali' } });
     fireEvent.click(
-      screen.getByRole('button', { name: t('flux.common.search') }),
+      screen.getByText(t('flux.common.search'), { selector: '[data-slot="crud-query-search"]' }),
     );
 
     await waitFor(() => expect(screen.getByText('Active query: Ali')).toBeTruthy());
@@ -249,7 +249,7 @@ describe('CRUD query and pagination', () => {
     });
 
     fireEvent.click(
-      screen.getByRole('button', { name: t('flux.common.reset') }),
+      screen.getByText(t('flux.common.reset'), { selector: '[data-slot="crud-query-reset"]' }),
     );
 
     await waitFor(() => expect(screen.getByText('Active query: none')).toBeTruthy());
@@ -314,7 +314,7 @@ describe('CRUD query and pagination', () => {
 
 
     fireEvent.click(
-      screen.getByRole('button', { name: t('flux.common.search') }),
+      screen.getByText(t('flux.common.search'), { selector: '[data-slot="crud-query-search"]' }),
     );
 
     await waitFor(() => {
