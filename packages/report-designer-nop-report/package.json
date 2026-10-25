@@ -18,5 +18,9 @@
     "test": "vitest run",
     "lint": "eslint src --ext .ts,.tsx --cache --cache-location node_modules/.cache/eslint"
   },
-  "description": "nop-report profile adapters for the report designer"
+  "description": "nop-report profile adapters for the report designer",
+  "dependencies": {
+    "@nop-chaos/report-designer-core": "workspace:*",
+    "@nop-chaos/spreadsheet-core": "workspace:*"
+  }
 }

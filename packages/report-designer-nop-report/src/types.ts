@@ -43,13 +43,16 @@ export interface ExcelCellLike {
 export interface XptWorkbookLike {
   model?: Record<string, unknown>;
   sheets?: Record<string, XptSheetLike>;
+  raw?: Record<string, unknown>;
 }
 
 export interface XptSheetLike {
   model?: Record<string, unknown>;
   cells?: Record<string, XptCellLike>;
+  raw?: Record<string, unknown>;
 }
 
 export interface XptCellLike {
   model?: Record<string, unknown>;
+  raw?: Record<string, unknown>;
 }

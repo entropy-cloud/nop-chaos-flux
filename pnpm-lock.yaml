@@ -1496,7 +1496,14 @@ importers:
         specifier: ^5.0.12
         version: 5.0.12(@types/react@19.3.0)(immer@11.1.4)(react@19.2.4)(use-sync-external-store@1.6.0(react@19.2.4))
 
-  packages/report-designer-nop-report: {}
+  packages/report-designer-nop-report:
+    dependencies:
+      '@nop-chaos/report-designer-core':
+        specifier: workspace:*
+        version: link:../report-designer-core
+      '@nop-chaos/spreadsheet-core':
+        specifier: workspace:*
+        version: link:../spreadsheet-core
 
   packages/report-designer-renderers:
     dependencies:

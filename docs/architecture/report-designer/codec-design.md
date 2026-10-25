@@ -312,72 +312,46 @@ ReportTemplateDocument
 - report profile 只在需要时叠加 semantic codec
 - 更容易单独测试 Excel 结构层和 XPT 语义层
 
-## 8. TemplateCodecAdapter 设计建议
+## 8. TemplateCodecAdapter 与两级 codec 契约（最终态，plan 750 落地）
 
-建议把当前合同中的 `TemplateCodecAdapter` 明确为两级接口:
+两级 codec 是纯转换函数，不持有 `CodecContext`；adapter 契约保持 `packages/report-designer-core/src/adapters.ts` 的 `TemplateCodecAdapter`（context 由命令链经 `ReportDesignerAdapterContext` 传入，codec 层不需要）:
 
 ```ts
 export interface SpreadsheetCodec {
-  importSpreadsheet(input: unknown, context: CodecContext): SpreadsheetDocument;
-  exportSpreadsheet(document: SpreadsheetDocument, context: CodecContext): unknown;
+  importSpreadsheet(input: unknown): SpreadsheetDocument;
+  exportSpreadsheet(document: SpreadsheetDocument): ExcelWorkbookLike;
 }
 
-export interface ReportSemanticCodec {
-  importSemantic(input: unknown, context: CodecContext): ReportSemanticDocument | undefined;
-  exportSemantic(document: ReportSemanticDocument | undefined, context: CodecContext): unknown;
+export interface SemanticCodec {
+  importSemantic(input: unknown): ReportSemanticDocument | undefined;
+  exportSemantic(document: ReportSemanticDocument | undefined): XptWorkbookLike | undefined;
 }
 
 export interface TemplateCodecAdapter {
   id: string;
   importDocument(
     payload: unknown,
-    context: CodecContext,
+    context: ReportDesignerAdapterContext,
   ): Promise<ReportTemplateDocument> | ReportTemplateDocument;
   exportDocument(
     document: ReportTemplateDocument,
     format: string | undefined,
-    context: CodecContext,
+    context: ReportDesignerAdapterContext,
   ): Promise<unknown> | unknown;
-}
-
-export interface CodecContext {
-  profileId?: string;
-  kind?: string;
-  readonly?: boolean;
 }
 ```
 
-其中 `TemplateCodecAdapter` 可组合 `SpreadsheetCodec + ReportSemanticCodec`，也可以自己做 envelope 解析。
+两级 codec 可组合为 `TemplateCodecAdapter`（`createNopReportTemplateCodec()`），也可以在 standalone spreadsheet 场景单独使用 `createSpreadsheetCodec()`。
 
-## 9. nop-report codec adapter 建议
+## 9. 实现落点（最终态，plan 750）
 
-建议未来实现拆成:
+两级 codec 与组合 codec 收敛在同一个包 `packages/report-designer-nop-report` 内按模块拆分（不按本节早期建议拆三个包——三者共享中间类型与信封契约，独立包只会增加发布面）:
 
-- `nop-report-spreadsheet-codec`
-- `nop-report-semantic-codec`
-- `nop-report-xpt-codec`
-
-### 9.1 `nop-report-spreadsheet-codec`
-
-负责:
-
-- `ExcelWorkbookLike -> SpreadsheetDocument`
-- `SpreadsheetDocument -> ExcelWorkbookLike`
-
-### 9.2 `nop-report-semantic-codec`
-
-负责:
-
-- `XptWorkbookLike -> ReportSemanticDocument`
-- `ReportSemanticDocument -> XptWorkbookLike`
-
-### 9.3 `nop-report-xpt-codec`
-
-负责:
-
-- 解析外部 payload
-- 组合 spreadsheet codec 与 semantic codec
-- 产出最终后端保存格式或预览 payload
+- `src/spreadsheet-codec.ts` — `SpreadsheetDocument <-> ExcelWorkbookLike`
+- `src/semantic-codec.ts` — `ReportSemanticDocument <-> XptWorkbookLike`
+- `src/template-codec.ts` — 外部信封 `{ format: 'nop-report-template', version, workbook, xpt? }` 的 decode/encode 与组合（`createNopReportTemplateCodec()`，adapter id `nop-report-xpt-codec`）
+- `src/diagnostics.ts` — `CodecDiagnostic` / `CodecImportResult` / `CodecError`（结构化错误边界）
+- `src/types.ts` — `*Like` 中间类型（NRP-1）
 
 ## 10. 地址与 identity 规则
 
@@ -434,7 +408,7 @@ export interface CodecImportResult {
 
 - Excel 结构层失败 -> import 失败
 - XPT 语义层部分失败 -> 允许导入 spreadsheet，但把 designer 降级为只读或部分功能受限
-- unknown field -> warning，不中断导入
+- unknown field -> `info` 诊断（code `codec-unknown-field`），保留进 `raw` 后不中断导入（最终态，plan 750）
 
 ## 12. 测试分层建议
 
