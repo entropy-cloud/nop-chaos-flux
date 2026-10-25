@@ -57,6 +57,10 @@ export function AiConversationsDemoPage({ onBack }: Props) {
       // Expose the controller through the page scope so the schema can bind it
       // via `conversationController: "${controller}"` (relative scope read).
       controller: conversations.controller,
+      // P1-MA5.6-001 (plan 745): expose activeEngine so the schema can bind
+      // `engine: "${activeEngine}"` — ai-chat switches messages when the
+      // conversation's engine changes instead of showing stale bubbles.
+      activeEngine: conversations.activeEngine,
       // plan 549 (IS-ai-conversations-001, bug-163 mitigation): the page
       // schema no longer declares xui:imports (its overlay captured schema
       // event writes and blocked page-data notifications — the sidebar was
@@ -64,7 +68,7 @@ export function AiConversationsDemoPage({ onBack }: Props) {
       // like the ai-coverage fixture precedent.
       connector,
     }),
-    [conversations.conversations, conversations.activeConversationId, conversations.controller, connector],
+    [conversations.conversations, conversations.activeConversationId, conversations.activeEngine, conversations.controller, connector],
   );
 
   // plan 633 UR-4 (replace-clobber 收敛): activeId 所有权归 host store——item 点击

@@ -48,6 +48,7 @@
               "connector": "${connector}",
               "conversationController": "${controller}",
               "activeConversationId": "${activeConversationId}",
+              "engine": "${activeEngine}",
               "placeholder": "Ask the mock AI…",
               "submitType": "enter",
               "className": "flex flex-col flex-1 min-h-0 gap-2",
