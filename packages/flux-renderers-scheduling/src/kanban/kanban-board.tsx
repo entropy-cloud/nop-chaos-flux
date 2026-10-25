@@ -324,6 +324,23 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
 
   const boardRef = useRef<HTMLDivElement>(null);
 
+  // P1-MA5.2-002 (plan 741): after a pointer drag completes, focus falls to
+  // <body> and the Ctrl+Z keyboard handler's activeElement containment gate
+  // (use-kanban-board-effects.ts:56) silently swallows the undo. Refocus the
+  // board container so the keyboard chain stays intact (P0-MA5.1-002 same
+  // pattern: focusDesignerCanvasSurface).
+  const prevDraggingRef = useRef(false);
+  useEffect(() => {
+    if (dragState.isDragging) {
+      prevDraggingRef.current = true;
+    } else if (prevDraggingRef.current) {
+      prevDraggingRef.current = false;
+      if (boardRef.current && !boardRef.current.contains(document.activeElement)) {
+        boardRef.current.focus();
+      }
+    }
+  }, [dragState.isDragging]);
+
   // 22-12: component:* 句柄读取的最新操作面镜像（calendar navRef 模式）。
   // 每次渲染后刷新；句柄 invoke 经镜像间接调用，保持注册 identity 稳定。
   const kanbanSurfaceRef = useRef<KanbanHandleSurface>({
@@ -450,6 +467,7 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
       ref={boardRef}
       data-slot="kanban"
       role="application"
+      tabIndex={0}
       aria-label={t('scheduling.kanbanCanvasLabel')}
       inert={meta.disabled === true || undefined}
       aria-disabled={meta.disabled === true || undefined}
@@ -489,7 +507,11 @@ export function KanbanBoard(props: RendererComponentProps<KanbanSchema>) {
       />
 
       <div className="nop-kanban-columns flex-1 overflow-x-auto overflow-y-hidden p-4 pt-0">
-        <div className="flex gap-3 h-full items-start">
+        {/* P1-MA7.1-001 (plan 741): removed items-start — stretch is required so
+            columns are height-constrained by the track, enabling the kanban
+            virtualizer's scroll container to clip (previously columns grew to
+            content height 26k px and the virtualizer rendered all items). */}
+        <div className="flex gap-3 h-full items-stretch min-h-0">
           {columns.map((col) => {
             const colData = boardData[col.id];
             const cardLimit = (colData?.data?.cardLimit as number) || 0;

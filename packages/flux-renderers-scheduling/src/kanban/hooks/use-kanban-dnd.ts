@@ -162,7 +162,6 @@ export function useKanbanDnd({ boardData, onBoardChange, onCardMove, wipOverLimi
   const registerColumn = useCallback((
     element: HTMLElement, columnId: string, cardCount: number,
   ) => {
-    const { wipOverLimitColumns: wipSet } = stateRef.current;
     return dropTargetForElements({
       element,
       getData: () => ({
@@ -172,7 +171,10 @@ export function useKanbanDnd({ boardData, onBoardChange, onCardMove, wipOverLimi
       }),
       canDrop({ source }) {
         if (source.data.type !== 'kanban-card') return false;
-        if (wipSet?.has(columnId)) return false;
+        // P1-MA5.2-001: live-read stateRef (same pattern as card-level fix in
+        // R2.7) — prevents stale wipSet snapshot from registration time.
+        const { wipOverLimitColumns: wipLive } = stateRef.current;
+        if (wipLive?.has(columnId)) return false;
         return true;
       },
       onDragEnter() {
