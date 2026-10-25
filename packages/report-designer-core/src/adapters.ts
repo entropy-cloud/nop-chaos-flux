@@ -175,4 +175,5 @@ export interface ReportDesignerProfile {
   previewId?: string;
   codecId?: string;
   expressionEditorId?: string;
+  referencePickerId?: string;
 }

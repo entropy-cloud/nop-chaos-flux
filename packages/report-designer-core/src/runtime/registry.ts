@@ -1,5 +1,7 @@
 import {
   createEmptyAdapterRegistry,
+  type ExpressionEditorAdapter,
+  type ReferencePickerAdapter,
   type ReportDesignerAdapterRegistry,
   type ReportDesignerProfile,
 } from '../adapters.js';
@@ -39,3 +41,28 @@ export function getPreviewProviderId(
 export function getCodecId(profile?: ReportDesignerProfile): string | undefined {
   return profile?.codecId;
 }
+
+export function getExpressionEditorId(profile?: ReportDesignerProfile): string | undefined {
+  return profile?.expressionEditorId;
+}
+
+export function getReferencePickerId(profile?: ReportDesignerProfile): string | undefined {
+  return profile?.referencePickerId;
+}
+
+export function resolveExpressionEditor(args: {
+  adapters: ReportDesignerAdapterRegistry;
+  profile?: ReportDesignerProfile;
+}): ExpressionEditorAdapter | undefined {
+  const id = getExpressionEditorId(args.profile);
+  return id ? args.adapters.expressions.get(id) : undefined;
+}
+
+export function resolveReferencePicker(args: {
+  adapters: ReportDesignerAdapterRegistry;
+  profile?: ReportDesignerProfile;
+}): ReferencePickerAdapter | undefined {
+  const id = getReferencePickerId(args.profile);
+  return id ? args.adapters.references.get(id) : undefined;
+}
+

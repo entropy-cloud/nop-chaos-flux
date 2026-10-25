@@ -1036,6 +1036,7 @@ export const enUS: Resource = {
       templateClose: 'Close',
     },
     reportDesigner: {
+      referencePick: 'Pick reference',
       title: 'Report Designer',
       noFieldSources: 'No field sources registered.',
       target: 'Target',

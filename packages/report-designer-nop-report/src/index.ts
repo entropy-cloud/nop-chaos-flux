@@ -34,6 +34,26 @@ export {
   NOP_REPORT_EXPRESSION_FIELDS,
   NOP_REPORT_EXPRESSION_KIND_MARKER,
   NOP_REPORT_INSPECTOR_SCHEMA_ID,
+  NOP_REPORT_REFERENCE_FIELDS,
+  NOP_REPORT_REFERENCE_KIND_MARKER,
   NOP_REPORT_XPT_MODEL_FIELDS,
   type NopReportInspectorSchemas,
 } from './inspector-schema.js';
+export {
+  createNopReportExpressionEditorAdapter,
+  NOP_REPORT_EXPRESSION_EDITOR_ADAPTER_ID,
+  NOP_REPORT_EXPRESSION_EDITOR_SLOT,
+} from './expression-editor-adapter.js';
+export {
+  createNopReportReferencePickerAdapter,
+  NOP_REPORT_REFERENCE_PICKER_ADAPTER_ID,
+} from './reference-picker-adapter.js';
+export {
+  NOP_REPORT_EXPRESSION_RENDERER_TYPE,
+  NOP_REPORT_REFERENCE_RENDERER_TYPE,
+  withNopReportFieldKinds,
+} from './field-kinds.js';
+export {
+  createNopReportRendererDefinitions,
+  NOP_REPORT_REFERENCE_PICK_SLOT,
+} from './renderers.js';

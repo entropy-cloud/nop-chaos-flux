@@ -176,6 +176,8 @@ type InspectorFieldKind =
 - shell 或 schema adapter 将其映射到 `ExpressionEditorAdapter`
 - adapter 接收 `ExpressionEditorProps`
 
+> 消费路径落点（plan 752，"schema adapter" 变体）：`packages/report-designer-nop-report` 的 `withNopReportFieldKinds` 把带 `x-expression-kind`/`x-reference-kind` 标记的字段改写为 `nop-report-expression-editor`/`nop-report-reference-picker` 自带 renderer definition 类型（adapter 关闭在 definition 工厂内）；**未注册 adapter 时字段保持普通 input（回退）**；live flux registry 注册归 profile 装配。resolver 入口在 `report-designer-core` 的 `runtime/registry.ts`（`resolveExpressionEditor`/`resolveReferencePicker`）。
+
 ### 12.1 为什么要 field kind
 
 因为以下字段虽然都是字符串，但编辑体验不同:

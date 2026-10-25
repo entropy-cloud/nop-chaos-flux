@@ -24,6 +24,10 @@ export const NOP_REPORT_EXPRESSION_FIELDS = [
   'linkExpr',
 ] as const;
 
+export const NOP_REPORT_REFERENCE_FIELDS = ['rowParent', 'colParent'] as const;
+
+export const NOP_REPORT_REFERENCE_KIND_MARKER = 'x-reference-kind';
+
 export const NOP_REPORT_XPT_MODEL_FIELDS = [
   'field',
   'ds',
@@ -102,12 +106,14 @@ function formWithUpdate(title: string, body: SchemaInput[]): SchemaInput {
 function xptModelFieldsBody(): SchemaInput[] {
   return NOP_REPORT_XPT_MODEL_FIELDS.map((field) => {
     const isExpression = (NOP_REPORT_EXPRESSION_FIELDS as readonly string[]).includes(field);
+    const isReference = (NOP_REPORT_REFERENCE_FIELDS as readonly string[]).includes(field);
     return {
       type: 'input-text',
       name: `xpt.${field}`,
       label: XPT_FIELD_LABELS[field],
       value: `${MODEL_PATH_PREFIX}${field}}`,
       ...(isExpression ? { [NOP_REPORT_EXPRESSION_KIND_MARKER]: true } : {}),
+      ...(isReference ? { [NOP_REPORT_REFERENCE_KIND_MARKER]: true } : {}),
     } as SchemaInput;
   });
 }

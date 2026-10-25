@@ -1501,12 +1501,28 @@ importers:
       '@nop-chaos/flux-core':
         specifier: workspace:*
         version: link:../flux-core
+      '@nop-chaos/flux-i18n':
+        specifier: workspace:*
+        version: link:../flux-i18n
       '@nop-chaos/report-designer-core':
         specifier: workspace:*
         version: link:../report-designer-core
       '@nop-chaos/spreadsheet-core':
         specifier: workspace:*
         version: link:../spreadsheet-core
+    devDependencies:
+      '@testing-library/react':
+        specifier: ^16.3.0
+        version: 16.3.2(@testing-library/dom@10.4.1)(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+      happy-dom:
+        specifier: ^15.11.0
+        version: 15.11.7
+      react:
+        specifier: ^19.0.0
+        version: 19.2.4
+      react-dom:
+        specifier: ^19.0.0
+        version: 19.2.4(react@19.2.4)
 
   packages/report-designer-renderers:
     dependencies:

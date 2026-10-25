@@ -779,8 +779,11 @@ export interface ReportDesignerProfile {
   previewId?: string;
   codecId?: string;
   expressionEditorId?: string;
+  referencePickerId?: string;
 }
 ```
+
+> `referencePickerId?` 为向后兼容加法（plan 752，NRP-4），与 `runtime/registry.ts` 的 `getReferencePickerId`/`resolveReferencePicker` resolver 配套（`expressions`/`references` registry map 的读取点）。live 契约以 `packages/report-designer-core/src/adapters.ts` 为准。
 
 这样 `nop-report` 的实现可以独立决定:
 

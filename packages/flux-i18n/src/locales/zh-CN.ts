@@ -1031,6 +1031,7 @@ export const zhCN: Resource = {
       templateClose: '关闭',
     },
     reportDesigner: {
+      referencePick: '选择引用',
       title: '报表设计器',
       noFieldSources: '未注册字段源。',
       target: '目标',
