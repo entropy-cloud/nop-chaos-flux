@@ -121,7 +121,7 @@ const SchemaRenderer = createSchemaRenderer();
 >
 > - **i18n 初始化**：`initFluxI18n()` 在 `ReactDOM.createRoot` 之前调用一次，否则 `${t('key')}` 与渲染器内部文案不生效（详见 `12-i18n.md`）。
 > - **主题样式 import**：`import '@nop-chaos/theme-tokens/styles.css'`，并把渲染子树挂到 `.nop-theme-root`（详见 `14-theming.md`）。
-> - **错误监控**：传 `<SchemaRenderer monitor={onEvent}>` 或 `<SchemaRenderer onActionError={(err, ctx) => ...}>` 上报动作异常（详见 `15-error-handling.md` + `16-monitor.md`）。
+> - **错误监控**：使用 `<SchemaRenderer onActionError={(err, ctx) => ...}>` 上报动作异常（详见 `15-error-handling.md`）。注：`monitor` prop 为 intent-only 设计未实现（P1-MA8.1-002），`16-monitor.md` 已标注。
 
 ## 文件索引
 
@@ -142,7 +142,7 @@ const SchemaRenderer = createSchemaRenderer();
 | `13-testing.md`           | 测试栈（Vitest + Playwright）、mock helper 清单、渲染 schema 标准做法、**E2E 字段定位契约（selector 速查）**、3 个推荐参考范例 |
 | `14-theming.md`           | 主题与样式：纯 CSS 契约（无 ThemeProvider）、三层 CSS、4 主题变体、`data-slot` 协议、`className`/`frameClassName`              |
 | `15-error-handling.md`    | 错误处理三层（编译/action/渲染）、Error Boundary、`onActionError`、链式恢复、默认 notify、已知缺口                             |
-| `16-monitor.md`           | 运行时遥测监控（event-based monitor，独立 prop，自动捕获 notify + fetcher，E2E 友好）                                          |
+| `16-monitor.md`           | 运行时遥测监控（**intent-only 设计未实现**——P1-MA8.1-002；当前不产生任何效果）                                                 |
 | `17-debugging.md`         | 三层定位法（配置/生成/渲染）、`__fluxDebug` 环形缓冲、后端 schema 直读、渲染器补测试规范、CRUD 缺按钮实战案例                  |
 | `18-reactions.md`         | 联动与响应式：表达式自动求值、reaction 节点、dependsOn、两层依赖追踪、微任务批量、性能优化                                     |
 | `19-scada.md`             | SCADA 工业组态：37 内置图元总表、点表/绑定/状态机/动画、电气族、画廊场景组合范式                                               |

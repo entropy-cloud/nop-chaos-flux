@@ -1,6 +1,6 @@
 # Monitor：运行时遥测
 
-> 通过 `<SchemaRenderer monitor={onEvent}>` 观察运行时事件（notify、动作、API 请求/响应、错误、渲染）。类型定义见 `packages/flux-core/src/types/renderer-api.ts`，设计文档见 `../docs/architecture/flux-monitor.md`。
+> ⚠️ **P1-MA8.1-002 (plan 747): `<SchemaRenderer monitor>` is an intent-only design that has NOT been implemented.** The `SchemaRendererProps` type has no `monitor` field, and `applyMonitor` has zero references in the codebase. Following the testing guide's monitor-based error-capture instructions will silently produce zero events. For actual error capture, use `env.notify` (spies in tests) or `env.reportSchemaDiagnostics`. The design document at `../docs/architecture/flux-monitor.md` is intent-only and may be implemented in the future.
 
 ---
 

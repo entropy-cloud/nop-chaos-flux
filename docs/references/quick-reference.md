@@ -352,7 +352,7 @@ interface RendererRuntime {
   resolveTarget(target: ComponentTarget, ctx): NodeInstance | undefined;
 
   registerDataSource(input: { id; scope; compiledSource }): DataSourceRegistration;
-  refreshDataSource(input: { name; scope? }): Promise<boolean>;
+  refreshDataSource(input: { name; scope? }): Promise<DataSourceRefreshOutcome>;
   registerReaction(input: { id; scope; compiledReaction; dispatch }): { id; dispose() };
 
   dispose(): void;
@@ -799,20 +799,34 @@ Use `component:<method>` + `componentId`/`componentName` **only for cross-tree t
 ```ts
 type DataSourceSchema = FormulaDataSourceSchema | ActionDataSourceSchema;
 
-interface FormulaDataSourceSchema {
-  type: 'formula';
-  formula: string;
+interface BaseDataSourceSchema extends BaseSchema {
+  type: 'data-source';
+  name?: string;
   mergeToScope?: boolean;
-  resultMapping?: string;
+  resultMapping?: Record<string, SchemaValue>;
+  statusPath?: string;
+  dependsOn?: string[];
+  initialData?: SchemaValue;
+  mergeStrategy?: 'replace' | 'append' | 'prepend' | 'merge' | 'upsert';
+  mergeKey?: string;
+  sendOn?: string;
 }
 
-interface ActionDataSourceSchema {
-  type: 'action';
-  action: ActionSchema;
+interface FormulaDataSourceSchema extends BaseDataSourceSchema {
+  formula: SchemaValue;
+  action?: never;
+  api?: never;
+}
+
+interface ActionDataSourceSchema extends BaseDataSourceSchema {
+  action: string;
+  args?: Record<string, SchemaValue>;
   interval?: number;
   stopWhen?: string;
-  mergeToScope?: boolean;
-  resultMapping?: string;
+  silent?: boolean;
+  initFetch?: boolean | string;
+  onSuccess?: ActionSchema | ActionSchema[];
+  onError?: ActionSchema | ActionSchema[];
 }
 ```
 

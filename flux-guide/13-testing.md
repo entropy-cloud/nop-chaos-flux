@@ -66,7 +66,7 @@ render(<MyRenderer {...props} />);
 
 `packages/flux-action-core/src/__tests__/action-dispatcher-test-support.ts` 导出全套：
 
-- `createMockEnv()` — `fetcher / notify / confirm / alert / monitor` 全 `vi.fn()`
+- `createMockEnv()` — `fetcher / notify / confirm / alert` 全 `vi.fn()`（注：`monitor` prop 未实现——P1-MA8.1-002）
 - `createMockAdapter(overrides?)` — action adapter 三类调用全 `vi.fn()`
 - `createMockRuntime(env?)` / `createMockScope()` / `createMockEvaluator()`
 - `createActionCtx(overrides?)` — 构造 ActionContext
