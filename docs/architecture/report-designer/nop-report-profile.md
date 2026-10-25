@@ -365,6 +365,8 @@ export interface NopReportDatasetField {
 
 真正的绑定策略交给 `FieldDropAdapter`。
 
+> 实现落点（plan 751）：`createNopReportDatasetProvider(options)` 位于 `packages/report-designer-nop-report/src/field-source.ts`，provider id `nop-report-datasets`；数据集可静态传入或由工厂函数提供（支持 abort）。
+
 ## 6. 字段拖放到单元格的映射规则
 
 建议在 `nop-report-cell-binding` adapter 中完成从字段 drop 到 metadata patch 的变换。
@@ -405,6 +407,8 @@ adapter 可根据字段类型增加默认值:
 - string -> 普通 field 绑定
 
 但这些都是 adapter 逻辑，不应进入通用 drop command 合同。
+
+> 实现落点（plan 751）：`createNopReportCellBindingDropAdapter()` 位于 `packages/report-designer-nop-report/src/field-drop.ts`，adapter id `nop-report-cell-binding`，patch 形状 `{ 'nop-report': { model: { field, ds } } }`；range drop 首版不支持（`canHandle` 仅接受 `target.kind==='cell'`，范围批量 patch 显式 deferred）。
 
 ## 7. inspector 面板适配
 
@@ -472,6 +476,8 @@ adapter 可根据字段类型增加默认值:
 
 - 通用 inspector shell 不需要理解 `nop-report`
 - profile 可以逐步扩展 schema，而不需要推翻原有结构
+
+> 实现落点（plan 751）：`createNopReportInspectorSchemas()` 位于 `packages/report-designer-nop-report/src/inspector-schema.ts`，schema id `nop-report-default`；cell schema 为 Basic + Report(XPT) 两段（XPT 覆盖 13 个 model 字段，`*Expr` 五字段带 `x-expression-kind` 标记）；提交为 `report-designer:updateMeta` namespaced action（`args.target` 绑定 `${selectionTarget}`，patch 由 `buildNopReportMetaPatch` 形状约定）。
 
 ## 8. 表达式字段与表达式编辑器接入
 

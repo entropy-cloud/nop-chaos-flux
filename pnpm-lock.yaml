@@ -1498,6 +1498,9 @@ importers:
 
   packages/report-designer-nop-report:
     dependencies:
+      '@nop-chaos/flux-core':
+        specifier: workspace:*
+        version: link:../flux-core
       '@nop-chaos/report-designer-core':
         specifier: workspace:*
         version: link:../report-designer-core

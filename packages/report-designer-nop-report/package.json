@@ -20,6 +20,7 @@
   },
   "description": "nop-report profile adapters for the report designer",
   "dependencies": {
+    "@nop-chaos/flux-core": "workspace:*",
     "@nop-chaos/report-designer-core": "workspace:*",
     "@nop-chaos/spreadsheet-core": "workspace:*"
   }

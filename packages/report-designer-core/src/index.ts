@@ -88,3 +88,8 @@ export {
 export type { ReportDesignerCore, CreateReportDesignerCoreOptions } from './core.js';
 
 export { createReportDesignerCore } from './core.js';
+
+// Package-internal export of the existing runtime resolver (same precedent as
+// rangeMetaId): profile packages (report-designer-nop-report) assert schema
+// resolution through the live consumption path without deep-importing runtime/.
+export { resolveInspectorSchemaForTarget } from './runtime/inspector-panels.js';
