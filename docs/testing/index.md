@@ -19,6 +19,7 @@ docs/testing/
 
 - Path convention: `docs/testing/{year}/{month}-{day}.md`
 - Writing rules and entry format: `docs/testing/00-testing-issue-writing-guide.md`
+- Coverage threshold baseline (per-package `vitest` thresholds, ratchet rule): `docs/testing/coverage-thresholds.md`
 
 ## Index (Reverse Chronological)
 
