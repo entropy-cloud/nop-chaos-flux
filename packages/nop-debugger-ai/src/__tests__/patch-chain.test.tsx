@@ -7,6 +7,7 @@ import { createNopDebugger } from '@nop-chaos/nop-debugger';
 import type { NopSchemaPatch, NopSchemaPatchApplier } from '@nop-chaos/nop-debugger';
 import { createAiDebuggerExtension } from '../panel/extension.js';
 import { INJECTION_PROBE } from './injection-probe.js';
+import { scriptedConnector } from './scripted-connector.js';
 
 beforeEach(async () => {
   resetFluxI18n();
@@ -39,31 +40,28 @@ function fakeRegistry(items: Array<{ cid: number; nodeId: string; path: string }
 
 /** First call proposes a patch (tool_calls); second call answers in text. */
 function proposeThenAnswerConnector(): AiConnector {
-  let calls = 0;
-  return {
-    async *stream() {
-      calls += 1;
-      if (calls === 1) {
-        yield {
-          delta: {
-            role: 'assistant',
-            tool_calls: [
-              {
-                index: 0,
-                id: 'call-propose',
-                type: 'function',
-                function: { name: 'propose_schema_patch', arguments: JSON.stringify(PROPOSE_ARGS) },
-              },
-            ],
-          },
-        };
-        yield { finishReason: 'tool_calls' };
-      } else {
-        yield { delta: { role: 'assistant', content: 'Proposal staged for review.' } };
-        yield { finishReason: 'stop' };
-      }
-    },
-  };
+  return scriptedConnector([
+    [
+      {
+        delta: {
+          role: 'assistant',
+          tool_calls: [
+            {
+              index: 0,
+              id: 'call-propose',
+              type: 'function',
+              function: { name: 'propose_schema_patch', arguments: JSON.stringify(PROPOSE_ARGS) },
+            },
+          ],
+        },
+      },
+      { finishReason: 'tool_calls' },
+    ],
+    [
+      { delta: { role: 'assistant', content: 'Proposal staged for review.' } },
+      { finishReason: 'stop' },
+    ],
+  ]);
 }
 
 async function typeAndSubmit(text: string) {

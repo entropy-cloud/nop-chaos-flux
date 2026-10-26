@@ -6,6 +6,7 @@ import type { NopComponentInspectResult } from '@nop-chaos/nop-debugger';
 import { createNopDebugger } from '@nop-chaos/nop-debugger';
 import type { NopDebuggerController } from '@nop-chaos/nop-debugger';
 import { createAiDebuggerExtension } from '../panel/extension.js';
+import { failingOnceConnector, hangingConnector, scriptedConnector } from './scripted-connector.js';
 import type { NopDebuggerPanelTabDescriptor } from '@nop-chaos/nop-debugger';
 
 beforeEach(async () => {
@@ -20,36 +21,12 @@ afterEach(() => {
 });
 
 function staticConnector(reply: string): AiConnector {
-  return {
-    async *stream() {
-      yield { delta: { role: 'assistant', content: reply } };
-      yield { finishReason: 'stop' };
-    },
-  };
-}
-
-function hangingConnector(gate: { open: () => void; promise: Promise<void> }): AiConnector {
-  return {
-    async *stream() {
-      await gate.promise;
-      yield { delta: { role: 'assistant', content: 'late' } };
-      yield { finishReason: 'stop' };
-    },
-  };
-}
-
-function failingOnceConnector(): AiConnector {
-  let calls = 0;
-  return {
-    async *stream() {
-      calls += 1;
-      if (calls === 1) {
-        throw new Error('connection refused (internal)');
-      }
-      yield { delta: { role: 'assistant', content: 'recovered' } };
-      yield { finishReason: 'stop' };
-    },
-  };
+  return scriptedConnector([
+    [
+      { delta: { role: 'assistant', content: reply } },
+      { finishReason: 'stop' },
+    ],
+  ]);
 }
 
 async function typeAndSubmit(text: string) {
@@ -141,7 +118,7 @@ describe('AI session surface behavior', () => {
 
   it('error shows a banner; retry recovers on the next connector call', async () => {
     const controller = createNopDebugger({ id: 'sess-retry', enabled: true });
-    renderSession({ connector: failingOnceConnector(), controller });
+    renderSession({ connector: failingOnceConnector('recovered'), controller });
     await typeAndSubmit('diagnose');
     const banner = await screen.findByTestId('ndbg-ai-error');
     expect(banner).toHaveTextContent(/failed/i);

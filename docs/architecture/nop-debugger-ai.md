@@ -85,4 +85,26 @@ All surfaces below are required-at-delivery verification obligations for the wor
 - tool surface: discriminating unit tests for whitelist denial, per-tool redaction/trimming, and error normalization
 - session surface: injection assertions (data-not-instructions), lazy/zero-load assertion when the AI capability is not registered
 - patch pipeline: validation rejection, audit trail, atomic apply/revert, and conflict-detection tests
+- probe ↔ production contract: deterministic CI tests pinning the live-model probe's seed tool names to the production face and walking a probe-shaped propose tool_call through the offline validate→stage chain (`packages/nop-debugger-ai/src/__tests__/local-model-contract.test.ts`)
 - e2e: programmatic assertions only (`page.evaluate` / locator / computed style); screenshots are diagnostic, never pass evidence
+
+### Local-Model Probe (optional human verification)
+
+`scripts/__tests__/ai-debugger-local-qwen.optional.test.ts` is the live-model probe. Real-model runs are OPTIONAL human verification and never a closure precondition; model output never becomes a regression baseline.
+
+Environment contract:
+
+- `NOP_AI_LOCAL_TEST=1` — enables the probe (default: skipped via `skipIf`)
+- `NOP_AI_LOCAL_BASE_URL` — OpenAI-compatible base URL (default `http://127.0.0.1:11434/v1`)
+- `NOP_AI_LOCAL_MODEL` — model name (default `qwen27b`)
+- `NOP_AI_LOCAL_API_KEY` — bearer token (default `local`)
+- `NOP_AI_LOCAL_TIMEOUT_MS` — fetch abort timeout (default 25000); the per-test vitest timeout is this value + 5s, so failures surface as clean HTTP errors, never harness kills
+
+Failure interpretation:
+
+- HTTP non-200 / abort — the local model is not running or the base URL is wrong; restart the model or fix the URL, retry
+- no `tool_calls` in the response — the model answered in text; a prompt/model-capability issue, NOT a product bug; does not block closure
+- unparseable `arguments` — the dispatcher's structured `invalid arguments` error is the expected product behavior; the probe's assertion may legitimately fail on weak models
+- mirror asymmetry: production→seed drift is CI-enforced (the seed names are asserted against the production face); probe-side whitelist edits are annotation-guarded only
+
+Deterministic fixtures: `packages/nop-debugger-ai/src/__tests__/scripted-connector.ts` provides the shared scripted/hanging/failing-once connectors used by the session and patch-chain tests — no network anywhere in CI.

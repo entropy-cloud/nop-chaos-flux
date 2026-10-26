@@ -1,14 +1,24 @@
 import { describe, expect, it } from 'vitest';
 
+// Live-model probe: OPTIONAL human verification, never a closure precondition.
+// Gate contract and failure interpretation: docs/architecture/nop-debugger-ai.md
+// §Verification Baseline (local-model probe section).
 const ENABLED = process.env.NOP_AI_LOCAL_TEST === '1';
 const BASE_URL = (process.env.NOP_AI_LOCAL_BASE_URL ?? 'http://127.0.0.1:11434/v1').replace(/\/$/, '');
 const MODEL = process.env.NOP_AI_LOCAL_MODEL ?? 'qwen27b';
 const API_KEY = process.env.NOP_AI_LOCAL_API_KEY ?? 'local';
-// Fetch abort must fire before the harness timeout (vitest.scripts.config.ts
-// testTimeout 30s) so failures surface as clean HTTP errors, not vitest kills.
+// Fetch abort must fire before the per-test timeout override
+// (TEST_TIMEOUT_MS = NOP_AI_LOCAL_TIMEOUT_MS + 5s, default 65s) so failures
+// surface as clean HTTP errors, not vitest kills. (Erratum 2026-10-27, plan
+// 773: the harness-wide vitest.scripts.config.ts value is 30s, but these two
+// tests carry the per-test override — this annotation previously cited 30s.)
 const TIMEOUT_MS = Number(process.env.NOP_AI_LOCAL_TIMEOUT_MS ?? 25_000);
 const TEST_TIMEOUT_MS = Number(process.env.NOP_AI_LOCAL_TIMEOUT_MS ?? 60_000) + 5_000;
 
+// PRODUCTION MIRROR — enforced from the other side by
+// packages/nop-debugger-ai/src/__tests__/local-model-contract.test.ts
+// (production face ⊇ these seed names, CI-enforced). Editing this set does not
+// change the production tool face; it only re-points the live-model probe.
 const DEBUGGER_TOOL_NAMES = new Set([
   'explain_node_failure',
   'get_node_diagnostics',
