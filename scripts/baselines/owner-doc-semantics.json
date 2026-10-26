@@ -1,0 +1,20 @@
+{
+  "_header": {
+    "description": "Semantic owner-doc assertions for check:owner-doc-semantics (plan 756, roadmap PH-3). identifierSets: a doc heading must cover every call inside a named function (name or kebab family) and match its bold count. symbol-anchor: within each doc item, every backticked symbol must appear in every backticked file cited by the same item (facade re-exports and same-name module dirs are folded in; items describing deleted/removed symbols are skipped). Add docs/architecture files to `docs` incrementally after clearing their mismatches.",
+    "source": "docs/plans/756-ph3-owner-doc-semantics-gate-plan.md",
+    "lastUpdated": "2026-10-26"
+  },
+  "docs": ["docs/architecture/flux-runtime-module-boundaries.md"],
+  "identifierSets": [
+    {
+      "id": "bundle-default-registration-face",
+      "doc": "docs/architecture/flux-runtime-module-boundaries.md",
+      "heading": "## Bundle Default Registration Face (2026-09-06, current state)",
+      "codeFile": "packages/flux-bundle/src/index.tsx",
+      "functionName": "registerDefaultFluxRenderers",
+      "callPattern": "register[A-Z]\\w*",
+      "countPattern": "\\*\\*(\\d+) renderer families\\*\\*"
+    }
+  ],
+  "allow": []
+}
