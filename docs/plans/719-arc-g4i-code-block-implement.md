@@ -1,7 +1,7 @@
 # 719 Arc G4I — markdown code fence 语法高亮落地（`codeHighlight`）
 
-> Plan Status: active
-> Last Reviewed: 2026-10-24
+> Plan Status: completed
+> Last Reviewed: 2026-10-27
 > Source: `docs/backlog/arc-component-gap-roadmap.md` §7 G4I（依赖 G4D done，plan 718）
 > Related: 协议权威 `docs/components/markdown/design.md` §2a（plan 718 裁决）
 > Branch note: 本分支 `arc-component-gap` 落地——实现与 plan 主体完成于 master worktree 在办会话（草案审查 R1 revised→共识已记录于 Draft Review Record），按 roadmap "每 plan 一 commit" 纪律移植至本分支收口（移植后门禁在本分支独立复验，closure audit 由本分支 fresh 子 agent 执行）。

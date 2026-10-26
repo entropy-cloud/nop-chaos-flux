@@ -1,7 +1,7 @@
 # 643 跨 roadmap Wave E 收口（UR-18 九项 nit 快扫 + UR-17/19/20 核验回写）
 
-> Plan Status: active
-> Last Reviewed: 2026-10-18
+> Plan Status: completed
+> Last Reviewed: 2026-10-27
 > Source: `docs/backlog/cross-roadmap-remediation-roadmap.md` UR-18 / UR-19 / UR-20（Wave E）+ UR-17 回写（并入本批 commit）
 > Related: `docs/analysis/2026-10-01-playground-designer-ux-roadmap.md`（复审计 Follow-up 登记）、`docs/analysis/2026-10-03-complex-pages-browser-confirmation-roadmap.md`、full-traversal §七、plan 623（@watch-only 机制）
 

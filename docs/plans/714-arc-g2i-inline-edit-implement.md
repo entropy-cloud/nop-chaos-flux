@@ -1,7 +1,7 @@
 # 714 Arc G2I — inline-edit 落地（`detail-field.editable`）
 
-> Plan Status: active
-> Last Reviewed: 2026-10-24
+> Plan Status: completed
+> Last Reviewed: 2026-10-27
 > Source: `docs/backlog/arc-component-gap-roadmap.md` §5.1 G2 / §7 G2I（依赖 G2D done，plan 713）
 > Related: 协议权威 `docs/components/detail-field/design.md` §4a（plan 713 裁决）
 

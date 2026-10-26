@@ -1,7 +1,7 @@
 # 713 审计修复 R2·MR2.0：P1 修复展开器—代码+测试（追加 R2.n 行）
 
-> Plan Status: active
-> Last Reviewed: 2026-10-24
+> Plan Status: completed
+> Last Reviewed: 2026-10-27
 > Source: `docs/backlog/audit-remediation-r2-roadmap.md` MR2.0（Dependencies MA3、MA4——MA3×18 全部 `done` 且 **P1 零立案**、MA4×5 全部 `done`，展开器解锁）；`docs/skills/test-first-implementation-prompt.md`（R 行 Skill 列）
 > Related: `docs/audits/arm2-index.md`（P1 追踪区 MA4 ×40 条在案）、`docs/plans/00-plan-authoring-and-execution-guide.md`（Rule 22/25 合并优先）、roadmap Cross-Cutting 4/5（展开与字母批预授权）/8（修复去重）/11（判别性测试纪律随行传递）
 > 先例：`docs/plans/711-audit-r2-mr1-structure-runtime-expander-plan.md`（MR1.0 同构展开器，closure audit approved——粒度裁定/去重对照/drift 径模式沿用）

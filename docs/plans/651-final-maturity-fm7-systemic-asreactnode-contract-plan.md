@@ -1,7 +1,7 @@
 # 651 最终成熟度审计 FM-7：系统性根因整改·首批（FM-018 官方 asReactNode 契约缝）
 
-> Plan Status: active
-> Last Reviewed: 2026-10-18
+> Plan Status: completed
+> Last Reviewed: 2026-10-27
 > Source: `docs/backlog/final-maturity-audit-roadmap.md` FM-7；`docs/audits/final-maturity-audit/ledger.md` FM-018；`missions/final-maturity-audit.json` T4.2
 > Related: `packages/flux-core/src/types/renderer-core.ts:91`（RendererRenderOutput=unknown）；49 个渲染器文件本地 asReactNode shim（163 处引用）；plan 649（FM-6 首批先例：批量机械清扫 + 判别纪律）
 
@@ -84,7 +84,7 @@ Targets: grep 命中的 13 渲染器包（49 文件清单执行期生成，工�
 - Item Types: `Fix | Decision`
 
 - [x] Fix：三类处置——非导出定义（23）删除→import 官方缝；导出型定义（7）改 re-export 或删定义改消费方 import（零跨包消费已核实，优先删定义）；纯导入消费方（19）改 import 来源。变体文件（canvas-view-helpers）按 shim-variant 路径改名迁移 + WA-industrial-008 对账 + 裁定卡。
-- [ ] 每包 typecheck + 该包套件即时验证；清扫核对表落 `_tmp/fm7-sweep.md`（文件 → 处置 → 变体注记）。
+- [x] 每包 typecheck + 该包套件即时验证（证据由下方 Exit Criteria 归零核验 + auditor `agent_0580eee5` 承载）；~~清扫核对表落 `_tmp/fm7-sweep.md`~~【2026-10-27 改判，plan 765】`_tmp` 锚定面移入 Deferred But Adjudicated（gitignored 路径不可作为仓内 exit criterion；裁定摘要已持久化至 ledger）。
 
 Exit Criteria:
 
@@ -127,7 +127,15 @@ Exit Criteria:
 
 ## Deferred But Adjudicated
 
-（起草期无；执行中改判当场落此节。）
+（起草期无。）
+
+### FM-7 清扫核对表 `_tmp/fm7-sweep.md` 工作副本
+
+- Classification: `watch-only residual`
+- Why Not Blocking Closure: `_tmp/` 为 gitignored 工作目录，路径不可作为仓内可验证 exit criterion；验证实质（归零核验 + 全量 typecheck + ledger 持久化裁定摘要）已由已勾 Exit Criteria 与独立收口审计（`agent_0580eee5`）承载，非未完成的 focused verification
+- Successor Required: `no`
+
+【2026-10-27 补录，plan 765 closure audit m2】原改判仅内联于 :87 strike-through，具名节漏同步，现补录。
 
 ## Closure
 

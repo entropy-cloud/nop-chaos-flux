@@ -412,7 +412,7 @@ plan review 检查五项：
 6. 明确区分“接口存在”与“行为完成”（对代码变更计划：至少抽查一轮 live code path 和 focused tests；对纯文档计划：抽查文档内容与 live repo 代码的一致性），确认实现语义真的满足 exit criteria。
 7. closure-audit 必须在执行 session **之外**完成——由独立子 agent（fresh session，不复用执行者上下文）反复审核直到通过，证据记入 plan 或对应 daily log。执行 session 不得自审、不得勾 Closure Gates 中的 audit 条目、不得以"留 human gate"替代；没有独立 agent 可用时必须显式启动一个 fresh sub-agent session，否则 plan 保持未关闭。
 8. 逐条检查 deferred / follow-up 项是否真的 non-blocking，确认没有把 in-scope live defect、contract drift、或硬门禁失败项偷偷改写成“后续再做”。
-9. 【P5.1 后新增】**回写同 commit 纪律**：closure audit 通过后的全部回写（roadmap 状态、daily log 计数修正、过时声称/注释修正、Deferred 补录）必须与 closure 证据并入**同一次提交**；禁止“审计已过但回写未落”的中间态提交。（针对 Lessons 2.0 模式 1。）
+9. 【P5.1 后新增】**回写同 commit 纪律**：closure audit 通过后的全部回写（roadmap 状态、daily log 计数修正、过时声称/注释修正、Deferred 补录、**`Plan Status` header 翻转与 slice `Status` 同步**——2026-10-27 plan 765 实证：14 份 plan 审计已过但 header 滞留 `active` 一周，即漏掉本项的后果）必须与 closure 证据并入**同一次提交**；禁止“审计已过但回写未落”的中间态提交。（针对 Lessons 2.0 模式 1。）
 10. 【P5.1 后新增】**声称-实况对账**：对 plan `[x]` 项与 Closure Evidence 中的每条文件/命令/测试声称做直接观测核验（git diff / 实跑 / 打开测试文件看断言）；任何一条声称不成立即退回执行。（针对 Lessons 2.0 模式 1。）
 11. 【P5.1 后新增】**Roadmap/Deferred 所有权记账核对**：roadmap 行回写状态必须与该行 scope 子句及 plan Deferred 裁定一致——行 scope 含未做子句时用部分收敛标注而非整行 `done`；Deferred 的 Successor 归属不得悬空。（针对 Lessons 2.0 模式 3。）
 12. 【P5.1 后新增】**前提就地勘误**：交付推翻了 roadmap/基线文档既有前提表述时，回写时必须在原文处就地加勘误标注（历史文本不改写、就地附注），防止复述性漂移。（针对 Lessons 2.0 模式 4。）

@@ -1,7 +1,7 @@
 # 638 跨 roadmap UR-11 UI 组件与测试质量（7 条收口）
 
-> Plan Status: active
-> Last Reviewed: 2026-10-17
+> Plan Status: completed
+> Last Reviewed: 2026-10-27
 > Source: `docs/backlog/cross-roadmap-remediation-roadmap.md` UR-11（Wave C，audit-remediation Follow-up Backlog：D11 组 11-02/03/04 + P2-C/D/H/I）
 > Related: `docs/backlog/audit-remediation-roadmap.md` Follow-up Backlog、AGENTS.md（测试布局惯例：colocation 与 `__tests__/` 双轨皆为 sanctioned）
 

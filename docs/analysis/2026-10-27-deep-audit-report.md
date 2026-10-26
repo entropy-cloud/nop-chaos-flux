@@ -31,7 +31,7 @@
 | B2  | Major  | plan 730 自相矛盾：:116 `[x]`「closure audit approved → 收口提交」与 :118 同项 `[ ]` 并存，header active                                                                                                                                                                                                    | sed :110-120          |
 | B3  | Major  | plan 748 声称「Implementation done. Gates green (44/44, 82/82)」但全文 0 勾选框、无 closure-audit 节                                                                                                                                                                                                        | grep                  |
 | B4  | Minor  | plan 651 唯一未勾项锚定 gitignored 的 `_tmp/fm7-sweep.md`，在仓内永久不可验证                                                                                                                                                                                                                               | `git check-ignore`    |
-| B5  | 参考   | 真实 in-flight 仅 707（13/16）、737（1/14）、628（backlog track）；762 归 A1 处置                                                                                                                                                                                                                           | 计数实测              |
+| B5  | 参考   | 真实 in-flight 仅 707（13/16）、737（1/14）、628（backlog track）；762 归 A1 处置。【2026-10-27 勘误，765 draft review 补入】741 同为漂移类（active、0 未勾项、无 closure-audit 节），初版审计遗漏，归 Plan B 与 748 同处置                                                                                 | 计数实测              |
 
 ### C 组：代码与契约卫生
 

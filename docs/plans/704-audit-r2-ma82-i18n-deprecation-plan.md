@@ -1,7 +1,7 @@
 # 704 审计修复 R2·MA8.2：i18n + deprecation + todo 审计
 
-> Plan Status: active
-> Last Reviewed: 2026-10-23
+> Plan Status: completed
+> Last Reviewed: 2026-10-27
 > Source: `docs/backlog/audit-remediation-r2-roadmap.md` MA8.2；`docs/audits/arm2-scope-and-dimension-matrix.md` MA8.2 行（报告名注册 `*arm2-MA8.2-i18n-deprecation.md`；`check:i18n-keys` + 硬编码字符串 grep；`@deprecated` 注记与移除流程合规〔`docs/skills/deprecated-feature-cleanup.md`〕；`check:audit-todo-exitless`）；owner doc `flux-guide/README.md`（i18n 契约域 = `flux-guide/12-i18n.md`——initFluxI18n/t/useFluxTranslation）
 > Related: matrix MA8 节、`docs/audits/arm2-index.md`、MA6.2 记录级文案线索（EN/CN 混排等——引用归并）
 > 方法先例沿用：`_tmp/arm2-ma82/` 中间件（收口清理）；零**入库**代码变更（P0 即时通道除外）；P1 注册前执行者 live 复核；显式路径提交

@@ -1,7 +1,7 @@
 # 712 Arc G1I — input-password 强度指示实现（`showStrength`）
 
-> Plan Status: active
-> Last Reviewed: 2026-10-24
+> Plan Status: completed
+> Last Reviewed: 2026-10-27
 > Source: `docs/backlog/arc-component-gap-roadmap.md` §5.1 G1 / §7 G1I（roadmap item G1I，依赖 G1D done）
 > Related: plan `710-arc-g1d-password-strength-design.md`（协议权威：`docs/components/input-password/design.md` §4a/§4b）
 

@@ -1,7 +1,7 @@
 # 730 审计修复 R2·R2.8：契约补测—designer 族（P1-MA4.4-001/002/003/004）
 
-> Plan Status: active
-> Last Reviewed: 2026-10-24
+> Plan Status: completed
+> Last Reviewed: 2026-10-27
 > Source: `docs/backlog/audit-remediation-r2-roadmap.md` R2.8（MR2.0/plan 713 展开）；`docs/audits/2026-10-21-2001-arm2-MA4.4-designer-office-tests.md` §P1-MA4.4-001/002/003/004（各含最小补强规格；003 前置裁决「补实现 or 降 doc」）；owner doc `docs/architecture/flow-designer/design.md`（§3.4 readonly、§8 六步校验、canvas-adapters.md:139-153）
 > Related: 先例 plan 723-729（同构契约补测链）；003 与 MA4.2 B-06 doc↔impl↔test 三方错位同族第三例
 > 编号 runway：729 为 R2.7（本线）；730 本 plan；ARC 线从 731 起避开
@@ -115,4 +115,3 @@ Exit Criteria:
 - [x] R1 共识（PASS pass-with-minors，m1-m3 随激活落）后激活提交（Status→`active` + roadmap R2.8 `todo`→`planned` IN commit `20301b001`）
 - [x] 执行 Phase 1/2 → Closure Gates 全过 → closure audit **approved**（`agent_69dc26d5`，0B/0M/3m）→ 收口提交（Status→`completed`、flip `done` IN commit）
 - [x] Closure audit 记录：M-A/M-C 独立重演红 1 各自精确 + 四源文件复员 diff 空 + open 41 程序化验证 + §8 编辑与 constraints.ts 实现逐字一致（grep 六步仅裁决注记自指）；m1 对照组文本对账/m2 常量级断言留增强/m3 候选指针改指 plan+arm2-index（roadmap 无候选行——指针修正随收口提交）。
-- [ ] 执行 Phase 1/2 → Closure Gates 全过 → closure audit PASS → 收口提交（Status→`completed`、flip `done` IN commit、记录复核结论于本节）

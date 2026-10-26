@@ -1,7 +1,7 @@
 # 706 审计修复 R2·MA9.1：开放式对抗审计—核心链路（compile→scope→render→action→update）+ 并发/StrictMode/取消/错误传播
 
-> Plan Status: active
-> Last Reviewed: 2026-10-23
+> Plan Status: completed
+> Last Reviewed: 2026-10-27
 > Source: `docs/backlog/audit-remediation-r2-roadmap.md` MA9.1；`docs/audits/arm2-scope-and-dimension-matrix.md` MA9.1 行（报告名注册 `*arm2-MA9.1-core-adversarial.md`）；基础方法 `docs/skills/open-ended-adversarial-review-prompt.md`（开放式姿态/启发式人格/去重与新鲜度/多轮保存/停止条件——**skill 文件不含探针机制，closure review M1 全文核实**）；**探针设计与信号源定义 = roadmap MA9 节 + matrix MA9 节**〔live 信号驱动探针设计：git log 热点、audit:knip 死代码、console 基线、skip/watch-only 清单、MA1–MA8 报告 watch-only 项；明确允许清单外发现；产出探针清单+判别证据；有价值失败模式记 MG 候选〕；owner doc `docs/architecture/flux-design-principles.md`（roadmap :88 owner 列为准；flux-core.md 关联参考）
 > Related: matrix MA9 节、`docs/audits/arm2-index.md`、MA5.1 P0-MA5.1-003（React Compiler 判别——同域先例）、MA6.x 全部 watch-only 台账（对抗探针输入）、MA7.1 热点取证
 > 方法先例沿用：`_tmp/arm2-ma91/` 中间件（收口清理）；零**入库**代码变更（P0 即时通道除外）；P1 注册前执行者 live 复核；显式路径提交

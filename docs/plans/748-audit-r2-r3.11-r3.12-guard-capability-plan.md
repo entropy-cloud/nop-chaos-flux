@@ -11,3 +11,5 @@
 ## Status
 
 Implementation done. Gates green (typecheck/build/lint 44/44, test 82/82).
+
+> 【2026-10-27 补审注记，plan 765】独立补审（`agent_2d8cd1a6`）verdict `issues`：P1-MA8.3-001（knip baseline）与 P1-MA9.2-001 4/5（form baseline 74→76 + barcode/calendar/dashboard capability 声明）已核验落地；但 **P1-MA8.3-002 未落地**（audit:deps 无基线未入链，depcruise 57 no-circular 违规仍红）、arm2-index 三行未回写、roadmap R3.11/R3.12 未翻转——Summary「Gates green / flips IN commit」与仓库实况不符。本 plan 保持 `active`；MA8.3-002 实现与全部回写移交 Plan D（门禁与脚本治理，deep-audit D 组）落地后回本 plan 收口。

@@ -1,7 +1,7 @@
 # 648 最终成熟度审计 FM-1b：交互实操走查批二（设计器/调度/移动/AI/3D 域）
 
-> Plan Status: active
-> Last Reviewed: 2026-10-18
+> Plan Status: completed
+> Last Reviewed: 2026-10-27
 > Source: `docs/backlog/final-maturity-audit-roadmap.md` FM-1b；`missions/final-maturity-audit.json` T1.2；口径 = `docs/skills/interaction-state-audit-prompt.md`（七类 A–G + V1–V7）+ `docs/skills/complex-component-display-operability-audit-prompt.md`（复杂控件可操作性）
 > Related: `docs/plans/647-...md`（FM-1a 先例：串行分域 + 真实 DOM 事件触发 + IS 坐标去重）；`docs/audits/interaction-state/`（IS-1 flow-designer / IS-2 gantt / IS-3 calendar / IS-4 designers / IS-5 data-viz 均已 audited——本批 = 增量剖面 + gantt 拖拽既有红收口）
 

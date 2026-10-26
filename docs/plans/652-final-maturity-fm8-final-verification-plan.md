@@ -1,7 +1,7 @@
 # 652 最终成熟度审计 FM-8：终验与守护固化（关键旅程 e2e 化 + 对账 + 全量门禁 + 矩阵终审 + 收官）
 
-> Plan Status: active
-> Last Reviewed: 2026-10-18
+> Plan Status: completed
+> Last Reviewed: 2026-10-27
 > Source: `docs/backlog/final-maturity-audit-roadmap.md` FM-8（①e2e 化 ②覆盖对账 ③全量门禁 ④矩阵终审 ⑤owner docs + 收官）；`missions/final-maturity-audit.json` T5.1
 > Related: FM-1a watch-note（lab/form Enter 受信键盘 e2e 候选，plan 647）；FM-036（tabs 叠加 RTL 判别已入库，页面级 e2e 钉候选）；gantt-bars-and-links 17/17（plan 648 已沉淀判别，无需重建）
 

@@ -1,7 +1,7 @@
 # 763 PH-11 台账内容锚定推广：QA.7 §C 行号键转内容锚 + 指令沉淀为规则与门禁
 
-> Plan Status: active
-> Last Reviewed: 2026-10-26
+> Plan Status: completed
+> Last Reviewed: 2026-10-27
 > Source: `docs/backlog/platform-hardening-roadmap.md` PH-11（C 组）；指令源头 commit `caf780ed1` + `docs/logs/2026/10-19.md`
 > Related: `docs/audits/missing-components/QA.7-residual-debt-register.md` §C；`docs/references/maintenance-checklist.md`（owner doc）
 

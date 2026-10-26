@@ -1,7 +1,7 @@
 # 649 最终成熟度审计 FM-6：局部缺陷消化·首批（local 族 P2 全量 + 同族 P3 顺带）
 
-> Plan Status: active
-> Last Reviewed: 2026-10-18
+> Plan Status: completed
+> Last Reviewed: 2026-10-27
 > Source: `docs/backlog/final-maturity-audit-roadmap.md` FM-6；`missions/final-maturity-audit.json`（local→FM-6 候选族）；口径 = `docs/plans/00-plan-authoring-and-execution-guide.md`（审计卡 + test-first + 类别清扫机制）
 > Related: `docs/audits/final-maturity-audit/ledger.md`（FM-010/011/012/016/017/020/021/024/025/028/031/033/034/036/037/039/040/041）；plan 643/644/645/646/647/648（发现来源批）；plan 613（RM-11 silent no-op 判例，FM-016 修复方向背书）
 

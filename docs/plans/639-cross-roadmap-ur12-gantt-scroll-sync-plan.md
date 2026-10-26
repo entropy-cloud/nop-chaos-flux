@@ -1,7 +1,7 @@
 # 639 跨 roadmap UR-12 GT-3 Gantt 双区滚动同步机制重构
 
-> Plan Status: active
-> Last Reviewed: 2026-10-17
+> Plan Status: completed
+> Last Reviewed: 2026-10-27
 > Source: `docs/backlog/cross-roadmap-remediation-roadmap.md` UR-12（Wave D；designer-ux R8 Recorded Scope adjudication：GT-3 超出有界修复范畴 → 滚动容器同步机制重构）
 > Related: `docs/analysis/2026-10-01-playground-designer-ux-roadmap.md`（GT-3 登记）、`packages/flux-renderers-scheduling/src/gantt/`、plan 545 Phase 2（timeline 单写者语义）
 

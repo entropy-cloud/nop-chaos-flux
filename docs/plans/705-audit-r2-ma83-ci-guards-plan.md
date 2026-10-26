@@ -1,7 +1,7 @@
 # 705 审计修复 R2·MA8.3：CI guard 激活与工具基线有效性验证
 
-> Plan Status: active
-> Last Reviewed: 2026-10-23
+> Plan Status: completed
+> Last Reviewed: 2026-10-27
 > Source: `docs/backlog/audit-remediation-r2-roadmap.md` MA8.3；`docs/audits/arm2-scope-and-dimension-matrix.md` MA8.3 行（报告名注册 `*arm2-MA8.3-ci-guards.md`；`pnpm check` 26 项逐一激活验证（closure review M1 勘正：chain 实数 26——`check:windows-safe-filenames` 于 2026-10-22 437daede8 加入，roadmap/matrix 的「25 项」为过时读数，随本批收口附勘误）；knip/dependency-cruiser/semgrep 配置有效性；`check:scanner-baselines` 基线机制真实防回退〔含基线 key 行号脆弱性抽查——2026-10-19 已迁移内容锚定键〕）；owner doc `docs/context/project-context.md`
 > Related: matrix MA8 节、`docs/audits/arm2-index.md`（工具基线区 :214-240 各扫描器基线数）、MA7.2 semgrep 未安装裁决（引用）、MA7.3 基线校准 255（MV 输入，引用）
 > 方法先例沿用：`_tmp/arm2-ma83/` 中间件（收口清理）；零**入库**代码变更（P0 即时通道除外；防回退 mutation 试验在工作树进行、试验后逐字还原——不产生 commit）；P1 注册前执行者 live 复核；显式路径提交
