@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, type ReactNode } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { Button, Input } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
 import type { DiffFileMeta } from '../../schemas.js';
@@ -193,20 +193,3 @@ function FileListItem({ entry, isActive, onSelect }: FileListItemProps) {
   );
 }
 
-/**
- * @deprecated Use `<DiffFileList>` directly instead. This function wrapper
- * will be removed in a future version.
- */
-export function renderFileListSidebar(
-  files: DiffFileMeta[],
-  activeIndex: number,
-  onFileSelect: (index: number) => void,
-): ReactNode {
-  return (
-    <DiffFileList
-      files={files}
-      activeIndex={activeIndex}
-      onFileSelect={onFileSelect}
-    />
-  );
-}

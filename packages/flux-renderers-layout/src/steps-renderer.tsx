@@ -26,13 +26,6 @@ function deriveStatus(
   return 'wait';
 }
 
-const STATUS_INDICATOR_CLASS: Record<StepsItemStatus, string> = {
-  wait: 'border-border bg-background text-muted-foreground',
-  process: 'border-primary bg-primary text-primary-foreground',
-  finish: 'border-primary bg-primary text-primary-foreground',
-  error: 'border-destructive bg-destructive text-destructive-foreground',
-};
-
 export function StepsRenderer(props: RendererComponentProps<StepsSchema>) {
   const schemaProps = props.props;
   const rawItems = compiledItems<StepsItemSchema>(schemaProps.items);
@@ -53,7 +46,7 @@ export function StepsRenderer(props: RendererComponentProps<StepsSchema>) {
         data-empty="true"
         data-ownership={ownership}
       >
-        <div data-slot="steps-empty" className="py-4 text-sm text-muted-foreground">
+        <div data-slot="steps-empty">
           {t('flux.common.noData')}
         </div>
       </div>
@@ -101,24 +94,11 @@ export function StepsRenderer(props: RendererComponentProps<StepsSchema>) {
             data-status={status}
             data-current={isCurrent || undefined}
             data-disabled={disabled || undefined}
-            className={cn(
-              // [G1-R2-视角8-01] `relative` makes the li the containing block for
-              // the absolutely-positioned horizontal connector — without it the
-              // line resolves against the nearest positioned ancestor.
-              'relative flex',
-              orientation === 'vertical'
-                ? 'flex-row gap-3 pb-6 last:pb-0'
-                : 'flex-1 flex-col items-center text-center',
-            )}
           >
             {orientation === 'horizontal' && index > 0 && (
               <span
                 aria-hidden="true"
                 data-slot="steps-connector"
-                className={cn(
-                  'absolute top-3 h-px w-full',
-                  status === 'finish' ? 'bg-primary' : 'bg-border',
-                )}
                 style={
                   orientation === 'horizontal'
                     ? { transform: 'translateX(-50%)', width: '100%', left: '50%' }
@@ -127,14 +107,7 @@ export function StepsRenderer(props: RendererComponentProps<StepsSchema>) {
               />
             )}
             {orientation === 'vertical' && index > 0 && (
-              <span
-                aria-hidden="true"
-                data-slot="steps-connector"
-                className={cn(
-                  'ml-[15px] w-px self-stretch',
-                  status === 'finish' ? 'bg-primary' : 'bg-border',
-                )}
-              />
+              <span aria-hidden="true" data-slot="steps-connector" />
             )}
             <Button
               variant="ghost"
@@ -147,50 +120,27 @@ export function StepsRenderer(props: RendererComponentProps<StepsSchema>) {
               // accessible name explicitly, tied to the step title.
               aria-label={`${t('flux.steps.step')} ${index + 1}: ${item.title ?? item.value ?? item.key ?? index + 1}`}
               onClick={() => handleClick(item, index)}
-              className={cn(
-                // [G1-R4-视角8-02] one interactive stop per step: the indicator
-                // button owns the whole step row (circle + title/description) so
-                // the click hot zone is not limited to the 28px indicator.
-                // Keyboard focus lands here, exactly once per step.
-                'nop-steps-indicator relative z-10 h-auto shrink whitespace-normal rounded-md py-0',
-                orientation === 'vertical'
-                  ? 'flex flex-row items-start gap-3 px-0 text-left'
-                  : 'flex flex-col items-center gap-1 px-1 text-center',
-                disabled && 'opacity-50 cursor-not-allowed',
-              )}
+              className='nop-steps-indicator'
+              // [G1-R4-视角8-02] one interactive stop per step: the indicator
+              // button owns the whole step row (circle + title/description) so
+              // the click hot zone is not limited to the 28px indicator.
+              // Keyboard focus lands here, exactly once per step.
             >
-              <span
-                data-slot="steps-indicator-circle"
-                className={cn(
-                  'flex size-7 shrink-0 items-center justify-center rounded-full border-2 text-xs font-semibold transition-colors',
-                  STATUS_INDICATOR_CLASS[status],
-                )}
-              >
+              <span data-slot="steps-indicator-circle" data-status={status}>
                 {status === 'finish' ? (
-                  <CheckIcon className="size-4" />
+                  <CheckIcon />
                 ) : status === 'error' ? (
-                  <XIcon className="size-4" />
+                  <XIcon />
                 ) : (
                   index + 1
                 )}
               </span>
-              <span
-                className={cn('flex min-w-0 flex-col', orientation === 'vertical' && 'pt-1')}
-              >
-                <span
-                  data-slot="steps-title"
-                  className={cn(
-                    'text-sm font-medium leading-tight',
-                    isCurrent ? 'text-foreground' : 'text-muted-foreground',
-                  )}
-                >
+              <span data-slot="steps-text">
+                <span data-slot="steps-title">
                   {item.title ?? item.value ?? item.key ?? index + 1}
                 </span>
                 {item.description ? (
-                  <span
-                    data-slot="steps-description"
-                    className="mt-0.5 text-xs text-muted-foreground"
-                  >
+                  <span data-slot="steps-description">
                     {item.description}
                   </span>
                 ) : null}

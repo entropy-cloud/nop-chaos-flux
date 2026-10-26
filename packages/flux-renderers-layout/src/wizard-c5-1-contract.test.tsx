@@ -1,4 +1,5 @@
 import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createLayoutSchemaRenderer, env, formulaCompiler } from './test-support.js';
@@ -257,7 +258,12 @@ describe('WizardRenderer C5.1 audit contract regression', () => {
         formulaCompiler={formulaCompiler}
       />,
     );
-    expect(document.querySelector('[data-slot="wizard-body-region"]')?.className).toBe('mt-4');
+    // Plan 766 C5: spacing moved from the tsx class to styles.css; assert the
+    // contract at the stylesheet source (jsdom does not load the css).
+    {
+      const styles = readFileSync(join(import.meta.dirname, 'styles.css'), 'utf8');
+      expect(styles).toMatch(/\[data-slot='wizard-body-region'\] \{[^}]*margin-top:\s*1rem/);
+    }
 
     rerender(
       <SchemaRenderer
@@ -268,6 +274,8 @@ describe('WizardRenderer C5.1 audit contract regression', () => {
         formulaCompiler={formulaCompiler}
       />,
     );
-    expect(document.querySelector('[data-slot="wizard-body-region"]')?.className).toBe('mt-4');
+    // Plan 766 C5: spacing contract moved to styles.css (asserted above);
+    // both orientations only need to keep rendering the marker.
+    expect(document.querySelector('[data-slot="wizard-body-region"]')).not.toBeNull();
   });
 });

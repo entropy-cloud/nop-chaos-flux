@@ -10,9 +10,4 @@ export {
   StructuralLoopContext,
   useRequiredContext,
 } from './contexts.js';
-export {
-  publishOwnerStatus,
-  executeApiObject,
-  createProjectedScopeStore as createProjectedScopeHelpers,
-  createProjectedScopeStore,
-} from '@nop-chaos/flux-runtime';
+export { publishOwnerStatus, createProjectedScopeStore } from '@nop-chaos/flux-runtime';

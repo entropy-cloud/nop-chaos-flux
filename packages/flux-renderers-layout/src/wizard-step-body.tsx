@@ -60,7 +60,6 @@ export function WizardStepBody(props: WizardStepBodyProps) {
       data-step-index={index}
       data-active={isActive || undefined}
       hidden={!isActive ? true : undefined}
-      className="flex flex-col gap-4"
     >
       {content}
     </div>

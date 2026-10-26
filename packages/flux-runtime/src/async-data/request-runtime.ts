@@ -493,12 +493,6 @@ export async function executeApiSchema(
   };
 }
 
-/**
- * @deprecated Use `executeApiSchema` (cq-6 Phase 2: duplicate-export aliases
- * funnel to the primary name; removed after one compatibility round).
- */
-export const executeApiObject = executeApiSchema;
-
 // Errors routed through state machine — request orchestration errors handled by request state machine
 export function createApiRequestExecutor(getEnv: () => RendererEnv): ApiRequestExecutor {
   const activeControllers = new Map<string, AbortController>();

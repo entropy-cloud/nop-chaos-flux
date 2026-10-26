@@ -558,13 +558,7 @@ export function WizardRenderer(props: RendererComponentProps<WizardSchema>) {
           data-mode={mode}
           aria-label={t('flux.wizard.stepNav')}
         >
-          <ol
-            className={cn(
-              mode === 'vertical'
-                ? 'flex flex-col gap-1'
-                : 'flex flex-wrap items-center gap-1',
-            )}
-          >
+          <ol>
             {stepNav}
           </ol>
         </nav>
@@ -573,7 +567,6 @@ export function WizardRenderer(props: RendererComponentProps<WizardSchema>) {
       <div
         ref={bodyRegionRef}
         data-slot="wizard-body-region"
-        className="mt-4"
       >
         {stepCount === 0 ? (
           <div data-slot="wizard-empty">{t('flux.wizard.noSteps')}</div>
@@ -596,7 +589,6 @@ export function WizardRenderer(props: RendererComponentProps<WizardSchema>) {
 
       <div
         data-slot="wizard-actions"
-        className="mt-4 flex items-center justify-between gap-2 border-t border-border pt-3"
       >
         {hasStepActions ? (
           <div data-slot="wizard-step-actions-region">
@@ -615,7 +607,7 @@ export function WizardRenderer(props: RendererComponentProps<WizardSchema>) {
               // handler, but on the button (a11y + visual lock).
               disabled={!canGoPrev || lifecycle.committing}
             >
-              <ChevronLeftIcon className="size-4" />
+              <ChevronLeftIcon />
               <span>{prevLabel}</span>
             </Button>
             <Button
@@ -628,13 +620,8 @@ export function WizardRenderer(props: RendererComponentProps<WizardSchema>) {
               disabled={lifecycle.committing}
             >
               {lifecycle.committing ? (
-                <span
-                  data-slot="wizard-committing"
-                  role="status"
-                  aria-live="polite"
-                  className="inline-flex items-center gap-2"
-                >
-                  <Spinner className="size-4" aria-hidden="true" />
+                <span data-slot="wizard-committing" role="status" aria-live="polite">
+                  <Spinner aria-hidden="true" />
                   <span>{t('flux.wizard.committing')}</span>
                 </span>
               ) : null}
@@ -642,7 +629,7 @@ export function WizardRenderer(props: RendererComponentProps<WizardSchema>) {
                 <span>{isLastStep ? finishLabel : nextLabel}</span>
               ) : null}
               {!lifecycle.committing && !isLastStep ? (
-                <ChevronRightIcon className="size-4" />
+                <ChevronRightIcon />
               ) : null}
             </Button>
           </>
@@ -653,18 +640,13 @@ export function WizardRenderer(props: RendererComponentProps<WizardSchema>) {
         data-slot="wizard-status"
         role="status"
         aria-live="polite"
-        className="sr-only"
       >
         {currentStepTitle}
       </div>
 
       {(lifecycle.lastCommitStatus === 'error' ||
         lifecycle.lastCommitStatus === 'validationError') && (
-        <div
-          data-slot="wizard-step-error"
-          role="alert"
-          className="mt-3 text-sm text-destructive"
-        >
+        <div data-slot="wizard-step-error" role="alert">
           {/* P2-10: render the real stepError message; generic i18n only when empty */}
           {lifecycle.stepError ||
             (lifecycle.lastCommitStatus === 'validationError'
