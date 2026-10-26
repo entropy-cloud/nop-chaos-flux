@@ -1,0 +1,26 @@
+{
+  "_header": {
+    "description": "Dispositions for check:* scripts that are intentionally NOT in the `pnpm check` aggregate. check:wiring-coverage auto-detects wired / lint-chain / alias checks; only wrapped-by and manual-only need an entry here. A stale entry (check deleted, or since wired) fails the gate — delete it. Deprecating a check = deleting its package.json entry, which forces the matching allowlist cleanup.",
+    "source": "docs/plans/754-ph1-unwired-check-disposition-matrix-plan.md (roadmap PH-1)",
+    "lastUpdated": "2026-10-26"
+  },
+  "entries": {
+    "check:audit-styling-suspects": { "wrappedBy": "check:scanner-baselines" },
+    "check:audit-suspects": { "wrappedBy": "check:scanner-baselines" },
+    "check:audit-test-global-leaks": { "wrappedBy": "check:scanner-baselines" },
+    "check:audit-todo-exitless": { "wrappedBy": "check:scanner-baselines" },
+    "check:audit-as-any-casts": { "wrappedBy": "check:scanner-baselines" },
+    "check:audit-async-failure-paths": { "wrappedBy": "check:scanner-baselines" },
+    "check:audit-react19-optimization-candidates": { "wrappedBy": "check:scanner-baselines" },
+    "check:audit-canvas-wrapper-a11y": { "wrappedBy": "check:scanner-baselines" },
+    "check:audit-hardcoded-type-dispatch": { "wrappedBy": "check:scanner-baselines" },
+    "check:audit-missing-renderer-markers": { "wrappedBy": "check:scanner-baselines" },
+    "check:audit-fieldframe-bypasses": { "wrappedBy": "check:scanner-baselines" },
+    "check:audit-reactive-render-reads": { "wrappedBy": "check:scanner-baselines" },
+    "check:audit-performance-suspects": { "wrappedBy": "check:scanner-baselines" },
+    "check:audit-non-retained-renderer-references": { "wrappedBy": "check:scanner-baselines" },
+    "check:duplicates:detail": {
+      "manualOnly": "jscpd raw dump exits 1 whenever any duplicate exists; the gate surface is check:duplicates-baseline"
+    }
+  }
+}

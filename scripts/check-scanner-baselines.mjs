@@ -11,9 +11,10 @@ const rootDir = path.join(__dirname, '..');
 const baselineFile = path.join(rootDir, 'scripts', 'baselines', 'scanner-baselines.json');
 const SCANNER_DIR = path.join(rootDir, 'scripts', 'audit');
 
-// The seven high-risk advisory scanners promoted to numeric-baseline gating (plan 626 added the async/react19 pair)
-// (cq-1 Phase 5; plan 601 WA-16 gate extension added find-todo-exitless and
-// find-as-any-casts). Counts only — per-entry identity is intentionally not
+// Advisory scanners promoted to numeric-baseline gating (cq-1 Phase 5 seeded the
+// first three; plan 601 WA-16 added todo-exitless/as-any-casts; plan 626 added the
+// async/react19 pair; plan 754 (roadmap PH-1) added the remaining seven that had
+// no gate at all). Counts only — per-entry identity is intentionally not
 // compared because scanner output ordering/format is not a stable contract.
 const BASELINED_SCANNERS = [
   'find-styling-suspects',
@@ -23,7 +24,17 @@ const BASELINED_SCANNERS = [
   'find-as-any-casts',
   'find-async-without-failure-path',
   'find-react19-optimization-candidates',
+  'find-canvas-wrapper-a11y-gaps',
+  'find-hardcoded-type-dispatch',
+  'find-missing-renderer-markers',
+  'find-fieldframe-bypasses',
+  'find-reactive-render-reads',
+  'find-performance-suspects',
+  'find-non-retained-renderer-references',
 ];
+
+const BASELINE_DESCRIPTION =
+  'Numeric baselines for the high-risk advisory scanners listed in BASELINED_SCANNERS (check-scanner-baselines.mjs). A count above the baseline fails check:scanner-baselines (new suspects must be fixed or the baseline consciously re-registered).';
 
 function evaluateScannerCounts(currentCounts, baselineCounts) {
   const newReds = [];
@@ -45,9 +56,10 @@ function evaluateScannerCounts(currentCounts, baselineCounts) {
 }
 
 function parseFoundCount(stdout, scanner) {
-  const match = stdout.match(/Found (\d+) (?:suspect )?matches/);
-  if (!match) return null;
-  return Number(match[1]);
+  const match = stdout.match(/Found (\d+) (?:suspect )?(?:matches|references)/);
+  if (match) return Number(match[1]);
+  if (/No suspect matches found\./.test(stdout)) return 0;
+  return null;
 }
 
 async function scanScanner(scanner) {
@@ -75,12 +87,18 @@ async function main() {
       counts[scanner] = (await scanScanner(scanner)).count;
     }
     const target = baselineIndex >= 0 ? args[baselineIndex + 1] : baselineFile;
+    let existingHeader = {};
+    try {
+      existingHeader = JSON.parse(await readFile(target, 'utf8'))._header ?? {};
+    } catch {
+      existingHeader = {};
+    }
     await writeFile(
       target,
       `${JSON.stringify({
         _header: {
-          description:
-            'Numeric baselines for the seven high-risk advisory scanners. A count above the baseline fails check:scanner-baselines (new suspects must be fixed or the baseline consciously re-registered).',
+          ...existingHeader,
+          description: BASELINE_DESCRIPTION,
           lastUpdated: new Date().toISOString().slice(0, 10),
         },
         scanners: counts,
