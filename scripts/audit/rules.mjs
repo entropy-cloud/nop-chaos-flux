@@ -12,9 +12,11 @@ import {
 } from './shared.mjs';
 import { react19OptimizationRules } from './react19-rules.mjs';
 import { canvasWrapperA11yRules } from './canvas-a11y-rules.mjs';
+import { rendererMarkerRules } from './marker-rules.mjs';
 
 export { react19OptimizationRules } from './react19-rules.mjs';
 export { canvasWrapperA11yRules } from './canvas-a11y-rules.mjs';
+export { rendererMarkerRules } from './marker-rules.mjs';
 
 const allowedFieldFrameOwnerPrefixes = ['packages/flux-react/src/'];
 const documentedFieldFrameBypassAllowlist = new Set([
@@ -139,33 +141,6 @@ function shouldIgnoreTestGlobalPatch(lineText, content) {
   }
 
   return false;
-}
-
-function scanMissingRendererMarkers({ rule, relativePath, content }) {
-  if (!content.includes('RendererComponentProps')) {
-    return [];
-  }
-
-  if (content.includes('nop-')) {
-    return [];
-  }
-
-  const anchorIndex =
-    content.indexOf('export function ') >= 0
-      ? content.indexOf('export function ')
-      : content.indexOf('return (') >= 0
-        ? content.indexOf('return (')
-        : 0;
-
-  return [
-    createResult(
-      rule,
-      relativePath,
-      getLineNumber(content, anchorIndex),
-      'No nop-* marker found in renderer component file',
-      'missing nop-* marker',
-    ),
-  ];
 }
 
 function scanCatchWithoutStructuredFailurePath({ rule, relativePath, content }) {
@@ -480,22 +455,6 @@ export const testLeakRules = [
       }
       return !shouldIgnoreTestGlobalPatch(lineText, content);
     },
-  },
-];
-
-export const rendererMarkerRules = [
-  {
-    id: 'missing-renderer-marker',
-    severity: 'medium',
-    description: 'Renderer component file appears to have no nop-* marker class',
-    include: (filePath) => {
-      return (
-        /^packages\/flux-renderers-[^/]+\/src\/.*\.tsx$/.test(filePath) &&
-        !isTestFile(filePath) &&
-        !filePath.includes('/test-support')
-      );
-    },
-    scanWithContent: scanMissingRendererMarkers,
   },
 ];
 
