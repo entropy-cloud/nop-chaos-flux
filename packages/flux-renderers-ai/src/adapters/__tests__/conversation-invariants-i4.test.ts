@@ -191,7 +191,7 @@ describe('Invariant ④ — clearAll fan-out source (P1-3/P1-4, 2026-08-10)', ()
       await result.current.activeEngine!.sendMessage('hi');
     });
     // Switch to B — A's engine is evicted (idle, non-active) but A's pending
-    // save stays in pendingSavesRef.
+    // save stays in the save drain.
     await act(async () => {
       await result.current.switchConversation('B');
     });

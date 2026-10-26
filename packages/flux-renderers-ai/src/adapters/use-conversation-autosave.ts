@@ -1,4 +1,5 @@
 import type { RefObject } from 'react';
+import type { WriteDrain } from '@nop-chaos/flux-core';
 import { isVacuousAssistantResidue, sanitizeDanglingToolCalls } from '../engine/utils.js';
 import type { AiConversationInfo, MessageEngine, MessageEngineState, RequestState } from '../engine/types.js';
 import type { ConversationStorageErrorEvent } from './use-conversation.js';
@@ -17,7 +18,7 @@ import type { ConversationStorageStrategy } from '../storage/types.js';
 export interface AutoSaveDeps {
   storage: ConversationStorageStrategy | undefined;
   autoSaveMessages: boolean;
-  pendingSavesRef: RefObject<Map<string, Promise<unknown>>>;
+  saveDrain: WriteDrain;
   conversationsRef: RefObject<AiConversationInfo[]>;
   autoSaveUnsubsRef: RefObject<Map<string, () => void>>;
   reportStorageError: (event: ConversationStorageErrorEvent) => void;
@@ -28,7 +29,7 @@ export function attachAutoSave(
   conversationId: string,
   deps: AutoSaveDeps,
 ): () => void {
-  const { storage, autoSaveMessages, pendingSavesRef, conversationsRef, autoSaveUnsubsRef, reportStorageError } = deps;
+  const { storage, autoSaveMessages, saveDrain, conversationsRef, autoSaveUnsubsRef, reportStorageError } = deps;
   const prev = autoSaveUnsubsRef.current.get(conversationId);
   if (prev) prev();
   if (!storage || !autoSaveMessages) {
@@ -82,28 +83,26 @@ export function attachAutoSave(
         const sanitized = sanitizeDanglingToolCalls(snapshot);
         // K3: serialize this save behind the conversation's previous
         // pending save (a rejection must not skip the next save — settle
-        // first, then write). The chain entry is what deleteConversation
-        // drains and clearAll chains its storage clear behind.
-        const prevPending = pendingSavesRef.current.get(conversationId);
-        const pending = Promise.resolve(prevPending)
-          .catch(() => {})
-          .then(() => {
-            // P1-3 (2026-08-10 multi-audit): settlement-time mirror
-            // re-check — a conversation removed by delete/clearAll (mirror
-            // already filtered synchronously) must not land its late save
-            // after the storage record is gone (ghost resurrection on
-            // remount). Parity with the create/rename metadata-write
-            // re-checks; an EVICTED-but-still-listed session still saves —
-            // its landing is ordered before the clear by the K3 drain.
-            if (!conversationsRef.current.some((c) => c.id === conversationId)) {
-              return;
-            }
-            return storage.saveMessages(conversationId, sanitized);
-          });
-        pending.catch((error: unknown) => {
+        // first, then write). plan 758: the chain is the framework drain
+        // (`createWriteDrain`) — the enqueue promise carries this write's
+        // own result/error; the drain swallows chain-tail errors so later
+        // saves still run. This enqueued entry is what deleteConversation
+        // drains and clearAll's per-id delete chains behind.
+        void saveDrain.enqueue(conversationId, () => {
+          // P1-3 (2026-08-10 multi-audit): settlement-time mirror
+          // re-check — a conversation removed by delete/clearAll (mirror
+          // already filtered synchronously) must not land its late save
+          // after the storage record is gone (ghost resurrection on
+          // remount). Parity with the create/rename metadata-write
+          // re-checks; an EVICTED-but-still-listed session still saves —
+          // its landing is ordered before the clear by the K3 drain.
+          if (!conversationsRef.current.some((c) => c.id === conversationId)) {
+            return;
+          }
+          return storage.saveMessages(conversationId, sanitized);
+        }).catch((error: unknown) => {
           reportStorageError({ phase: 'saveMessages', conversationId, error });
         });
-        pendingSavesRef.current.set(conversationId, pending);
       } catch (error) {
         reportStorageError({ phase: 'saveMessages', conversationId, error });
       }

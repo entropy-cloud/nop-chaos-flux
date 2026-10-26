@@ -334,7 +334,7 @@ describe('useConversation — AI-28 storage error observability', () => {
 // multi P2-2 (2026-08-10) — unmount cleanup order. The unmount effect used to
 // abort in-flight engines BEFORE unsubscribing the auto-save listeners, so the
 // abort's requestState transition ('processing' → 'aborted') fired the
-// listener and enqueued an aborted-snapshot save into `pendingSavesRef` — with
+// listener and enqueued an aborted-snapshot save into the save drain — with
 // the hook gone there was no drain surface left (cross-mount ghost on rapid
 // remount). clearAll's K3 detach-before-abort ordering is the reference.
 // ---------------------------------------------------------------------------

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useEffectEvent, useRef, useState } from 'react';
+import { createWriteDrain } from '@nop-chaos/flux-core';
 import { generateMessageId } from '../engine/utils.js';
 import { createMessageEngine } from '../engine/create-engine.js';
 import { createReactMessageAdapter } from './react-adapter.js';
@@ -163,8 +164,12 @@ export function useConversation(options: UseConversationOptions): UseConversatio
   // storage deletion (ghost re-landing). deleteConversation awaits the chain
   // (async signature), clearAll chains the storage clear behind it (sync
   // signature `(): void` is preserved — the drain→clear order is guaranteed
-  // without awaiting).
-  const pendingSavesRef = useRef(new Map<string, Promise<unknown>>());
+  // without awaiting). plan 758: the hand-written promise-map
+  // map is replaced by the framework drain (`createWriteDrain`, plan 757) —
+  // per-key serialisation, settle-tail swallowing and auto key removal are
+  // the primitive's contract; the settle-time mirror re-check stays at the
+  // call sites.
+  const [saveDrain] = useState(() => createWriteDrain());
 
   // Host-input sync sweep (2026-08-10, multi P2-7 / open P2-1 / open P2-2):
   // `connector` is ref-mirrored + hot-swapped (fan-out above); `storage` is
@@ -203,7 +208,7 @@ export function useConversation(options: UseConversationOptions): UseConversatio
     return attachAutoSave(engine, conversationId, {
       storage,
       autoSaveMessages,
-      pendingSavesRef,
+      saveDrain,
       conversationsRef,
       autoSaveUnsubsRef,
       reportStorageError,
@@ -318,7 +323,6 @@ export function useConversation(options: UseConversationOptions): UseConversatio
   useEffect(() => {
     const unsubs = autoSaveUnsubsRef.current;
     const cache = engineCache;
-    const pendingSaves = pendingSavesRef.current;
     return () => {
       // multi P2-2 (2026-08-10): detach (unsubscribe) BEFORE abort — the
       // abort's requestState transition ('processing' → 'aborted') fires the
@@ -334,10 +338,10 @@ export function useConversation(options: UseConversationOptions): UseConversatio
         }
       }
       // Pending saves chained BEFORE unmount (completed turns) continue to
-      // settle on their own — the chain is promise-owned and its settlement
-      // re-check reads the mirror, which outlives the hook. Drop the map so
-      // the unmounted hook has no stale drain surface.
-      pendingSaves.clear();
+      // settle on their own — plan 758: the drain is hook state and is simply
+      // abandoned here (no bulk drop; WriteDrain has only per-key evict). Its
+      // chain settlement re-check reads the mirror, which outlives the hook,
+      // so late writes stay ghost-safe without an evict loop.
     };
   }, [engineCache]);
 
@@ -378,17 +382,12 @@ export function useConversation(options: UseConversationOptions): UseConversatio
     // too — a same-tick clearAll/delete must be able to drain it) and
     // re-checks the mirror at settlement time (a same-tick delete/clearAll
     // skips the write — no ghost re-save).
-    const prevPending = pendingSavesRef.current.get(info.id);
-    const pending = Promise.resolve(prevPending)
-      .catch(() => {})
-      .then(() => {
-        if (!conversationsRef.current.some((c) => c.id === info.id)) return;
-        return storage?.saveConversation?.(info);
-      });
-    pending.catch((error: unknown) => {
+    void saveDrain.enqueue(info.id, () => {
+      if (!conversationsRef.current.some((c) => c.id === info.id)) return;
+      return storage?.saveConversation?.(info);
+    }).catch((error: unknown) => {
       reportStorageError({ phase: 'saveConversation', conversationId: info.id, error });
     });
-    pendingSavesRef.current.set(info.id, pending);
     return info;
   }
 
@@ -515,15 +514,11 @@ export function useConversation(options: UseConversationOptions): UseConversatio
     // K3: drain the conversation's in-flight saves BEFORE the storage delete
     // — a save that started before deleteConversation must settle first, so
     // it can never re-land its messages after the record is gone (ghost).
-    // The chain entry is dropped after draining (its save is complete or
-    // failed and already routed through reportStorageError).
-    const pendingSave = pendingSavesRef.current.get(id);
-    if (pendingSave) {
-      await Promise.allSettled([pendingSave]);
-      pendingSavesRef.current.delete(id);
-    }
+    // plan 758: the delete itself is enqueued onto the same key, so the
+    // drain guarantees the order and the key's chain entry is dropped once
+    // the delete settles.
     try {
-      await storage?.deleteConversation?.(id);
+      await saveDrain.enqueue(id, () => storage?.deleteConversation?.(id));
     } catch (error) {
       reportStorageError({ phase: 'deleteConversation', conversationId: id, error });
     }
@@ -551,17 +546,12 @@ export function useConversation(options: UseConversationOptions): UseConversatio
     // storage delete/clear, K-K4/②-1/2) and re-checks the mirror at
     // settlement time (a same-tick delete/clearAll skips the write — the
     // renamed record is not re-saved as a ghost).
-    const prevPending = pendingSavesRef.current.get(id);
-    const pending = Promise.resolve(prevPending)
-      .catch(() => {})
-      .then(() => {
-        if (!conversationsRef.current.some((c) => c.id === id)) return;
-        return storage?.saveConversation?.(next);
-      });
-    pending.catch((error: unknown) => {
+    void saveDrain.enqueue(id, () => {
+      if (!conversationsRef.current.some((c) => c.id === id)) return;
+      return storage?.saveConversation?.(next);
+    }).catch((error: unknown) => {
       reportStorageError({ phase: 'saveConversation', conversationId: id, error });
     });
-    pendingSavesRef.current.set(id, pending);
   }
 
   function clearAll(): void {
@@ -577,7 +567,7 @@ export function useConversation(options: UseConversationOptions): UseConversatio
     const ids = [
       ...new Set([
         ...engineCache.keys(),
-        ...pendingSavesRef.current.keys(),
+        ...saveDrain.pendingKeys(),
         ...conversationsRef.current.map((c) => c.id),
       ]),
     ];
@@ -614,34 +604,29 @@ export function useConversation(options: UseConversationOptions): UseConversatio
     setSwitchingId(null);
     // K3: drain every conversation's in-flight save chain, then clear
     // storage. clearAll keeps its sync signature `(): void` (public API
-    // contract) — the storage clear is chained behind the drain so the
-    // drain→clear order is guaranteed without awaiting.
-    const drain = Promise.allSettled(
-      ids.map((id) => pendingSavesRef.current.get(id) ?? Promise.resolve()),
-    );
-    pendingSavesRef.current.clear();
+    // contract). plan 758: each per-id delete is enqueued onto its key, so
+    // the drain orders it after that key's pending saves — the explicit
+    // allSettled + map clear is gone (the drain owns the ordering).
     // P1-b (open-audit): keep storage consistent so a remount does not
     // rehydrate cleared items (FP-2 ghost rehydration).
     // FIND-02 (2026-08-11, plan 2026-08-11-0008-3): the storage clear must
     // target the clearAll-TIME conversation snapshot — per-id
     // `deleteConversation` fan-out over `ids` — and must NEVER use an atomic
-    // `storage.clearAll()`. An atomic clear chained behind the drain settles
-    // AFTER any conversation created in the clearAll→drain window (its save
-    // is not part of this drain: pendingSavesRef is cleared synchronously),
-    // so the late atomic clear wipes the new conversation's record
-    // ("ghost-free-creation in reverse": the list survived, the record was
-    // erased; the K3 drain only guards the forward direction — old writes
-    // drain before the clear). Per-id deletes over the snapshot only touch
-    // conversations that existed at clearAll time; post-clearAll writes are
-    // never swept. Per-id failures route through reportStorageError so one
-    // rejection doesn't hide the others (FP-3).
-    void drain.then(() => {
-      for (const id of ids) {
-        Promise.resolve(storage?.deleteConversation?.(id)).catch((error: unknown) => {
-          reportStorageError({ phase: 'deleteConversation', conversationId: id, error });
-        });
-      }
-    });
+    // `storage.clearAll()`. An atomic clear settles after any conversation
+    // created in the clearAll→drain window (its save is enqueued on a fresh
+    // key that this snapshot's per-id deletes never touch), so the late
+    // atomic clear wipes the new conversation's record ("ghost-free-creation
+    // in reverse": the list survived, the record was erased; the K3 drain
+    // only guards the forward direction — old writes drain before the
+    // clear). Per-id deletes over the snapshot only touch conversations that
+    // existed at clearAll time; post-clearAll writes are never swept. Per-id
+    // failures route through reportStorageError so one rejection doesn't
+    // hide the others (FP-3).
+    for (const id of ids) {
+      void saveDrain.enqueue(id, () => storage?.deleteConversation?.(id)).catch((error: unknown) => {
+        reportStorageError({ phase: 'deleteConversation', conversationId: id, error });
+      });
+    }
   }
 
   const controller: AiConversationControllerBridge = {
