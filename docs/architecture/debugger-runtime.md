@@ -89,6 +89,8 @@ Hosts obtain a controller through `createNopDebugger()` and integrate it at the 
 
 This keeps debugger attachment at the framework host boundary rather than inside individual renderers.
 
+For AI-proposed schema patches the same boundary rule applies: the debugger validates, audits, and bookkeeps patch candidates, while the host registers a schema-patch applier (`controller.registerSchemaPatchApplier`) that owns the actual schema re-render and atomic revert. The patch contract lives in `docs/architecture/nop-debugger-ai.md` §Schema Patch Protocol.
+
 Current enablement baseline:
 
 - `enabled: false` means the debugger controller remains a bounded no-op surface for automation/query APIs, but it must not enable component-registry debug capture or append debugger events.

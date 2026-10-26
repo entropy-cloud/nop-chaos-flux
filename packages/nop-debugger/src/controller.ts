@@ -9,6 +9,11 @@ import type {
 import { setStrictValidationGlobal } from '@nop-chaos/flux-core';
 import { appendActionErrorEvent, createDebuggerPlugin, decorateDebuggerEnv } from './adapters.js';
 import {
+  createSchemaPatchAuditRecorder,
+  validateSchemaPatchShape,
+  type PatchTargetResolvers,
+} from './schema-patch.js';
+import {
   createAutomationApi,
   getNopDebuggerAutomationApi as getAutomationApi,
   installNopDebuggerWindowFlag,
@@ -61,6 +66,9 @@ import type {
   NopDebuggerOptions,
   NopDebuggerPanelTabDescriptor,
   NopDebuggerSessionExportOptions,
+  NopSchemaPatch,
+  NopSchemaPatchApplier,
+  NopSchemaPatchAuditEntry,
   NopDiagnosticReport,
   NopDiagnosticReportOptions,
   NopInteractionTraceQuery,
@@ -117,6 +125,20 @@ export function createNopDebugger(options: NopDebuggerOptions = {}): NopDebugger
   const notifyPanelTabListeners = () => {
     panelTabList = [...panelTabs.values()];
     for (const listener of panelTabListeners) listener();
+  };
+
+  // Schema patch state (AD-3): fail-closed bookkeeping. The host applier owns
+  // schema-state atomicity; the debugger owns validation, audit, and the
+  // active-patch table.
+  const patchAudit = createSchemaPatchAuditRecorder();
+  const activePatches = new Map<string, { revertToken: string }>();
+  let schemaPatchApplier: NopSchemaPatchApplier | null = null;
+  const patchTargetResolvers: PatchTargetResolvers = {
+    inspectByCid: (cid) => {
+      const hit = currentInspectByCid(cid);
+      return hit ? { cid: hit.cid } : undefined;
+    },
+    getComponentTree: () => currentGetComponentTree(),
   };
 
   const store = createDebuggerStore({
@@ -390,6 +412,73 @@ export function createNopDebugger(options: NopDebuggerOptions = {}): NopDebugger
         panelTabListeners.delete(listener);
       };
     },
+    validateSchemaPatch(patch: NopSchemaPatch) {
+      const result = validateSchemaPatchShape(patch, { controllerId: debuggerId }, patchTargetResolvers);
+      patchAudit.append(
+        'validate',
+        result.ok,
+        typeof patch?.id === 'string' && patch.id ? patch.id : '(none)',
+        result.ok ? undefined : result.errors.join('; '),
+      );
+      return result;
+    },
+    registerSchemaPatchApplier(applier: NopSchemaPatchApplier) {
+      if (schemaPatchApplier) {
+        throw new Error('[nop-debugger] schema patch applier already registered');
+      }
+      schemaPatchApplier = applier;
+      return () => {
+        if (schemaPatchApplier === applier) {
+          schemaPatchApplier = null;
+        }
+      };
+    },
+    async applySchemaPatch(patch: NopSchemaPatch) {
+      const patchId = typeof patch?.id === 'string' && patch.id ? patch.id : '(none)';
+      const validation = validateSchemaPatchShape(patch, { controllerId: debuggerId }, patchTargetResolvers);
+      patchAudit.append(
+        'validate',
+        validation.ok,
+        patchId,
+        validation.ok ? undefined : validation.errors.join('; '),
+      );
+      if (!validation.ok) {
+        patchAudit.append('reject', false, patchId, 'validation failed');
+        throw new Error(`schema patch rejected: ${validation.errors.join('; ')}`);
+      }
+      if (!schemaPatchApplier) {
+        patchAudit.append('reject', false, patchId, 'no applier');
+        throw new Error('schema patch rejected: no applier registered');
+      }
+      try {
+        const { revertToken } = await schemaPatchApplier.apply(patch);
+        activePatches.set(patch.id, { revertToken });
+        patchAudit.append('apply', true, patchId);
+      } catch (error) {
+        patchAudit.append('apply', false, patchId, error instanceof Error ? error.message : String(error));
+        throw error;
+      }
+    },
+    async revertSchemaPatch(patchId: string) {
+      const active = activePatches.get(patchId);
+      if (!active) {
+        patchAudit.append('revert', false, patchId, 'no active patch');
+        throw new Error(`schema patch revert rejected: no active patch ${patchId}`);
+      }
+      if (!schemaPatchApplier) {
+        patchAudit.append('revert', false, patchId, 'no applier');
+        throw new Error('schema patch revert rejected: no applier registered');
+      }
+      try {
+        await schemaPatchApplier.revert(active.revertToken);
+        activePatches.delete(patchId);
+        patchAudit.append('revert', true, patchId);
+      } catch (error) {
+        patchAudit.append('revert', false, patchId, error instanceof Error ? error.message : String(error));
+        throw error;
+      }
+    },
+    getSchemaPatchAudit: (): NopSchemaPatchAuditEntry[] => patchAudit.list(),
     setPanelPosition(position: { x: number; y: number }) {
       store.setPosition(position);
       persistPosition(debuggerId, position);

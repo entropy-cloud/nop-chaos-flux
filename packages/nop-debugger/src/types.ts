@@ -68,6 +68,55 @@ export interface NopDebuggerPanelTabDescriptor {
   render(context: NopDebuggerPanelTabContext): ReactNode;
 }
 
+// ============================================
+// Schema patch contract (AD-3; owner doc
+// `docs/architecture/nop-debugger-ai.md` §Schema Patch Protocol)
+// ============================================
+
+/** Discriminated union: structural operations are inexpressible at the type level. */
+export type NopSchemaPatchOp =
+  | { type: 'set-prop'; field: string; value: unknown }
+  | { type: 'set-expression'; field: string; expression: string };
+
+export interface NopSchemaPatchScope {
+  controllerId: string;
+  target: { cid?: number; nodeId?: string; path?: string };
+}
+
+export interface NopSchemaPatch {
+  id: string;
+  createdAt: number;
+  scope: NopSchemaPatchScope;
+  ops: NopSchemaPatchOp[];
+  reason?: string;
+}
+
+export type NopSchemaPatchAuditAction = 'propose' | 'validate' | 'apply' | 'revert' | 'reject';
+
+export interface NopSchemaPatchAuditEntry {
+  at: number;
+  patchId: string;
+  action: NopSchemaPatchAuditAction;
+  ok: boolean;
+  detail?: string;
+}
+
+export interface NopSchemaPatchValidationResult {
+  ok: boolean;
+  errors: string[];
+  resolvedTarget?: { cid?: number; nodeId?: string; path?: string };
+}
+
+/**
+ * Host-owned applier seam. The HOST guarantees schema-state all-or-nothing
+ * apply and revert-to-pre-apply; the debugger enforces validation, audit, and
+ * active-patch bookkeeping (fail-closed).
+ */
+export interface NopSchemaPatchApplier {
+  apply(patch: NopSchemaPatch): Promise<{ revertToken: string }>;
+  revert(revertToken: string): Promise<void>;
+}
+
 export type NopDebugEventKind =
   | 'compile:start'
   | 'compile:end'
@@ -481,6 +530,15 @@ export interface NopDebuggerController {
   registerPanelTab(descriptor: NopDebuggerPanelTabDescriptor): () => void;
   getPanelTabs(): NopDebuggerPanelTabDescriptor[];
   subscribePanelTabs(listener: () => void): () => void;
+  /** Validate a patch against this controller (live-tree resolution); audited. */
+  validateSchemaPatch(patch: NopSchemaPatch): NopSchemaPatchValidationResult;
+  /** Register the host apply/revert seam (one at a time; throws on duplicate). */
+  registerSchemaPatchApplier(applier: NopSchemaPatchApplier): () => void;
+  /** Validate then hand to the applier; audited; fail-closed (throws on rejection). */
+  applySchemaPatch(patch: NopSchemaPatch): Promise<void>;
+  /** Revert an applied patch by id via the applier's revert token. */
+  revertSchemaPatch(patchId: string): Promise<void>;
+  getSchemaPatchAudit(): NopSchemaPatchAuditEntry[];
   toggleFilter(filter: NopDebuggerFilterKind): void;
   queryEvents(query?: NopDebugEventQuery): NopDebugEvent[];
   getLatestEvent(query?: NopDebugEventQuery): NopDebugEvent | undefined;
