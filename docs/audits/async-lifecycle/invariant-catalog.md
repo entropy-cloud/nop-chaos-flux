@@ -3,7 +3,7 @@
 > Owner plan: `docs/plans/757-ph4-async-lifecycle-primitives-plan.md`（roadmap PH-4）
 > Primitives: `packages/flux-core/src/utils/lifecycle/`（re-exported by `@nop-chaos/flux-runtime`）
 > Executable form: every row's **Test ID** is the title prefix of an `it(...)` in `packages/flux-core/src/utils/lifecycle/lifecycle-contracts.test.ts` (convention: the Test ID must be the **first token** of the `it` title, single-quoted); `invariant-catalog.test.ts` fails if the two sets differ in either direction (table-completeness gate, same mechanism as `docs/audits/ai-invariants/`).
-> Scanner rule IDs (`AL-nn`) are reserved here and implemented by roadmap PH-6; PH-5 migrates `flux-renderers-ai` onto these primitives.
+> Scanner rule IDs (`AL-nn`): **AL-07 implemented** (plan 759, `scripts/audit/ai-invariant-rules-al.mjs`); **AL-05 implemented for `runTurn`** via the ⑧′ wrapper-form branch of `check:ai-engine-invariants` (plan 759, `scripts/audit/ai-invariant-rules-stamp.mjs`); AL-01/02/03/04/06/08 stay reserved until a migration surface exists (B 组 Loop Rule retrigger: CI red / structural change / periodic re-probe). PH-5 migrated the K3 drain (plan 758); PH-6 migrated the stamp wrapper and the isolated plugin hooks (plan 759).
 
 ## Families (deduped from bug notes 121–159)
 

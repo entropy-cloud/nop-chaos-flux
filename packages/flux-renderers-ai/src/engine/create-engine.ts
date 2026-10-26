@@ -15,6 +15,7 @@ import {
   markToolLoopMaxReached,
 } from './tool-execution.js';
 import { regenerateTurn } from './regenerate.js';
+import { invokeIsolated, runWithExitResets } from '@nop-chaos/flux-core';
 import type {
   AiConnector,
   AiConnectorChunk,
@@ -210,7 +211,17 @@ export function createMessageEngine(options: CreateMessageEngineOptions = {}): M
     await runTurn(stamped);
   }
 
-  async function runTurn(incomingMessages: ChatMessage[]): Promise<void> {
+  // ⑧ (plan 759): runOnce consumes the stamp; every other exit path (early
+  // return / abort break / throw) is cleared by the runWithExitResets wrapper.
+  function clearPendingBranchStamp(): void {
+    pendingBranchId = undefined;
+  }
+
+  function runTurn(incomingMessages: ChatMessage[]): Promise<void> {
+    return runWithExitResets(() => runTurnBody(incomingMessages), [clearPendingBranchStamp]);
+  }
+
+  async function runTurnBody(incomingMessages: ChatMessage[]): Promise<void> {
     // AI-01 (Bug 07 recurrence): serialise turns. A second send while a turn
     // is in-flight would otherwise overwrite `draft.abortController` and start
     // a competing stream, interleaving writes into `draft.messages`. Return
@@ -226,10 +237,7 @@ export function createMessageEngine(options: CreateMessageEngineOptions = {}): M
       // tool-no-executor branch so error-state consumers can read the reason
       // instead of just the requestState flip (Failure Path FP-6). Was
       // previously a silent error transition with no lastError written.
-      // ⑧ (ai-invariant-loop): consume the pending branch stamp before this
-      // early return — regenerate stamps it and this path never reaches
-      // runOnce's consumption (probe-3 leak into the next unrelated turn).
-      pendingBranchId = undefined;
+      // ⑧: stamp cleared by the runTurn wrapper on this early return (plan 759).
       const connectorMissingError = new Error('connector-missing');
       const errorCtxAbort = createAbortController();
       adapter.mutate('requestState', (draft) => {
@@ -272,9 +280,7 @@ export function createMessageEngine(options: CreateMessageEngineOptions = {}): M
       let needsFollowUp = true;
       while (needsFollowUp) {
         if (abortController.signal.aborted) {
-          // ⑧ multi P2-1: clear the pending stamp before the abort break —
-          // it is consumed only by runOnce (see bug note 137).
-          pendingBranchId = undefined;
+          // ⑧: stamp cleared by the runTurn wrapper on exit (plan 759).
           break;
         }
         if (rounds >= maxToolRounds) {
@@ -360,9 +366,7 @@ export function createMessageEngine(options: CreateMessageEngineOptions = {}): M
       });
     } catch (error) {
       const aborted = abortController.signal.aborted;
-      // ⑧ multi P2-1: a pre-runOnce throw (onTurnStart rejection) must clear
-      // the pending stamp — consumed only by runOnce (see bug note 137).
-      pendingBranchId = undefined;
+      // ⑧: a pre-runOnce throw leaves the stamp to the runTurn wrapper (plan 759).
       // ⑨ (ai-invariant-loop): a throwing onError must not skip the state
       // write below (it used to propagate out of the catch and reject the
       // host-facing promise with the turn stuck mid-state).
@@ -396,15 +400,15 @@ export function createMessageEngine(options: CreateMessageEngineOptions = {}): M
         // error to keep (a failed round keeps its original error; an aborted
         // round records the teardown failure without changing its terminal
         // state).
-        try {
-          await plugin.onTurnEnd?.(buildContext(abortController));
-        } catch (error) {
-          adapter.mutate('requestState', (draft) => {
-            if (draft.abortController !== abortController) return;
-            if (draft.lastError) return;
-            draft.lastError = error;
-          });
-        }
+        await invokeIsolated(() => plugin.onTurnEnd?.(buildContext(abortController)), [], {
+          onError: (error) => {
+            adapter.mutate('requestState', (draft) => {
+              if (draft.abortController !== abortController) return;
+              if (draft.lastError) return;
+              draft.lastError = error;
+            });
+          },
+        });
       }
     }
   }
@@ -416,11 +420,10 @@ export function createMessageEngine(options: CreateMessageEngineOptions = {}): M
    */
   function callPluginError(abortController: AbortController, error: unknown): void {
     for (const plugin of plugins) {
-      try {
-        plugin.onError?.(buildContext(abortController), error);
-      } catch {
-        // Isolated: plugin errors never change the turn's outcome.
-      }
+      // Isolated: plugin errors never change the turn's outcome (fn runs synchronously).
+      void invokeIsolated(() => plugin.onError?.(buildContext(abortController), error), [], {
+        onError: () => undefined,
+      });
     }
   }
 

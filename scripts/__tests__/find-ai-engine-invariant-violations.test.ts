@@ -41,6 +41,7 @@ describe('find-ai-engine-invariant-violations — scanner regression', () => {
     const root = makeFixture({
       'packages/flux-renderers-ai/src/engine/create-engine.ts': `
 function runTurn() {
+  pendingBranchId = undefined; // ⑧ prefix clear (the mutate-callback returns below are not turn exits, but the line rule is conservative)
   try { adapter.mutate('full', (draft) => { /* ok */ }); }
   catch { adapter.mutate('requestState', (draft) => {
     if (draft.abortController !== abortController) return;
@@ -49,6 +50,7 @@ function runTurn() {
   finally { adapter.mutate('full', (draft) => {
     if (draft.abortController === abortController) draft.abortController = null;
   }); }
+  const outcome = await runOnce(connector, abortController); // ⑧ consumption point (plan 759 monotone rule needs runOnce or a wrapper)
   adapter.mutate('requestState', (draft) => {
     if (draft.requestState === 'aborted') return;
     if (draft.abortController !== abortController) return;
@@ -409,5 +411,119 @@ function clearAll() {
     const result = runScanner({ FLUX_AUDIT_SCAN_ROOT: root });
     expect(result.exitCode).toBe(0);
     expect(result.stdout).toContain('No invariant violations');
+  });
+
+  // plan 759 (roadmap PH-6): wrapper-form stamp reset, optional-call storage blind spot, AL-07 isolation.
+
+  it("violating fixture ⑧ (plan 759 wrapper form): runTurn wrapped by runWithExitResets whose resets do not clear pendingBranchId → exit 1", () => {
+    const root = makeFixture({
+      "packages/flux-renderers-ai/src/engine/create-engine.ts": `
+function runTurn(incoming) {
+  return runWithExitResets(() => runTurnBody(incoming), [clearSomethingElse]);
+}
+async function runTurnBody(incoming) {
+  if (adapter.getState().isProcessing) { return; }
+  const connector = adapterStateConnector();
+  if (!connector) {
+    return; // no stamp clear and the wrapper does not reset the stamp either
+  }
+  const outcome = await runOnce(connector, abortController);
+}
+`,
+    });
+    const result = runScanner({ FLUX_AUDIT_SCAN_ROOT: root });
+    expect(result.exitCode).toBe(1);
+    expect(result.stderr).toContain("⑧");
+  });
+
+  it("clean fixture ⑧ (plan 759 wrapper form): runTurn wrapped by runWithExitResets with a pendingBranchId reset → exit 0", () => {
+    const root = makeFixture({
+      "packages/flux-renderers-ai/src/engine/create-engine.ts": `
+function clearPendingBranchStamp() {
+  pendingBranchId = undefined;
+}
+function runTurn(incoming) {
+  return runWithExitResets(() => runTurnBody(incoming), [clearPendingBranchStamp]);
+}
+async function runTurnBody(incoming) {
+  if (adapter.getState().isProcessing) { return; }
+  const connector = adapterStateConnector();
+  if (!connector) {
+    return; // covered by the wrapper reset
+  }
+  const outcome = await runOnce(connector, abortController);
+}
+`,
+    });
+    const result = runScanner({ FLUX_AUDIT_SCAN_ROOT: root });
+    expect(result.exitCode).toBe(0);
+    expect(result.stdout).toContain("No invariant violations");
+  });
+
+  it("violating fixture ⑧ (plan 759 monotonicity): runTurn body has neither runOnce nor runWithExitResets → exit 1", () => {
+    const root = makeFixture({
+      "packages/flux-renderers-ai/src/engine/create-engine.ts": `
+function runTurn(incoming) {
+  return runTurnRenamedElsewhere(incoming); // refactor that hides the stamp path from the rule
+}
+`,
+    });
+    const result = runScanner({ FLUX_AUDIT_SCAN_ROOT: root });
+    expect(result.exitCode).toBe(1);
+    expect(result.stderr).toContain("⑧");
+  });
+
+  it("violating fixture ④ (plan 759 optional-call form): storage?.method?.(…) without .catch → exit 1", () => {
+    const root = makeFixture({
+      "packages/flux-renderers-ai/src/adapters/use-conversation.ts": `
+function deleteConversation(id) {
+  void storage?.deleteConversation?.(id);
+}
+`,
+    });
+    const result = runScanner({ FLUX_AUDIT_SCAN_ROOT: root });
+    expect(result.exitCode).toBe(1);
+    expect(result.stderr).toContain("④");
+    expect(result.stderr).toContain("deleteConversation");
+  });
+
+  it("violating fixture AL-07 (plan 759): plugin.onError invoked outside invokeIsolated → exit 1", () => {
+    const root = makeFixture({
+      "packages/flux-renderers-ai/src/engine/create-engine.ts": `
+function callPluginError(abortController, error) {
+  for (const plugin of plugins) {
+    try {
+      plugin.onError?.(buildContext(abortController), error);
+    } catch {}
+  }
+}
+`,
+    });
+    const result = runScanner({ FLUX_AUDIT_SCAN_ROOT: root });
+    expect(result.exitCode).toBe(1);
+    expect(result.stderr).toContain("AL-07");
+    expect(result.stderr).toContain("onError");
+  });
+
+  it("clean fixture AL-07 (plan 759): plugin.onError / onTurnEnd invoked inside invokeIsolated → exit 0", () => {
+    const root = makeFixture({
+      "packages/flux-renderers-ai/src/engine/create-engine.ts": `
+function callPluginError(abortController, error) {
+  for (const plugin of plugins) {
+    void invokeIsolated(() => plugin.onError?.(buildContext(abortController), error), [], { onError: () => undefined });
+  }
+}
+async function finishTurn(abortController) {
+  for (const plugin of plugins) {
+    await invokeIsolated(() => plugin.onTurnEnd?.(buildContext(abortController)), [], {
+      onError: (error) => { recordTurnEndError(abortController, error); },
+    });
+  }
+}
+`,
+    });
+    const result = runScanner({ FLUX_AUDIT_SCAN_ROOT: root });
+    expect(result.exitCode).toBe(0);
+    expect(result.stdout).toContain("No invariant violations");
   });
 });
