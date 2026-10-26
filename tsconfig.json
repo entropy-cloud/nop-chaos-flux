@@ -45,6 +45,7 @@
     { "path": "./packages/word-editor-core" },
     { "path": "./packages/word-editor-renderers" },
     { "path": "./packages/nop-debugger" },
+    { "path": "./packages/nop-debugger-ai" },
     { "path": "./apps/playground" }
   ]
 }

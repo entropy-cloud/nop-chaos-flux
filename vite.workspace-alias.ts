@@ -34,6 +34,9 @@ export const workspacePackageAliases: Record<string, string> = {
   '@nop-chaos/nop-debugger': fileURLToPath(
     new URL('./packages/nop-debugger/src/index.tsx', import.meta.url),
   ),
+  '@nop-chaos/nop-debugger-ai': fileURLToPath(
+    new URL('./packages/nop-debugger-ai/src/index.ts', import.meta.url),
+  ),
   '@nop-chaos/flux-runtime': fileURLToPath(
     new URL('./packages/flux-runtime/src/index.ts', import.meta.url),
   ),

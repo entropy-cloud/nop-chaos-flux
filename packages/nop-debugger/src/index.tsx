@@ -6,3 +6,4 @@ export {
   getNopDebuggerAutomationApi,
   installNopDebuggerWindowFlag,
 } from './controller.js';
+export { normalizeRedactionOptions, redactData } from './redaction.js';

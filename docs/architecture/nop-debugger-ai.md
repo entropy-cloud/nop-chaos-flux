@@ -26,6 +26,10 @@ Ownership neighbors:
 - `packages/flux-renderers-ai/src/engine/types.ts` — `AiConnector`, `AiToolSchema`, `ToolExecutor`, `ToolExecutionResult`
 - `packages/flux-renderers-ai/src/engine/create-engine.ts` — `createMessageEngine({ connector, tools, toolExecutor, ... })`
 - `apps/playground/src/ai/openai-connector.ts` — host-side connector precedent (keys in host)
+- `packages/nop-debugger-ai/src/create-debugger-ai-tools.ts` — `createDebuggerAiTools()` whitelist adapter (`{ tools, toolExecutor }` for `createMessageEngine`)
+- `packages/nop-debugger-ai/src/tools.ts` — v1 read-only tool definitions (10-tool whitelist)
+- `packages/nop-debugger-ai/src/trim.ts` — per-tool projection allowlist + char cap
+- `packages/nop-debugger/src/ai-boundary.ts` — zero-AI-dependency boundary scanner (text-level assertion)
 - `scripts/__tests__/ai-debugger-local-qwen.optional.test.ts` — optional local-model probe (contract seed; not the production contract)
 
 ## Package Boundary And Naming
