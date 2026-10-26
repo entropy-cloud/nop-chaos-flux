@@ -272,6 +272,10 @@ Current store-diagnostics routing baseline:
 
 AI/E2E should prefer these APIs over panel DOM inspection.
 
+### AI Extension Surface Note
+
+The AI integration on top of this automation API (model-facing tool whitelist, per-tool redaction/trimming, connector injection, AI panel tab seam, and the schema patch protocol) is contracted in `docs/architecture/nop-debugger-ai.md`. That surface consumes the automation methods listed above; it does not extend or reinterpret them. `nop-debugger` itself carries no AI dependency — the AI layer lives in `@nop-chaos/nop-debugger-ai`, which depends on this package, never the reverse.
+
 ### AI-First Explanation Contracts
 
 The debugger now exposes explanation-oriented automation contracts in addition to raw inspect and event APIs.
