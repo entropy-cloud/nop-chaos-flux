@@ -1,0 +1,24 @@
+{
+  "name": "ai-debugger-copilot",
+  "description": "为 nop-debugger 增加可选的 AI 集成面，把既有自动化诊断 API 与 flux-renderers-ai 会话/工具循环组合为人和 Agent 共用的诊断、解释与 schema patch 协作面：①范围——新包 @nop-chaos/nop-debugger-ai（暂定名，AD-0 裁定；只读工具适配层、AI 只读会话面板与取点上下文、schema/表达式 patch 契约/校验/审计/应用面、候选预览/采纳/回滚/冲突、本地模型联调与确定性离线夹具、playground/文档收口）；范围排除与 deferred——反向代理/书签注入/本地 Node 服务、驱动外部 CLI 改源码、页面控制与表单自动提交、多 Agent 编排/团队评审/产物托管、跨会话记忆与 RAG、外部 Agent MCP 桥（需人工立项）、非 debugger 通用 Copilot。②授权——autonomy=implement；保护区域按 docs/context/ai-autonomy-policy.md；P0/P1 自动修复预授权；新建包、跨包公共 API、patch 应用路径等结构性变更执行前人工确认（AD-1 建包 / AD-3 seam / AD-4 应用路径 human gate）。③派生机制——线性 roadmap（AD-0→AD-6），无 Loop Rule；新 work item 由人在 roadmap 内增删，不得由 AI 自行派生；work item 粒度以一个 plan 能完成为准，过大拆分/过小合并均须人工确认。④沿用指针——debugger 运行时语义沿用 docs/architecture/debugger-runtime.md；AI 扩展面 owner doc 由 AD-0 建立（拟 docs/architecture/nop-debugger-ai.md）；宿主 IO 沿用 docs/architecture/renderer-env.md 的 stream 契约；AI 引擎与工具 UI 沿用 packages/flux-renderers-ai 既有能力，不另建第二套；自动修复/审计沿用 docs/skills/deep-audit-prompts.md 与 docs/skills/open-ended-adversarial-review-prompt.md。",
+  "roadmapPath": "docs/backlog/ai-debugger-copilot-roadmap.md",
+  "plansDir": "docs/plans",
+  "planGuide": "docs/plans/00-plan-authoring-and-execution-guide.md",
+  "auditsDir": "docs/audits/ai-debugger-copilot",
+  "contextDir": "docs/context",
+  "moduleDir": ".",
+  "commands": {
+    "test": "pnpm test",
+    "build": "pnpm build",
+    "lint": "pnpm lint",
+    "typecheck": "pnpm typecheck",
+    "check": "pnpm check"
+  },
+  "prompts": {
+    "multiAudit": "docs/skills/deep-audit-prompts.md",
+    "openAudit": "docs/skills/open-ended-adversarial-review-prompt.md"
+  },
+  "commitFormat": "feat(ai-debugger-copilot): <description>",
+  "model": "glm-5.3-flash",
+  "variant": "max"
+}

@@ -20,6 +20,7 @@ docs/testing/
 - Path convention: `docs/testing/{year}/{month}-{day}.md`
 - Writing rules and entry format: `docs/testing/00-testing-issue-writing-guide.md`
 - Coverage threshold baseline (per-package `vitest` thresholds, ratchet rule): `docs/testing/coverage-thresholds.md`
+- e2e baseline failure ledger (2026-10-26 full run, per-item attribution; ledger-matched failure = known): `docs/testing/e2e-baseline-ledger.md`
 
 ## Index (Reverse Chronological)
 

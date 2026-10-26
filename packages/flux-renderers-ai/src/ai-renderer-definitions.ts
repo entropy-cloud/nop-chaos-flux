@@ -78,6 +78,12 @@ export const aiRendererDefinitions: RegisteredRendererDefinition[] = [
     sourcePackage: '@nop-chaos/flux-renderers-ai',
     defaultSchema: { type: 'ai-chat' },
     component: AiChatRenderer,
+    // P1-MA9.2-001: capability declarations NOT added for ai-chat — the handle
+    // uses invoke-based model (createAiComponentHandle), not flat method
+    // registration. Adding standard componentCapabilityContracts caused a
+    // component-handle.test.tsx regression (invoke model incompatible with
+    // flat contract validation). Declarations for ai-chat need a dedicated
+    // invoke-model contract pattern (R3.x/MV follow-up).
     fields: [
       { key: 'connector', kind: 'prop' },
       { key: 'placeholder', kind: 'prop' },
