@@ -1,0 +1,19 @@
+{
+  "_header": {
+    "description": "Size budget for the @nop-chaos/flux pack artifact (check:bundle-size, plan 761 / roadmap PH-8). Any metric above baseline * (1 + tolerance) is red. Lower the numbers freely when the artifact shrinks; raising one needs a dated note here.",
+    "tolerance": 0.05,
+    "tarballName": "nop-chaos-flux-0.1.0.tgz",
+    "version": "0.1.0",
+    "measuredAt": "2026-10-26",
+    "measuredAtCommit": "269783a85",
+    "notes": [
+      "tarballBytes includes package/dist/index.js.map (10,279,010 B, ~60% of the tarball). Whether source maps ship is a release-strategy decision (roadmap PH-12); dropping them would surface as a tightening hint, not a red.",
+      "jsBytes = sum of every .js entry (non-.map) incl. lazy chunks (three-canvas ~1.9 MB, src-* ~1.7 MB). mainEntryBytes = package/dist/index.js only."
+    ]
+  },
+  "metrics": {
+    "tarballBytes": 6806038,
+    "jsBytes": 10542432,
+    "mainEntryBytes": 5169936
+  }
+}

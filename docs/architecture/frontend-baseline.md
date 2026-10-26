@@ -221,6 +221,26 @@ Treat the following as stable defaults unless there is a strong reason to change
 - require tests for static fast path and identity reuse behavior
 - keep document updates aligned with architecture changes
 
+## Build Artifact Baseline
+
+### Size budget (`check:bundle-size`)
+
+The host-facing release artifact is the `@nop-chaos/flux` tarball produced by `scripts/pack-flux-bundle.mjs`. `scripts/check-bundle-size.mjs` (in `pnpm check`, right after `check:flux-bundle-pack` which packs it) measures three metrics from that tarball and compares them with `scripts/baselines/bundle-size-baseline.json`:
+
+| Metric           | Meaning                                                            | Baseline (2026-10-26, v0.1.0) |
+| ---------------- | ------------------------------------------------------------------ | ----------------------------- |
+| `tarballBytes`   | gzip tarball size as downloaded by hosts (includes `index.js.map`) | 6,806,038                     |
+| `jsBytes`        | sum of every `.js` entry, main entry plus lazy chunks              | 10,542,432                    |
+| `mainEntryBytes` | `package/dist/index.js` alone                                      | 5,169,936                     |
+
+Any metric above its baseline by more than the registered tolerance (5%) fails the gate; a metric more than 5% below its baseline is reported as a tightening hint (exit 0). The baseline is a ratchet: lower it whenever the artifact shrinks; raising it requires a dated note in the json. Byte counts are taken by extracting each entry (`tar -xOf`) so the gate behaves identically under bsdtar and GNU tar. Whether source maps keep shipping in the tarball is a release-strategy question (roadmap PH-12); the budget only guards against unreviewed growth.
+
+### React Compiler: application-level opt-in, never in package builds
+
+- **Decision**: library packages (`packages/*`) are built without the React Compiler (`tsc` builds; `flux-bundle`'s Vite build has no compiler plugin). Applications opt in individually — `apps/playground/vite.config.ts` enables it through `babel({ presets: [reactCompilerPreset({ target: '19' })] })`.
+- **Why**: compiled output embeds compiler-runtime assumptions tied to a React/compiler version pair; a published package must not fix that pair for its hosts. Packages instead follow the source-level React 19 rules in `AGENTS.md` (no hand-written `useMemo`/`useCallback`, render-time derivation over effect mirrors) so that a host compiling its app tree gets the optimisations across package code as well.
+- **Rejected alternatives**: running the compiler in every package build (couples 43 packages to one compiler version and double-compiles in hosts that also enable it); compiling only `flux-bundle` (same coupling for the facade hosts rely on most, and it would diverge from the per-package builds hosts can import directly).
+
 ## Related Documents
 
 - Core architecture: `docs/architecture/flux-core.md`
