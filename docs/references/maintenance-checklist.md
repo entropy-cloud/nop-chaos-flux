@@ -351,3 +351,13 @@ Before finishing a code change, ask:
 - `docs/architecture/security-design-requirements.md`
 - `docs/architecture/performance-design-requirements.md`
 - `docs/references/architecture-guardrails-from-bugs.md`
+
+## Line-Number Usage Rule
+
+From the FM close-out directive (commit `caf780ed1`, recorded 2026-10-19): line numbers may appear in exactly three places —
+
+1. historical audit records (point-in-time evidence);
+2. diagnostic reports (current line numbers at scan time);
+3. `ref`-style historical pointers.
+
+Anything that constrains or identifies **current state** — baseline/whitelist keys, registry entry identifiers, watch/flake ledger entries — must be **content-anchored** (normalized statement text, file-level path, or full test name). Precedents: `renderer-metamodel-residue-whitelist.json` keys use `ruleId::path::normalizedLineText`; `jsdom-pragma-whitelist.json` is file-level; the QA.7 §C flake ledger identifies entries by spec + test description with line numbers moved into「（历史观测 :N）」parentheticals (plan 763). Enforced mechanically by `check:baseline-line-keys` (key positions in `scripts/baselines/*.json` and the QA.7 §C identifier column; free-text buckets `ref`/`reason`/`reRegistrationNotes`/`notes` are exempt).
