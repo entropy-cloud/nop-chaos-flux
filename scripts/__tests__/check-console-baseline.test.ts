@@ -50,7 +50,10 @@ describe('check-console-baseline', () => {
     const result = await runGate({ entries: [] });
     expect(result.code).toBe(1);
     expect(result.stderr).toContain('NEW console.log/debug hits');
-    expect(result.stderr).toContain('undo-stack.ts');
+    // The live tree's unregistered hits change over time (undo-stack.ts at
+    // writing, editor-canvas.tsx:160 later) — assert the listing shape
+    // (file:line per hit) instead of pinning a specific file.
+    expect(result.stderr).toMatch(/\s+packages\/[\w/-]+\.[cm]?[jt]sx?:\d+\s+console\./);
   });
 
   it('matches baseline entries by file+text so line drift does not produce false reds', async () => {

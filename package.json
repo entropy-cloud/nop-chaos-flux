@@ -15,7 +15,7 @@
     "audit:react-doctor": "npx react-doctor@latest . --verbose -y",
     "audit:semgrep": "semgrep --config .semgrep.yml .",
     "build": "turbo run build",
-    "check": "pnpm check:react19 && pnpm check:src-artifacts && pnpm check:oversized-code-files && pnpm check:active-doc-code-anchors && pnpm check:package-css-exports && pnpm check:flux-bundle-pack && pnpm check:bundle-size && pnpm check:i18n-keys && pnpm check:workspace-manifest-deps && pnpm check:page-designer-boundary && pnpm check:schema-prop-coverage && pnpm check:scada-symbol-keys && pnpm check:scanner-baselines && pnpm check:audit-renderer-browser-io && pnpm check:audit-event-dispatch-ctx && pnpm check:ai-engine-invariants && pnpm check:audit-ui-consistency-gaps && pnpm check:ui-family-nesting && pnpm check:duplicates-baseline && pnpm check:console-baseline && pnpm check:docs-garbled && pnpm check:jsdom-pragma-whitelist && pnpm check:knip-baseline && pnpm check:audit-runtime-raw-schema-reads && pnpm check:audit-renderer-metamodel-residue && pnpm check:designer-conformance && pnpm check:windows-safe-filenames && pnpm check:wiring-coverage && pnpm check:owner-doc-semantics && pnpm check:baseline-line-keys",
+    "check": "pnpm check:react19 && pnpm check:src-artifacts && pnpm check:oversized-code-files && pnpm check:active-doc-code-anchors && pnpm check:package-css-exports && pnpm check:flux-bundle-pack && pnpm check:bundle-size && pnpm check:i18n-keys && pnpm check:workspace-manifest-deps && pnpm check:page-designer-boundary && pnpm check:schema-prop-coverage && pnpm check:scada-symbol-keys && pnpm check:scanner-baselines && pnpm check:audit-renderer-browser-io && pnpm check:audit-event-dispatch-ctx && pnpm check:ai-engine-invariants && pnpm check:audit-ui-consistency-gaps && pnpm check:ui-family-nesting && pnpm check:duplicates-baseline && pnpm check:console-baseline && pnpm check:docs-garbled && pnpm check:jsdom-pragma-whitelist && pnpm check:knip-baseline && pnpm check:audit-runtime-raw-schema-reads && pnpm check:audit-renderer-metamodel-residue && pnpm check:designer-conformance && pnpm check:windows-safe-filenames && pnpm check:wiring-coverage && pnpm check:owner-doc-semantics && pnpm check:baseline-line-keys && pnpm check:deps-baseline",
     "check:active-doc-code-anchors": "node scripts/check-active-doc-code-anchors.mjs",
     "check:ai-engine-invariants": "node scripts/audit/find-ai-engine-invariant-violations.mjs",
     "check:audit-as-any-casts": "node scripts/audit/find-as-any-casts.mjs",
@@ -41,7 +41,6 @@
     "check:console-baseline": "node scripts/check-console-baseline.mjs",
     "check:designer-conformance": "node scripts/check-designer-conformance.mjs",
     "check:docs-garbled": "node scripts/check-docs-garbled.mjs",
-    "check:duplicates": "node scripts/check-duplicates.mjs",
     "check:duplicates-baseline": "node scripts/check-duplicates.mjs",
     "check:duplicates:detail": "jscpd packages/ --config .jscpd.json",
     "check:finite-prop-contracts": "node scripts/check-finite-prop-contracts.mjs",
@@ -90,7 +89,8 @@
     "interaction:reconcile": "node scripts/interaction-state/reconcile-coverage.mjs",
     "workaround:inventory": "vitest run --config scripts/workaround-audit/vitest.inventory.config.ts",
     "workaround:reconcile": "node scripts/workaround-audit/reconcile-coverage.ts",
-    "check:baseline-line-keys": "node scripts/check-baseline-line-keys.mjs"
+    "check:baseline-line-keys": "node scripts/check-baseline-line-keys.mjs",
+    "check:deps-baseline": "node scripts/check-deps-baseline.mjs"
   },
   "devDependencies": {
     "@babel/core": "^7.29.0",

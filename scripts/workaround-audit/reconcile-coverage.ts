@@ -1,3 +1,6 @@
+// Runtime: TypeScript file executed via bare `node` (type stripping) — requires
+// Node >= 22.6 (repo toolchain baseline). Sibling reconcile scripts use .mjs;
+// this one keeps .ts for its typed inventory imports (plan 767 D4 alignment note).
 // Workaround-audit coverage reconcile (plan 560 Phase 1; roadmap WA-0).
 // Structural audit of inventory ↔ ledger consistency plus the machine-readable
 // counts the roadmap contract requires:

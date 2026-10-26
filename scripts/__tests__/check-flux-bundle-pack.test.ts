@@ -43,6 +43,16 @@ async function stageTarballFixture(dtsContent: string): Promise<string> {
   await writeFile(join(packageDir, 'dist', 'index.js'), 'export {};\n', 'utf8');
   await writeFile(join(packageDir, 'dist', 'index.d.ts'), dtsContent, 'utf8');
   await writeFile(join(packageDir, 'dist', 'style.css'), '.x{}\n', 'utf8');
+  // Gate requires the lazy renderer implementation chunks (check-flux-bundle-pack.mjs
+  // expectedAsyncChunkStems); fixtures must ship one file per stem to pass.
+  for (const stem of [
+    'echarts-setup-fixture',
+    'chart-renderer-fixture',
+    'three-canvas-fixture',
+    'xlang-debug-editor-fixture',
+  ]) {
+    await writeFile(join(packageDir, 'dist', `${stem}.js`), 'export {};\n', 'utf8');
+  }
 
   const tarballPath = join(workDir, 'nop-chaos-flux-fixture.tgz');
   await execFileAsync('tar', ['-czf', tarballPath, '-C', workDir, 'package']);

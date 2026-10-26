@@ -133,23 +133,23 @@
   background: var(--border);
 }
 
-.nop-steps[data-orientation='horizontal']
-  [data-slot='steps-item'][data-status='finish']
-  > [data-slot='steps-connector'] {
-  position: absolute;
-  top: 0.75rem;
-  height: 1px;
-  width: 100%;
-  transform: translateX(-50%);
-  left: 50%;
+.nop-steps[data-orientation='horizontal'] {
+  & [data-slot='steps-item'][data-status='finish'] > [data-slot='steps-connector'] {
+    position: absolute;
+    top: 0.75rem;
+    height: 1px;
+    width: 100%;
+    transform: translateX(-50%);
+    left: 50%;
+  }
 }
 
-.nop-steps[data-orientation='vertical']
-  [data-slot='steps-item'][data-status='finish']
-  > [data-slot='steps-connector'] {
-  margin-left: 15px;
-  width: 1px;
-  align-self: stretch;
+.nop-steps[data-orientation='vertical'] {
+  & [data-slot='steps-item'][data-status='finish'] > [data-slot='steps-connector'] {
+    margin-left: 15px;
+    width: 1px;
+    align-self: stretch;
+  }
 }
 
 .nop-steps [data-slot='steps-item'][data-status='finish'] > [data-slot='steps-connector'] {

@@ -57,7 +57,7 @@ export default defineConfig({
   grepInvert: process.env.E2E_EXCLUDE_WATCH_ONLY ? [/@watch-only/] : undefined,
   use: {
     baseURL: baseUrl,
-    // Keep trace capture honest under the current retries=0 baseline.
+    // Keep trace capture honest under the retries: 1 baseline (one retry absorbs env flakes).
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
   },

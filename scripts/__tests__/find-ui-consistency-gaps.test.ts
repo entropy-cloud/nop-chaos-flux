@@ -331,8 +331,11 @@ describe('find-ui-consistency-gaps', () => {
         'packages/flux-renderers-industrial/src/symbols/visuals.ts',
         'color-exempt.fixture.ts',
       );
+      // kanban-board.tsx's color exemption was removed in the R2 G5
+      // unification; ai-tool-call.tsx retains a per-file color-exempt entry,
+      // so stage the second fixture there (plan 767 D9 re-anchor).
       await stageFixture(
-        'packages/flux-renderers-scheduling/src/kanban/kanban-board.tsx',
+        'packages/flux-renderers-ai/src/renderers/ai-tool-call.tsx',
         'color-exempt.fixture.ts',
       );
       const { stdout } = await runGateWithArgs(['--json']);
@@ -349,8 +352,8 @@ describe('find-ui-consistency-gaps', () => {
         ),
       );
       expect(payload.byFile.map((entry: { file: string }) => entry.file)).toEqual([
+        'packages/flux-renderers-ai/src/renderers/ai-tool-call.tsx',
         'packages/flux-renderers-industrial/src/symbols/visuals.ts',
-        'packages/flux-renderers-scheduling/src/kanban/kanban-board.tsx',
       ]);
       expect(payload.newHits).toEqual([]);
     });
