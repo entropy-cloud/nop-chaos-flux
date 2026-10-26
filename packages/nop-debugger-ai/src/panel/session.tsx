@@ -10,6 +10,8 @@ export interface AiSessionTabProps {
   connector: AiConnector | null;
   getInspectSelection: () => NopComponentInspectResult | null;
   redaction?: NopDebuggerRedactionOptions;
+  /** Patch candidate queue (AD-4) rendered above the message list. */
+  patchQueue?: React.ReactNode;
 }
 
 /**
@@ -55,6 +57,7 @@ export function AiSessionTab(props: AiSessionTabProps) {
   return (
     <AiChatProvider value={contextValue}>
       <div className="ndbg-ai-tab flex min-h-0 flex-1 flex-col gap-2 p-2" data-slot="nop-ai-session">
+        {props.patchQueue}
         <div className="ndbg-ai-context text-xs" data-slot="nop-ai-context" role="status">
           {pendingCard ? (
             <span className="ndbg-ai-context-title" data-testid="ndbg-ai-context-attached">

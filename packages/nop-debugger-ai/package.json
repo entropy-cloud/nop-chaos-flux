@@ -30,5 +30,8 @@
   "description": "AI copilot tool surface for the Flux debugger automation API (read-only whitelist adapter)",
   "peerDependencies": {
     "react": "^19.0.0"
+  },
+  "devDependencies": {
+    "@nop-chaos/flux-core": "workspace:*"
   }
 }

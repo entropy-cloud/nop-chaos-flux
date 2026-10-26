@@ -3,6 +3,8 @@
     "description": "Numeric baselines for the high-risk advisory scanners listed in BASELINED_SCANNERS (check-scanner-baselines.mjs). A count above the baseline fails check:scanner-baselines (new suspects must be fixed or the baseline consciously re-registered).",
     "lastUpdated": "2026-10-27",
     "reRegistrationNotes": [
+      "2026-10-27 plan 772 closure-fix batch (ai-debugger-copilot AD-4): find-async-without-failure-path 350 -> 351 (+1: packages/nop-debugger-ai/src/panel/patch-queue.tsx:67 preview-effect bare catch — failure handling IS a UI-state downgrade to the diff-card fallback, setPreviewSummary(null); same intentional-shape family as the plan-769/772 registrations), find-performance-suspects 28 -> 29 (+1: patch-queue.tsx originalValue uses JSON.stringify(value) for DISPLAY formatting of the original value in the diff card — not change detection/dependency keying), discover-audit-suspects 794 -> 796 (aggregate of the two).",
+      "2026-10-27 plan 772 (ai-debugger-copilot AD-4): find-async-without-failure-path 349 -> 350 (+1: packages/nop-debugger-ai/src/panel/propose-tool.ts:140 composite-dispatcher JSON.parse catch returning structured {ok:false} — same intentional family as the plan-769 executor registration), find-performance-suspects 27 -> 28 (+1: packages/nop-debugger-ai/src/panel/patch-queue.tsx opSummary uses JSON.stringify(op.value) for DISPLAY formatting of model-authored values in a text node — not change detection/dependency keying), discover-audit-suspects 793 -> 794 (aggregate of the async +1). Both new hits are display/normalization shapes in the patch-candidate surface, no behavioral suspect.",
       "2026-10-27 plan 769 (ai-debugger-copilot AD-1): find-async-without-failure-path 348 -> 349 (+1 net; raw listing shows 3 catch sites in the one new file, Found-count delta is the registered contract). New file packages/nop-debugger-ai/src/create-debugger-ai-tools.ts toolExecutor: three catch blocks intentionally normalize tool failures into structured { ok:false } ToolExecutionResult returns — the returned result IS the failure path (raw error text never rethrown or shipped to the model, owner-doc §Tool Surface Security), same intentional-shape family as the plan-757 lifecycle-primitive / plan-528 drag-ghost registrations.",
       "2026-10-26 plan 757 (roadmap PH-4): discover-audit-suspects 787 -> 793 / find-async-without-failure-path 342 -> 348 (+6 each, same files). The six new hits are the async-lifecycle primitives themselves (packages/flux-core/src/utils/lifecycle/write-drain.ts:20,24 then-chain management; exit-resets.ts:14,24 body awaits with intentional swallow-and-rethrow semantics; link-disposal.ts:34 generator .return() swallow-by-design). Failure handling IS the contract of these utilities — the flagged shapes are the framework's own registered semantics (settle-tail bookkeeping, error cause attachment, teardown-stall prevention), mirroring the supports-passive bare-catch registration precedent.",
       "2026-10-26 plan 755 (roadmap PH-2): find-missing-renderer-markers 0 -> 15 — the FALSE ZERO is fixed. rules.mjs scanMissingRendererMarkers no longer treats any `nop-` substring (satisfied by every @nop-chaos/* import) as a whole-file exemption; new criteria = (1) RendererComponentProps present, (2) no marker literal matching /(?<![@\\w/.-])nop-(?=[a-z0-9]|\\$\\{)/, (3) file contains a host-element JSX tag (HOST_ELEMENT_TAGS). Registered at the live recount 15: flux-renderers-data table-renderer sub-components x7, form hidden-renderer/input-suggest, form-advanced input-table-row/tree-control-pipeline/upload-field, layout resizable-renderer/wizard-step-body/wizard-step-nav. Triage of these 15 belongs to each renderer owner surface (ratchet, not zero-new, per roadmap PH-2). Same-source double count: discover-audit-suspects aggregates every rule bucket, so it moves 772 -> 787 (+15, identical file set) — no new suspects beyond the marker family. Hand-edited.",
@@ -25,18 +27,18 @@
   },
   "scanners": {
     "find-styling-suspects": 255,
-    "discover-audit-suspects": 793,
+    "discover-audit-suspects": 796,
     "find-test-global-leaks": 115,
     "find-todo-exitless": 1,
     "find-as-any-casts": 41,
-    "find-async-without-failure-path": 349,
+    "find-async-without-failure-path": 351,
     "find-react19-optimization-candidates": 663,
     "find-canvas-wrapper-a11y-gaps": 0,
     "find-hardcoded-type-dispatch": 0,
     "find-missing-renderer-markers": 15,
     "find-fieldframe-bypasses": 12,
     "find-reactive-render-reads": 20,
-    "find-performance-suspects": 27,
+    "find-performance-suspects": 29,
     "find-non-retained-renderer-references": 155
   }
 }

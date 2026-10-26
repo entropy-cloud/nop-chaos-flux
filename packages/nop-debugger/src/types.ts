@@ -115,6 +115,11 @@ export interface NopSchemaPatchValidationResult {
 export interface NopSchemaPatchApplier {
   apply(patch: NopSchemaPatch): Promise<{ revertToken: string }>;
   revert(revertToken: string): Promise<void>;
+  /**
+   * Optional host sandbox preview (text summary; AD-4). Absent → consumers
+   * fall back to protocol-level diff previews.
+   */
+  preview?(patch: NopSchemaPatch): Promise<{ kind: 'rendered'; summary: string } | { kind: 'unsupported' }>;
 }
 
 export type NopDebugEventKind =

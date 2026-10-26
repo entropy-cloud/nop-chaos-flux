@@ -1442,6 +1442,10 @@ importers:
       react:
         specifier: ^19.0.0
         version: 19.2.4
+    devDependencies:
+      '@nop-chaos/flux-core':
+        specifier: workspace:*
+        version: link:../flux-core
 
   packages/page-designer-core:
     dependencies:
