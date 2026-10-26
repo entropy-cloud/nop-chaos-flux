@@ -1,5 +1,5 @@
 import { DEFAULT_FILTERS } from './diagnostics.js';
-import type { DebuggerWindowDock, NopDebugEvent, NopDebuggerSnapshot, NopDebuggerTab } from './types.js';
+import type { DebuggerWindowDock, NopDebugEvent, NopDebuggerAnyTab, NopDebuggerSnapshot, NopDebuggerTab } from './types.js';
 
 export interface NopDebuggerStore {
   getSnapshot(): NopDebuggerSnapshot;
@@ -15,7 +15,7 @@ export interface NopDebuggerStore {
   unminimize(): void;
   pause(): void;
   resume(): void;
-  setActiveTab(tab: NopDebuggerTab): void;
+  setActiveTab(tab: NopDebuggerAnyTab): void;
   setPosition(position: { x: number; y: number }): void;
   toggleFilter(filter: NopDebuggerSnapshot['filters'][number]): void;
   setStrictMode(enabled: boolean): void;
@@ -189,7 +189,7 @@ export function createDebuggerStore(input: {
     resume() {
       setSnapshot((current) => ({ ...current, paused: false }));
     },
-    setActiveTab(tab: NopDebuggerTab) {
+    setActiveTab(tab: NopDebuggerAnyTab) {
       setSnapshot((current) => ({ ...current, activeTab: tab }));
     },
     setPosition(position: { x: number; y: number }) {

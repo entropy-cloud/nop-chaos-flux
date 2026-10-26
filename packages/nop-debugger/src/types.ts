@@ -26,6 +26,7 @@ import type {
   NopNodeValueExplanation,
   NopNodeValueExplanationQuery,
 } from './types-explanations.js';
+import type { ReactNode } from 'react';
 
 export type {
   NopDebuggerExplanation,
@@ -43,6 +44,29 @@ export type {
 } from './types-explanations.js';
 
 export type NopDebuggerTab = 'overview' | 'timeline' | 'network' | 'node';
+
+/** Host-registered panel tab ids live in the `x-` namespace and can never collide with built-in tabs. */
+export type NopDebuggerExtensionTabId = `x-${string}`;
+
+export type NopDebuggerAnyTab = NopDebuggerTab | NopDebuggerExtensionTabId;
+
+/** Read context handed to a panel tab render factory at activation time. */
+export interface NopDebuggerPanelTabContext {
+  controller: NopDebuggerController;
+  /** Current panel inspect selection (null when nothing is picked). */
+  getInspectSelection(): NopComponentInspectResult | null;
+}
+
+/**
+ * Host-registered panel tab. `label` is captured at registration time — a host
+ * that switches language re-registers the descriptor. Content is lazy: `render`
+ * runs only while the tab is active.
+ */
+export interface NopDebuggerPanelTabDescriptor {
+  id: NopDebuggerExtensionTabId;
+  label: string;
+  render(context: NopDebuggerPanelTabContext): ReactNode;
+}
 
 export type NopDebugEventKind =
   | 'compile:start'
@@ -146,7 +170,7 @@ export interface NopDebuggerSnapshot {
   minimized: boolean;
   paused: boolean;
   strictMode: boolean;
-  activeTab: NopDebuggerTab;
+  activeTab: NopDebuggerAnyTab;
   position: { x: number; y: number };
   /** launcher 停靠模式（ux-r6）：bottom-left = 无拖拽持久化位置时的默认停靠；拖拽落点即转 floating。 */
   dock: DebuggerWindowDock;
@@ -447,8 +471,16 @@ export interface NopDebuggerController {
   clear(): void;
   pause(): void;
   resume(): void;
-  setActiveTab(tab: NopDebuggerTab): void;
+  setActiveTab(tab: NopDebuggerAnyTab): void;
   setPanelPosition(position: { x: number; y: number }): void;
+  /**
+   * Register a host-owned panel tab (AI-agnostic seam; ids must use the `x-`
+   * prefix). Throws on a non-prefixed id or a duplicate id. Returns the
+   * unregister function.
+   */
+  registerPanelTab(descriptor: NopDebuggerPanelTabDescriptor): () => void;
+  getPanelTabs(): NopDebuggerPanelTabDescriptor[];
+  subscribePanelTabs(listener: () => void): () => void;
   toggleFilter(filter: NopDebuggerFilterKind): void;
   queryEvents(query?: NopDebugEventQuery): NopDebugEvent[];
   getLatestEvent(query?: NopDebugEventQuery): NopDebugEvent | undefined;

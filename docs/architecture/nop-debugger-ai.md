@@ -30,6 +30,10 @@ Ownership neighbors:
 - `packages/nop-debugger-ai/src/tools.ts` — v1 read-only tool definitions (10-tool whitelist)
 - `packages/nop-debugger-ai/src/trim.ts` — per-tool projection allowlist + char cap
 - `packages/nop-debugger/src/ai-boundary.ts` — zero-AI-dependency boundary scanner (text-level assertion)
+- `packages/nop-debugger/src/panel/ai-tab-seam.ts` — panel tab registry subscription hook (AI-agnostic seam)
+- `packages/nop-debugger-ai/src/panel/extension.tsx` — `createAiDebuggerExtension()` (`x-ai` tab, shared React-adapter engine)
+- `packages/nop-debugger-ai/src/panel/prompt.ts` — system prompt, bounded node-context card, `data-node-context` user parts
+- `packages/nop-debugger-ai/src/panel/session.tsx` — session surface (message list + sender + error/retry + context card)
 - `scripts/__tests__/ai-debugger-local-qwen.optional.test.ts` — optional local-model probe (contract seed; not the production contract)
 
 ## Package Boundary And Naming
@@ -57,6 +61,7 @@ Ownership neighbors:
 ## AI Panel Tab Extension Seam
 
 - `nop-debugger` exposes a generic, AI-agnostic panel tab extension seam: a controller-level registry where the host registers tab descriptors (id, label, lazy content factory). The built-in tabs (overview/timeline/network/node) keep their identity and ordering precedence.
+- Registration rejects non-`x-` ids and duplicate ids (throws). A descriptor's `render` receives `{ controller, getInspectSelection }` — the panel's current inspect selection — and runs only while the tab is active. The window-facing `NopDebuggerAutomationApi.setActiveTab` stays built-in-only; extension tab activation is a panel-internal surface.
 - Extension tab ids use an `x-` prefixed namespace, so they can never collide with built-in tab ids.
 - The panel chrome never statically imports extension content: a descriptor's content factory is invoked lazily (host-side dynamic import), so an application that never registers the AI tab loads zero AI chunk.
 - The AI capability is default-off: nothing renders or loads unless the host explicitly registers the extension.

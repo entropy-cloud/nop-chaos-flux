@@ -55,11 +55,12 @@ import type {
   NopComponentInspectResult,
   NopDebugEvent,
   NopDebugEventQuery,
+  NopDebuggerAnyTab,
   NopDebuggerAutomationApi,
   NopDebuggerController,
   NopDebuggerOptions,
+  NopDebuggerPanelTabDescriptor,
   NopDebuggerSessionExportOptions,
-  NopDebuggerTab,
   NopDiagnosticReport,
   NopDiagnosticReportOptions,
   NopInteractionTraceQuery,
@@ -105,6 +106,18 @@ export function createNopDebugger(options: NopDebuggerOptions = {}): NopDebugger
   const initialDock =
     persistedPosition ?? windowConfig.position ? ('floating' as const) : windowConfig.dock;
   const storePosition = initialPosition ?? DEFAULT_POSITION;
+
+  // Host-registered panel tabs (AI-agnostic seam). Registry + listeners live
+  // outside the event snapshot store: tab registration is chrome state, not
+  // diagnostics state.
+  const panelTabs = new Map<string, NopDebuggerPanelTabDescriptor>();
+  const panelTabListeners = new Set<() => void>();
+  // Cached list identity for useSyncExternalStore getSnapshot stability.
+  let panelTabList: NopDebuggerPanelTabDescriptor[] = [];
+  const notifyPanelTabListeners = () => {
+    panelTabList = [...panelTabs.values()];
+    for (const listener of panelTabListeners) listener();
+  };
 
   const store = createDebuggerStore({
     enabled,
@@ -351,8 +364,31 @@ export function createNopDebugger(options: NopDebuggerOptions = {}): NopDebugger
     resume() {
       store.resume();
     },
-    setActiveTab(tab: NopDebuggerTab) {
+    setActiveTab(tab: NopDebuggerAnyTab) {
       store.setActiveTab(tab);
+    },
+    registerPanelTab(descriptor: NopDebuggerPanelTabDescriptor) {
+      if (!descriptor.id.startsWith('x-')) {
+        throw new Error(`[nop-debugger] panel tab id must use the "x-" prefix: ${descriptor.id}`);
+      }
+      if (panelTabs.has(descriptor.id)) {
+        throw new Error(`[nop-debugger] panel tab id already registered: ${descriptor.id}`);
+      }
+      panelTabs.set(descriptor.id, descriptor);
+      notifyPanelTabListeners();
+      return () => {
+        if (panelTabs.get(descriptor.id) === descriptor) {
+          panelTabs.delete(descriptor.id);
+          notifyPanelTabListeners();
+        }
+      };
+    },
+    getPanelTabs: () => panelTabList,
+    subscribePanelTabs(listener: () => void) {
+      panelTabListeners.add(listener);
+      return () => {
+        panelTabListeners.delete(listener);
+      };
     },
     setPanelPosition(position: { x: number; y: number }) {
       store.setPosition(position);

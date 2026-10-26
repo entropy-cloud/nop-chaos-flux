@@ -80,7 +80,43 @@ export function createSnapshot(): NopDebuggerSnapshot {
   };
 }
 
+function createPanelTabRegistry() {
+  const tabs = new Map<string, import('./types.js').NopDebuggerPanelTabDescriptor>();
+  const listeners = new Set<() => void>();
+  let list: import('./types.js').NopDebuggerPanelTabDescriptor[] = [];
+  const notify = () => {
+    list = [...tabs.values()];
+    for (const listener of listeners) listener();
+  };
+  return {
+    register(descriptor: import('./types.js').NopDebuggerPanelTabDescriptor) {
+      if (!descriptor.id.startsWith('x-')) {
+        throw new Error(`panel tab id must use the "x-" prefix: ${descriptor.id}`);
+      }
+      if (tabs.has(descriptor.id)) {
+        throw new Error(`panel tab id already registered: ${descriptor.id}`);
+      }
+      tabs.set(descriptor.id, descriptor);
+      notify();
+      return () => {
+        if (tabs.get(descriptor.id) === descriptor) {
+          tabs.delete(descriptor.id);
+          notify();
+        }
+      };
+    },
+    get: () => list,
+    subscribe(listener: () => void) {
+      listeners.add(listener);
+      return () => {
+        listeners.delete(listener);
+      };
+    },
+  };
+}
+
 export function createController(snapshot: NopDebuggerSnapshot): NopDebuggerController {
+  const panelTabRegistry = createPanelTabRegistry();
   const emptyOverview: NopDebuggerOverview = {
     errorCount: 0,
     totalEvents: 0,
@@ -226,6 +262,9 @@ export function createController(snapshot: NopDebuggerSnapshot): NopDebuggerCont
     },
     decorateEnv: (env) => env,
     onActionError() {},
+    registerPanelTab: panelTabRegistry.register,
+    getPanelTabs: panelTabRegistry.get,
+    subscribePanelTabs: panelTabRegistry.subscribe,
     show,
     hide,
     toggle() {},

@@ -10,11 +10,16 @@
     ".": {
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
+    },
+    "./panel": {
+      "types": "./dist/panel/index.d.ts",
+      "default": "./dist/panel/index.js"
     }
   },
   "dependencies": {
     "@nop-chaos/flux-renderers-ai": "workspace:*",
-    "@nop-chaos/nop-debugger": "workspace:*"
+    "@nop-chaos/nop-debugger": "workspace:*",
+    "@nop-chaos/flux-i18n": "workspace:*"
   },
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
@@ -22,5 +27,8 @@
     "test": "vitest run",
     "lint": "eslint src --ext .ts,.tsx --cache --cache-location node_modules/.cache/eslint"
   },
-  "description": "AI copilot tool surface for the Flux debugger automation API (read-only whitelist adapter)"
+  "description": "AI copilot tool surface for the Flux debugger automation API (read-only whitelist adapter)",
+  "peerDependencies": {
+    "react": "^19.0.0"
+  }
 }

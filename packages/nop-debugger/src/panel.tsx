@@ -3,7 +3,7 @@ import type { MouseEvent } from 'react';
 import { Pause, Play, Trash2, Crosshair, Minimize2, Bug } from 'lucide-react';
 import { Button, Tabs, TabsContent, TabsList, TabsTrigger } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
-import type { DebuggerWindowDock, NopDebuggerController, NopDebuggerFilterKind, NopDebuggerTab } from './types.js';
+import type { DebuggerWindowDock, NopDebuggerAnyTab, NopDebuggerController, NopDebuggerFilterKind, NopDebuggerTab } from './types.js';
 import { buildOverview } from './diagnostics.js';
 import { loadPersistedSearchHistory, persistSearchHistory } from './controller-helpers.js';
 import { formatTraceSummary, groupErrors, mergeNetworkRequests } from './panel/event-groups.js';
@@ -19,6 +19,7 @@ import { OverviewTab } from './panel/overview-tab.js';
 import { useInjectDebuggerStyles } from './panel/styles.js';
 import { TimelineTab } from './panel/timeline-tab.js';
 import { useInspectMode } from './panel/use-inspect-mode.js';
+import { usePanelTabs } from './panel/ai-tab-seam.js';
 
 function equalFilters(
   a: NopDebuggerFilterKind[],
@@ -45,7 +46,7 @@ function equalChromeState(
     minimized: boolean;
     paused: boolean;
     strictMode: boolean;
-    activeTab: NopDebuggerTab;
+    activeTab: NopDebuggerAnyTab;
     position: { x: number; y: number };
     dock: DebuggerWindowDock;
   },
@@ -55,7 +56,7 @@ function equalChromeState(
     minimized: boolean;
     paused: boolean;
     strictMode: boolean;
-    activeTab: NopDebuggerTab;
+    activeTab: NopDebuggerAnyTab;
     position: { x: number; y: number };
     dock: DebuggerWindowDock;
   },
@@ -166,6 +167,7 @@ function matchesSearchQuery(event: import('./types.js').NopDebugEvent, rawQuery:
 export function NopDebuggerPanel(props: { controller: NopDebuggerController }) {
   const filterLabels = getFilterLabels();
   const tabLabels = getTabLabels();
+  const extensionTabs = usePanelTabs(props.controller);
   const chrome = useDebuggerSnapshot(
     props.controller,
     (snapshot) => ({
@@ -444,13 +446,18 @@ export function NopDebuggerPanel(props: { controller: NopDebuggerController }) {
 
       <Tabs
         value={chrome.activeTab}
-        onValueChange={(value) => props.controller.setActiveTab(value as NopDebuggerTab)}
+        onValueChange={(value) => props.controller.setActiveTab(value as NopDebuggerAnyTab)}
         className="gap-0"
       >
         <TabsList className="ndbg-tabs h-auto w-full justify-start rounded-none bg-transparent p-0" aria-label={t('flux.debugger.tabsLabel')}>
           {(['overview', 'timeline', 'network', 'node'] as NopDebuggerTab[]).map((tab) => (
             <TabsTrigger key={tab} value={tab} className="ndbg-tab rounded-none px-3 py-2 data-[active]:bg-transparent">
               {tabLabels[tab]}
+            </TabsTrigger>
+          ))}
+          {extensionTabs.map((tab) => (
+            <TabsTrigger key={tab.id} value={tab.id} className="ndbg-tab rounded-none px-3 py-2 data-[active]:bg-transparent">
+              {tab.label}
             </TabsTrigger>
           ))}
         </TabsList>
@@ -493,6 +500,17 @@ export function NopDebuggerPanel(props: { controller: NopDebuggerController }) {
             setNetworkExpandedKey={setNetworkExpandedKey}
           />
         </TabsContent>
+
+        {extensionTabs.map((tab) => (
+          <TabsContent key={tab.id} value={tab.id}>
+            {chrome.activeTab === tab.id
+              ? tab.render({
+                  controller: props.controller,
+                  getInspectSelection: () => inspectData,
+                })
+              : null}
+          </TabsContent>
+        ))}
 
         <TabsContent value="node">
           <NodeTab
