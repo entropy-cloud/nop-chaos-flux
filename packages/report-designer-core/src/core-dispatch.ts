@@ -138,9 +138,13 @@ export async function dispatchReportDesignerCommand(
       case 'report-designer:updateMeta': {
         return withDerivedRefresh(async () => {
           const current = store.getState();
-          const currentMeta = getTargetMeta(current.document.semantic, command.target);
+          const target = command.target ?? current.selectionTarget;
+          if (!target) {
+            return { ok: false, changed: false, error: new Error('report-designer:updateMeta requires a selection target') };
+          }
+          const currentMeta = getTargetMeta(current.document.semantic, target);
           const nextMeta = mergeMetadata(currentMeta, command.patch);
-          const result = updateMetadata(current.document, command.target, nextMeta);
+          const result = updateMetadata(current.document, target, nextMeta);
           store.setState((s) => ({ ...s, ...ctx.pushUndoEntry(s), document: result.document }));
 
           return { ok: true, changed: result.changed };

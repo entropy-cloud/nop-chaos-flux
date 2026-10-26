@@ -58,15 +58,17 @@ describe('createNopReportInspectorSchemas', () => {
     expect(nodes.find((item) => item.name === 'xpt.field')?.[NOP_REPORT_EXPRESSION_KIND_MARKER]).toBeUndefined();
   });
 
-  it('submit action is the report-designer:updateMeta namespaced action with target binding', () => {
+  it('submit action is the report-designer:updateMeta namespaced action committing form values', () => {
     const nodes = collectNodes(schemas.cell);
     const action = nodes.find(
       (node) => (node.action ?? node.onClick) != null && JSON.stringify(node).includes('updateMeta'),
     );
     expect(action).toBeTruthy();
     const serialized = JSON.stringify(action);
+    // target 缺省落到当前 selection（core 命令可选化，plan 753）
     expect(serialized).toContain('report-designer:updateMeta');
-    expect(serialized).toContain('${selectionTarget}');
+    expect(serialized).toContain('${basic}');
+    expect(serialized).toContain('${xpt}');
   });
 
   it('resolves through resolveInspectorSchemaForTarget via byProfile (and undefined for unconfigured kinds)', () => {

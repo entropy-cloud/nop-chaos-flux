@@ -35,8 +35,10 @@ function rewriteTree(
 
   if (kinds.expression && record[NOP_REPORT_EXPRESSION_KIND_MARKER] === true) {
     next.type = NOP_REPORT_EXPRESSION_RENDERER_TYPE;
+    delete next[NOP_REPORT_EXPRESSION_KIND_MARKER];
   } else if (kinds.reference && record[NOP_REPORT_REFERENCE_KIND_MARKER] === true) {
     next.type = NOP_REPORT_REFERENCE_RENDERER_TYPE;
+    delete next[NOP_REPORT_REFERENCE_KIND_MARKER];
   }
 
   for (const key of ['body', 'actions', 'tabs'] as const) {

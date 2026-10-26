@@ -36,9 +36,12 @@
     "@nop-chaos/flux-renderers-map": "workspace:*",
     "@nop-chaos/flux-renderers-mobile": "workspace:*",
     "@nop-chaos/flux-runtime": "workspace:*",
+    "@nop-chaos/flux-xlang-debug": "workspace:*",
+    "@nop-chaos/flux-xlang-lang": "workspace:*",
     "@nop-chaos/nop-debugger": "workspace:*",
     "@nop-chaos/page-designer-renderers": "workspace:*",
     "@nop-chaos/report-designer-core": "workspace:*",
+    "@nop-chaos/report-designer-nop-report": "workspace:*",
     "@nop-chaos/report-designer-renderers": "workspace:*",
     "@nop-chaos/spreadsheet-core": "workspace:*",
     "@nop-chaos/spreadsheet-renderers": "workspace:*",
@@ -51,9 +54,7 @@
     "lucide-react": "^1.17.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "three": "0.186.0",
-    "@nop-chaos/flux-xlang-debug": "workspace:*",
-    "@nop-chaos/flux-xlang-lang": "workspace:*"
+    "three": "0.186.0"
   },
   "devDependencies": {
     "@nop-chaos/flux-renderers-dashboard": "workspace:*",

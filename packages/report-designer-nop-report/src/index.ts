@@ -57,3 +57,16 @@ export {
   createNopReportRendererDefinitions,
   NOP_REPORT_REFERENCE_PICK_SLOT,
 } from './renderers.js';
+export {
+  createNopReportPreviewAdapter,
+  NOP_REPORT_PREVIEW_ADAPTER_ID,
+  type NopReportPreviewEndpointArgs,
+} from './preview-adapter.js';
+export {
+  createNopReportAdapters,
+  createNopReportFieldSourceConfigEntry,
+  createNopReportProfile,
+  NOP_REPORT_PROFILE_FIELD_SOURCE_ID,
+  NOP_REPORT_PROFILE_ID,
+  NOP_REPORT_PROFILE_KIND,
+} from './profile.js';

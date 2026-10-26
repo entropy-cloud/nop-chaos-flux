@@ -48,8 +48,8 @@ export type NopReportInspectorSchemas = Partial<
   Record<ReportSelectionTargetKind, SchemaInput>
 >;
 
-const MODEL_PATH_PREFIX = "${activeMeta['nop-report'].model.";
-const BASIC_PATH_PREFIX = '${activeMeta.basic.';
+const MODEL_PATH_PREFIX = "${meta?.['nop-report']?.model?.";
+const BASIC_PATH_PREFIX = '${meta?.basic?.';
 
 const BASIC_CELL_FIELDS: Array<{ name: string; label: string; type?: string }> = [
   { name: 'value', label: 'Value' },
@@ -82,8 +82,10 @@ function updateMetaAction(): SchemaInput {
     namespace: 'report-designer',
     method: 'updateMeta',
     args: {
-      target: '${selectionTarget}',
-      patch: '${patch}',
+      patch: {
+        basic: '${basic}',
+        'nop-report': { model: '${xpt}' },
+      },
     },
   } as unknown as SchemaInput;
 }
@@ -92,6 +94,10 @@ function formWithUpdate(title: string, body: SchemaInput[]): SchemaInput {
   return {
     type: 'form',
     title,
+    data: {
+      basic: '${meta?.basic}',
+      xpt: "${meta?.['nop-report']?.model}",
+    },
     body,
     actions: [
       {
@@ -122,51 +128,32 @@ function xptModelFieldsBody(): SchemaInput[] {
  * 供宿主装配使用：`config.inspector.byProfile[NOP_REPORT_INSPECTOR_SCHEMA_ID] = schemas`。
  */
 export function createNopReportInspectorSchemas(): NopReportInspectorSchemas {
+  // 扁平 body：不引入 'group' 等额外结构节点依赖（registry 未注册时按 unknown-type 降级）。
   const cell: SchemaInput = formWithUpdate('Cell', [
-    {
-      type: 'group',
-      title: 'Basic',
-      body: BASIC_CELL_FIELDS.map((field) => ({
-        type: field.type ?? 'input-text',
-        name: `basic.${field.name}`,
-        label: field.label,
-        value: `${BASIC_PATH_PREFIX}${field.name}}`,
-      })) as SchemaInput[],
-    },
-    {
-      type: 'group',
-      title: 'Report (XPT)',
-      body: xptModelFieldsBody(),
-    },
+    ...BASIC_CELL_FIELDS.map((field) => ({
+      type: field.type ?? 'input-text',
+      name: `basic.${field.name}`,
+      label: `Basic: ${field.label}`,
+      value: `${BASIC_PATH_PREFIX}${field.name}}`,
+    })) as SchemaInput[],
+    ...xptModelFieldsBody(),
   ] as SchemaInput[]);
 
   const sheet: SchemaInput = formWithUpdate('Sheet', [
     {
-      type: 'group',
-      title: 'Report (XPT)',
-      body: [
-        {
-          type: 'input-text',
-          name: 'xpt.pageSetup',
-          label: 'Page Setup',
-          value: `${MODEL_PATH_PREFIX}pageSetup}`,
-        },
-      ],
+      type: 'input-text',
+      name: 'xpt.pageSetup',
+      label: 'Page Setup',
+      value: `${MODEL_PATH_PREFIX}pageSetup}`,
     },
   ] as SchemaInput[]);
 
   const workbook: SchemaInput = formWithUpdate('Workbook', [
     {
-      type: 'group',
-      title: 'Report (XPT)',
-      body: [
-        {
-          type: 'input-text',
-          name: 'xpt.exportFormat',
-          label: 'Export Format',
-          value: `${MODEL_PATH_PREFIX}exportFormat}`,
-        },
-      ],
+      type: 'input-text',
+      name: 'xpt.exportFormat',
+      label: 'Export Format',
+      value: `${MODEL_PATH_PREFIX}exportFormat}`,
     },
   ] as SchemaInput[]);
 

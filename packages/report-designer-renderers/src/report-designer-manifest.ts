@@ -408,8 +408,10 @@ const reportDesignerCapabilities: HostCapabilityContract = {
           target: selectionTargetShape,
           patch: metadataBagShape,
         },
+        optional: ['target'],
       },
-      description: 'Patch metadata for the current selection target.',
+      description:
+        'Patch metadata for the current selection target (target defaults to the live selection).',
     },
     replaceMeta: {
       args: {

@@ -10,6 +10,12 @@
 - 左侧字段拖拽、右侧属性面板、预览、导入导出分别应该由哪些 adapter 承担
 - 哪些能力应在 profile 层完成，哪些仍应保留在通用 spreadsheet/report-designer core 中
 
+> **落地状态（2026-10-26，roadmap NRP-1..NRP-5 全部 done）**：本文描述的全部能力已实现于
+> `packages/report-designer-nop-report`（codec、字段源、字段拖放、inspector schema、preview、
+> expression editor、reference picker、profile 装配）。文中"建议/推荐"措辞保留为设计意图
+> 表述；与实现的出入以各节"实现落点（plan NNN）"注与 live 代码为准。二进制 `.xpt.xlsx`
+> 与 Excel 完整样式模型（§1.2 差距表）仍归后续 plan（roadmap §9）。
+
 ## 1. 适配目标
 
 `nop-report` 的真实目标模型不是一个通用 spreadsheet JSON，而是双层模型:
@@ -200,6 +206,7 @@ export interface ReportDesignerProfile {
   previewId?: string;
   codecId?: string;
   expressionEditorId?: string;
+  referencePickerId?: string;
 }
 ```
 
@@ -592,9 +599,9 @@ codec adapter 必须优先保证:
 - inspector shell 与最终 schema 挂载边界
 - expression editor adapter 注入位
 
-## 14. 推荐落地顺序
+## 14. 落地顺序（已按此收口，plan 749-753）
 
-若后续开始编码，最合理的 `nop-report` 适配落地顺序是:
+实际落地顺序:
 
 1. 实现 `SpreadsheetDocument <-> ExcelWorkbook` 基础 codec
 2. 实现 `ReportSemanticDocument <-> Xpt*Model` 基础 codec

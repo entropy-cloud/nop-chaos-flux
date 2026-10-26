@@ -87,7 +87,7 @@ describe('nop-report interaction adapters (plan 752)', () => {
     });
     expect(expressionDef.type).toBe('nop-report-expression-editor');
 
-    render(expressionDef.component({ props: { value: '${x}' } } as never));
+    render(expressionDef.component({ props: { value: '${x}' } } as never) as never);
     const editor = document.querySelector(`[data-slot="${NOP_REPORT_EXPRESSION_EDITOR_SLOT}"]`);
     expect(editor).toBeTruthy();
     expect((editor as HTMLTextAreaElement).value).toBe('${x}');
@@ -98,7 +98,7 @@ describe('nop-report interaction adapters (plan 752)', () => {
     const [, referenceDef] = createNopReportRendererDefinitions({
       referencePicker: createNopReportReferencePickerAdapter({ selectAddress: () => 'B7' }),
     });
-    render(referenceDef.component({ props: { value: '', onChange } } as never));
+    render(referenceDef.component({ props: { value: '', onChange } } as never) as never);
 
     fireEvent.click(screen.getByText(/Pick|选择引用/));
     await vi.waitFor(() => {

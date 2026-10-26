@@ -233,6 +233,9 @@ importers:
       '@nop-chaos/report-designer-core':
         specifier: workspace:*
         version: link:../../packages/report-designer-core
+      '@nop-chaos/report-designer-nop-report':
+        specifier: workspace:*
+        version: link:../../packages/report-designer-nop-report
       '@nop-chaos/report-designer-renderers':
         specifier: workspace:*
         version: link:../../packages/report-designer-renderers

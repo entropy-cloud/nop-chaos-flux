@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import type { RegisteredRendererDefinition, RendererComponentProps } from '@nop-chaos/flux-core';
 import { t } from '@nop-chaos/flux-i18n';
 import type {
   ExpressionEditorAdapter,
@@ -16,18 +17,25 @@ import {
 
 export const NOP_REPORT_REFERENCE_PICK_SLOT = 'nop-report-reference-pick';
 
-interface RendererComponentPropsLike {
-  props: Record<string, unknown>;
-  meta?: Record<string, unknown>;
-}
-
 function ExpressionEditorComponent(args: {
   adapters: { expressionEditor?: ExpressionEditorAdapter };
-  props: RendererComponentPropsLike;
+  props: RendererComponentProps;
 }) {
   const adapter = args.adapters.expressionEditor;
   if (!adapter) {
-    return null;
+    // adapter 未注册：回退普通输入（消费路径 fallback 语义）
+    return (
+      <input
+        data-slot="nop-report-expression-fallback"
+        value={typeof args.props.props.value === 'string' ? args.props.props.value : ''}
+        onChange={(event) => {
+          const onChange = args.props.props.onChange;
+          if (typeof onChange === 'function') {
+            (onChange as (value: string) => void)(event.target.value);
+          }
+        }}
+      />
+    );
   }
   return (
     <>
@@ -46,12 +54,23 @@ function ExpressionEditorComponent(args: {
 
 function ReferencePickerComponent(args: {
   adapters: { referencePicker?: ReferencePickerAdapter };
-  props: RendererComponentPropsLike;
+  props: RendererComponentProps;
 }) {
   const [picked, setPicked] = useState<string | undefined>();
   const adapter = args.adapters.referencePicker;
   if (!adapter) {
-    return null;
+    return (
+      <input
+        data-slot="nop-report-reference-fallback"
+        value={typeof args.props.props.value === 'string' ? args.props.props.value : ''}
+        onChange={(event) => {
+          const onChange = args.props.props.onChange;
+          if (typeof onChange === 'function') {
+            (onChange as (value: string) => void)(event.target.value);
+          }
+        }}
+      />
+    );
   }
   const current = picked ?? (typeof args.props.props.value === 'string' ? args.props.props.value : '');
   return (
@@ -89,19 +108,39 @@ function ReferencePickerComponent(args: {
 export function createNopReportRendererDefinitions(args: {
   expressionEditor?: ExpressionEditorAdapter;
   referencePicker?: ReferencePickerAdapter;
-}) {
+}): RegisteredRendererDefinition[] {
   return [
     {
       type: NOP_REPORT_EXPRESSION_RENDERER_TYPE,
-      component: (props: RendererComponentPropsLike) => (
+      sourcePackage: '@nop-chaos/report-designer-nop-report',
+      component: (props: RendererComponentProps) => (
         <ExpressionEditorComponent adapters={args} props={props} />
       ),
+      fields: [
+        { key: 'name', kind: 'prop' },
+        { key: 'label', kind: 'prop' },
+        { key: 'value', kind: 'prop' },
+        { key: 'placeholder', kind: 'prop' },
+        { key: 'disabled', kind: 'prop', valueType: 'boolean' },
+        { key: 'onChange', kind: 'event' },
+      ],
+      wrap: true,
     },
     {
       type: NOP_REPORT_REFERENCE_RENDERER_TYPE,
-      component: (props: RendererComponentPropsLike) => (
+      sourcePackage: '@nop-chaos/report-designer-nop-report',
+      component: (props: RendererComponentProps) => (
         <ReferencePickerComponent adapters={args} props={props} />
       ),
+      fields: [
+        { key: 'name', kind: 'prop' },
+        { key: 'label', kind: 'prop' },
+        { key: 'value', kind: 'prop' },
+        { key: 'placeholder', kind: 'prop' },
+        { key: 'onChange', kind: 'event' },
+      ],
+      wrap: true,
+      frameRootTag: 'div',
     },
   ];
 }

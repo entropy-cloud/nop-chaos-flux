@@ -27,7 +27,11 @@ export interface DropFieldToTargetCommand extends ReportDesignerCommandBase {
 
 export interface UpdateReportMetaCommand extends ReportDesignerCommandBase {
   type: 'report-designer:updateMeta';
-  target: ReportSelectionTarget;
+  /**
+   * 缺省时落到当前 selectionTarget（plan 753：inspector schema 的 namespaced
+   * action 无法可靠携带 target，语义上本就提交到当前选中目标）。
+   */
+  target?: ReportSelectionTarget;
   patch: MetadataBag;
 }
 

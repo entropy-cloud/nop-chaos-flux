@@ -9,9 +9,13 @@ const HOST_SOURCE = readFileSync(resolve(process.cwd(), 'src/pages/report-design
 const LOCAL_FIELD_SOURCES_MARKER = 'const fieldSources: FieldSourceSnapshot[] = [';
 
 describe('report-designer fieldSources single source (WA-pages-009②)', () => {
-  it('exposes one Orders field table; both report-designer demos reference it and keep no local copy', () => {
+  it('exposes one Orders field table; the generic demo references it and keeps no local copy', () => {
+    // plan 753: host demo switched from the shared static table to the
+    // nop-report profile assembly (provider-backed datasets) — the pin now
+    // applies to the generic report-designer demo only.
     expect(DEMO_SOURCE).toContain("from './report-designer-demo-shared.js'");
-    expect(HOST_SOURCE).toContain("from './report-designer-demo-shared.js'");
+    expect(HOST_SOURCE).toContain('createNopReportAdapters');
+    expect(HOST_SOURCE).not.toContain("from './report-designer-demo-shared.js'");
     expect(DEMO_SOURCE).not.toContain(LOCAL_FIELD_SOURCES_MARKER);
     expect(HOST_SOURCE).not.toContain(LOCAL_FIELD_SOURCES_MARKER);
   });
