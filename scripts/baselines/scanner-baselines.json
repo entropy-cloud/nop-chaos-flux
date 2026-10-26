@@ -3,6 +3,7 @@
     "description": "Numeric baselines for the high-risk advisory scanners listed in BASELINED_SCANNERS (check-scanner-baselines.mjs). A count above the baseline fails check:scanner-baselines (new suspects must be fixed or the baseline consciously re-registered).",
     "lastUpdated": "2026-10-26",
     "reRegistrationNotes": [
+      "2026-10-26 plan 757 (roadmap PH-4): discover-audit-suspects 787 -> 793 / find-async-without-failure-path 342 -> 348 (+6 each, same files). The six new hits are the async-lifecycle primitives themselves (packages/flux-core/src/utils/lifecycle/write-drain.ts:20,24 then-chain management; exit-resets.ts:14,24 body awaits with intentional swallow-and-rethrow semantics; link-disposal.ts:34 generator .return() swallow-by-design). Failure handling IS the contract of these utilities — the flagged shapes are the framework's own registered semantics (settle-tail bookkeeping, error cause attachment, teardown-stall prevention), mirroring the supports-passive bare-catch registration precedent.",
       "2026-10-26 plan 755 (roadmap PH-2): find-missing-renderer-markers 0 -> 15 — the FALSE ZERO is fixed. rules.mjs scanMissingRendererMarkers no longer treats any `nop-` substring (satisfied by every @nop-chaos/* import) as a whole-file exemption; new criteria = (1) RendererComponentProps present, (2) no marker literal matching /(?<![@\\w/.-])nop-(?=[a-z0-9]|\\$\\{)/, (3) file contains a host-element JSX tag (HOST_ELEMENT_TAGS). Registered at the live recount 15: flux-renderers-data table-renderer sub-components x7, form hidden-renderer/input-suggest, form-advanced input-table-row/tree-control-pipeline/upload-field, layout resizable-renderer/wizard-step-body/wizard-step-nav. Triage of these 15 belongs to each renderer owner surface (ratchet, not zero-new, per roadmap PH-2). Same-source double count: discover-audit-suspects aggregates every rule bucket, so it moves 772 -> 787 (+15, identical file set) — no new suspects beyond the marker family. Hand-edited.",
       "2026-10-26 plan 754 (roadmap PH-1): +7 scanners into the ratchet — the seven advisory scanners that previously had NO gate at all (standalone check:audit-* entries, exit 0 advisory). Registered at live counts: find-canvas-wrapper-a11y-gaps 0 / find-hardcoded-type-dispatch 0 / find-missing-renderer-markers 0 (FALSE ZERO — rules.mjs:144-150 whole-file exemption bug hides real hits; semantic fix + baseline rebuild is roadmap PH-2) / find-fieldframe-bypasses 12 / find-reactive-render-reads 20 / find-performance-suspects 27 / find-non-retained-renderer-references 155. Per roadmap PH-1/PH-2 the goal is a ratchet, not zero-new — triage of existing hits belongs to each scanner's owner surface. Hand-edited (09ed6e5b6 precedent); --update-baselines now preserves this notes array.",
       "2026-10-06 plan 528: 716 -> 717。+1 = report-field-panel.tsx setFieldDragGhost 的降级 catch（宿主 setDragImage 抛 Not implemented 时移除 ghost 回落浏览器默认拖拽截图——catch 体为 UI 降级而非错误吞噬；试图像 toast/throw 等结构化信号注入均为伪语义，故有意识注册）。",
@@ -23,11 +24,11 @@
   },
   "scanners": {
     "find-styling-suspects": 255,
-    "discover-audit-suspects": 787,
+    "discover-audit-suspects": 793,
     "find-test-global-leaks": 115,
     "find-todo-exitless": 1,
     "find-as-any-casts": 41,
-    "find-async-without-failure-path": 342,
+    "find-async-without-failure-path": 348,
     "find-react19-optimization-candidates": 663,
     "find-canvas-wrapper-a11y-gaps": 0,
     "find-hardcoded-type-dispatch": 0,

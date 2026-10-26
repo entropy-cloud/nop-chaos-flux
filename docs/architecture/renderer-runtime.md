@@ -1605,6 +1605,7 @@ command (always exit 0; not part of the `pnpm check` aggregate).
 - `docs/architecture/field-metadata-slot-modeling.md`
 - `docs/architecture/form-validation.md`
 - `docs/references/renderer-interfaces.md`
+- `docs/architecture/async-lifecycle-primitives.md` — cancellation / residue / dispose-ordering primitives (`createLifecycleGuard`, `createWriteDrain`, `runWithExitResets`, `linkDisposal`, `invokeIsolated`) renderer owners use for async continuations (plan 757)
 
 ## Binding Evaluation Core (flux-react bindings)
 

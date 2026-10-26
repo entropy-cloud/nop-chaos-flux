@@ -39,3 +39,19 @@ export {
   normalizeBlobResponse,
 } from './async-data/blob-download.js';
 export { buildFormStatusSummary } from './form-runtime-status.js';
+export {
+  createLifecycleGuard,
+  createWriteDrain,
+  invokeIsolated,
+  linkDisposal,
+  runWithExitResets,
+} from '@nop-chaos/flux-core';
+export type {
+  DisposableGenerator,
+  DisposalLink,
+  DisposalLinkOptions,
+  InvokeIsolatedOptions,
+  LifecycleGuard,
+  LifecycleToken,
+  WriteDrain,
+} from '@nop-chaos/flux-core';

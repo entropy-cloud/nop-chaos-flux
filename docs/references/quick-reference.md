@@ -237,6 +237,20 @@ const loadEChartsSetup = createLazyLibLoader(
 
 ---
 
+## Async lifecycle primitives — `@nop-chaos/flux-core` (re-exported by `@nop-chaos/flux-runtime`)
+
+Source: `packages/flux-core/src/utils/lifecycle/`. Design: `docs/architecture/async-lifecycle-primitives.md`. Invariants: `docs/audits/async-lifecycle/invariant-catalog.md`.
+
+```ts
+createLifecycleGuard(): { token(); isCurrent(token); invalidate(); guard(token, fn) }   // epoch token; stale → fn skipped, returns undefined
+createWriteDrain(): { enqueue(key, write); barrier(); evict(key); pendingKeys() }        // per-key serial writes; barrier waits for all in-flight
+runWithExitResets(body, resets): Promise<T>                                             // resets run once, reverse order, on return/throw/abort
+linkDisposal({ signal?, detach?, generators?, abort }): { dispose(); disposed }          // detach → generator.return() → abort; idempotent
+invokeIsolated(fn, args, { onError, cloneArgs? }): Promise<R | undefined>               // sync throw + async reject → onError; optional deep-cloned args
+```
+
+---
+
 ## RendererRuntime — Central orchestrator
 
 Key methods (full definition in `packages/flux-core/src/types/renderer-core.ts`):

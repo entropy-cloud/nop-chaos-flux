@@ -64,6 +64,22 @@ export {
 export { createLazyLibLoader } from './utils/lazy-lib.js';
 export type { LazyLibLoader } from './utils/lazy-lib.js';
 export { reportRuntimeHostIssue } from './utils/runtime-host-reporting.js';
+export {
+  createLifecycleGuard,
+  createWriteDrain,
+  invokeIsolated,
+  linkDisposal,
+  runWithExitResets,
+} from './utils/lifecycle/index.js';
+export type {
+  DisposableGenerator,
+  DisposalLink,
+  DisposalLinkOptions,
+  InvokeIsolatedOptions,
+  LifecycleGuard,
+  LifecycleToken,
+  WriteDrain,
+} from './utils/lifecycle/index.js';
 
 export { createNamedActionProvider } from './named-action-provider.js';
 export { createTemplateRegion, validateRegionParams } from './nested-regions.js';

@@ -1,0 +1,24 @@
+{
+  "name": "platform-hardening-b",
+  "description": "nop-chaos-flux 平台加固路线图 B 组（PH-4/PH-5/PH-6，驱动 docs/backlog/platform-hardening-roadmap.md §B 组）：运行时健壮性持续闭环。种子 = flux-renderers-ai 连续 40 个 bug note（121–159）在同族兄弟路径上反复击穿（ghost 写入 / 残余清理 / abort 打断 / plugin 隔离）的「修实例不修类别」反模式。PH-4 建统一 cancellation/residue 框架（abort 传播契约、dispose 后 continuation 抑制、in-flight guard 标准化）+ 可执行不变式清单；PH-5 迁移骨架 + ghost 写入 / 残余清理两族；PH-6 abort 残留 / plugin 隔离收口 + check:ai-engine-invariants 扩容。闭环四机制照搬 missions/ai-invariant-loop.json：① 不变式 = 可执行门禁（非文档）；② 门禁集合单调（只增不减，弱化需人工确认）；③ 表完备性门禁（不变式表 == 公共方法集）；④ 类别清扫强制（修任一实例必 grep 全部同类兄弟，只修实例 = closure 拒绝）；⑤ Loop Rule：PH-6 收口若发现新失败类，预授权派生下一轮 PH-4'/PH-5'（附触发证据），零新族零违背 → 稳态暂停，CI 变红 / 结构变更 / 周期复探三条件复触发。代码变更授权：PH-4 触及 flux-runtime 公共 API 为 plan-first（向后兼容加法在 plan 内显式记录）；ai 包默认 implement；新门禁入 pnpm check 须 committed 先红后绿回归测试。每个工作项 = 一个 execution plan（draft review → 执行 → 独立 fresh-session closure audit → 同 commit 回写 roadmap 状态 → 提交）。",
+  "model": "account:bigmodel-individual-coding-plan/claude-fable-5-1",
+  "variant": "max",
+  "roadmapPath": "docs/backlog/platform-hardening-roadmap.md",
+  "plansDir": "docs/plans",
+  "planGuide": "docs/plans/00-plan-authoring-and-execution-guide.md",
+  "auditsDir": "docs/audits",
+  "contextDir": "docs/context",
+  "moduleDir": "packages/flux-renderers-ai",
+  "commands": {
+    "test": "pnpm test",
+    "build": "pnpm build",
+    "lint": "pnpm lint",
+    "typecheck": "pnpm typecheck",
+    "check": "pnpm check"
+  },
+  "prompts": {
+    "multiAudit": "docs/skills/deep-audit-prompts.md",
+    "openAudit": "docs/skills/open-ended-adversarial-review-prompt.md"
+  },
+  "commitFormat": "feat(platform-hardening): <description>"
+}

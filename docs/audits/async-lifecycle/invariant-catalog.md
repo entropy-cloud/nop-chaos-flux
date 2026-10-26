@@ -1,0 +1,35 @@
+# Async Lifecycle Invariant Catalog
+
+> Owner plan: `docs/plans/757-ph4-async-lifecycle-primitives-plan.md`（roadmap PH-4）
+> Primitives: `packages/flux-core/src/utils/lifecycle/`（re-exported by `@nop-chaos/flux-runtime`）
+> Executable form: every row's **Test ID** is the title prefix of an `it(...)` in `packages/flux-core/src/utils/lifecycle/lifecycle-contracts.test.ts` (convention: the Test ID must be the **first token** of the `it` title, single-quoted); `invariant-catalog.test.ts` fails if the two sets differ in either direction (table-completeness gate, same mechanism as `docs/audits/ai-invariants/`).
+> Scanner rule IDs (`AL-nn`) are reserved here and implemented by roadmap PH-6; PH-5 migrates `flux-renderers-ai` onto these primitives.
+
+## Families (deduped from bug notes 121–159)
+
+| Family                                  | Hand-written shape found in the fixes                                                    | Primitive                                       |
+| --------------------------------------- | ---------------------------------------------------------------------------------------- | ----------------------------------------------- |
+| A ghost write after delete/clear/switch | `pendingSavesRef` drain chains, `switchVersionRef` epochs, `deletedDuringLoadRef` tokens | `createWriteDrain`, `createLifecycleGuard`      |
+| B residue left by failed/aborted turn   | stamp-clear on every return/break/throw, residue predicates                              | `runWithExitResets`                             |
+| C abort does not reach in-flight work   | controller identity compare, per-yield `signal.aborted`, generator `.return()`           | `createLifecycleGuard`, `linkDisposal`          |
+| D plugin/ctx isolation                  | per-hook try/catch, whitelist + deep clone                                               | `invokeIsolated`                                |
+| E stale closure capture                 | ref mirrors                                                                              | `createLifecycleGuard` (token per continuation) |
+| F dispose ordering                      | detach-before-abort, idempotent double abort                                             | `linkDisposal`                                  |
+
+## Invariants
+
+| Test ID | Invariant                                                                                                                         | Family | Primitive              | Reserved scanner rule                                                |
+| ------- | --------------------------------------------------------------------------------------------------------------------------------- | ------ | ---------------------- | -------------------------------------------------------------------- |
+| LG-1    | A continuation holding a stale token does not execute: `guard(staleToken, fn)` never calls `fn` and returns `undefined`.          | A/C/E  | `createLifecycleGuard` | AL-01 post-await write dominated by `guard()`/`isCurrent()`          |
+| LG-2    | `invalidate()` makes every previously issued token stale and the next `token()` current.                                          | A/C    | `createLifecycleGuard` | AL-02 destructive methods call `invalidate()` exactly once           |
+| WD-1    | Writes enqueued under the same key run strictly one at a time, in enqueue order.                                                  | A      | `createWriteDrain`     | AL-03 storage writes go through `enqueue()`                          |
+| WD-2    | `barrier()` resolves only after every in-flight write has settled, including rejected ones.                                       | A      | `createWriteDrain`     | AL-04 delete/clear paths await `barrier()` before re-reading storage |
+| WD-3    | After `evict(key)` a new write under that key does not wait for the evicted chain.                                                | A      | `createWriteDrain`     | —                                                                    |
+| ER-1    | When the body returns normally every reset runs exactly once, in reverse registration order.                                      | B      | `runWithExitResets`    | AL-05 turn bodies are wrapped by `runWithExitResets`                 |
+| ER-2    | When the body throws, every reset still runs and the original error is rethrown unchanged.                                        | B      | `runWithExitResets`    | AL-05                                                                |
+| ER-3    | When the body rejects with an `AbortError`, resets run and the `AbortError` is rethrown unchanged.                                | B/C    | `runWithExitResets`    | AL-05                                                                |
+| LD-1    | `dispose()` runs `detach` first, then `return()` on every registered generator, then `abort` — in that order.                     | C/F    | `linkDisposal`         | AL-06 cleanup bodies: detach precedes abort                          |
+| LD-2    | A second `dispose()` is a no-op: no callback runs twice.                                                                          | F      | `linkDisposal`         | —                                                                    |
+| LD-3    | Aborting the linked external `signal` triggers the same ordered sequence exactly once.                                            | C/F    | `linkDisposal`         | —                                                                    |
+| II-1    | `invokeIsolated` routes both synchronous throws and asynchronous rejections to `onError` and never propagates them to the caller. | D      | `invokeIsolated`       | AL-07 plugin hooks invoked only through `invokeIsolated`             |
+| II-2    | With `cloneArgs`, mutations the callee performs on its arguments do not reach the caller's objects.                               | D      | `invokeIsolated`       | AL-08 ctx handed to plugins is cloned                                |
