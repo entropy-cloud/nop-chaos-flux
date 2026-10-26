@@ -27,6 +27,12 @@ Record the latest verified project state so future sessions can tell a **new** f
 - When a previously-green command starts failing (so the new failure is distinguishable from history).
 - When accepted failures change (resolved or newly accepted).
 
+## e2e Failure Ledger
+
+The authoritative per-item attribution of the current e2e red baseline (not a full-green record; kept here as the queryable counterpart for "is this failure new?"):
+
+- **2026-10-26 full run** (`E2E_EXCLUDE_WATCH_ONLY=1`, HEAD ~`309a3a567`): expected 1643 / unexpected 248 / flaky 3 / skipped 46 — ledger: `docs/testing/e2e-baseline-ledger.md` (plan 762; A 类=0, 247/248 isolated-rerun stable red). A failure matching a ledger entry with a category + pointer is **known**; anything else is **new** and must be triaged per the ledger's category rules.
+
 ## Mutation Baselines
 
 These are **point-in-time measurement records** of the mutation-testing device, refreshed whenever the device (stryker/vitest versions, configs) or a scope changes. They are exempt from the full-green Baselines table Rules above — a mutation baseline is valid when the device passes its canary self-check (`pnpm audit:mutants:canary` exit 0), not when a full-green run lands. Never compare scores across device versions (the pre-fix stryker 9.6.1 device produced invalid scores; see P1-MA4.5-001 / P1-MA4.1-009). Tests/mutant = mean testsCompleted per tested mutant computed from `reports/mutation/mutation.json`; stryker clear-text prints a different average for the same run (closure audit m1).
