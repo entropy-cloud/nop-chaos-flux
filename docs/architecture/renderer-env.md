@@ -345,3 +345,9 @@ const decorated = decorateRendererEnv(env, {
 - **蓝牙 / USB / 串口等设备 IO**：暂无需求
 
 如未来 3+ 不相关组件都需要这些能力，按 §4 流程走 C 档评审。
+
+## SSR：显式 non-goal（2026-10-27，plan 778）
+
+- **裁定**：SSR 不是支持目标。全仓零 `renderToString` / `hydrateRoot`；无 SSR 宿主需求记录；3d/map/scada/code-editor 等 DOM 重依赖渲染器族天然不可服务端渲染。
+- **保留的设计约束**：本文件既有的 host 抽象条款不变——host 实现继续不假设 DOM（WebSocket 结构化事件、diagnostic 签名、`location` 静态桩等）。新增渲染器不因本裁定放松对 env 抽象的使用。
+- **翻转条件**：出现需要 SSR 的宿主需求。届时以分包 `window`/`document` 直接访问清单为起点，起草"破坏点清单 + 冒烟范围"的 successor plan。
