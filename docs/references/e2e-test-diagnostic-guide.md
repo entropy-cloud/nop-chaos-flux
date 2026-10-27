@@ -104,6 +104,20 @@ Programmatic visual assertion toolchain (plan 470, visual-quality roadmap V0). P
 - Domain-by-domain visual assertion gap inventory: `docs/analysis/visual-quality/V0-visual-regression-infra.md` §2.
 - Screenshot baselines are never committed: `tests/e2e/__snapshots__/` and `tests/e2e/artifacts/` are gitignored; ad-hoc manual baselines go under `_tmp/baselines/`.
 
+## Flake Attribution And Closure Protocol
+
+Registry: `docs/testing/e2e-flake-ledger.md` (plan 775). Gate: `check:e2e-flake-ledger` in `pnpm check` — every `@watch-only` test must be registered; every `CLOSED-fixed` entry must still name an existing test.
+
+1. **Record** a new flake as `OPEN` with its first-failure signature (from the full-run JSON `results[0]`, so no re-run is needed) and the QA.7 family tag if one applies.
+2. **Attribute** with a single-worker repeat run: `npx playwright test <spec> --repeat-each=5 --workers=1 --retries=0`.
+   - any non-deterministic failure → `ATTRIBUTED(timing-defect)` (record the ratio);
+   - all green on a warm web server → `ATTRIBUTED(not-reproduced(warm-run))` — this neither refutes a cold-start family nor proves contention;
+   - `contention` needs three pieces of evidence (red in the parallel full run, green in single-spec isolation, green across repeats);
+   - `cold-start` is positive only via a fresh-server probe (restart the web server, run the first-entry smoke once).
+     The family tag is secondary history and is never overwritten by one matrix.
+3. **Close** through exactly one exit: `fixed`, `sanctioned-skip` (also register in the skip list of `docs/testing/e2e-baseline-ledger.md`), `watch-only` (title tag; `E2E_EXCLUDE_WATCH_ONLY=1` is the clean-run switch), or `retry-absorbed` (`retries: 1` absorbs it; re-observe whenever the retry budget or the web-server bootstrap changes).
+4. Entry anchors are content-anchored (`spec path > leaf test title`); line numbers only as "（历史观测 :N）". Parametrized titles are registered in their literal expanded form. Rows without an anchor are history-only (the gate lists them but cannot check them); a `CLOSED-fixed` row must carry an anchor or the gate fails. Every attribution ratio must point at a logged run under `_tmp/` — an unlogged observation is not evidence.
+
 ## Project-Specific Verification Levels
 
 In addition to the generic layered strategy:
