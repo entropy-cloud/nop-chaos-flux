@@ -1,0 +1,35 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended", ":timezone(Asia/Shanghai)"],
+  "lockFileMaintenance": {
+    "enabled": true,
+    "schedule": ["before 6am on monday"]
+  },
+  "packageRules": [
+    {
+      "description": "React ecosystem: batch minor/patch, never automerge",
+      "matchPackagePatterns": ["^react", "^@types/react"],
+      "groupName": "react-ecosystem",
+      "automerge": false
+    },
+    {
+      "description": "Build toolchain: separate group, never automerge",
+      "matchPackagePatterns": [
+        "^vite$",
+        "^@vitejs/",
+        "^tailwindcss$",
+        "^typescript$",
+        "^@playwright/test"
+      ],
+      "groupName": "build-toolchain",
+      "automerge": false
+    },
+    {
+      "description": "Everything else: batch minor+patch weekly, no automerge",
+      "matchUpdateTypes": ["minor", "patch"],
+      "groupName": "all-minor-patch",
+      "automerge": false,
+      "schedule": ["before 6am on monday"]
+    }
+  ]
+}

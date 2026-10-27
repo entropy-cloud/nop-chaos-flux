@@ -361,3 +361,12 @@ From the FM close-out directive (commit `caf780ed1`, recorded 2026-10-19): line 
 3. `ref`-style historical pointers.
 
 Anything that constrains or identifies **current state** — baseline/whitelist keys, registry entry identifiers, watch/flake ledger entries — must be **content-anchored** (normalized statement text, file-level path, or full test name). Precedents: `renderer-metamodel-residue-whitelist.json` keys use `ruleId::path::normalizedLineText`; `jsdom-pragma-whitelist.json` is file-level; the QA.7 §C flake ledger identifies entries by spec + test description with line numbers moved into「（历史观测 :N）」parentheticals (plan 763). Enforced mechanically by `check:baseline-line-keys` (key positions in `scripts/baselines/*.json` and the QA.7 §C identifier column; free-text buckets `ref`/`reason`/`reRegistrationNotes`/`notes` are exempt).
+
+## Dependency Update Policy
+
+Tooling decision (plan 783, roadmap PH-19): **Renovate (GitHub App form)** over Dependabot — mature pnpm-workspace/lockfile-maintenance support, grouped update PRs, dashboard. Config: `renovate.json` (repo root; inert until a repo admin installs/enables the Renovate GitHub App).
+
+- **Verification for every Renovate PR**: the full CI chain (typecheck/build/lint/test) plus `pnpm check` and a representative e2e run when renderer-facing packages move. No automerge is configured.
+- **Major framework versions** (react, react-compiler, vite, tailwindcss, typescript): never routine-bumped — each is its own plan with a migration assessment.
+- **Manual quarterly sweep** (while the Renovate app is not enabled): run `pnpm outdated`, triage security-relevant bumps first, and walk the same verification chain as a Renovate PR.
+- Related surfaces already in place: dependency audit (`pnpm audit:deps`), knip baseline (`check:knip-baseline`), bundle size budget (`check:bundle-size`).
