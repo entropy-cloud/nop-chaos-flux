@@ -11,6 +11,9 @@ importers:
 
   .:
     devDependencies:
+      '@axe-core/playwright':
+        specifier: 4.11.0
+        version: 4.11.0(playwright-core@1.63.0)
       '@babel/core':
         specifier: ^7.29.0
         version: 7.29.0
@@ -1790,6 +1793,11 @@ packages:
 
   '@atlaskit/pragmatic-drag-and-drop@1.8.1':
     resolution: {integrity: sha512-uXWNPpL8n4OmTVbduH7nq8pk8htqGo/prR5cYEE8sVCPJGAUMWn6lzvWTfI+4VCeQvHiDRODVz4YzH06OVAxhw==}
+
+  '@axe-core/playwright@4.11.0':
+    resolution: {integrity: sha512-70vBT/Ylqpm65RQz2iCG2o0JJCEG/WCNyefTr2xcOcr1CoSee60gNQYUMZZ7YukoKkFLv26I/jjlsvwwp532oQ==}
+    peerDependencies:
+      playwright-core: '>= 1.0.0'
 
   '@babel/code-frame@7.29.0':
     resolution: {integrity: sha512-9NhCeYjq9+3uxgdtp20LSiJXJvN0FeCtNGpJxuMFZ1Kv3cWUNb6DOhJwUvcVCzKGR66cw4njwM6hrJLqgOwbcw==}
@@ -8162,6 +8170,11 @@ snapshots:
       '@babel/runtime': 7.29.2
       bind-event-listener: 3.0.0
       raf-schd: 4.0.3
+
+  '@axe-core/playwright@4.11.0(playwright-core@1.63.0)':
+    dependencies:
+      axe-core: 4.11.4
+      playwright-core: 1.63.0
 
   '@babel/code-frame@7.29.0':
     dependencies:

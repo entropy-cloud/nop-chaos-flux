@@ -25,11 +25,11 @@
 
 ## Registered gaps
 
-| Gap                                                                                                                                | Successor                        |
-| ---------------------------------------------------------------------------------------------------------------------------------- | -------------------------------- |
-| No axe surface in the test pipeline (`axe-core` exists only as a transitive lock dependency)                                       | roadmap PH-17                    |
-| No repo-wide focus-management ledger (Base UI covers primitives; the renderer composition surface is unverified)                   | roadmap PH-18                    |
-| No cross-package consistency check for aria contracts (aria-usage density varies 12–72 files per package without a semantic audit) | open; re-evaluate after PH-17/18 |
+| Gap                                                                                                                                                                                                                                                                                                                                                                                                                              | Successor                                   |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------- |
+| ~~No axe surface in the test pipeline~~ **landed (plan 781, 2026-10-27)**: `tests/e2e/a11y-axe-baseline.spec.ts` scans 7 representative routes (`@axe-core/playwright`, WCAG 2.1 A/AA tags) against a violation-count ratchet (`tests/e2e/__fixtures__/axe-baseline.json`). Registered stock violations: flux-basic 7, dashboard-demo 6, ai-widgets 1 (fixes belong to component owners); map-demo excluded (>120 s axe timeout) | closed; remaining gap: focus ledger → PH-18 |
+| No repo-wide focus-management ledger (Base UI covers primitives; the renderer composition surface is unverified)                                                                                                                                                                                                                                                                                                                 | roadmap PH-18                               |
+| No cross-package consistency check for aria contracts (aria-usage density varies 12–72 files per package without a semantic audit)                                                                                                                                                                                                                                                                                               | open; re-evaluate after PH-17/18            |
 
 ## Acceptance requirements for new renderers
 
