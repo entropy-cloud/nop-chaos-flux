@@ -402,3 +402,11 @@ Allowed values:
 - `'group'`: use grouped `<fieldset>/<legend>` layout
 
 `frameWrap` does not force wrapping onto renderers that registered with `wrap: false`.
+
+## 11. Schema 版本与演进（2026-10-27 裁定，plan 777）
+
+- **裁定：不引入全局版本字段**（现阶段）。依据：页面 schema 零破坏性变更史（演进历来是向后兼容加法 + `@deprecated` 注记流程）；无消费者的版本字段是幻影契约。
+- **保留字**：顶层 `$schemaVersion`（可选整数）。**当前无消费者、无校验，添加该字段今日无任何效果**——仅作为首个破坏性变更的启用点被保留。
+- **迁移 hook 契约草案**（启用时由 `flux-compiler` 编译入口前置调用）：`migrateSchema(input, fromVersion) => SchemaInput`；hook 实现随首个破坏性变更的 plan 落地。
+- `flux-print-core` 的 `schemaVersion: 1` 是打印文档模型的局部版本，与本约定无关。
+- 翻转条件：首个无法以加法表达的 schema 变更进入 plan。
