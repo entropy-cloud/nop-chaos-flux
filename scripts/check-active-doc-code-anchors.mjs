@@ -8,7 +8,7 @@ const rootDir = process.env.NOP_ACTIVE_DOC_ROOT
   : path.join(__dirname, '..');
 
 const activeDocRoots = ['docs/architecture', 'docs/components', 'docs/references'];
-const explicitActiveDocs = ['docs/index.md'];
+const explicitActiveDocs = ['docs/index.md', 'docs/testing/wcag-2.1-aa-baseline.md', 'docs/testing/coverage-thresholds.md', 'docs/testing/e2e-baseline-ledger.md'];
 const ignoredDirectoryNames = new Set(['node_modules']);
 const ignoredPathPrefixes = [
   'docs/analysis/',
