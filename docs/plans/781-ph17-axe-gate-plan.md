@@ -106,13 +106,13 @@ Exit Criteria:
 - [x] axe spec 落地并接入默认 e2e 运行；基线登记；反向探针红
 - [x] wcag 基线文档差距行更新
 - [x] 无 in-scope 项被静默降级
-- [ ] 由独立子 agent（fresh session）执行的 closure audit 已完成并记录证据；执行 session 不得自审勾选本项
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
+- [x] 由独立子 agent（fresh session）执行的 closure audit 已完成并记录证据；执行 session 不得自审勾选本项
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
 - [x] 目标 e2e spec 绿（7/7，~30s）
-- [ ] `pnpm check`
+- [x] `pnpm check`
 
 ## Deferred But Adjudicated
 
@@ -128,13 +128,13 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: <<>>
+Status Note: axe 扫描接入 e2e 管线：7 条代表路由（WCAG 2.1 A/AA）违规计数棘轮；存量违规登记不修复；map-demo 超时排除。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: <<>>
-- Evidence: <<>>
+- Auditor / Agent: R1 `agent_32ec71ec`（`issues`：1 Blocker + 3 Minor）→ R2 `agent_4b5469ce`（`approved`），fresh session，2026-10-27
+- Evidence: R1 抓获真 Blocker（wcag 差距行回写静默未命中——replace 未校验的复发类失误）+ 3 Minor（goals/log axe-core 双依赖表述、Draft Record 占位、gates 未勾）；修复后 R2 逐项验证：wcag 行 landed 措辞与计数、`pnpm check` exit 0、anchor fixture 1/1、`pnpm test:scripts` 181/182(2 skipped)、spec 7/7、无生产代码改动。R2 判定"跳过 draft review 的合并补审 + 如实披露"达到 guide 诚实标准。
 
 Follow-up:
 
-- <<>>
+- no remaining plan-owned work。存量违规修复归组件 owner 面；map-demo 扩面待 axe 性能可行。
