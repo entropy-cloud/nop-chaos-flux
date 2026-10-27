@@ -54,7 +54,8 @@
     "lucide-react": "^1.17.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "three": "0.186.0"
+    "three": "0.186.0",
+    "@nop-chaos/nop-debugger-ai": "workspace:*"
   },
   "devDependencies": {
     "@nop-chaos/flux-renderers-dashboard": "workspace:*",

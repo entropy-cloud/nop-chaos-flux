@@ -36,6 +36,9 @@ Ownership neighbors:
 - `packages/nop-debugger-ai/src/panel/prompt.ts` — system prompt, bounded node-context card, `data-node-context` user parts
 - `packages/nop-debugger-ai/src/panel/session.tsx` — session surface (message list + sender + error/retry + context card)
 - `scripts/__tests__/ai-debugger-local-qwen.optional.test.ts` — optional local-model probe (contract seed; not the production contract)
+- `apps/playground/src/ai/debugger-ai-demo.ts` — host reference integration (scripted demo connector + minimal snapshot applier)
+- `apps/playground/src/pages/debugger-lab-page.tsx` — opt-in enablement path (default-off, dynamic `@nop-chaos/nop-debugger-ai/panel` import)
+- `tests/e2e/debugger-ai.spec.ts` — programmatic e2e chain (zero-load network assertion, propose→adopt→rollback)
 
 ## Package Boundary And Naming
 
@@ -76,6 +79,10 @@ Ownership neighbors:
 - Apply/revert seam (controller surface, not the window automation API): `registerSchemaPatchApplier({ apply(patch) → { revertToken }, revert(revertToken) })` — one applier at a time, duplicate registration throws; `applySchemaPatch(patch)` validates then hands off; `revertSchemaPatch(patchId)` consumes the active patch; `getSchemaPatchAudit()` is read-only. The host owns page truth and re-render; the package ships no default applier.
 - Candidate preview, adopt, rollback, and conflict detection consume this protocol (plan 772): the session-side candidate queue stages validated proposals; adoption is a human action on the preview card — the model tool face carries NO apply/revert channel (stage-only `propose_schema_patch` + 10 read-only tools behind one dispatcher). Cards re-validate at render time and at adopt time; conflicted candidates (target gone/ambiguous) cannot be adopted. Host sandbox preview is optional: appliers may implement `preview?(patch) → { kind, summary }` (text summary), injected through the extension input; absent it, the protocol-level diff card (original → new per op) is the preview.
 - Current candidate code anchors: `packages/nop-debugger-ai/src/panel/propose-tool.ts`, `packages/nop-debugger-ai/src/panel/patch-candidates.ts`, `packages/nop-debugger-ai/src/panel/patch-queue.tsx`.
+
+## Host Reference Integration (playground demo)
+
+The playground debugger-lab page is the reference host integration: an explicit enable toggle (default off) lazily imports the `/panel` subpath and registers the `x-ai` tab; disabling disposes the extension and unregisters the host applier symmetrically. The demo connector is scripted (zero credentials, zero network) and sources its patch target from a host-side component-tree scan — NOT tool parity with a real model, which learns `cid` through inspect context. The reference applier is demo-scope: snapshot-atomic apply/revert over a single-field demo schema plus a text-summary `preview`; it demonstrates the AD-3 seam contract, not a production applier shape.
 
 ## Verification Baseline
 

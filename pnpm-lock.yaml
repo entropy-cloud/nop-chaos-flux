@@ -227,6 +227,9 @@ importers:
       '@nop-chaos/nop-debugger':
         specifier: workspace:*
         version: link:../../packages/nop-debugger
+      '@nop-chaos/nop-debugger-ai':
+        specifier: workspace:*
+        version: link:../../packages/nop-debugger-ai
       '@nop-chaos/page-designer-renderers':
         specifier: workspace:*
         version: link:../../packages/page-designer-renderers

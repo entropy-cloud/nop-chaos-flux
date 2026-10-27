@@ -1,6 +1,17 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import type { NopDebuggerController, NopDebuggerTab } from '@nop-chaos/nop-debugger';
+import type { AiDebuggerExtension } from '@nop-chaos/nop-debugger-ai/panel';
+import { createFormulaCompiler } from '@nop-chaos/flux-formula';
+import { createSchemaRenderer, createDefaultRegistry } from '@nop-chaos/flux-react';
+import { registerBasicRenderers } from '@nop-chaos/flux-renderers-basic';
+import { registerFormRenderers } from '@nop-chaos/flux-renderers-form';
 import { Button, Input } from '@nop-chaos/ui';
+import {
+  createDemoConnector,
+  createDemoFormSchema,
+  createDemoSchemaPatchApplier,
+  type DemoFormSchema,
+} from '../ai/debugger-ai-demo.js';
 
 interface DebuggerLabPageProps {
   debuggerController: NopDebuggerController;
@@ -8,6 +19,12 @@ interface DebuggerLabPageProps {
 }
 
 const TABS: NopDebuggerTab[] = ['overview', 'timeline', 'network', 'node'];
+
+const demoRegistry = createDefaultRegistry();
+registerBasicRenderers(demoRegistry);
+registerFormRenderers(demoRegistry);
+const DemoSchemaRenderer = createSchemaRenderer();
+const demoFormulaCompiler = createFormulaCompiler();
 
 function SectionCard({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -58,6 +75,13 @@ export function DebuggerLabPage({ debuggerController, onBack }: DebuggerLabPageP
   const [output, setOutput] = useState<string | null>(null);
   const [paused, setPaused] = useState(false);
   const [cidInput, setCidInput] = useState('');
+  const [aiEnabled, setAiEnabled] = useState(false);
+  const [aiBusy, setAiBusy] = useState(false);
+  const [demoSchema, setDemoSchema] = useState<DemoFormSchema>(createDemoFormSchema);
+  const demoSchemaRef = useRef(demoSchema);
+  demoSchemaRef.current = demoSchema;
+  const extensionRef = useRef<AiDebuggerExtension | null>(null);
+  const unregisterApplierRef = useRef<(() => void) | null>(null);
 
   const env = useMemo(
     () =>
@@ -109,6 +133,47 @@ export function DebuggerLabPage({ debuggerController, onBack }: DebuggerLabPageP
     const result = debuggerController.inspectByCid(cid);
     setOutput(`[Inspect CID=${cid}]\n${JSON.stringify(result, null, 2)}`);
   }, [debuggerController, cidInput]);
+
+  const toggleAiCopilot = useCallback(async () => {
+    if (aiBusy) return;
+    setAiBusy(true);
+    try {
+      if (extensionRef.current) {
+        extensionRef.current.dispose();
+        extensionRef.current = null;
+        unregisterApplierRef.current?.();
+        unregisterApplierRef.current = null;
+        setAiEnabled(false);
+        return;
+      }
+      // Lazy: the AI chunk is fetched only on first enable (default-off).
+      const { createAiDebuggerExtension } = await import('@nop-chaos/nop-debugger-ai/panel');
+      const applier = createDemoSchemaPatchApplier({
+        getSchema: () => demoSchemaRef.current,
+        setSchema: (schema) => setDemoSchema(schema),
+      });
+      unregisterApplierRef.current = debuggerController.registerSchemaPatchApplier(applier);
+      extensionRef.current = createAiDebuggerExtension({
+        controller: debuggerController,
+        connector: createDemoConnector(debuggerController),
+        preview: (patch) => applier.preview!(patch),
+      });
+      setAiEnabled(true);
+      debuggerController.show();
+      debuggerController.setActiveTab('x-ai');
+    } finally {
+      setAiBusy(false);
+    }
+  }, [aiBusy, debuggerController]);
+
+  const demoEnv = useMemo(
+    () =>
+      debuggerController.decorateEnv({
+        fetcher: async <T = unknown,>() => ({ status: 0, data: null as unknown as T }),
+        notify: () => {},
+      }),
+    [debuggerController],
+  );
 
   const togglePause = useCallback(() => {
     if (paused) {
@@ -314,6 +379,45 @@ export function DebuggerLabPage({ debuggerController, onBack }: DebuggerLabPageP
                 Calls controller.inspectByCid(cid). Requires components with data-cid attributes
                 rendered via flux-react.
               </p>
+            </SectionCard>
+
+            <SectionCard title="AI Copilot (demo, opt-in)">
+              <div className="flex flex-wrap gap-2 items-center">
+                <ActionButton
+                  label={aiEnabled ? 'Disable AI Copilot' : 'Enable AI Copilot'}
+                  onClick={() => void toggleAiCopilot()}
+                  variant={aiEnabled ? 'danger' : 'primary'}
+                />
+                <span
+                  className="text-[11px] uppercase tracking-[0.12em] font-bold"
+                  data-testid="debugger-ai-state"
+                >
+                  {aiEnabled ? 'enabled' : 'off'}
+                </span>
+              </div>
+              <p className="mt-2 text-[11px] text-white/40">
+                Registers the scripted demo copilot (no network, no keys). When enabled, the panel
+                gains an AI tab; ask it to rename the demo field, then adopt or roll back the staged
+                patch below.
+              </p>
+            </SectionCard>
+
+            <SectionCard title="AI patch demo target">
+              <div className="p-3 rounded-[12px] bg-black/30" data-testid="debugger-ai-demo-form">
+                <DemoSchemaRenderer
+                  schemaUrl="playground://debugger-lab/ai-demo"
+                  schema={demoSchema}
+                  env={demoEnv}
+                  registry={demoRegistry}
+                  formulaCompiler={demoFormulaCompiler}
+                  onRuntimeChange={(runtime) => debuggerController.setRuntime(runtime)}
+                  onComponentRegistryChange={(componentRegistry) =>
+                    debuggerController.setComponentRegistry(componentRegistry)
+                  }
+                  onActionScopeChange={(actionScope) => debuggerController.setActionScope(actionScope)}
+                  onActionError={debuggerController.onActionError}
+                />
+              </div>
             </SectionCard>
 
             <SectionCard title="Output">

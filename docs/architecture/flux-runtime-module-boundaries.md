@@ -422,6 +422,12 @@ Do not turn it into a mixed behavior registry for:
 - `packages/flux-runtime/src/node-resolver.ts`
   - runtime target resolution across nearest-owner semantics, component targets, and compatibility carriers
 
+## Diagnostics And AI Extension Packages
+
+- `@nop-chaos/nop-debugger` attaches at the host boundary (`decorateEnv` / plugin / `setRuntime` / `setComponentRegistry`); it is diagnostics infrastructure, not part of the `flux-core → flux-runtime → flux-react` execution chain, and it never mutates runtime semantics.
+- `@nop-chaos/nop-debugger-ai` depends ON `nop-debugger` + `flux-renderers-ai` (never the reverse). `nop-debugger` carries zero AI imports/dependencies — mechanically asserted by its boundary test. The AI capability is host-opt-in and removable as a whole (default-off, zero-load when unregistered).
+- The AI extension consumes read-only debugger automation plus the controller-level schema-patch seam (validate/audit/apply-revert with a host-registered applier); it does not reinterpret or bypass runtime ownership — schema truth stays host-owned. Contract: `docs/architecture/nop-debugger-ai.md`.
+
 ## Where To Add A New Validation Rule
 
 For a new built-in sync rule:
