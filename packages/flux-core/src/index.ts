@@ -53,6 +53,7 @@ export type {
   MergeResult,
 } from './json-merge/index.js';
 export { genId } from './utils/id.js';
+export { amountInWords } from './utils/amount-in-words.js';
 export { cloneDeep } from './utils/object.js';
 export { isSchema, isSchemaArray, isSchemaInput, isTemplateNode, createNodeId } from './utils/schema.js';
 export { decorateRendererEnv } from './utils/renderer-env.js';

@@ -359,6 +359,7 @@ export const enUS: Resource = {
       moveUp: 'Move up',
       moveDown: 'Move down',
       noItems: 'No items',
+      totalRow: 'Total',
       value: 'Value',
       iconList: 'Icons',
     },

@@ -38,6 +38,7 @@ const TYPES = [
   'html',
   'cards',
   'alert',
+  'amount-in-words',
   'mapping',
   'status',
   'audio',
@@ -49,7 +50,7 @@ const TYPES = [
 ] as const;
 
 describe('contentRendererDefinitions', () => {
-  it('declares 20 renderer definitions for the content family (W1a + W1b + W2a + W3c + W4a + G-A result)', () => {
+  it('declares 21 renderer definitions for the content family (W1a + W1b + W2a + W3c + W4a + G-A result)', () => {
     expect(contentRendererDefinitions.map((d) => d.type).sort()).toEqual([...TYPES].sort());
   });
 

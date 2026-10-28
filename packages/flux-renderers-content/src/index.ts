@@ -21,6 +21,7 @@ export type {
   AlertSchema,
   AlertLevel,
   MappingSchema,
+  AmountInWordsSchema,
   StatusSchema,
   StatusLevel,
   AudioSchema,
@@ -48,6 +49,7 @@ export { HtmlRenderer } from './html.js';
 export { CardsRenderer } from './cards-renderer.js';
 export { AlertRenderer } from './alert-renderer.js';
 export { MappingRenderer } from './mapping.js';
+export { AmountInWordsRenderer } from './amount-in-words.js';
 export { StatusRenderer } from './status.js';
 export { AudioRenderer } from './audio.js';
 export { VideoRenderer } from './video.js';

@@ -356,6 +356,7 @@ export const zhCN: Resource = {
       moveUp: '上移',
       moveDown: '下移',
       noItems: '暂无项',
+      totalRow: '合计',
       value: '值',
       iconList: '图标',
     },

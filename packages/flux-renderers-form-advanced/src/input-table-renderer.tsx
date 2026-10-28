@@ -31,6 +31,13 @@ import {
 } from './composite-field/array-container-controller.js';
 import { formFieldRules, useFieldPresentation } from '@nop-chaos/flux-renderers-form';
 import { InputTableRow } from './input-table-row.js';
+import {
+  aggregateColumn,
+  formatAggregateValue,
+  isExprAggregate,
+  isScalarAggregate,
+  isValidSummaryBinding,
+} from './input-table-summary.js';
 
 export { InputTableRow } from './input-table-row.js';
 
@@ -178,6 +185,102 @@ export function InputTableRenderer(props: RendererComponentProps<InputTableSchem
   const controller = useArrayContainerController(controllerParams);
   const { items, itemEntries, atMaxItems, maxItems, minItems, handleAdd, handleRemove, handleMoveUp, handleMoveDown, isRemoveBlockedAt } = controller;
 
+  // plan 785 — onRowChange: diff the previous item snapshot against the current
+  // one after each controller update; dispatch { record, index, name, value }
+  // for the first edited row. Add/remove change the row count and are covered
+  // by onAdd/onRemove, so they do not dispatch onRowChange.
+  const prevItemsSnapshotRef = React.useRef<readonly unknown[] | null>(null);
+  React.useEffect(() => {
+    const prev = prevItemsSnapshotRef.current;
+    prevItemsSnapshotRef.current = items;
+    if (!prev || prev.length !== items.length || prev === items) return;
+    const changedIndex = items.findIndex((item, index) => item !== prev[index]);
+    if (changedIndex === -1) return;
+    const record = items[changedIndex];
+    const prevRecord = prev[changedIndex];
+    const changedName =
+      record && typeof record === 'object' && prevRecord && typeof prevRecord === 'object'
+        ? Object.keys(record as Record<string, unknown>).find(
+            (key) =>
+              (record as Record<string, unknown>)[key] !==
+              (prevRecord as Record<string, unknown>)[key],
+          )
+        : undefined;
+    const payload = {
+      type: 'input-table:row-change',
+      record,
+      index: changedIndex,
+      name: changedName,
+      value:
+        changedName !== undefined
+          ? (record as Record<string, unknown>)[changedName]
+          : undefined,
+    };
+    // Event passthrough convention (renderer-runtime.md): the payload doubles
+    // as evaluationBindings so action-args templates resolve bare names.
+    void props.events.onRowChange?.(payload, {
+      event: payload,
+      evaluationBindings: payload,
+    });
+  }, [items, props.events]);
+
+  // plan 785 — summaryBinding: write the aggregated column value into the
+  // parent form field whenever the table content changes (ERP 主单合计联动).
+  const summaryBinding = isValidSummaryBinding(props.props.summaryBinding)
+    ? props.props.summaryBinding
+    : undefined;
+  const lastSummaryWrittenRef = React.useRef<{ key: string; value: number } | null>(null);
+  React.useEffect(() => {
+    if (!summaryBinding || !parentForm) return;
+    // Same skip-and-sum semantics as the visible summary row: non-numeric
+    // cells are skipped; the write-back only pauses when the aggregate itself
+    // is undefined (zero numeric cells for sum/avg).
+    const { value } = aggregateColumn(items, summaryBinding.column, summaryBinding.agg);
+    if (value === null) return;
+    const key = `${summaryBinding.field}:${summaryBinding.column}:${summaryBinding.agg}:${items.length}`;
+    const last = lastSummaryWrittenRef.current;
+    if (last && last.key === key && last.value === value) return;
+    lastSummaryWrittenRef.current = { key, value };
+    parentForm.setValue(summaryBinding.field, value);
+  }, [summaryBinding, parentForm, items]);
+
+  const hasAggregateColumn = columns.some((column) => column.aggregate !== undefined);
+  const summaryVisible = props.props.summaryVisible === true || hasAggregateColumn;
+  const firstNonAggregateColumnIndex = columns.findIndex((column) => !column.aggregate);
+  const summaryCells = React.useMemo(() => {
+    if (!summaryVisible || columns.length === 0) return null;
+    return columns.map((column, index) => {
+      if (column.aggregate !== undefined) {
+        if (isExprAggregate(column.aggregate)) {
+          const scope = props.helpers.createScope({ rows: items });
+          try {
+            return props.helpers.evaluate<string | number>(`\${${column.aggregate.expr}}`, scope);
+          } catch (error) {
+            console.warn(
+              `[InputTableRenderer] aggregate expr for column "${column.label ?? index}" failed to evaluate; the cell is left empty.`,
+              error,
+            );
+            return '';
+          } finally {
+            props.helpers.disposeScope(scope.id);
+          }
+        }
+        if (isScalarAggregate(column.aggregate)) {
+          const { value, skipped } = aggregateColumn(items, column.name ?? '', column.aggregate);
+          if (skipped > 0) {
+            console.warn(
+              `[InputTableRenderer] aggregate "${column.aggregate}" on column "${column.label ?? column.name}" skipped ${skipped} non-numeric cell(s).`,
+            );
+          }
+          return formatAggregateValue(value);
+        }
+        return '';
+      }
+      if (index === firstNonAggregateColumnIndex) return t('flux.form.totalRow');
+      return '';
+    });
+  }, [summaryVisible, columns, items, props.helpers, firstNonAggregateColumnIndex]);
+
   if (!props.meta.visible) {
     return null;
   }
@@ -257,6 +360,30 @@ export function InputTableRenderer(props: RendererComponentProps<InputTableSchem
               ))
             )}
           </TableBody>
+          {summaryVisible && summaryCells && (
+            <tfoot data-slot="input-table-summary">
+              <TableRow data-slot="input-table-summary-row">
+                {columns.length > 0 ? (
+                  summaryCells.map((cellContent, index) => (
+                    <TableCell
+                      key={columnKeys[index]}
+                      data-slot="input-table-summary-cell"
+                      style={
+                        typeof columns[index].width === 'number' || typeof columns[index].width === 'string'
+                          ? { width: columns[index].width as string | number }
+                          : undefined
+                      }
+                    >
+                      {cellContent}
+                    </TableCell>
+                  ))
+                ) : (
+                  <TableCell data-slot="input-table-summary-cell">{t('flux.form.totalRow')}</TableCell>
+                )}
+                {showActionColumn && <TableCell aria-hidden="true" />}
+              </TableRow>
+            </tfoot>
+          )}
         </Table>
       </div>
       {addable && !interactionDisabled && (
@@ -311,6 +438,9 @@ export const inputTableRendererDefinition: RegisteredRendererDefinition = {
     { key: 'onAdd', kind: 'event' },
     { key: 'onRemove', kind: 'event' },
     { key: 'onReorder', kind: 'event' },
+    { key: 'summaryVisible', kind: 'prop', valueType: 'boolean' },
+    { key: 'summaryBinding', kind: 'prop' },
+    { key: 'onRowChange', kind: 'event' },
     { key: 'item', kind: 'region', regionKey: 'item', params: ['index', 'value'] },
   ],
   componentCapabilityContracts: COMPOSITE_EDITOR_CAPABILITY_CONTRACTS,

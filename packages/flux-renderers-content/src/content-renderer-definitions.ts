@@ -1,6 +1,7 @@
 import { defineRendererFamily } from '@nop-chaos/flux-core';
 import type { RegisteredRendererDefinition } from '@nop-chaos/flux-core';
 import { AlertRenderer } from './alert-renderer.js';
+import { AmountInWordsRenderer } from './amount-in-words.js';
 import { AudioRenderer } from './audio.js';
 import { CardRenderer } from './card.js';
 import { CardsRenderer } from './cards-renderer.js';
@@ -23,6 +24,7 @@ import { StatusRenderer } from './status.js';
 import { VideoRenderer } from './video.js';
 import type {
   AlertSchema,
+  AmountInWordsSchema,
   AudioSchema,
   CardSchema,
   CardsSchema,
@@ -548,6 +550,34 @@ export const contentRendererDefinitions: RegisteredRendererDefinition[] = [
     ],
   }),
   defineContentRenderer({
+    type: 'amount-in-words',
+    displayName: 'Amount In Words',
+    category: 'content',
+    component: AmountInWordsRenderer,
+    fields: [
+      {
+        key: 'value',
+        kind: 'prop',
+        contract: {
+          shape: { kind: 'unknown' },
+          displayName: 'Value',
+          description: 'Amount to convert to zh-CN financial uppercase words (number or numeric string).',
+          editorType: 'expression',
+        },
+      },
+      {
+        key: 'placeholder',
+        kind: 'prop',
+        contract: {
+          shape: { kind: 'string' },
+          displayName: 'Placeholder',
+          description: 'Shown when the value is empty or not convertible to a finite number.',
+          editorType: 'expression',
+        },
+      },
+    ],
+  }),
+  defineContentRenderer({
     type: 'audio',
     displayName: 'Audio',
     category: 'content',
@@ -650,6 +680,7 @@ export type ContentRendererSchema =
   | HtmlSchema
   | CardsSchema
   | AlertSchema
+  | AmountInWordsSchema
   | MappingSchema
   | StatusSchema
   | AudioSchema

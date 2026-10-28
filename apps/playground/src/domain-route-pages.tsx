@@ -38,6 +38,7 @@ import { W3dAdvancedInputFamilyDemoPage } from './pages/w3d-advanced-input-famil
 import { W4aMultimediaDemoPage } from './pages/w4a-multimedia-demo';
 import { W4bProcessDisplayFamilyDemoPage } from './pages/w4b-process-display-family-demo';
 import { W4cCompositeFormFamilyDemoPage } from './pages/w4c-composite-form-family-demo';
+import { InputTableErpDemoPage } from './pages/input-table-erp-demo';
 
 const LazyAiAttachmentsDemoPage = lazy(() =>
   import('./pages/ai-attachments-demo').then((m) => ({ default: m.AiAttachmentsDemoPage })),
@@ -249,6 +250,7 @@ export const DOMAIN_ROUTE_PAGES: Record<string, (ctx: DomainPageContext) => Reac
   'w4a-multimedia': (ctx) => <W4aMultimediaDemoPage onBack={ctx.goHome} />,
   'w4b-process-display': (ctx) => <W4bProcessDisplayFamilyDemoPage onBack={ctx.goHome} />,
   'w4c-composite-form-family': (ctx) => <W4cCompositeFormFamilyDemoPage onBack={ctx.goHome} />,
+  'input-table-erp': (ctx) => <InputTableErpDemoPage onBack={ctx.goHome} />,
   'm1-responsive': (ctx) => <M1ResponsiveDemoPage onBack={ctx.goHome} />,
   'm2-touch': (ctx) => <M2TouchDemoPage onBack={ctx.goHome} />,
   'm3-layout': (ctx) => <M3LayoutDemoPage onBack={ctx.goHome} />,

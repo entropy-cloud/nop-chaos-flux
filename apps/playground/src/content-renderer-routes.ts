@@ -144,6 +144,14 @@ export const CONTENT_RENDERER_ROUTES: RendererRouteEntry[] = [
       'Business status display (display-only): labelMap/levelMap/iconMap projection onto the Badge primitive with semantic colors and placeholder miss fallback.',
   },
   {
+    id: 'amount-in-words',
+    title: 'Amount In Words',
+    category: 'content',
+    sourcePackage: '@nop-chaos/flux-renderers-content',
+    description:
+      'Read-only zh-CN financial uppercase display (plan 785): number/numeric-string to 人民币大写 via the shared amountInWords utility; placeholder on empty/non-numeric.',
+  },
+  {
     id: 'audio',
     title: 'Audio',
     category: 'content',

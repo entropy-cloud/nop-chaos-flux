@@ -313,6 +313,13 @@ export const DOMAIN_RENDERER_ROUTES: DomainRouteEntry[] = [
       'W4c composite form renderers: combo (repeated composite-item field editor), input-table (tabular object-array field editor), transfer (two-pane shuttle selection), picker (dialog-layer selection) — combo/input-table reuse array-field staged owner + canonical composite handle; transfer/picker add a minimal valueKey/labelKey normalization helper. Main roadmap Wave 1–4 capstone.',
   },
   {
+    id: 'input-table-erp',
+    title: 'Input Table ERP Enhancement',
+    eyebrow: 'Form Renderers (Plan 785)',
+    description:
+      'input-table ERP 行内编辑增强：列合计行 (aggregate/summaryVisible tfoot)、从表联动 (computed 派生列 + onRowChange 行变化事件 + summaryBinding 聚合回写父表单字段)、amount-in-words 金额大写展示渲染器 — ERP 单据从表编辑链路演示。',
+  },
+  {
     id: 'm1-responsive',
     title: 'M1 Responsive Controls',
     eyebrow: 'Mobile Responsive (M1)',

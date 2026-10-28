@@ -106,10 +106,32 @@ export interface ComboSchema extends BoundFieldSchemaBase {
  * field system; each row renders its cells through the `item` region inside a
  * projected item scope. `columns` provides the header row.
  */
+/**
+ * Plan 785 — column aggregate for the input-table summary row:
+ * `'sum' | 'avg' | 'count'` over the column's field values, or `{ expr }`
+ * evaluated once in the row-array scope (`rows` bound to the item array).
+ */
+export type InputTableAggregate = 'sum' | 'avg' | 'count' | { expr: string };
+
 export interface InputTableColumn extends SchemaObject {
+  /** Field name of the row object this column maps to (required for aggregate/computed columns). */
+  name?: string;
   label?: string;
   width?: string | number;
+  /** Summary-row aggregate for this column (plan 785). */
+  aggregate?: InputTableAggregate;
+  /** Row-scope expression deriving a read-only cell value (plan 785 computed column). */
+  computed?: string;
 }
+
+/** Plan 785 — writes a from-table aggregate into a parent form field (ERP 主单合计联动). */
+export type InputTableSummaryBinding = {
+  /** Parent form field path to write the aggregate into. */
+  field: string;
+  /** Column `name` whose values are aggregated. */
+  column: string;
+  agg: 'sum' | 'count' | 'avg';
+};
 
 export interface InputTableSchema extends BoundFieldSchemaBase {
   type: 'input-table';
@@ -127,6 +149,12 @@ export interface InputTableSchema extends BoundFieldSchemaBase {
   onAdd?: ActionSchema | ActionSchema[];
   onRemove?: ActionSchema | ActionSchema[];
   onReorder?: ActionSchema | ActionSchema[];
+  /** Force-render the tfoot summary row even when no column declares `aggregate` (plan 785). */
+  summaryVisible?: boolean;
+  /** Dispatched after any row field edit (params via event: record / index / name / value) (plan 785). */
+  onRowChange?: ActionSchema | ActionSchema[];
+  /** Writes a from-table aggregate into a parent form field on every row change (plan 785). */
+  summaryBinding?: InputTableSummaryBinding;
 }
 
 /**

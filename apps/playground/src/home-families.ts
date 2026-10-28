@@ -144,6 +144,7 @@ export const DOMAIN_HOME_FAMILY: Record<string, HomeFamilyId> = {
   'w2b-date-family': 'forms',
   'w3d-advanced-input-family': 'forms',
   'w4c-composite-form-family': 'forms',
+  'input-table-erp': 'forms',
 
   'w1a-content': 'content',
   'w1b-content': 'content',

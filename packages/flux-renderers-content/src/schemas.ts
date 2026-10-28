@@ -325,6 +325,19 @@ export interface StatusSchema extends BaseSchema {
   placeholder?: string;
 }
 
+/**
+ * Plan 785 — amount-in-words: read-only financial uppercase display
+ * (zh-CN 人民币大写). Value is converted via the shared `amountInWords`
+ * utility in flux-core; non-finite/non-numeric input renders empty.
+ */
+export interface AmountInWordsSchema extends BaseSchema {
+  type: 'amount-in-words';
+  /** 金额（number 或 numeric string；可来自表达式/source） */
+  value?: SchemaValue;
+  /** 值为空或不可数值化时的占位文本 */
+  placeholder?: string;
+}
+
 // ───────────────────────────── W4a 多媒体组 ─────────────────────────────
 
 export interface AudioSchema extends BaseSchema {

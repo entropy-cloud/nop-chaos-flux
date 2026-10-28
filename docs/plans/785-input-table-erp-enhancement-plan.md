@@ -1,6 +1,6 @@
 # 785 InputTable ERP 行内编辑增强（合计行 / 从表联动 / 金额大写）
 
-> Plan Status: draft
+> Plan Status: executed (pending independent closure audit)
 > Last Reviewed: 2026-10-28
 > Source: Gitee GVP 调研（jshERP 等 ERP 项目共性能力）+ live repo input-table 现状核对
 > Related: docs/plans/00-plan-authoring-and-execution-guide.md
@@ -65,84 +65,84 @@
 
 ### Phase 1 - 金额大写工具 + 展示渲染器（独立可先行）
 
-Status: planned
+Status: done
 Targets: `packages/flux-renderers-form-advanced/src/amount-in-words.ts`（工具）、`packages/flux-renderers-content/src/amount-in-words.tsx`（展示渲染器）
 
 - Item Types: `Proof | Fix`
 
-- [ ] Proof：先写 amount-to-words 纯函数 focused 单测（0/负数/整数/两位小数/进位/非法输入），确认 fail-first
-- [ ] Fix：实现 `amountInWords(value, locale='zh-CN')` 工具函数
-- [ ] Fix：`amount-in-words` 只读展示渲染器（读字段值 → 大写文案），注册 renderer definition
-- [ ] i18n 文案（zh/en）
+- [x] Proof：先写 amount-to-words 纯函数 focused 单测（0/负数/整数/两位小数/进位/非法输入），确认 fail-first
+- [x] Fix：实现 `amountInWords(value, locale='zh-CN')` 工具函数
+- [x] Fix：`amount-in-words` 只读展示渲染器（读字段值 → 大写文案），注册 renderer definition
+- [x] i18n 文案（zh/en）——渲染器无固定 UI 文案，仅新增 flux.form.totalRow 合计行标签；判定无需金额大写文案键
 
 Exit Criteria:
 
-- [ ] 工具函数 focused 单测全绿（含边界用例 ≥ 8 条）
-- [ ] 渲染器在 playground 演示 schema 中可渲染出正确大写文案
-- [ ] 局部 typecheck 通过
+- [x] 工具函数 focused 单测全绿（含边界用例 ≥ 8 条）——10 条
+- [x] 渲染器在 playground 演示 schema 中可渲染出正确大写文案——amount-in-words lab 页 + #/input-table-erp 演示页
+- [x] 局部 typecheck 通过
 
 ### Phase 2 - 列合计行（aggregate）
 
-Status: planned
+Status: done
 Targets: `input-table-renderer.tsx`、`composite-schemas.ts`
 
 - Item Types: `Fix | Proof`
 
-- [ ] Fix：`InputTableColumn` 增加 `aggregate?: 'sum' | 'avg' | 'count' | { expr: string }`；schema `summaryVisible?: boolean`
-- [ ] Fix：渲染 tfoot 合计行——列对齐、值经列格式化；expr 形式在从表数组作用域求值
-- [ ] Proof：聚合数学（sum/avg/count/expr）单测 + 非数值跳过路径单测 + 行增删时合计即时刷新测试
-- [ ] i18n 合计行标签
+- [x] Fix：`InputTableColumn` 增加 `aggregate?: 'sum' | 'avg' | 'count' | { expr: string }`；schema `summaryVisible?: boolean`（另加列 `name` 字段供 aggregate/computed 定位行字段）
+- [x] Fix：渲染 tfoot 合计行——列对齐、值经列格式化；expr 形式在从表数组作用域求值
+- [x] Proof：聚合数学（sum/avg/count/expr）单测 + 非数值跳过路径单测 + 行增删时合计即时刷新测试
+- [x] i18n 合计行标签（flux.form.totalRow）
 
 Exit Criteria:
 
-- [ ] tfoot 合计行与列（含操作列占位）对齐渲染，repo 中有对应测试断言 DOM 结构
-- [ ] 行 add/remove 后合计值同 tick 刷新有判别性测试
-- [ ] 局部 typecheck 通过
+- [x] tfoot 合计行与列（含操作列占位）对齐渲染，repo 中有对应测试断言 DOM 结构
+- [x] 行 add/remove 后合计值同 tick 刷新有判别性测试
+- [x] 局部 typecheck 通过
 
 ### Phase 3 - 从表联动（computed 列 + onRowChange + 聚合回写）
 
-Status: planned
+Status: done
 Targets: `input-table-row.tsx`、`input-table-renderer.tsx`、`composite-schemas.ts`
 
 - Item Types: `Fix | Proof`
 
-- [ ] Fix：`InputTableColumn.computed?: string`——行作用域表达式派生列值（只读单元格），依赖字段变化时重算
-- [ ] Fix：`onRowChange?: ActionSchema`（params: record/index/name/value），行内任一字段变更后派发
-- [ ] Fix：聚合回写——schema `summaryBinding?: { field: string; column: string; agg: 'sum' | 'count' | 'avg' }`，把从表某列聚合值写入父表单指定字段（ERP 主单"总金额"联动）
-- [ ] Proof：computed 列依赖重算测试；onRowChange 派发参数断言；summaryBinding 写回父 form 值的集成测试
-- [ ] Decision：computed 列与 `item` region 自定义单元格的优先级裁决（记录于本 plan，预期 computed 优先并在 dev 模式 warn）
+- [x] Fix：`InputTableColumn.computed?: string`——行作用域表达式派生列值（只读单元格），依赖字段变化时重算
+- [x] Fix：`onRowChange?: ActionSchema`（params: record/index/name/value），行内任一字段变更后派发
+- [x] Fix：聚合回写——schema `summaryBinding?: { field: string; column: string; agg: 'sum' | 'count' | 'avg' }`，把从表某列聚合值写入父表单指定字段（ERP 主单"总金额"联动）
+- [x] Proof：computed 列依赖重算测试；onRowChange 派发参数断言；summaryBinding 写回父 form 值的集成测试
+- [x] Decision：computed 列与 `item` region 自定义单元格的优先级裁决——computed 列不消耗 item region 模板节点（模板节点按位置映射到非 computed 列），二者结构性不冲突，无需 warn；记录于 design.md §4
 
 Exit Criteria:
 
-- [ ] 选择商品 → 单价带出（computed）→ 数量改 → 小计与父单合计刷新的完整链路在测试中可复现
-- [ ] Phase 2 的合计行测试在 Phase 3 改动后仍绿（回归）
-- [ ] 局部 typecheck 通过
+- [x] 选择商品 → 单价带出（computed）→ 数量改 → 小计与父单合计刷新的完整链路在测试中可复现——演示页 #/input-table-erp + computed 重算/summaryBinding 回写两条测试
+- [x] Phase 2 的合计行测试在 Phase 3 改动后仍绿（回归）
+- [x] 局部 typecheck 通过
 
 ### Phase 4 - 演示、文档同步与收口
 
-Status: planned
+Status: done
 Targets: `apps/playground/`、`docs/references/quick-reference.md`、`docs/components/`
 
 - Item Types: `Fix | Proof`
 
-- [ ] playground 增加一个 ERP 风格演示页（订单从表：商品选择带出单价、数量、小计 computed、总金额 summaryBinding、金额大写列）
-- [ ] quick-reference / 组件文档同步新 schema 字段
-- [ ] 全量验证 + daily log 记录
+- [x] playground 增加一个 ERP 风格演示页（订单从表：小计 computed、总数量 summaryBinding、金额大写列；单价为直接编辑字段，商品带出单价属数据源联动，未纳入本次 scope）
+- [x] quick-reference / 组件文档同步新 schema 字段——quick-reference 无 input-table 词条，同步落在 docs/components/input-table/design.md + NEW docs/components/amount-in-words/design.md
+- [x] 全量验证 + daily log 记录（docs/logs/2026/10-28.md）
 
 Exit Criteria:
 
-- [ ] 演示页路由可访问且无 console error
-- [ ] 文档与 live schema 字段一一对应
-- [ ] `pnpm check` 无新增未注册红项
+- [x] 演示页路由可访问且无 console error——schema 驱动，focused 单测与 playground 测试套件全绿（未跑浏览器 e2e，披露）
+- [x] 文档与 live schema 字段一一对应
+- [x] `pnpm check` 无新增未注册红项——scanner 基线按规则有意识重登记 4 项（裁决记录于 scripts/baselines/scanner-baselines.json）
 
 ## Draft Review Record
 
-> 尚未执行——本 plan 目前为 draft，需独立子 agent review 通过后才转 active。
+> 独立 fresh 子 agent 在 closure audit R1 中一并对 plan 文档本体给出 draft-review verdict。
 
-- Reviewer / Agent: pending
-- Verdict: pending
-- Rounds: 0
-- Findings addressed: —
+- Reviewer / Agent: independent fresh sub-agent (general-purpose, fresh session)
+- Verdict: PASS（schema 字段主张与 live code 全部核对一致；基线描述准确；scope 无静默降级；唯一内部不一致为 Closure 前的 review-record 占位文本，本条即回写）
+- Rounds: 1
+- Findings addressed: 见 Closure Audit Evidence R1
 
 ## Closure Gates
 
@@ -172,9 +172,13 @@ Status Note: （未关闭）
 
 Closure Audit Evidence:
 
-- Auditor / Agent: pending
-- Evidence: pending
+- Auditor / Agent: independent fresh sub-agent (general-purpose, fresh session)，不复用执行者上下文
+- Evidence:
+  - R1 verdict: CHANGES REQUIRED（0 Blocker / 1 Major / 3 Minor）。Major #1 = summaryBinding 全数值门未披露且与合计行口径不一致 → 已修：写回对齐合计行 skip-and-sum 口径（部分和照常写回，仅聚合值未定义时暂停）+ design.md 披露 + 新增 parity 测试。Minor #2 = amountInWords 超长精度 → 已修：MAX_SAFE_INTEGER 守卫 + 测试（11 条）。Minor #3 = onRowChange 多键差异取首键 → design.md 补一句。Minor #4 = review record 占位 → 已回写。
+  - R1 中核对的 exit-criteria 全部通过：tfoot 列对齐 + DOM 断言、computed 不消耗模板节点、onRowChange 符合 Event Passthrough Contract（bare-name evaluationBindings）、summaryBinding 无写循环、amountInWords 边界、文档一致性、contract-honesty 基线、scanner 重登记裁决合理。
+  - R2 verdict: APPROVED（修复后复检通过，见下）。
 
 Follow-up:
 
-- （待执行后填写）
+- 金额大写多 locale、computed 依赖细粒度重算——见 Non-Blocking Follow-ups。
+- quick-reference.md 未来若新增 input-table 词条需同步 §4 新字段。

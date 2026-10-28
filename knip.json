@@ -16,6 +16,11 @@
       "project": ["src/**/*.{ts,tsx}"],
       "ignoreDependencies": ["@nop-chaos/theme-tokens"]
     },
+    "apps/mall-mobile": {
+      "entry": ["package.json", "src/**/*.{ts,tsx}"],
+      "project": ["src/**/*.{ts,tsx}"],
+      "ignoreDependencies": ["@nop-chaos/theme-tokens"]
+    },
     "packages/*": {
       "entry": ["package.json", "src/index.{ts,tsx}", "src/**/*.{test,spec}.{ts,tsx}"],
       "project": ["src/**/*.{ts,tsx}"]

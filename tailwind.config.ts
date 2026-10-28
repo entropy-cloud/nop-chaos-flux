@@ -6,6 +6,8 @@ const config: Config = {
   content: [
     './apps/playground/index.html',
     './apps/playground/src/**/*.{ts,tsx,json}',
+    './apps/mall-mobile/index.html',
+    './apps/mall-mobile/src/**/*.{ts,tsx,json}',
     './packages/ui/src/**/*.{ts,tsx}',
     './packages/flux-react/src/**/*.{ts,tsx}',
     './packages/flux-renderers-basic/src/**/*.{ts,tsx}',

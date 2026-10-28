@@ -15,6 +15,8 @@ import {
   FormLayoutContext,
   ScopeContext,
   ValidationContext,
+  useRenderScope,
+  useScopeSelector,
 } from '@nop-chaos/flux-react';
 import { TableCell, TableRow } from '@nop-chaos/ui';
 import type { InputTableColumn, InputTableSchema } from './composite-field/composite-schemas.js';
@@ -45,6 +47,48 @@ export type InputTableRowProps = {
   itemInstancePath: readonly InstanceFrame[];
   itemRegion: RendererComponentProps<InputTableSchema>['regions']['item'];
 };
+
+const warnedComputedExpressions = new Set<string>();
+
+/**
+ * Plan 785 — read-only computed cell. The expression is evaluated against the
+ * row scope; the cell subscribes to row-scope changes so dependent field edits
+ * recompute the value in the same tick.
+ *
+ * Priority (plan 785 decision): a column with `computed` never consumes an
+ * `item` region template node — the region nodes map to the non-computed
+ * columns positionally; computed columns render their own cell.
+ */
+function InputTableComputedCell(props: {
+  expression: string;
+  width: string | number | undefined;
+  helpers: RendererHelpers;
+}) {
+  const { expression, width, helpers } = props;
+  useScopeSelector((scopeData: Record<string, unknown>) => scopeData);
+  const scope = useRenderScope();
+  let text = '';
+  try {
+    const evaluated = helpers.evaluate<unknown>(`\${${expression}}`, scope);
+    text = evaluated === null || evaluated === undefined ? '' : String(evaluated);
+  } catch (error) {
+    if (!warnedComputedExpressions.has(expression)) {
+      warnedComputedExpressions.add(expression);
+      console.warn(
+        `[InputTableRenderer] computed expression "${expression}" failed to evaluate; the cell is left empty.`,
+        error,
+      );
+    }
+  }
+  return (
+    <TableCell
+      data-slot="input-table-computed-cell"
+      style={width != null ? { width } : undefined}
+    >
+      {text}
+    </TableCell>
+  );
+}
 
 function InputTableRowView(props: InputTableRowProps) {
   const {
@@ -111,23 +155,50 @@ function InputTableRowView(props: InputTableRowProps) {
       );
     }
 
-    return templateNodes.map((node, i) => {
+    const cells: React.ReactNode[] = [];
+    let templateIndex = 0;
+    columns.forEach((column, i) => {
+      const colKey = column.label ?? column.name ?? `col-${i}`;
+      if (typeof column.computed === 'string' && column.computed.length > 0) {
+        cells.push(
+          <InputTableComputedCell
+            key={colKey}
+            expression={column.computed}
+            width={column.width}
+            helpers={helpers}
+          />,
+        );
+        return;
+      }
+      if (templateIndex >= templateNodes.length) return;
+      const node = templateNodes[templateIndex++];
       const rendered = helpers.render(node, {
         scope: itemScope,
         instancePath: itemInstancePath,
       });
-      const colWidth = columns[i]?.width;
-      const colKey = columns[i]?.label ?? `col-${i}`;
-      return (
+      cells.push(
         <TableCell
           key={colKey}
           data-slot="input-table-row-body"
-          style={colWidth != null ? { width: colWidth } : undefined}
+          style={column.width != null ? { width: column.width } : undefined}
         >
           {asReactNode(rendered)}
-        </TableCell>
+        </TableCell>,
       );
     });
+    while (templateIndex < templateNodes.length) {
+      const node = templateNodes[templateIndex++];
+      const rendered = helpers.render(node, {
+        scope: itemScope,
+        instancePath: itemInstancePath,
+      });
+      cells.push(
+        <TableCell key={`col-extra-${cells.length}`} data-slot="input-table-row-body">
+          {asReactNode(rendered)}
+        </TableCell>,
+      );
+    }
+    return cells;
   }, [itemRegion, helpers, itemScope, itemInstancePath, columns, itemContent]);
 
   return (
