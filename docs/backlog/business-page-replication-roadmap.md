@@ -32,14 +32,14 @@
 
 ### Milestone 1: 调研（上游典型页面盘点与能力矩阵）
 
-| Work item                                                                                                     | 状态   | 依赖  | 说明                                                            |
-| ------------------------------------------------------------------------------------------------------------- | ------ | ----- | --------------------------------------------------------------- |
-| R1 WMS/CRM/ITAM 页面盘点（上游 roadmap + 模块 UI 中的典型复杂页面清单，逐页列出交互要素与所需 renderer 能力） | `todo` | —     | 输入 erp wms/crm/itam 三份 roadmap                              |
-| R2 AI 客服/MES/商城页面盘点                                                                                   | `todo` | —     | 输入 ai-knowledge-ticket/mes-shopfloor/multitenant-saas roadmap |
-| R3 智能单据/IoT 页面盘点                                                                                      | `todo` | —     | 输入 smart-document-platform/iot-value-added roadmap            |
-| R4 flux 能力差距矩阵（页面交互要素 × 现有 renderer 覆盖；产出"直接组合 / 能力扩展 / 新 type"三色分级）        | `todo` | R1-R3 | 交付复刻可行性结论与缺口清单                                    |
-| R5 调研阶段深度审计（对照 live repo 核对 R1-R4 引用的 renderer 能力与上游 roadmap 基线；contract drift 登记） | `todo` | R4    | deep audit                                                      |
-| R6 调研阶段开放审计（独立 fresh sub-agent 开放评审，不复用执行者上下文）                                      | `todo` | R5    | open audit                                                      |
+| Work item                                                                                                     | 状态   | 依赖  | 说明                                                                                                                          |
+| ------------------------------------------------------------------------------------------------------------- | ------ | ----- | ----------------------------------------------------------------------------------------------------------------------------- |
+| R1 WMS/CRM/ITAM 页面盘点（上游 roadmap + 模块 UI 中的典型复杂页面清单，逐页列出交互要素与所需 renderer 能力） | `done` | —     | 输入 erp wms/crm/itam 三份 roadmap；plan 786（completed）；交付 `docs/analysis/business-replication/r1-erp-page-inventory.md` |
+| R2 AI 客服/MES/商城页面盘点                                                                                   | `todo` | —     | 输入 ai-knowledge-ticket/mes-shopfloor/multitenant-saas roadmap                                                               |
+| R3 智能单据/IoT 页面盘点                                                                                      | `todo` | —     | 输入 smart-document-platform/iot-value-added roadmap                                                                          |
+| R4 flux 能力差距矩阵（页面交互要素 × 现有 renderer 覆盖；产出"直接组合 / 能力扩展 / 新 type"三色分级）        | `todo` | R1-R3 | 交付复刻可行性结论与缺口清单                                                                                                  |
+| R5 调研阶段深度审计（对照 live repo 核对 R1-R4 引用的 renderer 能力与上游 roadmap 基线；contract drift 登记） | `todo` | R4    | deep audit                                                                                                                    |
+| R6 调研阶段开放审计（独立 fresh sub-agent 开放评审，不复用执行者上下文）                                      | `todo` | R5    | open audit                                                                                                                    |
 
 ### Milestone 2: 设计（复刻方案与验收标准）
 
