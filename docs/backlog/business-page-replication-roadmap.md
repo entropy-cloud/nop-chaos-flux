@@ -1,7 +1,7 @@
 # Business Page Replication Roadmap（上游业务项目典型复杂页面复刻）
 
 > Created: 2026-10-28（用户下达：对 nop-app-erp 五条业务线、nop-app-mall、nop-entropy 智能单据、nop-app-iot 的典型复杂页面，在 flux playground 中复刻，要求实现对应 UI/UX 能力）
-> Status: **active**（R1-R4 done、R5/R6 与 M2-M4 待启动；执行队列按 §2 表序，不重排。头部状态于 2026-10-30 随 plan 788/789 收口就地勘误——此前头部滞留 todo 与 §2 实况漂移）
+> Status: **active**（M1 调研里程碑达成：R1-R6 全 done；M2-M4 待启动。头部状态于 2026-10-30 随 plan 791 收口就地勘误）
 > 拟制与共识流程：`docs/skills/roadmap-and-mission-authoring-with-consensus-review.md`
 > Sources:
 >
@@ -39,7 +39,7 @@
 | R3 智能单据/IoT 页面盘点                                                                                      | `done` | —     | 输入 smart-document-platform/iot-value-added roadmap；plan 788（completed）；交付 `docs/analysis/business-replication/r3-entropy-iot-page-inventory.md`            |
 | R4 flux 能力差距矩阵（页面交互要素 × 现有 renderer 覆盖；产出"直接组合 / 能力扩展 / 新 type"三色分级）        | `done` | R1-R3 | 交付复刻可行性结论与缺口清单；plan 789（completed）；交付 `docs/analysis/business-replication/r4-capability-gap-matrix.md`                                         |
 | R5 调研阶段深度审计（对照 live repo 核对 R1-R4 引用的 renderer 能力与上游 roadmap 基线；contract drift 登记） | `done` | R4    | deep audit；plan 790（completed）；交付 `docs/audits/business-replication/r5-research-deep-audit.md`（Pass）                                                       |
-| R6 调研阶段开放审计（独立 fresh sub-agent 开放评审，不复用执行者上下文）                                      | `todo` | R5    | open audit                                                                                                                                                         |
+| R6 调研阶段开放审计（独立 fresh sub-agent 开放评审，不复用执行者上下文）                                      | `done` | R5    | open audit；plan 791（completed）；交付 `docs/audits/business-replication/r6-research-open-audit.md`（首轮 Fail→修复→复审 Pass）                                   |
 
 ### Milestone 2: 设计（复刻方案与验收标准）
 
