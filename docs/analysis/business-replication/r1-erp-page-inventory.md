@@ -46,9 +46,9 @@
 
 - **上游出处**（`crm-standalone-app-roadmap.md`）：L57 C2.4 + L68 C3.4（漏斗看板界面化为显式工作项）；L33（Lead 三轴状态：docStatus/stageId/leadType，商机=leadType=OPPORTUNITY 判别非两表）。**实页佐证**：`module-crm/erp-crm-web/.../pages/ErpCrmLead/opportunity-kanban.page.yaml`（商机看板，阶段动态列 `ErpCrmStage__findPage` orderBy sequence；行级 dialog→`@mutation:ErpCrmLead__moveStage` 流转；**L6 明确裁决"不使用拖拽"**，赢单列只读）；漏斗统计实态为 `report/lead-conversion-funnel.page.yaml`（renderHtml+下载）。
 - **页面形态**：商机按漏斗阶段（ErpCrmStage 动态列）分组看板+漏斗转化统计；上游当前实态是"每列 crud+dialog 换阶段"，拖拽为其明确降级项。
-- **交互要素**：① 阶段动态列（sequence 排序）；② 阶段流转 moveStage（后端单向递增守卫、赢单守卫）；③ **拖拽阶段流转〔flux 侧预期；上游 L6 曾明确降级"不使用拖拽"，flux kanban 拖拽属增强复刻〕**；④ 行内编辑金额 expectedRevenue〔flux 侧预期，上游列仅 number 展示〕；⑤ 刷新级联两个 data-source（上游实存）；⑥ 概率徽章条件三色（上游实存）；⑦ 空阶段告警；⑧ 漏斗统计图。
+- **交互要素**：① 阶段动态列（sequence 排序）；② 阶段流转 moveStage（后端单向递增守卫、赢单守卫）；③ **拖拽阶段流转〔flux 侧预期；上游 opportunity-kanban.page.yaml L6 曾明确降级"不使用拖拽"，flux kanban 拖拽属增强复刻〕**；④ 行内编辑金额 expectedRevenue〔flux 侧预期，上游列仅 number 展示〕；⑤ 刷新级联两个 data-source（上游实存）；⑥ 概率徽章条件三色（上游实存）；⑦ 空阶段告警；⑧ 漏斗统计图。
 - **renderer 映射**：看板+拖拽=`kanban`（scheduling dnd；**拖拽落点→moveStage mutation 的 action 绑定需在 D2 设计时验证**）；行内编辑=table quick-edit（data，table-quick-edit-cell）；刷新联动=`data-source`+`refreshSource`；徽章=`status`/`mapping`（content）；漏斗图=`chart`（data echarts）。
-- **缺口**：funnel 图类型（chart-schemas 仅 area/bar/heatmap/line/pie/scatter，可用水平 bar 近似）；表格 footer 统计带绑定方式待核（有 table-summary-row）。
+- **缺口**：funnel 图类型（chart-schemas 仅 area/bar/heatmap/line/pie/scatter，可用水平 bar 近似）；表格 footer 统计带绑定方式待核（有 table-summary-row；R4 处置：D2 设计验证项，未单列 G 编号）。
 
 ### C2 CRM 客户 360 详情页（上游无直接章节）
 

@@ -37,8 +37,8 @@
 | R1 WMS/CRM/ITAM 页面盘点（上游 roadmap + 模块 UI 中的典型复杂页面清单，逐页列出交互要素与所需 renderer 能力） | `done` | —     | 输入 erp wms/crm/itam 三份 roadmap；plan 786（completed）；交付 `docs/analysis/business-replication/r1-erp-page-inventory.md`                                      |
 | R2 AI 客服/MES/商城页面盘点                                                                                   | `done` | —     | 输入 ai-knowledge-ticket/mes-shopfloor/multitenant-saas roadmap；plan 787（completed）；交付 `docs/analysis/business-replication/r2-ai-mes-mall-page-inventory.md` |
 | R3 智能单据/IoT 页面盘点                                                                                      | `done` | —     | 输入 smart-document-platform/iot-value-added roadmap；plan 788（completed）；交付 `docs/analysis/business-replication/r3-entropy-iot-page-inventory.md`            |
-| R4 flux 能力差距矩阵（页面交互要素 × 现有 renderer 覆盖；产出"直接组合 / 能力扩展 / 新 type"三色分级）        | `done` | R1-R3 | 交付复刻可行性结论与缺口清单；plan 789（active）；交付 `docs/analysis/business-replication/r4-capability-gap-matrix.md`                                            |
-| R5 调研阶段深度审计（对照 live repo 核对 R1-R4 引用的 renderer 能力与上游 roadmap 基线；contract drift 登记） | `todo` | R4    | deep audit                                                                                                                                                         |
+| R4 flux 能力差距矩阵（页面交互要素 × 现有 renderer 覆盖；产出"直接组合 / 能力扩展 / 新 type"三色分级）        | `done` | R1-R3 | 交付复刻可行性结论与缺口清单；plan 789（completed）；交付 `docs/analysis/business-replication/r4-capability-gap-matrix.md`                                         |
+| R5 调研阶段深度审计（对照 live repo 核对 R1-R4 引用的 renderer 能力与上游 roadmap 基线；contract drift 登记） | `done` | R4    | deep audit；plan 790（completed）；交付 `docs/audits/business-replication/r5-research-deep-audit.md`（Pass）                                                       |
 | R6 调研阶段开放审计（独立 fresh sub-agent 开放评审，不复用执行者上下文）                                      | `todo` | R5    | open audit                                                                                                                                                         |
 
 ### Milestone 2: 设计（复刻方案与验收标准）

@@ -39,7 +39,7 @@
 - **佐证来源**：iot roadmap L19-22 Non-Goals（遥测核心链路/前端 UI 面排除，归既有 roadmap 与 dashboard-ui-roadmap 通道）；`docs/backlog/dashboard-ui-roadmap.md` L36 WI4（时序折线/最新值卡片/聚合柱状渲染页，已勾选）+L37 WI5（预置看板）；`docs/design/telemetry-data-design.md` L25-38（ITelemetryStore 六方法）+L275-301（遥测订阅 VF-WI1：进程内即发即弃、无前端推送 API）；实体 `_IotTelemetryRecord`（deviceId/metricName/ts/valueDouble/quality/tags）、`_IotAlarm`（severity/status/triggerValue/thresholdValue/ackAt/escalationTier）；动作 `AlarmLifecycleService`（acknowledge L76/startProcessing L80/close L84/batchTransition L303）；既有页实证：`module-dashboard/iot-dash-web/.../pages/{IotDashTrendChart, IotDashLatestValue, DeviceOverview, AlarmOverview}/main.page.yaml`（`@query:IotTelemetryData__raw` + form + chart，多处 `interval: 30000` 轮询实证）。
 - **页面形态**：单设备焦点页：deviceKey+metric+时间窗 → 实时曲线+最新值概览卡，周期轮询；下方联动活动告警列表（ack/处理/关闭）。
 - **交互要素**：① 查询表单（deviceKey/metric/start/end）；② 实时曲线（queryRaw/aggregate 周期刷新）；③ 最新值概览卡（多 metric+迷你趋势）；④ 告警列表联动（行点击→ack/开始处理/关闭+统计条）；⑤ 质量位/数据类型映射展示〔实体有字段，呈现形态 flux 侧预期〕；⑥ 实时推送〔上游订阅为进程内即发即弃，无前端 API；flux 侧以轮询替代，预期〕。
-- **renderer 映射**：表单=`form`+input 系+`query-filter`；曲线=`echarts`（data，8 类事件）或 `chart`；轮询=`data-source` interval/stopWhen（flux-core schema L305-306）+`use-crud-polling`；概览卡=`stat-tile`（value/delta/sparkline）+`sparkline`；告警联动=`table`/`crud`（onRowClick）+`dialog`+`status`/`mapping` 严重度。
+- **renderer 映射**：表单=`form`+input 系+`query-filter`；曲线=`echarts`（data，9 类事件，live 实证；R5 审计勘误）或 `chart`；轮询=`data-source` interval/stopWhen（flux-core schema L305-306）+`use-crud-polling`；概览卡=`stat-tile`（value/delta/sparkline）+`sparkline`；告警联动=`table`/`crud`（onRowClick）+`dialog`+`status`/`mapping` 严重度。
 - **缺口**：无 WebSocket/SSE renderer，实时推送只能轮询模拟（G23）。
 
 ### V2 IoT OTA 灰度管理页
