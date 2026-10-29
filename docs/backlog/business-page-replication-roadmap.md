@@ -43,14 +43,14 @@
 
 ### Milestone 2: 设计（复刻方案与验收标准）
 
-| Work item                                                                                                                                             | 状态   | 依赖    | 说明       |
-| ----------------------------------------------------------------------------------------------------------------------------------------------------- | ------ | ------- | ---------- |
-| D1 复刻总体设计（playground 路由规划、mock fixture 规范、每页验收断言模板：交互断言 + axe 基线 + focus 断言）                                         | `todo` | M1 done |            |
-| D2 ERP 线复刻设计（WMS PDA 作业/拣货看板/库存台账；CRM 漏斗看板/客户 360/销售驾驶舱；ITAM 盘点扫码/折旧仪表盘——逐页 schema 结构与 renderer 组合方案） | `todo` | D1      |            |
-| D3 AI/MES 复刻设计（知识库对话页/工单处理台/审批轨迹；车间大屏/工序报工表/异常叫料移动页）                                                            | `todo` | D1      |            |
-| D4 商城/智能单据/IoT 复刻设计（商品 SKU 页/营销活动页/分销后台；OCR 校正工作台/HITL 审批收件箱；设备遥测页/OTA 灰度管理/围栏地图/视频墙）             | `todo` | D1      |            |
-| D5 设计阶段深度审计（设计 vs live repo renderer 契约核对；缺口登记项与 missing-components/improvement-analysis 无重复立项冲突）                       | `todo` | D2-D4   | deep audit |
-| D6 设计阶段开放审计（独立 fresh sub-agent 开放评审，不复用执行者上下文）                                                                              | `todo` | D5      | open audit |
+| Work item                                                                                                                                             | 状态   | 依赖    | 说明                                                                                               |
+| ----------------------------------------------------------------------------------------------------------------------------------------------------- | ------ | ------- | -------------------------------------------------------------------------------------------------- |
+| D1 复刻总体设计（playground 路由规划、mock fixture 规范、每页验收断言模板：交互断言 + axe 基线 + focus 断言）                                         | `done` | M1 done | ；plan 792（completed）；交付 `docs/analysis/business-replication/d1-replication-master-design.md` |
+| D2 ERP 线复刻设计（WMS PDA 作业/拣货看板/库存台账；CRM 漏斗看板/客户 360/销售驾驶舱；ITAM 盘点扫码/折旧仪表盘——逐页 schema 结构与 renderer 组合方案） | `todo` | D1      |                                                                                                    |
+| D3 AI/MES 复刻设计（知识库对话页/工单处理台/审批轨迹；车间大屏/工序报工表/异常叫料移动页）                                                            | `todo` | D1      |                                                                                                    |
+| D4 商城/智能单据/IoT 复刻设计（商品 SKU 页/营销活动页/分销后台；OCR 校正工作台/HITL 审批收件箱；设备遥测页/OTA 灰度管理/围栏地图/视频墙）             | `todo` | D1      |                                                                                                    |
+| D5 设计阶段深度审计（设计 vs live repo renderer 契约核对；缺口登记项与 missing-components/improvement-analysis 无重复立项冲突）                       | `todo` | D2-D4   | deep audit                                                                                         |
+| D6 设计阶段开放审计（独立 fresh sub-agent 开放评审，不复用执行者上下文）                                                                              | `todo` | D5      | open audit                                                                                         |
 
 ### Milestone 3: 开发（逐页复刻）
 
