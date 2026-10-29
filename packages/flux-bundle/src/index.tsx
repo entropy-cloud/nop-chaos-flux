@@ -8,6 +8,7 @@ import { registerDataRenderers } from '@nop-chaos/flux-renderers-data';
 import { registerFormAdvancedRenderers } from '@nop-chaos/flux-renderers-form-advanced';
 import { registerFormRenderers } from '@nop-chaos/flux-renderers-form/definitions';
 import { registerLayoutRenderers } from '@nop-chaos/flux-renderers-layout';
+import { registerMobileRenderers } from '@nop-chaos/flux-renderers-mobile';
 import { registerSchedulingRenderers } from '@nop-chaos/flux-renderers-scheduling';
 import { registerThreeRenderers } from '@nop-chaos/flux-renderers-3d';
 // plan 2474 Phase 2：只经轻子路径进包（重 index 禁触——renderer-lazy-loading.md 约定）；
@@ -47,6 +48,9 @@ export function registerDefaultFluxRenderers(registry: FluxRendererRegistry): Fl
   registerDataRenderers(registry);
   registerContentRenderers(registry);
   registerLayoutRenderers(registry);
+  // mobile 交互族（pull-refresh/infinite-scroll/swipe-cell/countdown/...）：
+  // 壳（nop-chaos-next）的移动端形态依赖本 bundle 缺省注册
+  registerMobileRenderers(registry);
   registerSchedulingRenderers(registry);
   // 3D 渲染族：注册同步、实现经 createLazyRendererComponent 落在 three-canvas
   // 异步 chunk——three.js 只在首个 three-canvas 节点渲染时加载，不进主 chunk
