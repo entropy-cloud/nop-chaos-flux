@@ -1,7 +1,7 @@
 # Arc Gap G2I — `detail-field` `editMode: 'inline'` 点即编辑实现
 
-> Plan Status: planned（2026-10-24 草案审查 approved：0 Blocker / 0 Major / 5 Minor，F-1–F-5 已吸收进正文）
-> Last Reviewed: 2026-10-24
+> Plan Status: active（2026-10-31 plan 824 编排独立 closure audit verdict **issues**：1 Major——inline-commit-fail settle 失败回滚判别测试缺失但清单已勾〔见 Closure Audit Evidence 勘误〕；按 audit 裁定状态对齐实况，缺口清单一项，补测后可关）
+> Last Reviewed: 2026-10-31
 > Source: `docs/backlog/arc-component-gap-roadmap.md` §5.1 G2 / §6 Wave 2 G2I / §7 G2I（roadmap work item G2I，依赖 G2D `done`）
 > Related: `docs/plans/arc-gap-g2d-inline-edit-design-plan.md`（completed——契约唯一事实源）、`missions/arc-component-gap.json`（commitFormat：`feat(arc-component-gap): <description>`）
 
@@ -66,7 +66,7 @@
 
 ### Phase 1 — inline 分支实现（schema + renderer + 单测）
 
-Status: done
+Status: in progress（2026-10-31 audit 裁定：settle-fail 判别测试缺口，补齐后回 done）
 Targets: `packages/flux-renderers-form-advanced/src/`
 
 - Item Types: `Fix | Proof`
@@ -81,7 +81,8 @@ Targets: `packages/flux-renderers-form-advanced/src/`
   - 取消（Escape）：丢弃草稿回 viewer，无写回
   - viewer 内容逻辑与 surface 分支一致（viewer region 缺省回退 `String(fieldValue)` / `—`）
 - [x] focused 单测 `detail-field-inline.test.tsx`（Failure Paths 七场景全盖 + §10 DOM 断言 + 焦点往返 + 触发门控）：
-  - (i) 判别组：inline schema 点击 viewer 进入就地编辑器（无 Dialog DOM）、输入 + Enter 提交后表单值更新、Escape 取消不写回、blur 提交、transformIn 失败保持 viewer、validate 失败编辑态保持 + 内联错误 + **焦点仍在编辑器**（钉 slot 名 `detail-field-inline-error` + `role="status"`）、settle 失败回滚 + **错误可见断言（同款 slot）**、readOnly/disabled 不可进入、in-flight 二次提交忽略（可用挂起 promise 断言）、**进入编辑后 `data-slot="detail-field-inline-editor"` 出现且持有焦点**
+  - (i) 判别组：inline schema 点击 viewer 进入就地编辑器（无 Dialog DOM）、输入 + Enter 提交后表单值更新、Escape 取消不写回、blur 提交、transformIn 失败保持 viewer、validate 失败编辑态保持 + 内联错误 + **焦点仍在编辑器**（钉 slot 名 `detail-field-inline-error` + `role="status"`）、readOnly/disabled 不可进入、in-flight 二次提交忽略（可用挂起 promise 断言）
+  - [ ] **（2026-10-31 audit 勘误：下项未落地却随整项勾选——独立审计实证 settle 失败回滚判别测试缺失）settle 失败回滚 + 错误可见断言（同款 slot `detail-field-inline-error`）**——镜像 `__tests__/detail-view-validation-crash.test.tsx` 的 surface 模式：parent-field validate action 在 writeback 后拒绝 → 断言值回滚 + 内联错误 slot + notify warning + 编辑态保持、**进入编辑后 `data-slot="detail-field-inline-editor"` 出现且持有焦点**
   - (ii) 回归钉：`editMode` 未声明 schema 无 `data-editable`/`data-slot="detail-field-inline-editor"` DOM（surface 路径照旧）；根 marker `nop-detail-field` 在 inline 分支保持不变
 - [x] 既有 detail-field 测试组（basic/commit/unmount/revalidation）全绿（surface 零漂移佐证）
 
@@ -138,13 +139,13 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: 实现完成，全门禁绿，待独立 closure audit。
+Status Note: 实现完成，全门禁绿；2026-10-31 独立复核 verdict issues（1 Major：settle-fail 判别测试缺失）——状态 planned → active，缺口显式未勾（见 Execution Plan），补齐该测试后即可关。
 
 Closure Evidence（执行 session 提供）:
 
 - 实现面：`composite-schemas.ts` DetailFieldSchema 增 `editMode?: 'surface' | 'inline'`；`detail-field.tsx` definition fields 增 `{ key: 'editMode', kind: 'prop' }` + inline 分支（idle/opening/editing/confirming local UI state，openSequencer/confirmSequencer 复用，`inlineBusyRef` in-flight 守卫，`data-slot="detail-field-viewer"`+`data-editable="true"` 按钮化 viewer、`data-slot="detail-field-inline-editor"` 单行编辑器（effect 聚焦，满足 jsx-a11y/no-autofocus）、`data-slot="detail-field-inline-error"` role=status+aria-live=assertive）；`settleParentValidation`/`rollbackParentWriteback` 增 error-sink 参数实现 inline 错误桥接（surface 默认行为不变）。
 - surface 零漂移：surface 渲染路径与 handleOpen/handleConfirm 逻辑零改动（仅 error-sink 默认参数）；detail-field 全测试组通过。
-- focused 单测：`detail-field-inline.test.tsx` 9 例（判别 8 + 回归钉 1），覆盖 Failure Paths 七场景（inline-surface-default / inline-readOnly+disabled / inline-commit / inline-escape / inline-blur / inline-validate-fail 含焦点留编辑器断言 / inline-transformin-fail）+ in-flight 忽略 + §10 DOM 断言 + 根 marker。
+- focused 单测：`detail-field-inline.test.tsx` 9 例（判别 8 + 回归钉 1），覆盖 Failure Paths 七场景中的六场景 + in-flight 忽略 + §10 DOM 断言 + 根 marker。**（2026-10-31 独立 closure audit 勘误：原表述"覆盖七场景"系过拟声称——inline-commit-fail〔settle 失败回滚〕判别测试缺失，被错误归并到成功路径 inline-commit 名下；本条按审计实证改写，缺口项已在 Execution Plan 显式未勾。）**
 - 铁律核对：example——`docs/components/detail-field/example.json` 不存在（live 实测），走"记录结论"分支，不新建文件；manifest/index——detail-field 已在 examples.manifest.json:28 与 docs/components/index.md:338,541（G2D 时核对，本次无新增 type，无需增行）；i18n——零新 key（editItem/saveFailed/saveFailedDetail/detailDraftValidationError 均既有）。
 - Closure audit R1 = fail（Major-1：design.md §7 要求 validate 失败与 settle 失败"内联错误 + env.notify warning"，实现缺 notify 且无断言）→ 修复：validate-invalid 分支与 settle 失败桥（`reportInlineSettleFailure` error-sink）均补 `runtime.env.notify('warning', …)`，validate-fail 测试补 notify 断言；Minor-1 死状态已清除（open 失败路径不再写 inline error state，改 throw + 调用侧 .catch 记日志，notify 由 reportOpenFailure 承担）；Minor-3 roadmap 表格对齐已修。修复后：detail-view 全组 16 文件/141 用例绿、包 lint 零 error、find-async-without-failure-path exit 0、discover-audit-suspects 与基线行数一致（1551）。
 - 门禁证据（2026-10-24）：`pnpm typecheck` 44/44 ✅；`pnpm build` 44/44 ✅；`pnpm lint` ✅（修复 jsx-a11y/no-autofocus 一处，改 effect 聚焦）；`pnpm test` 全绿（form-advanced 174 文件/1224 用例，全仓 exit 0）；`pnpm check` ✅ 零新增红（曾现 +1 async-without-failure-path 命中：handleInlineOpen catch 缺结构化失败路径，已补 setInlineError 结构化上报后 scanner 与基线 diff 为空）；e2e complex-form.spec detail-field 块 2/2 passed（Playwright 程序化断言）。
@@ -153,7 +154,8 @@ Closure Audit Evidence:
 
 - Auditor / Agent: 独立子 agent（fresh session，agent_5b71a07d，2026-10-24）
 - Evidence: R1 **fail**（Major-1 契约偏差：§7 validate/settle 失败缺 env.notify 且无断言；Minor-1 死状态 / Minor-2 备注 / Minor-3 表格对齐）→ 修复后 R2 **approved**（0 Blocker / 0 Major；Major-1 修复逐项复核 PASS + 抽查复跑 scanner exit 0、detail-view 141 用例绿、notify 断言在案；新增观察（非阻断）：settle+回滚路径可能双次同族 warning notify，属噪声级不构成缺口）。铁律三项复核全 PASS。
+- **2026-10-31 复核（plan 824 编排，agent_6f198da5）verdict issues（1 Major）**：实现面、语义抽查（validate-fail/in-flight/readOnly 门控/错误桥接四处代码级核对）、9/9 判别组复跑、176 文件/1235 用例全绿均确认；但 Major：inline-commit-fail（settle 失败回滚）判别测试缺失而清单已勾 + Closure Evidence/commit message/daily log 三处"七场景全盖"过拟声称（本 plan Execution Plan 与 Closure Evidence 已就地勘误、缺口项显式未勾）。**状态裁定：planned → active，待 settle-fail 判别测试补齐后按 R2+本次复核即可关**（successor work：镜像 `__tests__/detail-view-validation-crash.test.tsx` surface 模式一个 focused test）。
 
 Follow-up:
 
-- （无剩余 plan-owned work）
+- settle-fail（inline-commit-fail）判别测试补齐——g2i 自有 ownership 的唯一剩余 work（镜像 detail-view-validation-crash surface 模式），补齐并复跑 inline 组后本 plan 可关

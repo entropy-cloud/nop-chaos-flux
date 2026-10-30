@@ -1,7 +1,7 @@
 # 640 跨 roadmap UR-13 边路由引擎（TF-1 环回穿节点 + GR-2 邻接边小环）——两级路由设计
 
-> Plan Status: draft
-> Last Reviewed: 2026-10-17
+> Plan Status: completed（2026-10-31 plan 824 编排独立 closure audit〔R3〕verdict **approved**：零 Blocker/Major、4 Minor 同 commit 同步；取代待决 R3）
+> Last Reviewed: 2026-10-31
 > Source: `docs/backlog/cross-roadmap-remediation-roadmap.md` UR-13（Wave D；designer-ux TF-1 改判归边路由引擎家族 + GR-2）
 > Related: `docs/analysis/2026-10-01-playground-designer-ux-roadmap.md`（TF-1/GR-2 登记）、`packages/flow-designer-core/src/`（纯函数落点）、`packages/flow-designer-renderers/src/designer-xyflow-canvas/`（消费位点）、`packages/flux-renderers-graph/`（GR-2 位点）
 
@@ -84,11 +84,11 @@ Targets: flow-designer-core edge-router.ts
 - Item Types: `Fix | Proof`
 
 - [x] Proof：edge-router.test.ts 几何断言 4 用例（e8 右出后向边车道 laneX > 全部节点 right + 逐线段-bbox 清空；e7 左出经源 gap 列；bundled 分离；前向边 default）。
-- [x] Fix：computeEdgeRoutes 实现——SKIP
+- [x] Fix：computeEdgeRoutes 实现（R2 三缺陷记录见 daily log 10-17.md:185——靶侧走廊等三处同型缺陷；plan 侧原 SKIP 占位行按 2026-10-31 R3 audit M-b 就地补注）
 
 Exit Criteria:
 
-- [x] flow-designer-core 单测 209/209 绿（含 edge-router 5 用例红→绿；R2 F-1 后 5 用例）；typecheck 绿。
+- [x] flow-designer-core 单测 209/209 绿（含 edge-router 5 用例红→绿；R2 F-1 后 5 用例；2026-10-31 R3 audit M-c 注记：此为 Phase-1 时点快照，收口作用数字为 Closure Gates 的 210/210；今日实测 220/220）——typecheck 绿。
 
 ### Phase 2 - 消费 + 判别
 
@@ -122,7 +122,7 @@ Exit Criteria:
 
 - Reviewer / Agent: agent_7beed325（fresh session 独立子 agent，2026-10-17）
 - Verdict: `issues`（R1：3 High——F1 getSmoothStepPath 注入轴+极性相关、lane 注入对 e8 后向边不成立；F2 e6/e7/e8 判别断言构造性不可满足（8px 走廊垂直进场为唯一无交叉解，须 waypoint 化 + 走廊感知进场）；F3 GR-2 bundled 用错轴（水平主轴须 centerX）；F4 几何来源定案 provider+context+measured；F6 分类细节）→ 设计节全量修订（waypoint 化 + 走廊感知进场 + 轴修正 + 架构定案 + 诚实边界补登记）→ R2 delta 复核
-- Rounds: 进行中
+- Rounds: 2（R1 agent_cbbf2ff8 + R2 agent_0399e308；2026-10-31 R3 closure audit agent_8373ccc3 approved）
 - Findings addressed: F1（机制改 waypoint 自建折线）/F2（走廊感知进场 + e6 子情形 + 边界补登记）/F3（centerX 通道）/F4（measured + provider/context 定案）/F5（同点 handle 实读证实入基线）/F6（优先级 + 同列子情形）/F7（行号勘误）/F8（逐线段断言 + characterization）
 
 ## Closure Gates
@@ -155,9 +155,11 @@ Status Note: 2026-10-17 收口。UR-13 收口：两级路由引擎（waypoint �
 
 Closure Audit Evidence:
 
-- Auditor / Agent: R1 agent_cbbf2ff8（issues 3 Major）→ 修复 → R2 agent_0399e308（issues 1 Major 遗留 F-1 + 5 Minor）→ 全部修复 → 待 R3 确认或按 R2「修掉 F-1 + F-2 后即可 approved」指示收口
-- Evidence: R2 逐项实跑：edge-router 4/4→5/5（characterization 补后）、三包 209/210→210/210、307/307、56/56；scanner 回 649≤650；corridorX=446 tsx 实证；回写三面一致（cross-roadmap UR-13 done + Plan 列、designer-ux TF-1/GR-2 注记、daily log）
+- Auditor / Agent: R1 agent_cbbf2ff8（issues 3 Major）→ 修复 → R2 agent_0399e308（issues 1 Major 遗留 F-1 + 5 Minor）→ 全部修复 → **R3（2026-10-31，plan 824 编排）agent_8373ccc3 verdict approved（零 Blocker/Major，4 Minor 已同 commit 同步）——取代待决 R3**
+- Evidence: R2 逐项实跑：edge-router 4/4→5/5（characterization 补后）、三包 209/210→210/210、307/307、56/56；scanner 回 649≤650；corridorX=446 tsx 实证；回写三面一致（cross-roadmap UR-13 done + Plan 列、designer-ux TF-1/GR-2 注记、daily log）。
+- Evidence（R3, 2026-10-31）: 直观测验——edge-router.test.ts 5/5 + edge-router-defensive.test.ts 3/3；flow-designer-core 220/220、graph 56/56、flow-designer-renderers 314/314、三包 typecheck 绿；语义抽查 4 项（canvas useMemo 经 resolveNodeSize→computeEdgeRoutes 注入 \_\_fdRoute、DesignerXyflowEdge 三分支分发、default 分支与收口前逐字节恒等〔git show 81133ae2e 比对〕、graph bundle offset）；判别测试真执行实证；Deferred 诚实（A\*/拖动重路由 out-of-scope 非缺陷）；R2 批准条件「修掉 F-1+F-2」满足。4 Minor 同步：M-a 首边混合线型残留在本 plan 诚实边界补披露、M-b SKIP 占位行补注、M-c 209/209 快照注记、M-d Rounds 关闭。
 
 Follow-up:
 
 - 无 remaining plan-owned work。
+- 诚实边界补披露（2026-10-31 R3 M-a）：首条边混合线型不对称残留（R2 F-2）——substance 在 daily log 10-17.md 披露，plan 侧此处补记；装饰性 residual、不阻断 UR-13 契约。
