@@ -7,7 +7,7 @@
 
 ## 0. 设计总纲（六项落地决策）
 
-- **D1-决策①（页面形态）**：21 个复刻页统一走 **complex-pages surface**（`#/complex-pages/<pageId>`）。依据（live 实证）：`apps/playground/src/complex-pages/schema-page.tsx` L10-16 以 `import.meta.glob('./page-schemas/*.json', { eager: true })` 自动装载——**新增 JSON 即新增页面，无组件注册步骤**；`COMPLEX_PAGE_ENTRIES`（complex-pages-model.ts L67 起，现 43 条，closure audit Major-1 勘误）加一条 entry（id/title/category/description/features）即可获得列表页收录；特殊 host 覆盖先例 `pih-workspace`（complex-pages-registry.tsx L25-27）备用。
+- **D1-决策①（页面形态）**：21 个复刻页统一走 **complex-pages surface**（`#/complex-pages/<pageId>`）。依据（live 实证）：`apps/playground/src/complex-pages/schema-page.tsx` L10-16 以 `import.meta.glob('./page-schemas/*.json', { eager: true })` 自动装载——**新增 JSON 即新增页面，无组件注册步骤**；`COMPLEX_PAGE_ENTRIES`（complex-pages-model.ts L67 起，现 43 条，closure audit Major-1 勘误）加一条 entry（id/title/category/description/features）即可获得列表页收录；特殊 host 覆盖先例 `pih-workspace`（complex-pages-registry.tsx L19-21——D5 深审勘误 MIN-5：原引 L25-27，实读为注释 L19-20 + entry L21）备用。
 - **D1-决策②（路由命名）**：pageId = `<domain>-<slug>`（全小写连字符），21 页清单见 §1；complex-pages 新增分类 `business-replication`（与既有 `app-replica` 并列，complex-pages-model.ts L12-18 的 category 字段）。
 - **D1-决策③（mock 数据）**：每域一个 mock-backend 模块，独占 `/r/Repl<Domain>__*` fetcher 面（先例 `mock-backend-airtable.ts` 头注释 L1-23 的"一模块独占一 fetcher 面"模式，规避 showcase-env 700 行硬门禁）；返回信封 `{ status: 0, data: { items, total } }`（flux-guide/03-api-config.md L50 契约）；会话状态由工厂闭包持有（同会话跨页可观察写入）；预置 `window.__repl<Domain>TestHooks` 观测钩子（生产不设置即 no-op，先例 `__airtableEndpointCalls`）。
 - **D1-决策④（e2e 组织）**：spec 平铺 `tests/e2e/replication-<pageId>.spec.ts`（沿用仓库现行平铺惯例），统一从 `./fixtures.js` 导入 test/expect（console/pageerror 监控 + `assertTrackedPageErrors`）；每 spec 一个 `openReplicationPage(page, pageId)` helper：`page.goto('#/complex-pages/<id>', { waitUntil: 'commit' })` → 等 `[data-testid="complex-page-title"]` 含标题 → 等页面主 testid 可见（先例 crud-demo.spec.ts L3-10）。
@@ -102,7 +102,7 @@ PH-17 机制实况（live 核实）：`a11y-axe-baseline.spec.ts` L15-23 ROUTES 
 
 ## 6. 关键引用清单
 
-- 路由机制：`apps/playground/src/route-model.ts`（L60-116）、`domain-route-entries.ts`、`domain-route-pages.tsx`（L207-303 + 对账测试 domain-route-pages.test.tsx L22-42）、`complex-pages/{complex-pages-model.ts（L67 起 43 entry）, schema-page.tsx L10-16, complex-pages-registry.tsx L25-27, page-data.ts}`、`home-families.ts`（complex-pages 不需要 home family 映射）
+- 路由机制：`apps/playground/src/route-model.ts`（L60-116）、`domain-route-entries.ts`、`domain-route-pages.tsx`（L207-303 + 对账测试 domain-route-pages.test.tsx L22-42）、`complex-pages/{complex-pages-model.ts（L67 起 43 entry）, schema-page.tsx L10-16, complex-pages-registry.tsx L19-21（D5 深审勘误 MIN-5：原引 L25-27）, page-data.ts}`、`home-families.ts`（complex-pages 不需要 home family 映射）
 - axe 棘轮：`tests/e2e/a11y-axe-baseline.spec.ts`（L15-27/L34-63）、`tests/e2e/__fixtures__/axe-baseline.json`（\_header 结构）、`docs/plans/781-ph17-axe-gate-plan.md`（L77 map-demo 排除修订）
 - focus：`docs/plans/782-ph18-focus-ledger-plan.md`（Status Note L134-136）、`scripts/audit/build-focus-ledger.mjs`、`docs/testing/focus-management-ledger.md`、断言先例 `tests/e2e/component-handles.spec.ts` L34-42、`tests/e2e/form-sync-validation-focus.spec.ts` L30-41
 - e2e 设施：`playwright.config.ts`（L43-101 双 webServer、workers 2、fixtures.js）、`tests/e2e/helpers/visual-assert.ts`（getComputedStyleValue）、mock 先例 `apps/playground/src/complex-pages/shared/{mock-backend.ts, showcase-env.ts L102-153, mock-backend-airtable*.ts}`、交互先例 `tests/e2e/{crud-demo, airtable-replica-interactions, spreadsheet-visual-tokens}.spec.ts`

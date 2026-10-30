@@ -27,6 +27,7 @@
 - styling contract（D1 §5-②）：布局类 renderer（page/flex/dashboard 骨架）只发 marker 类 + 显式 `stack-*`/`hstack-*` 别名；widget 类 renderer（ai-\*、kanban、input-table、stat-tile、mobile 族）为自样式完整控件；M1 暗色底以 page 根 `className` 一次声明。
 - 数据绑定：查询走 data-source/crud → `/r/ReplAi__*`、`/r/ReplMes__*`（§4），信封 `{status:0,data:{items,total}}`；业务数据不内联进 schema（D1 §2 L51）。
 - 动作写法：`ajax` 的 `args` 即 ApiSchema（`{url,method,data,params}`，schema-base-types.ts L36-41；先例 standard-crud.json L12-17）；`when` 条件门（actions.ts L165）按列/状态路由；`then`/`onError` 链做刷新与错误 toast。片段为节选，`"…"` 处 M3 补全。
+- **统一勘误注（2026-10-30，D5 深审，与 D2 §2.0 同款）**：全文 ajax 的 ApiSchema 一律置于 `args`（AjaxActionSchema args: ApiSchema，flux-core types/actions.ts L171-173）；data-source 取数走 `action`+`args`（DataSourceSchema 无 `api`/顶层 `url` 字段）；form 提交走 `submitAction`（FormSchema 无 `api` 字段，form/schemas.ts L104）；refreshSource 契约为顶层 `targetId`（与 D2 二轮勘误同步）——D5 深审勘误，以下各片段就地标注。
 
 ### 2.1 K1 ai-knowledge-chat（P0，直接组合，涉 G11）
 
@@ -102,7 +103,8 @@ ai-citations/ai-feedback/ai-token-usage 是 message 级独立 widget（不内嵌
       "testid": "ai-knowledge-chat-guardrail",
       "level": "warning",
       "visible": "${activeAnswer && activeAnswer.refused}",
-    },
+      "body": "本次回答触发内容护栏已被拦截，请调整提问后重试。",
+    }, // D5 深审勘误（MIN-6）：补 body 文案——AlertSchema 反馈内容属性为 body（content/schemas.ts L280），缺文案会渲染空壳且断言只看可见性会掩盖空文案缺陷
     {
       "type": "ai-citations",
       "testid": "ai-knowledge-chat-citations",
@@ -176,7 +178,7 @@ page
       "when": "${toColumnId === 'RESOLVED'|'CLOSED'|'REOPENED'}",
       "args": { "…": "mutation=resolve|close|reopen" },
     },
-    { "action": "refreshSource", "args": { "sourceName": "ticketSource" } },
+    { "action": "refreshSource", "targetId": "ticketSource" }, // D5 深审勘误（D2 二轮勘误同步）：refreshSource 契约为顶层 targetId（built-in-actions L217-227 requires targetId），args.sourceName 全仓无消费方
   ],
 }
 ```
@@ -191,7 +193,8 @@ page
     { "action": "setValue", "args": { "path": "replyDraft", "value": "${item.text}" } },
     { "action": "showToast", "args": { "level": "success", "message": "已采用 AI 推荐回复" } } ] },
 { "type": "alert", "level": "warning", "testid": "ai-ticket-console-confidence-gate",
-  "visible": "${suggestions[0].confidence < 0.6}", "message": "AI 置信度低于门限，建议人工接管后回复。" }
+  "visible": "${suggestions[0].confidence < 0.6}", "body": "AI 置信度低于门限，建议人工接管后回复。" }
+// D5 深审勘误：AlertSchema 无 message 属性（content/schemas.ts L267-284：title/body），反馈内容改 body——原 message 被静默丢弃渲染空壳
 ```
 
 ### 2.3 K3 ai-approval-trail（P1，直接组合，涉 G13/G18）
@@ -226,7 +229,7 @@ page
       },
     },
     { "action": "ajax", "when": "${action === 'reject'}", "args": { "…": "decision=reject" } },
-    { "action": "refreshSource", "args": { "sourceName": "approvalTaskSource" } },
+    { "action": "refreshSource", "targetId": "approvalTaskSource" }, // D5 深审勘误（同 §2.2 二轮勘误同步）：顶层 targetId，args.sourceName 无消费方
   ],
 }
 ```
@@ -240,7 +243,11 @@ page
   "testid": "ai-approval-trail-transfer-dialog",
   "body": {
     "type": "form",
-    "api": { "url": "/r/ReplAi__approvalTransfer", "method": "post" },
+    "submitAction": {
+      "action": "ajax",
+      "args": { "url": "/r/ReplAi__approvalTransfer", "method": "post" },
+    },
+    // D5 深审勘误：FormSchema 无 api 字段（form/schemas.ts L89-143，提交走 submitAction L104；先例 standard-crud.json L70-73）——原 api 被静默丢弃致 approvalTransfer 永不发出
     "body": [
       { "type": "user-select", "name": "targetUserId", "label": "转办给", "required": true },
       { "type": "textarea", "name": "reason", "label": "转办原因", "required": true },
@@ -258,7 +265,7 @@ page（暗色 className 一次声明）
 ├─ dashboard（panels 网格坐标模型，flux-renderers-dashboard/schemas.ts）：stat-tile ×4
 │  （计划/完成/报废/完成率，value/delta/sparkline/status，G10 近似翻牌器 §6.2）｜echarts line
 │  当日趋势（dataset=kpi.trend24h 24h×48 确定性序列；9 类事件 echarts-renderer-definition.ts L23）｜
-│  table 工单四阶段进度（progress + status/mapping 配色分级，片段 2）｜table 当前停机｜
+│  table 工单四阶段进度（progress + status labelMap/levelMap 配色分级，片段 2）｜table 当前停机｜
 │  scada-canvas 车间工位组态（config 单一字段符号树）
 └─ echarts onClick 下钻预警明细（openDialog + table）
 ```
@@ -274,7 +281,7 @@ page（暗色 className 一次声明）
     { "id": "kpi-planned", "type": "stat-tile", "x": 0, "y": 0, "w": 3, "h": 2, "title": "计划数",
       "props": { "value": "${kpi.planned}", "sparkline": "${kpi.plannedSpark}", "delta": "…" } },
     { "id": "trend", "type": "echarts", "x": 0, "y": 2, "w": 8, "h": 4, "title": "当日报工趋势",
-      "props": { "option": "${trendOption}", "dataset": "${kpi.trend24h}" } },
+      "props": { "option": "${trendOption}", "dataset": { "source": "${kpi.trend24h}" } } },   // D5 深审勘误：EChartsDatasetSchema 要求对象 {source,dimensions?,transform?}（echarts-schemas.ts L9-13，validator 硬校验 must be an object），原字符串数组表达式被 renderer 置 null
     { "id": "scada", "type": "scada-canvas", "x": 8, "y": 2, "w": 4, "h": 4,
       "props": { "config": "${shopfloorScadaConfig}" } } ] }
 ```
@@ -287,31 +294,31 @@ scada-canvas：`config` 为组态 JSON 单一字段（quick-reference.md §Indus
 {
   "type": "status",
   "value": "${progressBand}",
-  "mapping": {
-    "full": { "label": "已完成", "className": "text-emerald-500" },
-    "half": { "label": "过半", "className": "text-sky-500" },
-    "low": { "label": "偏低", "className": "text-amber-500" },
-    "zero": { "label": "未开工", "className": "text-slate-500" },
-  },
+  "labelMap": { "full": "已完成", "half": "过半", "low": "偏低", "zero": "未开工" },
+  "levelMap": { "full": "success", "half": "info", "low": "warning", "zero": "default" },
+  // D5 深审勘误：StatusSchema 无 mapping（属性为 labelMap/levelMap/iconMap，content/schemas.ts L314-330，status.tsx 零 mapping 消费）——四阶段配色整块静默失效；
+  // 原 entry 形状 {label,className} 亦不符语义：文本拆入 labelMap，className 语义色改走 levelMap（StatusLevel 枚举，非法值 renderer 兜底 'default'）
 }
 ```
 
 ### 2.5 M2 mes-work-reporting（P0，直接组合，无缺口——plan 785 直接受益页）
 
 ```
-page
+page                        # testid: mes-work-reporting-root（D5 深审勘误 MIN-3：补主容器 testid 注）
 ├─ crud 作业卡列表 #mes-work-reporting-cards
 │    columns：工序/卡号/工作中心/计划数/完成数/工时比/状态（status mapping 配色）
-│    行操作：报工（openDialog 报工表单）；状态按钮组按 status 显隐（片段 2）
-└─ dialog 报工表单（form api=POST /r/ReplMes__reportWork）
+│    行操作：报工（openDialog 报工表单）；状态按钮平铺按 status 显隐（片段 2）
+└─ dialog 报工表单（form submitAction=POST /r/ReplMes__reportWork——D5 深审勘误：FormSchema 无 api，提交走 submitAction）
    ├─ input-table lines（片段 1：computed 列 + aggregate 合计行 + summaryBinding 守恒回写）
    │    行字段 completedQty/scrappedQty/reworkQty/setupMins/runMins；
    │    computed：totalMins=setup+run、hourRatio=totalMins/stdMins、qualifiedRate
-   └─ 校验：行级 completed+scrapped≤planned（validateValueAction 前置拦截）；
-        超计划/工时比超限由 mock 端点二次拦截（GUARD_*，§4.4）
+   └─ 校验：行级 completed+scrapped≤planned 前置拦截＝item 区内字段 validate（行字段声明
+        validate 规则）+ mock 端点守卫（GUARD_CONSERVATION/GUARD_HOUR_RATIO，§4.4）
+        ——D5 深审勘误：原 validateValueAction 非 InputTableSchema 属性（该属性属
+        DetailField/VariantField/DetailView），「行级守恒前置拦截」机制不存在，删除该引用
 ```
 
-片段 1（input-table 报工明细；aggregate/computed 见 `composite-schemas.ts` L110-131，summaryVisible L153、summaryBinding L124-157、validateValueAction L60/L291）：
+片段 1（input-table 报工明细；aggregate/computed 见 `composite-schemas.ts` L110-131，summaryVisible L153、summaryBinding L129-135 单对象——D5 深审勘误：原引 validateValueAction 非 InputTableSchema 属性，删除该引用）：
 
 ```jsonc
 {
@@ -333,25 +340,29 @@ page
       "name": "hourRatio",
       "label": "工时比",
       "computed": "${(setupMins + runMins) / stdMins}",
-      "summaryVisible": false,
+      // D5 复审轮1 R3 勘误：summaryVisible 是表级属性（InputTableSchema），列级被静默丢弃——该列无 aggregate 本就不进合计行，直接删除
     },
   ],
-  "summaryBinding": [
-    { "field": "totalCompletedQty", "column": "completedQty", "agg": "sum" },
-    { "field": "totalScrappedQty", "column": "scrappedQty", "agg": "sum" },
-  ],
+  "summaryBinding": { "field": "totalCompletedQty", "column": "completedQty", "agg": "sum" },
+  // D5 深审勘误：InputTableSummaryBinding 为单对象（isValidSummaryBinding 要 object 且 field/column
+  // 为 string，数组即守卫失败→静默不回写，input-table-renderer.tsx L227-244）。双字段回写
+  // （totalCompletedQty+totalScrappedQty）契约仅支持单绑定——M3 收口时拆两处绑定（如主单
+  // totalScrappedQty 由 scope formula 从 lines 派生）或先立约扩展数组语义，定稿前不写数组形状。
   "item": { "type": "form" },
 }
 ```
 
 工时比>1.0 标红：行内单元格条件 className 走 status/mapping + `${hourRatio > 1}`（佐证 R2 L58/ui-patterns L129）。非法状态迁移由 mock `jobCardMutation` 返回 `ILLEGAL_TRANSITION` 拦截（§4.4），onError 链 toast。
 
-片段 2（状态按钮 visible 表达式，R2 L58 ⑤；JobCard 8 态枚举以活仓 state-machine.md L184-205 为准，R2 L56 佐证）：
+片段 2（状态按钮 visible 表达式，R2 L58 ⑤；JobCard 8 态枚举以活仓 state-machine.md L184-205 为准，R2 L56 佐证。D5 深审勘误：原写 button-group `buttons` ——prop 名为 `items` 且 ButtonGroupItemSchema 仅 key/label/variant/action/disabled、item 级无 visible/onClick（layout/schemas.ts L183-213），状态显隐语义无法声明→改为平铺 button ×N（各自 BaseSchema.visible + onClick）置于 hstack（flex row 别名），删除 button-group 承载显隐的语义）：
 
 ```jsonc
 {
-  "type": "button-group",
-  "buttons": [
+  "type": "flex",
+  "direction": "row",
+  "className": "hstack",
+  "testid": "mes-work-reporting-status-actions",
+  "items": [
     {
       "type": "button",
       "label": "开工",
@@ -391,18 +402,18 @@ page
 ### 2.6 M3 mes-andon-material（P1，直接组合，涉 G14；axe 分支 B mobile）
 
 ```
-page（移动 viewport 375×667）
+page（移动 viewport 375×667）   # testid: mes-andon-material-root（D5 深审勘误 MIN-3：补主容器 testid 注）
 ├─ notice-bar（未关闭异常/叫料响应播报）
 ├─ pull-refresh（onRefresh → refreshSource andonSource；schemas.ts L4-32，仅 direction:'down'）
 │  └─ infinite-scroll（onLoadMore → andonFindPage 翻页，L33-56）
 │     └─ list 行 = swipe-cell（right：催单/关闭，L58-77）→ 任务卡 + countdown 响应计时
 │          （targetTime=respondDeadline，onFinish → 超时标红，L79-93）
-├─ floating-bubble（onClick → action-sheet 快捷动作，L213-231）
+├─ floating-bubble（onClick → action-sheet 快捷动作，schemas.ts L213-224——D5 深审勘误 MIN-5：原引 L213-231 跨界至 ActionSheetItem）
 ├─ action-sheet（display:'grid'：发起异常/发起叫料/刷新，L233-250）
 └─ floating-panel（anchors [220,480]，L200-211）
-   └─ form api=POST andonCreate：wheel-picker 异常类型；input-text 工位；textarea 描述；
+   └─ form submitAction=POST andonCreate（D5 深审勘误：form 无 api）：wheel-picker 异常类型；input-text 工位；textarea 描述；
         input-image accept="image/*" multiple uploadAction=uploadAndonPhoto（G14 §6.3）；
-        image-viewer（photos，L252-267）；叫料明细 input-table（物料/应领数量/库位，
+        image-viewer（photos，schemas.ts L252-265——D5 深审勘误 MIN-5：原引 L252-267 跨界）；叫料明细 input-table（物料/应领数量/库位，
         数量 tap → number-keyboard 受控 open + onKey/onConfirm 写回，L286-306）
 ```
 
@@ -449,7 +460,11 @@ page（移动 viewport 375×667）
   "testid": "mes-andon-material-panel",
   "body": {
     "type": "form",
-    "api": { "url": "/r/ReplMes__andonCreate", "method": "post" },
+    "submitAction": {
+      "action": "ajax",
+      "args": { "url": "/r/ReplMes__andonCreate", "method": "post" },
+    },
+    // D5 深审勘误（同 §2.3）：FormSchema 无 api 字段，提交走 submitAction——原 api 被静默丢弃致 andonCreate 永不发出
     "body": [
       {
         "type": "input-image",
@@ -475,14 +490,14 @@ input-table 注册于全局 registry（R4 §0 L14）；明细数量键入以 num
 
 ### 3.1 逐页对照（R4 §1 → 本设计组合）
 
-| 页  | R4 §1 结论与依据缺口        | 本设计组合（§2 节）                                                                                                    | 一致性                               |
-| --- | --------------------------- | ---------------------------------------------------------------------------------------------------------------------- | ------------------------------------ |
-| K1  | 直接组合；G11（L28）        | ai-chat 整页编排 + conversations/prompts/citations/feedback/token-usage + G11 alert（§2.1）                            | 一致；G11 按 R4 §2 L58 以 alert 承接 |
-| K2  | 能力扩展；G9/G12/G11（L29） | kanban 六态路由 + crud 双视图 + stat-tile + timeline/steps + ai-suggestions（G12 链）+ SLA 静态文本（G9 临时）（§2.2） | 一致；扩展点仅 G9，口径 §6.1         |
-| K3  | 直接组合；G13/G18（L30）    | timeline/steps/user-select+ajax 转办/ai-tool-call HITL（§2.3）                                                         | 一致；G18 不做 wf 图形（R4 §2 L65）  |
-| M1  | 直接组合；G10（L31）        | dashboard/stat-tile/echarts/notice-bar/scada-canvas/data-source interval（§2.4）                                       | 一致；G10 以 stat-tile 近似（§6.2）  |
-| M2  | 直接组合；无缺口（L32）     | input-table computed/aggregate/summaryBinding/validateValueAction + 状态按钮 visible（§2.5）                           | 一致                                 |
-| M3  | 直接组合；G14（L33）        | mobile 族 10 type 编排（§2.6）                                                                                         | 一致；G14 口径 §6.3                  |
+| 页  | R4 §1 结论与依据缺口        | 本设计组合（§2 节）                                                                                                             | 一致性                               |
+| --- | --------------------------- | ------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------ |
+| K1  | 直接组合；G11（L28）        | ai-chat 整页编排 + conversations/prompts/citations/feedback/token-usage + G11 alert（§2.1）                                     | 一致；G11 按 R4 §2 L58 以 alert 承接 |
+| K2  | 能力扩展；G9/G12/G11（L29） | kanban 六态路由 + crud 双视图 + stat-tile + timeline/steps + ai-suggestions（G12 链）+ SLA 静态文本（G9 临时）（§2.2）          | 一致；扩展点仅 G9，口径 §6.1         |
+| K3  | 直接组合；G13/G18（L30）    | timeline/steps/user-select+ajax 转办/ai-tool-call HITL（§2.3）                                                                  | 一致；G18 不做 wf 图形（R4 §2 L65）  |
+| M1  | 直接组合；G10（L31）        | dashboard/stat-tile/echarts/notice-bar/scada-canvas/data-source interval（§2.4）                                                | 一致；G10 以 stat-tile 近似（§6.2）  |
+| M2  | 直接组合；无缺口（L32）     | input-table computed/aggregate/summaryBinding（单对象）+ 状态按钮平铺 visible（§2.5——D5 深审勘误：删 validateValueAction 引用） | 一致                                 |
+| M3  | 直接组合；G14（L33）        | mobile 族 10 type 编排（§2.6）                                                                                                  | 一致；G14 口径 §6.3                  |
 
 ### 3.2 R4 §2 ↔ §4 双向核对表
 
@@ -597,8 +612,8 @@ input-table 注册于全局 registry（R4 §0 L14）；明细数量键入以 num
 
 ### 5.5 mes-work-reporting（axe 分支 A）
 
-- 报工提交 + 合计断言：dialog 填 2 行 → 合计行三列 DOM 数值 = sum（合格数/报废数/totalMins）→ summaryBinding 回写主单字段断言 → 提交 → `reportWork === 1`。
-- 超计划拦截：行 completed+scrapped>planned → validateValueAction 阻断（提交计数 0 + 错误文案可见）；forceConservationError → 端点 toast GUARD_CONSERVATION（双重拦截各自断言）。
+- 报工提交 + 合计断言：dialog 填 2 行 → 合计行三列 DOM 数值 = sum（合格数/报废数/totalMins）→ summaryBinding 回写主单 totalCompletedQty 断言（totalScrappedQty 回写按 §2.5 拆两处/先立约的 M3 收口结论执行，不静默）→ 提交 → `reportWork === 1`。
+- 超计划拦截（D5 深审勘误：validateValueAction 非 InputTableSchema 属性，原「双拦截」前半失据——改为端点守卫拦截 + 合计断言）：行 completed+scrapped>planned → `reportWork` 端点守卫 GUARD_CONSERVATION 拦截（错误文案可见 + tfoot 合计/主单 summaryBinding 字段不回写）；工时比超限同走 GUARD_HOUR_RATIO；forceConservationError 复用同端点错误分支断言 toast；前端侧由 item 区内字段 validate 承担行级校验（提交计数 0 语义保留在字段校验路径）。
 - 状态按钮显隐：8 态 fixture 抽 3 态（RELEASED 只见开工；RUNNING 见暂停/报工提交；SUBMITTED 只见完成）→ visible 断言；非法迁移拦截：对 CLOSED 行直调 startJob → ILLEGAL_TRANSITION toast + 行状态不变；附加：hourRatio>1 行单元格标红 class 断言（getComputedStyleValue）。
 - focus：dialog 内首字段 autofocus；input-table 行内 tab 序连续；提交后焦点落回触发行。
 
@@ -643,18 +658,18 @@ ai-tool-call 的 approval 工作流为 AI 包既有能力（P3 HITL A-14，ai-to
 
 ### flux type 名核对表（全部 live 注册）
 
-| type                                                                                                                                                                   | 归属包                                                                                                | 用于        |
-| ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- | ----------- |
-| ai-chat / ai-conversations / ai-message-list / ai-bubble / ai-sender / ai-citations / ai-feedback / ai-prompts / ai-suggestions / ai-token-usage / ai-tool-call        | flux-renderers-ai（14 type 之 11）                                                                    | K1/K2/K3    |
-| kanban                                                                                                                                                                 | flux-renderers-scheduling                                                                             | K2          |
-| crud / table / query-filter / list / stat-tile / sparkline / echarts                                                                                                   | flux-renderers-data 等（registry 全局共享）                                                           | K1-M3       |
-| steps / timeline / button-group                                                                                                                                        | flux-renderers-layout；flex 注册于 flux-renderers-basic（closure audit 勘误）                         | K2/K3/M1    |
-| dialog / drawer / button / text                                                                                                                                        | flux-renderers-basic；form / textarea 注册于 flux-renderers-form（closure audit 勘误，registry 共享） | K2/K3/M2/M3 |
-| alert / status / mapping / progress / image                                                                                                                            | flux-renderers-content                                                                                | K1/K2/M1/M2 |
-| input-table / input-number / user-select / input-image / picker                                                                                                        | flux-renderers-form / form-advanced                                                                   | K3/M2/M3    |
-| dashboard                                                                                                                                                              | flux-renderers-dashboard                                                                              | M1          |
-| scada-canvas（+ scada-group/scada-rect/scada-text/scada-device-motor/scada-sensor-control-indicator 符号）                                                             | flux-renderers-industrial                                                                             | M1          |
-| pull-refresh / infinite-scroll / swipe-cell / countdown / notice-bar / floating-bubble / floating-panel / action-sheet / image-viewer / number-keyboard / wheel-picker | flux-renderers-mobile（16 type 之 11；registry 共享故 notice-bar 可桌面用，R4 §0 L14）                | M3/M1       |
-| data-source                                                                                                                                                            | flux-core schema（Formula/Action 两变体，取数走 action:'ajax'）                                       | K2/M1/M3    |
+| type                                                                                                                                                                   | 归属包                                                                                                                                                                                                                                   | 用于        |
+| ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------- |
+| ai-chat / ai-conversations / ai-message-list / ai-bubble / ai-sender / ai-citations / ai-feedback / ai-prompts / ai-suggestions / ai-token-usage / ai-tool-call        | flux-renderers-ai（14 type 之 11）                                                                                                                                                                                                       | K1/K2/K3    |
+| kanban                                                                                                                                                                 | flux-renderers-scheduling                                                                                                                                                                                                                | K2          |
+| crud / table / query-filter / list / stat-tile / sparkline / echarts                                                                                                   | flux-renderers-data 等（registry 全局共享）                                                                                                                                                                                              | K1-M3       |
+| steps / timeline / button-group                                                                                                                                        | flux-renderers-layout；flex 注册于 flux-renderers-basic（closure audit 勘误）                                                                                                                                                            | K2/K3/M1    |
+| dialog / drawer / button / text                                                                                                                                        | flux-renderers-basic；form / textarea 注册于 flux-renderers-form（closure audit 勘误，registry 共享）                                                                                                                                    | K2/K3/M2/M3 |
+| alert / status / mapping / progress / image                                                                                                                            | flux-renderers-content                                                                                                                                                                                                                   | K1/K2/M1/M2 |
+| input-table / input-number / user-select / input-image / picker                                                                                                        | input-number/user-select 归 flux-renderers-form；input-table/picker/input-image 归 flux-renderers-form-advanced（D5 深审勘误 MIN-7：input-image 实归 form-advanced——upload-schemas.ts 位于该包，原写"form / form-advanced"双包归属不准） | K3/M2/M3    |
+| dashboard                                                                                                                                                              | flux-renderers-dashboard                                                                                                                                                                                                                 | M1          |
+| scada-canvas（+ scada-group/scada-rect/scada-text/scada-device-motor/scada-sensor-control-indicator 符号）                                                             | flux-renderers-industrial                                                                                                                                                                                                                | M1          |
+| pull-refresh / infinite-scroll / swipe-cell / countdown / notice-bar / floating-bubble / floating-panel / action-sheet / image-viewer / number-keyboard / wheel-picker | flux-renderers-mobile（16 type 之 11；registry 共享故 notice-bar 可桌面用，R4 §0 L14）                                                                                                                                                   | M3/M1       |
+| data-source                                                                                                                                                            | flux-core schema（Formula/Action 两变体，取数走 action:'ajax'）                                                                                                                                                                          | K2/M1/M3    |
 
 本表与 R2 §0 L13 归属一致（ai 14 / mobile 16 / countdown 仅 mobile），经各包 definitions 抽查 ≥20 处 live 复核。

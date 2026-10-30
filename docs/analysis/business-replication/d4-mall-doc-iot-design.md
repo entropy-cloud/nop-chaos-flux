@@ -23,12 +23,14 @@
 
 通用约定（全节生效）：页面 JSON 放 `page-schemas/<pageId>.json`（glob 自动装载，D1 决策①）；`testid` meta 传 `data-testid`（flux-core schema.ts L90），命名 `<pageId>-<element>`，主容器 `<pageId>-root`（D1 §3 L76）；布局用 `stack-*`/`hstack-*` + marker 类，自有视觉（价格大小字/低置信高亮/吸底 sticky/状态色）以 `repl-` 前缀类 + CSS 变量定义在页面级样式，禁 BEM（Renderer Styling Contract）；业务数据走 mock fetcher 不内联，仅默认筛选/静态选项走 `PAGE_DATA['<pageId>']`（D1 §2 L51）。
 
+**统一勘误注（2026-10-30，D5 深审，与 D2 §2.0/D3 §2.0 同款）**：全文 ajax 的 ApiSchema 一律置于 `args`（AjaxActionSchema args: ApiSchema）；data-source 取数走 `action`+`args`（DataSourceSchema 无顶层 `url`/`api` 字段，flux-core schema.ts L296-327）；form 提交走 `submitAction`；字符串 URL 不可作 crud/pivot/table 的 `source`（crud 服务端取数走 `loadAction`，先例 standard-crud.json L10-18；pivot/table 的 source 是内存数据入口，use-source-value 仅对 `{type:'source'}` 对象取数）——D5 深审勘误，以下各片段就地标注。
+
 ### 2.1 mall-sku-picker（S1，mobile，axe 分支 B）
 
 组件树（R2 L78 交互①-⑫ → L79 映射 + G15 近似）：
 
 ```
-page(mobile)
+page(mobile)   # testid: mall-sku-picker-root（D5 深审勘误 MIN-3：补主容器 testid 注）
 ├─ pull-refresh ─ infinite-scroll (loadmore → goodsFeed 分页)
 │   ├─ carousel 画廊 (goods.images, onChange) └ image-viewer 放大
 │   ├─ card 促销横幅: text tpl 大小字价格(repl-price≈G15) + countdown(onFinish 切态) + progress(抢购进度)
@@ -43,8 +45,9 @@ page(mobile)
 片段① SKU 求交定位（G16，formula/action 层；skuMatrix 由 data-source 预载）：
 
 ```jsonc
-{ "type": "data-source", "name": "skuMatrix", "url": "/r/ReplMall__goodsDetail",
-  "responseAdaptor": "return payload.data.goods.skuMatrix" },
+{ "type": "data-source", "name": "skuMatrix", "action": "ajax",
+  "args": { "url": "/r/ReplMall__goodsDetail", "responseAdaptor": "return payload.data.goods.skuMatrix" } },
+// D5 深审勘误（MAJ-10）：DataSourceSchema 无顶层 url/responseAdaptor（schema.ts L296-327），responseAdaptor 是 ApiSchema 字段须入 args——原写法永不取数，S1 求交全链失效
 { "type": "picker-view", "testid": "mall-sku-picker-spec-color",
   "columns": "${skuMatrix | ...规格列展开为 WheelPickerOption[][]}" }  // PickerViewSchema 属性为 columns 非 options（closure audit Major-1 勘误）；onChange → 求交表达式编排（见下）
 ```
@@ -85,7 +88,7 @@ page(mobile)
 
 ### 2.2 mall-distribution（S2，桌面，直接组合）
 
-组件树（R2 L86 交互①-⑩ → L87 映射）：`dashboard`（stat-tile×4 GMV/佣金/人数/待结算 + sparkline；echarts line 趋势）→ `crud` 佣金明细（query-filter+batch-bar+pagination ≥25 行，operation 列 审核）→ 导出按钮（download action，G6）→ `pivot-table` 层级透视（pivot:cell-click 下钻）→ `tree` 关系树（三级）+ `qrcode` 邀请码 → `dialog` 提现审核/打回（form+input-number+textarea 原因）→ batch-bar 结算批次入口（≈G17 调度 action 模拟）→ `input-table` 佣金规则配置（品类/金额区间→三级比例）→ page 权限层两视图裁剪（≈G17 SAAS-15）。
+组件树（R2 L86 交互①-⑩ → L87 映射；主容器 # testid: mall-distribution-root——D5 深审勘误 MIN-3）：`dashboard`（stat-tile×4 GMV/佣金/人数/待结算 + sparkline；echarts line 趋势）→ `crud` 佣金明细（query-filter+batch-bar+pagination ≥25 行，operation 列 审核）→ 导出按钮（download action，G6）→ `pivot-table` 层级透视（pivot:cell-click 下钻）→ `tree` 关系树（三级）+ `qrcode` 邀请码 → `dialog` 提现审核/打回（form+input-number+textarea 原因）→ batch-bar 结算批次入口（≈G17 调度 action 模拟）→ `input-table` 佣金规则配置（品类/金额区间→三级比例）→ page 权限层两视图裁剪（≈G17 SAAS-15）。
 
 片段① 导出（G6 登记冲突，走服务端；flux-guide/04 内置 `download` 动作）：
 
@@ -105,11 +108,14 @@ page(mobile)
 片段② 透视下钻（`pivot:cell-click`，pivot 包 pivot-events.ts L11）：
 
 ```jsonc
+{ "type": "data-source", "name": "distPivotRows", "action": "ajax",
+  "args": { "url": "/r/ReplMall__distPivot" } },
+// D5 深审勘误（MAJ-11）：字符串 URL 作 PivotTableSchema.source 按字面值透传（use-source-value.ts L8-17 仅 {type:'source'} 对象触发取数）→ 取数下沉 data-source，source 改表达式绑定
 {
   "type": "pivot-table",
   "testid": "mall-distribution-pivot",
-  "source": "/r/ReplMall__distPivot",
-  "rowDimensions": [{ "field": "level" }, { "field": "distributorName" }],
+  "source": "${distPivotRows}",
+  "rowDimensions": ["level", "distributorName"],   // D5 深审勘误（MAJ-14）：对象形式须 {dimensionKey}（PivotDimensionSchema.dimensionKey 必填，validator 明确拒绝 {field}），改字符串形式（D2 全文同款）
   "indicators": [
     { "field": "commissionAmount", "aggregationType": "SUM" },
     { "field": "orderCount", "aggregationType": "COUNT" },
@@ -126,20 +132,27 @@ page(mobile)
 
 ### 2.3 doc-ocr-workbench（O1，桌面，新 type 临时形态）
 
-组件树（R3 L21 交互①-⑩ → L22 映射）：`grid` 两栏 2fr/3fr——左 `image` 原件（preview 放大）+ `image-compare`（before=原件/after=识别参考整图，≈要素② 非 bbox）；右 `wizard` 四步（原件对照→字段确认→明细行→回流提交），步骤 2 内嵌 `detail-view` 逐字段确认（草稿+逐字段提交+再校验≈G20）+ `detail-field`（labelRemark 原值悬浮≈要素⑤、inputClassName 低置信高亮≈要素④）+ `badge` 置信度分档（≥0.9 高/0.7-0.9 中/<0.7 低）+ `input-table` 明细行（要素⑧）；步骤 4 `ocrCommit`（要素⑨）。
+组件树（R3 L21 交互①-⑩ → L22 映射；主容器 # testid: doc-ocr-workbench-root——D5 深审勘误 MIN-3）：`grid` 两栏 2fr/3fr——左 `image` 原件（preview 放大）+ `image-compare`（before=原件/after=识别参考整图，≈要素② 非 bbox）；右 `wizard` 四步（原件对照→字段确认→明细行→回流提交），步骤 2 内嵌 `detail-view` 逐字段确认（草稿+逐字段提交+再校验≈G20）+ `detail-field`（labelRemark 原值悬浮≈要素⑤、inputClassName 低置信高亮≈要素④）+ `badge` 置信度分档（≥0.9 高/0.7-0.9 中/<0.7 低）+ `input-table` 明细行（要素⑧）；步骤 4 `ocrCommit`（要素⑨）。
 
 片段① 逐字段确认（labelRemark+inputClassName，flux-core schema.ts L154/L158）：
 
 ```jsonc
+// D5 深审勘误（MAJ-12）：DetailViewSchema 无 fields/source（区域是 content（必填），数据走
+// data/scopePath，composite-schemas.ts L280-295）；逐字段用 detail-field（L70-84）；
+// labelRemark 须 FieldRemarkSchema 对象 {content}（flux-core schema.ts L137-142，
+// 字符串使 field-frame 读 .content 落空→原值悬浮失效）——原值取数下沉 data-source ocrCase。
 {
   "type": "detail-view",
   "testid": "doc-ocr-workbench-field-panel",
-  "source": "/r/ReplDoc__ocrCase?id=${caseId}",
-  "fields": [
+  "data": "${ocrCase}", // data-source ReplDoc__ocrCase?id=${caseId} 预载（或改 scopePath 绑定）
+  "content": [
     {
+      "type": "detail-field",
       "name": "invoiceNo",
       "label": "发票号码",
-      "labelRemark": "原值: ${fields.invoiceNo.originalValue}（置信度 ${fields.invoiceNo.confidence}）",
+      "labelRemark": {
+        "content": "原值: ${fields.invoiceNo.originalValue}（置信度 ${fields.invoiceNo.confidence}）",
+      },
       "inputClassName": "${fields.invoiceNo.confidence < 0.7 ? 'repl-low-confidence' : ''}",
       "required": true,
     },
@@ -188,16 +201,19 @@ page(mobile)
 
 ### 2.4 doc-hitl-inbox（O2，桌面，能力扩展）
 
-组件树（R3 L29 交互①-⑫ → L30 映射；八列契约=maker-checker 04，R3 L27）：`query-filter`（业务对象/动作/高危）→ `crud` 待办八列（时限升序，selection multiple + keepOnPageChange ←R4 §4.1 强制，onRowClick→dialog）+ `batch-bar` 批量通过（countTemplate 影响行数）→ `dialog`：`alert` staleness 横幅（过期禁用批准）+ `alert` 高危横幅 + `ai-suggestions` AI 预审建议 + `ai-tool-call` HITL 交接卡 + `tabs` 变更对比三视图（Mode A=labelRemark+inputClassName≈G22 / Mode B=tree 承载 diffTree≈G21 / Mode C=json-view rawRequest）+ form 意见（reject 必填）+ 批准/驳回按钮（reaction 联动）。
+组件树（R3 L29 交互①-⑫ → L30 映射；八列契约=maker-checker 04，R3 L27；主容器 # testid: doc-hitl-inbox-root——D5 深审勘误 MIN-3）：`query-filter`（业务对象/动作/高危）→ `crud` 待办八列（时限升序，selection multiple + keepOnPageChange ←R4 §4.1 强制，onRowClick→dialog）+ `batch-bar` 批量通过（countTemplate 影响行数）→ `dialog`：`alert` staleness 横幅（过期禁用批准）+ `alert` 高危横幅 + `ai-suggestions` AI 预审建议 + `ai-tool-call` HITL 交接卡 + `tabs` 变更对比三视图（Mode A=labelRemark+inputClassName≈G22 / Mode B=tree 承载 diffTree≈G21 / Mode C=json-view rawRequest）+ form 意见（reject 必填）+ 批准/驳回按钮（reaction 联动）。
 
 片段① 批量通过（跨页保留选中+影响行数；`$crud.selectionCount` 见 crud-renderer.tsx L216/L225）：
 
 ```jsonc
-{ "type": "crud", "testid": "doc-hitl-inbox-inbox-crud", "source": "/r/ReplDoc__inboxPage",
+{ "type": "crud", "testid": "doc-hitl-inbox-inbox-crud",
+  "loadAction": { "action": "ajax", "args": { "url": "/r/ReplDoc__inboxPage" } },   // D5 深审勘误（MAJ-11）：CrudSchema.source 是内存数组入参（crud-schema.ts L215），服务端取数走 loadAction（先例 standard-crud.json L10-18）——原字符串 URL 按字面值透传不取数
   "selection": { "type": "checkbox", "keepOnPageChange": true } },  // 时限升序由 mock 端点排序保证（04 契约，R3 L27）
-{ "type": "batch-bar", "testid": "doc-hitl-inbox-batch-approve", "label": "批量通过",
-  "countTemplate": "影响 ${selectionCount} 行",
-  "onClick": { "action": "ajax", "args": { "url": "/r/ReplDoc__batchApprove", "method": "post" } } }
+{ "type": "batch-bar", "testid": "doc-hitl-inbox-batch-approve",
+  "selectionPath": "$crud.selectedRowKeys",   // D5 复审轮1 R1 勘误：definition 级必填（batch-bar-definition.ts L18-31），缺省 selection 恒 []；crud 宿主平铺绑定（先例 antdpro-list.json L290）
+  "countTemplate": "批量通过：影响 ${count} 行",   // D5 深审勘误（MAJ-13）：BatchBarSchema 无 label（语义并入 countTemplate 文案）；countTemplate 在子作用域 {count,selectedRowKeys} 求值（batch-bar.tsx L103），${selectionCount} 不在该作用域
+  "actions": [ { "type": "button", "label": "批量通过",
+    "onClick": { "action": "ajax", "args": { "url": "/r/ReplDoc__batchApprove", "method": "post" } } } ] }   // D5 深审勘误（MAJ-13）：BatchBarSchema 无 onClick，批量动作放 actions
 ```
 
 片段② staleness 禁用批准（契约对齐 maker-checker 04，R3 L27；服务端兜底）：
@@ -210,19 +226,20 @@ page(mobile)
   "onClick": { "action": "ajax", "args": { "url": "/r/ReplDoc__approve", "method": "post" } } }
 ```
 
-片段③ 对比三视图：`tabs` 内 Mode B `{ "type": "tree", "testid": "doc-hitl-inbox-diff-tree", "source": "${review.diffTree}" }`、Mode C `{ "type": "json-view", "testid": "doc-hitl-inbox-diff-json", "value": "${review.rawRequest}" }`（Mode A 见 §2.3 同款 labelRemark/inputClassName）。
+片段③ 对比三视图：`tabs` 内 Mode B `{ "type": "tree", "testid": "doc-hitl-inbox-diff-tree", "data": "${review.diffTree}" }`（D5 深审勘误 MAJ-11c：TreeSchema 无 `source`，数据属性是 `data`——data/schemas.ts L267-279）、Mode C `{ "type": "json-view", "testid": "doc-hitl-inbox-diff-json", "value": "${review.rawRequest}" }`（Mode A 见 §2.3 同款 labelRemark/inputClassName）。
 
 HITL 卡复用口径（R3 L30）：`ai-tool-call` 为 AI 会话语境卡，inbox 复用由页面 schema 构造 toolCall/state 输入并接管持久化；`onApproval` → ajax 写回；engine 不自改 `state.approval`（ai-tool-call.tsx L24-41）。
 
 ### 2.5 iot-telemetry-device（V1，桌面，直接组合）
 
-组件树（R3 L41 交互①-⑥ → L42）：`form`+`query-filter`（deviceKey/metric/时间窗）→ `data-source` interval 轮询 → `stat-tile`×3+`sparkline` 最新值概览 + `echarts` line 实时曲线 → `status`+`mapping` 质量位（GOOD/UNCERTAIN/BAD，要素⑤ flux 侧预期）→ `crud` 告警联动（severity mapping 色，onRowClick→`dialog` ack/开始处理/关闭，AlarmLifecycleService 语义，R3 L39）。
+组件树（R3 L41 交互①-⑥ → L42；主容器 # testid: iot-telemetry-device-root——D5 深审勘误 MIN-3）：`form`+`query-filter`（deviceKey/metric/时间窗）→ `data-source` interval 轮询 → `stat-tile`×3+`sparkline` 最新值概览 + `echarts` line 实时曲线 → `status`+`mapping` 质量位（GOOD/UNCERTAIN/BAD，要素⑤ flux 侧预期）→ `crud` 告警联动（severity mapping 色，onRowClick→`dialog` ack/开始处理/关闭，AlarmLifecycleService 语义，R3 L39）。
 
 片段：
 
 ```jsonc
-{ "type": "data-source", "name": "telemetry", "url": "/r/ReplIot__telemetryQuery",
-  "interval": 5000 },  // trackExpression 已删：runtime 未实现（improvement-detail 登记为 DESIGN-GAP，closure audit Major-1 勘误）；轮询 scope 依赖由 interval+stopWhen+刷新参数承担，验证方案见 §3.3
+{ "type": "data-source", "name": "telemetry", "action": "ajax",
+  "args": { "url": "/r/ReplIot__telemetryQuery" },
+  "interval": 5000 },  // D5 深审勘误（MAJ-10，同 §2.1）：DataSourceSchema 无顶层 url——取数走 action+args（schema.ts L302-327，对齐 D3 M1）；trackExpression 已删：runtime 未实现（improvement-detail 登记为 DESIGN-GAP，closure audit Major-1 勘误）；轮询 scope 依赖由 interval+stopWhen+刷新参数承担，验证方案见 §3.3
 { "type": "stat-tile", "testid": "iot-telemetry-device-latest-tile-temperature", "title": "温度最新值",
   "value": "${telemetry.latest.temperature}", "sparkline": "${telemetry.series.temperature}" },  // sparkline 字段收 number[] 表达式（stat-tile-renderer-definition.ts L63）
 { "type": "echarts", "testid": "iot-telemetry-device-trend-chart", "option": "${telemetry.chartOption}" }
@@ -232,7 +249,7 @@ HITL 卡复用口径（R3 L30）：`ai-tool-call` 为 AI 会话语境卡，inbox
 
 ### 2.6 iot-ota-rollout（V2，桌面，直接组合）
 
-组件树（R3 L49 交互①-⑦ → L50）：`crud` 固件列表（input-file 上传/verifySignature/废弃）→ `wizard` 灰度指派三步（选设备→分批→确认下发，onStepCommit 门禁，内嵌 table 多选）→ `steps` 八态（QUEUED→INITIATED→DOWNLOADING→DOWNLOADED→VERIFIED→UPDATING→UPDATED，FAILED=error 分叉）→ `timeline` statusTime（items.time=statusTime）→ `table` 进度矩阵（设备×批次×状态+lastError，mapping 状态色）→ `button-group` 门控（推进/暂停→dialog）→ `dialog` 回滚确认（alert ROLLED_BACK+textarea 原因）。断点续传（要素⑦）不呈现（D1 §1 #20）。
+组件树（R3 L49 交互①-⑦ → L50；主容器 # testid: iot-ota-rollout-root——D5 深审勘误 MIN-3）：`crud` 固件列表（input-file 上传/verifySignature/废弃）→ `wizard` 灰度指派三步（选设备→分批→确认下发，onStepCommit 门禁，内嵌 table 多选）→ `steps` 八态（QUEUED→INITIATED→DOWNLOADING→DOWNLOADED→VERIFIED→UPDATING→UPDATED，FAILED=error 分叉）→ `timeline` statusTime（items.time=statusTime）→ `table` 进度矩阵（设备×批次×状态+lastError，mapping 状态色）→ `button-group` 门控（推进/暂停→dialog）→ `dialog` 回滚确认（alert ROLLED_BACK+textarea 原因）。断点续传（要素⑦）不呈现（D1 §1 #20）。
 
 片段：
 
@@ -248,7 +265,7 @@ HITL 卡复用口径（R3 L30）：`ai-tool-call` 为 AI 会话语境卡，inbox
 
 ### 2.7 iot-geofence-videowall（V3，桌面，新 type 临时形态，axe 分支 C）
 
-组件树（R3 L57 交互①-⑦ → L58，收窄见 §6）：`grid` 左图右墙（3fr/2fr）——左 `map`（mapType pin、pinData、cluster、geojsonSource 围栏圆回显非交互、onClick 联动）+ 左下 `table` 事件列表（interval 轮询增量）+`timeline` 事件流；右 `grid` 视频墙（`video`×4 mp4 样例，controls/muted，`card` 包裹通道名+status）+ `drawer` 通道树（tree，点播控制仅 UI 摆放）。
+组件树（R3 L57 交互①-⑦ → L58，收窄见 §6；主容器 # testid: iot-geofence-videowall-root——D5 深审勘误 MIN-3）：`grid` 左图右墙（3fr/2fr）——左 `map`（mapType pin、pinData、cluster、geojsonSource 围栏圆回显非交互、onClick 联动）+ 左下 `table` 事件列表（interval 轮询增量）+`timeline` 事件流；右 `grid` 视频墙（`video`×4 mp4 样例，controls/muted，`card` 包裹通道名+status）+ `drawer` 通道树（tree，点播控制仅 UI 摆放）。
 
 片段① map 围栏回显+pin 联动（事件 key `onClick`，payload `map:feature-click`，map-renderer-definitions.ts L223-249；R3 L58"feature-click payload"同一事物）：
 
@@ -478,7 +495,7 @@ HITL 卡复用口径（R3 L30）：`ai-tool-call` 为 AI 会话语境卡，inbox
 | content                      | carousel（L614 items/onChange）/image（L232 preview）/image-compare（L205 before/after/defaultPosition/orientation）/card（L158）/cards（L297）/progress（L95）/qrcode（L653 value/size/level）/status（L495）/mapping（L445）/alert（L381 level: info\|success\|warning\|error）/json-view（L261）/video（L596 src/poster/controls/muted/loop）                                                               |
 | data                         | crud（CrudSelectionConfig L172 keepOnPageChange；onRowClick L297；$crud.selectionCount crud-renderer.tsx L216/L225）/table/batch-bar（countTemplate batch-bar.tsx L99）/stat-tile/sparkline/echarts（9 事件 onClick/onDblClick/onMouseOver/onMouseOut/onMouseDown/onMouseUp/onContextMenu/onDataZoom/onLegendSelectChanged，echarts-renderer-definition.ts L23-71）/tree/query-filter/data-source/list/mapping |
 | pivot                        | pivot-table（schemas.ts L62 totals/L75 rowDimensions/L76 columnDimensions/L77 indicators；`pivot:cell-click` pivot-events.ts L11）                                                                                                                                                                                                                                                                             |
-| layout                       | wizard（steps/formId/beforeEnter/beforeLeave/statusPath/linear/onStepCommit/onStepError，schemas.ts L29-70）/steps（items value/title/status wait\|process\|finish\|error，L280-317）/timeline（items value/time/title/detail/icon/level，L326-360）/grid（items colSpan/columns）/page/button-group（selectionMode）                                                                                          |
+| layout                       | wizard（steps/formId/beforeEnter/beforeLeave/statusPath/linear/onStepCommit/onStepError，schemas.ts L13-71——D5 深审勘误 MIN-5：原引 L29-70，实为 WizardStepSchema L13-33 + WizardSchema L36-71）/steps（items value/title/status wait\|process\|finish\|error，L280-317）/timeline（items value/time/title/detail/icon/level，L326-360）/grid（items colSpan/columns）/page/button-group（selectionMode）      |
 | basic                        | badge/tabs/dialog/drawer/text/flex/container                                                                                                                                                                                                                                                                                                                                                                   |
 | form                         | input-number/input-text/textarea/select/button-group-select/date-range/user-select                                                                                                                                                                                                                                                                                                                             |
 | form-advanced                | detail-view（detail-view/ 目录 detail-draft-controller.ts 草稿+再校验）/input-table/input-file/input-image/combo/picker                                                                                                                                                                                                                                                                                        |

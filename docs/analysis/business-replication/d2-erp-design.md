@@ -30,6 +30,7 @@
 - widget 类（table/crud/kanban/gantt/pivot-table/barcode-input/mobile 族）为自样式控件，内部布局不经页面 schema 干预。
 - schema `className` 为静态字符串；动态选中态用 `visible: "${expr}"` 双渲染；配色走 CSS 变量；不引 ThemeProvider。
 - testid（D1 §3）：主容器 `<pageId>-root`、关键元素 `<pageId>-<element>`（经 `props.meta.testid` 呈现）。
+- **统一勘误注（2026-10-30，D5 深审）**：全文 ajax 的 ApiSchema 一律置于 `args`（AjaxActionSchema args: ApiSchema，flux-core types/actions.ts L171-173）；data-source 取数走 `action`+`args`（DataSourceSchema 无 `api`/顶层 `url` 字段，schema.ts L296-327）；form 提交走 `submitAction`（FormSchema 无 `api` 字段）——D5 深审勘误，以下各片段就地标注。
 
 ### 2.1 wms-pda-receiving（W1，P0，mobile 族整页）
 
@@ -59,10 +60,10 @@ name: skuBarcode
 formats: [code_128, qr_code]
 continuousScan: true
 validate:                        # 提交时原子校验（上游明示形态，兜底）
-  action: { action: ajax, api: { url: /r/ReplWms__asnGet?barcode=${skuBarcode} } }
+  action: { action: ajax, args: { url: /r/ReplWms__asnGet?barcode=${skuBarcode} } }   # D5 深审勘误：ajax 的 ApiSchema 置于 args（原误写 api:，dispatch 即报 "ajax requires args payload"）
   message: 条码未在 ASN 明细中登记
 onScan:                          # 扫码即远程校验回填（G3：纯编排，非新 type）
-  - { action: ajax, api: { url: /r/ReplWms__asnGet, params: { barcode: ${skuBarcode} } }, adaptor: payload.data }
+  - { action: ajax, args: { url: /r/ReplWms__asnGet, params: { barcode: ${skuBarcode} }, responseAdaptor: "return payload.data" } }   # D5 深审勘误：api:→args:；adaptor:→responseAdaptor（ApiSchema 属性名）
   - { action: setValues, args: { path: ./, values: { skuName: ${skuName}, expectedQty: ${expectedQty} } } }
   - { action: showToast, args: { level: success, message: 校验通过，请录入数量 } }
 onScanError:
@@ -118,8 +119,8 @@ columnAggregate: { fn: sum, field: totalQty, label: 件数 }
 draggable: true
 keyboardReorder: { enabled: true }  # 键盘重排与拖拽解耦（focus 路径）
 onCardMove:                       # G2 绑定语义（C1/W2 共用，§3.3）
-  - { action: ajax, api: { method: post, url: /r/ReplWms__waveMove,
-      data: { waveId: ${card.id}, fromStatus: ${fromColumnId}, toStatus: ${toColumnId} } } }
+  - { action: ajax, args: { method: post, url: /r/ReplWms__waveMove,
+      data: { waveId: ${card.id}, fromStatus: ${fromColumnId}, toStatus: ${toColumnId} } } }   # D5 深审勘误：api:→args:
   - { action: refreshSource, targetId: waveBoard }  # refreshSource 契约为顶层 targetId（built-in-actions L217-227，args.sourceName 无消费方——二轮复审勘误）
 ---
 type: input-table
@@ -213,7 +214,7 @@ cardTemplate:
 draggable: true                  # 拖拽为 flux 侧增强复刻；上游 dialog 流转保留为备径
 onCardMove:
   - action: ajax
-    api:
+    args:                         # D5 深审勘误：api:→args:（与 §2.4 片段 2 quickSaveAction args 形态对齐）
       method: post
       url: /r/ReplCrm__moveStage
       data: { leadId: ${card.id}, toStageId: ${toColumnId} }
@@ -294,7 +295,7 @@ page
 └─ flex stack-column          # testid: crm-sales-dashboard-root
    ├─ query-filter            # periodId/territoryId/teamId；onSubmit 级联（refreshSource 顶层 targetId ×4，勘误后口径）
    └─ dashboard               # cols:12 网格
-      ├─ panel value ×4       # KPI 阵列（漏斗总额/转化率/预测达成/配额完成）
+      ├─ panel stat-tile ×4   # KPI 阵列（漏斗总额/转化率/预测达成/配额完成）——D5 深审勘误：原误写 panel value（type:'value' 全仓未注册，registry.has 不命中被跳过、面板不渲染）
       ├─ panel echarts        # 月度趋势 line + onClick 钻取（G8）
       ├─ panel chart          # 漏斗近似 bar（G1）
       ├─ panel echarts        # 类别分布 pie
@@ -309,8 +310,8 @@ testid: crm-sales-dashboard-grid
 cols: 12
 rowHeight: 48
 panels:
-  - { id: kpi-total, type: value, x: 0, y: 0, w: 3, h: 2, title: 漏斗总额,
-      props: { value: ${dashboardKpi.funnelAmount}, prefix: ￥ } }
+  - { id: kpi-total, type: stat-tile, x: 0, y: 0, w: 3, h: 2, title: 漏斗总额,
+      props: { value: ${dashboardKpi.funnelAmount}, prefix: ￥ } }   # D5 深审勘误：type:'value'→'stat-tile'（已注册 renderer，props 形状不变；×4 同改）
   - { id: trend, type: echarts, x: 0, y: 2, w: 8, h: 5, title: 月度趋势,
       props:
         option:
@@ -360,14 +361,14 @@ formats: [qr_code, code_128]
 batchMode: true                  # 连续扫码进队列、批量提交（R4 §1 I1「直接对口」）
 scanButton: true
 onScan:
-  - { action: ajax, api: { method: post, url: /r/ReplItam__stockTakeScan,
-      data: { takeId: ${takeId}, assetBarcode: ${assetBarcode} } } }
+  - { action: ajax, args: { method: post, url: /r/ReplItam__stockTakeScan,
+      data: { takeId: ${takeId}, assetBarcode: ${assetBarcode} } } }   # D5 深审勘误：api:→args:
   - { action: setValue, args: { path: scannedCount, value: ${scannedCount} } }
 onScanError: [ { action: showToast, args: { level: error, message: ${msg} } } ]  # miss/duplicate
 ---
 type: batch-bar
 testid: itam-asset-inventory-batch-bar
-selectionPath: $crud.asset-crud.selectedRowKeys
+selectionPath: $crud.selectedRowKeys   # D5 复审轮1 R2 勘误：crud 绑定为平铺 $crud（crud-renderer.tsx L225，无 id 嵌套机制；全仓 4 先例均平铺）
 countTemplate: 已选 ${count} 台设备
 clearTarget: asset-crud
 actions: [ { type: button, label: 批量打印标签, onClick: { action: showToast, args: { level: info, message: 打印任务已生成 } } } ]
@@ -421,8 +422,8 @@ onSubmit: [ { action: refreshSource, targetId: depreciationKpi } ]  # 顶层 tar
 type: data-source                # 五个 data-source 以 sendOn 绑定同过滤变量（示意两条）
 name: depreciationKpi
 action: ajax
-api: { url: /r/ReplItam__depreciationKpi, params: { period: ${period} } }
-sendOn: ${period != null}
+args: { url: /r/ReplItam__depreciationKpi, params: { period: ${period} } }   # D5 深审勘误：data-source 无 api/顶层 url 字段，取数走 action+args（ActionDataSourceSchema，对齐 D3 §2.4 写法）
+sendOn: period != null           # raw 布尔表达式，无 ${} 包装（编译器自行再包 ${...}，二次包装即非法表达式）——D5 深审勘误
 initFetch: true
 ---
 type: pivot-table
@@ -447,7 +448,7 @@ indicators:
 | W3  | 直接组合；G6、G7       | pivot-table + stat-tile + query-filter + dialog/table + status/card + button 导出                                                                                  | G6/G7          |
 | C1  | 直接组合；G1、G2       | kanban（columnsConfig/onCardMove/columnAggregate）+ table quick-edit + affixRow + stat-tile + chart bar 近似 + status/mapping                                      | G1/G2          |
 | C2  | 直接组合；—            | tabs + detail-view + timeline + table/cards + picker + calendar + drawer                                                                                           | —              |
-| C3  | 直接组合；G1、G8       | dashboard（value/echarts/chart/table panels）+ query-filter 级联                                                                                                   | G1/G8          |
+| C3  | 直接组合；G1、G8       | dashboard（stat-tile/echarts/chart/table panels——D5 深审勘误：panel value→stat-tile，同 §2.6）+ query-filter 级联                                                  | G1/G8          |
 | I1  | 直接组合；—            | crud + query-filter + batch-bar + barcode-input batchMode + table（status/mapping）+ diff-view + drawer                                                            | —              |
 | I2  | 直接组合；G6           | stat-tile ×5 + chart pie/line + pivot-table + crud + query-filter + button 导出                                                                                    | G6             |
 
@@ -509,27 +510,28 @@ indicators:
 | get  | /r/ReplWms\_\_ledgerReport    | {downloadUrl}（format=xlsx/pdf）                  | format 非法 → `unsupported format`（G6）       | W3  |
 | get  | /r/ReplWms\_\_reconCheck      | {consistent, driftCount, message}                 | 钩子 forceReconDrift 驱动不一致态              | W3  |
 
-实体字段：`Asn{asnNo, supplierName, expectedQty, receivedQty, status, lines:[{skuBarcode, skuName, expectedQty, suggestedLocation}]}`；`WmsTaskRecord{id, time, type, asnNo, skuName, qty, locationCode, result}`；`Wave{id:wave-*, code, status:PLANNED|RELEASED|PICKING|DONE, orderCount, totalQty, zone, priority}`；`WaveLine{lineNo, skuBarcode, skuName, locationCode, qty, pickedQty, unitPrice, amount}`；`GanttTask{id, name, start, end, zone, sequence, progress}`（gantt 直读形状）；`StockLedgerRow{warehouse, locationCode, materialCode, materialName, batchNo, month, qtyIn, qtyOut, qtyBalance}`；`MoveRecord{moveNo, direction, qty, occurredAt}`。
+实体字段：`Asn{asnNo, supplierName, expectedQty, receivedQty, status, lines:[{skuBarcode, skuName, expectedQty, suggestedLocation}]}`；`WmsTaskRecord{id, time, type, asnNo, skuName, qty, locationCode, result}`；`Wave{id:wave-*, code, status:PLANNED|RELEASED|PICKING|DONE, orderCount, totalQty, zone, priority}`；`WaveLine{lineNo, skuBarcode, skuName, locationCode, qty, pickedQty, unitPrice, amount}`；`GanttTask{id, text, start, end, zone, progress}`（text 必填、无 name 字段；gantt 无 sequence 字段，排序由 mock 侧按 sequence 预排后返回有序数组——D5 深审勘误；zone 为 mock 侧附加过滤字段）；`StockLedgerRow{warehouse, locationCode, materialCode, materialName, batchNo, month, qtyIn, qtyOut, qtyBalance}`；`MoveRecord{moveNo, direction, qty, occurredAt}`。
 
 ### 4.2 crm 模块（C1/C2/C3）
 
-| 方法 | URL                            | 返回形状（data）                                                                           | 错误分支                                                         | 页    |
-| ---- | ------------------------------ | ------------------------------------------------------------------------------------------ | ---------------------------------------------------------------- | ----- |
-| get  | /r/ReplCrm\_\_stageFindPage    | {items:Stage[], total}（orderBy sequence）                                                 | —                                                                | C1    |
-| get  | /r/ReplCrm\_\_opportunityBoard | flat BoardData（列=stage，卡=lead）                                                        | —                                                                | C1    |
-| post | /r/ReplCrm\_\_moveStage        | {leadId, stageId}（单向递增守卫）                                                          | 回退 → `stage rollback rejected`；赢单列 → `won stage read-only` | C1    |
-| post | /r/ReplCrm\_\_updateRevenue    | {leadId, expectedRevenue}                                                                  | 金额<0 → `invalid amount`                                        | C1    |
-| get  | /r/ReplCrm\_\_funnelSummary    | {totalLeads, totalAmount, wonAmount, stages:[{stageId,label,leadCount,amount,conversion}]} | forceKpiError 钩子 → status:1                                    | C1/C3 |
-| get  | /r/ReplCrm\_\_partnerFindPage  | {items:Partner[], total}                                                                   | —                                                                | C2    |
-| get  | /r/ReplCrm\_\_partnerGet       | {partner, addresses[], contacts[]}                                                         | id miss → `partner not found`                                    | C2    |
-| get  | /r/ReplCrm\_\_activityTimeline | {items:Activity[]}（DESC+着色）                                                            | —                                                                | C2    |
-| get  | /r/ReplCrm\_\_leadByPartner    | {items:Lead[], total}（外键过滤）                                                          | —                                                                | C2    |
-| get  | /r/ReplCrm\_\_activityCalendar | {events:[{id,date,title,type}]}                                                            | —                                                                | C2    |
-| post | /r/ReplCrm\_\_activityCreate   | {id, activityDate}                                                                         | content 缺失 → `content required`                                | C2    |
-| get  | /r/ReplCrm\_\_dashboardKpi     | {kpis:[funnelAmount/conversion/forecastRate/quotaRate]}                                    | periodId 非法 → `invalid period`                                 | C3    |
-| get  | /r/ReplCrm\_\_dashboardTrend   | {months[], amounts[], funnelStages:[{name,value}]}                                         | —                                                                | C3    |
-| get  | /r/ReplCrm\_\_forecastAccuracy | {forecast, actual, accuracy}                                                               | —                                                                | C3    |
-| get  | /r/ReplCrm\_\_reportDownload   | {downloadUrl}（report/format）                                                             | 未知 report → `unknown report`（G6）                             | C3    |
+| 方法 | URL                            | 返回形状（data）                                                                                                 | 错误分支                                                         | 页    |
+| ---- | ------------------------------ | ---------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------- | ----- |
+| get  | /r/ReplCrm\_\_stageFindPage    | {items:Stage[], total}（orderBy sequence）                                                                       | —                                                                | C1    |
+| get  | /r/ReplCrm\_\_opportunityBoard | flat BoardData（列=stage，卡=lead）                                                                              | —                                                                | C1    |
+| post | /r/ReplCrm\_\_moveStage        | {leadId, stageId}（单向递增守卫）                                                                                | 回退 → `stage rollback rejected`；赢单列 → `won stage read-only` | C1    |
+| post | /r/ReplCrm\_\_updateRevenue    | {leadId, expectedRevenue}                                                                                        | 金额<0 → `invalid amount`                                        | C1    |
+| get  | /r/ReplCrm\_\_funnelSummary    | {totalLeads, totalAmount, wonAmount, stages:[{stageId,label,leadCount,amount,conversion}]}                       | forceKpiError 钩子 → status:1                                    | C1/C3 |
+| get  | /r/ReplCrm\_\_partnerFindPage  | {items:Partner[], total}                                                                                         | —                                                                | C2    |
+| get  | /r/ReplCrm\_\_partnerGet       | {partner, addresses[], contacts[]}                                                                               | id miss → `partner not found`                                    | C2    |
+| get  | /r/ReplCrm\_\_activityTimeline | {items:Activity[]}（DESC+着色）                                                                                  | —                                                                | C2    |
+| get  | /r/ReplCrm\_\_leadByPartner    | {items:Lead[], total}（外键过滤）                                                                                | —                                                                | C2    |
+| get  | /r/ReplCrm\_\_activityCalendar | {events:[{id,date,title,type}]}                                                                                  | —                                                                | C2    |
+| post | /r/ReplCrm\_\_activityCreate   | {id, activityDate}                                                                                               | content 缺失 → `content required`                                | C2    |
+| get  | /r/ReplCrm\_\_dashboardKpi     | {kpis:[funnelAmount/conversion/forecastRate/quotaRate]}                                                          | periodId 非法 → `invalid period`                                 | C3    |
+| get  | /r/ReplCrm\_\_dashboardTrend   | {months[], amounts[], funnelStages:[{name,value}]}                                                               | —                                                                | C3    |
+| get  | /r/ReplCrm\_\_drillRows        | {items, total}（echarts onClick 钻取，按 ${params.name} 过滤——D5 深审勘误：补登记，原漏登致 §5 断言②无端点落点） | name miss → 空集（batchTrace 同款）                              | C3    |
+| get  | /r/ReplCrm\_\_forecastAccuracy | {forecast, actual, accuracy}                                                                                     | —                                                                | C3    |
+| get  | /r/ReplCrm\_\_reportDownload   | {downloadUrl}（report/format）                                                                                   | 未知 report → `unknown report`（G6）                             | C3    |
 
 实体字段：`Stage{id:stage-*, name, sequence, probabilityBand}`；`Lead 卡 data{id:lead-*, customerName, expectedRevenue, probability:high|mid|low, stageId, ownerName}`；`Partner{id, code, name, level, ownerName, industry, address}`；`Activity{id, partnerId, activityDate, type:VISIT|CALL|NOTE|DEMO, title, content}`；`关联 Lead{leadId, name, stageName, amount, closeDate}`。
 
@@ -586,20 +588,20 @@ indicators:
 
 本域 8 页 R4 §1 分级全为直接组合，**无新 type 页**（「新 type」缺口仅 G5，watch-only 不实现）：
 
-| 项                | 页    | 做 / 不做                                                                                                                        | 裁决引用                                                                         |
-| ----------------- | ----- | -------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
-| G5 库位 2D 平面图 | W2    | 做：gantt 时间轴形态验收（sequence + zone 列 + zoomLevels + onZoomChange）；不做 2D 平面/动线绘制                                | R4 §1 W2 行；R4 §2 G5 watch-only 需求行，不实现不登记                            |
-| G6 导出内建       | W3/I2 | 做：button → ajax → {downloadUrl} 服务端报表下载 + §4 端点；不做内建 export 字段                                                 | R4 §3-1（improvement L23/L182）；L3.3 declarative download（proposed）落地后替换 |
-| G1 funnel/gauge   | C1/C3 | 做：漏斗以 chart `'bar'` 水平条近似（阶段降序+conversion 标签）；gauge 指标以 value panel/stat-tile 承载；不做 funnel/gauge 图型 | R4 §2 G1 → improvement chart P3 族；echarts 透传不受 L183 约束                   |
-| G4 单手操作流     | W1    | 做：floating-bubble + action-sheet 近似；不做专用单手布局/手势族                                                                 | R4 §1 W1 / §2 G4                                                                 |
-| G3 扫码即校验回填 | W1    | 做：onScan → ajax → setValues 编排 + validate.action 兜底；不做专用 type                                                         | R4 §2 G3；R1 §1 W1 L23                                                           |
-| W1 离线条         | W1    | 做：notice-bar 横幅〔flux 侧预期〕+ barcode-input 自带队列提示；不做真离线引擎（钩子仅切 UI 态）                                 | R1 §1 W1 L21-⑩（上游仅明示 L89 调研项）                                          |
-| C1 拖拽增强       | C1    | 做：kanban 拖拽 moveStage 为增强验收路径；上游 dialog 流转+赢单列只读保留为备径                                                  | R1 §2 C1 L47/L49-③；R4 §2 G2                                                     |
-| I1 diff-view      | I1    | 做：差异表（status/mapping）为主验收面；diff-view split 为 flux 侧预期增强，二者并存                                             | R1 §3 I1 L76-⑥/L78；D1 §1 临时形态列                                             |
-| C2 calendar 回归  | C2    | 做：月/周渲染与 onEventClick 回归验证；拖拽建活动不作断言门槛                                                                    | R4 §1 C2 行；R1 §2 C2 L55/L57-⑦                                                  |
+| 项                | 页    | 做 / 不做                                                                                                                                                                   | 裁决引用                                                                         |
+| ----------------- | ----- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| G5 库位 2D 平面图 | W2    | 做：gantt 时间轴形态验收（sequence + zone 列 + zoomLevels + onZoomChange）；不做 2D 平面/动线绘制                                                                           | R4 §1 W2 行；R4 §2 G5 watch-only 需求行，不实现不登记                            |
+| G6 导出内建       | W3/I2 | 做：button → ajax → {downloadUrl} 服务端报表下载 + §4 端点；不做内建 export 字段                                                                                            | R4 §3-1（improvement L23/L182）；L3.3 declarative download（proposed）落地后替换 |
+| G1 funnel/gauge   | C1/C3 | 做：漏斗以 chart `'bar'` 水平条近似（阶段降序+conversion 标签）；gauge 指标以 stat-tile 承载（D5 复审轮1 R4 勘误：value panel 为 MAJ-3 旧措辞残留）；不做 funnel/gauge 图型 | R4 §2 G1 → improvement chart P3 族；echarts 透传不受 L183 约束                   |
+| G4 单手操作流     | W1    | 做：floating-bubble + action-sheet 近似；不做专用单手布局/手势族                                                                                                            | R4 §1 W1 / §2 G4                                                                 |
+| G3 扫码即校验回填 | W1    | 做：onScan → ajax → setValues 编排 + validate.action 兜底；不做专用 type                                                                                                    | R4 §2 G3；R1 §1 W1 L23                                                           |
+| W1 离线条         | W1    | 做：notice-bar 横幅〔flux 侧预期〕+ barcode-input 自带队列提示；不做真离线引擎（钩子仅切 UI 态）                                                                            | R1 §1 W1 L21-⑩（上游仅明示 L89 调研项）                                          |
+| C1 拖拽增强       | C1    | 做：kanban 拖拽 moveStage 为增强验收路径；上游 dialog 流转+赢单列只读保留为备径                                                                                             | R1 §2 C1 L47/L49-③；R4 §2 G2                                                     |
+| I1 diff-view      | I1    | 做：差异表（status/mapping）为主验收面；diff-view split 为 flux 侧预期增强，二者并存                                                                                        | R1 §3 I1 L76-⑥/L78；D1 §1 临时形态列                                             |
+| C2 calendar 回归  | C2    | 做：月/周渲染与 onEventClick 回归验证；拖拽建活动不作断言门槛                                                                                                               | R4 §1 C2 行；R1 §2 C2 L55/L57-⑦                                                  |
 
 ## 附录 A. flux type 名核对清单（live，2026-10-30）
 
-basic：page/container/flex/text/button/badge/icon/dialog/drawer/tabs；form：form/input-text/input-number/textarea/select/switch/radio-group/checkbox-group/input-date/fieldset（+checkbox 等）；form-advanced：input-table/detail-view/condition-builder/picker/combo；data：table/crud/list/chart（bar|line|pie|scatter|area|heatmap）/echarts/stat-tile/query-filter/data-source/batch-bar/pagination/statistics/tree；pivot：pivot-table；dashboard：dashboard（panel `value`）；scheduling：kanban/gantt/calendar/barcode-input；mobile：pull-refresh/infinite-scroll/swipe-cell/notice-bar/wheel-picker/wheel-cascader/number-keyboard/action-sheet/floating-bubble/floating-panel/countdown（+picker-view）；layout：timeline/grid/steps/responsive（+collapse/button-group/dropdown-button/wizard/resizable 可用未引用）；content：alert/status/mapping/card/cards/html/link/diff-view/qrcode/image；action：ajax/submitForm/openDialog/openDrawer/closeSurface/refreshTable/refreshSource/setValue/setValues/showToast/navigate/component:method/ns:method。属性契约出处：kanban.types.ts L50-102、gantt.types.ts L166-223、barcode-input.types.ts L8-55、pivot-events.ts L11-15、echarts-renderer-definition.ts L23-69、form-advanced/src/composite-field/composite-schemas.ts L116-158、diff-view-definition.ts L15-50、mobile/schemas.ts、layout/schemas.ts L341-361。
+basic：page/container/flex/text/button/badge/icon/dialog/drawer/tabs；form：form/input-text/input-number/textarea/select/switch/radio-group/checkbox-group/input-date/fieldset（+checkbox 等）；form-advanced：input-table/detail-view/condition-builder/picker/combo；data：table/crud/list/chart（bar|line|pie|scatter|area|heatmap）/echarts/stat-tile/query-filter/data-source/batch-bar/pagination/statistics/tree；pivot：pivot-table；dashboard：dashboard（panel `stat-tile`——D5 深审勘误：原 `value` 全仓未注册）；scheduling：kanban/gantt/calendar/barcode-input；mobile：pull-refresh/infinite-scroll/swipe-cell/notice-bar/wheel-picker/wheel-cascader/number-keyboard/action-sheet/floating-bubble/floating-panel/countdown（+picker-view）；layout：timeline/grid/steps/responsive（+collapse/button-group/dropdown-button/wizard/resizable 可用未引用）；content：alert/status/mapping/card/cards/html/link/diff-view/qrcode/image；action：ajax/submitForm/openDialog/openDrawer/closeSurface/refreshTable/refreshSource/setValue/setValues/showToast/navigate/component:method/ns:method。属性契约出处：kanban.types.ts L50-102、gantt.types.ts L166-223、barcode-input.types.ts L8-55、pivot-events.ts L11-15、echarts-renderer-definition.ts L23-69、form-advanced/src/composite-field/composite-schemas.ts L116-158、diff-view-definition.ts L15-50、mobile/schemas.ts、layout/schemas.ts L341-361。
 
-引用自查：R1/R4/D1 节号按 2026-10-30 版本引用；§2 片段 api.url 与 §4 端点逐条一致（wms 16 / crm 15 / itam 12）。
+引用自查：R1/R4/D1 节号按 2026-10-30 版本引用；§2 片段端点（args.url / source 表达式对应 data-source）与 §4 端点逐条一致（wms 16 / crm 16 / itam 12——D5 深审勘误：crm 补登 drillRows 后 15→16）。
