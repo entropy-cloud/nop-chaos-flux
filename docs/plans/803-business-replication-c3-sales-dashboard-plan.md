@@ -83,16 +83,16 @@ Exit Criteria:
 
 ## Closure Gates
 
-- [ ] in-scope 工作全部落地（C3 页 + mock delegate + roadmap 回写）
-- [ ] 行为/契约结果已达成（D2 §5 C3 断言清单全绿，--retries=0）
-- [ ] 必要 focused verification 已完成
-- [ ] 不存在被静默降级的 in-scope 缺口
-- [ ] 受影响 owner docs 已同步（daily log；设计勘误如有）
+- [x] in-scope 工作全部落地（C3 页 + mock delegate + roadmap 回写）
+- [x] 行为/契约结果已达成（D2 §5 C3 断言清单全绿，--retries=0）
+- [x] 必要 focused verification 已完成
+- [x] 不存在被静默降级的 in-scope 缺口
+- [x] 受影响 owner docs 已同步（daily log；设计勘误如有）
 - [x] 独立子 agent（fresh session）closure audit 通过并记录证据
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`（触达面零新增红口径）
-- [ ] `pnpm test`（触达面零新增红口径）
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`（触达面零新增红口径）
+- [x] `pnpm test`（触达面零新增红口径）
 - [x] `pnpm check`（触达面零新增红——scanner-baselines 增量未发生〔dashboard 族入注册后引用已 retained〕；新增 1 处 data-blob-href-without-download 已按 W3/plan 820 先例就地豁免登记〔mock 层无 download 语义、运行时 downloadBlob 无顶层导航〕→ 全链 exit 0；oversized 3 exempt 既有）
 
 ## Deferred But Adjudicated
@@ -110,7 +110,7 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: C3 全链落地（dashboard 网格+stat-tile×4+echarts 趋势 onClick 参数链+漏斗 bar+级联多源刷新+panel table 报表区块；render-host 补注册 registerDashboardRenderers；panels PAGE_DATA 载体〔勘误①〕）。closure audit **approved** 零 Blocker/Major（3 Minor 随收口处理）。**含一处产品代码修复**：flux-renderers-data echarts-renderer evaluationBindings 补齐（IS-5 同族，`${event.name}` 静默失败）+ echarts-events-bridge 新用例——审计员核验语义正确（map-renderer 同款）且 data 包全量 1264/1264 不破坏。审计员独立实跑 C3 9/9、axe 13/13、回归 50/50、unit 547/547、全链 check exit 0。C3 可关，M3 累计 6/21 页。
+Status Note: C3 全链落地（dashboard 网格+stat-tile×4+echarts 趋势 onClick 参数链+漏斗 bar+级联多源刷新+panel table 报表区块；render-host 补注册 registerDashboardRenderers；panels PAGE_DATA 载体〔勘误①〕）。closure audit **approved** 零 Blocker/Major（3 Minor 随收口处理）。**含一处产品代码修复**：flux-renderers-data echarts-renderer evaluationBindings 补齐（IS-5 同族，`${event.name}` 静默失败）+ echarts-events-bridge 新用例（文件 E2.1 已存在，新增断言用例+适配两断言——审计 Minor-1 措辞校准）——审计员核验语义正确（map-renderer 同款）且 data 包全量 1264/1264 不破坏。审计员独立实跑 C3 9/9、axe 13/13、回归 50/50、unit 547/547、全链 check exit 0。C3 可关，M3 累计 6/21 页。
 
 Closure Audit Evidence:
 
