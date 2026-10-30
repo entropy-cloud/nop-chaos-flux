@@ -1,6 +1,6 @@
 # 801 M3-C1 CRM 商机漏斗看板页复刻（business-page-replication roadmap M3-C1）
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-10-30
 > Source: `docs/backlog/business-page-replication-roadmap.md` §2 M3-C1（依赖 M2 done；前置 W1-W3 done——设施与 crm mock 基座就绪口径）
 > Related: D1 总体设计；D2 §2.4/§3.1/§3.3/§4.2/§5（C1 页设计 + 三项 ERP 验证项义务）；R1 §2 C1；R4 §1 C1（G1/G2）
@@ -69,7 +69,7 @@ Exit Criteria:
 - [x] C1 页可达可交互且列表页收录，strict validation 零 error
 - [x] focused e2e `--retries=0` 全绿（义务①②③断言齐备：lastMoveStageBody 逐字段+统计带三落位差值+moveStage 计数；focus③ test.fail 棘轮反转计绿——live 缺口勘误⑧如实登记）
 - [x] axe 基线登记绿（首跑实测回填）
-- [ ] roadmap §2 C1 回写 `done`（随 closure audit 通过的同一次回写提交完成，guide When Closing 9；本执行会话不改 roadmap——当前盘面 `planned` 翻转系计划起草会话所为）
+- [x] roadmap §2 C1 回写 `done`（随 closure audit 通过的同一次回写提交完成，guide When Closing 9）
 
 ## Draft Review Record
 
@@ -92,7 +92,7 @@ Exit Criteria:
 - [x] 必要 focused verification 已完成（C1 10/10 + axe 11/11 + W1/W2/W3 回归 31/31 + strict 65/65）
 - [x] 不存在被静默降级的 in-scope 缺口（lint/check 失败归因已知红，见 Deferred）
 - [x] 受影响 owner docs 已同步（daily log；D2 §2.4 实现勘误 10 条就地落档——含义务①②③验证记录：moveStage 绑定 lastMoveStageBody 逐字段/统计带三处差值/kanban 键盘层 live 缺口 test.fail 棘轮）
-- [ ] 独立子 agent（fresh session）closure audit 通过并记录证据
+- [x] 独立子 agent（fresh session）closure audit 通过并记录证据
 - [x] `pnpm typecheck`（绿）
 - [x] `pnpm build`（OK）
 - [x] `pnpm lint`（触达面零新增红；失败系并行会话 WIP——flux-bundle mall-ds-ajax.test.tsx unused eslint-disable，同 799/800 Deferred 归因）
@@ -114,13 +114,19 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: Phase 1 执行完成（2026-10-30）；closure gates 未过——待独立子 agent（fresh session）closure audit；audit 通过后随同一次提交完成 roadmap §2 C1 `done` 回写与本 plan `completed` 翻转（799/800 顺序教训：先翻转后提交）。执行留证：docs/logs/2026/10-30.md「M3-C1 CRM 商机漏斗看板页实现（plan 801）」节（含设计勘误①-⑩ 与遗留清单）。
+Status Note: C1 全链落地（crm mock 五端点+回退/赢单守卫+lastMoveStageBody 钩子/动态阶段列 kanban+columnAggregate/quickSaveAction row-draft/统计带三处/漏斗 bar/徽章三色）。closure audit **approved** 零 Blocker/Major（4 Minor 随收口处理：D2 三处就地附注已落〔focus② 退守/§3.3 ③b 字段集/§4.4 钩子增补〕、日志标题去重已落、strict 计数口径已记录、pnpm-lock 不夹带）。义务①②③全部经审计员独立实跑核验（C1 10/10 含 focus③ test.fail 棘轮诚实登记、回归 42/42、unit 545/545）。C1 可关，M3 累计 4/21 页。状态翻转滞留一拍于 98bacfd1d（实现 agent 中途改 plan 致 Edit 陈旧读态失败，本 commit 补救并披露）。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: 待独立子 agent 填写
-- Evidence: 待填写
+- Auditor / Agent: 独立子 agent（fresh session，general-purpose）
+- Evidence: verdict `approved`（零 Blocker/Major，4 Minor）——审计员独立实跑 C1 10/10（retries=0）+ W1-W3/axe 回归 42/42、unit 545/545、typecheck；种子数学独立复算全对（revenue 750/10 卡、totalAmount 1950、won 240）；义务②三处断言逐一定位核验；focus③ test.fail 棘轮真实咬合（单独重跑 ✘ 计 passed、exit 0）与 D2 勘误⑧逐点一致；Deferred 归因实证（mall-ds-ajax lint 红系并行会话 commit 80fec284b 引入）；详见 `docs/logs/2026/10-30.md`。
+
+Closure Audit Evidence:
+
+- Auditor / Agent: 独立子 agent（fresh session，general-purpose）
+- Evidence: verdict `approved`（零 Blocker/Major，4 Minor）——审计员独立实跑 C1 10/10（retries=0）+ W1-W3/axe 回归 42/42、unit 545/545、typecheck；种子数学独立复算全对；义务②三处断言逐一定位核验；focus③ test.fail 棘轮真实咬合；详见 `docs/logs/2026/10-30.md`。
 
 Follow-up:
 
-- 待收口填写
+- 已知 check/lint 链失败子项 successor 同 798-800 Deferred（flux-bundle owner 面 / F2）
+- 全量 test:e2e 归 P1 阶段
