@@ -1,6 +1,6 @@
 # 800 M3-W3 WMS 库存台账页复刻（business-page-replication roadmap M3-W3）
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-10-30
 > Source: `docs/backlog/business-page-replication-roadmap.md` §2 M3-W3（依赖 M2 done；前置 W1/W2 done——设施与 wms mock 模块已就绪）
 > Related: D1 总体设计；D2 §2.3/§4.1/§5（W3 页设计）；R1 §1 W3；R4 §1 W3（G6/G7）
@@ -68,7 +68,7 @@ Exit Criteria:
 - [x] W3 页可达可交互且列表页收录，strict validation 零 error（unit 544/544 含 entry↔registry）
 - [x] focused e2e `--retries=0` 全绿（9/9，断言含 \_\_replWmsCalls 计数证据）
 - [x] axe 基线登记绿（10/10）
-- [ ] roadmap §2 W3 回写 `done`（随 closure audit 通过的同一次回写提交完成，guide When Closing 9）
+- [x] roadmap §2 W3 回写 `done`（随 closure audit 通过的同一次回写提交完成，guide When Closing 9；实际翻转滞留一拍于 bb85256cc——Edit 陈旧读态失败，本 commit 即时补救并披露）
 
 ## Draft Review Record
 
@@ -89,7 +89,7 @@ Exit Criteria:
 - [x] 必要 focused verification 已完成（W3 spec + axe 10/10 + W1/W2 回归 22/22 + strict 校验 47/47）
 - [x] 不存在被静默降级的 in-scope 缺口（lint/check 触达面零新增红实证）
 - [x] 受影响 owner docs 已同步（daily log；D2 §2.3 实现勘误 9 条就地落档）
-- [ ] 独立子 agent（fresh session）closure audit 通过并记录证据
+- [x] 独立子 agent（fresh session）closure audit 通过并记录证据
 - [x] `pnpm typecheck`（OK）
 - [x] `pnpm build`（OK）
 - [x] `pnpm lint`（触达面零新增红；失败系并行会话 WIP——flux-bundle mall-ds-ajax.test.tsx unused eslint-disable，同 799 Deferred 归因）
@@ -111,13 +111,14 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: 待收口填写
+Status Note: W3 全链落地（pivot 透视含 batchNo 行维叶子+cell-click setValue→refreshSource→openDialog 参数链+对账 status/card〔G7〕+download action+render-host 补注册 registerPivotRenderers live 缺口）。closure audit 首轮 issues（1 Major：check"其余子项过"未验证——owner-doc-semantics 现红属 799 Deferred 既有；4 Minor）→ 修复 → 复核揪出 3 处残留（R-1 遗留行矛盾/R-2 log 勘误清单未同步/R-3 溯源错标 799）→ 全部修正 → 终轮 **approved** 零保留。审计员独立实跑 9/9、22/22 回归、10/10、544/544。W3 可关，M3 累计 3/21 页。状态翻转滞留一拍（bb85256cc 后本 commit 补齐）——guide 记录的 765 教训在本会话实证复现，后续页收口改用先翻转后提交顺序。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: 待独立子 agent 填写
-- Evidence: 待填写
+- Auditor / Agent: 独立子 agent（fresh session，general-purpose；首轮+两轮复核）
+- Evidence: 首轮 `issues`（1 Major + 4 Minor）→ 修复 → 二轮 `issues`（3 残留：R-1 遗留行矛盾/R-2 log 清单未同步/R-3 溯源错标）→ 修正 → 终轮 `approved`（零保留意见）；审计员独立实跑 focused e2e 9/9（retries=0）、W1/W2 回归 22/22、axe 10/10、unit 544/544；详见 `docs/logs/2026/10-30.md`。
 
 Follow-up:
 
-- 待收口填写
+- 已知 check 链 3 失败子项 successor 同 798/799 Deferred（flux-bundle owner 面 / F2）
+- 全量 test:e2e 归 P1 阶段
