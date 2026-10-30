@@ -1,0 +1,465 @@
+{
+  "type": "page",
+  "body": [
+    {
+      "type": "data-source",
+      "id": "crm-customer-360-partner-source",
+      "name": "partnerGet",
+      "action": "ajax",
+      "args": {
+        "url": "/r/ReplCrm__partnerGet",
+        "method": "get",
+        "params": {
+          "id": "${customerScope?.partnerId ?? 'partner-0001'}"
+        }
+      },
+      "dependsOn": ["customerScope"],
+      "testid": "crm-customer-360-partner-source"
+    },
+    {
+      "type": "flex",
+      "direction": "column",
+      "gap": 8,
+      "testid": "crm-customer-360-root",
+      "body": [
+        {
+          "type": "flex",
+          "direction": "row",
+          "gap": 16,
+          "align": "start",
+          "className": "flex-wrap",
+          "testid": "crm-customer-360-header",
+          "body": [
+            {
+              "type": "detail-view",
+              "testid": "crm-customer-360-partner-detail",
+              "label": "客户基本信息（partnerGet）",
+              "disabled": true,
+              "data": "${partnerGet?.partner}",
+              "viewer": [
+                {
+                  "type": "text",
+                  "testid": "crm-customer-360-partner-name",
+                  "text": "${partnerGet?.partner?.name ?? '-'}",
+                  "className": "text-base font-semibold"
+                },
+                {
+                  "type": "text",
+                  "testid": "crm-customer-360-partner-meta",
+                  "text": "编码：${partnerGet?.partner?.code ?? '-'} · 级别：${partnerGet?.partner?.level ?? '-'} · 负责人：${partnerGet?.partner?.ownerName ?? '-'}",
+                  "className": "text-sm"
+                },
+                {
+                  "type": "text",
+                  "testid": "crm-customer-360-partner-industry",
+                  "text": "行业：${partnerGet?.partner?.industry ?? '-'} · ${partnerGet?.partner?.remark ?? '-'}",
+                  "className": "text-sm text-muted-foreground"
+                },
+                {
+                  "type": "text",
+                  "testid": "crm-customer-360-partner-address",
+                  "text": "地址：${partnerGet?.partner?.address ?? '-'}",
+                  "className": "text-sm text-muted-foreground"
+                }
+              ],
+              "content": [
+                { "type": "detail-field", "name": "name", "label": "客户名称" },
+                { "type": "detail-field", "name": "code", "label": "客户编码" },
+                { "type": "detail-field", "name": "level", "label": "客户级别" },
+                { "type": "detail-field", "name": "ownerName", "label": "负责人" },
+                { "type": "detail-field", "name": "industry", "label": "行业" },
+                { "type": "detail-field", "name": "address", "label": "地址" }
+              ]
+            },
+            {
+              "type": "form",
+              "id": "crm-customer-360-customer-form",
+              "testid": "crm-customer-360-customer-form",
+              "valuesPath": "customerScope",
+              "mode": "inline",
+              "data": {
+                "partnerId": "partner-0001"
+              },
+              "body": [
+                {
+                  "type": "picker",
+                  "name": "partnerId",
+                  "label": "客户切换（party-search 范式）",
+                  "testid": "crm-customer-360-partner-picker",
+                  "valueField": "id",
+                  "labelField": "name",
+                  "multiple": false,
+                  "pickerPopup": {
+                    "title": "选择客户",
+                    "size": "lg"
+                  },
+                  "pickerSchema": {
+                    "type": "crud",
+                    "testid": "crm-customer-360-partner-crud",
+                    "loadAction": {
+                      "dependsOn": ["__init_load__"],
+                      "action": "ajax",
+                      "args": {
+                        "url": "/r/ReplCrm__partnerFindPage",
+                        "method": "get"
+                      }
+                    },
+                    "columns": [
+                      { "name": "code", "label": "编码", "width": 100 },
+                      { "name": "name", "label": "客户名称", "width": 220 },
+                      { "name": "level", "label": "级别", "width": 110 },
+                      { "name": "ownerName", "label": "负责人", "width": 100 }
+                    ],
+                    "selection": { "type": "radio" },
+                    "selectionOwnership": "scope",
+                    "selectionStatePath": "$_picker.selection",
+                    "dataStatePath": "$_picker.rows",
+                    "autoClearSelectionOnRefresh": false
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "tabs",
+          "testid": "crm-customer-360-tabs",
+          "mountOnEnter": true,
+          "items": [
+            {
+              "key": "activity",
+              "title": "跟进时间线",
+              "body": [
+                {
+                  "type": "data-source",
+                  "id": "crm-customer-360-timeline-source",
+                  "name": "activityTimeline",
+                  "action": "ajax",
+                  "args": {
+                    "url": "/r/ReplCrm__activityTimeline",
+                    "method": "get",
+                    "params": {
+                      "partnerId": "${customerScope?.partnerId ?? 'partner-0001'}",
+                      "activityType": "${activityFilter?.type ?? ''}"
+                    }
+                  },
+                  "dependsOn": ["customerScope"],
+                  "testid": "crm-customer-360-timeline-source"
+                },
+                {
+                  "type": "flex",
+                  "direction": "row",
+                  "gap": 12,
+                  "align": "center",
+                  "className": "flex-wrap",
+                  "testid": "crm-customer-360-activity-toolbar",
+                  "body": [
+                    {
+                      "type": "form",
+                      "id": "crm-customer-360-filter-form",
+                      "testid": "crm-customer-360-filter-form",
+                      "valuesPath": "activityFilter",
+                      "mode": "inline",
+                      "data": {
+                        "type": ""
+                      },
+                      "body": [
+                        {
+                          "type": "select",
+                          "name": "type",
+                          "label": "活动类型",
+                          "testid": "crm-customer-360-filter-type",
+                          "clearable": false,
+                          "options": [
+                            { "label": "全部类型", "value": "" },
+                            { "label": "上门拜访", "value": "VISIT" },
+                            { "label": "电话跟进", "value": "CALL" },
+                            { "label": "方案演示", "value": "DEMO" },
+                            { "label": "跟进纪要", "value": "NOTE" }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "button",
+                      "label": "查询",
+                      "variant": "outline",
+                      "testid": "crm-customer-360-filter-submit",
+                      "onClick": {
+                        "action": "refreshSource",
+                        "targetId": "activityTimeline"
+                      }
+                    },
+                    {
+                      "type": "button",
+                      "label": "新增跟进",
+                      "variant": "primary",
+                      "testid": "crm-customer-360-activity-add",
+                      "onClick": {
+                        "action": "openDrawer",
+                        "args": {
+                          "title": "新增跟进",
+                          "testid": "crm-customer-360-activity-drawer",
+                          "side": "right",
+                          "closeOnSubmit": true,
+                          "data": {
+                            "partnerId": "${customerScope?.partnerId ?? 'partner-0001'}"
+                          },
+                          "body": [
+                            {
+                              "type": "form",
+                              "testid": "crm-customer-360-activity-form",
+                              "submitScope": "surface",
+                              "data": {
+                                "partnerId": "${partnerId}",
+                                "activityType": "VISIT",
+                                "title": "",
+                                "content": ""
+                              },
+                              "body": [
+                                {
+                                  "type": "select",
+                                  "name": "activityType",
+                                  "label": "活动类型",
+                                  "testid": "crm-customer-360-activity-type",
+                                  "clearable": false,
+                                  "options": [
+                                    { "label": "上门拜访", "value": "VISIT" },
+                                    { "label": "电话跟进", "value": "CALL" },
+                                    { "label": "方案演示", "value": "DEMO" },
+                                    { "label": "跟进纪要", "value": "NOTE" }
+                                  ]
+                                },
+                                {
+                                  "type": "input-text",
+                                  "name": "title",
+                                  "label": "标题",
+                                  "testid": "crm-customer-360-activity-title",
+                                  "placeholder": "选填，缺省按活动类型命名"
+                                },
+                                {
+                                  "type": "textarea",
+                                  "name": "content",
+                                  "label": "跟进内容（必填，缺失将被服务端拒绝）",
+                                  "testid": "crm-customer-360-activity-content",
+                                  "placeholder": "填写本次跟进的具体内容"
+                                }
+                              ],
+                              "actions": [
+                                {
+                                  "type": "button",
+                                  "label": "取消",
+                                  "variant": "outline",
+                                  "testid": "crm-customer-360-activity-cancel",
+                                  "onClick": { "action": "closeSurface" }
+                                },
+                                {
+                                  "type": "button",
+                                  "label": "提交跟进",
+                                  "variant": "primary",
+                                  "testid": "crm-customer-360-activity-submit",
+                                  "onClick": { "action": "submitForm" }
+                                }
+                              ],
+                              "submitAction": {
+                                "action": "ajax",
+                                "args": {
+                                  "url": "/r/ReplCrm__activityCreate",
+                                  "method": "post",
+                                  "data": {
+                                    "partnerId": "${partnerId}",
+                                    "activityType": "${activityType}",
+                                    "title": "${title}",
+                                    "content": "${content}"
+                                  }
+                                },
+                                "messages": {
+                                  "success": "跟进已登记"
+                                },
+                                "onError": [
+                                  {
+                                    "action": "showToast",
+                                    "args": {
+                                      "level": "error",
+                                      "message": "跟进提交被拒绝：内容缺失（content required）"
+                                    }
+                                  }
+                                ]
+                              }
+                            }
+                          ],
+                          "onSubmitSuccess": [
+                            { "action": "refreshSource", "targetId": "activityTimeline" }
+                          ]
+                        }
+                      }
+                    }
+                  ]
+                },
+                {
+                  "type": "timeline",
+                  "testid": "crm-customer-360-timeline",
+                  "items": "${activityTimeline?.items ?? []}",
+                  "reverse": true,
+                  "onChange": {
+                    "action": "setValue",
+                    "args": {
+                      "path": "timelineSeek",
+                      "value": "${value}"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "key": "leads",
+              "title": "关联线索",
+              "body": [
+                {
+                  "type": "data-source",
+                  "id": "crm-customer-360-leads-source",
+                  "name": "leadByPartner",
+                  "action": "ajax",
+                  "args": {
+                    "url": "/r/ReplCrm__leadByPartner",
+                    "method": "get",
+                    "params": {
+                      "partnerId": "${customerScope?.partnerId ?? 'partner-0001'}"
+                    }
+                  },
+                  "dependsOn": ["customerScope"],
+                  "testid": "crm-customer-360-leads-source"
+                },
+                {
+                  "type": "text",
+                  "testid": "crm-customer-360-selected-lead",
+                  "text": "当前线索：${(selectedLeadKey && selectedLeadKey.length > 0) ? selectedLeadKey.join('、') : '未选择（点击线索行使主从联动生效）'}",
+                  "className": "text-sm text-muted-foreground"
+                },
+                {
+                  "type": "table",
+                  "testid": "crm-customer-360-lead-table",
+                  "source": "${leadByPartner?.items ?? []}",
+                  "itemKey": "leadId",
+                  "pagination": { "enabled": false },
+                  "rowSelection": {
+                    "type": "radio",
+                    "toggleOnRowClick": true
+                  },
+                  "selectionOwnership": "scope",
+                  "selectionStatePath": "selectedLeadKey",
+                  "columns": [
+                    { "name": "leadId", "label": "线索 ID", "width": 150 },
+                    { "name": "name", "label": "线索名称", "width": 280 },
+                    { "name": "stageName", "label": "阶段", "width": 110 },
+                    { "name": "amount", "label": "金额（万元）", "width": 120 },
+                    { "name": "closeDate", "label": "预计成交日", "width": 130 }
+                  ],
+                  "onRowClick": [
+                    {
+                      "action": "component:refresh",
+                      "componentId": "crm-customer-360-leads-source"
+                    }
+                  ],
+                  "empty": { "type": "text", "text": "该客户暂无关联线索" }
+                }
+              ]
+            },
+            {
+              "key": "contacts",
+              "title": "联系人",
+              "body": [
+                {
+                  "type": "cards",
+                  "testid": "crm-customer-360-contact-cards",
+                  "items": "${partnerGet?.contacts ?? []}",
+                  "keyField": "id",
+                  "columns": 3,
+                  "card": {
+                    "type": "flex",
+                    "direction": "column",
+                    "gap": 4,
+                    "body": [
+                      {
+                        "type": "text",
+                        "text": "${$slot.item.name}",
+                        "className": "text-sm font-medium"
+                      },
+                      {
+                        "type": "text",
+                        "text": "${$slot.item.role}",
+                        "className": "text-xs text-muted-foreground"
+                      },
+                      {
+                        "type": "text",
+                        "text": "☎ ${$slot.item.phone}",
+                        "className": "text-xs"
+                      },
+                      {
+                        "type": "text",
+                        "text": "✉ ${$slot.item.email}",
+                        "className": "text-xs text-muted-foreground"
+                      }
+                    ]
+                  },
+                  "empty": { "type": "text", "text": "该客户暂无联系人" }
+                }
+              ]
+            },
+            {
+              "key": "calendar",
+              "title": "活动日历",
+              "body": [
+                {
+                  "type": "data-source",
+                  "id": "crm-customer-360-calendar-source",
+                  "name": "activityCalendar",
+                  "action": "ajax",
+                  "args": {
+                    "url": "/r/ReplCrm__activityCalendar",
+                    "method": "get",
+                    "params": {
+                      "partnerId": "${customerScope?.partnerId ?? 'partner-0001'}"
+                    }
+                  },
+                  "dependsOn": ["customerScope"],
+                  "testid": "crm-customer-360-calendar-source"
+                },
+                {
+                  "type": "calendar",
+                  "testid": "crm-customer-360-calendar",
+                  "view": "month",
+                  "events": "${activityCalendar?.events ?? []}",
+                  "onEventClick": [
+                    {
+                      "action": "setValue",
+                      "args": {
+                        "path": "eventDetail",
+                        "value": "${event}"
+                      }
+                    },
+                    {
+                      "action": "openDialog",
+                      "args": {
+                        "title": "活动详情：${event.title}",
+                        "testid": "crm-customer-360-event-dialog",
+                        "body": [
+                          {
+                            "type": "text",
+                            "testid": "crm-customer-360-event-detail",
+                            "text": "开始：${eventDetail?.start} · 结束：${eventDetail?.end} · 类型：${eventDetail?.type}",
+                            "className": "text-sm"
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

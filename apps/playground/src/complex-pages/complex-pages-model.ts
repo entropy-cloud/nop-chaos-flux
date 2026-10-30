@@ -449,4 +449,12 @@ export const COMPLEX_PAGE_ENTRIES: ComplexPageEntry[] = [
       '复刻 CRM 商机漏斗看板页（roadmap 21 页 C1，D2 §2.4 桌面整页）：商机看板（kanban 六阶段动态列 columnAggregate 金额合计 + 拖卡 onCardMove→moveStage 持久化 + 回退/赢单列拒绝守卫 + refreshSource 级联回读 + 卡片模板客户/金额/概率徽章三色）+ footer 统计带双落位（stat-tile×3 ← funnelSummary + table affixRow 统计行）+ 商机列表 quick-edit 预期金额（quickSaveAction→updateRevenue）+ 阶段金额漏斗（chart bar 近似，G1）。数据经 /r/ReplCrm__stageFindPage/opportunityBoard/moveStage/updateRevenue/funnelSummary 端点流动。',
     features: ['kanban 阶段动态列', '拖卡 moveStage 守卫', 'quick-edit 金额', 'columnAggregate 列头合计', 'stat-tile+affixRow 双落位', '漏斗 bar 近似', 'ReplCrm__ 端点'],
   },
+  {
+    id: 'crm-customer-360',
+    title: 'CRM 客户 360 详情页',
+    category: 'business-replication',
+    description:
+      '复刻 CRM 客户 360 详情页（roadmap 21 页 C2，D2 §2.5 桌面整页）：头部 detail-view 客户基本信息（partnerGet）+ picker 客户切换（party-search 范式）+ 四 tab 分区——跟进时间线（timeline reverse 置顶 + seek 高亮 + activityCreate 新增跟进 drawer mutation 链：content required 守卫 + onSubmitSuccess refreshSource）/关联线索 table（行点击 setValue+refreshSource 主从联动）/联系人 cards（partnerGet.contacts）/活动日历 calendar（CalendarEvent 月视图回归 + 跨日事件）。filterForm（form+valuesPath）活动类型过滤经 refreshSource 重取。数据经 /r/ReplCrm__partnerFindPage/partnerGet/leadByPartner/activityTimeline/activityCalendar/activityCreate 端点流动。',
+    features: ['detail-view 基本信息', 'picker 客户切换', 'timeline seek 高亮', 'drawer activityCreate', '主从联动', 'calendar 月视图', 'filterForm refreshSource', 'ReplCrm__ 端点'],
+  },
 ];

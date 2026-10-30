@@ -341,6 +341,16 @@ onEventClick:
     args: { title: ${title}, body: [{ type: detail-view, data: ${event} }] }
 ```
 
+#### C2 实现勘误（M3 落地实证 2026-10-30，plan 802；以 live 为准——C2 为复刻面首个 detail-view 消费页）
+
+1. **timeline/calendar 形状**：live 消费 TimelineItemSchema `value/time/title/detail/level`（level 驱动着色）与 CalendarEvent `id/title/start/end`；§4.2 裸 Activity/`{id,date,title,type}` 不成立，mock 投影层落地。
+2. **主从联动编排**：table 行事件 scope 为 isolate——行内 refreshSource 报 Source not found、setValue 写入行隔离 scope 页面不可见；改 component:refresh componentId + rowSelection + selectionStatePath（W2 勘误 6 同款）。
+3. **onEventClick→dialog**：openDialog body 为 schema 保留面，`${event.*}` 在 body 内不解析；改 setValue→openDialog 读 scope（W3 参数链先例）。
+4. **args.params/data 禁带字符串 `type` 键**：isSchema 启发式误判为 schema 节点→整对象 literal 保留；wire 参数改名 activityType。
+5. **GET params 走 URL query**：fetcher 分支读参走 createUrlParamReader（直读 input.params 恒空）。
+6. **refreshSource 对 mountOnEnter 未激活 tab 的 source 报 Source not found**：查询按钮只 refresh 已激活源，未激活源在 tab 激活时带当前过滤参数取数（行为等价）。
+7. **tabs 选中态在 aria-selected**；timeline onChange 载荷绑定为 `${value}`；detail-view 头部 inline 可见面是 viewer（display-only 以 disabled:true 收起 trigger）。
+
 ### 2.6 crm-sales-dashboard（C3，P1）
 
 ```

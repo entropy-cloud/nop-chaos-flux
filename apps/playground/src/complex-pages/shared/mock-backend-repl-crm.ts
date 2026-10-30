@@ -3,15 +3,19 @@
  * fetcher-surface + D2 §4.2 crm module design). C1 (crm-opportunity-kanban)
  * ships the endpoint subset its schema consumes — `stageFindPage` /
  * `opportunityBoard` / `moveStage` / `updateRevenue` / `funnelSummary`
- * (D2 §4.2 original names). C2/C3 endpoints join this module later (same
- * line-gate pattern as the WMS stock delegation).
+ * (D2 §4.2 original names). C2 (crm-customer-360, plan 802) is delegated to
+ * `mock-backend-repl-crm-c2.ts` under the same line gate as the WMS stock
+ * delegation (`mock-backend-repl-wms-stock.ts`): the branch below hands
+ * unmatched C2 urls to the `createReplCrmC2Surface` handler — shared seed
+ * pools passed in, the counter below stays the single per-request count site.
  *
  * Envelopes (D1 §2): queries `{status:0, data:{items,total}}` (funnelSummary
  * and opportunityBoard return their aggregate/board shapes directly, per the
  * D2 §4.2 返回形状 column), mutations `{status:0, data:{...}}`, error paths
- * `{status:1, msg}`. Session state (stage list + lead board) lives in the
- * factory closure, so `moveStage` / `updateRevenue` mutations are observable
- * across pages within one session.
+ * `{status:1, msg}`. Session state (stage list + lead board + the C2
+ * partner/activity logs) lives in the factory closure, so `moveStage` /
+ * `updateRevenue` / `activityCreate` mutations are observable across pages
+ * within one session.
  *
  * Live-shape notes (D2 §2.4/§4.2 errata, M3 evidence — see plan 801 report):
  * - `opportunityBoard` returns `{ board, leads }`: `board` is the flat kanban
@@ -27,17 +31,37 @@
  * production never sets them, so both stay no-ops. Hooks: `moveStageReject`
  * ('rollback' | 'won' guard force), `forceKpiError` (funnelSummary failure
  * face), plus the last-request-body mirrors `lastMoveStageBody` (G2 义务③c
- * C1 field-by-field assertion) and `lastUpdateRevenueBody` (quick-edit body
- * mirror, W-module 落地增补 pattern).
+ * C1 field-by-field assertion), `lastUpdateRevenueBody` (quick-edit body
+ * mirror) and the C2 drawer mirror `lastActivityCreateBody` (written by the
+ * delegate module onto the same hooks object).
  */
 
 import {
   createEndpointCounter,
+  createUrlParamReader,
   readOptInHooks,
   withOptInHooks,
   type ReplicaBranchInput,
   type ReplicaFetcherBranch,
 } from './mock-backend-replica-kit';
+import { createReplCrmC2Surface } from './mock-backend-repl-crm-c2';
+import type {
+  ReplCrmActivity,
+  ReplCrmAddress,
+  ReplCrmContact,
+  ReplCrmPartner,
+} from './mock-backend-repl-crm-c2';
+
+// C2 entity types physically live in the delegate module; re-exported here so
+// the module's type surface stays unchanged for the domain family.
+export type {
+  ReplCrmActivity,
+  ReplCrmActivityType,
+  ReplCrmAddress,
+  ReplCrmContact,
+  ReplCrmPartner,
+  ReplCrmRelatedLead,
+} from './mock-backend-repl-crm-c2';
 
 /* ── Entities (D2 §4.2 实体字段 + plan 801 isWonStage 赢单列) ─────────────── */
 
@@ -72,6 +96,9 @@ export interface ReplCrmTestHooks {
   lastMoveStageBody?: Record<string, unknown>;
   /** Quick-edit mirror: last `updateRevenue` request body. */
   lastUpdateRevenueBody?: Record<string, unknown>;
+  /** C2 drawer mirror: last `activityCreate` request body (field-by-field:
+   * partnerId ↔ picker-selected partner, type/title/content ↔ drawer form). */
+  lastActivityCreateBody?: Record<string, unknown>;
 }
 
 /* ── Deterministic fixtures ─────────────────────────────────────────────── */
@@ -196,17 +223,44 @@ export function buildReplOpportunityBoardData(
   return board;
 }
 
+/* ── C2 delegate wiring (plan 802, mock-backend-repl-crm-c2.ts) ─────────── */
+/* The C2 customer-360 endpoints + partner/activity fixtures live in the
+ * delegate module; the shared C1 seed pools flow in so the fixture math keeps
+ * a single source of truth while the delegate stays import-clean of this file
+ * (deps-baseline no-cycle, wms-stock precedent). */
+
+const c2Surface = createReplCrmC2Surface({
+  customers: CUSTOMERS,
+  owners: OWNERS,
+  rowCount: LEAD_COUNT,
+  stageNames: REPL_CRM_STAGES.map((stage) => stage.name),
+  revenueFor: replCrmRevenue,
+});
+
 /* ── Session state ──────────────────────────────────────────────────────── */
 
 export interface ReplCrmSessionState {
   stages: ReplCrmStage[];
   leads: ReplCrmLead[];
+  partners: ReplCrmPartner[];
+  contacts: ReplCrmContact[];
+  addresses: ReplCrmAddress[];
+  /** Per-partner activity log, ASC by activityDate (activityCreate appends →
+   * the page schema's timeline `reverse: true` renders the new entry on top). */
+  activities: ReplCrmActivity[];
+  activitySeq: number;
 }
 
 export function createReplCrmSession(): ReplCrmSessionState {
+  const c2Seed = c2Surface.createSeedData();
   return {
     stages: REPL_CRM_STAGES.map((stage) => ({ ...stage })),
     leads: createLeadRows(),
+    partners: c2Seed.partners,
+    contacts: c2Seed.contacts,
+    addresses: c2Seed.addresses,
+    activities: c2Seed.activities,
+    activitySeq: 0,
   };
 }
 
@@ -256,6 +310,7 @@ export function createReplCrmFetcherBranch(session: ReplCrmSessionState = create
   const countEndpointCall = createEndpointCounter({
     countersKey: '__replCrmCalls',
     prefix: 'ReplCrm__',
+    hooksKey: '__replCrmTestHooks',
   });
 
   function handleReplCrmBranch<T>(input: ReplicaBranchInput): { status: number; data: T } | null {
@@ -263,6 +318,9 @@ export function createReplCrmFetcherBranch(session: ReplCrmSessionState = create
     countEndpointCall(input.url);
     const method = input.method.toLowerCase();
     const hooks = readReplCrmTestHooks();
+    // GET params travel on the url query string (runtime appends args.params);
+    // the reader falls back params → body → qs (WMS module precedent).
+    const read = createUrlParamReader(input.url, input.params, input.body);
 
     // ----- C1 reads -----
     if (input.url.includes('/r/ReplCrm__stageFindPage') && method === 'get') {
@@ -336,6 +394,18 @@ export function createReplCrmFetcherBranch(session: ReplCrmSessionState = create
       lead.expectedRevenue = amount;
       return { status: 0, data: { leadId: lead.id, expectedRevenue: lead.expectedRevenue } as unknown as T };
     }
+
+    // ----- C2 reads+writes (delegate module, plan 802; the counter above
+    // already counted the call) -----
+    const c2Handled = c2Surface.handleBranch<T>({
+      url: input.url,
+      method,
+      read,
+      body: input.body,
+      session,
+      hooks,
+    });
+    if (c2Handled) return c2Handled;
 
     return null;
   }

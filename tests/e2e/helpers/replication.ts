@@ -191,21 +191,42 @@ export async function tapReplicationTarget(page: Page, target: Locator): Promise
  * repeated ~15× across D2-D4 pages, so it lives here). Focus must land inside
  * the opened `[data-slot="dialog-surface"]` (Base UI focuses the popup or its
  * first focusable), Esc closes it, and focus returns to the trigger element.
+ *
+ * Plan 802 (C2): drawer surfaces (openDrawer) render `[data-slot="drawer-surface"]`
+ * instead — pass `surfaceSlot: 'drawer-surface'` for the drawer variant (same
+ * focus-in / Esc-back / trigger-return contract).
  */
-export async function assertDialogFocusRoundTrip(page: Page, trigger: Locator): Promise<void> {
+export async function assertDialogFocusRoundTrip(
+  page: Page,
+  trigger: Locator,
+  options: { surfaceSlot?: 'dialog-surface' | 'drawer-surface' } = {},
+): Promise<void> {
+  const surfaceSlot = options.surfaceSlot ?? 'dialog-surface';
   await trigger.click();
 
-  const surface = page.locator('[data-slot="dialog-surface"]').last();
+  const surface = page.locator(`[data-slot="${surfaceSlot}"]`).last();
   await expect(surface).toBeVisible({ timeout: 5_000 });
   await expect
     .poll(
       () =>
-        page.evaluate(() => {
-          const surfaces = document.querySelectorAll('[data-slot="dialog-surface"]');
-          const top = surfaces[surfaces.length - 1];
-          const active = document.activeElement;
-          return !!top && !!active && (active === top || top.contains(active));
-        }),
+        page.evaluate(
+          (slot) => {
+            const surfaces = document.querySelectorAll(`[data-slot="${slot}"]`);
+            const top = surfaces[surfaces.length - 1] as HTMLElement | undefined;
+            const active = document.activeElement;
+            if (!top || !active) return false;
+            if (top === active || top.contains(active)) return true;
+            // Drawer variant: Base UI focuses the popup layer that WRAPS the
+            // drawer content (ui Drawer renders DrawerContent inside
+            // DrawerPrimitive.Popup), so popup-level focus counts as landed.
+            if (slot === 'drawer-surface') {
+              const popup = top.closest('[data-slot="drawer-popup"]');
+              return !!popup && (active === popup || popup.contains(active));
+            }
+            return false;
+          },
+          surfaceSlot,
+        ),
       { timeout: 5_000 },
     )
     .toBe(true);

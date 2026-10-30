@@ -34,6 +34,9 @@ const ROUTES = [
   // desktop scan set (non-mobile page — pure JSON SchemaPage, no host
   // override).
   'complex-pages/crm-opportunity-kanban',
+  // Plan 802 (D1 §4 branch A): C2 customer-360 joins the standard desktop
+  // scan set (non-mobile page — pure JSON SchemaPage, no host override).
+  'complex-pages/crm-customer-360',
   'dashboard-demo',
 ];
 
