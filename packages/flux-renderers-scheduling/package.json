@@ -30,7 +30,7 @@
   "peerDependencies": {
     "html2canvas": "^1.4.1",
     "ical.js": "^2.2.1",
-    "jspdf": "^2.5.2",
+    "jspdf": "^4.2.1",
     "lucide-react": "^1.17.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
@@ -54,7 +54,7 @@
     "@nop-chaos/flux-formula": "workspace:*",
     "html2canvas": "^1.4.1",
     "ical.js": "^2.2.1",
-    "jspdf": "^2.5.2",
+    "jspdf": "^4.2.1",
     "lucide-react": "^1.17.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",

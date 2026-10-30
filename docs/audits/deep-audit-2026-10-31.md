@@ -133,6 +133,19 @@
 
 执行顺序：820 → 821 → 822 → 823 → 824 → 825（825 置尾：lockfile 变更集中一次，且 jspdf 大版本迁移风险最高）。每个 plan 按 guide 走：draft → 独立子代理 review（零 Blocker/Major 升 active）→ 执行 → 独立子代理 closure audit → 回写同 commit。
 
+### 终态回填（2026-10-31，plan 825 收口 commit 承接 plan 823 移交项）
+
+| Plan                | 终态                      | closure audit 轨迹                                                                                                     |
+| ------------------- | ------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| 820 门禁红收敛      | ✅ completed（c5a5fa128） | approved 零 B/M（5 红全收敛）                                                                                          |
+| 821 仓库卫生        | ✅ completed              | approved 零 B/M（159MB→7.6MB、pnpm 0 字节移除）                                                                        |
+| 822 死代码/基线收缩 | ✅ completed（e59bfc4e6） | round-1 **issues**（1 Blocker：kanban `!!`→`!` 行为反转被审计抓获 + 判别测试缺口）→ 修复 + 双向判别 → round-2 approved |
+| 823 文档同步        | ✅ completed（4791e0249） | 四轮 issues×3→approved（ZWJ 处置改判/wa-15a 取证勘误/提交时自检出风险 F5）                                             |
+| 824 治理面收口      | ✅ completed              | g2i=issues（缺口诚实化，状态对齐 active）+ 640=approved（→completed）+ meta approved                                   |
+| 825 供应链加固      | ✅ completed              | round-1 **issues**（scheduling 第二 jspdf 消费面等 3M）→ 修复 → round-2 approved；`pnpm audit --prod` 40→**0 漏洞**    |
+
+§7 Deferred 表各项状态不变（E1/E3/E10/D2/D4/C4 等见上表与 §5 勘误；825 新增 dev 链残余/bundle 回收两项 Deferred 登记于 plan 825）。
+
 ### Deferred But Adjudicated（本审计裁定的不立即执行项）
 
 | 项                            | 分类                   | Why Not Blocking                                                      |

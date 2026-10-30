@@ -28,7 +28,7 @@
     "qrcode": "^1.5.4"
   },
   "peerDependencies": {
-    "dompurify": "^3.4.11",
+    "dompurify": "^3.4.17",
     "lucide-react": "^1.17.0",
     "react": "^19.0.0",
     "react-markdown": "^10.1.0",
@@ -39,7 +39,7 @@
     "@nop-chaos/flux-formula": "workspace:*",
     "@types/diff-match-patch": "^1.0.7",
     "@types/qrcode": "^1.5.6",
-    "dompurify": "^3.4.11",
+    "dompurify": "^3.4.17",
     "jsdom": "^29.1.1",
     "lucide-react": "^1.17.0",
     "react": "^19.0.0",

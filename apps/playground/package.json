@@ -48,7 +48,7 @@
     "@nop-chaos/theme-tokens": "workspace:*",
     "@nop-chaos/ui": "workspace:*",
     "@nop-chaos/word-editor-renderers": "workspace:*",
-    "katex": "^0.16.0",
+    "katex": "^0.18.2",
     "leafer-ui": "2.2.9",
     "lowlight": "^3.1.0",
     "lucide-react": "^1.17.0",

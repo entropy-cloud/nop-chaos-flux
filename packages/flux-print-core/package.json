@@ -23,7 +23,7 @@
     "@nop-chaos/flux-formula": "workspace:*",
     "html2canvas": "^1.4.1",
     "jsbarcode": "^3.12.1",
-    "jspdf": "^2.5.2",
+    "jspdf": "^4.2.1",
     "qrcode": "^1.5.4"
   },
   "description": "Pure TypeScript print engine: print template schemas, unit conversion, validation diagnostics, and formula binding",

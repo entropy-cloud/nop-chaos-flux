@@ -4,16 +4,17 @@
     "tolerance": 0.05,
     "tarballName": "nop-chaos-flux-0.1.0.tgz",
     "version": "0.1.0",
-    "measuredAt": "2026-10-26",
-    "measuredAtCommit": "269783a85",
+    "measuredAt": "2026-10-31",
+    "measuredAtCommit": "e59bfc4e6",
     "notes": [
       "tarballBytes includes package/dist/index.js.map (10,279,010 B, ~60% of the tarball). Whether source maps ship is a release-strategy decision (roadmap PH-12); dropping them would surface as a tightening hint, not a red.",
-      "jsBytes = sum of every .js entry (non-.map) incl. lazy chunks (three-canvas ~1.9 MB, src-* ~1.7 MB). mainEntryBytes = package/dist/index.js only."
+      "jsBytes = sum of every .js entry (non-.map) incl. lazy chunks (three-canvas ~1.9 MB, src-* ~1.7 MB). mainEntryBytes = package/dist/index.js only.",
+      "2026-10-31 plan 825: mainEntryBytes 5,169,936 → 5,479,361 (+6.0%) — tiptap family bumped off the exact-pinned 3.27.1 generation to ^3.30.5 (resolved 3.32.2; supply-chain advisories GHSA on @tiptap/core <3.30.5 ReDoS + prosemirror-view <1.42.3 XSS) grows the flux-bundle main entry via the bundled form-advanced editor family. Security remediation consciously trades ~300 KB main-entry bytes; re-registered per the gate's dated-note contract (jsBytes/tarball refreshed to live values)."
     ]
   },
   "metrics": {
-    "tarballBytes": 6806038,
-    "jsBytes": 10542432,
-    "mainEntryBytes": 5169936
+    "tarballBytes": 7019181,
+    "jsBytes": 10853794,
+    "mainEntryBytes": 5479361
   }
 }

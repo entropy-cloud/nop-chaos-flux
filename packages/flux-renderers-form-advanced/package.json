@@ -29,11 +29,11 @@
     "@nop-chaos/flux-runtime": "workspace:*",
     "@nop-chaos/ui": "workspace:*",
     "@tanstack/react-virtual": "^3.13.24",
-    "@tiptap/extension-highlight": "3.27.1",
-    "@tiptap/extension-image": "3.27.1",
-    "@tiptap/extensions": "^3.27.1",
-    "@tiptap/react": "^3.27.1",
-    "@tiptap/starter-kit": "^3.27.1"
+    "@tiptap/extension-highlight": "^3.30.5",
+    "@tiptap/extension-image": "^3.30.5",
+    "@tiptap/extensions": "^3.30.5",
+    "@tiptap/react": "^3.30.5",
+    "@tiptap/starter-kit": "^3.30.5"
   },
   "peerDependencies": {
     "lucide-react": "^1.17.0",
@@ -49,7 +49,8 @@
     "@nop-chaos/flux-formula": "workspace:*",
     "@nop-chaos/flux-renderers-basic": "workspace:*",
     "@nop-chaos/flux-renderers-data": "workspace:*",
-    "@tiptap/core": "^3.27.1",
+    "@tiptap/core": "^3.30.5",
+    "@tiptap/pm": "^3.30.5",
     "lucide-react": "^1.17.0",
     "react": "^19.0.0"
   },
