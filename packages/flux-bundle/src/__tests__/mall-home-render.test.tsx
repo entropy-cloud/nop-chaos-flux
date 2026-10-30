@@ -1,53 +1,124 @@
 /// <reference types="node" />
 import { readFileSync } from 'node:fs';
 import React from 'react';
-import { render, waitFor } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { render, screen, waitFor } from '@testing-library/react';
+import { describe, expect, it } from 'vitest';
 import {
   createDefaultFluxEnv,
-  createFluxSchemaRenderer,
   createFluxRendererRegistry,
+  createFluxSchemaRenderer,
   registerDefaultFluxRenderers,
 } from '../index.js';
 
-// nop-app-mall mobile 首页（PageProvider 实际返回的 schema）：
-// 用于确定性复现壳内「部分节点不渲染」的问题。
-const homeSchema = JSON.parse(
-  readFileSync('src/__tests__/mall-home-page.json', 'utf8'),
-) as Record<string, unknown>;
+// nop-app-mall mobile 首页「brand-header」片段的最小确定性复现：
+// 壳内回归现象为该 wrapper 节点不渲染（子节点被丢弃/提升）。
+const brandHeaderFragment = {
+  type: 'flex',
+  direction: 'column',
+  className: 'mall-brand-header',
+  body: [
+    {
+      type: 'flex',
+      align: 'center',
+      gap: 8,
+      body: [
+        { type: 'text', text: 'mall 优选', className: 'mall-brand-title' },
+        { type: 'text', text: '新人专享 · 天天领券 · 品牌特卖', className: 'mall-brand-notice' },
+      ],
+    },
+    { type: 'button', className: 'mall-search-capsule', label: '搜索商品 / 品牌 / 专题' },
+  ],
+} as const;
 
-async function renderHome() {
+function renderSchema(schema: unknown) {
   const registry = createFluxRendererRegistry();
   registerDefaultFluxRenderers(registry);
   const SchemaRenderer = createFluxSchemaRenderer();
-  const fetcher = vi.fn(async (api: { url: string }) => {
-    // 数据源失败（H2 SQL 等）不应阻断渲染：返回错误信封
-    return { status: -1, data: null, msg: 'mock failure' };
-  });
-  const env = {
-    ...createDefaultFluxEnv(),
-    fetcher: fetcher as unknown as (api: never, ctx: never) => Promise<never>,
-  };
-  const view = render(
+  return render(
     React.createElement(SchemaRenderer, {
-      schema: homeSchema as never,
-      registry,
-      env: env as never,
+      schemaUrl: 'test://mall-brand-header.json',
+      schema: schema as never,
+      env: createDefaultFluxEnv(),
     } as never),
   );
-  return view;
 }
 
-describe.skip('mall mobile home page (PageProvider schema) —— 复现基底：当前卡在 Schema preparing（测试 env 异步编译未就绪），需先补 env.importLoader/compile 等待后作为 body 渲染回归的确定性复现', () => {
-  it('renders brand header, section title and goods grid without throwing', async () => {
-    const view = await renderHome();
-    (await import('node:fs')).writeFileSync('/tmp/mall-dom.html', document.body.innerHTML.slice(0, 4000));
-        // 关键断言：品牌头部 wrapper 必须存在（此前回归：className 包装节点被丢弃、子节点被提升）
-    expect(document.querySelector('.mall-brand-header')).toBeTruthy();
-    expect(document.querySelector('.mall-brand-title')?.textContent).toContain('mall 优选');
-    expect(document.querySelector('.mall-search-capsule')?.getAttribute('label') ?? 'x').toBeDefined();
-    expect(document.querySelector('.mall-section-title')?.textContent).toContain('猜你喜欢');
-    expect(document.querySelectorAll('.mall-goods-card').length).toBeGreaterThan(0);
+describe('mall mobile goods grid fragment (loop + $slot.item)', () => {
+  it('renders goods cards from loop scope', async () => {
+    const goodsGrid = {
+      type: 'flex',
+      wrap: true,
+      gap: 8,
+      body: {
+        type: 'loop',
+        items: [
+          { name: '商品A', picUrl: 'a.png', retailPrice: 9.9 },
+          { name: '商品B', picUrl: 'b.png', retailPrice: 19.9 },
+        ],
+        body: {
+          type: 'flex',
+          direction: 'column',
+          gap: 6,
+          className: 'mall-goods-card mall-goods-item',
+          body: [
+            { type: 'image', src: 'x', alt: 'y', className: 'mall-goods-img' },
+            { type: 'text', text: 'x', className: 'mall-goods-name' },
+          ],
+        },
+      },
+    };
+    const view = renderSchema(goodsGrid);
+    await waitFor(
+      () => {
+        expect(document.querySelectorAll('.mall-goods-card').length).toBe(2);
+      },
+      { timeout: 5000 },
+    );
+    view.unmount();
+  });
+});
+
+describe('mall mobile home page (PageProvider envelope, data-source 失败不阻断渲染)', () => {
+  it('renders brand header, section title and goods grid', async () => {
+    const envelope = JSON.parse(
+      readFileSync('src/__tests__/page.json', 'utf8'),
+    ) as { data: unknown };
+    const registry = createFluxRendererRegistry();
+    registerDefaultFluxRenderers(registry);
+    const SchemaRenderer = createFluxSchemaRenderer();
+    const env = createDefaultFluxEnv({
+      fetcher: (async () => ({ status: -1, data: null, msg: 'mock failure' })) as never,
+    } as never);
+    const view = render(
+      React.createElement(SchemaRenderer, {
+        schemaUrl: 'test://mall-home-page.json',
+        schema: envelope.data as never,
+        env,
+      } as never),
+    );
+    await waitFor(
+      () => {
+        expect(document.querySelector('.mall-brand-header')).toBeTruthy();
+      },
+      { timeout: 8000 },
+    );
+    expect(screen.getByText('猜你喜欢')).toBeTruthy();
+    view.unmount();
+  });
+});
+
+describe('mall mobile brand-header fragment (壳内回归最小复现)', () => {
+  it('renders the wrapper className, nested texts and button label', async () => {
+    const view = renderSchema(brandHeaderFragment);
+    await waitFor(
+      () => {
+        expect(document.querySelector('.mall-brand-header')).toBeTruthy();
+      },
+      { timeout: 5000 },
+    );
+    expect(screen.getByText('mall 优选')).toBeTruthy();
+    expect(screen.getByText('新人专享 · 天天领券 · 品牌特卖')).toBeTruthy();
+    expect(screen.getByText('搜索商品 / 品牌 / 专题')).toBeTruthy();
     view.unmount();
   });
 });
