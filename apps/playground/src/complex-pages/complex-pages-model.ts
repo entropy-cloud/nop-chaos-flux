@@ -441,4 +441,12 @@ export const COMPLEX_PAGE_ENTRIES: ComplexPageEntry[] = [
       '复刻 WMS 库存台账页（roadmap 21 页 W3，D2 §2.3 桌面整页）：仓库×库位×物料×批次收发存透视（pivot-table 四维行维 + 月列维 SUM 聚合 + 行总计/仓库小计 + pivot:cell-click→setValue→refreshSource→openDialog 批次追溯钻取参数链）+ 对账一致性提示卡（status 双态 + reconCheck 端点 + forceReconDrift 钩子，G7）+ KPI 四 tile（stat-tile，stockKpi 端点）+ 批次/仓库过滤（form+valuesPath 载体联动透视与明细重取）+ 收发存明细表 + 台账报表导出（button→download action，G6）。数据经 /r/ReplWms__stock* 与 ledgerReport/reconCheck 端点流动。',
     features: ['pivot-table 四维透视', 'cell-click 钻取参数链', 'stat-tile KPI', 'form+valuesPath 过滤', 'reconCheck 对账双态', 'download 报表导出', 'ReplWms__ 端点'],
   },
+  {
+    id: 'crm-opportunity-kanban',
+    title: 'CRM 商机漏斗看板页',
+    category: 'business-replication',
+    description:
+      '复刻 CRM 商机漏斗看板页（roadmap 21 页 C1，D2 §2.4 桌面整页）：商机看板（kanban 六阶段动态列 columnAggregate 金额合计 + 拖卡 onCardMove→moveStage 持久化 + 回退/赢单列拒绝守卫 + refreshSource 级联回读 + 卡片模板客户/金额/概率徽章三色）+ footer 统计带双落位（stat-tile×3 ← funnelSummary + table affixRow 统计行）+ 商机列表 quick-edit 预期金额（quickSaveAction→updateRevenue）+ 阶段金额漏斗（chart bar 近似，G1）。数据经 /r/ReplCrm__stageFindPage/opportunityBoard/moveStage/updateRevenue/funnelSummary 端点流动。',
+    features: ['kanban 阶段动态列', '拖卡 moveStage 守卫', 'quick-edit 金额', 'columnAggregate 列头合计', 'stat-tile+affixRow 双落位', '漏斗 bar 近似', 'ReplCrm__ 端点'],
+  },
 ];

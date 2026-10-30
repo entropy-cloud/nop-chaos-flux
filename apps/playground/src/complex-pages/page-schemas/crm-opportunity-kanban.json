@@ -1,0 +1,240 @@
+{
+  "type": "page",
+  "body": [
+    {
+      "type": "data-source",
+      "id": "crm-opportunity-stages-source",
+      "name": "stagesData",
+      "action": "ajax",
+      "args": {
+        "url": "/r/ReplCrm__stageFindPage",
+        "method": "get",
+        "params": {
+          "orderBy": "sequence"
+        }
+      },
+      "testid": "crm-opportunity-kanban-stages-source"
+    },
+    {
+      "type": "data-source",
+      "id": "crm-opportunity-board-source",
+      "name": "oppBoard",
+      "action": "ajax",
+      "args": {
+        "url": "/r/ReplCrm__opportunityBoard",
+        "method": "get"
+      },
+      "dependsOn": ["stagesData"],
+      "testid": "crm-opportunity-kanban-board-source"
+    },
+    {
+      "type": "data-source",
+      "id": "crm-opportunity-funnel-source",
+      "name": "funnelSummary",
+      "action": "ajax",
+      "args": {
+        "url": "/r/ReplCrm__funnelSummary",
+        "method": "get"
+      },
+      "testid": "crm-opportunity-kanban-funnel-source"
+    },
+    {
+      "type": "flex",
+      "direction": "column",
+      "gap": 8,
+      "testid": "crm-opportunity-kanban-root",
+      "body": [
+        {
+          "type": "flex",
+          "direction": "row",
+          "gap": 12,
+          "className": "items-center flex-wrap",
+          "testid": "crm-opportunity-kanban-toolbar",
+          "body": [
+            {
+              "type": "button",
+              "label": "手工刷新",
+              "variant": "outline",
+              "testid": "crm-opportunity-kanban-refresh",
+              "onClick": {
+                "action": "refreshSource",
+                "targetId": "oppBoard",
+                "then": {
+                  "action": "refreshSource",
+                  "targetId": "funnelSummary"
+                }
+              }
+            },
+            {
+              "type": "text",
+              "testid": "crm-opportunity-kanban-stage-caption",
+              "text": "销售阶段（stageFindPage）：${stagesData?.total ?? '-'} 个 · 拖卡流转商机阶段，回退与赢单列移动会被拒绝",
+              "className": "text-sm text-muted-foreground"
+            }
+          ]
+        },
+        {
+          "type": "kanban",
+          "testid": "crm-opportunity-kanban-board",
+          "data": "${oppBoard?.board}",
+          "columnWidth": 300,
+          "draggable": true,
+          "keyboardReorder": { "enabled": true },
+          "columnAggregate": { "fn": "sum", "field": "expectedRevenue", "label": "金额" },
+          "cardTemplate": {
+            "type": "flex",
+            "direction": "column",
+            "gap": 4,
+            "body": [
+              {
+                "type": "text",
+                "text": "${$slot.card.data.customerName}",
+                "className": "text-sm font-medium"
+              },
+              {
+                "type": "text",
+                "text": "￥${$slot.card.data.expectedRevenue} 万 · ${$slot.card.data.ownerName}",
+                "className": "text-xs text-muted-foreground"
+              },
+              {
+                "type": "status",
+                "testid": "crm-opportunity-kanban-probability-badge",
+                "value": "${$slot.card.data.probability}",
+                "labelMap": {
+                  "high": "概率高",
+                  "mid": "概率中等",
+                  "low": "概率低"
+                },
+                "levelMap": {
+                  "high": "success",
+                  "mid": "warning",
+                  "low": "neutral"
+                }
+              }
+            ]
+          },
+          "empty": {
+            "type": "text",
+            "text": "该阶段暂无商机"
+          },
+          "onCardMove": {
+            "action": "ajax",
+            "args": {
+              "url": "/r/ReplCrm__moveStage",
+              "method": "post",
+              "data": {
+                "leadId": "${cardId}",
+                "fromStageId": "${fromColumnId}",
+                "toStageId": "${toColumnId}"
+              }
+            },
+            "messages": {
+              "success": "商机阶段已流转",
+              "failed": "商机阶段流转失败"
+            },
+            "then": [
+              { "action": "refreshSource", "targetId": "oppBoard" },
+              { "action": "refreshSource", "targetId": "funnelSummary" }
+            ],
+            "onError": [
+              { "action": "refreshSource", "targetId": "oppBoard" },
+              {
+                "action": "showToast",
+                "args": {
+                  "level": "error",
+                  "message": "商机阶段流转被拒绝（不允许回退或赢单列只读）"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "type": "flex",
+          "direction": "row",
+          "gap": 12,
+          "className": "flex-wrap",
+          "testid": "crm-opportunity-kanban-kpi-band",
+          "body": [
+            {
+              "type": "stat-tile",
+              "testid": "crm-opportunity-kanban-kpi-total",
+              "label": "商机总金额（万元）",
+              "value": "${funnelSummary?.totalAmount ?? 0}",
+              "prefix": "￥",
+              "formatter": { "thousands": true, "decimals": 0 }
+            },
+            {
+              "type": "stat-tile",
+              "testid": "crm-opportunity-kanban-kpi-won",
+              "label": "赢单金额（万元）",
+              "value": "${funnelSummary?.wonAmount ?? 0}",
+              "prefix": "￥",
+              "formatter": { "thousands": true, "decimals": 0 }
+            },
+            {
+              "type": "stat-tile",
+              "testid": "crm-opportunity-kanban-kpi-leads",
+              "label": "商机总数",
+              "value": "${funnelSummary?.totalLeads ?? 0}"
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "testid": "crm-opportunity-kanban-list",
+          "source": "${oppBoard?.leads ?? []}",
+          "itemKey": "id",
+          "pagination": { "enabled": false },
+          "columns": [
+            { "name": "customerName", "label": "客户", "width": 170 },
+            { "name": "stageName", "label": "阶段", "width": 110 },
+            { "name": "probability", "label": "概率", "width": 80 },
+            { "name": "ownerName", "label": "负责人", "width": 100 },
+            {
+              "name": "expectedRevenue",
+              "label": "预期金额（万元）",
+              "width": 190,
+              "quickEdit": true
+            }
+          ],
+          "affixRow": {
+            "cells": [
+              { "column": "expectedRevenue", "value": "${funnelSummary?.totalAmount ?? 0}" },
+              { "column": "stageName", "value": "${funnelSummary?.wonAmount ?? 0}" }
+            ]
+          },
+          "quickSaveAction": {
+            "action": "ajax",
+            "args": {
+              "url": "/r/ReplCrm__updateRevenue",
+              "method": "post",
+              "data": {
+                "leadId": "${id}",
+                "expectedRevenue": "${expectedRevenue}"
+              }
+            },
+            "messages": {
+              "success": "预期金额已更新"
+            },
+            "then": [
+              { "action": "component:refresh", "componentId": "crm-opportunity-board-source" },
+              { "action": "component:refresh", "componentId": "crm-opportunity-funnel-source" }
+            ]
+          },
+          "empty": { "type": "text", "text": "暂无商机" }
+        },
+        {
+          "type": "chart",
+          "testid": "crm-opportunity-kanban-funnel-chart",
+          "chartType": "bar",
+          "title": "阶段金额漏斗（bar 近似）",
+          "source": "${funnelSummary?.stages ?? []}",
+          "xAxis": { "dataKey": "label", "label": "阶段" },
+          "series": [{ "name": "阶段金额（万元）", "dataRegionKey": "amount" }],
+          "height": 260,
+          "legend": false
+        }
+      ]
+    }
+  ]
+}

@@ -30,6 +30,10 @@ const ROUTES = [
   // Plan 800 (D1 §4 branch A): W3 stock-ledger joins the standard desktop
   // scan set (non-mobile page — pure JSON SchemaPage, no host override).
   'complex-pages/wms-stock-ledger',
+  // Plan 801 (D1 §4 branch A): C1 opportunity-kanban joins the standard
+  // desktop scan set (non-mobile page — pure JSON SchemaPage, no host
+  // override).
+  'complex-pages/crm-opportunity-kanban',
   'dashboard-demo',
 ];
 

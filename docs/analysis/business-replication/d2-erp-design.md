@@ -288,6 +288,21 @@ prefix: ￥
 formatter: { thousands: true }
 ```
 
+#### C1 实现勘误（M3 落地实证 2026-10-30，plan 801；以 live 为准）
+
+1. **columnsConfig 不驱动动态列**：live 仅 controlled-collapse 消费——阶段列由 opportunityBoard flat BoardData 承载，stageFindPage 经 board source dependsOn 链承载"阶段先行取数"。
+2. **opportunityBoard 返回 `{board, leads}` 双投影**（table 需行数组）。
+3. **kanban 列 CSS min-width 280 钳制**：columnWidth<280 不可达。
+4. **onCardMove 请求体变量与字段集**：`${cardId}/${fromColumnId}/${toColumnId}` 先例变量；业务字段集 `{leadId, fromStageId, toStageId}`（非片段 `${card.id}`/`toStageId` 单字段——G2 逐字段断言以此为准）。
+5. **cardTemplate 绑定为 `${$slot.card.data.*}`**。
+6. **table 级 quickSaveAction 使行进 row-draft 模式**（行尾 table-row-save-bar 提交）；row-draft scope 下 then 链 refreshSource 报 `Source not found`——改 `component:refresh`（W2 先例）。
+7. **stat-tile formatter.decimals 在渲染器声明契约下必填**（与 W3 勘误⑤ schemas 层 optional 口径并存：schemas 层 optional、渲染器声明链要求显式——两处口径以 live 声明链为准）。
+8. **kanban 键盘层 live 缺口**：async 数据看板上 board-effects 键盘层不挂载（空首渲 boardRef=null、effect deps 稳定不重跑；静态 demo 正常，R3.4/5.2-002 同族）——focus③ 键盘可达以 test.fail 棘轮如实登记，修复归 kanban owner 面。
+9. **levelMap low→neutral** 映射 Badge secondary。
+10. **漏斗 bar X 轴刻度文本为空**（bars 渲染正常，chart owner 观察项）。
+11. **focus② "提交后返回"退守**（plan 801 收口审计 Minor-1a）：inline quick-edit live 形态无 dialog 面，退守"焦点回落 body、单元格可再聚焦"。
+12. **onCardMove 业务字段集 {leadId, fromStageId, toStageId}**（plan 801 收口审计 Minor-1b，§3.3 ③b 原文 toStageId/toStatus/fromStatus 就地勘误）：live 实况字段集如左，G2 逐字段断言以此为准。
+
 ### 2.5 crm-customer-360（C2，P1）
 
 ```
@@ -520,6 +535,8 @@ indicators:
 **③ G2 拖拽绑定语义**（R4 §2 G2；涉及 C1/W2）——落位 §2.2/§2.4 onCardMove 编排。
 验证（双层）：契约层——M3 补单测固化 onCardMove payload 形状（card + from/to 列 id）；编排层——e2e 经 `lastMoveStageBody` 钩子断言请求体逐字段。
 断言点：a) payload 契约测试通过；b) mock 收到 `toStageId/toStatus`＝目标列 id、`fromStatus`＝源列 id；c) C1/W2 共用同一语义模板，两页各跑 b)。
+
+> 2026-10-30 就地勘误（plan 801 收口审计 Minor-1b）：C1 侧 live 字段集为 `{leadId, fromStageId, toStageId}`（§2.4 勘误 12）——b) 的 toStatus/fromStatus 字段名为 W2 侧实况，两页字段集以各自实现实况为准。
 
 三项义务全部落位。
 

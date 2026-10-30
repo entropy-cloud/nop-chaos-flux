@@ -25,6 +25,7 @@ import {
   unwrapPatch,
   warnUnknownEndpointOnce,
 } from './mock-backend-replica-kit';
+import { createReplCrmFetcherBranches } from './mock-backend-repl-crm';
 import { createReplFetcherBranches } from './mock-backend-repl-wms';
 import { confirmBridge } from './confirm-bridge';
 import { createMockAiStream, createMockAiConnector, createAiImportLoader } from '../../ai/mock-ai-env';
@@ -119,7 +120,9 @@ export function createShowcaseEnv(): { env: RendererEnv; db: MockDatabase } {
     ['/r/Sundial__', handleSundialBranch],
     // business-replication domain branches (plan 798): one /r/Repl<Domain>__
     // fetcher face per domain module; the pairs live in the domain module.
+    // Plan 801 adds the CRM face (C1 opportunity kanban).
     ...createReplFetcherBranches(),
+    ...createReplCrmFetcherBranches(),
   ]);
 
   const fetcher = async function fetcher<T>(api: FetcherApi): Promise<{ status: number; data: T }> {

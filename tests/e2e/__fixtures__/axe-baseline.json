@@ -23,6 +23,11 @@
     "_notes": "plan 800 first-run measurement 2026-10-30 (D1 §4 branch A registration): counts measured on #/complex-pages/wms-stock-ledger. aria-required-attr = the detail table's 9 column-resize separator spans (table component owner debt, same rule as standard-crud/W2); color-contrast = 7 stat-tile secondary badges; label = the VTable internal readonly .table-focus-control input (pivot component owner). Fixes belong to the component owner, not the page schema."
   },
   "complex-pages/wms-pda-receiving": { "color-contrast": 6 },
+  "complex-pages/crm-opportunity-kanban": {
+    "aria-required-attr": 5,
+    "color-contrast": 17,
+    "_notes": "plan 801 first-run measurement 2026-10-30 (D1 §4 branch A registration): counts measured on #/complex-pages/crm-opportunity-kanban. aria-required-attr mirrors the standard-crud/W2 shell-level debt pattern (table column-resize separator family, component owner); color-contrast = stat-tile secondary badges + kanban probability status badges (warning/neutral badge pair, component owner). Fixes belong to the component owner, not the page schema."
+  },
   "dashboard-demo": { "aria-required-attr": 4, "color-contrast": 1, "nested-interactive": 1 },
   "flux-basic": { "aria-required-attr": 5, "color-contrast": 2 },
   "gantt": { "aria-conditional-attr": 14, "aria-required-children": 2, "button-name": 1 },
