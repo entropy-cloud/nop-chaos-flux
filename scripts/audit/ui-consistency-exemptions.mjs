@@ -498,4 +498,12 @@ export const EXEMPTIONS = [
       'CSV 导出 data URL 唯一生成点；schema 侧已补 download: true 经 link 渲染器透传（R3 ⑦ 修复），生成点本身无 download 语义可表达',
     source: 'R2 owner doc §R3 收口节 §3 批次⑦ + [G7-R2-视角11-01] link-download.test.tsx',
   },
+  {
+    path: 'apps/playground/src/complex-pages/shared/mock-backend-repl-wms-stock.ts',
+    rule: 'data-blob-href-without-download',
+    reason:
+      'W3 库存台账 CSV 导出的 data URL 生成点（mock 层无 download 语义可表达）；运行时 download action form-3 路径对 data: URL 走 dataUrlToBlob → downloadBlob（URL.createObjectURL + <a download>），不存在顶层导航——扫描器对该调用面系误报',
+    source:
+      'docs/audits/deep-audit-2026-10-31.md §1 A3 误报裁决 + packages/flux-runtime/src/runtime-action-helpers.ts:392-393 / async-data/blob-download.ts downloadBlob；先例：showcase-env.ts candidate D（plan 820）',
+  },
 ];

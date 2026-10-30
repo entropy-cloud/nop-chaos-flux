@@ -50,7 +50,6 @@ describe('data-source ajax args.data 契约', () => {
       } as never),
     );
     await waitFor(() => expect(captured.length).toBeGreaterThan(0), { timeout: 5000 });
-    // eslint-disable-next-line no-console
     console.log('CAPTURED', JSON.stringify(captured));
     expect(captured[0]).toMatchObject({ url: '/r/X__op', data: { page: 1, pageSize: 10 } });
     view.unmount();

@@ -38,7 +38,10 @@ import {
   type ReplicaBranchInput,
   type ReplicaFetcherBranch,
 } from './mock-backend-replica-kit';
+import type { ReplWmsTestHooks } from './mock-backend-repl-shared-types';
 import { createStockLedgerRows, handleReplWmsStockBranch, type ReplWmsStockLedgerRow } from './mock-backend-repl-wms-stock';
+
+export type { ReplWmsTestHooks };
 
 /* ── Entities (D2 §4.1 实体字段) ─────────────────────────────────────────── */
 
@@ -116,29 +119,6 @@ export const REPL_WMS_WAVE_STAGES: readonly ReplWmsWaveStatus[] = [
 ];
 
 export const REPL_WMS_WAVE_ZONES = ['Z-A', 'Z-B', 'Z-C'] as const;
-
-export interface ReplWmsTestHooks {
-  asnMiss?: boolean;
-  duplicateIdempotencyKey?: boolean;
-  forceOffline?: boolean;
-  /** Force the putaway `invalid location` guard (e2e drives the error branch
-   * without dragging the wheel-cascader). */
-  forcePutawayInvalid?: boolean;
-  lastAsnReceiveBody?: Record<string, unknown>;
-  lastPutawayBody?: Record<string, unknown>;
-  /** G2 (D2 §3.3 ③): mirror of the last `waveMove` request body for the
-   * field-by-field request assertion (waveId ↔ card id, fromStatus ↔ source
-   * column id, toStatus ↔ target column id). */
-  lastWaveMoveBody?: Record<string, unknown>;
-  lastWaveReleaseBody?: Record<string, unknown>;
-  /** W3 G7: read at `reconCheck` fetch time — flipping it mid-session and
-   * refreshing the source switches the banner to the drifted face. */
-  forceReconDrift?: boolean;
-  /** W3 G6: mirror of the last `ledgerReport` payload (download-URL shape). */
-  lastLedgerReportData?: Record<string, unknown>;
-  /** W3 cell-click param chain: batchNo the last `batchTrace` fetch carried. */
-  lastBatchTraceBatchNo?: string;
-}
 
 const SUPPLIERS = [
   '华东供应链',

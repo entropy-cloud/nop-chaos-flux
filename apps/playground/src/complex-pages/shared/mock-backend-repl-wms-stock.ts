@@ -22,7 +22,7 @@
  *   the `forceReconDrift` hook flips it to the drifted face (G7).
  */
 
-import type { ReplWmsSessionState, ReplWmsTestHooks } from './mock-backend-repl-wms';
+import type { ReplWmsTestHooks } from './mock-backend-repl-shared-types';
 
 /* ── W3 entities (D2 §4.1 实体字段) ──────────────────────────────────────── */
 
@@ -189,7 +189,9 @@ export interface ReplWmsStockBranchInput {
   method: string;
   read: (key: string) => string | undefined;
   body: Record<string, unknown>;
-  session: ReplWmsSessionState;
+  /** Structural subset of the wms session state — keeps this delegate module
+   * import-clean of `mock-backend-repl-wms.ts` (deps-baseline cycle, plan 820). */
+  session: { stockLedgerRows: ReplWmsStockLedgerRow[] };
   hooks: ReplWmsTestHooks | undefined;
 }
 
