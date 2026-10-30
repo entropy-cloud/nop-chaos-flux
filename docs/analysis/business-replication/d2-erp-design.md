@@ -34,6 +34,8 @@
 
 ### 2.1 wms-pda-receiving（W1，P0，mobile 族整页）
 
+> 实现形态（D6 开放审计 MAJ-C 裁决，2026-10-30）：**mobile host override 移动画布 375×667**——registry 特例 host 以居中手机框形态承载（桌面壳内固定宽度画布，D1 §0 决策①例外注 + §4 分支 B），非桌面壳全宽铺开。
+
 ```
 page
 └─ flex stack-column          # testid: wms-pda-receiving-root
@@ -472,7 +474,7 @@ indicators:
 ### 3.3 散落验证项归集表（R4 §4.1 三项义务落位）
 
 **① C1 kanban moveStage 绑定验证**（R4 §1 C1 行；R1 §2 C1 L50）——落位 §2.4 片段 1。
-验证：M3 e2e 以 dnd helper `dispatchEvent` 拖卡片至目标列。
+验证：M3 e2e 以 replication.ts dnd helper（封装真实指针拖拽先例：kanban-demo.spec.ts L101-111 page.mouse steps 12 / linear-replica-interactions.spec.ts L449 locator.dragTo，继承 L452 双挂载滞后等待注）拖卡片至目标列——**D6 开放审计勘误（MIN-4，2026-10-30）**：原写「dnd helper `dispatchEvent`」手段引用偏航，synthetic dispatchEvent 对 pointer 驱动的 dnd 管线未必生效。
 断言点：a) `__replCrmCalls.moveStage` 计数 +1；b) 目标列 children 含该 card id；c) 非法回退走 mock 守卫 `status:1` → 卡片不迁移 + 错误 toast 可见。
 
 **② C1 footer 统计带绑定验证**（R1 §2 C1 L51「待核（有 table-summary-row）」，R4 未单列 G 编号）——落位 §2.4 片段 2 双落位。

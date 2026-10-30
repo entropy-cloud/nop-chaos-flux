@@ -21,11 +21,13 @@
 
 ## 2. Schema 结构设计
 
-通用约定（全节生效）：页面 JSON 放 `page-schemas/<pageId>.json`（glob 自动装载，D1 决策①）；`testid` meta 传 `data-testid`（flux-core schema.ts L90），命名 `<pageId>-<element>`，主容器 `<pageId>-root`（D1 §3 L76）；布局用 `stack-*`/`hstack-*` + marker 类，自有视觉（价格大小字/低置信高亮/吸底 sticky/状态色）以 `repl-` 前缀类 + CSS 变量定义在页面级样式，禁 BEM（Renderer Styling Contract）；业务数据走 mock fetcher 不内联，仅默认筛选/静态选项走 `PAGE_DATA['<pageId>']`（D1 §2 L51）。
+通用约定（全节生效）：页面 JSON 放 `page-schemas/<pageId>.json`（glob 自动装载，D1 决策①；**例外**：S1 为 mobile host override 页，D6 开放审计 MAJ-C，见 §2.1）；`testid` meta 传 `data-testid`（flux-core schema.ts L90），命名 `<pageId>-<element>`，主容器 `<pageId>-root`（D1 §3 L76）；布局用 `stack-*`/`hstack-*` + marker 类，自有视觉（价格大小字/低置信高亮/吸底 sticky/状态色）以 `repl-` 前缀类 + CSS 变量定义在**指定落点 `apps/playground/src/complex-pages/shared/replication.css`（新建），经 `apps/playground/src/styles.css` `@import` 接入（先例 L22 sundial / L27 airtable 各自 replica css @import）**——D6 开放审计勘误（MIN-8，2026-10-30）：原「页面级样式」未指名文件与 @import 位置，`repl-price`/`repl-sticky-footer`/`repl-low-confidence` 类与 `--repl-low-confidence-bg` 变量是 §5 断言对象（getComputedStyleValue），不足以开工即对；禁 BEM（Renderer Styling Contract）；业务数据走 mock fetcher 不内联，仅默认筛选/静态选项走 `PAGE_DATA['<pageId>']`（D1 §2 L51）。
 
 **统一勘误注（2026-10-30，D5 深审，与 D2 §2.0/D3 §2.0 同款）**：全文 ajax 的 ApiSchema 一律置于 `args`（AjaxActionSchema args: ApiSchema）；data-source 取数走 `action`+`args`（DataSourceSchema 无顶层 `url`/`api` 字段，flux-core schema.ts L296-327）；form 提交走 `submitAction`；字符串 URL 不可作 crud/pivot/table 的 `source`（crud 服务端取数走 `loadAction`，先例 standard-crud.json L10-18；pivot/table 的 source 是内存数据入口，use-source-value 仅对 `{type:'source'}` 对象取数）——D5 深审勘误，以下各片段就地标注。
 
 ### 2.1 mall-sku-picker（S1，mobile，axe 分支 B）
+
+> 实现形态（D6 开放审计 MAJ-C 裁决，2026-10-30）：**mobile host override 移动画布 375×667**——registry 特例 host 以居中手机框形态承载（桌面壳内固定宽度画布，D1 §0 决策①例外注 + §4 分支 B），非桌面壳全宽铺开；schema JSON 由该 host 直接 import（同 D3 K1 装配形态）。
 
 组件树（R2 L78 交互①-⑫ → L79 映射 + G15 近似）：
 
@@ -132,7 +134,7 @@ page(mobile)   # testid: mall-sku-picker-root（D5 深审勘误 MIN-3：补主�
 
 ### 2.3 doc-ocr-workbench（O1，桌面，新 type 临时形态）
 
-组件树（R3 L21 交互①-⑩ → L22 映射；主容器 # testid: doc-ocr-workbench-root——D5 深审勘误 MIN-3）：`grid` 两栏 2fr/3fr——左 `image` 原件（preview 放大）+ `image-compare`（before=原件/after=识别参考整图，≈要素② 非 bbox）；右 `wizard` 四步（原件对照→字段确认→明细行→回流提交），步骤 2 内嵌 `detail-view` 逐字段确认（草稿+逐字段提交+再校验≈G20）+ `detail-field`（labelRemark 原值悬浮≈要素⑤、inputClassName 低置信高亮≈要素④）+ `badge` 置信度分档（≥0.9 高/0.7-0.9 中/<0.7 低）+ `input-table` 明细行（要素⑧）；步骤 4 `ocrCommit`（要素⑨）。
+组件树（R3 L21 交互①-⑩ → L22 映射；主容器 # testid: doc-ocr-workbench-root——D5 深审勘误 MIN-3）：`grid` 两栏 2fr/3fr——左 `image` 原件（preview 放大）+ `image-compare`（before=原件/after=识别参考整图，≈要素② 非 bbox）；右 `wizard` 四步（原件对照→字段确认→明细行→回流提交），步骤 2 内嵌 `detail-view` 逐字段确认（草稿+逐字段提交+再校验≈G20）+ `detail-field`（labelRemark 原值悬浮≈要素⑤、inputClassName 低置信高亮≈要素④）+ `badge` 置信度分档（≥0.9 高/0.7-0.9 中/<0.7 低）；步骤 3 明细行以 **`form` 包裹 `input-table`**（要素⑧——D6 开放审计勘误 MIN-2，2026-10-30：InputTableSchema extends BoundFieldSchemaBase（composite-schemas.ts），input-table 是绑定 form 状态的字段，合计回写 "parent form field"（input-table-renderer.tsx L228 注释），裸放有绑定落空面；D2 W2（§2.2 form→input-table）与 D3 M2（§2.5 dialog 内 form 包裹）同属性用法均包 form，唯本页原树裸放——补 form 包裹对齐同款；§5 交互④的增改+校验断言在该 form 宿主内进行）；步骤 4 `ocrCommit`（要素⑨）。
 
 片段① 逐字段确认（labelRemark+inputClassName，flux-core schema.ts L154/L158）：
 
@@ -173,13 +175,18 @@ page(mobile)   # testid: mall-sku-picker-root（D5 深审勘误 MIN-3：补主�
     {
       "key": "fields",
       "title": "字段确认",
-      "formId": "ocrFieldPanel",
+      // D6 开放审计勘误（MIN-1，2026-10-30）：删除原 formId:"ocrFieldPanel"——死配置：该 id 未在任何节点声明，
+      // 且 wizard formId 校验要求目标在 componentRegistry 可 resolve 且暴露 validate 方法
+      //（wizard-renderer.tsx L375-384：hasMethod('validate') 不命中即静默跳过），全仓组件 handle 暴露
+      // validate 的只有 form（form-definition.ts L118），detail-view 零 component handle——该 formId 在
+      // detail-view 承载（G20 裁决）下是静默 no-op。字段级门禁单点 = beforeLeave（ocrValidate）；
+      // 如后续改 form 承载字段面板才启用 formId。
       "beforeLeave": {
         "action": "ajax",
         "args": { "url": "/r/ReplDoc__ocrValidate", "method": "post" },
       },
     },
-    { "key": "rows", "title": "明细行" },
+    { "key": "rows", "title": "明细行" }, // D6 开放审计勘误（MIN-2）：本步 body = form 包裹 input-table（见组件树勘误注），对齐 D2 W2/D3 M2 同款
     {
       "key": "commit",
       "title": "回流提交",
@@ -368,22 +375,22 @@ HITL 卡复用口径（R3 L30）：`ai-tool-call` 为 AI 会话语境卡，inbox
 
 ### 4.1 mall 模块（S1/S2）
 
-| 端点（method）                         | 页  | 数据形状                                                                                                                                                          | 错误分支                                      |
-| -------------------------------------- | --- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------- |
-| ReplMall\_\_goodsDetail (get)          | S1  | `{ goods:{ goodsId,title,images[],price,seckillPrice,stock,purchaseLimit }, skuMatrix:[{ skuId,specs:{color,size},price,stock,image }], promo:{ seckillEndAt } }` | —                                             |
-| ReplMall\_\_flashSaleSession (get)     | S1  | `{ sessions:[{ sessionId,name,state:'ended'\|'active'\|'upcoming',startAt,endAt,progressPercent }] }`                                                             | —                                             |
-| ReplMall\_\_goodsFeed (get 分页)       | S1  | `{ items ≥25 商品卡, total }`（≥3 页）                                                                                                                            | —                                             |
-| ReplMall\_\_addToCart (post)           | S1  | `{ cartItemId }`                                                                                                                                                  | REPL_MALL_SOLD_OUT                            |
-| ReplMall\_\_placeOrder (post)          | S1  | `{ orderId }`（秒杀直购：地址+数量，禁优惠券语义由 payload 承载）                                                                                                 | REPL_MALL_SOLD_OUT / REPL_MALL_LIMIT_EXCEEDED |
-| ReplMall\_\_skuLocate (post)           | S1  | `{ sku }`（仅 formula 降级备胎，§3.3）                                                                                                                            | —                                             |
-| ReplMall\_\_commissionPage (get)       | S2  | `{ items ≥25:{ orderNo,distributorName,level 1-3,rate,commissionAmount,status }, total }`                                                                         | —                                             |
-| ReplMall\_\_commissionExport (post)    | S2  | `{ downloadUrl, filename }`（G6 服务端报表）                                                                                                                      | REPL_MALL_EXPORT_EMPTY                        |
-| ReplMall\_\_distPivot (get)            | S2  | `{ items:{ level,distributorName,commissionAmount,orderCount } }`                                                                                                 | —                                             |
-| ReplMall\_\_distTree (get)             | S2  | `{ tree 三级:{ id,name,level,children[] } }`                                                                                                                      | —                                             |
-| ReplMall\_\_commissionRules (get/post) | S2  | `{ items:{ category,minAmount,L1Rate,L2Rate,L3Rate } }`                                                                                                           | post: REPL_MALL_RULE_INVALID（合计≠100%）     |
-| ReplMall\_\_payoutAudit (post)         | S2  | `{ payoutId,auditResult }`（打回走余额语义）                                                                                                                      | REPL_MALL_PAYOUT_REJECTED_REQUIRED            |
+| 端点（method）                         | 页  | 数据形状                                                                                                                                                                                                                                                                                                                                                                                                                                                              | 错误分支                                      |
+| -------------------------------------- | --- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------- |
+| ReplMall\_\_goodsDetail (get)          | S1  | `{ goods:{ goodsId,title,images[],price,seckillPrice,stock,purchaseLimit }, skuMatrix:[{ skuId,specs:{color,size},price,stock,image }], promo:{ seckillEndAt } }`（**`seckillEndAt` 为 epoch-ms number**——D6 开放审计勘误 MIN-3，2026-10-30：countdown `targetTime` 契约 number（countdown.tsx L31/L53-57：非 number 不进 targetTime 分支），按上游 ORM 习惯生成 ISO 字符串会静默不触发 onFinish，§5 S1 交互③「倒计时切态」断言同挂；D3 §4.5 respondDeadline 同口径） | —                                             |
+| ReplMall\_\_flashSaleSession (get)     | S1  | `{ sessions:[{ sessionId,name,state:'ended'\|'active'\|'upcoming',startAt,endAt,progressPercent }] }`                                                                                                                                                                                                                                                                                                                                                                 | —                                             |
+| ReplMall\_\_goodsFeed (get 分页)       | S1  | `{ items ≥25 商品卡, total }`（≥3 页）                                                                                                                                                                                                                                                                                                                                                                                                                                | —                                             |
+| ReplMall\_\_addToCart (post)           | S1  | `{ cartItemId }`                                                                                                                                                                                                                                                                                                                                                                                                                                                      | REPL_MALL_SOLD_OUT                            |
+| ReplMall\_\_placeOrder (post)          | S1  | `{ orderId }`（秒杀直购：地址+数量，禁优惠券语义由 payload 承载）                                                                                                                                                                                                                                                                                                                                                                                                     | REPL_MALL_SOLD_OUT / REPL_MALL_LIMIT_EXCEEDED |
+| ReplMall\_\_skuLocate (post)           | S1  | `{ sku }`（仅 formula 降级备胎，§3.3）                                                                                                                                                                                                                                                                                                                                                                                                                                | —                                             |
+| ReplMall\_\_commissionPage (get)       | S2  | `{ items ≥25:{ orderNo,distributorName,level 1-3,rate,commissionAmount,status }, total }`                                                                                                                                                                                                                                                                                                                                                                             | —                                             |
+| ReplMall\_\_commissionExport (post)    | S2  | `{ downloadUrl, filename }`（G6 服务端报表）                                                                                                                                                                                                                                                                                                                                                                                                                          | REPL_MALL_EXPORT_EMPTY                        |
+| ReplMall\_\_distPivot (get)            | S2  | `{ items:{ level,distributorName,commissionAmount,orderCount } }`                                                                                                                                                                                                                                                                                                                                                                                                     | —                                             |
+| ReplMall\_\_distTree (get)             | S2  | `{ tree 三级:{ id,name,level,children[] } }`                                                                                                                                                                                                                                                                                                                                                                                                                          | —                                             |
+| ReplMall\_\_commissionRules (get/post) | S2  | `{ items:{ category,minAmount,L1Rate,L2Rate,L3Rate } }`                                                                                                                                                                                                                                                                                                                                                                                                               | post: REPL_MALL_RULE_INVALID（合计≠100%）     |
+| ReplMall\_\_payoutAudit (post)         | S2  | `{ payoutId,auditResult }`（打回走余额语义）                                                                                                                                                                                                                                                                                                                                                                                                                          | REPL_MALL_PAYOUT_REJECTED_REQUIRED            |
 
-会话状态：goods.stock 扣减、payout 状态闭包持有。钩子：`forcePlaceOrderError(msg)`、`advanceFlashSaleClock(deltaMs)`（推进倒计时基线使 onFinish 可触发）。
+会话状态：goods.stock 扣减、payout 状态闭包持有。钩子：`forcePlaceOrderError(msg)`、`advanceFlashSaleClock(deltaMs)`（推进 mock 闭包中的秒杀倒计时基线使 onFinish 可触发；**传播路径**——D6 开放审计勘误 MIN-3，2026-10-30：改闭包值不会自动重解析 scope 绑定，spec 须在钩子调用后触发 `goodsDetail` data-source 刷新（refreshSource 或重进页）使 `${promo.seckillEndAt}` 重新求值，countdown 才读到新基线）。
 
 ### 4.2 doc 模块（O1/O2）
 
@@ -431,7 +438,7 @@ HITL 卡复用口径（R3 L30）：`ai-tool-call` 为 AI 会话语境卡，inbox
 
 通则（不逐页重复）：`tests/e2e/replication-<pageId>.spec.ts` 平铺 + `openReplicationPage` helper；交互全程序化 + `__repl<Domain>Calls` 计数证动作发生；收尾 `assertTrackedPageErrors`；高亮/配色用 `getComputedStyleValue`（visual-assert.ts）；axe 在 a11y-axe-baseline.spec.ts 扩展不进页面 spec；focus 用 `toBeFocused()`/`activeElement` 比对（D1 决策⑥）；dialog focus 模式：打开落 `[data-slot="dialog-surface"]`、Esc 返回触发元素。
 
-**S1 mall-sku-picker**（axe 分支 B：桌面 ROUTES + `viewport 375×667` 新 describe，基线键同 pageId、describe 标注 mobile）
+**S1 mall-sku-picker**（axe 分支 B：mobile host override 移动画布内 describe——context 选项 `{ viewport 375×667, hasTouch: true }`，基线键同 pageId、describe 标注 mobile；交互断言均在 mobile 画布 DOM 内——D6 开放审计 MAJ-C 同步）
 
 - 交互：① 求交：选规格→`mall-sku-picker-price`/库存文本变化且 `__replMallCalls.skuLocate`=0；② 步进：超 purchaseLimit 拦截；③ 倒计时切态：`advanceFlashSaleClock`→onFinish→`flashSaleSession` 计数+1+场次态文本；④ 直购：buy-now→placeOrder 计数+1，钩子强制 SOLD_OUT→错误 toast；⑤ 无限滚动：商品卡增长 ≥2 页。
 - focus：sku-panel 展开后焦点落面板首控件（移动页抽样）；buy-now tab 可达；image-viewer Esc 关闭返回。
@@ -453,7 +460,7 @@ HITL 卡复用口径（R3 L30）：`ai-tool-call` 为 AI 会话语境卡，inbox
 
 **V1 iot-telemetry-device**（axe 分支 A）
 
-- 交互：① 轮询刷新：记录 latest-tile 文本→`tickTelemetry`→≤6s 内文本变化（interval 前后数据变化）；② 告警 ack：行点击→dialog→ack-btn→alarmAck 计数+1+status mapping 变化；③ 错误分支：`forceAlarmAckError`→toast；④ 查询：换 deviceKey→telemetryQuery 计数+1+tile 更新。
+- 交互：① 轮询刷新（D6 开放审计勘误 MIN-6，2026-10-30，对齐 D3 §5.4 M1 防flake口径）：`tickTelemetry` 钩子推进序列相位后**直接断数据面**——latest-tile 文本 = 推进后相位值，`expect(...).toHaveText(...)` 显式 waitFor timeout 给足 interval+余量（interval=5000，timeout ≥7s）；不采用原「≤6s 内文本变化」窄窗口口径（interval 5000 + 6s 窗余量仅 1s，双 webServer/workers 2 下 flake 面偏大，与 D3 M1「只断首帧/钩子推进后断数据面」同族页面两套口径）；② 告警 ack：行点击→dialog→ack-btn→alarmAck 计数+1+status mapping 变化；③ 错误分支：`forceAlarmAckError`→toast；④ 查询：换 deviceKey→telemetryQuery 计数+1+tile 更新。
 - focus：查询表单首字段 tab 首站；告警 dialog 焦点落入+Esc 返回。
 
 **V2 iot-ota-rollout**（axe 分支 A）

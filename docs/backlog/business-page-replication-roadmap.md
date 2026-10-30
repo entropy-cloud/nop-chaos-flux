@@ -1,7 +1,7 @@
 # Business Page Replication Roadmap（上游业务项目典型复杂页面复刻）
 
 > Created: 2026-10-28（用户下达：对 nop-app-erp 五条业务线、nop-app-mall、nop-entropy 智能单据、nop-app-iot 的典型复杂页面，在 flux playground 中复刻，要求实现对应 UI/UX 能力）
-> Status: **active**（M1 调研里程碑达成：R1-R6 全 done；M2-M4 待启动。头部状态于 2026-10-30 随 plan 791 收口就地勘误）
+> Status: **active**（M1 调研、M2 设计里程碑均达成：R1-R6/D1-D6 全 done；M3-M4 待启动。头部状态于 2026-10-30 随 plan 797 收口就地勘误）
 > 拟制与共识流程：`docs/skills/roadmap-and-mission-authoring-with-consensus-review.md`
 > Sources:
 >
@@ -50,7 +50,7 @@
 | D3 AI/MES 复刻设计（知识库对话页/工单处理台/审批轨迹；车间大屏/工序报工表/异常叫料移动页）                                                            | `done` | D1      | ；plan 794（completed）；交付 `docs/analysis/business-replication/d3-ai-mes-design.md`                                                                                                    |
 | D4 商城/智能单据/IoT 复刻设计（商品 SKU 页/营销活动页/分销后台；OCR 校正工作台/HITL 审批收件箱；设备遥测页/OTA 灰度管理/围栏地图/视频墙）             | `done` | D1      | ；plan 795（completed）；交付 `docs/analysis/business-replication/d4-mall-doc-iot-design.md`（注：D4 行页面枚举收敛为 7 页——营销活动页归 R2 候选⑤未纳入 1.0，围栏地图与视频墙合并 V3 页） |
 | D5 设计阶段深度审计（设计 vs live repo renderer 契约核对；缺口登记项与 missing-components/improvement-analysis 无重复立项冲突）                       | `done` | D2-D4   | deep audit；plan 796（completed）；交付 `docs/audits/business-replication/d5-design-deep-audit.md`（首轮 Fail→两轮复审 Pass）+ improvement-analysis countDown 双处就地勘误                |
-| D6 设计阶段开放审计（独立 fresh sub-agent 开放评审，不复用执行者上下文）                                                                              | `todo` | D5      | open audit                                                                                                                                                                                |
+| D6 设计阶段开放审计（独立 fresh sub-agent 开放评审，不复用执行者上下文）                                                                              | `done` | D5      | open audit；plan 797（completed）；交付 `docs/audits/business-replication/d6-design-open-audit.md`（首轮 Fail→复审轮 1 Pass）                                                             |
 
 ### Milestone 3: 开发（逐页复刻）
 

@@ -22,7 +22,7 @@
 
 ### 2.0 通用约定
 
-- 每页一个 JSON `page-schemas/<pageId>.json`（D1 决策① glob 自动装载）+ `COMPLEX_PAGE_ENTRIES` 增 entry（category `business-replication`，D1 决策②）。
+- 每页一个 JSON `page-schemas/<pageId>.json`（D1 决策① glob 自动装载）+ `COMPLEX_PAGE_ENTRIES` 增 entry（category `business-replication`，D1 决策②）。**例外：K1 为 host override 页**（D6 开放审计 MAJ-B 裁决，见 §2.1）——schema JSON 由专用 host 组件直接 import 并经 page-data 注入 controller/engine（先例 `ai-conversations-demo.tsx` 直接 import `ai-conversations-example.json`），registry 特例覆盖通用 SchemaPage entry。
 - testid：主容器 `<pageId>-root`、关键元素 `<pageId>-<element>`（D1 §3 L76）；schema 顶层 `testid`（schema.ts L90）编译进 `props.meta.testid`。
 - styling contract（D1 §5-②）：布局类 renderer（page/flex/dashboard 骨架）只发 marker 类 + 显式 `stack-*`/`hstack-*` 别名；widget 类 renderer（ai-\*、kanban、input-table、stat-tile、mobile 族）为自样式完整控件；M1 暗色底以 page 根 `className` 一次声明。
 - 数据绑定：查询走 data-source/crud → `/r/ReplAi__*`、`/r/ReplMes__*`（§4），信封 `{status:0,data:{items,total}}`；业务数据不内联进 schema（D1 §2 L51）。
@@ -34,16 +34,20 @@
 ```
 page（xui:imports ai://）
 └─ flex row
-   ├─ ai-conversations #ai-knowledge-chat-conversations（events → ReplAi__conversation*）
+   ├─ ai-conversations #ai-knowledge-chat-conversations（events → ReplAi__conversation*；
+   │    onItemClick → host action replAi:setActive → switchConversation，MAJ-B 裁决）
    └─ flex col
       └─ ai-chat #ai-knowledge-chat-chat connector=${$ai.connectors.mock}
+         conversationController=${controller} engine=${activeEngine}   # 均由 K1 host 注入（MAJ-B）
          ├─ header：标题 + 频控提示位（G11）；beforeMessages：ai-welcome + ai-prompts（chips，onSelect→ai:send）
          ├─ 内置：ai-message-list + ai-bubble（streaming buffer）+ ai-sender（停止钮 data-slot="ai-sender-cancel"，ai-sender.tsx L167-177）
          ├─ afterMessages：alert（G11）+ ai-citations + ai-feedback + ai-token-usage，绑 ${activeAnswer}
-         └─ onResponseComplete：ajax messageSave → setValue activeAnswer
+         └─ onResponseComplete：ajax messageSave（data 透传 payload.message）→ setValue activeAnswer ← ${message}
 ```
 
-ai-citations/ai-feedback/ai-token-usage 是 message 级独立 widget（不内嵌 bubble，live 核实），落 afterMessages 绑定最近一条 assistant 消息；会话切换经 conversationController（先例 `ai-conversations-example.json`）。
+ai-citations/ai-feedback/ai-token-usage 是 message 级独立 widget（不内嵌 bubble，live 核实），落 afterMessages 绑定最近一条 assistant 消息（绑定源 = activeAnswer，即 onResponseComplete 写回的 message 快照，见片段 1 勘误注）；会话切换经 conversationController——**实现形态裁决见下**。
+
+**实现形态裁决（D6 开放审计 MAJ-B，2026-10-30）：K1 为 host override 页（registry 特例），非纯 JSON SchemaPage。** 依据：① `conversationController`/`engine` 是 host 注入的 resolved prop——host objects，非 schema 表达式可产生的值（`flux-renderers-ai/src/schemas.ts` L11-16 明注 "connector / conversationController: these are resolved prop values (host objects)"）；② D3 自引先例本身即专用 host：`ai-conversations-example.json` 的 `conversationController: "${controller}"`/`engine: "${activeEngine}"` 由 `apps/playground/src/pages/ai-conversations-demo.tsx`（专用 demo page）持 `useConversation` 注入 page-data；③ complex-pages 内唯一 ai-conversations 用户 pih-workspace 也因 "needs host-owned AI conversation state" 以 PihWorkspaceHost 覆盖通用 SchemaPage（`complex-pages-registry.tsx` L18-21 注释 + entry）——D1-决策①登记的"特殊 host 覆盖先例"正是本页所需机制，本次由备用转正（D1 §0 决策①例外注同步）。纯 JSON 版的实际行为（反驳实证）：`ai-chat` 无 engine/controller 时自建引擎（schemas.ts L13-16 "When omitted, ai-chat self-creates an engine"）聊天可用，但 `ai-conversations` 的 onItemClick 只发 ajax、`activeConversationId` 无人回写、历史消息无处进引擎——切换会话 = 端点计数 +1 而界面无任何变化，R2 要素①"切换"语义静默欠交。裁决落点：K1 专用 host 组件（如 `AiKnowledgeChatHost`）持 `useConversation({ connector })`，经 page-data 注入 `conversations`/`activeConversationId`/`controller`/`activeEngine`；registry 特例覆盖通用 SchemaPage entry；**选中态经 host namespace action**（先例 ai-conversations-demo.tsx plan 633 UR-4：activeId 所有权归 host store，schema `setValue` 只写 scope、下一次 pageData replace 会把高亮回退）——onItemClick → `replAi:setActive` → `switchConversation(id)`，历史消息经 `ReplAi__messageFindPage` 取回后由 host 灌入引擎回显；CRUD ajax（conversationSave 等）保留为持久化副写。会话切换全语义（选中回显 + 历史消息进引擎）可验收，不收窄。
 
 片段 1（骨架，节选）：
 
@@ -62,13 +66,12 @@ ai-citations/ai-feedback/ai-token-usage 是 message 级独立 widget（不内嵌
           "testid": "ai-knowledge-chat-conversations",
           "conversations": "${conversations}",
           "activeId": "${activeConversationId}",
+          // D6 开放审计勘误（MAJ-B）：原 onItemClick 仅发 ajax——activeId 无人回写、历史消息无处进引擎（切换会话=端点计数+1 而界面无变化）。
+          // 选中态改经 host namespace action（activeId 所有权归 host store，先例 ai-conversations-demo.tsx plan 633 UR-4：
+          // schema setValue 只写 scope、下一次 pageData replace 会把高亮回退）；历史消息由 host 经 messageFindPage 取回灌入引擎回显。
           "onItemClick": {
-            "action": "ajax",
-            "args": {
-              "url": "/r/ReplAi__messageFindPage",
-              "method": "get",
-              "params": { "conversationId": "${id}" },
-            },
+            "action": "replAi:setActive",
+            "args": { "id": "${id}" },
           },
           "onCreate": {
             "action": "ajax",
@@ -79,11 +82,34 @@ ai-citations/ai-feedback/ai-token-usage 是 message 级独立 widget（不内嵌
           "type": "ai-chat",
           "testid": "ai-knowledge-chat-chat",
           "connector": "${$ai.connectors.mock}",
+          "conversationController": "${controller}", // D6 开放审计 MAJ-B：K1 host 注入（resolved prop，先例 ai-conversations-example.json）
+          "engine": "${activeEngine}", // 同上——host 注入，会话切换时 ai-chat 随 activeEngine 换消息面（demo host P1-MA5.6-001 同款）
+          "activeConversationId": "${activeConversationId}",
           "submitType": "enter",
           "placeholder": "向知识库提问…",
           "onResponseComplete": [
-            { "action": "ajax", "args": { "url": "/r/ReplAi__messageSave", "method": "post" } },
-            { "action": "setValue", "args": { "path": "activeAnswer", "value": "${result}" } },
+            {
+              "action": "ajax",
+              "args": {
+                "url": "/r/ReplAi__messageSave",
+                "method": "post",
+                "data": { "message": "${message}" }, // D6 开放审计 MAJ-A 同步：补 data 透传 payload——原片段无 data，落库体为空
+              },
+            },
+            {
+              "action": "setValue",
+              "args": { "path": "activeAnswer", "value": "${message}" },
+              // D6 开放审计勘误（MAJ-A）：事件 payload 实为 {message}（ai-chat.tsx L460-467 构造
+              // `payload = { message: last ? cloneMessage(last) : last }`；dispatch-ctx.ts L16-24
+              // `evaluationBindings: payload`——事件上下文可求值键只有 message）。原 `${result}` 是动作链
+              // "上一动作返回值"语义（action-execution.ts L522-539）——会把上一动作 messageSave 的 ajax
+              // 响应写进 activeAnswer，致 afterMessages 三件套渲染空、G11 护栏 alert 永不可见、§5.1
+              // citations/guardrail 断言整条必挂。改绑 `${message}` 整快照（`${message.*}` 族的根绑定，
+              // 等价分步 setValue 取 `${message.content}`/`${message.metadata.*}` 的聚合形状）：
+              // 一等字段 id/role/content/metadata.finishReason 对照 engine/types.ts ChatMessage（M3 定稿）；
+              // sources/refused/usage 为 mock 按 ReplAiMessage 形状在消息快照上的扩展（§4.2 fixture，
+              // M3 对照 cloneMessage 快照定稿落 metadata 或快照本体，不静默）。
+            },
           ],
         },
       ],
@@ -130,7 +156,9 @@ ai-citations/ai-feedback/ai-token-usage 是 message 级独立 widget（不内嵌
 }
 ```
 
-护栏判定：mock stream 按 §4.2 refusal 预设返回拒绝应答，`refused` 由 onResponseComplete 动作链写入；finishReason 若引擎未透出（M3 对照 `engine/types.ts` 校准），退化「内容前缀 `[REFUSED]` + formula 检测」等价口径（断言只看 alert 可见性）。
+D6 开放审计 MAJ-A 同步检查（citations/feedback/token-usage 绑定源）：activeAnswer 现为 onResponseComplete 写回的 message 快照，`message: "${activeAnswer}"`、`sources: "${activeAnswer.sources}"`、`visible: "${activeAnswer && activeAnswer.refused}"` 三处绑定随之成立——ai-citations 解析 message.content 的 [N] 上标（schemas.ts L370-374 mode list）、ai-token-usage 读 message.metadata.usage（schemas.ts L407-416）。M3 前置义务：mock 流完成时 sources/refused/usage 必须已在快照上（§4.2 fixture，M3 对照 cloneMessage 快照定稿落 metadata 或快照本体，不静默）。
+
+护栏判定：mock stream 按 §4.2 refusal 预设返回拒绝应答，`refused` 随 onResponseComplete 链写回的 `${message}` 快照进入 activeAnswer 后被 G11 alert 的 visible 表达式读取（D6 开放审计 MAJ-A 勘误：原「refused 由 onResponseComplete 动作链写入」未指明绑定源，`${result}` 语义下该前提落空）；finishReason 若引擎未透出（M3 对照 `engine/types.ts` 校准，透出路径 = payload.message.metadata.finishReason），退化「内容前缀 `[REFUSED]` + formula 检测」等价口径（断言只看 alert 可见性）。
 
 ### 2.2 K2 ai-ticket-console（P1，能力扩展：G9 桌面 SLA 倒计时临时形态 + G11 置信度门 + G12 采用链路）
 
@@ -401,6 +429,8 @@ page                        # testid: mes-work-reporting-root（D5 深审勘误 
 
 ### 2.6 M3 mes-andon-material（P1，直接组合，涉 G14；axe 分支 B mobile）
 
+> 实现形态（D6 开放审计 MAJ-C 裁决，2026-10-30）：**mobile host override 移动画布 375×667**——registry 特例 host 以居中手机框形态承载（桌面壳内固定宽度画布，D1 §0 决策①例外注 + §4 分支 B），非桌面壳全宽铺开。
+
 ```
 page（移动 viewport 375×667）   # testid: mes-andon-material-root（D5 深审勘误 MIN-3：补主容器 testid 注）
 ├─ notice-bar（未关闭异常/叫料响应播报）
@@ -441,7 +471,7 @@ page（移动 viewport 375×667）   # testid: mes-andon-material-root（D5 深�
       { "type": "text", "text": "${typeLabel} · ${station}" },
       {
         "type": "countdown",
-        "targetTime": "${respondDeadline}",
+        "targetTime": "${respondDeadline}", // D6 开放审计勘误（MIN-3）：countdown targetTime 契约 number epoch-ms（countdown.tsx L31/L53-57：非 number 不进 targetTime 分支），ISO 字符串静默不触发 onFinish——respondDeadline 类型声明见 §4.5
         "format": "mm:ss",
         "suffix": " 内响应",
         "onFinish": { "action": "showToast", "args": { "level": "error", "message": "响应超时" } },
@@ -538,7 +568,7 @@ input-table 注册于全局 registry（R4 §0 L14）；明细数量键入以 num
 | slow-stream       | 「长答」   | ≥8 chunk、delayMs 经 `__replAiTestHooks.streamDelayMs` 可调                  | K1 逐帧渲染/停止钮断言     |
 
 - tool-call/HITL 场景 mock：复用 `tool-mock.ts` 的 `mockToolSchemas`/`mockToolExecutor` 两轮范式（round1 tool_calls → executor 罐头结果 → round2 内容）；HITL 叠加 `ai-tool-call` pending 态（`data-requires-approval` presence-only）→ 宿主 onApproval 持久化 → decided 断言。
-- finishReason 透出校准点：refusal 预设依赖引擎把 `finish_reason` 映射进响应完成事件 payload；M3 对照 `engine/types.ts` 核实，未透出则退化「内容前缀 + formula 检测」等价口径；断言只看 G11 alert 可见性（§5.1）。
+- finishReason 透出校准点：refusal 预设依赖引擎把 `finish_reason` 映射进响应完成事件 payload（经 `payload.message.metadata.finishReason` 透出——D6 开放审计 MAJ-A 同步：payload 形状为 `{message}`）；M3 对照 `engine/types.ts` 核实，未透出则退化「内容前缀 + formula 检测」等价口径；断言只看 G11 alert 可见性（§5.1）。
 - 流错误分支：`forceStreamError` 使下一轮流 reject，验证 ai-chat `onError` + sender 恢复可输入。
 
 ### 4.3 ReplAi 端点清单
@@ -573,7 +603,7 @@ input-table 注册于全局 registry（R4 §0 L14）；明细数量键入以 num
 - `ReplAiApprovalTask {id,subject,approveStatus(UNSUBMITTED|SUBMITTED|APPROVED|REJECTED),submitter,currentNode,hitlToolCall?}`
 - `ReplMesJobCard {id,opNo,cardNo,workCenter,plannedQty,completedQty,scrappedQty,reworkQty,stdMins,setupMins,runMins,status(8 态)}`（佐证 R2 L56 ErpMfgJobCardTimeLog/state-machine）
 - `ReplMesDashboardKpi {planned,completed,scrapped,completionRate,plannedDelta,plannedSpark[],trend24h:[{ts,output}],abnormalities:[{id,type,station,level,raisedAt}],downtimes:[…]}`（trend24h 确定性生成，D1 §2 L49）
-- `ReplMesAndon {id,type(ANDON|MATERIAL),typeLabel,station,description,photos[],level,raisedAt,respondDeadline,status,escalationLevel,materialIssue:{docNo,lines:[{material,requiredQty,issuedQty,location}]}}`（佐证 R2 L64）
+- `ReplMesAndon {id,type(ANDON|MATERIAL),typeLabel,station,description,photos[],level,raisedAt,respondDeadline,status,escalationLevel,materialIssue:{docNo,lines:[{material,requiredQty,issuedQty,location}]}}`（佐证 R2 L64）。**`respondDeadline` 为 epoch-ms number**（D6 开放审计勘误 MIN-3：countdown `targetTime` 契约 number——countdown.tsx L31/L53-57 非 number 不进 targetTime 分支，ISO 字符串静默不触发 onFinish，S1 同类口径见 D4 §4.1；§5.6「已过 deadline fixture 行 onFinish → 行标红」断言依赖此类型）；`raisedAt` 同按 epoch-ms。
 
 ### 4.6 测试钩子（opt-in，D1 §2 L50；生产不设置即 no-op）
 
@@ -617,7 +647,7 @@ input-table 注册于全局 registry（R4 §0 L14）；明细数量键入以 num
 - 状态按钮显隐：8 态 fixture 抽 3 态（RELEASED 只见开工；RUNNING 见暂停/报工提交；SUBMITTED 只见完成）→ visible 断言；非法迁移拦截：对 CLOSED 行直调 startJob → ILLEGAL_TRANSITION toast + 行状态不变；附加：hourRatio>1 行单元格标红 class 断言（getComputedStyleValue）。
 - focus：dialog 内首字段 autofocus；input-table 行内 tab 序连续；提交后焦点落回触发行。
 
-### 5.6 mes-andon-material（axe 分支 B：375×667 describe 块，D1 §4 L87；基线键同 pageId、describe 名标注 mobile）
+### 5.6 mes-andon-material（axe 分支 B：mobile host override 移动画布内 375×667 describe 块，D1 §4（D6 开放审计 MAJ-C 同步）；基线键同 pageId、describe 名标注 mobile；交互断言均在 mobile 画布 DOM 内）
 
 - 列表/刷新/翻页：首屏任务行 ≥5；pull-refresh onRefresh → `andonFindPage` 计数增量；infinite-scroll onLoadMore 翻页计数。
 - 拍照上传：文件注入 → input-image 选 1 张 → uploadAction → `uploadAndonPhoto === 1` → 缩略渲染 + image-viewer 打开定位该图（onChange payload index 断言）。
