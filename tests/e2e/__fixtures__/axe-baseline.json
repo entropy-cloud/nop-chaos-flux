@@ -33,6 +33,11 @@
     "list": 1,
     "_notes": "plan 802 first-run measurement 2026-10-30 (D1 §4 branch A registration): counts measured on #/complex-pages/crm-customer-360. color-contrast = 8 table-pagination secondary-badge page-number buttons (bg-secondary/text-secondary-foreground family — same badge contrast debt as W3/C1 registrations, component owner); list = the timeline <ol> root whose clickable seek <li> items carry role=button (timeline renderer seek affordance vs list semantics, component owner). Fixes belong to the component owner, not the page schema."
   },
+  "complex-pages/crm-sales-dashboard": {
+    "aria-required-attr": 4,
+    "color-contrast": 8,
+    "_notes": "plan 803 first-run measurement 2026-10-30 (D1 §4 branch A registration): counts measured on #/complex-pages/crm-sales-dashboard. aria-required-attr = the report panel table's 4 column-resize separator spans (table component owner debt, same rule family as standard-crud/W2/W3/C1; count = the 4 report columns); color-contrast = 8 header feature badges (data-slot=badge variant=secondary in the complex-pages shell header — same secondary-badge contrast debt as W3/C1/C2 registrations, component owner). Fixes belong to the component owner, not the page schema."
+  },
   "dashboard-demo": { "aria-required-attr": 4, "color-contrast": 1, "nested-interactive": 1 },
   "flux-basic": { "aria-required-attr": 5, "color-contrast": 2 },
   "gantt": { "aria-conditional-attr": 14, "aria-required-children": 2, "button-name": 1 },

@@ -4,10 +4,12 @@
  * ships the endpoint subset its schema consumes — `stageFindPage` /
  * `opportunityBoard` / `moveStage` / `updateRevenue` / `funnelSummary`
  * (D2 §4.2 original names). C2 (crm-customer-360, plan 802) is delegated to
- * `mock-backend-repl-crm-c2.ts` under the same line gate as the WMS stock
+ * `mock-backend-repl-crm-c2.ts` and C3 (crm-sales-dashboard, plan 803) to
+ * `mock-backend-repl-crm-c3.ts` under the same line gate as the WMS stock
  * delegation (`mock-backend-repl-wms-stock.ts`): the branch below hands
- * unmatched C2 urls to the `createReplCrmC2Surface` handler — shared seed
- * pools passed in, the counter below stays the single per-request count site.
+ * unmatched C2/C3 urls to the respective `createReplCrmC2Surface` /
+ * `createReplCrmC3Surface` handler — shared seed pools passed in, the counter
+ * below stays the single per-request count site.
  *
  * Envelopes (D1 §2): queries `{status:0, data:{items,total}}` (funnelSummary
  * and opportunityBoard return their aggregate/board shapes directly, per the
@@ -32,8 +34,9 @@
  * ('rollback' | 'won' guard force), `forceKpiError` (funnelSummary failure
  * face), plus the last-request-body mirrors `lastMoveStageBody` (G2 义务③c
  * C1 field-by-field assertion), `lastUpdateRevenueBody` (quick-edit body
- * mirror) and the C2 drawer mirror `lastActivityCreateBody` (written by the
- * delegate module onto the same hooks object).
+ * mirror), the C2 drawer mirror `lastActivityCreateBody` and the C3 mirrors
+ * `lastDrillRowsMonth` / `lastReportDownloadQuery` (written by the delegate
+ * modules onto the same hooks object).
  */
 
 import {
@@ -45,6 +48,7 @@ import {
   type ReplicaFetcherBranch,
 } from './mock-backend-replica-kit';
 import { createReplCrmC2Surface } from './mock-backend-repl-crm-c2';
+import { createReplCrmC3Surface } from './mock-backend-repl-crm-c3';
 import type {
   ReplCrmActivity,
   ReplCrmAddress,
@@ -99,6 +103,10 @@ export interface ReplCrmTestHooks {
   /** C2 drawer mirror: last `activityCreate` request body (field-by-field:
    * partnerId ↔ picker-selected partner, type/title/content ↔ drawer form). */
   lastActivityCreateBody?: Record<string, unknown>;
+  /** C3 drill mirror: last `drillRows` request month (D2 §5 ② 参数命中载体). */
+  lastDrillRowsMonth?: string;
+  /** C3 download mirror: last `reportDownload` query params (report/format). */
+  lastReportDownloadQuery?: Record<string, unknown>;
 }
 
 /* ── Deterministic fixtures ─────────────────────────────────────────────── */
@@ -236,6 +244,12 @@ const c2Surface = createReplCrmC2Surface({
   stageNames: REPL_CRM_STAGES.map((stage) => stage.name),
   revenueFor: replCrmRevenue,
 });
+
+/* ── C3 delegate wiring (plan 803, mock-backend-repl-crm-c3.ts) ─────────── */
+/* The C3 sales-dashboard endpoints live in the delegate module; only the C1
+ * name pools flow in (C3 is read-only — no extra session seed). */
+
+const c3Surface = createReplCrmC3Surface({ customers: CUSTOMERS, owners: OWNERS });
 
 /* ── Session state ──────────────────────────────────────────────────────── */
 
@@ -406,6 +420,17 @@ export function createReplCrmFetcherBranch(session: ReplCrmSessionState = create
       hooks,
     });
     if (c2Handled) return c2Handled;
+
+    // ----- C3 reads (delegate module, plan 803) -----
+    const c3Handled = c3Surface.handleBranch<T>({
+      url: input.url,
+      method,
+      read,
+      body: input.body,
+      session,
+      hooks,
+    });
+    if (c3Handled) return c3Handled;
 
     return null;
   }

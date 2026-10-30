@@ -399,6 +399,14 @@ body:
 onSubmit: [ { action: refreshSource, targetId: dashboardKpi }, { action: refreshSource, targetId: dashboardTrend } ]  # QueryFilterSchema 无 submitOnChange（勘误）；refreshSource 契约为顶层 targetId（args.sourceName 无消费方——二轮复审勘误）；四个已声明 source 落地时逐一列出，此处示意两条
 ```
 
+#### C3 实现勘误（M3 落地实证 2026-10-30，plan 803；以 live 为准）
+
+1. **panels 表达式绑定**：内联 panels 片段在 strict 校验下不可达（注册类型面板每块固定产出 conflicting-field-definition warning，编译器 pinned 语义）——panels 落 PAGE_DATA，schema 侧 `'${crmSalesDashboardPanels}'`，语义等价（fragment 渲染期编译）。
+2. **echarts 事件桥缺口（live 修复）**：echarts-renderer 派发 `{event, scope}` 无 evaluationBindings，`${event.name}` 全链静默失败（IS-5 同族，map-renderer 同款已修）——已补 `evaluationBindings: {...payload, event}` + 新增 echarts-events-bridge 单测（flux-renderers-data 包内产品修复，随本计划提交）。
+3. **6 series line 点击 hit-test 局限**（chart owner 观察项）：polyline 无 per-point ecData（LineView.js L644）→ 像素级真实点击不可达，e2e 以 `chart.trigger('click', 真实 option 参数)` 实例级 seam 驱动同一动作链（W1 勘误 5 先例）；`__flux_echarts_<componentId>` 观察锚点首建。
+4. **reportDownload `{downloadUrl}` → live `{url, filename}`**（W3 勘误 7 同款）；**dashboardKpi `{kpis:[…]}` → 平铺 map**（W3 勘误 9 同款）。
+5. **类别分布 pie panel 未纳入 plan 803 已批准枚举**（计划起草遗漏，评审未标）——裁决：移出 C3 1.0 范围登记 D5/P1 审计裁决（补实现或从树移除）；C3 e2e 断言清单本不含 pie 断言，验收面不受影响。
+
 ### 2.7 itam-asset-inventory（I1，P1）
 
 ```

@@ -499,6 +499,14 @@ export const EXEMPTIONS = [
     source: 'R2 owner doc §R3 收口节 §3 批次⑦ + [G7-R2-视角11-01] link-download.test.tsx',
   },
   {
+    path: 'apps/playground/src/complex-pages/shared/mock-backend-repl-crm-c3.ts',
+    rule: 'data-blob-href-without-download',
+    reason:
+      'C3 销售驾驶舱 CSV 报表导出的 data URL 生成点（mock 层无 download 语义可表达）；运行时 download action form-3 路径对 data: URL 走 dataUrlToBlob → downloadBlob，不存在顶层导航——同 mock-backend-repl-wms-stock.ts 误报裁决',
+    source:
+      'plan 803 收口（M3-C3）；先例：mock-backend-repl-wms-stock.ts（W3/plan 800）+ showcase-env.ts candidate D',
+  },
+  {
     path: 'apps/playground/src/complex-pages/shared/mock-backend-repl-wms-stock.ts',
     rule: 'data-blob-href-without-download',
     reason:

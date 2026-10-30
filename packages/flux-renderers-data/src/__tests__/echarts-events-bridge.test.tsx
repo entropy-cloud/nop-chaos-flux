@@ -92,7 +92,7 @@ describe('echarts events bridge (A3)', () => {
       value: 42,
     });
     await vi.waitFor(() => {
-      expect(props.helpers.dispatch).toHaveBeenCalledWith(clickAction, {
+      expect(props.helpers.dispatch).toHaveBeenCalledWith(clickAction, expect.objectContaining({
         event: expect.objectContaining({
           type: 'click',
           componentType: 'series',
@@ -101,7 +101,27 @@ describe('echarts events bridge (A3)', () => {
           value: 42,
         }),
         scope: fakeScope,
-      });
+      }));
+    });
+  });
+
+  it('exposes the event payload on the evaluation bindings root (CX-10: ${event.*} args resolve)', async () => {
+    const props = createProps({
+      option: { series: [] },
+      events: { onClick: clickAction },
+    });
+    render(<EChartsRenderer {...props} />);
+    await vi.waitFor(() => expect(mockChart.on).toHaveBeenCalled());
+    const [, handler] = mockChart.on.mock.calls[0];
+    handler({ componentType: 'series', name: 'Jan', value: 42 });
+    await vi.waitFor(() => {
+      expect(props.helpers.dispatch).toHaveBeenCalledWith(clickAction, expect.objectContaining({
+        evaluationBindings: expect.objectContaining({
+          name: 'Jan',
+          value: 42,
+          event: expect.objectContaining({ type: 'click', name: 'Jan' }),
+        }),
+      }));
     });
   });
 
@@ -201,10 +221,10 @@ describe('echarts events bridge (A3)', () => {
     const [, handler] = mockChart.on.mock.calls[0];
     handler({ name: 'Jan' });
     await vi.waitFor(() => {
-      expect(props.helpers.dispatch).toHaveBeenCalledWith(templatedAction, {
+      expect(props.helpers.dispatch).toHaveBeenCalledWith(templatedAction, expect.objectContaining({
         event: expect.objectContaining({ type: 'click', name: 'Jan' }),
         scope: fakeScope,
-      });
+      }));
     });
   });
 
@@ -224,7 +244,6 @@ describe('echarts events bridge (A3)', () => {
       expect(props.helpers.dispatch).toHaveBeenCalledWith(
         clickAction,
         expect.objectContaining({ event: expect.objectContaining({ type: 'dataZoom', start: 10, end: 90 }) }),
-      );
-    });
+      );    });
   });
 });

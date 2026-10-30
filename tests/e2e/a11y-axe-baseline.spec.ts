@@ -37,6 +37,9 @@ const ROUTES = [
   // Plan 802 (D1 §4 branch A): C2 customer-360 joins the standard desktop
   // scan set (non-mobile page — pure JSON SchemaPage, no host override).
   'complex-pages/crm-customer-360',
+  // Plan 803 (D1 §4 branch A): C3 sales-dashboard joins the standard desktop
+  // scan set (non-mobile page — pure JSON SchemaPage, no host override).
+  'complex-pages/crm-sales-dashboard',
   'dashboard-demo',
 ];
 

@@ -7,6 +7,7 @@ import { registerFormRenderers } from '@nop-chaos/flux-renderers-form';
 import { registerFormAdvancedRenderers } from '@nop-chaos/flux-renderers-form-advanced';
 import { registerDataRenderers } from '@nop-chaos/flux-renderers-data';
 import { registerPivotRenderers } from '@nop-chaos/flux-renderers-pivot';
+import { registerDashboardRenderers } from '@nop-chaos/flux-renderers-dashboard';
 import { registerContentRenderers } from '@nop-chaos/flux-renderers-content';
 import { registerLayoutRenderers } from '@nop-chaos/flux-renderers-layout';
 import { registerSchedulingRenderers } from '@nop-chaos/flux-renderers-scheduling';
@@ -31,6 +32,12 @@ registerMobileRenderers(registry);
 // Pivot family (plan 800 W3): the pivot-table drill-through page renders on
 // the shared showcase registry (the pivot demo page registers its own copy).
 registerPivotRenderers(registry);
+// Dashboard family (plan 803 C3): the sales-dashboard page is the first
+// complex-pages consumer of the `dashboard` grid renderer — its panels embed
+// stat-tile/echarts/chart/table, which the data-family registration above
+// already covers; only the dashboard wrapper type was missing here (same
+// registration gap the pivot family had, W3 勘误 4 同型).
+registerDashboardRenderers(registry);
 registerFlowDesignerRenderers(registry);
 
 function toNumber(value: unknown): number {

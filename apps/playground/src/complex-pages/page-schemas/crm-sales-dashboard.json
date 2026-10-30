@@ -1,0 +1,232 @@
+{
+  "type": "page",
+  "body": [
+    {
+      "type": "data-source",
+      "id": "crm-sales-dashboard-kpi-source",
+      "name": "dashboardKpi",
+      "action": "ajax",
+      "args": {
+        "url": "/r/ReplCrm__dashboardKpi",
+        "method": "get",
+        "params": {
+          "periodId": "${dashboardFilter?.periodId ?? ''}"
+        }
+      },
+      "testid": "crm-sales-dashboard-kpi-source"
+    },
+    {
+      "type": "data-source",
+      "id": "crm-sales-dashboard-trend-source",
+      "name": "dashboardTrend",
+      "action": "ajax",
+      "args": {
+        "url": "/r/ReplCrm__dashboardTrend",
+        "method": "get",
+        "params": {
+          "periodId": "${dashboardFilter?.periodId ?? ''}"
+        }
+      },
+      "testid": "crm-sales-dashboard-trend-source"
+    },
+    {
+      "type": "data-source",
+      "id": "crm-sales-dashboard-accuracy-source",
+      "name": "forecastAccuracy",
+      "action": "ajax",
+      "args": {
+        "url": "/r/ReplCrm__forecastAccuracy",
+        "method": "get",
+        "params": {
+          "periodId": "${dashboardFilter?.periodId ?? ''}"
+        }
+      },
+      "testid": "crm-sales-dashboard-accuracy-source"
+    },
+    {
+      "type": "data-source",
+      "id": "crm-sales-dashboard-funnel-source",
+      "name": "funnelSummary",
+      "action": "ajax",
+      "args": {
+        "url": "/r/ReplCrm__funnelSummary",
+        "method": "get",
+        "params": {
+          "periodId": "${dashboardFilter?.periodId ?? ''}"
+        }
+      },
+      "testid": "crm-sales-dashboard-funnel-source"
+    },
+    {
+      "type": "data-source",
+      "id": "crm-sales-dashboard-drill-source",
+      "name": "drillRows",
+      "action": "ajax",
+      "args": {
+        "url": "/r/ReplCrm__drillRows",
+        "method": "get",
+        "params": {
+          "month": "${drillMonth ?? ''}"
+        }
+      },
+      "initFetch": false,
+      "testid": "crm-sales-dashboard-drill-source"
+    },
+    {
+      "type": "flex",
+      "direction": "column",
+      "gap": 8,
+      "testid": "crm-sales-dashboard-root",
+      "body": [
+        {
+          "type": "flex",
+          "direction": "row",
+          "gap": 12,
+          "className": "items-center flex-wrap",
+          "testid": "crm-sales-dashboard-toolbar",
+          "body": [
+            {
+              "type": "form",
+              "id": "crm-sales-dashboard-filter-form",
+              "testid": "crm-sales-dashboard-filter",
+              "valuesPath": "dashboardFilter",
+              "mode": "inline",
+              "data": {
+                "periodId": "",
+                "territoryId": "",
+                "teamId": ""
+              },
+              "body": [
+                {
+                  "type": "select",
+                  "name": "periodId",
+                  "label": "期间",
+                  "testid": "crm-sales-dashboard-filter-period",
+                  "clearable": false,
+                  "options": [
+                    { "label": "全部期间", "value": "" },
+                    { "label": "2026-08", "value": "2026-08" },
+                    { "label": "2026-09", "value": "2026-09" },
+                    { "label": "2026-10", "value": "2026-10" }
+                  ]
+                },
+                {
+                  "type": "select",
+                  "name": "territoryId",
+                  "label": "大区",
+                  "testid": "crm-sales-dashboard-filter-territory",
+                  "clearable": false,
+                  "options": [
+                    { "label": "全部大区", "value": "" },
+                    { "label": "华东", "value": "east" },
+                    { "label": "华南", "value": "south" },
+                    { "label": "华北", "value": "north" }
+                  ]
+                },
+                {
+                  "type": "select",
+                  "name": "teamId",
+                  "label": "团队",
+                  "testid": "crm-sales-dashboard-filter-team",
+                  "clearable": false,
+                  "options": [
+                    { "label": "全部团队", "value": "" },
+                    { "label": "大客户组", "value": "key-account" },
+                    { "label": "中小客户组", "value": "smb" },
+                    { "label": "渠道组", "value": "channel" }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "button",
+              "label": "查询",
+              "variant": "outline",
+              "testid": "crm-sales-dashboard-filter-submit",
+              "onClick": {
+                "action": "refreshSource",
+                "targetId": "dashboardKpi",
+                "then": {
+                  "action": "refreshSource",
+                  "targetId": "dashboardTrend",
+                  "then": {
+                    "action": "refreshSource",
+                    "targetId": "funnelSummary",
+                    "then": {
+                      "action": "refreshSource",
+                      "targetId": "forecastAccuracy"
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "type": "button",
+              "label": "下载阶段报表",
+              "variant": "outline",
+              "testid": "crm-sales-dashboard-export",
+              "onClick": {
+                "action": "download",
+                "args": {
+                  "url": "/r/ReplCrm__reportDownload?report=stageFunnel&format=xlsx",
+                  "filename": "销售阶段报表-xlsx.csv"
+                },
+                "then": {
+                  "action": "showToast",
+                  "args": {
+                    "level": "success",
+                    "message": "阶段报表已生成并开始下载"
+                  }
+                },
+                "onError": [
+                  {
+                    "action": "showToast",
+                    "args": {
+                      "level": "error",
+                      "message": "阶段报表导出失败"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "type": "button",
+              "label": "下载（非法演练）",
+              "variant": "ghost",
+              "testid": "crm-sales-dashboard-export-invalid",
+              "onClick": {
+                "action": "download",
+                "args": {
+                  "url": "/r/ReplCrm__reportDownload?report=badReport&format=xlsx",
+                  "filename": "销售阶段报表-非法演练.csv"
+                },
+                "onError": [
+                  {
+                    "action": "showToast",
+                    "args": {
+                      "level": "error",
+                      "message": "阶段报表导出失败（未知报表）"
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "testid": "crm-sales-dashboard-forecast-caption",
+          "text": "预测口径（forecastAccuracy）：预测 ${forecastAccuracy?.forecast ?? '-'} 万 · 实际 ${forecastAccuracy?.actual ?? '-'} 万 · 准确率 ${forecastAccuracy?.accuracy ?? '-'}% · 当前期间：${dashboardFilter?.periodId || '全部期间'}",
+          "className": "text-sm text-muted-foreground"
+        },
+        {
+          "type": "dashboard",
+          "testid": "crm-sales-dashboard-grid",
+          "cols": 12,
+          "rowHeight": 48,
+          "panels": "${crmSalesDashboardPanels}"
+        }
+      ]
+    }
+  ]
+}

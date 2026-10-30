@@ -457,4 +457,12 @@ export const COMPLEX_PAGE_ENTRIES: ComplexPageEntry[] = [
       '复刻 CRM 客户 360 详情页（roadmap 21 页 C2，D2 §2.5 桌面整页）：头部 detail-view 客户基本信息（partnerGet）+ picker 客户切换（party-search 范式）+ 四 tab 分区——跟进时间线（timeline reverse 置顶 + seek 高亮 + activityCreate 新增跟进 drawer mutation 链：content required 守卫 + onSubmitSuccess refreshSource）/关联线索 table（行点击 setValue+refreshSource 主从联动）/联系人 cards（partnerGet.contacts）/活动日历 calendar（CalendarEvent 月视图回归 + 跨日事件）。filterForm（form+valuesPath）活动类型过滤经 refreshSource 重取。数据经 /r/ReplCrm__partnerFindPage/partnerGet/leadByPartner/activityTimeline/activityCalendar/activityCreate 端点流动。',
     features: ['detail-view 基本信息', 'picker 客户切换', 'timeline seek 高亮', 'drawer activityCreate', '主从联动', 'calendar 月视图', 'filterForm refreshSource', 'ReplCrm__ 端点'],
   },
+  {
+    id: 'crm-sales-dashboard',
+    title: 'CRM 销售驾驶舱页',
+    category: 'business-replication',
+    description:
+      '复刻 CRM 销售驾驶舱页（roadmap 21 页 C3，D2 §2.6 桌面整页）：dashboard 网格（cols/panels x/y/w/h，复刻面首个 dashboard 族消费页）+ panel 内 stat-tile KPI 阵列×4（漏斗总额/转化率/预测达成/配额完成 ← dashboardKpi）+ echarts 月度趋势（onClick 钻取参数链 setValue→refreshSource→openDialog drillRows，W3 参数链先例）+ chart bar 漏斗近似（G1，funnelStages 序降序）+ panel table 阶段报表区块 + 报表下载（button→download action，G6，{url,filename} live 契约）+ 条件筛选级联（form+valuesPath 载体 + 查询按钮 refreshSource 顶层 targetId 四源，W2 勘误 5/6 实况）。数据经 /r/ReplCrm__dashboardKpi/dashboardTrend/drillRows/forecastAccuracy/reportDownload/funnelSummary 端点流动。',
+    features: ['dashboard 网格', 'stat-tile KPI 阵列', 'echarts 点击钻取', '漏斗 bar 近似', 'panel table 报表', 'download 报表导出', '筛选级联多源刷新', 'ReplCrm__ 端点'],
+  },
 ];

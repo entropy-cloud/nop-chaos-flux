@@ -44,6 +44,23 @@ function isValidDatasetSource(value: unknown): boolean {
   return false;
 }
 
+// 测试/程序化断言锚点：以 schema componentId 为键（pivot `__flux_pivot_<id>` /
+// map `__flux_map_<id>` 先例同款——echarts API 级 e2e（convertToPixel 求命中点）
+// 需要页面上下文可达的实例句柄）。
+function exposeEChartsInstance(key: string, chart: unknown): void {
+  if (typeof window === 'undefined' || key.length === 0) {
+    return;
+  }
+  (window as unknown as Record<string, unknown>)[`__flux_echarts_${key}`] = { chart };
+}
+
+function clearExposedEChartsInstance(key: string): void {
+  if (typeof window === 'undefined' || key.length === 0) {
+    return;
+  }
+  delete (window as unknown as Record<string, unknown>)[`__flux_echarts_${key}`];
+}
+
 interface ResolvedDatasetBinding {
   source: unknown;
   raw: Record<string, unknown>;
@@ -232,6 +249,7 @@ export function EChartsRenderer(props: RendererComponentProps<EChartsSchema>) {
         });
         chartRef.current = instance;
         lastOptionRef.current = null;
+        exposeEChartsInstance(componentId, instance);
         setChartInstance(instance);
       })
       .catch((error: unknown) => {
@@ -244,11 +262,14 @@ export function EChartsRenderer(props: RendererComponentProps<EChartsSchema>) {
 
     return () => {
       cancelled = true;
+      clearExposedEChartsInstance(componentId);
       instance?.dispose();
       chartRef.current = null;
       setChartInstance(null);
     };
-  }, [optionIsObject, mapUnavailable, mapInfo, rendererMode, theme, initOptions]);
+    // componentId joins the deps: the observation anchor is keyed by it, so an
+    // id change re-inits (and re-exposes) — same lifecycle as the instance.
+  }, [optionIsObject, mapUnavailable, mapInfo, rendererMode, theme, initOptions, componentId]);
 
   useEffect(() => {
     const instance = chartRef.current;
@@ -303,12 +324,19 @@ export function EChartsRenderer(props: RendererComponentProps<EChartsSchema>) {
         continue;
       }
       const handler = (params: unknown) => {
-        const normalized = createNormalizedActionEvent(
-          isPlainObject(params) ? { type: native, ...params } : { type: native, params },
-        );
+        // CX-10 action-eval contract (map-renderer 同款裁决): expose the event
+        // payload under the bindings root so schema args like '${event.name}'
+        // evaluate — the normalized ctx.event alone never reaches the args
+        // evaluation scope, and the action would fail silently.
+        const payload = isPlainObject(params) ? params : { params };
+        const normalized = createNormalizedActionEvent({ type: native, ...payload });
         try {
           void Promise.resolve(
-            props.helpers.dispatch(action as ActionSchema, { event: normalized, scope }),
+            props.helpers.dispatch(action as ActionSchema, {
+              event: normalized,
+              evaluationBindings: { ...payload, event: normalized },
+              scope,
+            }),
           ).catch((error: unknown) => {
             console.warn('[flux-echarts] event action dispatch failed:', error);
           });

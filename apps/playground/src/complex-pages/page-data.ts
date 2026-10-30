@@ -181,3 +181,174 @@ PAGE_DATA['content-landing'] = {
 // ── bisheng build replica: debug panel collapsed by default (resizable
 // panel defaultCollapsed) so the designer canvas gets the vertical budget ──
 PAGE_DATA['bisheng-build'] = {};
+
+// ── C3 CRM 销售驾驶舱：dashboard 网格布局（plan 803）──
+// panels 走 PAGE_DATA 表达式绑定通道（schema 侧 `panels: '${crmSalesDashboardPanels}'`）：
+// 内联 panels 数组的条目带注册类型（stat-tile/echarts/chart/table），编译期
+// schema-definition 分类按子渲染器定义走（explicit type wins），与容器声明的
+// fieldRules 冲突 → 每个面板固定产出一条 conflicting-field-definition warning，
+// strict 零诊断门槛过不了（编译器 pinned 语义，schema-compiler-schema-definition-
+// unified-parity.test.ts L309）。表达式绑定的 panels 是纯运行时值，编译发生在
+// buildDashboardPanelFragment 的 fragment 渲染期——语义与内联完全一致。
+PAGE_DATA['crm-sales-dashboard'] = {
+  crmSalesDashboardPanels: [
+    {
+      id: 'kpi-funnel',
+      type: 'stat-tile',
+      x: 0,
+      y: 0,
+      w: 3,
+      h: 2,
+      title: '漏斗总额',
+      props: {
+        testid: 'crm-sales-dashboard-kpi-funnel',
+        label: '漏斗总额（万元）',
+        value: '${dashboardKpi?.kpis?.funnelAmount ?? 0}',
+        prefix: '￥',
+        formatter: { thousands: true, decimals: 0 },
+      },
+    },
+    {
+      id: 'kpi-conversion',
+      type: 'stat-tile',
+      x: 3,
+      y: 0,
+      w: 3,
+      h: 2,
+      title: '转化率',
+      props: {
+        testid: 'crm-sales-dashboard-kpi-conversion',
+        label: '商机转化率',
+        value: '${dashboardKpi?.kpis?.conversion ?? 0}',
+        suffix: '%',
+        formatter: { thousands: false, decimals: 0 },
+      },
+    },
+    {
+      id: 'kpi-forecast',
+      type: 'stat-tile',
+      x: 6,
+      y: 0,
+      w: 3,
+      h: 2,
+      title: '预测达成',
+      props: {
+        testid: 'crm-sales-dashboard-kpi-forecast',
+        label: '预测达成率',
+        value: '${dashboardKpi?.kpis?.forecastRate ?? 0}',
+        suffix: '%',
+        formatter: { thousands: false, decimals: 0 },
+      },
+    },
+    {
+      id: 'kpi-quota',
+      type: 'stat-tile',
+      x: 9,
+      y: 0,
+      w: 3,
+      h: 2,
+      title: '配额完成',
+      props: {
+        testid: 'crm-sales-dashboard-kpi-quota',
+        label: '配额完成率',
+        value: '${dashboardKpi?.kpis?.quotaRate ?? 0}',
+        suffix: '%',
+        formatter: { thousands: false, decimals: 0 },
+      },
+    },
+    {
+      id: 'trend',
+      type: 'echarts',
+      x: 0,
+      y: 2,
+      w: 8,
+      h: 6,
+      title: '月度趋势（echarts onClick 钻取）',
+      props: {
+        testid: 'crm-sales-dashboard-trend',
+        componentId: 'crm-sales-dashboard-trend',
+        height: 270,
+        option: {
+          xAxis: { type: 'category', data: '${dashboardTrend?.months ?? []}' },
+          yAxis: { type: 'value' },
+          series: [{ type: 'line', data: '${dashboardTrend?.amounts ?? []}' }],
+        },
+        events: {
+          onClick: {
+            action: 'setValue',
+            args: { path: 'drillMonth', value: '${event.name}' },
+            then: {
+              action: 'refreshSource',
+              targetId: 'drillRows',
+              then: {
+                action: 'openDialog',
+                args: {
+                  title: '${drillMonth} 成交明细',
+                  testid: 'crm-sales-dashboard-drill-dialog',
+                  body: [
+                    {
+                      type: 'table',
+                      testid: 'crm-sales-dashboard-drill-table',
+                      source: '${drillRows?.items ?? []}',
+                      itemKey: 'dealNo',
+                      pagination: { enabled: false },
+                      columns: [
+                        { name: 'dealNo', label: '成交单号', width: 150 },
+                        { name: 'customerName', label: '客户', width: 200 },
+                        { name: 'stageName', label: '阶段', width: 100 },
+                        { name: 'amount', label: '金额（万元）', width: 110 },
+                        { name: 'ownerName', label: '负责人', width: 90 },
+                        { name: 'closeDate', label: '预计成交日', width: 110 }
+                      ],
+                      empty: { type: 'text', text: '该月无成交明细' }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+      },
+    },
+    {
+      id: 'funnel-bar',
+      type: 'chart',
+      x: 8,
+      y: 2,
+      w: 4,
+      h: 6,
+      title: '漏斗分布（bar 近似）',
+      props: {
+        testid: 'crm-sales-dashboard-funnel-chart',
+        chartType: 'bar',
+        source: '${dashboardTrend?.funnelStages ?? []}',
+        xAxis: { dataKey: 'name', label: '阶段' },
+        series: [{ name: '阶段金额（万元）', dataRegionKey: 'value' }],
+        height: 270,
+        legend: false,
+      },
+    },
+    {
+      id: 'report-table',
+      type: 'table',
+      x: 0,
+      y: 8,
+      w: 12,
+      h: 6,
+      title: '阶段报表（stageFunnel，下载见工具带）',
+      props: {
+        testid: 'crm-sales-dashboard-report-table',
+        source: '${funnelSummary?.stages ?? []}',
+        itemKey: 'stageId',
+        pagination: { enabled: false },
+        columns: [
+          { name: 'label', label: '阶段', width: 140 },
+          { name: 'leadCount', label: '商机数', width: 100 },
+          { name: 'amount', label: '金额（万元）', width: 130 },
+          { name: 'conversion', label: '转化率（%）', width: 110 }
+        ],
+        empty: { type: 'text', text: '暂无阶段报表数据' }
+      },
+    },
+  ],
+};
