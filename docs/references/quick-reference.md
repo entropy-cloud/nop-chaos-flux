@@ -1,5 +1,7 @@
 # Quick Reference
 
+> Last Reviewed: 2026-10-31 (plan 823 — 4/4 API spot-checks against live source; see `docs/audits/deep-audit-2026-10-31.md` §5 E6)
+
 Single-file compressed reference for the types, hooks, and APIs most frequently needed
 when writing renderer components. Reading this file replaces reading 10+ source files
 (`renderer-core.ts`, `runtime.ts`, `schema.ts`, `actions.ts`, `hooks.ts`, etc.).

@@ -36,6 +36,41 @@ const suspiciousSingles = new Map([
   ['\u2060', 'word-joiner'],
 ]);
 
+// Benign-occurrence whitelist (plan 823, deep-audit E9 adjudication): data-only
+// exemption consulted AFTER classification — the classify/score/threshold chain
+// above is untouched. Adjudicated families:
+// - Latin-1 accented letters + Greek letters in quoted originals / math formulas
+//   (façade, German umlauts, |δ| physics notation): legitimate content flagged
+//   only because the single-char mojibake alternatives (`ç.` `ä.` `å.` `æ.`)
+//   match any continuation character.
+// - ZWJ inside an emoji surrogate-pair line: intentional emoji examples
+//   (e.g. the maxLength/ZWJ adversarial spec), not corruption.
+// Deliberately NOT whitelisted: Cyrillic homoglyph letters, replacement/control
+// chars, private-use/noncharacters — known byte-level corruption (standing
+// sample: docs/audits/workaround-code-smell/wa-15a/report.md, whose table rows
+// are genuinely double-encoded) must stay flagged; that file is the detection
+// self-proof for this whitelist.
+const BENIGN_LETTERS = new Set([
+  ...'áàâãäåèéêëìíîïòóôõöùúûüýÿçñšž',
+  ...'αβγδεζηθικλμνξοπρστυφχψω',
+  ...'ΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡΣΤΥΦΧΨΩ',
+  'ß',
+]);
+// No `u` flag: must match raw UTF-16 high surrogates — under /u the regex
+// sees merged code points (U+1F468 etc.) and the surrogate range never hits.
+const BENIGN_ZWJ_EMOJI_CONTEXT = /[\uD800-\uDBFF]/;
+const BENIGN_VENDOR_PATH_PREFIXES = ['docs/ppts/assets/js/'];
+
+function isBenignOccurrence(type, character, lineText) {
+  if (type === 'unexpected-letter' && BENIGN_LETTERS.has(character)) {
+    return true;
+  }
+  if (character === '\u200D' && BENIGN_ZWJ_EMOJI_CONTEXT.test(lineText)) {
+    return true;
+  }
+  return false;
+}
+
 const mojibakePattern = /(?:Ã.|Â.|â€¦|â€”|â€“|â€|ðŸ|Ð.|Ñ.|æ.|ç.|ä.|å.)/u;
 const asciiLetterPattern = /^[A-Za-z]$/u;
 const hanPattern = /^\p{Script=Han}$/u;
@@ -231,14 +266,16 @@ async function scanFile(relativePath) {
     if (type) {
       const { line, column } = getLineColumn(content, index);
       const lineText = getLineText(content, line);
-      occurrences.push({
-        type,
-        character,
-        codePoint: getCodePointLabel(character),
-        line,
-        column,
-        context: getContextSnippet(lineText, column),
-      });
+      if (!isBenignOccurrence(type, character, lineText)) {
+        occurrences.push({
+          type,
+          character,
+          codePoint: getCodePointLabel(character),
+          line,
+          column,
+          context: getContextSnippet(lineText, column),
+        });
+      }
     }
 
     index += width;
@@ -290,7 +327,9 @@ function buildSummary(scannedFileCount, candidates, verdicts) {
 async function main() {
   await mkdir(outputDir, { recursive: true });
 
-  const trackedFiles = await getTrackedDocFiles();
+  const trackedFiles = (await getTrackedDocFiles()).filter(
+    (filePath) => !BENIGN_VENDOR_PATH_PREFIXES.some((prefix) => filePath.startsWith(prefix)),
+  );
   const scans = await Promise.all(trackedFiles.map((relativePath) => scanFile(relativePath)));
   const candidates = scans
     .filter((item) => item.occurrences.length > 0)

@@ -1,5 +1,7 @@
 # 逐组件审计路线图（Component Audit Roadmap）
 
+> **状态：已收口（2026-10-31 banner，plan 823）**——全部 48 项 `done`，零剩余 todo/planned；round-2 后续工作拆分至 `component-audit-round2-roadmap.md`。本文件为历史执行记录，不再新增工作项。
+>
 > 最后更新：2026-08-06
 > 来源：用户要求"逐个组件完成一次审查"（上轮 `audit-remediation` 粒度在"包簇 x 维度"，未到组件级）
 > 细则：`docs/audits/component-audit-checklist.md`（18 维清单 + 审计卡模板 + 裁决规则）
