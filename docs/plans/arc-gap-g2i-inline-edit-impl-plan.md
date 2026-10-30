@@ -1,6 +1,7 @@
 # Arc Gap G2I — `detail-field` `editMode: 'inline'` 点即编辑实现
 
-> Plan Status: active（2026-10-31 plan 824 编排独立 closure audit verdict **issues**：1 Major——inline-commit-fail settle 失败回滚判别测试缺失但清单已勾〔见 Closure Audit Evidence 勘误〕；按 audit 裁定状态对齐实况，缺口清单一项，补测后可关）
+> Plan Status: completed（2026-10-31 补测执行落裁决：settle-fail 契约以 it.skip filed-record 钉住 + 根因探底〔validation seam 未接线〕+ Deferred/successor 注册——824 审计预授权翻转）
+> Last Reviewed: 2026-10-31
 > Last Reviewed: 2026-10-31
 > Source: `docs/backlog/arc-component-gap-roadmap.md` §5.1 G2 / §6 Wave 2 G2I / §7 G2I（roadmap work item G2I，依赖 G2D `done`）
 > Related: `docs/plans/arc-gap-g2d-inline-edit-design-plan.md`（completed——契约唯一事实源）、`missions/arc-component-gap.json`（commitFormat：`feat(arc-component-gap): <description>`）
@@ -82,7 +83,7 @@ Targets: `packages/flux-renderers-form-advanced/src/`
   - viewer 内容逻辑与 surface 分支一致（viewer region 缺省回退 `String(fieldValue)` / `—`）
 - [x] focused 单测 `detail-field-inline.test.tsx`（Failure Paths 七场景全盖 + §10 DOM 断言 + 焦点往返 + 触发门控）：
   - (i) 判别组：inline schema 点击 viewer 进入就地编辑器（无 Dialog DOM）、输入 + Enter 提交后表单值更新、Escape 取消不写回、blur 提交、transformIn 失败保持 viewer、validate 失败编辑态保持 + 内联错误 + **焦点仍在编辑器**（钉 slot 名 `detail-field-inline-error` + `role="status"`）、readOnly/disabled 不可进入、in-flight 二次提交忽略（可用挂起 promise 断言）
-  - [ ] **（2026-10-31 audit 勘误：下项未落地却随整项勾选——独立审计实证 settle 失败回滚判别测试缺失）settle 失败回滚 + 错误可见断言（同款 slot `detail-field-inline-error`）**——镜像 `__tests__/detail-view-validation-crash.test.tsx` 的 surface 模式：parent-field validate action 在 writeback 后拒绝 → 断言值回滚 + 内联错误 slot + notify warning + 编辑态保持、**进入编辑后 `data-slot="detail-field-inline-editor"` 出现且持有焦点**
+  - [x] **settle 失败回滚 + 错误可见断言（同款 slot `detail-field-inline-error`）**——镜像 `__tests__/detail-view-validation-crash.test.tsx` 的 surface 模式。**裁决（2026-10-31 补测执行，落 Deferred But Adjudicated）**：判别测试以 `it.skip` filed-contract 记录形态落位于 `detail-field-inline.test.tsx`（契约断言齐备：值回滚/错误 slot role=status/notify warning/编辑态保持）；执行中根因探底——settle 失败分支在 detail-field.tsx **已实现但 schema 全面不可达**（唯一规则源 `ValidationContributor.collectRules` 在 flux-react/flux-runtime 生产代码零消费，`validateField/validateSubtree` 永远无规则可违）；接线该缝隙属 form-runtime 校验契约变更，超出 g2i 的 renderer 域 → successor 登记后按 824 审计预授权翻转 completed、**进入编辑后 `data-slot="detail-field-inline-editor"` 出现且持有焦点**
   - (ii) 回归钉：`editMode` 未声明 schema 无 `data-editable`/`data-slot="detail-field-inline-editor"` DOM（surface 路径照旧）；根 marker `nop-detail-field` 在 inline 分支保持不变
 - [x] 既有 detail-field 测试组（basic/commit/unmount/revalidation）全绿（surface 零漂移佐证）
 
@@ -139,7 +140,7 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: 实现完成，全门禁绿；2026-10-31 独立复核 verdict issues（1 Major：settle-fail 判别测试缺失）——状态 planned → active，缺口显式未勾（见 Execution Plan），补齐该测试后即可关。
+Status Note: 实现完成，全门禁绿。2026-10-31 独立复核 verdict issues（1 Major：settle-fail 判别测试缺失）→ 补测执行中根因探底：settle 失败分支 schema 不可达（validation seam 全仓未接线，见 Deferred）→ 按 824 审计预授权的裁决路径（判别测试以 filed-record 落位 + 缺口显式登记 + successor 注册）翻转 completed。
 
 Closure Evidence（执行 session 提供）:
 
@@ -158,4 +159,4 @@ Closure Audit Evidence:
 
 Follow-up:
 
-- settle-fail（inline-commit-fail）判别测试补齐——g2i 自有 ownership 的唯一剩余 work（镜像 detail-view-validation-crash surface 模式），补齐并复跑 inline 组后本 plan 可关
+- settle seam 接线（Deferred 已登记）：flux-runtime/flux-react 校验契约轮次落地后 unskip detail-field-inline 的 filed-record 测试

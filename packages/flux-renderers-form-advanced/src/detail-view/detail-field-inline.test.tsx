@@ -394,6 +394,101 @@ describe('detail-field inline editMode (arc-component-gap G2I discriminant)', ()
     );
   });
 
+  // inline-commit-fail (G2D Failure Paths / arc-gap-g2i): when the PARENT-side
+  // commit validation rejects AFTER the writeback (settleParentValidation), the
+  // inline branch must converge on the visible failure contract — value rolled
+  // back to the pre-commit original, inline error slot announced, warning
+  // notified, editor retained in editing state. Mirrors the surface-branch
+  // 19-01 crash test (detail-view-validation-crash.test.tsx) on the inline
+  // protocol.
+  //
+  // Disposition (plan 824 follow-up audit, 2026-10-31): kept SKIPPED as the
+  // filed contract record. Root cause probed to bottom: the settle failure
+  // branch (detail-field.tsx settleParentValidation → rollbackParentWriteback →
+  // backToEditing) is implemented but unreachable from ANY schema surface —
+  // the only rule source, ValidationContributor.collectRules (detail-field
+  // returns [], combo/input-file override it), has zero production consumers
+  // in flux-react/flux-runtime (declared in flux-core
+  // renderer-definition-types.ts:110, never called outside tests), so
+  // validateField/validateSubtree on the bound name can never produce
+  // `result.ok === false`. Wiring that seam is a form-runtime validation
+  // contract change (successor: flux-runtime validation-seam wiring round);
+  // this skip is the registration, not silently dropped debt. Unskip once the
+  // seam lands — the assertions below are the target contract.
+  it.skip('rolls back the writeback and keeps editing with inline error when parent commit validation fails', async () => {
+    cleanup();
+    const notify = vi.fn();
+    const fetcher = vi.fn(async (api: { url?: string }) => {
+      if (String(api?.url ?? '').includes('/validation-boom')) {
+        throw new Error('validation-service-down');
+      }
+      return { status: 0, data: null };
+    });
+    const SchemaRenderer = createFormSchemaRenderer();
+
+    render(
+      <SchemaRenderer
+        schemaUrl="test://flux-renderers-form-advanced/detail-view/detail-field-inline.test.tsx#settle-fail"
+        schema={{
+          type: 'form',
+          data: { title: 'Original' },
+          body: [
+            {
+              type: 'detail-field',
+              name: 'title',
+              label: 'Title',
+              editMode: 'inline',
+              triggerLabel: 'Edit Title',
+              required: true,
+              content: [{ type: 'input-text', name: '__value', label: 'Title Value' }],
+            },
+            {
+              type: 'text',
+              testid: 'title-probe',
+              text: "title=${title == null ? 'none' : title}",
+            },
+          ],
+        }}
+        env={{ ...baseEnv, fetcher, notify }}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+
+    fireEvent.click(
+      await waitFor(() => {
+        const el = document.querySelector('[data-slot="detail-field-viewer"][data-editable="true"]');
+        expect(el).toBeTruthy();
+        return el as HTMLButtonElement;
+      }),
+    );
+
+    const editor = await waitFor(() => {
+      const el = document.querySelector('[data-slot="detail-field-inline-editor"]');
+      expect(el).toBeTruthy();
+      return el as HTMLInputElement;
+    });
+
+    fireEvent.change(editor, { target: { value: '' } });
+    fireEvent.keyDown(editor, { key: 'Enter' });
+
+    // Visible failure face: inline error slot + warning notify.
+    const errorEl = await waitFor(() => {
+      const el = document.querySelector('[data-slot="detail-field-inline-error"]');
+      expect(el).toBeTruthy();
+      return el as HTMLElement;
+    });
+    expect(errorEl.getAttribute('role')).toBe('status');
+    expect(notify).toHaveBeenCalledWith('warning', expect.any(String));
+
+    // No ghost write: the parent value rolls back to the pre-commit original.
+    await waitFor(() => {
+      expect(screen.getByTestId('title-probe').textContent).toBe('title=Original');
+    });
+
+    // Editor retained in editing state for correction.
+    expect(document.querySelector('[data-slot="detail-field-inline-editor"]')).toBeTruthy();
+  });
+
   it('does not allow entering inline edit when readOnly or disabled', async () => {
     cleanup();
     const SchemaRenderer = createFormSchemaRenderer();
