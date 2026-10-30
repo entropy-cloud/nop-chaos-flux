@@ -27,6 +27,7 @@ import {
 } from './mock-backend-replica-kit';
 import { createReplCrmFetcherBranches } from './mock-backend-repl-crm';
 import { createReplItamFetcherBranches } from './mock-backend-repl-itam';
+import { createReplAiFetcherBranches } from './mock-backend-repl-ai';
 import { createReplFetcherBranches } from './mock-backend-repl-wms';
 import { confirmBridge } from './confirm-bridge';
 import { createMockAiStream, createMockAiConnector, createAiImportLoader } from '../../ai/mock-ai-env';
@@ -126,6 +127,8 @@ export function createShowcaseEnv(): { env: RendererEnv; db: MockDatabase } {
     ...createReplCrmFetcherBranches(),
     // Plan 804 (D1 §4 branch A): I1 asset-inventory joins the ITAM face.
     ...createReplItamFetcherBranches(),
+    // Plan 806 (D3 §4.3): the K1 knowledge-chat joins the AI face.
+    ...createReplAiFetcherBranches(),
   ]);
 
   const fetcher = async function fetcher<T>(api: FetcherApi): Promise<{ status: number; data: T }> {

@@ -43,7 +43,8 @@ page（xui:imports ai://）
          ├─ header：标题 + 频控提示位（G11）；beforeMessages：ai-welcome + ai-prompts（chips，onSelect→ai:send）
          ├─ 内置：ai-message-list + ai-bubble（streaming buffer）+ ai-sender（停止钮 data-slot="ai-sender-cancel"，ai-sender.tsx L167-177）
          ├─ afterMessages：alert（G11）+ ai-citations + ai-feedback + ai-token-usage，绑 ${activeAnswer}
-         └─ onResponseComplete：ajax messageSave（data 透传 payload.message）→ setValue activeAnswer ← ${message}
+         └─ onResponseComplete：ajax messageSave（data 透传 payload.message + conversationId 会话归属键——plan 806 落地补充）→ setValue activeAnswer ← ${message}
+         │  （§2.1 实现勘误：payload 实为 {message: cloneMessage(last)} 非 ${result} 动作链语义〔D6 MAJ-A〕；activeAnswer 需形状化种子 {refused:false,sources:[]} 非 null——null-member 守卫整节点跳过 citations，plan 806 落地实证）
 ```
 
 ai-citations/ai-feedback/ai-token-usage 是 message 级独立 widget（不内嵌 bubble，live 核实），落 afterMessages 绑定最近一条 assistant 消息（绑定源 = activeAnswer，即 onResponseComplete 写回的 message 快照，见片段 1 勘误注）；会话切换经 conversationController——**实现形态裁决见下**。
@@ -572,7 +573,15 @@ input-table 注册于全局 registry（R4 §0 L14）；明细数量键入以 num
 - finishReason 透出校准点：refusal 预设依赖引擎把 `finish_reason` 映射进响应完成事件 payload（经 `payload.message.metadata.finishReason` 透出——D6 开放审计 MAJ-A 同步：payload 形状为 `{message}`）；M3 对照 `engine/types.ts` 核实，未透出则退化「内容前缀 + formula 检测」等价口径；断言只看 G11 alert 可见性（§5.1）。
 - 流错误分支：`forceStreamError` 使下一轮流 reject，验证 ai-chat `onError` + sender 恢复可输入。
 
-### 4.3 ReplAi 端点清单
+##### §4.2 实现勘误（M3 落地实证 2026-10-30，plan 806；以 live 为准）
+
+**connector mock 落 AiConnector 直连而非 env.stream**：`createStreamBasedAiConnector` 的 OpenAI chunk mapper 只透传 delta/finish_reason/model——sources/refused/usage 结构性不可达（D6 复审前置义务无法经 env.stream 兑现）；交付改为 `complex-pages/shared/mock-backend-repl-ai-connector.ts` 侧 `AiConnector` 直连，terminal chunk 以 snapshot（顶层 refused/sources/usage）+ metadata（usage/finishReason）双通道投影。
+
+#### §4.2 实现勘误（M3 落地实证 2026-10-30，plan 806；以 live 为准）
+
+**connector mock 落 AiConnector 直连而非 env.stream**：`createStreamBasedAiConnector` 的 OpenAI chunk mapper 只透传 delta/finish_reason/model——sources/refused/usage 结构性不可达（D6 复审前置义务无法经 env.stream 兑现）；交付改为 `complex-pages/shared/mock-backend-repl-ai-connector.ts` 侧 `AiConnector` 直连，terminal chunk 以 snapshot（顶层 refused/sources/usage）+ metadata（usage/finishReason）双通道投影。
+
+## 4.3 ReplAi 端点清单
 
 | 端点（`/r/` 前缀省略）                                              | 方法·用途（页，R2 行号）                                                     | 返回 / 错误分支                                      |
 | ------------------------------------------------------------------- | ---------------------------------------------------------------------------- | ---------------------------------------------------- |
@@ -620,6 +629,8 @@ input-table 注册于全局 registry（R4 §0 L14）；明细数量键入以 num
 - streaming 逐帧：输入「长答」→ 两次 innerText 采样单调增长 → 完成后含 fixture 终句；停止按钮：期间 `[data-slot="ai-sender-cancel"]` 可见 → 点击 → loading 解除、输入框恢复可用。
 - 引用/反馈/会话：「引用」提问 → citations 含 2 条来源（mode list），点 like → `feedbackCreate === 1`；新建会话 → `conversationSave ≥1` 且列表行数 +1；G11：forceGuardrail → guardrail alert 可见。
 - focus：tab 首站落入 sender 输入框；prompts chip 点击后输入框仍可输入；afterMessages 控件 tab 可达。
+
+> 2026-10-30 focus ②③ 裁决登记（plan 806 收口审计 Major-1）：live focus ② 实现"streaming 中发送钮切换停止钮、textarea 可输入"（text-gating），focus ③ 实现"切换后焦点驻留"——与原文不同，live 口径已实现并断言，原文两测未触达登记为后续观察。
 
 ### 5.2 ai-ticket-console（axe 分支 A）
 

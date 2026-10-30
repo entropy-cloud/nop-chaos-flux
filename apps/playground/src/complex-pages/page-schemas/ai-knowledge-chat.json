@@ -1,0 +1,182 @@
+{
+  "type": "page",
+  "testid": "ai-knowledge-chat-root",
+  "className": "repl-ai-page h-full min-h-0 flex flex-col",
+  "bodyClassName": "flex-1 min-h-0",
+  "body": [
+    {
+      "type": "flex",
+      "direction": "row",
+      "className": "repl-ai-shell flex-1 min-h-0",
+      "body": [
+        {
+          "type": "ai-conversations",
+          "testid": "ai-knowledge-chat-conversations",
+          "className": "repl-ai-conversations shrink-0",
+          "conversations": "${conversations}",
+          "activeId": "${activeConversationId}",
+          "onItemClick": {
+            "action": "replAi:setActive",
+            "args": { "id": "${id}" }
+          },
+          "onCreate": [
+            {
+              "action": "ai:createConversation",
+              "args": { "title": "新会话" }
+            },
+            {
+              "action": "ajax",
+              "args": {
+                "url": "/r/ReplAi__conversationSave",
+                "method": "post",
+                "data": { "title": "新会话" }
+              }
+            }
+          ],
+          "onItemRename": [
+            {
+              "action": "ai:renameConversation",
+              "args": { "id": "${id}", "title": "${title}" }
+            },
+            {
+              "action": "ajax",
+              "args": {
+                "url": "/r/ReplAi__conversationRename",
+                "method": "post",
+                "data": { "id": "${id}", "title": "${title}" }
+              }
+            }
+          ],
+          "onItemDelete": [
+            {
+              "action": "ai:deleteConversation",
+              "args": { "id": "${id}" }
+            },
+            {
+              "action": "ajax",
+              "args": {
+                "url": "/r/ReplAi__conversationDelete",
+                "method": "post",
+                "data": { "id": "${id}" }
+              }
+            }
+          ]
+        },
+        {
+          "type": "ai-chat",
+          "testid": "ai-knowledge-chat-chat",
+          "className": "repl-ai-chat flex flex-col flex-1 min-h-0",
+          "connector": "${connector}",
+          "conversationController": "${controller}",
+          "engine": "${activeEngine}",
+          "activeConversationId": "${activeConversationId}",
+          "tools": "${tools}",
+          "toolExecutor": "${toolExecutor}",
+          "maxToolRounds": 5,
+          "placeholder": "向知识库提问…",
+          "submitType": "enter",
+          "header": {
+            "type": "flex",
+            "direction": "row",
+            "className": "repl-ai-header items-center",
+            "body": [
+              { "type": "text", "text": "知识库助手", "className": "repl-ai-header-title" },
+              {
+                "type": "text",
+                "text": "RAG 检索 · 引用来源 · 内容护栏",
+                "className": "repl-ai-header-hint"
+              }
+            ]
+          },
+          "beforeMessages": [
+            {
+              "type": "ai-welcome",
+              "title": "AI 知识库对话",
+              "description": "基于企业知识库检索作答，回答携带引用来源与 token 用量。",
+              "icon": "sparkles",
+              "align": "center"
+            },
+            {
+              "type": "ai-prompts",
+              "testid": "ai-knowledge-chat-prompts",
+              "layout": "horizontal",
+              "size": "md",
+              "items": [
+                {
+                  "label": "引用：样式契约",
+                  "description": "回答携带 [1][2] 上标与引用来源卡片"
+                },
+                {
+                  "label": "长答：逐帧流式",
+                  "description": "长回答用于观察逐帧渲染与停止按钮"
+                },
+                {
+                  "label": "审批：工具调用",
+                  "description": "触发知识库检索工具轮"
+                }
+              ],
+              "onSelect": {
+                "action": "ai:send",
+                "args": { "text": "${item.label}" }
+              }
+            }
+          ],
+          "afterMessages": [
+            {
+              "type": "alert",
+              "testid": "ai-knowledge-chat-guardrail",
+              "level": "warning",
+              "visible": "${activeAnswer?.refused === true}",
+              "body": "本次回答触发内容护栏已被拦截，请调整提问后重试。"
+            },
+            {
+              "type": "ai-citations",
+              "testid": "ai-knowledge-chat-citations",
+              "mode": "list",
+              "message": "${activeAnswer}",
+              "sources": "${activeAnswer?.sources ?? []}"
+            },
+            {
+              "type": "ai-feedback",
+              "testid": "ai-knowledge-chat-feedback",
+              "message": "${activeAnswer}",
+              "actions": ["copy", "refresh", "like", "dislike", "sources"],
+              "onAction": {
+                "action": "ajax",
+                "args": {
+                  "url": "/r/ReplAi__feedbackCreate",
+                  "method": "post",
+                  "data": { "action": "${action}", "messageId": "${message?.id ?? ''}" }
+                }
+              }
+            },
+            {
+              "type": "ai-token-usage",
+              "testid": "ai-knowledge-chat-token-usage",
+              "message": "${activeAnswer}",
+              "contextLimit": 8192,
+              "showCost": true
+            }
+          ],
+          "onResponseComplete": [
+            {
+              "action": "ajax",
+              "args": {
+                "url": "/r/ReplAi__messageSave",
+                "method": "post",
+                "data": {
+                  "message": "${message}",
+                  "conversationId": "${activeConversationId}"
+                }
+              }
+            },
+            {
+              "action": "setValue",
+              "args": { "path": "activeAnswer", "value": "${message}" }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

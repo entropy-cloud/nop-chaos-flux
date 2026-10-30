@@ -481,4 +481,12 @@ export const COMPLEX_PAGE_ENTRIES: ComplexPageEntry[] = [
       '复刻 ITAM 折旧仪表盘页（roadmap 21 页 I2，D2 §2.8 桌面整页）：KPI 五 tile 阵列（原值/累计折旧/净值/本期折旧/在建工程 ← depreciationKpi 平铺 map）+ 资产类别分布 pie（categoryDistribution）+ 近 12 月折旧趋势 line（depreciationTrend）+ 年度折旧透视（pivot-table category×quarter SUM 三指标 + 行总计，depreciationPivot year 过滤）+ 折旧未计提预警 crud（IN_SERVICE 无 EXECUTED 行集 + 行操作处置 dialog）+ 期间/年度过滤（form+valuesPath 载体 + 一键刷新 refreshSource 五源级联，W2/W3 勘误同族口径）+ 折旧报表导出（button→download action，G6，{url,filename} live 契约）。数据经 /r/ReplItam__depreciation* 与 categoryDistribution 端点流动。',
     features: ['stat-tile KPI×5', 'pie/line 双图', 'pivot 年度透视', '预警 crud 行操作 dialog', '五源级联刷新', 'download 报表导出', 'ReplItam__ 端点'],
   },
+  {
+    id: 'ai-knowledge-chat',
+    title: 'AI 知识库对话页',
+    category: 'business-replication',
+    description:
+      '复刻 AI 知识库对话页（roadmap 21 页 K1，D3 §2.1 整页，D6 MAJ-B host override）：左侧 ai-conversations 会话列表（新建/切换/重命名/删除，选中态经 replAi:setActive host namespace action，历史消息经 messageFindPage 灌入引擎回显）+ 右侧 ai-chat（streaming 逐帧渲染/停止按钮/G11 护栏 alert）+ afterMessages 三件套（ai-citations 引用来源卡片 mode list / ai-feedback 反馈按钮 / ai-token-usage token 用量，绑 onResponseComplete 写回的 ${activeAnswer} message 快照）+ ai-welcome/ai-prompts 预设提问 chips。connector mock 四类 fixture 预设（引用/护栏/HITL 工具调用/慢流），数据经 /r/ReplAi__* 端点流动。',
+    features: ['ai-chat 流式对话', 'ai-conversations 会话管理', '引用来源卡片', 'G11 护栏 alert', 'token 用量', 'host override', 'ReplAi__ 端点'],
+  },
 ];

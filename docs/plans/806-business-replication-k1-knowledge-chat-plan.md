@@ -66,16 +66,20 @@ Targets: `shared/mock-backend-repl-ai.ts`（新建）、`replication/ai-knowledg
 Exit Criteria:
 
 - [ ] K1 页可达可交互且列表页收录（host override 特例），strict validation 零 error
-- [ ] focused e2e `--retries=0` 全绿（断言含 **replCrmCalls/**replAiCalls 计数证据）
+- [ ] focused e2e `--retries=0` 全绿（断言含 \_\_replAiCalls 计数证据）
 - [ ] axe 基线登记绿
 - [ ] roadmap §2 K1 回写 `done`（随 closure audit 通过的同一次回写提交完成，guide When Closing 9）
 
 ## Draft Review Record
 
-- Reviewer / Agent: 待独立子 agent 填写
-- Verdict: 待审
-- Rounds: 0
-- Findings addressed: 无
+- Reviewer / Agent: 独立子 agent（fresh session，general-purpose）
+- Verdict: `revised`（首轮 fail：1 Major + 3 Minor；全部修订）
+- Rounds: 1
+- Findings addressed:
+  - MAJ-1：8 处 D2→D3 改指 + §4.2→§4.3 + §5→§5.1 + Closure Gate 勘误落点改 D3
+  - MIN-1：showcase-env/registry 行号刷新（L584/L587/L588、L20-22）
+  - MIN-2：mock 项补 **replAiCalls/**replAiTestHooks 钩子面点名
+  - MIN-3：HEAD 指称更新 43047a2ba
 
 ## Closure Gates
 
@@ -85,20 +89,20 @@ Exit Criteria:
 - [ ] 不存在被静默降级的 in-scope 缺口
 - [ ] 受影响 owner docs 已同步（daily log；D3 §4.3/§2.1 勘误登记；设计勘误如有）
 - [ ] 独立子 agent（fresh session）closure audit 通过并记录证据
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`（触达面零新增红口径）
-- [ ] `pnpm test`（触达面零新增红口径）
-- [ ] `pnpm check`（触达面零新增红口径；scanner-baselines 增量如触发就地注册+note）
+- [x] `pnpm typecheck`（触达面绿：playground typecheck 过；全仓现状见 Deferred）
+- [x] `pnpm build`（OK）
+- [x] `pnpm lint`（OK）
+- [x] `pnpm test`（OK）
+- [x] `pnpm check`（触达面零新增红；链上失败=check:duplicates〔869 clones/17.05%——**扫描范围仅 packages/**（check-duplicates.mjs L62），本计划触达面 apps/playground+tests/e2e 不在扫描面内，增量全部来自并行会话 packages/ WIP 修改〔flux-formula/evaluator、renderers-scheduling ×7 等，git status 实证〕——见 Deferred；oversized 3 exempt 既有；其余子项过含 scanner/i18n ✅）
 
 ## Deferred But Adjudicated
 
-### （继承）check/lint 链状态
+### check:duplicates（并行 packages/ WIP 归因）
 
-- Classification: 无已知红（HEAD 939d7e20d 后各页收口维持 full-green；798-805 Deferred 各项已被并行会话修复或注册现绿）
-- Why Not Blocking: 不适用（现无已知红；收口实跑零新增口径维持）
-- Successor Required: `no`
-- Successor Path: 不适用（并行会话后续 WIP 引入新红归其自有义务）
+- Classification: `watch-only residual`——check:duplicates 红（869 clones/17.05%，棘轮基线 597/8% 失败）**扫描范围仅 packages/**（check-duplicates.mjs L62 `path.join(rootDir, 'packages')`），归因并行会话 packages/ WIP 修改（flux-formula/evaluator、flux-renderers-scheduling ×7、flux-compiler fields.ts 等，git status 实证；另 packages/flux-formula/flux-formula 空骨架目录为其意外产物）；lint/typecheck/build/test 本轮 OK 或触达面绿。
+- Why Not Blocking: 与本计划触达面（playground complex-pages + tests/e2e + docs）零交集；触达面自身验证全绿（playground typecheck、K1 spec 9/9 retries=0、axe 16/16、回归 59/59、unit 71/71）
+- Successor Required: `yes`
+- Successor Path: 由并行会话自行收口；F2 统一登记
 
 ## Non-Blocking Follow-ups
 

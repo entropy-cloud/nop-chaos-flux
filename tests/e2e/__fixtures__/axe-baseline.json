@@ -8,9 +8,14 @@
     },
     "_notes": "plan 798 Phase 1: stale ids gantt-demo / crud-demo scanned the home page (routes no longer exist). Keys migrated to the real hash segments (gantt, complex-pages/standard-crud); counts re-measured on the target pages on first run 2026-10-30 — the old home-page counts were empty {} and are not transferable (D1 §4 纪律). wms-pda-receiving registered per the D6 unified A+B single-key: the mobile-canvas branch B scan is the registered scan (D6 MAJ-C: the canvas DOM does not vary with viewport, one scan suffices)."
   },
-  "ai-widgets": { "aria-required-children": 1 },
+  "ai-widgets": {
+    "aria-required-children": 1
+  },
   "component-handles": {},
-  "complex-pages/standard-crud": { "aria-required-attr": 6, "color-contrast": 6 },
+  "complex-pages/standard-crud": {
+    "aria-required-attr": 6,
+    "color-contrast": 6
+  },
   "complex-pages/wms-wave-picking": {
     "aria-required-attr": 6,
     "color-contrast": 6,
@@ -22,7 +27,9 @@
     "label": 1,
     "_notes": "plan 800 first-run measurement 2026-10-30 (D1 §4 branch A registration): counts measured on #/complex-pages/wms-stock-ledger. aria-required-attr = the detail table's 9 column-resize separator spans (table component owner debt, same rule as standard-crud/W2); color-contrast = 7 stat-tile secondary badges; label = the VTable internal readonly .table-focus-control input (pivot component owner). Fixes belong to the component owner, not the page schema."
   },
-  "complex-pages/wms-pda-receiving": { "color-contrast": 6 },
+  "complex-pages/wms-pda-receiving": {
+    "color-contrast": 6
+  },
   "complex-pages/crm-opportunity-kanban": {
     "aria-required-attr": 5,
     "color-contrast": 17,
@@ -48,8 +55,23 @@
     "color-contrast": 7,
     "_notes": "plan 805 first-run measurement 2026-10-30 (D1 §4 branch A registration): counts measured on #/complex-pages/itam-depreciation-dashboard. aria-required-attr = the alerts crud table's 5 column-resize separator spans (5 alert columns incl. the operation column, table component owner debt, same rule family as standard-crud/W2/W3/C1/C3/I1); color-contrast = 7 header feature badges (data-slot=badge variant=secondary in the complex-pages shell header — same secondary-badge contrast debt as W3/C1/C2/C3/I1 registrations, component owner). Fixes belong to the component owner, not the page schema."
   },
-  "dashboard-demo": { "aria-required-attr": 4, "color-contrast": 1, "nested-interactive": 1 },
-  "flux-basic": { "aria-required-attr": 5, "color-contrast": 2 },
-  "gantt": { "aria-conditional-attr": 14, "aria-required-children": 2, "button-name": 1 },
-  "w4a-multimedia": {}
+  "dashboard-demo": {
+    "aria-required-attr": 4,
+    "color-contrast": 1,
+    "nested-interactive": 1
+  },
+  "flux-basic": {
+    "aria-required-attr": 5,
+    "color-contrast": 2
+  },
+  "gantt": {
+    "aria-conditional-attr": 14,
+    "aria-required-children": 2,
+    "button-name": 1
+  },
+  "w4a-multimedia": {},
+  "complex-pages/ai-knowledge-chat": {
+    "color-contrast": 7,
+    "_notes": "plan 806 first-run measurement 2026-10-30 (D1 §4 branch A registration): counts measured on #/complex-pages/ai-knowledge-chat. color-contrast = 7 header feature badges (data-slot=badge variant=secondary in the complex-pages shell header — same secondary-badge contrast debt as W3/C1/C2/C3/I1/I2 registrations, component owner). The K1 page DOM itself (ai-conversations/ai-chat/afterMessages widgets) contributes zero violations. Fixes belong to the component owner, not the page schema."
+  }
 }

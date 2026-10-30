@@ -14,7 +14,7 @@ import { registerSchedulingRenderers } from '@nop-chaos/flux-renderers-schedulin
 import { registerAiRenderers } from '@nop-chaos/flux-renderers-ai';
 import { registerMobileRenderers } from '@nop-chaos/flux-renderers-mobile';
 import { registerFlowDesignerRenderers } from '@nop-chaos/flow-designer-renderers';
-import type { RendererEnv } from '@nop-chaos/flux-core';
+import type { ActionScope, RendererEnv } from '@nop-chaos/flux-core';
 import { ConfirmHost } from './confirm-bridge';
 
 const registry = createDefaultRegistry();
@@ -83,6 +83,12 @@ interface ShowcaseSchemaHostProps {
   schema: React.ComponentProps<typeof ShowcaseSchemaRenderer>['schema'];
   env: RendererEnv;
   data?: Record<string, unknown>;
+  /**
+   * Optional host ActionScope (plan 806 K1): host namespace actions
+   * (`replAi:setActive`) are registered by the page host and dispatched by
+   * schema events. Undefined keeps the previous behavior (runtime-built scope).
+   */
+  actionScope?: ActionScope;
   /** Optional className for the host wrapper. */
   className?: string;
   /** Render children (e.g. extra toast/hosts) inside the host. */
@@ -99,6 +105,7 @@ export function ShowcaseSchemaHost({
   schema,
   env,
   data,
+  actionScope,
   className,
   children,
 }: ShowcaseSchemaHostProps) {
@@ -112,6 +119,7 @@ export function ShowcaseSchemaHost({
           env={env}
           formulaCompiler={showcaseFormulaCompiler}
           data={data}
+          actionScope={actionScope}
           onActionError={(error) => {
             // Form-validation rejections ({ok:false, error: ValidationError[]})
             // are surfaced inline by the form (toast + aria-invalid) — they are

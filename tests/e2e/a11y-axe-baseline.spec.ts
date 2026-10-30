@@ -47,6 +47,10 @@ const ROUTES = [
   // desktop scan set (non-mobile page — pure JSON SchemaPage, no host
   // override).
   'complex-pages/itam-depreciation-dashboard',
+  // Plan 806 (D1 §4 branch A): K1 knowledge-chat joins the standard desktop
+  // scan set (non-mobile page — host override host, but a plain desktop page
+  // in the shared shell, no mobile canvas).
+  'complex-pages/ai-knowledge-chat',
   'dashboard-demo',
 ];
 
