@@ -162,4 +162,28 @@ describe('Kanban useScopeSelector ownership gating (05-01)', () => {
     expect(boardCall![0]).not.toBe('scope');
     expect(collapsedCall![0]).not.toBe('scope');
   });
+
+  // plan 822 regression discriminator: the controlled columnsConfig seeding
+  // loop had zero suite coverage — an inverted seed (`!` instead of `!!`)
+  // passed 1094 tests while rendering collapsed:false columns as collapsed.
+  // Asserts the seeded truth per column: collapsed:true → collapsed face,
+  // collapsed:false → expanded face.
+  it('controlled collapsedOwnership: columnsConfig seeds collapsedMap truthfully', () => {
+    const twoColumnBoard: BoardData = {
+      root: { id: 'root', type: 'root', children: ['col1', 'col2'], data: {}, meta: {} },
+      col1: { id: 'col1', type: 'column', parentId: 'root', children: ['card1'], data: { title: 'Backlog' }, meta: {} },
+      col2: { id: 'col2', type: 'column', parentId: 'root', children: [], data: { title: 'Done' }, meta: {} },
+      card1: { id: 'card1', type: 'card', parentId: 'col1', children: [], data: { title: 'Task A' }, meta: {} },
+    };
+    render(React.createElement(KanbanBoard, makeProps({
+      props: {
+        data: twoColumnBoard,
+        collapsedOwnership: 'controlled',
+        columnsConfig: { col1: { collapsed: true }, col2: { collapsed: false } },
+      },
+    })));
+    const columns = Array.from(document.querySelectorAll('.nop-kanban-column'));
+    expect(columns).toHaveLength(2);
+    expect(columns.map((c) => c.classList.contains('nop-kanban-column-collapsed'))).toEqual([true, false]);
+  });
 });

@@ -191,7 +191,7 @@ export class DeleteTaskCommand implements Command {
 }
 
 // WA-scheduling-005 (plan 568) — adjudicated dual-track design, not an open
-// TODO: Gantt and Kanban both run command-based undo with deliberately
+// work item: Gantt and Kanban both run command-based undo with deliberately
 // different granularity (Gantt: class-based commands with execute/undo/redo
 // methods; Kanban: typed operation deltas applied via helpers). Unification
 // is a possible future refactor, not a pending fix — pick it up only if a

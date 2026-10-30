@@ -78,7 +78,7 @@ export function useKanbanBoardState(options: {
       if (columnsConfig) {
         for (const [id, cfg] of Object.entries(columnsConfig)) {
           if (typeof cfg === 'object' && cfg !== null && 'collapsed' in cfg) {
-            map[id] = !!(cfg as any).collapsed;
+            map[id] = !!((cfg as { collapsed?: unknown }).collapsed);
           }
         }
       }

@@ -3,7 +3,7 @@ import type { RendererEnv, ScopeRef } from '@nop-chaos/flux-core';
 import { IndustrialAdapter } from '../../data-source/industrial-adapter.js';
 import type { IndustrialTagConfig } from '../../data-source/industrial-adapter.js';
 
-export interface UseDataSourcesArgs {
+interface UseDataSourcesArgs {
   dataSources?: IndustrialTagConfig[];
   env: RendererEnv;
   scope: ScopeRef;

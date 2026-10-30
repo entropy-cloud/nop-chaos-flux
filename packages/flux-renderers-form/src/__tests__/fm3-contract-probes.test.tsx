@@ -374,6 +374,9 @@ describe('FM-3 GAP7: input-suggest IME Enter guard probe', () => {
   // concurrent form.tsx fix owns that territory; this probe stays skipped as
   // the filed defect record. Unskip once the guard lands; the assertions
   // below are the target contract and should then pass.
+  // Disposition (plan 822 Phase 3): kept as the standing filed-defect record —
+  // successor ownership is a form-package functional plan; this skip is the
+  // registration, not a silently dropped debt.
   it.skip('characterization: Enter that confirms an IME candidate must not commit the highlighted suggestion', async () => {
     const SchemaRenderer = makeRenderer([stubDataSourceDefinition]);
     render(

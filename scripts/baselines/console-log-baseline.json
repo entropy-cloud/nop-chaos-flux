@@ -1,19 +1,14 @@
 {
   "_header": {
     "description": "console.log/debug baseline for non-test src under packages/ and apps/. New hits fail check:console-baseline; shrink via --update-baselines after removing hits.",
-    "lastUpdated": "2026-10-10",
-    "count": 29
+    "lastUpdated": "2026-10-30",
+    "count": 27
   },
   "entries": [
     {
       "file": "packages/word-editor-renderers/src/editor-canvas.tsx",
       "line": 160,
       "text": "console.debug('[word-editor] word count failed', err);"
-    },
-    {
-      "file": "packages/word-editor-renderers/src/preview/doc-preview-page.tsx",
-      "line": 50,
-      "text": "console.debug('[word-editor] preview load failed', err);"
     },
     {
       "file": "apps/playground/src/pages/barcode-demo.tsx",
@@ -24,11 +19,6 @@
       "file": "apps/playground/src/pages/calendar-perf-scale-demo.tsx",
       "line": 21,
       "text": "notify: (level, msg) => console.log(`[${level}] ${msg}`),"
-    },
-    {
-      "file": "apps/playground/src/pages/dashboard-demo.tsx",
-      "line": 99,
-      "text": "notify: (_level, message) => console.log('[dashboard-demo]', message),"
     },
     {
       "file": "apps/playground/src/pages/data-verify-page.tsx",
@@ -47,7 +37,7 @@
     },
     {
       "file": "apps/playground/src/pages/event-prevention-demo.tsx",
-      "line": 99,
+      "line": 98,
       "text": "console.log(`[event-prevention-demo notify:${level}] ${message}`);"
     },
     {

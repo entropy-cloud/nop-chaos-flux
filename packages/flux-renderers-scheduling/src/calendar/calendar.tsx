@@ -75,9 +75,10 @@ export function Calendar(props: RendererComponentProps<CalendarSchema> & { ref?:
 
   const locale = (resolved.locale as string) ?? (typeof navigator !== 'undefined' ? navigator.language : 'en-US');
 
-  const eventsData = (resolved.events as CalendarSchema['events']) ?? (resolved as any).data as CalendarEvent[] ?? [];
+  const legacyEventsField = (resolved as { data?: CalendarSchema['events'] }).data;
+  const eventsData = (resolved.events as CalendarSchema['events']) ?? legacyEventsField ?? [];
   const resourcesData = useMemo(() => (resolved.resources as CalendarSchema['resources']) ?? [], [resolved.resources]);
-  if ((resolved as any).data != null && resolved.events == null && typeof console !== 'undefined') {
+  if (legacyEventsField != null && resolved.events == null && typeof console !== 'undefined') {
     console.warn('Calendar: `data` field is deprecated, use `events` instead');
   }
 

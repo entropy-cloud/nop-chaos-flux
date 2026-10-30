@@ -111,7 +111,7 @@ function applyBinaryOperator(
         reportIllegalOperand(reportError, op, right);
         return undefined;
       }
-      // Explicit JS `+` semantics for primitive operands (was `(as any)` —
+      // Explicit JS `+` semantics for primitive operands (was an untyped cast —
       // cq-6 Phase 1; behavior pinned by the characterisation matrix).
       if (typeof left === 'string' || typeof right === 'string') {
         return String(left) + String(right);
@@ -397,7 +397,7 @@ export function evaluateAst(ast: FormulaAstNode, options: EvaluateOptions): unkn
       throw createExpressionError(`Access to '${key}' is not allowed in expressions`);
     }
     return {
-      value: (objectValue as any)[key],
+      value: (objectValue as Record<PropertyKey, unknown>)[key],
       receiver: objectValue,
       name: typeof propertyValue === 'string' ? propertyValue : undefined,
     };

@@ -16,7 +16,7 @@ export interface KanbanColumnProps {
   configMap?: Record<string, KanbanCardConfig>;
   // WA-scheduling-003 (plan 568): the four region props use the shared
   // RenderRegionHandle instead of hand-rolled narrow shapes (which forced
-  // `as any` at every board → column boundary). The single React.ReactNode
+  // untyped casts at every board → column boundary). The single React.ReactNode
   // boundary cast lives at each render() call site, mirroring the calendar
   // event-template convention.
   columnHeaderRegion?: RenderRegionHandle | null;

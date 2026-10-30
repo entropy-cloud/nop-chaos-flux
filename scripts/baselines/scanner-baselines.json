@@ -3,6 +3,7 @@
     "description": "Numeric baselines for the high-risk advisory scanners listed in BASELINED_SCANNERS (check-scanner-baselines.mjs). A count above the baseline fails check:scanner-baselines (new suspects must be fixed or the baseline consciously re-registered).",
     "lastUpdated": "2026-10-30",
     "reRegistrationNotes": [
+      "2026-10-30 plan 802 (business-replication C2 customer-360): find-non-retained-renderer-references 155 -> 158 (+3: apps/playground/src/complex-pages/page-schemas/crm-customer-360.json — picker selection radio ×2 + table rowSelection radio + calendar type。radio 与基线内 standard-crud.json/form-wizard.json 同族（amis matrix not-retained 名称碰撞假阳性）；calendar 为 matrix 注释明示的 landed 扩展族〔flux scheduling calendar 已落地〕)。Hand-edited single value per prior precedent; no --update-baselines.",
       "2026-10-30 plan 798 (business-replication W1 mobile host override): find-react19-optimization-candidates 693 -> 694 (+1: apps/playground/src/complex-pages/replication/wms-pda-receiving-host.tsx:18 useMemo — the memo keys keep host-scope seed/config identity for the SchemaPage remount inside the mobile canvas; render-time derivation family same as the plan-785 registrations). Hand-edited single value per prior precedent; no --update-baselines.",
       "2026-10-28 mall-mobile backend-integration test round: find-test-global-leaks 115 -> 120 (+5) / discover-audit-suspects 820 -> 825 (+5 aggregate). All +5 are test-harness shapes inside the new test files (apps/mall-mobile/src/api/nop-protocol.integration.test.ts module-level recorded array + node:http server state, src/pages/auth/{auth-pages,forgot}.test.tsx + src/pages/topic/topic-detail-v2.test.tsx local mock slots) — same test-infra family as the plan-727/R2.5 registrations. Zero product-code suspects; surgical hand-edit per 09ed6e5b6 precedent.",
       "2026-10-28 mall-mobile redesign R3b: find-react19-optimization-candidates 692 -> 693 (+1: apps/mall-mobile/src/components/mall/seckill-countdown.tsx:21 setInterval-in-effect — the 1s tick IS the render contract of the seckill countdown display (no store dependency to sync against; same sanctioned external-sync family as the plan-774 patch-queue poll registration). Hand-edited single value.",
@@ -35,8 +36,8 @@
     "find-styling-suspects": 255,
     "discover-audit-suspects": 825,
     "find-test-global-leaks": 120,
-    "find-todo-exitless": 1,
-    "find-as-any-casts": 41,
+    "find-todo-exitless": 0,
+    "find-as-any-casts": 31,
     "find-async-without-failure-path": 373,
     "find-react19-optimization-candidates": 694,
     "find-canvas-wrapper-a11y-gaps": 0,
@@ -45,6 +46,6 @@
     "find-fieldframe-bypasses": 12,
     "find-reactive-render-reads": 21,
     "find-performance-suspects": 30,
-    "find-non-retained-renderer-references": 155
+    "find-non-retained-renderer-references": 158
   }
 }

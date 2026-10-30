@@ -31,7 +31,12 @@ function createZxingDetector(formats?: BarcodeFormat[]): {
         .map((f) => {
           const zxingName = BARCODE_FORMAT_TO_ZXING[f];
           if (!zxingName) return null;
-          return (ZXingFormat as any)[zxingName] ?? null;
+          // name → numeric enum value, via the enum's own forward entries
+          // (reverse numeric entries filtered out — no string-index cast).
+          const forwardEntry = Object.entries(ZXingFormat).find(
+            ([entryKey]) => entryKey === zxingName,
+          );
+          return forwardEntry ? (forwardEntry[1] as number) : null;
         })
         .filter((f): f is NonNullable<typeof f> => f != null);
       if (possibleFormats.length > 0) {

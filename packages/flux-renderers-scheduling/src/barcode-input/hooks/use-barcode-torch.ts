@@ -72,8 +72,11 @@ export function useBarcodeTorch(options?: UseBarcodeTorchOptions): UseBarcodeTor
 
     if (!isOnRef.current) {
       try {
+        // torch is a de-facto (Chromium/Android) constraint, not in lib.dom's
+        // MediaTrackConstraintSet — extend instead of an untyped cast.
+        const torchConstraint: MediaTrackConstraintSet & { torch?: boolean } = { torch: true };
         await track.applyConstraints({
-          advanced: [{ torch: true }] as any,
+          advanced: [torchConstraint],
         });
         setIsOn(true);
       } catch (err) {

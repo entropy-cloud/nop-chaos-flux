@@ -25,7 +25,9 @@ export interface BarcodeMediaIO {
 const defaultBarcodeMediaIO: BarcodeMediaIO = {
   getUserMedia: (constraints) => navigator.mediaDevices.getUserMedia(constraints),
   getNativeBarcodeDetectorCtor: () =>
-    typeof window !== 'undefined' ? (window as any).BarcodeDetector : undefined,
+    typeof window !== 'undefined'
+      ? (window as Window & { BarcodeDetector?: NativeBarcodeDetectorCtor }).BarcodeDetector
+      : undefined,
   isOnline: () => navigator.onLine,
   isSecureContext: () => typeof window !== 'undefined' && window.isSecureContext,
   supportsEnumerateDevices: () =>

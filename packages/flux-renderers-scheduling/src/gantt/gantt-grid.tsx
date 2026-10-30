@@ -81,7 +81,7 @@ export function GanttGrid({ store, columns, onSelectTask, selectedTaskId, classN
       case 'end': return task.end;
       case 'duration': return String(task.duration ?? '');
       case 'predecessor': return task.$target?.join(', ') ?? '';
-      default: return (task as any)[column.name] ?? '';
+      default: return ((task as Record<string, unknown>)[column.name] ?? '') as string;
     }
   };
 
