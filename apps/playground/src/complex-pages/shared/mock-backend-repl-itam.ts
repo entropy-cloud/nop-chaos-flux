@@ -8,6 +8,13 @@
  * §4.3 defines no submit endpoint (drillRows precedent — registered here and
  * flagged back to the design doc).
  *
+ * Plan 805 (I2 itam-depreciation-dashboard): the six D2 §4.3 I2 endpoints
+ * (`depreciationKpi` / `depreciationTrend` / `categoryDistribution` /
+ * `depreciationPivot` / `depreciationAlerts` / `depreciationReport`) live in
+ * the delegate module `mock-backend-repl-itam-depreciation.ts` (oversized-file
+ * gate, wms-stock/c3 precedent) and this branch hands unmatched I2 urls over
+ * to it below.
+ *
  * Envelopes (D1 §2): queries `{status:0, data:{...}}`, mutations
  * `{status:0, data:{...}}`, error paths `{status:1, msg}` (D2 §4.3 error
  * branches keep their original message names). Session state (asset registry,
@@ -50,6 +57,7 @@ import {
   type ReplicaBranchInput,
   type ReplicaFetcherBranch,
 } from './mock-backend-replica-kit';
+import { handleReplItamDepreciationBranch } from './mock-backend-repl-itam-depreciation';
 
 /* ── Entities (D2 §4.3 实体字段) ─────────────────────────────────────────── */
 
@@ -94,6 +102,12 @@ export interface ReplItamTestHooks {
   lastScanBody?: Record<string, unknown>;
   /** Mirror of the last `repairCreate` request body (plan 804 addition). */
   lastRepairBody?: Record<string, unknown>;
+  /** I2 pivot mirror: last `depreciationPivot` request year (plan 805). */
+  lastDepreciationPivotYear?: string;
+  /** I2 download mirror: last `depreciationReport` query params (plan 805). */
+  lastDepreciationReportQuery?: Record<string, unknown>;
+  /** I2 download mirror: last successful `depreciationReport` payload (plan 805). */
+  lastDepreciationReportData?: Record<string, unknown>;
 }
 
 /* ── Deterministic fixtures ─────────────────────────────────────────────── */
@@ -387,6 +401,18 @@ export function createReplItamFetcherBranch(session: ReplItamSessionState = crea
       session.repairs.push({ repairId, ...input.body });
       return { status: 0, data: { repairId, status: 'OPEN' } as unknown as T };
     }
+
+    // ----- I2 reads (delegate module, D2 §4.3 depreciation subset; the
+    // counter above already counted the call) -----
+    const depreciationHandled = handleReplItamDepreciationBranch<T>({
+      url: input.url,
+      method,
+      read,
+      body: input.body,
+      session: { assets: session.assets },
+      hooks,
+    });
+    if (depreciationHandled) return depreciationHandled;
 
     return null;
   }

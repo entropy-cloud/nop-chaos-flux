@@ -519,6 +519,14 @@ indicators:
   - { field: netBookValue, title: 净值, aggregationType: SUM }
 ```
 
+#### I2 实现勘误（M3 落地实证 2026-10-30，plan 805；以 live 为准）
+
+1. **totals.row 单行维不写 showSubTotals**：单行维 [category] 时 category 即 leaf 维，showSubTotals:true 无 subTotalsDimensions 触发 pivot-option.ts L46-82 leaf-guard 退化形态（W3 勘误 8 前提是多级行维）。
+2. **depreciationTrend 附 trend zip 投影 face**：三平行数组无渲染器消费面（公式语言无 zip），mock 保留原数组并服务端派生记录数组。
+3. **depreciationKpi/depreciationReport 形状**：平铺 map + `{url, filename}`（D2 原文数组/`{downloadUrl}` 不成立——C3 同族延续）。
+4. **载体 page+flex 直排**（树非 dashboard 网格，无 PAGE_DATA panels 通道）；query-filter 按 W2 勘误 6 以 form+valuesPath + 一键刷新按钮承载五源级联。
+5. **过滤分工**：period→KPI/trend/category 三源、year→pivot、alerts 无参；一键刷新统一五源级联（§5 ① 按按钮触发面验收）。
+
 ## 3. R4 对照与双向核对
 
 ### 3.1 R4 §1 结论 ↔ 本设计组合对照

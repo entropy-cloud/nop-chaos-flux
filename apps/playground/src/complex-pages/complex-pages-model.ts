@@ -473,4 +473,12 @@ export const COMPLEX_PAGE_ENTRIES: ComplexPageEntry[] = [
       '复刻 ITAM 资产台账与盘点页（roadmap 21 页 I1，D2 §2.7 桌面整页）：资产台账 crud（IT 视角字段面 queryForm 过滤 + selection + batch-bar 批量打印标签 countTemplate/清空）+ 盘点作业三阶段（DRAFT→CONFIRMED→DONE 状态徽章迁移：startTake 确认 / barcode-input batchMode 扫码队列 + 模拟扫码走同一 stockTakeScan 链 + 扫描落行表 / completeTake 二次确认 dialog→stockTakeComplete 生成差异）+ 盘点差异表（differenceQuantity 服务端派生 + status labelMap/levelMap 盘盈盘亏平三态标色）+ diff-view split 账面 vs 实盘对照〔flux 侧预期〕+ 盘点中报修 drawer（repairCreate，content required 守卫）。数据经 /r/ReplItam__* 端点流动。',
     features: ['crud 台账 IT 字段面', 'batch-bar 批量操作', 'barcode-input batchMode', '盘点三阶段徽章', '差异三态标色', 'diff-view split', '报修 drawer', 'ReplItam__ 端点'],
   },
+  {
+    id: 'itam-depreciation-dashboard',
+    title: 'ITAM 折旧仪表盘页',
+    category: 'business-replication',
+    description:
+      '复刻 ITAM 折旧仪表盘页（roadmap 21 页 I2，D2 §2.8 桌面整页）：KPI 五 tile 阵列（原值/累计折旧/净值/本期折旧/在建工程 ← depreciationKpi 平铺 map）+ 资产类别分布 pie（categoryDistribution）+ 近 12 月折旧趋势 line（depreciationTrend）+ 年度折旧透视（pivot-table category×quarter SUM 三指标 + 行总计，depreciationPivot year 过滤）+ 折旧未计提预警 crud（IN_SERVICE 无 EXECUTED 行集 + 行操作处置 dialog）+ 期间/年度过滤（form+valuesPath 载体 + 一键刷新 refreshSource 五源级联，W2/W3 勘误同族口径）+ 折旧报表导出（button→download action，G6，{url,filename} live 契约）。数据经 /r/ReplItam__depreciation* 与 categoryDistribution 端点流动。',
+    features: ['stat-tile KPI×5', 'pie/line 双图', 'pivot 年度透视', '预警 crud 行操作 dialog', '五源级联刷新', 'download 报表导出', 'ReplItam__ 端点'],
+  },
 ];

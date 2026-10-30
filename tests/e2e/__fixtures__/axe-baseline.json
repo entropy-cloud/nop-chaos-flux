@@ -43,6 +43,11 @@
     "color-contrast": 9,
     "_notes": "plan 804 first-run measurement 2026-10-30 (D1 §4 branch A registration): counts measured on #/complex-pages/itam-asset-inventory. aria-required-attr = the ledger crud table's 9 column-resize separator spans (9 IT-face columns, table component owner debt, same rule family as standard-crud/W2/W3/C1/C3); color-contrast = 9 header feature badges (data-slot=badge variant=secondary in the complex-pages shell header — same secondary-badge contrast debt as W3/C1/C2/C3 registrations, component owner). Fixes belong to the component owner, not the page schema."
   },
+  "complex-pages/itam-depreciation-dashboard": {
+    "aria-required-attr": 5,
+    "color-contrast": 7,
+    "_notes": "plan 805 first-run measurement 2026-10-30 (D1 §4 branch A registration): counts measured on #/complex-pages/itam-depreciation-dashboard. aria-required-attr = the alerts crud table's 5 column-resize separator spans (5 alert columns incl. the operation column, table component owner debt, same rule family as standard-crud/W2/W3/C1/C3/I1); color-contrast = 7 header feature badges (data-slot=badge variant=secondary in the complex-pages shell header — same secondary-badge contrast debt as W3/C1/C2/C3/I1 registrations, component owner). Fixes belong to the component owner, not the page schema."
+  },
   "dashboard-demo": { "aria-required-attr": 4, "color-contrast": 1, "nested-interactive": 1 },
   "flux-basic": { "aria-required-attr": 5, "color-contrast": 2 },
   "gantt": { "aria-conditional-attr": 14, "aria-required-children": 2, "button-name": 1 },

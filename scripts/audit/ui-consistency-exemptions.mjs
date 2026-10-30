@@ -507,6 +507,13 @@ export const EXEMPTIONS = [
       'plan 803 收口（M3-C3）；先例：mock-backend-repl-wms-stock.ts（W3/plan 800）+ showcase-env.ts candidate D',
   },
   {
+    path: 'apps/playground/src/complex-pages/shared/mock-backend-repl-itam-depreciation.ts',
+    rule: 'data-blob-href-without-download',
+    reason:
+      'I2 折旧仪表盘 CSV 报表导出的 data URL 生成点（mock 层无 download 语义可表达）；运行时 download action 路径对 data: URL 走 dataUrlToBlob → downloadBlob，不存在顶层导航——同 mock-backend-repl-crm-c3.ts 误报裁决',
+    source: 'plan 805 收口（M3-I2）；先例：mock-backend-repl-crm-c3.ts（C3/plan 803）+ mock-backend-repl-wms-stock.ts（W3/plan 800）',
+  },
+  {
     path: 'apps/playground/src/complex-pages/shared/mock-backend-repl-wms-stock.ts',
     rule: 'data-blob-href-without-download',
     reason:

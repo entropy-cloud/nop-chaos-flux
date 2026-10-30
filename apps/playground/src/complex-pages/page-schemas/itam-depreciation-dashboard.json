@@ -1,0 +1,372 @@
+{
+  "type": "page",
+  "body": [
+    {
+      "type": "data-source",
+      "id": "itam-depreciation-dashboard-kpi-source",
+      "name": "depreciationKpi",
+      "action": "ajax",
+      "args": {
+        "url": "/r/ReplItam__depreciationKpi",
+        "method": "get",
+        "params": {
+          "period": "${depreciationFilter?.period ?? ''}"
+        }
+      },
+      "testid": "itam-depreciation-dashboard-kpi-source"
+    },
+    {
+      "type": "data-source",
+      "id": "itam-depreciation-dashboard-trend-source",
+      "name": "depreciationTrend",
+      "action": "ajax",
+      "args": {
+        "url": "/r/ReplItam__depreciationTrend",
+        "method": "get",
+        "params": {
+          "period": "${depreciationFilter?.period ?? ''}"
+        }
+      },
+      "testid": "itam-depreciation-dashboard-trend-source"
+    },
+    {
+      "type": "data-source",
+      "id": "itam-depreciation-dashboard-category-source",
+      "name": "categoryDistribution",
+      "action": "ajax",
+      "args": {
+        "url": "/r/ReplItam__categoryDistribution",
+        "method": "get",
+        "params": {
+          "period": "${depreciationFilter?.period ?? ''}"
+        }
+      },
+      "testid": "itam-depreciation-dashboard-category-source"
+    },
+    {
+      "type": "data-source",
+      "id": "itam-depreciation-dashboard-pivot-source",
+      "name": "depreciationPivot",
+      "action": "ajax",
+      "args": {
+        "url": "/r/ReplItam__depreciationPivot",
+        "method": "get",
+        "params": {
+          "year": "${depreciationFilter?.year ?? '2026'}"
+        }
+      },
+      "testid": "itam-depreciation-dashboard-pivot-source"
+    },
+    {
+      "type": "data-source",
+      "id": "itam-depreciation-dashboard-alerts-source",
+      "name": "depreciationAlerts",
+      "action": "ajax",
+      "args": {
+        "url": "/r/ReplItam__depreciationAlerts",
+        "method": "get"
+      },
+      "testid": "itam-depreciation-dashboard-alerts-source"
+    },
+    {
+      "type": "flex",
+      "direction": "column",
+      "gap": 8,
+      "testid": "itam-depreciation-dashboard-root",
+      "body": [
+        {
+          "type": "flex",
+          "direction": "row",
+          "gap": 12,
+          "className": "items-center flex-wrap",
+          "testid": "itam-depreciation-dashboard-toolbar",
+          "body": [
+            {
+              "type": "form",
+              "id": "itam-depreciation-dashboard-filter-form",
+              "testid": "itam-depreciation-dashboard-filter",
+              "valuesPath": "depreciationFilter",
+              "mode": "inline",
+              "data": {
+                "period": "",
+                "year": "2026"
+              },
+              "body": [
+                {
+                  "type": "select",
+                  "name": "period",
+                  "label": "期间",
+                  "testid": "itam-depreciation-dashboard-filter-period",
+                  "clearable": false,
+                  "options": [
+                    { "label": "全部期间", "value": "" },
+                    { "label": "2026-09", "value": "2026-09" },
+                    { "label": "2026-10", "value": "2026-10" }
+                  ]
+                },
+                {
+                  "type": "select",
+                  "name": "year",
+                  "label": "年度",
+                  "testid": "itam-depreciation-dashboard-filter-year",
+                  "clearable": false,
+                  "options": [
+                    { "label": "全部年度", "value": "" },
+                    { "label": "2025", "value": "2025" },
+                    { "label": "2026", "value": "2026" }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "button",
+              "label": "一键刷新",
+              "variant": "outline",
+              "testid": "itam-depreciation-dashboard-refresh",
+              "onClick": {
+                "action": "refreshSource",
+                "targetId": "depreciationKpi",
+                "then": {
+                  "action": "refreshSource",
+                  "targetId": "depreciationTrend",
+                  "then": {
+                    "action": "refreshSource",
+                    "targetId": "categoryDistribution",
+                    "then": {
+                      "action": "refreshSource",
+                      "targetId": "depreciationPivot",
+                      "then": {
+                        "action": "refreshSource",
+                        "targetId": "depreciationAlerts"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "type": "button",
+              "label": "导出折旧报表",
+              "variant": "outline",
+              "testid": "itam-depreciation-dashboard-export",
+              "onClick": {
+                "action": "download",
+                "args": {
+                  "url": "/r/ReplItam__depreciationReport?report=depreciationSummary&format=xlsx&year=${depreciationFilter?.year ?? ''}",
+                  "filename": "折旧报表-xlsx.csv"
+                },
+                "then": {
+                  "action": "showToast",
+                  "args": {
+                    "level": "success",
+                    "message": "折旧报表已生成并开始下载"
+                  }
+                },
+                "onError": [
+                  {
+                    "action": "showToast",
+                    "args": {
+                      "level": "error",
+                      "message": "折旧报表导出失败"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "type": "button",
+              "label": "导出（非法格式演练）",
+              "variant": "ghost",
+              "testid": "itam-depreciation-dashboard-export-invalid",
+              "onClick": {
+                "action": "download",
+                "args": {
+                  "url": "/r/ReplItam__depreciationReport?report=depreciationSummary&format=docx&year=${depreciationFilter?.year ?? ''}",
+                  "filename": "折旧报表-docx.csv"
+                },
+                "onError": [
+                  {
+                    "action": "showToast",
+                    "args": {
+                      "level": "error",
+                      "message": "折旧报表导出失败（不支持的格式）"
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "type": "flex",
+          "direction": "row",
+          "gap": 12,
+          "className": "flex-wrap",
+          "testid": "itam-depreciation-dashboard-kpi-band",
+          "body": [
+            {
+              "type": "stat-tile",
+              "testid": "itam-depreciation-dashboard-kpi-original",
+              "label": "资产原值（元）",
+              "value": "${depreciationKpi?.kpis?.originalValue ?? 0}",
+              "prefix": "￥",
+              "formatter": { "thousands": true, "decimals": 0 }
+            },
+            {
+              "type": "stat-tile",
+              "testid": "itam-depreciation-dashboard-kpi-accumulated",
+              "label": "累计折旧（元）",
+              "value": "${depreciationKpi?.kpis?.accumulatedDepreciation ?? 0}",
+              "prefix": "￥",
+              "formatter": { "thousands": true, "decimals": 0 }
+            },
+            {
+              "type": "stat-tile",
+              "testid": "itam-depreciation-dashboard-kpi-net",
+              "label": "资产净值（元）",
+              "value": "${depreciationKpi?.kpis?.netBookValue ?? 0}",
+              "prefix": "￥",
+              "formatter": { "thousands": true, "decimals": 0 }
+            },
+            {
+              "type": "stat-tile",
+              "testid": "itam-depreciation-dashboard-kpi-period",
+              "label": "本期折旧（元）",
+              "value": "${depreciationKpi?.kpis?.periodDepreciation ?? 0}",
+              "prefix": "￥",
+              "formatter": { "thousands": true, "decimals": 0 }
+            },
+            {
+              "type": "stat-tile",
+              "testid": "itam-depreciation-dashboard-kpi-cip",
+              "label": "在建工程（元）",
+              "value": "${depreciationKpi?.kpis?.cipBalance ?? 0}",
+              "prefix": "￥",
+              "formatter": { "thousands": true, "decimals": 0 }
+            }
+          ]
+        },
+        {
+          "type": "flex",
+          "direction": "row",
+          "gap": 12,
+          "className": "items-stretch flex-wrap",
+          "testid": "itam-depreciation-dashboard-chart-band",
+          "body": [
+            {
+              "type": "chart",
+              "testid": "itam-depreciation-dashboard-pie",
+              "className": "flex-1 min-w-0",
+              "chartType": "pie",
+              "title": "资产类别分布（原值）",
+              "source": "${categoryDistribution?.items ?? []}",
+              "xAxis": { "dataKey": "category" },
+              "series": [{ "name": "原值（元）", "dataRegionKey": "value" }],
+              "legend": true,
+              "height": 260
+            },
+            {
+              "type": "chart",
+              "testid": "itam-depreciation-dashboard-line",
+              "className": "flex-1 min-w-0",
+              "chartType": "line",
+              "title": "近 12 月折旧趋势",
+              "source": "${depreciationTrend?.trend ?? []}",
+              "xAxis": { "dataKey": "month", "label": "月份" },
+              "series": [
+                { "name": "本期折旧（元）", "dataRegionKey": "periodDepreciation" },
+                { "name": "累计折旧（元）", "dataRegionKey": "accumulated" }
+              ],
+              "legend": true,
+              "height": 260
+            }
+          ]
+        },
+        {
+          "type": "pivot-table",
+          "id": "itam-depreciation-dashboard-pivot",
+          "testid": "itam-depreciation-dashboard-pivot",
+          "label": "年度折旧透视（类别×季度）",
+          "source": "${depreciationPivot?.records ?? []}",
+          "rowDimensions": ["category"],
+          "columnDimensions": ["quarter"],
+          "indicators": [
+            { "field": "originalValue", "title": "原值", "aggregationType": "SUM" },
+            { "field": "periodDepreciation", "title": "本期折旧", "aggregationType": "SUM" },
+            { "field": "netBookValue", "title": "净值", "aggregationType": "SUM" }
+          ],
+          "dataConfig": {
+            "totals": {
+              "row": {
+                "showGrandTotals": true,
+                "grandTotalLabel": "总计"
+              }
+            }
+          },
+          "height": 300
+        },
+        {
+          "type": "crud",
+          "id": "itam-depreciation-dashboard-alerts",
+          "testid": "itam-depreciation-dashboard-alerts",
+          "itemKey": "assetCode",
+          "source": "${depreciationAlerts?.items ?? []}",
+          "columns": [
+            { "name": "assetCode", "label": "资产编码", "width": 140 },
+            { "name": "name", "label": "资产名称", "width": 150 },
+            {
+              "name": "status",
+              "label": "资产状态",
+              "width": 100,
+              "cell": {
+                "type": "status",
+                "value": "${status}",
+                "labelMap": {
+                  "IN_SERVICE": "在用"
+                },
+                "levelMap": {
+                  "IN_SERVICE": "success"
+                }
+              }
+            },
+            { "name": "lastDepreciationPeriod", "label": "最近计提期间", "width": 130 },
+            {
+              "type": "operation",
+              "label": "操作",
+              "width": 110,
+              "buttons": [
+                {
+                  "type": "button",
+                  "label": "处置",
+                  "variant": "outline",
+                  "testid": "itam-depreciation-dashboard-alert-deal",
+                  "onClick": {
+                    "action": "openDialog",
+                    "args": {
+                      "title": "折旧预警处置 ${$slot.record.assetCode}",
+                      "testid": "itam-depreciation-dashboard-alert-dialog",
+                      "data": {
+                        "assetCode": "${$slot.record.assetCode}",
+                        "assetName": "${$slot.record.name}",
+                        "lastPeriod": "${$slot.record.lastDepreciationPeriod}"
+                      },
+                      "body": [
+                        {
+                          "type": "text",
+                          "testid": "itam-depreciation-dashboard-alert-dialog-summary",
+                          "text": "资产 ${assetCode}（${assetName}）自 ${lastPeriod} 起未生成折旧计提记录，请核查计提任务并补提。",
+                          "className": "text-sm"
+                        }
+                      ]
+                    }
+                  }
+                }
+              ]
+            }
+          ],
+          "empty": { "type": "text", "text": "本期无未计提预警" }
+        }
+      ]
+    }
+  ]
+}

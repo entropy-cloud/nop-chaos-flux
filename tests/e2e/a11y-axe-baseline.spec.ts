@@ -43,6 +43,10 @@ const ROUTES = [
   // Plan 804 (D1 §4 branch A): I1 asset-inventory joins the standard desktop
   // scan set (non-mobile page — pure JSON SchemaPage, no host override).
   'complex-pages/itam-asset-inventory',
+  // Plan 805 (D1 §4 branch A): I2 depreciation-dashboard joins the standard
+  // desktop scan set (non-mobile page — pure JSON SchemaPage, no host
+  // override).
+  'complex-pages/itam-depreciation-dashboard',
   'dashboard-demo',
 ];
 
