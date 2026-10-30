@@ -1,0 +1,803 @@
+{
+  "type": "page",
+  "body": [
+    {
+      "type": "data-source",
+      "name": "taskRecords",
+      "action": "ajax",
+      "args": {
+        "url": "/r/ReplWms__taskRecords",
+        "method": "get",
+        "params": {
+          "page": 1,
+          "pageSize": 8
+        }
+      },
+      "testid": "wms-pda-receiving-records-source"
+    },
+    {
+      "type": "flex",
+      "direction": "column",
+      "gap": 8,
+      "testid": "wms-pda-receiving-root",
+      "body": [
+        {
+          "type": "notice-bar",
+          "testid": "wms-pda-receiving-offline-bar",
+          "text": "网络不可用，扫码已进入离线队列，恢复后自动补传",
+          "variant": "error",
+          "visible": "${offlineMode ? true : false}"
+        },
+        {
+          "type": "flex",
+          "direction": "row",
+          "gap": 8,
+          "body": [
+            {
+              "type": "text",
+              "text": "PDA 演练：",
+              "className": "text-xs text-muted-foreground self-center"
+            },
+            {
+              "type": "button",
+              "label": "离线演练",
+              "variant": "outline",
+              "testid": "wms-pda-receiving-offline-toggle",
+              "onClick": {
+                "action": "setValues",
+                "args": {
+                  "values": {
+                    "offlineMode": true
+                  }
+                }
+              }
+            },
+            {
+              "type": "button",
+              "label": "恢复在线",
+              "variant": "outline",
+              "testid": "wms-pda-receiving-online-toggle",
+              "onClick": {
+                "action": "setValues",
+                "args": {
+                  "values": {
+                    "offlineMode": false
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "type": "pull-refresh",
+          "testid": "wms-pda-receiving-pull-refresh",
+          "threshold": 60,
+          "onRefresh": [
+            {
+              "action": "refreshSource",
+              "targetId": "taskRecords"
+            },
+            {
+              "action": "showToast",
+              "args": {
+                "level": "success",
+                "message": "作业记录已刷新"
+              }
+            }
+          ],
+          "body": [
+            {
+              "type": "form",
+              "id": "wms-receive-form",
+              "testid": "wms-pda-receiving-form",
+              "body": [
+                {
+                  "type": "flex",
+                  "direction": "column",
+                  "gap": 8,
+                  "body": [
+                    {
+                      "type": "wheel-picker",
+                      "name": "mode",
+                      "label": "作业链路",
+                      "testid": "wms-pda-receiving-mode-picker",
+                      "placeholder": "选择收货/上架链路",
+                      "columns": [
+                        [
+                          {
+                            "label": "收货链路",
+                            "value": "receive"
+                          },
+                          {
+                            "label": "上架链路",
+                            "value": "putaway"
+                          }
+                        ]
+                      ],
+                      "value": ["receive"]
+                    },
+                    {
+                      "type": "wheel-cascader",
+                      "name": "locationPath",
+                      "label": "目标库位",
+                      "testid": "wms-pda-receiving-location-cascader",
+                      "placeholder": "仓库 / 库区 / 库位",
+                      "options": [
+                        {
+                          "label": "一号仓",
+                          "value": "wh1",
+                          "children": [
+                            {
+                              "label": "收货区 A",
+                              "value": "a1",
+                              "children": [
+                                {
+                                  "label": "A-01-01",
+                                  "value": "A-01-01"
+                                },
+                                {
+                                  "label": "A-01-02",
+                                  "value": "A-01-02"
+                                },
+                                {
+                                  "label": "C-09-09（非建议位）",
+                                  "value": "C-09-09"
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "label": "二号仓",
+                          "value": "wh2",
+                          "children": [
+                            {
+                              "label": "收货区 B",
+                              "value": "b2",
+                              "children": [
+                                {
+                                  "label": "B-02-01",
+                                  "value": "B-02-01"
+                                },
+                                {
+                                  "label": "B-02-02",
+                                  "value": "B-02-02"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ],
+                      "onConfirm": [
+                        {
+                          "action": "setValues",
+                          "args": {
+                            "values": {
+                              "locationCode": "${value[value.length - 1]}"
+                            }
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "type": "flex",
+                      "direction": "row",
+                      "gap": 8,
+                      "body": [
+                        {
+                          "type": "barcode-input",
+                          "name": "asnBarcode",
+                          "label": "ASN 码",
+                          "testid": "wms-pda-receiving-asn-scan",
+                          "placeholder": "扫 ASN 码或手输单号",
+                          "validate": {
+                            "action": {
+                              "action": "ajax",
+                              "args": {
+                                "url": "/r/ReplWms__asnGet",
+                                "method": "get",
+                                "params": {
+                                  "barcode": "${asnBarcode}"
+                                }
+                              }
+                            },
+                            "message": "条码未在 ASN 明细中登记"
+                          }
+                        },
+                        {
+                          "type": "button",
+                          "label": "校验 ASN",
+                          "variant": "outline",
+                          "testid": "wms-pda-receiving-asn-check",
+                          "onClick": {
+                            "action": "ajax",
+                            "args": {
+                              "url": "/r/ReplWms__asnGet",
+                              "method": "get",
+                              "params": {
+                                "barcode": "${asnBarcode}"
+                              }
+                            },
+                            "then": [
+                              {
+                                "action": "setValues",
+                                "args": {
+                                  "values": {
+                                    "asnNo": "${result.data.asnNo}",
+                                    "supplierName": "${result.data.supplierName}",
+                                    "expectedQty": "${result.data.expectedQty}"
+                                  }
+                                }
+                              },
+                              {
+                                "action": "showToast",
+                                "args": {
+                                  "level": "success",
+                                  "message": "ASN 校验通过"
+                                }
+                              }
+                            ],
+                            "onError": [
+                              {
+                                "action": "showToast",
+                                "args": {
+                                  "level": "error",
+                                  "message": "ASN 校验失败：条码未在 ASN 明细中登记"
+                                }
+                              }
+                            ]
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "type": "text",
+                      "testid": "wms-pda-receiving-asn-info",
+                      "text": "ASN：${asnNo ?? '-'} · ${supplierName ?? '-'} · 应收 ${expectedQty ?? 0}",
+                      "className": "text-sm text-muted-foreground"
+                    },
+                    {
+                      "type": "flex",
+                      "direction": "row",
+                      "gap": 8,
+                      "body": [
+                        {
+                          "type": "barcode-input",
+                          "name": "skuBarcode",
+                          "label": "SKU 码",
+                          "testid": "wms-pda-receiving-sku-scan",
+                          "placeholder": "扫 SKU 码或手输条码",
+                          "formats": ["code_128", "qr_code"],
+                          "continuousScan": true,
+                          "validate": {
+                            "action": {
+                              "action": "ajax",
+                              "args": {
+                                "url": "/r/ReplWms__asnGet",
+                                "method": "get",
+                                "params": {
+                                  "barcode": "${skuBarcode}"
+                                }
+                              }
+                            },
+                            "message": "条码未在 ASN 明细中登记"
+                          },
+                          "onScan": [
+                            {
+                              "action": "ajax",
+                              "args": {
+                                "url": "/r/ReplWms__asnGet",
+                                "method": "get",
+                                "params": {
+                                  "barcode": "${skuBarcode}"
+                                }
+                              },
+                              "then": [
+                                {
+                                  "action": "setValues",
+                                  "args": {
+                                    "values": {
+                                      "asnNo": "${result.data.asnNo}",
+                                      "supplierName": "${result.data.supplierName}",
+                                      "skuName": "${result.data.lines[0]?.skuName ?? '-'}",
+                                      "expectedQty": "${result.data.lines[0]?.expectedQty ?? 0}",
+                                      "scanCount": "${(scanCount ?? 0) + 1}"
+                                    }
+                                  }
+                                },
+                                {
+                                  "action": "showToast",
+                                  "args": {
+                                    "level": "success",
+                                    "message": "校验通过，请录入数量"
+                                  }
+                                }
+                              ],
+                              "onError": [
+                                {
+                                  "action": "showToast",
+                                  "args": {
+                                    "level": "error",
+                                    "message": "条码未在 ASN 明细中登记"
+                                  }
+                                }
+                              ]
+                            }
+                          ],
+                          "onScanError": [
+                            {
+                              "action": "showToast",
+                              "args": {
+                                "level": "error",
+                                "message": "${error?.message ?? '扫码失败'}"
+                              }
+                            }
+                          ]
+                        },
+                        {
+                          "type": "button",
+                          "label": "模拟扫码",
+                          "variant": "outline",
+                          "testid": "wms-pda-receiving-simulate-scan",
+                          "onClick": {
+                            "action": "ajax",
+                            "args": {
+                              "url": "/r/ReplWms__asnGet",
+                              "method": "get",
+                              "params": {
+                                "barcode": "${skuBarcode}"
+                              }
+                            },
+                            "then": [
+                              {
+                                "action": "setValues",
+                                "args": {
+                                  "values": {
+                                    "asnNo": "${result.data.asnNo}",
+                                    "supplierName": "${result.data.supplierName}",
+                                    "skuName": "${result.data.lines[0]?.skuName ?? '-'}",
+                                    "expectedQty": "${result.data.lines[0]?.expectedQty ?? 0}",
+                                    "scanCount": "${(scanCount ?? 0) + 1}"
+                                  }
+                                }
+                              },
+                              {
+                                "action": "showToast",
+                                "args": {
+                                  "level": "success",
+                                  "message": "校验通过，请录入数量"
+                                }
+                              }
+                            ],
+                            "onError": [
+                              {
+                                "action": "showToast",
+                                "args": {
+                                  "level": "error",
+                                  "message": "条码未在 ASN 明细中登记"
+                                }
+                              }
+                            ]
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "type": "flex",
+                      "direction": "row",
+                      "gap": 12,
+                      "body": [
+                        {
+                          "type": "text",
+                          "testid": "wms-pda-receiving-sku-info",
+                          "text": "SKU：${skuName ?? '-'} × ${expectedQty ?? 0}",
+                          "className": "text-sm"
+                        },
+                        {
+                          "type": "text",
+                          "testid": "wms-pda-receiving-scan-count",
+                          "text": "本单续扫 ${scanCount ?? 0} 件",
+                          "className": "text-sm text-muted-foreground"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "flex",
+                      "direction": "row",
+                      "gap": 8,
+                      "body": [
+                        {
+                          "type": "input-number",
+                          "name": "qty",
+                          "label": "数量",
+                          "testid": "wms-pda-receiving-qty-input"
+                        },
+                        {
+                          "type": "button",
+                          "label": "键盘录入",
+                          "variant": "outline",
+                          "testid": "wms-pda-receiving-keyboard-open",
+                          "onClick": {
+                            "action": "setValues",
+                            "args": {
+                              "values": {
+                                "qtyKeyboardOpen": true
+                              }
+                            }
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "type": "flex",
+                      "direction": "row",
+                      "gap": 8,
+                      "body": [
+                        {
+                          "type": "button",
+                          "label": "提交收货",
+                          "variant": "primary",
+                          "testid": "wms-pda-receiving-submit-receive",
+                          "onClick": {
+                            "action": "openDialog",
+                            "args": {
+                              "title": "提交确认",
+                              "testid": "wms-pda-receiving-submit-dialog",
+                              "closeOnSubmit": true,
+                              "data": {
+                                "asnNo": "${asnBarcode}",
+                                "skuBarcode": "${skuBarcode}",
+                                "skuName": "${skuName ?? '-'}",
+                                "qty": "${qty ?? 0}",
+                                "idemKey": "${asnBarcode}-${skuBarcode}-${scanCount ?? 0}"
+                              },
+                              "body": [
+                                {
+                                  "type": "form",
+                                  "testid": "wms-pda-receiving-submit-dialog-form",
+                                  "submitScope": "surface",
+                                  "data": {
+                                    "asnNo": "${asnNo}",
+                                    "skuBarcode": "${skuBarcode}",
+                                    "skuName": "${skuName}",
+                                    "qty": "${qty}",
+                                    "idemKey": "${idemKey}"
+                                  },
+                                  "body": [
+                                    {
+                                      "type": "text",
+                                      "testid": "wms-pda-receiving-submit-summary",
+                                      "text": "ASN ${asnNo} · ${skuName} × ${qty} · 幂等键 ${idemKey}",
+                                      "className": "text-sm"
+                                    }
+                                  ],
+                                  "actions": [
+                                    {
+                                      "type": "button",
+                                      "label": "确认收货",
+                                      "variant": "primary",
+                                      "testid": "wms-pda-receiving-confirm-receive",
+                                      "onClick": {
+                                        "action": "submitForm"
+                                      }
+                                    }
+                                  ],
+                                  "submitAction": {
+                                    "action": "ajax",
+                                    "args": {
+                                      "url": "/r/ReplWms__asnReceive",
+                                      "method": "post",
+                                      "data": {
+                                        "asnNo": "${asnNo}",
+                                        "skuBarcode": "${skuBarcode}",
+                                        "qty": "${qty}",
+                                        "idempotencyKey": "${idemKey}"
+                                      }
+                                    },
+                                    "messages": {
+                                      "success": "收货提交成功"
+                                    },
+                                    "onError": [
+                                      {
+                                        "action": "showToast",
+                                        "args": {
+                                          "level": "error",
+                                          "message": "收货提交被拒绝（幂等键已使用或网络不可用）"
+                                        }
+                                      }
+                                    ]
+                                  }
+                                }
+                              ],
+                              "onSubmitSuccess": [
+                                {
+                                  "action": "refreshSource",
+                                  "targetId": "taskRecords"
+                                }
+                              ]
+                            }
+                          }
+                        },
+                        {
+                          "type": "button",
+                          "label": "清空续扫",
+                          "variant": "outline",
+                          "testid": "wms-pda-receiving-clear-scan",
+                          "onClick": {
+                            "action": "setValues",
+                            "args": {
+                              "values": {
+                                "skuBarcode": "",
+                                "skuName": "",
+                                "expectedQty": "",
+                                "qty": "",
+                                "scanCount": 0,
+                                "qtyKeyboardOpen": false
+                              }
+                            }
+                          }
+                        },
+                        {
+                          "type": "button",
+                          "label": "提交上架",
+                          "variant": "outline",
+                          "testid": "wms-pda-receiving-submit-putaway",
+                          "onClick": {
+                            "action": "openDialog",
+                            "args": {
+                              "title": "上架确认",
+                              "testid": "wms-pda-receiving-putaway-dialog",
+                              "closeOnSubmit": true,
+                              "data": {
+                                "asnNo": "${asnBarcode}",
+                                "skuBarcode": "${skuBarcode}",
+                                "qty": "${qty ?? 0}",
+                                "locationCode": "${locationCode ?? ''}"
+                              },
+                              "body": [
+                                {
+                                  "type": "form",
+                                  "testid": "wms-pda-receiving-putaway-dialog-form",
+                                  "submitScope": "surface",
+                                  "data": {
+                                    "asnNo": "${asnNo}",
+                                    "skuBarcode": "${skuBarcode}",
+                                    "qty": "${qty}",
+                                    "locationCode": "${locationCode}"
+                                  },
+                                  "body": [
+                                    {
+                                      "type": "text",
+                                      "testid": "wms-pda-receiving-putaway-summary",
+                                      "text": "ASN ${asnNo} · ${skuBarcode} × ${qty} → 库位 ${locationCode}",
+                                      "className": "text-sm"
+                                    }
+                                  ],
+                                  "actions": [
+                                    {
+                                      "type": "button",
+                                      "label": "确认上架",
+                                      "variant": "primary",
+                                      "testid": "wms-pda-receiving-confirm-putaway",
+                                      "onClick": {
+                                        "action": "submitForm"
+                                      }
+                                    }
+                                  ],
+                                  "submitAction": {
+                                    "action": "ajax",
+                                    "args": {
+                                      "url": "/r/ReplWms__putawaySubmit",
+                                      "method": "post",
+                                      "data": {
+                                        "asnNo": "${asnNo}",
+                                        "skuBarcode": "${skuBarcode}",
+                                        "putawayQty": "${qty}",
+                                        "locationCode": "${locationCode}"
+                                      }
+                                    },
+                                    "messages": {
+                                      "success": "上架提交成功"
+                                    },
+                                    "onError": [
+                                      {
+                                        "action": "showToast",
+                                        "args": {
+                                          "level": "error",
+                                          "message": "上架失败：库位不在建议集"
+                                        }
+                                      }
+                                    ]
+                                  }
+                                }
+                              ],
+                              "onSubmitSuccess": [
+                                {
+                                  "action": "refreshSource",
+                                  "targetId": "taskRecords"
+                                }
+                              ]
+                            }
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "type": "number-keyboard",
+                      "testid": "wms-pda-receiving-qty-keyboard",
+                      "title": "录入数量",
+                      "open": "${qtyKeyboardOpen ? true : false}",
+                      "onKey": [
+                        {
+                          "action": "setValues",
+                          "args": {
+                            "values": {
+                              "qty": "${(qty ?? '')}${value}"
+                            }
+                          },
+                          "when": "${value != null}"
+                        },
+                        {
+                          "action": "setValues",
+                          "args": {
+                            "values": {
+                              "qty": "${(qty ?? '').slice(0, -1)}"
+                            }
+                          },
+                          "when": "${value == null}"
+                        }
+                      ],
+                      "onConfirm": [
+                        {
+                          "action": "setValues",
+                          "args": {
+                            "values": {
+                              "qtyKeyboardOpen": false
+                            }
+                          }
+                        }
+                      ],
+                      "onCancel": [
+                        {
+                          "action": "setValues",
+                          "args": {
+                            "values": {
+                              "qtyKeyboardOpen": false
+                            }
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "infinite-scroll",
+          "testid": "wms-pda-receiving-records",
+          "hasMore": "${taskRecords?.hasMore ? true : false}",
+          "immediateCheck": false,
+          "finishedText": "没有更多作业记录",
+          "body": [
+            {
+              "type": "loop",
+              "testid": "wms-pda-receiving-records-loop",
+              "items": "${taskRecords?.items ?? []}",
+              "body": [
+                {
+                  "type": "swipe-cell",
+                  "testid": "wms-pda-receiving-record-cell",
+                  "direction": "both",
+                  "threshold": 30,
+                  "body": [
+                    {
+                      "type": "flex",
+                      "direction": "row",
+                      "gap": 8,
+                      "className": "repl-record-row",
+                      "body": [
+                        {
+                          "type": "text",
+                          "text": "${$slot.item.time}",
+                          "className": "text-xs text-muted-foreground whitespace-nowrap"
+                        },
+                        {
+                          "type": "text",
+                          "testid": "wms-pda-receiving-record-row",
+                          "text": "${$slot.item.type} · ${$slot.item.skuName} ×${$slot.item.qty} · ${$slot.item.asnNo} · ${$slot.item.locationCode}",
+                          "className": "text-sm truncate"
+                        }
+                      ]
+                    }
+                  ],
+                  "right": [
+                    {
+                      "type": "button",
+                      "label": "撤销",
+                      "variant": "destructive",
+                      "testid": "wms-pda-receiving-record-undo"
+                    }
+                  ],
+                  "onAction": [
+                    {
+                      "action": "showToast",
+                      "args": {
+                        "level": "warning",
+                        "message": "已触发记录快捷操作（演示）"
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "floating-bubble",
+          "testid": "wms-pda-receiving-quick-entry",
+          "magnetic": true,
+          "onClick": {
+            "action": "openDialog",
+            "args": {
+              "title": "快捷操作",
+              "testid": "wms-pda-receiving-quick-dialog",
+              "body": [
+                {
+                  "type": "action-sheet",
+                  "testid": "wms-pda-receiving-quick-sheet",
+                  "title": "快捷操作",
+                  "triggerText": "展开快捷操作面板",
+                  "items": [
+                    {
+                      "label": "清空续扫",
+                      "value": "clear"
+                    },
+                    {
+                      "label": "切换链路",
+                      "value": "switch-mode"
+                    },
+                    {
+                      "label": "模拟离线（e2e）",
+                      "value": "toggle-offline"
+                    }
+                  ],
+                  "onSelect": [
+                    {
+                      "action": "showToast",
+                      "args": {
+                        "level": "success",
+                        "message": "已发出清空指令（演示作用域，正文请用表单内按钮）"
+                      },
+                      "when": "${value === 'clear'}"
+                    },
+                    {
+                      "action": "showToast",
+                      "args": {
+                        "level": "info",
+                        "message": "链路切换为演示项（对话框作用域隔离）"
+                      },
+                      "when": "${value === 'switch-mode'}"
+                    },
+                    {
+                      "action": "showToast",
+                      "args": {
+                        "level": "warning",
+                        "message": "离线演练请使用页内「离线演练」开关"
+                      },
+                      "when": "${value === 'toggle-offline'}"
+                    }
+                  ]
+                }
+              ],
+              "closeOnOutsideClick": false
+            }
+          },
+          "initialX": 311,
+          "initialY": 560
+        }
+      ]
+    }
+  ]
+}

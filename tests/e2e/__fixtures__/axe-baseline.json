@@ -5,13 +5,15 @@
     "measuredAtCommit": "86efb94b2",
     "excludedRoutes": {
       "map-demo": "axe analysis exceeds a practical timeout (heavy SVG DOM, >120 s single-worker)"
-    }
+    },
+    "_notes": "plan 798 Phase 1: stale ids gantt-demo / crud-demo scanned the home page (routes no longer exist). Keys migrated to the real hash segments (gantt, complex-pages/standard-crud); counts re-measured on the target pages on first run 2026-10-30 — the old home-page counts were empty {} and are not transferable (D1 §4 纪律). wms-pda-receiving registered per the D6 unified A+B single-key: the mobile-canvas branch B scan is the registered scan (D6 MAJ-C: the canvas DOM does not vary with viewport, one scan suffices)."
   },
   "ai-widgets": { "aria-required-children": 1 },
   "component-handles": {},
-  "crud-demo": {},
+  "complex-pages/standard-crud": { "aria-required-attr": 6, "color-contrast": 6 },
+  "complex-pages/wms-pda-receiving": { "color-contrast": 6 },
   "dashboard-demo": { "aria-required-attr": 4, "color-contrast": 1, "nested-interactive": 1 },
   "flux-basic": { "aria-required-attr": 5, "color-contrast": 2 },
-  "gantt-demo": {},
+  "gantt": { "aria-conditional-attr": 14, "aria-required-children": 2, "button-name": 1 },
   "w4a-multimedia": {}
 }

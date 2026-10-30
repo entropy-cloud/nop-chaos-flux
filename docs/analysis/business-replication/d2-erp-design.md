@@ -5,6 +5,7 @@
 > 输入契约: D1（§0/§2/§3/§5 六节模板强制）；R1（引节名+行号，不重抄）；R4（§1/§2/§4.1）
 > 落地面: complex-pages surface + pageId 命名（D1-决策①②）；§4/§5 对齐 D1-决策③④⑤⑥
 > type 名核对: 附录 A，live 实证
+> 容量注（plan 798 Phase 1.5 裁决）：本文件越 50KB 线为复刻系列设计有意保留——拆分将破坏 R/D 系审计节号引用链，引用链完整性优先；F2 复评。
 
 ## 1. 页面清单与上游引用
 
@@ -96,6 +97,17 @@ onScanError:
   variant: error
   visible: ${offlineMode}         # 钩子 forceOffline 驱动（§4.4）
 ```
+
+#### W1 实现勘误（M3 落地实证 2026-10-30，plan 798；以 live 为准）
+
+1. **提交链编排**：openDialog→submitForm→ajax 不可行（submitForm 跨 surface 无 form handle，useSurfaceComponentHandle 零消费方）——live 等价编排 = dialog 内 form `submitScope:'surface'` + submitAction ajax + closeOnSubmit + onSubmitSuccess refreshSource（airtable search-dialog 先例）。
+2. **dialog 子 scope 写隔离**（runtime-factory L346）：action-sheet onSelect `setValue` 写不进页作用域——离线演练改页内开关按钮；bubble→dialog 内 sheet 保留（focus 职责），sheet items 降级 toast。
+3. **onScanError payload 为 `{error:{message}}`**：`${msg}` 不解析，改 `${error.message}`。
+4. **floating-bubble 定位界基于 window.innerWidth**：画布内须显式 `initialX/initialY`，否则溢出画布被裁。
+5. **onScan 相机事件 headless 不可达**：G3 编排以"模拟扫码"按钮走同一 ajax→setValues→toast 动作链验收；触摸手势经 CDP Input.dispatchTouchEvent 合成（已封装 replication.ts helper）。
+6. **"作业记录行数 +1"在窗口化分页（pageSize 8）下不可观测**：断言口径改首行命中（RECEIVE/PUTAWAY + asnNo）。
+7. **focus 口径（D5 复审后第 7 条，plan 798 收口审计）**：focus① "sku-scan 获焦"不成立——barcode-input 组合在画布内不可 Tab 直达，退守"tab 必达画布内容且驻留"；focus③ "action-sheet 焦点入首条目"不成立——首项不自动获焦，退守"焦点落入 sheet panel 内"。两者登记 a11y 后续观察（barcode-input 可达性/sheet 首项 autofocus）。
+8. **infinite-scroll onLoadMore（plan 798 收口审计 Minor-1）**：§2.1 树中"onLoadMore 翻页"未实现（schema 仅 hasMore 表达式、无翻页动作路径）——作业记录由 mock 全量返回承载，真分页加载登记后续观察。
 
 ### 2.2 wms-wave-picking（W2，P1）
 

@@ -4,6 +4,7 @@
 > Source: roadmap §2 M2-D3；执行 plan `docs/plans/794-business-replication-d3-ai-mes-design-plan.md`
 > 契约: 章节结构强制遵循 D1 §5 六节模板（L92-101）；页面形态/mock/验收遵守 D1 §0 六项决策、§2 mock 规范、§3 验收模板、§4 axe 分支。
 > 输入: R2 §1（AI 域）/§2（MES 域）逐页盘点；R4 §1 六行结论 + §2 G 缺口分级；type 名 live 核实见 §7（2026-10-30）。
+> 容量注（plan 798 Phase 1.5 裁决）：本文件越 50KB 线为复刻系列设计有意保留——拆分将破坏 R/D 系审计节号引用链，引用链完整性优先；F2 复评。
 
 ## 1. 页面清单与上游引用
 

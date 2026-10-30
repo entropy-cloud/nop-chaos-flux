@@ -29,6 +29,7 @@
 @import './pih-replica/pih-replica.css';
 @import './landing-replica/landing-replica.css';
 @import './bisheng-replica/bisheng-replica.css';
+@import './complex-pages/shared/replication.css';
 @source "../../../packages";
 
 @theme inline {

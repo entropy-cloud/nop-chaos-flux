@@ -4,6 +4,7 @@
 > Source: roadmap §2 M2-D4；执行 plan `docs/plans/795-business-replication-d4-mall-doc-iot-design-plan.md`
 > 输入: D1（§0 决策/§2 mock/§3 验收/§4 axe/§5 模板）；R2 §3 商城；R3 §1 智能单据+§2 IoT；R4 §1/§2/§4.1
 > 用途: M3 域级前置契约。schema 片段为 type/属性级指导，不产出完整可运行 JSON。type 名全部 live 核对（附录 A）。
+> 容量注（plan 798 Phase 1.5 裁决）：本文件越 50KB 线为复刻系列设计有意保留——拆分将破坏 R/D 系审计节号引用链，引用链完整性优先；F2 复评。
 
 ## 1. 页面清单与上游引用
 

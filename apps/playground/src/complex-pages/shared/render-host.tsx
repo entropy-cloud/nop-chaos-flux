@@ -10,6 +10,7 @@ import { registerContentRenderers } from '@nop-chaos/flux-renderers-content';
 import { registerLayoutRenderers } from '@nop-chaos/flux-renderers-layout';
 import { registerSchedulingRenderers } from '@nop-chaos/flux-renderers-scheduling';
 import { registerAiRenderers } from '@nop-chaos/flux-renderers-ai';
+import { registerMobileRenderers } from '@nop-chaos/flux-renderers-mobile';
 import { registerFlowDesignerRenderers } from '@nop-chaos/flow-designer-renderers';
 import type { RendererEnv } from '@nop-chaos/flux-core';
 import { ConfirmHost } from './confirm-bridge';
@@ -23,6 +24,9 @@ registerContentRenderers(registry);
 registerLayoutRenderers(registry);
 registerSchedulingRenderers(registry);
 registerAiRenderers(registry);
+// Mobile family (plan 798 W1): the business-replication mobile pages (W1/M3/S1)
+// render mobile-native renderers on the shared showcase registry.
+registerMobileRenderers(registry);
 registerFlowDesignerRenderers(registry);
 
 function toNumber(value: unknown): number {

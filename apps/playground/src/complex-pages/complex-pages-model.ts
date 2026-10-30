@@ -4,7 +4,8 @@ export type ComplexPageCategory =
   | 'complex-forms'
   | 'visualization'
   | 'content-showcase'
-  | 'app-replica';
+  | 'app-replica'
+  | 'business-replication';
 
 export interface ComplexPageEntry {
   id: string;
@@ -28,6 +29,7 @@ export const COMPLEX_PAGE_CATEGORY_ORDER: ComplexPageCategory[] = [
   'visualization',
   'content-showcase',
   'app-replica',
+  'business-replication',
 ];
 
 export const COMPLEX_PAGE_CATEGORY_META: Record<ComplexPageCategory, ComplexPageCategoryMeta> = {
@@ -61,6 +63,12 @@ export const COMPLEX_PAGE_CATEGORY_META: Record<ComplexPageCategory, ComplexPage
     id: 'app-replica',
     label: '外部应用复刻',
     blurb: '用 schema + 自定义 CSS 复刻真实外部应用（Sundial 待办）的界面，验证 flux 对外部设计系统的还原能力。',
+  },
+  'business-replication': {
+    id: 'business-replication',
+    label: '业务页面复刻',
+    blurb:
+      '复刻 ERP/AI/MES/商城/单据/IoT 真实业务页型（roadmap 21 页，D1-D4 分域设计），每页配套域 mock 后端与 focused e2e 三支柱验收。',
   },
 };
 
@@ -408,5 +416,13 @@ export const COMPLEX_PAGE_ENTRIES: ComplexPageEntry[] = [
     description:
       '复刻 bisheng（毕昇，~/ai/bisheng）platform 工作流编排页：品牌蓝顶栏（#024DE3，取自其 style/index.css 令牌）+ 左侧节点库（输入输出/模型/技能/逻辑四组）+ 中央 designer canvas（「客服工单助手」六节点工作流：开始→知识库检索→azure_gpt_4→条件判断→deepseek-chat→结束，双分支带标签边）+ 右侧节点参数面板（模型 select/系统提示/温度/输出变量名 + 运行/删除动作）+ 底部调试对话抽屉。canvas 由真实 `designer-page` 渲染器驱动，顶栏与参数面板经 toolbar/inspector region 覆写，bisheng 皮肤由 bisheng-replica.css 贴附。',
     features: ['复刻样式', 'designer-page 画布', 'region 覆写', '节点参数面板', '调试抽屉'],
+  },
+  {
+    id: 'wms-pda-receiving',
+    title: 'WMS PDA 收货/上架作业页',
+    category: 'business-replication',
+    description:
+      '复刻 WMS PDA 收货/上架作业页（roadmap 21 页 W1，D2 §2.1 mobile 族整页）：375×667 移动画布（host override）内 notice-bar 离线条 + pull-refresh 扫码作业面（wheel-picker 链路 / wheel-cascader 库位 / barcode-input ASN+SKU 连续扫码 G3 校验回填 / input-number + number-keyboard 数量 / 提交确认 dialog → asnReceive 幂等键）+ infinite-scroll 作业记录（loop + swipe-cell 左滑快捷操作）+ floating-bubble 单手流入口（G4，action-sheet）。数据经 /r/ReplWms__* 端点流动。',
+    features: ['移动画布 375×667', 'barcode-input 连续扫码', 'swipe-cell', 'pull-refresh', 'number-keyboard', 'ReplWms__ 端点'],
   },
 ];

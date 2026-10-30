@@ -1,0 +1,38 @@
+/*
+ * replication.css — shared styles for the business-replication page family
+ * (plan 798 Phase 1, D1 §3 "repl-* 页面级 CSS 落点指名").
+ *
+ * Mobile pages (W1/M3/S1) render through a registry host override as a
+ * fixed-width mobile canvas inside the desktop shell (D1 §0 决策① 例外注:
+ * the 240px sidebar + double padding shell would squeeze a 375px page to
+ * ~55px of content). The canvas is the F1 viewport-adaptation acceptance
+ * object and the axe branch-B scan root.
+ */
+
+.repl-mobile-canvas {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: 16px 0;
+  overflow-y: auto;
+}
+
+.repl-mobile-canvas-screen {
+  width: 375px;
+  height: 667px;
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
+  /* Containing block for the fixed-position mobile overlays (number-keyboard,
+   * floating-bubble) so they stay inside the phone frame instead of escaping
+   * to the desktop viewport. Portaled dialogs are unaffected. */
+  transform: translateZ(0);
+  background: var(--background, #ffffff);
+  border: 1px solid var(--border, #e5e7eb);
+  border-radius: 24px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+}

@@ -25,6 +25,7 @@ import {
   unwrapPatch,
   warnUnknownEndpointOnce,
 } from './mock-backend-replica-kit';
+import { createReplFetcherBranches } from './mock-backend-repl-wms';
 import { confirmBridge } from './confirm-bridge';
 import { createMockAiStream, createMockAiConnector, createAiImportLoader } from '../../ai/mock-ai-env';
 import { mockToolSchemas, mockToolExecutor } from '../../ai/tool-mock';
@@ -116,6 +117,9 @@ export function createShowcaseEnv(): { env: RendererEnv; db: MockDatabase } {
     ['/r/Airtable__', createAirtableFetcherBranch(createAirtableDatabase(), clone)],
     ['/r/Stripe__', createStripeFetcherBranch(createStripeDatabase(), clone)],
     ['/r/Sundial__', handleSundialBranch],
+    // business-replication domain branches (plan 798): one /r/Repl<Domain>__
+    // fetcher face per domain module; the pairs live in the domain module.
+    ...createReplFetcherBranches(),
   ]);
 
   const fetcher = async function fetcher<T>(api: FetcherApi): Promise<{ status: number; data: T }> {
