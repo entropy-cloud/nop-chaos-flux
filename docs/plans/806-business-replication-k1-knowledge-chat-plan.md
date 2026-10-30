@@ -1,0 +1,118 @@
+# 806 M3-K1 AI 知识库对话页复刻（business-page-replication roadmap M3-K1）
+
+> Plan Status: active
+> Last Reviewed: 2026-10-30
+> Source: `docs/backlog/business-page-replication-roadmap.md` §2 M3-K1（依赖 M2 done；前置 C1/C2 done——crm mock 模块与 AI 装配先例就绪）
+> Related: D1 总体设计；D3 §2.1（K1 页设计，D6 MAJ-A/B 裁决块所在——评审 MAJ-1 勘误：原错引 D2）；R2 §1 K1；R4 §1 K1（G11）
+
+## Purpose
+
+落地 M3-K1「AI 知识库对话页」（**host override 页**——D6 MAJ-B 裁决）：ai-chat 整页编排（会话列表/消息流 streaming/引用来源卡片/反馈按钮/token 用量）+ RAG connector mock（streaming fixture/护栏/HITL 场景），复用 showcase-env 既有 AI 装配，focused e2e + axe 分支 A 登记。收口为 roadmap §2 K1 状态 `todo → planned → done`。
+
+## Current Baseline
+
+- 设施就绪：replication.ts 六件套、showcase-env `/r/ReplCrm__` 等分支、**AI 装配**：showcase-env L574-583 `createMockAiStream/createMockAiConnector/createAiImportLoader` 既有装配（C1 交付前在案）；ai-\* 族 14 type 已注册（ai-renderer-definitions）；ai-conversations-demo.tsx 专用 host 先例（plan 633 UR-4：activeId 所有权归 host store、`conversationsDemo:setActive` namespace action）。
+- D3 §2.1 K1 设计（D6 裁决后——评审 MAJ-1 勘误：K1 设计 owner 为 D3 非 D2）：**实现形态裁决块**——K1 为 host override 页（registry 特例非纯 JSON）：ai-chat 绑定 conversationController/engine/activeConversationId（host 注入）；选中态经 host namespace action（`replAi:setActive`→switchConversation）；onResponseComplete 链绑 `${message}` 整快照（D6 MAJ-A：payload `{message}` 非 `${result}`）；messageSave args.data `{message}` 透传；citations/feedback/token-usage 为 message 级独立 widget 落 afterMessages 绑 `${activeAnswer}`；G11 护栏 alert（finishReason 透出路径 payload.message.metadata.finishReason）；sources/refused/usage 非 ChatMessage 一等字段——M3 前置义务：mock 流完成时 cloneMessage 快照须携带（D6 复审披露）。
+- D3 §4.3 ai 端点表 K1 子集（messageFindPage/conversationSave/messageSave 等按表原名——评审 MAJ-1 勘误）+ mock fixture 四类预设（引用/护栏/HITL/慢流——D3 §4.2 特别节）。
+- G11 缺口口径：护栏/频控提示 alert/status 组合（无专用 type）。
+
+## Goals
+
+- `mock-backend-repl-ai.ts`（RAG connector mock fixture 四类预设+K1 端点）+ K1 host override 组件（registry 特例）+ entry + e2e `tests/e2e/replication-ai-knowledge-chat.spec.ts`（三支柱）+ axe 分支 A 登记。
+- e2e 断言按 D3 §5.1 K1 清单（streaming 逐帧渲染+停止按钮/引用来源卡片/反馈按钮/G11 护栏提示/会话切换/新建会话；focus 3 条）。
+
+## Non-Goals
+
+- 不实现 K2/K3 页；不落地 G11 专用 type（alert/status 组合口径已定）；不做语音输入面（ai-voice-input 非设计枚举）。
+
+## Scope
+
+### In Scope
+
+- K1 页 host override + AI mock fixture + entry + e2e + axe 登记；roadmap §2 K1 回写。
+
+### Out Of Scope
+
+- 其余 13 页；G11 缺口落地；kanban 键盘层缺口修复（C1 遗留，kanban owner 面）。
+
+## Failure Paths
+
+| 编号           | 触发                            | 行为                                                                         | 可重试 | 用户可见表现   |
+| -------------- | ------------------------------- | ---------------------------------------------------------------------------- | ------ | -------------- |
+| e2e-fail       | focused e2e 失败                | 定位修复→重跑至绿（显式 --retries=0）；设计与 live 不符以 live 为准并勘误 D2 | 是     | e2e 全绿       |
+| stream-fixture | connector mock 流行为与断言不符 | 以 engine/types.ts ChatMessage 契约与 mock-ai-env 实况为准调整/勘误 D2       | 是     | streaming 可验 |
+
+## Test Strategy
+
+必须自动化：本页 e2e 即验收本体（三支柱），显式 `--retries=0` 全绿。
+
+## Execution Plan
+
+### Phase 1 - K1 页全链实现
+
+Status: planned
+Targets: `shared/mock-backend-repl-ai.ts`（新建）、`replication/ai-knowledge-chat-host.tsx`（host override）、`complex-pages-registry.tsx`（特例覆盖）、`complex-pages-model.ts`（entry）、`page-schemas/ai-knowledge-chat.json`（host 消费的 schema 面）、`tests/e2e/replication-ai-knowledge-chat.spec.ts`、axe spec/JSON
+
+- Item Types: `Fix | Proof`
+
+- [ ] mock：`mock-backend-repl-ai.ts`——K1 端点（messageFindPage/conversationSave/messageSave 逐名对齐 D3 §4.3 ai 表）+ connector mock 四类 fixture 预设（正常引用流〔sources 携带〕/护栏拒绝流〔refused+finishReason〕/HITL 工具调用流/慢流〔停止按钮可验〕；复用 createMockAiStream/createMockAiConnector 契约，cloneMessage 快照携带 sources/refused/usage——D6 复审前置义务）
+- [ ] host override 组件：`replication/ai-knowledge-chat-host.tsx`——registry 特例覆盖（pih-workspace 先例），ai-chat 绑定 conversationController/engine/activeConversationId（host store）+ `replAi:setActive` namespace action（plan 633 UR-4 先例）+ onResponseComplete `${message}` 快照链 + afterMessages 三件套（ai-citations/ai-feedback/ai-token-usage）+ G11 护栏 alert + mobile/desktop 无画布（普通页）
+- [ ] registry 特例 + complex-pages-model.ts entry
+- [ ] page-schemas/ai-knowledge-chat.json（host 消费的 schema 面：ai-chat 参数/afterMessages 三件套/护栏 alert）
+- [ ] e2e spec 三支柱（D3 §5.1 K1：新建会话/提问→streaming 逐帧+完成→引用卡片+反馈按钮+token 用量/护栏流→alert 可见/会话切换 replAi:setActive→历史回显/停止按钮慢流；axe 分支 A；focus 3 条）
+- [ ] axe ROUTES + JSON 登记（分支 A；首跑实测回填+\_notes）
+- [ ] 验证：`npx playwright test tests/e2e/replication-ai-knowledge-chat.spec.ts --retries=0` 全绿 + axe spec 绿 + W1-W3/C1-C3 回归 + playground typecheck + strict 校验
+
+Exit Criteria:
+
+- [ ] K1 页可达可交互且列表页收录（host override 特例），strict validation 零 error
+- [ ] focused e2e `--retries=0` 全绿（断言含 **replCrmCalls/**replAiCalls 计数证据）
+- [ ] axe 基线登记绿
+- [ ] roadmap §2 K1 回写 `done`（随 closure audit 通过的同一次回写提交完成，guide When Closing 9）
+
+## Draft Review Record
+
+- Reviewer / Agent: 待独立子 agent 填写
+- Verdict: 待审
+- Rounds: 0
+- Findings addressed: 无
+
+## Closure Gates
+
+- [ ] in-scope 工作全部落地（K1 页 + AI mock + roadmap 回写）
+- [ ] 行为/契约结果已达成（D3 §5.1 K1 断言清单全绿，--retries=0）
+- [ ] 必要 focused verification 已完成
+- [ ] 不存在被静默降级的 in-scope 缺口
+- [ ] 受影响 owner docs 已同步（daily log；D3 §4.3/§2.1 勘误登记；设计勘误如有）
+- [ ] 独立子 agent（fresh session）closure audit 通过并记录证据
+- [ ] `pnpm typecheck`
+- [ ] `pnpm build`
+- [ ] `pnpm lint`（触达面零新增红口径）
+- [ ] `pnpm test`（触达面零新增红口径）
+- [ ] `pnpm check`（触达面零新增红口径；scanner-baselines 增量如触发就地注册+note）
+
+## Deferred But Adjudicated
+
+### （继承）check/lint 链状态
+
+- Classification: 无已知红（HEAD 939d7e20d 后各页收口维持 full-green；798-805 Deferred 各项已被并行会话修复或注册现绿）
+- Why Not Blocking: 不适用（现无已知红；收口实跑零新增口径维持）
+- Successor Required: `no`
+- Successor Path: 不适用（并行会话后续 WIP 引入新红归其自有义务）
+
+## Non-Blocking Follow-ups
+
+- 全量 test:e2e 归 P1 阶段
+
+## Closure
+
+Status Note: 待收口填写
+
+Closure Audit Evidence:
+
+- Auditor / Agent: 待独立子 agent 填写
+- Evidence: 待填写
+
+Follow-up:
+
+- 待收口填写
