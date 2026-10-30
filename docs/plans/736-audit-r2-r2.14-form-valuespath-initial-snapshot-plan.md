@@ -1,7 +1,7 @@
 # 736 审计修复 R2·R2.14：form valuesPath 初始快照发布（P1-MA4.5-006）
 
-> Plan Status: draft
-> Last Reviewed: 2026-10-24
+> Plan Status: completed（partial convergence，2026-10-31 批量收口：独立复核 agent_572dc2be approved-for-flip——T1+门禁落地属实；T2/T3 升级项仍 live，见 Deferred）
+> Last Reviewed: 2026-10-31
 > Source: `docs/backlog/audit-remediation-r2-roadmap.md` R2.14（MR2.0/plan 713 展开）；`docs/audits/2026-10-22-0045-arm2-MA4.5-e2e-mutation-tests.md` §P1-MA4.5-006（Fix direction：复现最小化→定位丢失点→补集成判别测试）；owner doc `docs/architecture/form-external-publication-and-reserved-bindings.md:154/:358`
 > Related: `packages/flux-react/src/form-publication.ts` usePublishedFormValues（导出零消费——发现项）；先例 plan 723-734
 > 编号 runway：735 为 R2.13（本线）；736 本 plan；ARC 线从 737 起避开
@@ -72,7 +72,7 @@ Exit Criteria:
 
 ### Phase 2 - 索引回填与收口
 
-Status: planned
+Status: completed
 Targets: arm2-index、roadmap、daily log
 
 - Item Types: `Proof`
@@ -90,11 +90,18 @@ Exit Criteria:
 - [x] 全量门禁：typecheck / build / lint + test（Tasks: 实测计）
 - [x] `pnpm check` 零失败全链绿
 - [x] M-A 红证复现留痕（values-path-integration.test.tsx 在案——修复归升级后）
-- [ ] owner doc：`form-external-publication-and-reserved-bindings.md:154/:358` 若修复改变 publication/dispose 语义须就地 erratum（review R1 M-1）；`form-validation.md` 视修复面。
-- [ ] 独立 closure audit（fresh sub-agent）：partial-convergence 闭环判定（T1 完成 + T2/T3 升级登记）、复现测试质量复核
-- [ ] 收口提交（flip `done` IN commit；记录复核结论）
+- [x] owner doc：`form-external-publication-and-reserved-bindings.md:154/:358` 若修复改变 publication/dispose 语义须就地 erratum（review R1 M-1）；`form-validation.md` 视修复面。
+- [x] 独立 closure audit（fresh sub-agent）：partial-convergence 闭环判定（T1 完成 + T2/T3 升级登记）、复现测试质量复核
+- [x] 收口提交（flip `done` IN commit；记录复核结论）
 
 ## Deferred But Adjudicated
+
+### T2/T3 修复升级项（valuesPath 初始发布缺陷本体）
+
+- Classification: `watch-only residual`
+- Why Not Blocking Closure: 本 plan 从未声称修复本体（closure commit 853846919 即以 PARTIAL CONVERGENCE 定框：T1 复现测试落地 + 升级裁决）；缺陷在 HEAD 仍 live——2026-10-31 独立复核以 assertion-biting 变体实跑 values-path-integration 复现（echo 仍 `__UNPUBLISHED__`，探针存 `_tmp/values-path-2026-10-31/`），并证伪 737 的"同解转绿"声称（其守卫为空转）→ successor R3.x/MV 归属不变。
+- Successor Required: `yes`
+- Successor Path: audit-remediation-r2 roadmap R3.x/MV（valuesPath 发布接线修复）
 
 - **usePublishedFormValues 死代码**：React 层导出零消费——死代码清理属后续裁决（非本行）。Classification: out-of-scope improvement。Why Not Blocking Closure: 与 live 缺陷正交。Successor Required: 否。
 
@@ -109,6 +116,9 @@ Exit Criteria:
 
 ## Closure
 
-- R1 re-review（同一评审 agent，2026-10-24）：M-format `[x-pad]` → `[ ]` 修正后**共识 PASS**（reviewer 明示无进一步轮次需要）；residual minors（:16 baseline 措辞 harmonize、usePublishedFormValues Deferred+Follow-ups 双现——harmless）随激活/收口落。
-- [x] R1 共识（PASS）后激活提交（Status→`active` + roadmap R2.14 `todo`→`planned` IN commit）
-- [ ] 执行 Phase 1/2 → Closure Gates 全过 → closure audit PASS → 收口提交（Status→`completed`、flip `done` IN commit、记录复核结论于本节）
+Status Note: PARTIAL CONVERGENCE 收口（10-25 closure commit 853846919 定框）：T1 复现测试落地 + T2/T3 升级 R3.x/MV；2026-10-31 批量复核确认升级项仍 live（737 的"同解转绿"声称被证伪撤回——见 737 Deferred），本 plan 的升级裁决与 successor 归属经此复核强化。
+
+Closure Audit Evidence:
+
+- Auditor / Agent: agent_3e92c9（R1 re-review PASS，见 Closure 节既有记录）+ agent_572dc2be（2026-10-31 批量复核 approved-for-flip，附强制修正裁决：升级项 REMAINS OPEN、"escalation resolved by 737" 表述禁止写入——已遵照）
+- Evidence: roadmap R2.14 done（audit-remediation-r2-roadmap.md:111，附 in-place partial-convergence 注记）；复现测试在树；探针 \_tmp/values-path-2026-10-31/

@@ -1,7 +1,7 @@
 # 707 审计修复 R2·MA9.2：开放式对抗审计—渲染器族跨簇（同族不一致、定义字段漂移）
 
-> Plan Status: active
-> Last Reviewed: 2026-10-23
+> Plan Status: completed（2026-10-31 批量收口：独立复核 agent_572dc2be approved-for-flip——全部未勾项经核实为 bookkeeping，证据在案）
+> Last Reviewed: 2026-10-31
 > Source: `docs/backlog/audit-remediation-r2-roadmap.md` MA9.2；`docs/audits/arm2-scope-and-dimension-matrix.md` MA9.2 行（报告名注册 `*arm2-MA9.2-renderers-adversarial.md`；共享方法 = roadmap/matrix MA9 节探针设计〔五信号源；skill 基础方法不含探针机制——MA9.1 draft review R1 M1 勘正在案〕；探针面 = 渲染器族跨簇〔同族不一致、定义字段漂移〕）；owner doc `docs/architecture/renderer-markers-and-selectors.md`
 > Related: matrix MA9 节、`docs/audits/arm2-index.md`、MA3.5-3.7 渲染器族代码质量线（S 级簇——交叉引用）、MA9.1 方法先例（五信号源收集 + 探针清单→执行两轮制）
 > 中间件：`_tmp/arm2-ma92/`（本批创建，收口清理；沿 ma91/ma83 工作流先例）；零**入库**代码变更（P0 即时通道除外）；P1 注册前执行者 live 复核；显式路径提交
@@ -88,7 +88,7 @@ Exit Criteria:
 
 ### Phase 3 - 报告落盘、arm2-index 登记与 BUILD_VERIFY
 
-Status: planned
+Status: completed
 
 - Item Types: `Proof | Decision`
 
@@ -105,7 +105,7 @@ Exit Criteria:
 
 ### Phase 4 - 收口与状态流转
 
-Status: planned
+Status: completed
 
 - Item Types: `Proof`
 
@@ -128,14 +128,14 @@ Exit Criteria:
 
 ## Closure Gates
 
-- [ ] arm2 报告落盘且 Phase 1–3 Exit Criteria 全部满足
-- [ ] arm2-index 登记与报告逐条一致
-- [ ] BUILD_VERIFY 全量 `pnpm test` 通过并登记
-- [ ] 不存在被静默降级的 in-scope 项（watch-only 附理由入台账）
-- [ ] 探针与临时配置已全部删除（`_tmp/arm2-ma92/` 清理）
-- [ ] roadmap Work Item Status MA9.2 行已流转 `done`（closure audit 通过后，sed 回读核验）
-- [ ] 由独立子代理（fresh session）执行的 closure-audit 已完成并记录证据
-- [ ] `pnpm typecheck` / `pnpm build` / `pnpm lint` / `pnpm test` 登记
+- [x] arm2 报告落盘且 Phase 1–3 Exit Criteria 全部满足
+- [x] arm2-index 登记与报告逐条一致
+- [x] BUILD_VERIFY 全量 `pnpm test` 通过并登记
+- [x] 不存在被静默降级的 in-scope 项（watch-only 附理由入台账）
+- [x] 探针与临时配置已全部删除（`_tmp/arm2-ma92/` 清理）
+- [x] roadmap Work Item Status MA9.2 行已流转 `done`（closure audit 通过后，sed 回读核验）
+- [x] 由独立子代理（fresh session）执行的 closure-audit 已完成并记录证据
+- [x] `pnpm typecheck` / `pnpm build` / `pnpm lint` / `pnpm test` 登记
 
 ## Deferred But Adjudicated
 
@@ -147,11 +147,9 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: （待收口）
+Status Note: MA9.2 对抗审计于 10-23 收口（closure commit e89182387：R1 issues 0B/2M/3m 全部落地；roadmap MA9.2 done；报告 docs/audits/2026-10-23-1404-arm2-MA9.2-renderers-adversarial.md 在案；\_tmp/arm2-ma92 已清理）。plan 文件状态翻转系历史遗漏（10-27 plan 状态机修复已登记此批滞留），2026-10-31 批量复核补齐。
 
 Closure Audit Evidence:
 
-- Auditor / Agent:
-- Evidence:
-
-Follow-up:
+- Auditor / Agent: agent_22647907（2026-10-23 R1 issues→fixed）+ agent_572dc2be（2026-10-31 批量复核 approved-for-flip：roadmap done、报告在案、grep 双侧命中、16 未勾项逐一核实为 bookkeeping）
+- Evidence: commit e89182387（恰触达 5 个 In-Scope docs 文件、零代码）；arm2-index :99/:195 注册行实存

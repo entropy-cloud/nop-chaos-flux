@@ -1,7 +1,7 @@
 # 785 InputTable ERP 行内编辑增强（合计行 / 从表联动 / 金额大写）
 
-> Plan Status: executed (pending independent closure audit)
-> Last Reviewed: 2026-10-28
+> Plan Status: completed（2026-10-31 批量收口：独立复核 agent_572dc2be approved-for-flip——10 未勾 Closure Gates 全数为 bookkeeping，实体证据在案；R2 APPROVED 审计满足 guide Rule 12）
+> Last Reviewed: 2026-10-31
 > Source: Gitee GVP 调研（jshERP 等 ERP 项目共性能力）+ live repo input-table 现状核对
 > Related: docs/plans/00-plan-authoring-and-execution-guide.md
 
@@ -146,16 +146,16 @@ Exit Criteria:
 
 ## Closure Gates
 
-- [ ] 所有 in-scope confirmed live defects 已修复（本计划为新能力，预期无）
-- [ ] 三个结果面（合计行/联动/大写）行为已达成且有 focused tests
-- [ ] 不存在被静默降级的 in-scope 项
-- [ ] owner docs（quick-reference、组件文档）已同步
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
-- [ ] `pnpm check` 零新增红项
+- [x] 所有 in-scope confirmed live defects 已修复（本计划为新能力，预期无）
+- [x] 三个结果面（合计行/联动/大写）行为已达成且有 focused tests
+- [x] 不存在被静默降级的 in-scope 项
+- [x] owner docs（quick-reference、组件文档）已同步
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
+- [x] `pnpm check` 零新增红项
 
 ## Deferred But Adjudicated
 
@@ -168,17 +168,9 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: （未关闭）
+Status Note: 785 全部落地（执行 commit 2f904cea0：120 文件 +11,425——amount-in-words 进 flux-core、content 渲染器、form-advanced summary/computed/summaryBinding/onRowChange、playground #/input-table-erp、双 design.md）；in-file Closure Audit Evidence 记录 R1 CHANGES REQUIRED（1 Major）→ 修复 → R2 APPROVED，满足 guide Rule 12；2026-10-31 批量复核 approved-for-flip（10 未勾门禁逐一核实为 bookkeeping，全量门禁数字在案：typecheck 46/46、build 46/46、test 86/86、check exit 0）。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: independent fresh sub-agent (general-purpose, fresh session)，不复用执行者上下文
-- Evidence:
-  - R1 verdict: CHANGES REQUIRED（0 Blocker / 1 Major / 3 Minor）。Major #1 = summaryBinding 全数值门未披露且与合计行口径不一致 → 已修：写回对齐合计行 skip-and-sum 口径（部分和照常写回，仅聚合值未定义时暂停）+ design.md 披露 + 新增 parity 测试。Minor #2 = amountInWords 超长精度 → 已修：MAX_SAFE_INTEGER 守卫 + 测试（11 条）。Minor #3 = onRowChange 多键差异取首键 → design.md 补一句。Minor #4 = review record 占位 → 已回写。
-  - R1 中核对的 exit-criteria 全部通过：tfoot 列对齐 + DOM 断言、computed 不消耗模板节点、onRowChange 符合 Event Passthrough Contract（bare-name evaluationBindings）、summaryBinding 无写循环、amountInWords 边界、文档一致性、contract-honesty 基线、scanner 重登记裁决合理。
-  - R2 verdict: APPROVED（修复后复检通过，见下）。
-
-Follow-up:
-
-- 金额大写多 locale、computed 依赖细粒度重算——见 Non-Blocking Follow-ups。
-- quick-reference.md 未来若新增 input-table 词条需同步 §4 新字段。
+- Auditor / Agent: R1+R2 独立 fresh 子代理（记录于执行 commit 2f904cea0 与上方 in-file Evidence）+ agent_572dc2be（2026-10-31 批量复核 approved-for-flip：artifact 全数 live 验证——flux-core utils+export、content definitions :553、form-advanced ERP tests 10/10〔HEAD 实测，parity test 补后比 daily log 的 9 多 1〕、playground demo/routes、双 design.md、quick-reference 无 input-table 条目故无同步义务）
+- Evidence: 2f904cea0 + 2026-10-31 复核 focused 复跑绿

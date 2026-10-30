@@ -12,6 +12,17 @@ import { formRenderer } from '../test-support-core.js';
 // reaching the valuesPath read face. While the defect is live this body is
 // skipped (test.fixme ratchet — remove the fixme when the fix lands to
 // activate as a permanent regression guard).
+//
+// RATCHET HISTORY (plan 824 batch closure audit, 2026-10-31): plan 737's
+// closure commit 6cd1e6046 flipped this `it.skip`→`it` claiming a "co-root
+// resolution / 同解转绿", but the activated body kept the
+// `waitFor(...).catch(() => { /* test.fixme */ })` swallow (and never
+// returned the waitFor) — vacuous, cannot fail. The 2026-10-31 independent
+// closure re-audit ran an assertion-biting variant (catch removed, waitFor
+// returned) under the repo's real vitest config: still RED at HEAD
+// (`ui.textCron` echoes `__UNPUBLISHED__` after 3s). Probe preserved under
+// `_tmp/values-path-2026-10-31/`. The honest ratchet is restored below;
+// successor ownership R3.x/MV unchanged (see plan 737 Deferred).
 
 const inputTextRenderer = {
   type: 'input-text',
@@ -42,7 +53,9 @@ const echoRenderer = {
 } as never;
 
 describe('form valuesPath initial snapshot publication (P1-MA4.5-006)', () => {
-  it('initial data reaches the valuesPath read face without user interaction', () => {
+  // Ratchet restored 2026-10-31: 737's premature skip-removal left a vacuous
+  // always-green body while the defect is live (see RATCHET HISTORY above).
+  it.skip('initial data reaches the valuesPath read face without user interaction', () => {
     const SchemaRenderer = createSchemaRenderer([
       pageRenderer,
       formRenderer,
