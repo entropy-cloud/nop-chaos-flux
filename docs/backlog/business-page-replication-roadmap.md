@@ -43,44 +43,44 @@
 
 ### Milestone 2: 设计（复刻方案与验收标准）
 
-| Work item                                                                                                                                             | 状态   | 依赖    | 说明                                                                                               |
-| ----------------------------------------------------------------------------------------------------------------------------------------------------- | ------ | ------- | -------------------------------------------------------------------------------------------------- |
-| D1 复刻总体设计（playground 路由规划、mock fixture 规范、每页验收断言模板：交互断言 + axe 基线 + focus 断言）                                         | `done` | M1 done | ；plan 792（completed）；交付 `docs/analysis/business-replication/d1-replication-master-design.md` |
-| D2 ERP 线复刻设计（WMS PDA 作业/拣货看板/库存台账；CRM 漏斗看板/客户 360/销售驾驶舱；ITAM 盘点扫码/折旧仪表盘——逐页 schema 结构与 renderer 组合方案） | `todo` | D1      |                                                                                                    |
-| D3 AI/MES 复刻设计（知识库对话页/工单处理台/审批轨迹；车间大屏/工序报工表/异常叫料移动页）                                                            | `todo` | D1      |                                                                                                    |
-| D4 商城/智能单据/IoT 复刻设计（商品 SKU 页/营销活动页/分销后台；OCR 校正工作台/HITL 审批收件箱；设备遥测页/OTA 灰度管理/围栏地图/视频墙）             | `todo` | D1      |                                                                                                    |
-| D5 设计阶段深度审计（设计 vs live repo renderer 契约核对；缺口登记项与 missing-components/improvement-analysis 无重复立项冲突）                       | `todo` | D2-D4   | deep audit                                                                                         |
-| D6 设计阶段开放审计（独立 fresh sub-agent 开放评审，不复用执行者上下文）                                                                              | `todo` | D5      | open audit                                                                                         |
+| Work item                                                                                                                                             | 状态      | 依赖    | 说明                                                                                                                                                                                      |
+| ----------------------------------------------------------------------------------------------------------------------------------------------------- | --------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| D1 复刻总体设计（playground 路由规划、mock fixture 规范、每页验收断言模板：交互断言 + axe 基线 + focus 断言）                                         | `done`    | M1 done | ；plan 792（completed）；交付 `docs/analysis/business-replication/d1-replication-master-design.md`                                                                                        |
+| D2 ERP 线复刻设计（WMS PDA 作业/拣货看板/库存台账；CRM 漏斗看板/客户 360/销售驾驶舱；ITAM 盘点扫码/折旧仪表盘——逐页 schema 结构与 renderer 组合方案） | `planned` | D1      | ；plan 793（active）                                                                                                                                                                      |
+| D3 AI/MES 复刻设计（知识库对话页/工单处理台/审批轨迹；车间大屏/工序报工表/异常叫料移动页）                                                            | `planned` | D1      | ；plan 794（active）                                                                                                                                                                      |
+| D4 商城/智能单据/IoT 复刻设计（商品 SKU 页/营销活动页/分销后台；OCR 校正工作台/HITL 审批收件箱；设备遥测页/OTA 灰度管理/围栏地图/视频墙）             | `done`    | D1      | ；plan 795（completed）；交付 `docs/analysis/business-replication/d4-mall-doc-iot-design.md`（注：D4 行页面枚举收敛为 7 页——营销活动页归 R2 候选⑤未纳入 1.0，围栏地图与视频墙合并 V3 页） |
+| D5 设计阶段深度审计（设计 vs live repo renderer 契约核对；缺口登记项与 missing-components/improvement-analysis 无重复立项冲突）                       | `todo`    | D2-D4   | deep audit                                                                                                                                                                                |
+| D6 设计阶段开放审计（独立 fresh sub-agent 开放评审，不复用执行者上下文）                                                                              | `todo`    | D5      | open audit                                                                                                                                                                                |
 
 ### Milestone 3: 开发（逐页复刻）
 
 > 每个工作项 = 一个 execution plan：playground 演示页 schema + mock fixture + 该页 focused e2e（程序化断言）+ axe 基线登记。缺口按 D 阶段分级：组合类当场落地，扩展/新类型类先落缺口登记再以临时形态过验收。
 
-| Work item                                                                                                                  | 状态   | 依赖           | 说明                          |
-| -------------------------------------------------------------------------------------------------------------------------- | ------ | -------------- | ----------------------------- |
-| W1 WMS PDA 收货/上架作业页（swipe-cell + pull-refresh + barcode-input + wheel-picker；单手操作流、扫码即校验、离线提示条） | `todo` | M2 done        | mobile 渲染器族主战场         |
-| W2 WMS 拣货路径看板与波次管理页（gantt/kanban 路径可视化；input-table 波次明细 + 合计行）                                  | `todo` | M2 done        |                               |
-| W3 WMS 库存台账页（pivot 多维透视 + dashboard 指标卡 + 批次追溯 drill-down dialog）                                        | `todo` | M2 done        |                               |
-| C1 CRM 商机漏斗看板页（kanban 拖拽阶段流转 + 漏斗统计 + 行内编辑金额）                                                     | `todo` | M2 done        |                               |
-| C2 CRM 客户 360 详情页（tabs + detail-view + timeline 跟进记录 + 关联列表主从联动）                                        | `todo` | M2 done        |                               |
-| C3 CRM 销售驾驶舱页（dashboard + echarts + stat-tile + 条件筛选联动）                                                      | `todo` | M2 done        |                               |
-| I1 ITAM 资产台账与盘点页（table 批量操作 + barcode-input 扫码盘点 + diff-view 盘点差异）                                   | `todo` | M2 done        |                               |
-| I2 ITAM 折旧仪表盘页（dashboard 图表组 + pivot 年度折旧透视 + 导出）                                                       | `todo` | M2 done        |                               |
-| K1 AI 知识库对话页（flux-renderers-ai 会话流 + streaming 输出 + 引用来源卡片 + 反馈按钮）                                  | `todo` | M2 done        |                               |
-| K2 工单处理台页（CRUD 队列 + SLA 倒计时 + 工单详情 timeline + AI 推荐回复卡片）                                            | `todo` | M2 done        |                               |
-| K3 审批轨迹页（approval timeline + user-picker 转办 + HITL 审批卡片）                                                      | `todo` | M2 done        |                               |
-| M1 MES 车间大屏页（industrial/dashboard + echarts 实时刷新 + 翻牌器/跑马灯式状态栏）                                       | `todo` | M2 done        | 大屏能力验收                  |
-| M2 MES 工序报工页（input-table 行内报工 + 行级 computed 工时/合计 + 数量校验）                                             | `todo` | M2 done        |                               |
-| M3 MES 异常叫料移动页（mobile 族：floating-panel + action-sheet + image-viewer 现场拍照）                                  | `todo` | M2 done        |                               |
-| S1 商城商品 SKU 选择页（picker/组合规格 + 数量步进 + countdown 秒杀倒计时 + 商品卡片）                                     | `todo` | M2 done        |                               |
-| S2 商城分销后台页（table 佣金明细 + pivot 分销层级透视 + dashboard 业绩卡）                                                | `todo` | M2 done        |                               |
-| O1 OCR 校正工作台页（image 区域对照 + 字段确认表单 + 置信度高亮 + 逐字段校验流）                                           | `todo` | M2 done        | 表单+图片组合复杂度最高的一页 |
-| O2 HITL 审批收件箱页（CRUD 待办 + AI 建议卡片 + 审批 dialog + 批量通过）                                                   | `todo` | M2 done        |                               |
-| V1 IoT 设备遥测详情页（echarts 实时曲线 + data-source 轮询 + 告警列表联动 + sparkline 概览）                               | `todo` | M2 done        |                               |
-| V2 IoT OTA 灰度管理页（wizard 分批推送 + 状态机步骤条 + 失败回滚操作 + 进度表）                                            | `todo` | M2 done        |                               |
-| V3 IoT 围栏地图与视频墙页（flux-renderers-map 围栏绘制 + 地理点标注；iframe/video 面板墙）                                 | `todo` | M2 done        |                               |
-| P1 开发阶段深度审计（逐页对照 live repo 与上游 roadmap 核对复刻保真度、断言真实性；缺口登记项与 §Authority 无冲突）        | `todo` | W1-V3 all done | deep audit                    |
-| P2 开发阶段开放审计（独立 fresh sub-agent 开放评审，不复用执行者上下文；输入"页面清单 + diff 摘要 + e2e 输出"）            | `todo` | P1             | open audit                    |
+| Work item                                                                                                                  | 状态   | 依赖           | 说明                                                                                              |
+| -------------------------------------------------------------------------------------------------------------------------- | ------ | -------------- | ------------------------------------------------------------------------------------------------- |
+| W1 WMS PDA 收货/上架作业页（swipe-cell + pull-refresh + barcode-input + wheel-picker；单手操作流、扫码即校验、离线提示条） | `todo` | M2 done        | mobile 渲染器族主战场                                                                             |
+| W2 WMS 拣货路径看板与波次管理页（gantt/kanban 路径可视化；input-table 波次明细 + 合计行）                                  | `todo` | M2 done        |                                                                                                   |
+| W3 WMS 库存台账页（pivot 多维透视 + dashboard 指标卡 + 批次追溯 drill-down dialog）                                        | `todo` | M2 done        |                                                                                                   |
+| C1 CRM 商机漏斗看板页（kanban 拖拽阶段流转 + 漏斗统计 + 行内编辑金额）                                                     | `todo` | M2 done        |                                                                                                   |
+| C2 CRM 客户 360 详情页（tabs + detail-view + timeline 跟进记录 + 关联列表主从联动）                                        | `todo` | M2 done        |                                                                                                   |
+| C3 CRM 销售驾驶舱页（dashboard + echarts + stat-tile + 条件筛选联动）                                                      | `todo` | M2 done        |                                                                                                   |
+| I1 ITAM 资产台账与盘点页（table 批量操作 + barcode-input 扫码盘点 + diff-view 盘点差异）                                   | `todo` | M2 done        |                                                                                                   |
+| I2 ITAM 折旧仪表盘页（dashboard 图表组 + pivot 年度折旧透视 + 导出）                                                       | `todo` | M2 done        |                                                                                                   |
+| K1 AI 知识库对话页（flux-renderers-ai 会话流 + streaming 输出 + 引用来源卡片 + 反馈按钮）                                  | `todo` | M2 done        |                                                                                                   |
+| K2 工单处理台页（CRUD 队列 + SLA 倒计时 + 工单详情 timeline + AI 推荐回复卡片）                                            | `todo` | M2 done        |                                                                                                   |
+| K3 审批轨迹页（approval timeline + user-picker 转办 + HITL 审批卡片）                                                      | `todo` | M2 done        |                                                                                                   |
+| M1 MES 车间大屏页（industrial/dashboard + echarts 实时刷新 + 翻牌器/跑马灯式状态栏）                                       | `todo` | M2 done        | 大屏能力验收                                                                                      |
+| M2 MES 工序报工页（input-table 行内报工 + 行级 computed 工时/合计 + 数量校验）                                             | `todo` | M2 done        |                                                                                                   |
+| M3 MES 异常叫料移动页（mobile 族：floating-panel + action-sheet + image-viewer 现场拍照）                                  | `todo` | M2 done        |                                                                                                   |
+| S1 商城商品 SKU 选择页（picker/组合规格 + 数量步进 + countdown 秒杀倒计时 + 商品卡片）                                     | `todo` | M2 done        |                                                                                                   |
+| S2 商城分销后台页（table 佣金明细 + pivot 分销层级透视 + dashboard 业绩卡）                                                | `todo` | M2 done        |                                                                                                   |
+| O1 OCR 校正工作台页（image 区域对照 + 字段确认表单 + 置信度高亮 + 逐字段校验流）                                           | `todo` | M2 done        | 表单+图片组合复杂度最高的一页                                                                     |
+| O2 HITL 审批收件箱页（CRUD 待办 + AI 建议卡片 + 审批 dialog + 批量通过）                                                   | `todo` | M2 done        |                                                                                                   |
+| V1 IoT 设备遥测详情页（echarts 实时曲线 + data-source 轮询 + 告警列表联动 + sparkline 概览）                               | `todo` | M2 done        |                                                                                                   |
+| V2 IoT OTA 灰度管理页（wizard 分批推送 + 状态机步骤条 + 失败回滚操作 + 进度表）                                            | `todo` | M2 done        |                                                                                                   |
+| V3 IoT 围栏地图与视频墙页（flux-renderers-map 围栏绘制 + 地理点标注；iframe/video 面板墙）                                 | `todo` | M2 done        | ；交互验收收窄裁决：绘制/轨迹/流媒体不做交互验收（R4 §1 V3 行+开放审计 Minor-④，D4 设计 §6 落位） |
+| P1 开发阶段深度审计（逐页对照 live repo 与上游 roadmap 核对复刻保真度、断言真实性；缺口登记项与 §Authority 无冲突）        | `todo` | W1-V3 all done | deep audit                                                                                        |
+| P2 开发阶段开放审计（独立 fresh sub-agent 开放评审，不复用执行者上下文；输入"页面清单 + diff 摘要 + e2e 输出"）            | `todo` | P1             | open audit                                                                                        |
 
 ### Milestone 4: 验证（统一 UX 验收与收口）
 
