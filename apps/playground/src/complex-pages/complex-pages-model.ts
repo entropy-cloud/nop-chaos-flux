@@ -433,4 +433,12 @@ export const COMPLEX_PAGE_ENTRIES: ComplexPageEntry[] = [
       '复刻 WMS 拣货路径看板与波次管理页（roadmap 21 页 W2，D2 §2.2 桌面整页）：波次分组看板（kanban 四阶段列 columnAggregate 件数合计 + 拖卡 onCardMove→waveMove 持久化 + refreshSource 回读）+ 拣货路径时间轴（gantt zoomLevels 三档缩放 onZoomChange）+ 波次明细（input-table aggregate 合计行 summaryBinding 金额回写 + computed 金额列）+ 释放操作带（button 确认 dialog→waveRelease + condition-builder 释放规则）+ 只读分组汇总（table group 按库区分组聚合）。数据经 /r/ReplWms__wave* 与 pickingTasks 端点流动。',
     features: ['kanban 拖卡持久化', 'gantt zoomLevels', 'input-table 合计行', 'condition-builder', 'table 分组汇总', 'ReplWms__ 端点'],
   },
+  {
+    id: 'wms-stock-ledger',
+    title: 'WMS 库存台账页',
+    category: 'business-replication',
+    description:
+      '复刻 WMS 库存台账页（roadmap 21 页 W3，D2 §2.3 桌面整页）：仓库×库位×物料×批次收发存透视（pivot-table 四维行维 + 月列维 SUM 聚合 + 行总计/仓库小计 + pivot:cell-click→setValue→refreshSource→openDialog 批次追溯钻取参数链）+ 对账一致性提示卡（status 双态 + reconCheck 端点 + forceReconDrift 钩子，G7）+ KPI 四 tile（stat-tile，stockKpi 端点）+ 批次/仓库过滤（form+valuesPath 载体联动透视与明细重取）+ 收发存明细表 + 台账报表导出（button→download action，G6）。数据经 /r/ReplWms__stock* 与 ledgerReport/reconCheck 端点流动。',
+    features: ['pivot-table 四维透视', 'cell-click 钻取参数链', 'stat-tile KPI', 'form+valuesPath 过滤', 'reconCheck 对账双态', 'download 报表导出', 'ReplWms__ 端点'],
+  },
 ];

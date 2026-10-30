@@ -16,6 +16,12 @@
     "color-contrast": 6,
     "_notes": "plan 799 first-run measurement 2026-10-30 (D1 §4 branch A registration): counts measured on #/complex-pages/wms-wave-picking with only the board tab mounted (tabs mountOnEnter). Both rules mirror the standard-crud shell-level debt pattern (same rule ids, same counts); fixes belong to the component owner, not the page schema."
   },
+  "complex-pages/wms-stock-ledger": {
+    "aria-required-attr": 9,
+    "color-contrast": 7,
+    "label": 1,
+    "_notes": "plan 800 first-run measurement 2026-10-30 (D1 §4 branch A registration): counts measured on #/complex-pages/wms-stock-ledger. aria-required-attr = the detail table's 9 column-resize separator spans (table component owner debt, same rule as standard-crud/W2); color-contrast = 7 stat-tile secondary badges; label = the VTable internal readonly .table-focus-control input (pivot component owner). Fixes belong to the component owner, not the page schema."
+  },
   "complex-pages/wms-pda-receiving": { "color-contrast": 6 },
   "dashboard-demo": { "aria-required-attr": 4, "color-contrast": 1, "nested-interactive": 1 },
   "flux-basic": { "aria-required-attr": 5, "color-contrast": 2 },

@@ -8,8 +8,10 @@
  * `putawaySubmit` / `taskRecords` (D2 §4.1 original names; `validate` is a
  * barcode-input schema property, not an endpoint). W2 (plan 799) adds the
  * wave subset — `waveFindPage` / `waveBoard` / `waveMove` / `waveRelease` /
- * `waveLines` / `pickingTasks`. W3 (`stock*`, `ledgerReport`, `reconCheck`)
- * endpoints land with their page and extend `createReplFetcherBranches`.
+ * `waveLines` / `pickingTasks`. W3 (plan 800) adds the stock subset —
+ * `stockLedgerRows` / `stockKpi` / `batchTrace` / `ledgerReport` /
+ * `reconCheck` — delegated to `mock-backend-repl-wms-stock.ts` (same line
+ * gate); the counter below stays the single per-request count site.
  *
  * Envelopes (D1 §2): queries `{status:0, data:{items,total}}`, mutations
  * `{status:0, data:{...}}`, error paths `{status:1, msg}`. Session state
@@ -20,9 +22,11 @@
  * `window.__replWmsCalls` + `window.__replWmsTestHooks` via addInitScript;
  * production never sets them, so both stay no-ops (airtable precedent).
  * Hooks: `asnMiss`, `duplicateIdempotencyKey`, `forceOffline`, the
- * last-request-body mirrors `lastAsnReceiveBody` / `lastPutawayBody`, plus
- * the W2 mirrors `lastWaveMoveBody` (G2 field-by-field assertion, D2 §3.3 ③)
- * and `lastWaveReleaseBody`.
+ * last-request-body mirrors `lastAsnReceiveBody` / `lastPutawayBody`, the
+ * W2 mirrors `lastWaveMoveBody` (G2 field-by-field assertion, D2 §3.3 ③)
+ * and `lastWaveReleaseBody`, plus the W3 mirrors `forceReconDrift` (G7
+ * drifted-face switch, read at fetch time) and `lastLedgerReportData`
+ * (G6 download-URL shape assertion).
  */
 
 import {
@@ -34,6 +38,7 @@ import {
   type ReplicaBranchInput,
   type ReplicaFetcherBranch,
 } from './mock-backend-replica-kit';
+import { createStockLedgerRows, handleReplWmsStockBranch, type ReplWmsStockLedgerRow } from './mock-backend-repl-wms-stock';
 
 /* ── Entities (D2 §4.1 实体字段) ─────────────────────────────────────────── */
 
@@ -112,7 +117,7 @@ export const REPL_WMS_WAVE_STAGES: readonly ReplWmsWaveStatus[] = [
 
 export const REPL_WMS_WAVE_ZONES = ['Z-A', 'Z-B', 'Z-C'] as const;
 
-interface ReplWmsTestHooks {
+export interface ReplWmsTestHooks {
   asnMiss?: boolean;
   duplicateIdempotencyKey?: boolean;
   forceOffline?: boolean;
@@ -126,6 +131,13 @@ interface ReplWmsTestHooks {
    * column id, toStatus ↔ target column id). */
   lastWaveMoveBody?: Record<string, unknown>;
   lastWaveReleaseBody?: Record<string, unknown>;
+  /** W3 G7: read at `reconCheck` fetch time — flipping it mid-session and
+   * refreshing the source switches the banner to the drifted face. */
+  forceReconDrift?: boolean;
+  /** W3 G6: mirror of the last `ledgerReport` payload (download-URL shape). */
+  lastLedgerReportData?: Record<string, unknown>;
+  /** W3 cell-click param chain: batchNo the last `batchTrace` fetch carried. */
+  lastBatchTraceBatchNo?: string;
 }
 
 const SUPPLIERS = [
@@ -380,6 +392,7 @@ export interface ReplWmsSessionState {
   waves: ReplWmsWave[];
   pickingTasks: ReplWmsPickingTask[];
   pickingLinks: ReplWmsPickingLink[];
+  stockLedgerRows: ReplWmsStockLedgerRow[];
 }
 
 export function createReplWmsSession(): ReplWmsSessionState {
@@ -391,6 +404,7 @@ export function createReplWmsSession(): ReplWmsSessionState {
     waves: createWaveRows(),
     pickingTasks: picking.tasks,
     pickingLinks: picking.links,
+    stockLedgerRows: createStockLedgerRows(),
   };
 }
 
@@ -652,9 +666,18 @@ export function createReplWmsFetcherBranch(session: ReplWmsSessionState = create
       return { status: 0, data: { releasedCount: planned.length } as unknown as T };
     }
 
-    // W3 endpoints (`stock*`, `ledgerReport`, `reconCheck`) are NOT implemented
-    // yet — fall through so the caller's unknown-endpoint face applies (they
-    // land with their own page).
+    // ----- W3 reads (delegate module, D2 §4.1 stock subset; the counter
+    // above already counted the call) -----
+    const stockHandled = handleReplWmsStockBranch<T>({
+      url: input.url,
+      method,
+      read,
+      body: input.body,
+      session,
+      hooks,
+    });
+    if (stockHandled) return stockHandled;
+
     return null;
   }
 

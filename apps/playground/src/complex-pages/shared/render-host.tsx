@@ -6,6 +6,7 @@ import { registerBasicRenderers } from '@nop-chaos/flux-renderers-basic';
 import { registerFormRenderers } from '@nop-chaos/flux-renderers-form';
 import { registerFormAdvancedRenderers } from '@nop-chaos/flux-renderers-form-advanced';
 import { registerDataRenderers } from '@nop-chaos/flux-renderers-data';
+import { registerPivotRenderers } from '@nop-chaos/flux-renderers-pivot';
 import { registerContentRenderers } from '@nop-chaos/flux-renderers-content';
 import { registerLayoutRenderers } from '@nop-chaos/flux-renderers-layout';
 import { registerSchedulingRenderers } from '@nop-chaos/flux-renderers-scheduling';
@@ -27,6 +28,9 @@ registerAiRenderers(registry);
 // Mobile family (plan 798 W1): the business-replication mobile pages (W1/M3/S1)
 // render mobile-native renderers on the shared showcase registry.
 registerMobileRenderers(registry);
+// Pivot family (plan 800 W3): the pivot-table drill-through page renders on
+// the shared showcase registry (the pivot demo page registers its own copy).
+registerPivotRenderers(registry);
 registerFlowDesignerRenderers(registry);
 
 function toNumber(value: unknown): number {

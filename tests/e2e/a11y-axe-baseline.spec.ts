@@ -27,6 +27,9 @@ const ROUTES = [
   // Plan 799 (D1 §4 branch A): W2 wave-picking joins the standard desktop
   // scan set (non-mobile page — pure JSON SchemaPage, no host override).
   'complex-pages/wms-wave-picking',
+  // Plan 800 (D1 §4 branch A): W3 stock-ledger joins the standard desktop
+  // scan set (non-mobile page — pure JSON SchemaPage, no host override).
+  'complex-pages/wms-stock-ledger',
   'dashboard-demo',
 ];
 

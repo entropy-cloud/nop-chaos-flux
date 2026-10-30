@@ -204,6 +204,20 @@ onCellClick:                     # pivot:cell-click（pivot-events.ts L11）
           columns: [ { name: moveNo, label: 移动单号 }, { name: direction, label: 收/发 }, { name: qty, label: 数量 }, { name: occurredAt, label: 时间 } ]
 ```
 
+#### W3 实现勘误（M3 落地实证 2026-10-30，plan 800；以 live 为准）
+
+1. **rowDimensions 须含 batchNo**：批次须为行维叶子，cell-click 才能从 rowHeaderPaths 取到——原片段漏列。
+2. **onCellClick 非 openDialog 单步**：live 需 setValue→refreshSource→openDialog then 链（先写页作用域再开弹窗）。
+3. **`${dimension.value}` 不存在**：live payload 为 `cellHeaderPaths.rowHeaderPaths[n].value`，经 setValue 中转页作用域。
+4. **pivot 族未入 showcase registry**：complex-pages 渲染路径需 render-host.tsx 补注册 registerPivotRenderers（type 存在属实，渲染通道缺注册——live 缺口已在本计划修复）。
+5. **stat-tile formatter**：live 契约 decimals 为 optional（缺省 0，schemas.ts L447/definition L81 无 required——收口审计 Minor-1 勘误：原"必填"陈述不成立）。
+6. **过滤载体 form+valuesPath**（W2 勘误⑤⑥ 同因：query-filter scope 不发布值）。
+7. **ledgerReport 返回 `{url, filename}`** 而非 `{downloadUrl}`（runtime 读 data.url——built-in-actions download case 实况）。
+8. **totals.row 需显式 showSubTotals:true**。
+9. **stockKpi 返回 `{kpis:{...}}` 平铺 map**（Kpi[] 数组无表达式消费先例）。
+10. **pivot filterRules 上移 data-source params**（plan 800 收口审计 Minor-2——R-3 溯源勘误：原错标 799）：片段 dataConfig.filterRules 形态 live 支持但 W3 实现改由 data-source 参数承载过滤——行为等价由过滤联动断言实证，登记实现偏差。
+11. **focus ② Esc 回腿退守**（plan 800 收口审计 Minor-4 同族——R-3 溯源勘误）：canvas 点击的钻取触发非可焦 trigger，Esc 回腿退守"焦点回文档内"——W1 同类退守曾以 §2.1 勘误 7/8 落档，口径对齐。
+
 ### 2.4 crm-opportunity-kanban（C1，P0）
 
 ```
