@@ -26,6 +26,7 @@ import {
   warnUnknownEndpointOnce,
 } from './mock-backend-replica-kit';
 import { createReplCrmFetcherBranches } from './mock-backend-repl-crm';
+import { createReplItamFetcherBranches } from './mock-backend-repl-itam';
 import { createReplFetcherBranches } from './mock-backend-repl-wms';
 import { confirmBridge } from './confirm-bridge';
 import { createMockAiStream, createMockAiConnector, createAiImportLoader } from '../../ai/mock-ai-env';
@@ -123,6 +124,8 @@ export function createShowcaseEnv(): { env: RendererEnv; db: MockDatabase } {
     // Plan 801 adds the CRM face (C1 opportunity kanban).
     ...createReplFetcherBranches(),
     ...createReplCrmFetcherBranches(),
+    // Plan 804 (D1 §4 branch A): I1 asset-inventory joins the ITAM face.
+    ...createReplItamFetcherBranches(),
   ]);
 
   const fetcher = async function fetcher<T>(api: FetcherApi): Promise<{ status: number; data: T }> {

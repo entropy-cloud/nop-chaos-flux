@@ -40,6 +40,9 @@ const ROUTES = [
   // Plan 803 (D1 §4 branch A): C3 sales-dashboard joins the standard desktop
   // scan set (non-mobile page — pure JSON SchemaPage, no host override).
   'complex-pages/crm-sales-dashboard',
+  // Plan 804 (D1 §4 branch A): I1 asset-inventory joins the standard desktop
+  // scan set (non-mobile page — pure JSON SchemaPage, no host override).
+  'complex-pages/itam-asset-inventory',
   'dashboard-demo',
 ];
 

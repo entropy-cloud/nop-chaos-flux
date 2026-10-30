@@ -470,6 +470,17 @@ oldContent: ${stockTakeDiff.textDiff.oldText}
 newContent: ${stockTakeDiff.textDiff.newText}
 ```
 
+#### I1 实现勘误（M3 落地实证 2026-10-30，plan 804；以 live 为准）
+
+1. **repairCreate 端点缺口补登**（§4.3 原六名外）：D2 §2.7 drawer 仅 button+form 未定义提交端点——已按 drillRows 先例显式裁决补充 repairCreate（D2 §4.3 缺口落地勘误，drillRows/W3 先例同款）。
+2. **§5 ②「队列项 status=duplicate」相机面 headless 不可达**：batchMode 队列渲染在相机 scanner-overlay 内（checkCameraAvailability 门控）——按 §2.1 勘误 5（barcode-headless）口径以模拟扫码走同一动作链验收 toast+计数，队列项 face 登记 a11y/e2e 后续观察。
+3. **levelMap `even: neutral`**：不在 StatusLevel 联合但 status renderer STATUS_LEVEL_VARIANT 实证映射 secondary——按 live 保留。
+4. **未扫行结算为盘亏**为 mock 裁决口径（§4.3 未规定差异生成规则），保证三态差异确定性复现。
+5. **stockTakeGet 逐请求克隆**：返回同引用行对象会让 table 行 memo 跳过重渲染——mock 改逐请求克隆（模块注释留证）。
+6. **lastRepairBody 钩子增补（plan 804 收口审计 Minor-2）**：§4.4 itam 钩子表补登 lastRepairBody（drawer 报修提交镜像）——W2 lastWaveMoveBody 表内登记先例同款。
+7. **stockTakeScan 响应新增 `name` 字段**（plan 804 收口审计 Minor-3a）：§4.3 形状 `{assetCode, scannedCount}` 之外新增 name 供 scanFeedback 模板消费。
+8. **onScan 回写通道替换**（plan 804 收口审计 Minor-3b，W1 勘误 2 同因）：片段 onScan setValue path: scannedCount 替换为 setValues scanFeedback + refreshSource stockTakeGet——逐请求克隆（第 5 条）为使能措施。
+
 ### 2.8 itam-depreciation-dashboard（I2，P2）
 
 ```

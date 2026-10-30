@@ -1,0 +1,597 @@
+{
+  "type": "page",
+  "body": [
+    {
+      "type": "data-source",
+      "name": "stockTakeGet",
+      "action": "ajax",
+      "args": {
+        "url": "/r/ReplItam__stockTakeGet",
+        "method": "get",
+        "params": {
+          "takeId": "ST-2026-001"
+        }
+      },
+      "testid": "itam-asset-inventory-take-source"
+    },
+    {
+      "type": "data-source",
+      "name": "stockTakeDiff",
+      "action": "ajax",
+      "args": {
+        "url": "/r/ReplItam__stockTakeDiff",
+        "method": "get",
+        "params": {
+          "takeId": "ST-2026-001"
+        }
+      },
+      "testid": "itam-asset-inventory-diff-source"
+    },
+    {
+      "type": "flex",
+      "direction": "column",
+      "gap": 8,
+      "testid": "itam-asset-inventory-root",
+      "body": [
+        {
+          "type": "tabs",
+          "testid": "itam-asset-inventory-tabs",
+          "mountOnEnter": true,
+          "items": [
+            {
+              "key": "ledger",
+              "title": "资产台账",
+              "body": [
+                {
+                  "type": "crud",
+                  "id": "itam-asset-inventory-crud",
+                  "testid": "itam-asset-inventory-crud",
+                  "itemKey": "assetCode",
+                  "loadAction": {
+                    "dependsOn": ["__init_load__"],
+                    "action": "ajax",
+                    "args": {
+                      "url": "/r/ReplItam__assetFindPage",
+                      "method": "get",
+                      "data": {
+                        "keyword": "${query.keyword ?? ''}"
+                      }
+                    }
+                  },
+                  "queryForm": {
+                    "layout": "horizontal",
+                    "labelWidth": 70,
+                    "columnCount": 2,
+                    "gap": "sm",
+                    "body": [
+                      {
+                        "type": "input-text",
+                        "name": "keyword",
+                        "label": "关键字",
+                        "placeholder": "资产编码 / 名称 / 序列号 / 责任人",
+                        "testid": "itam-asset-inventory-query-keyword"
+                      }
+                    ]
+                  },
+                  "selection": {},
+                  "toolbar": [
+                    {
+                      "type": "button",
+                      "label": "刷新",
+                      "icon": "rotate-cw",
+                      "variant": "outline",
+                      "testid": "itam-asset-inventory-crud-refresh",
+                      "onClick": {
+                        "action": "component:refresh",
+                        "componentId": "itam-asset-inventory-crud"
+                      }
+                    },
+                    {
+                      "type": "batch-bar",
+                      "testid": "itam-asset-inventory-batch-bar",
+                      "selectionPath": "$crud.selectedRowKeys",
+                      "countTemplate": "已选 ${count} 台设备",
+                      "clearTarget": "itam-asset-inventory-crud",
+                      "clearLabel": "清空选择",
+                      "actions": [
+                        {
+                          "type": "button",
+                          "label": "批量打印标签",
+                          "variant": "outline",
+                          "testid": "itam-asset-inventory-batch-print",
+                          "onClick": {
+                            "action": "showToast",
+                            "args": {
+                              "level": "info",
+                              "message": "打印任务已生成"
+                            }
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "columns": [
+                    { "name": "assetCode", "label": "资产编码", "width": 130 },
+                    { "name": "name", "label": "资产名称", "width": 140 },
+                    { "name": "model", "label": "型号", "width": 100 },
+                    { "name": "serialNo", "label": "序列号", "width": 120 },
+                    { "name": "category", "label": "类别", "width": 90 },
+                    { "name": "ownerName", "label": "责任人", "width": 90 },
+                    { "name": "location", "label": "存放位置", "width": 100 },
+                    { "name": "leaseEndDate", "label": "租约到期", "width": 110 },
+                    {
+                      "name": "status",
+                      "label": "状态",
+                      "width": 100,
+                      "cell": {
+                        "type": "status",
+                        "value": "${status}",
+                        "labelMap": {
+                          "IN_SERVICE": "在用",
+                          "IN_STOCK": "库存中",
+                          "MAINTENANCE": "维修中",
+                          "RETIRED": "已退役"
+                        },
+                        "levelMap": {
+                          "IN_SERVICE": "success",
+                          "IN_STOCK": "info",
+                          "MAINTENANCE": "warning",
+                          "RETIRED": "neutral"
+                        }
+                      }
+                    }
+                  ],
+                  "empty": { "type": "text", "text": "暂无资产" }
+                }
+              ]
+            },
+            {
+              "key": "take",
+              "title": "盘点作业",
+              "body": [
+                {
+                  "type": "form",
+                  "id": "itam-take-form",
+                  "testid": "itam-asset-inventory-take-form",
+                  "data": {
+                    "takeId": "ST-2026-001",
+                    "assetBarcode": "",
+                    "scanFeedback": ""
+                  },
+                  "body": [
+                    {
+                      "type": "flex",
+                      "direction": "row",
+                      "gap": 12,
+                      "className": "items-center flex-wrap",
+                      "testid": "itam-asset-inventory-take-header",
+                      "body": [
+                        {
+                          "type": "text",
+                          "testid": "itam-asset-inventory-take-id",
+                          "text": "盘点单 ${stockTakeGet?.id ?? '-'}",
+                          "className": "text-sm font-medium"
+                        },
+                        {
+                          "type": "status",
+                          "testid": "itam-asset-inventory-take-status",
+                          "value": "${stockTakeGet?.status}",
+                          "labelMap": {
+                            "DRAFT": "草稿",
+                            "CONFIRMED": "盘点中",
+                            "DONE": "已完成"
+                          },
+                          "levelMap": {
+                            "DRAFT": "info",
+                            "CONFIRMED": "processing",
+                            "DONE": "success"
+                          }
+                        },
+                        {
+                          "type": "text",
+                          "testid": "itam-asset-inventory-scanned-count",
+                          "text": "已扫描 ${stockTakeGet?.scannedCount ?? 0} 件",
+                          "className": "text-sm text-muted-foreground"
+                        },
+                        {
+                          "type": "button",
+                          "label": "开始盘点",
+                          "variant": "primary",
+                          "testid": "itam-asset-inventory-start-take",
+                          "visible": "${stockTakeGet?.status === 'DRAFT'}",
+                          "onClick": {
+                            "action": "ajax",
+                            "args": {
+                              "url": "/r/ReplItam__stockTakeStart",
+                              "method": "post",
+                              "data": {
+                                "takeId": "${takeId}"
+                              }
+                            },
+                            "messages": {
+                              "success": "盘点已开始"
+                            },
+                            "then": [
+                              {
+                                "action": "refreshSource",
+                                "targetId": "stockTakeGet"
+                              }
+                            ],
+                            "onError": [
+                              {
+                                "action": "showToast",
+                                "args": {
+                                  "level": "error",
+                                  "message": "${error?.message ?? '盘点开始被拒绝'}"
+                                }
+                              }
+                            ]
+                          }
+                        },
+                        {
+                          "type": "button",
+                          "label": "完成盘点",
+                          "variant": "primary",
+                          "testid": "itam-asset-inventory-complete-take",
+                          "visible": "${stockTakeGet?.status === 'CONFIRMED'}",
+                          "onClick": {
+                            "action": "openDialog",
+                            "args": {
+                              "title": "完成盘点确认",
+                              "testid": "itam-asset-inventory-complete-dialog",
+                              "closeOnSubmit": true,
+                              "data": {
+                                "takeId": "${takeId}"
+                              },
+                              "body": [
+                                {
+                                  "type": "form",
+                                  "testid": "itam-asset-inventory-complete-form",
+                                  "submitScope": "surface",
+                                  "data": {
+                                    "takeId": "${takeId}",
+                                    "secondaryConfirmed": true
+                                  },
+                                  "body": [
+                                    {
+                                      "type": "text",
+                                      "testid": "itam-asset-inventory-complete-summary",
+                                      "text": "将结束盘点单 ${takeId}：未扫码资产按盘亏结算，盘盈盘亏生成差异移库单。",
+                                      "className": "text-sm"
+                                    }
+                                  ],
+                                  "actions": [
+                                    {
+                                      "type": "button",
+                                      "label": "确认完成",
+                                      "variant": "primary",
+                                      "testid": "itam-asset-inventory-confirm-complete",
+                                      "onClick": {
+                                        "action": "submitForm"
+                                      }
+                                    }
+                                  ],
+                                  "submitAction": {
+                                    "action": "ajax",
+                                    "args": {
+                                      "url": "/r/ReplItam__stockTakeComplete",
+                                      "method": "post",
+                                      "data": {
+                                        "takeId": "${takeId}",
+                                        "confirmed": "${secondaryConfirmed}"
+                                      }
+                                    },
+                                    "messages": {
+                                      "success": "盘点已完成"
+                                    },
+                                    "onError": [
+                                      {
+                                        "action": "showToast",
+                                        "args": {
+                                          "level": "error",
+                                          "message": "${error?.message ?? '完成盘点被拒绝'}"
+                                        }
+                                      }
+                                    ]
+                                  }
+                                }
+                              ],
+                              "onSubmitSuccess": [
+                                {
+                                  "action": "refreshSource",
+                                  "targetId": "stockTakeGet"
+                                },
+                                {
+                                  "action": "refreshSource",
+                                  "targetId": "stockTakeDiff"
+                                }
+                              ]
+                            }
+                          }
+                        },
+                        {
+                          "type": "button",
+                          "label": "资产报修",
+                          "variant": "outline",
+                          "testid": "itam-asset-inventory-repair-open",
+                          "onClick": {
+                            "action": "openDrawer",
+                            "args": {
+                              "title": "盘点中报修",
+                              "testid": "itam-asset-inventory-repair-drawer",
+                              "side": "right",
+                              "closeOnSubmit": true,
+                              "data": {
+                                "takeId": "${takeId}"
+                              },
+                              "body": [
+                                {
+                                  "type": "form",
+                                  "testid": "itam-asset-inventory-repair-form",
+                                  "submitScope": "surface",
+                                  "data": {
+                                    "takeId": "${takeId}",
+                                    "assetCode": "",
+                                    "content": ""
+                                  },
+                                  "body": [
+                                    {
+                                      "type": "input-text",
+                                      "name": "assetCode",
+                                      "label": "资产编码",
+                                      "testid": "itam-asset-inventory-repair-asset",
+                                      "placeholder": "如 IT-2026-0003"
+                                    },
+                                    {
+                                      "type": "textarea",
+                                      "name": "content",
+                                      "label": "报修内容（必填，缺失将被服务端拒绝）",
+                                      "testid": "itam-asset-inventory-repair-content",
+                                      "placeholder": "描述故障现象"
+                                    }
+                                  ],
+                                  "actions": [
+                                    {
+                                      "type": "button",
+                                      "label": "取消",
+                                      "variant": "outline",
+                                      "testid": "itam-asset-inventory-repair-cancel",
+                                      "onClick": {
+                                        "action": "closeSurface"
+                                      }
+                                    },
+                                    {
+                                      "type": "button",
+                                      "label": "提交报修",
+                                      "variant": "primary",
+                                      "testid": "itam-asset-inventory-repair-submit",
+                                      "onClick": {
+                                        "action": "submitForm"
+                                      }
+                                    }
+                                  ],
+                                  "submitAction": {
+                                    "action": "ajax",
+                                    "args": {
+                                      "url": "/r/ReplItam__repairCreate",
+                                      "method": "post",
+                                      "data": {
+                                        "takeId": "${takeId}",
+                                        "assetCode": "${assetCode}",
+                                        "content": "${content}"
+                                      }
+                                    },
+                                    "messages": {
+                                      "success": "报修已受理"
+                                    },
+                                    "onError": [
+                                      {
+                                        "action": "showToast",
+                                        "args": {
+                                          "level": "error",
+                                          "message": "报修提交被拒绝：内容缺失（content required）"
+                                        }
+                                      }
+                                    ]
+                                  }
+                                }
+                              ]
+                            }
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "type": "flex",
+                      "direction": "row",
+                      "gap": 8,
+                      "className": "items-end",
+                      "body": [
+                        {
+                          "type": "barcode-input",
+                          "name": "assetBarcode",
+                          "label": "资产标签码",
+                          "testid": "itam-asset-inventory-scan",
+                          "placeholder": "扫资产标签码或手输编码",
+                          "formats": ["qr_code", "code_128"],
+                          "batchMode": true,
+                          "scanButton": true,
+                          "onScan": [
+                            {
+                              "action": "ajax",
+                              "args": {
+                                "url": "/r/ReplItam__stockTakeScan",
+                                "method": "post",
+                                "data": {
+                                  "takeId": "${takeId}",
+                                  "assetBarcode": "${assetBarcode}"
+                                }
+                              },
+                              "then": [
+                                {
+                                  "action": "setValues",
+                                  "args": {
+                                    "values": {
+                                      "scanFeedback": "${result.data.assetCode} · ${result.data.name}"
+                                    }
+                                  }
+                                },
+                                {
+                                  "action": "showToast",
+                                  "args": {
+                                    "level": "success",
+                                    "message": "扫码登记成功"
+                                  }
+                                },
+                                {
+                                  "action": "refreshSource",
+                                  "targetId": "stockTakeGet"
+                                }
+                              ],
+                              "onError": [
+                                {
+                                  "action": "showToast",
+                                  "args": {
+                                    "level": "error",
+                                    "message": "${error?.message ?? '扫码被拒绝'}"
+                                  }
+                                }
+                              ]
+                            }
+                          ],
+                          "onScanError": [
+                            {
+                              "action": "showToast",
+                              "args": {
+                                "level": "error",
+                                "message": "${error?.message ?? '扫码失败'}"
+                              }
+                            }
+                          ]
+                        },
+                        {
+                          "type": "button",
+                          "label": "模拟扫码",
+                          "variant": "outline",
+                          "testid": "itam-asset-inventory-simulate-scan",
+                          "onClick": {
+                            "action": "ajax",
+                            "args": {
+                              "url": "/r/ReplItam__stockTakeScan",
+                              "method": "post",
+                              "data": {
+                                "takeId": "${takeId}",
+                                "assetBarcode": "${assetBarcode}"
+                              }
+                            },
+                            "then": [
+                              {
+                                "action": "setValues",
+                                "args": {
+                                  "values": {
+                                    "scanFeedback": "${result.data.assetCode} · ${result.data.name}"
+                                  }
+                                }
+                              },
+                              {
+                                "action": "showToast",
+                                "args": {
+                                  "level": "success",
+                                  "message": "扫码登记成功"
+                                }
+                              },
+                              {
+                                "action": "refreshSource",
+                                "targetId": "stockTakeGet"
+                              }
+                            ],
+                            "onError": [
+                              {
+                                "action": "showToast",
+                                "args": {
+                                  "level": "error",
+                                  "message": "${error?.message ?? '扫码被拒绝'}"
+                                }
+                              }
+                            ]
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "type": "text",
+                      "testid": "itam-asset-inventory-scan-feedback",
+                      "text": "最近扫码：${scanFeedback ?? '-'}",
+                      "className": "text-sm text-muted-foreground"
+                    },
+                    {
+                      "type": "table",
+                      "testid": "itam-asset-inventory-take-lines",
+                      "source": "${stockTakeGet?.lines ?? []}",
+                      "itemKey": "assetCode",
+                      "pagination": { "enabled": false },
+                      "columns": [
+                        { "name": "assetCode", "label": "资产编码", "width": 140 },
+                        { "name": "bookQty", "label": "账面数", "width": 90 },
+                        { "name": "actualQty", "label": "实盘数", "width": 90 },
+                        { "name": "scannedAt", "label": "扫码时间", "width": 150 }
+                      ],
+                      "empty": { "type": "text", "text": "盘点单无账面行" }
+                    },
+                    {
+                      "type": "text",
+                      "testid": "itam-asset-inventory-diff-count",
+                      "text": "本次盘差 ${stockTakeDiff?.differencesCount ?? 0} 条",
+                      "className": "text-sm font-medium"
+                    },
+                    {
+                      "type": "table",
+                      "testid": "itam-asset-inventory-diff-table",
+                      "source": "${stockTakeDiff?.rows ?? []}",
+                      "itemKey": "assetCode",
+                      "pagination": { "enabled": false },
+                      "columns": [
+                        { "name": "assetCode", "label": "资产编码", "width": 140 },
+                        { "name": "name", "label": "资产名称", "width": 140 },
+                        { "name": "bookQty", "label": "账面数", "width": 90 },
+                        { "name": "actualQty", "label": "实盘数", "width": 90 },
+                        {
+                          "name": "differenceQuantity",
+                          "label": "差异（+盘盈/-盘亏）",
+                          "width": 160,
+                          "cell": {
+                            "type": "status",
+                            "value": "${differenceQuantity > 0 ? 'surplus' : differenceQuantity < 0 ? 'loss' : 'even'}",
+                            "labelMap": {
+                              "surplus": "盘盈",
+                              "loss": "盘亏",
+                              "even": "平"
+                            },
+                            "levelMap": {
+                              "surplus": "success",
+                              "loss": "error",
+                              "even": "neutral"
+                            }
+                          }
+                        }
+                      ],
+                      "empty": { "type": "text", "text": "完成盘点后生成差异" }
+                    },
+                    {
+                      "type": "diff-view",
+                      "testid": "itam-asset-inventory-diff-view",
+                      "viewType": "split",
+                      "defaultCollapsedLines": 0,
+                      "oldContent": "${stockTakeDiff?.textDiff?.oldText ?? ''}",
+                      "newContent": "${stockTakeDiff?.textDiff?.newText ?? ''}"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

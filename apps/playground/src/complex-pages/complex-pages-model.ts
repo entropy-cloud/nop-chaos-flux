@@ -465,4 +465,12 @@ export const COMPLEX_PAGE_ENTRIES: ComplexPageEntry[] = [
       '复刻 CRM 销售驾驶舱页（roadmap 21 页 C3，D2 §2.6 桌面整页）：dashboard 网格（cols/panels x/y/w/h，复刻面首个 dashboard 族消费页）+ panel 内 stat-tile KPI 阵列×4（漏斗总额/转化率/预测达成/配额完成 ← dashboardKpi）+ echarts 月度趋势（onClick 钻取参数链 setValue→refreshSource→openDialog drillRows，W3 参数链先例）+ chart bar 漏斗近似（G1，funnelStages 序降序）+ panel table 阶段报表区块 + 报表下载（button→download action，G6，{url,filename} live 契约）+ 条件筛选级联（form+valuesPath 载体 + 查询按钮 refreshSource 顶层 targetId 四源，W2 勘误 5/6 实况）。数据经 /r/ReplCrm__dashboardKpi/dashboardTrend/drillRows/forecastAccuracy/reportDownload/funnelSummary 端点流动。',
     features: ['dashboard 网格', 'stat-tile KPI 阵列', 'echarts 点击钻取', '漏斗 bar 近似', 'panel table 报表', 'download 报表导出', '筛选级联多源刷新', 'ReplCrm__ 端点'],
   },
+  {
+    id: 'itam-asset-inventory',
+    title: 'ITAM 资产台账与盘点页',
+    category: 'business-replication',
+    description:
+      '复刻 ITAM 资产台账与盘点页（roadmap 21 页 I1，D2 §2.7 桌面整页）：资产台账 crud（IT 视角字段面 queryForm 过滤 + selection + batch-bar 批量打印标签 countTemplate/清空）+ 盘点作业三阶段（DRAFT→CONFIRMED→DONE 状态徽章迁移：startTake 确认 / barcode-input batchMode 扫码队列 + 模拟扫码走同一 stockTakeScan 链 + 扫描落行表 / completeTake 二次确认 dialog→stockTakeComplete 生成差异）+ 盘点差异表（differenceQuantity 服务端派生 + status labelMap/levelMap 盘盈盘亏平三态标色）+ diff-view split 账面 vs 实盘对照〔flux 侧预期〕+ 盘点中报修 drawer（repairCreate，content required 守卫）。数据经 /r/ReplItam__* 端点流动。',
+    features: ['crud 台账 IT 字段面', 'batch-bar 批量操作', 'barcode-input batchMode', '盘点三阶段徽章', '差异三态标色', 'diff-view split', '报修 drawer', 'ReplItam__ 端点'],
+  },
 ];

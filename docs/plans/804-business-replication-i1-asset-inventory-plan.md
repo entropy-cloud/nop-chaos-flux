@@ -1,6 +1,6 @@
 # 804 M3-I1 ITAM 资产台账与盘点页复刻（business-page-replication roadmap M3-I1）
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-10-30
 > Source: `docs/backlog/business-page-replication-roadmap.md` §2 M3-I1（依赖 M2 done；前置 W1-C3 done——设施与 repl mock 模式就绪）
 > Related: D1 总体设计；D2 §2.7/§4.3/§4.4/§5（I1 页设计与端点/钩子表）；R1 §3 I1；R4 §1 I1（无缺口——全要素现成 type）
@@ -51,25 +51,25 @@
 
 ### Phase 1 - I1 页全链实现
 
-Status: planned
+Status: completed
 Targets: `mock-backend-repl-itam.ts`（新建）、`page-schemas/itam-asset-inventory.json`、`complex-pages-model.ts`（entry）、`showcase-env.ts`（ReplItam 接线）、`tests/e2e/replication-itam-asset-inventory.spec.ts`、axe spec/JSON
 
 - Item Types: `Fix | Proof`
 
-- [ ] mock 新建：`mock-backend-repl-itam.ts` I1 子集端点**逐名对齐 D2 §4.3 itam 表原六名**（assetFindPage〔IT 字段面 ≥25 行〕/stockTakeGet/stockTakeStart/stockTakeScan〔服务端派生 differenceQuantity〕/stockTakeComplete/stockTakeDiff，含错误分支〔盘点单状态守卫/重复扫码〕）；**报修提交端点 repairCreate 为 D2 §4.3 缺口的显式裁决补充**（D2 drawer 仅写 button+form 未定义端点——落地时就地勘误补登，drillRows 先例）；钩子按 D2 §4.4 原名（scanMiss/duplicateScan/forceCompleteGuard/lastScanBody）+ lastRepairBody 增补登记
-- [ ] showcase-env 接线 `/r/ReplItam__` 分支
-- [ ] complex-pages-model.ts 加 itam-asset-inventory entry
-- [ ] schema JSON（D2 §2.7 组件树：crud 台账+query-filter/batch-bar/盘点区 barcode-input batchMode+扫描落行表/差异表 status 标色/diff-view split/报修 button+drawer；testid `<pageId>-<element>`；strict 零 error）
-- [ ] e2e spec 三支柱（**§5 ①-⑤**：手输资产码 scan 计数+scannedCount/duplicateScan status=duplicate+toast/三阶段徽章+complete 二次确认+差异行数/差异三态标色 getComputedStyle/batch-bar 选 2 行 countTemplate+清空；**补充断言**：台账筛选、diff-view 渲染、报修 drawer 提交计数+焦点往返；axe 分支 A；focus 3 条〔focus① 预登记 W1 勘误 7 同源退守：barcode-input 画布内不可 Tab 直达→退守 tab 必达画布内容〕）
-- [ ] axe ROUTES + JSON 登记（分支 A；首跑实测回填+\_notes）
-- [ ] 验证：`npx playwright test tests/e2e/replication-itam-asset-inventory.spec.ts --retries=0` 全绿 + axe spec 绿 + W1-W3/C1-C3 回归 + playground typecheck + strict 校验
+- [x] mock 新建：`mock-backend-repl-itam.ts`（406 行 <500）I1 子集端点**逐名对齐 D2 §4.3 itam 表原六名**（assetFindPage〔IT 字段面 ≥25 行〕/stockTakeGet/stockTakeStart/stockTakeScan〔服务端派生 differenceQuantity〕/stockTakeComplete/stockTakeDiff，含错误分支〔盘点单状态守卫/重复扫码〕）；**报修提交端点 repairCreate 为 D2 §4.3 缺口的显式裁决补充**（D2 drawer 仅写 button+form 未定义端点——落地时就地勘误补登，drillRows 先例）；钩子按 D2 §4.4 原名（scanMiss/duplicateScan/forceCompleteGuard/lastScanBody）+ lastRepairBody 增补登记
+- [x] showcase-env 接线 `/r/ReplItam__` 分支
+- [x] complex-pages-model.ts 加 itam-asset-inventory entry
+- [x] schema JSON（D2 §2.7 组件树：crud 台账+query-filter/batch-bar/盘点区 barcode-input batchMode+扫描落行表/差异表 status 标色/diff-view split/报修 button+drawer；testid `<pageId>-<element>`；strict 零 error）
+- [x] e2e spec 三支柱（**§5 ①-⑤**：手输资产码 scan 计数+scannedCount/duplicateScan status=duplicate+toast/三阶段徽章+complete 二次确认+差异行数/差异三态标色 getComputedStyle/batch-bar 选 2 行 countTemplate+清空；**补充断言**：台账筛选、diff-view 渲染、报修 drawer 提交计数+焦点往返；axe 分支 A；focus 3 条〔focus① 预登记 W1 勘误 7 同源退守：barcode-input 画布内不可 Tab 直达→退守 tab 必达画布内容〕）
+- [x] axe ROUTES + JSON 登记（分支 A；实测回填 aria-required-attr:9/color-contrast:9 + \_notes）
+- [x] 验证：I1 spec `--retries=0` 11/11 + axe 14/14 + W1-W3/C1-C3 回归 59/59 + playground typecheck/build/lint 绿 + unit 548/548 + strict 校验
 
 Exit Criteria:
 
-- [ ] I1 页可达可交互且列表页收录，strict validation 零 error
-- [ ] focused e2e `--retries=0` 全绿（断言含 \_\_replItamCalls 计数证据）
-- [ ] axe 基线登记绿
-- [ ] roadmap §2 I1 回写 `done`（随 closure audit 通过的同一次回写提交完成，guide When Closing 9）
+- [x] I1 页可达可交互且列表页收录，strict validation 零 error（unit 548/548 含 strict 校验）
+- [x] focused e2e `--retries=0` 全绿（11/11；断言含 \_\_replItamCalls 计数证据）
+- [x] axe 基线登记绿（14/14）
+- [x] roadmap §2 I1 回写 `done`（随 closure audit 通过的同一次回写提交完成，guide When Closing 9）
 
 ## Draft Review Record
 
@@ -91,12 +91,12 @@ Exit Criteria:
 - [ ] 必要 focused verification 已完成
 - [ ] 不存在被静默降级的 in-scope 缺口
 - [ ] 受影响 owner docs 已同步（daily log；设计勘误如有）
-- [ ] 独立子 agent（fresh session）closure audit 通过并记录证据
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`（触达面零新增红口径）
-- [ ] `pnpm test`（触达面零新增红口径）
-- [ ] `pnpm check`（触达面零新增红口径；**新 schema 的 radio/calendar 等引用如触发 scanner-baselines 增量，首跑实测后就地注册+note**；mock 模块 <500 行防 oversized——delegate 模式）
+- [x] 独立子 agent（fresh session）closure audit 通过并记录证据
+- [x] `pnpm typecheck`（OK）
+- [x] `pnpm build`（OK）
+- [x] `pnpm lint`（OK）
+- [x] `pnpm test`（OK）
+- [x] `pnpm check`（OK——五门禁全绿；mock 406 行 <500 防 oversized；radio/calendar 引用未触发 scanner 增量）
 
 ## Deferred But Adjudicated
 
@@ -113,13 +113,14 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: 待收口填写
+Status Note: I1 全链落地（itam mock 六端点+repairCreate 显式裁决补充+钩子五件/台账 crud IT 字段面+batch-bar/盘点三阶段+barcode batchMode+模拟扫码同链/差异三态标色/diff-view split/报修 drawer）。closure audit **approved** 零 Blocker/Major（3 Minor 随收口处理：日志去重/lastRepairBody §4.4 补登/勘误 6-8 增量补记）。审计员独立实跑 I1 11/11、W1/C3 回归 22/22、unit 548/548、typecheck/check 全绿（五门禁全绿首例）。§5 ② 相机面 headless 不可达按勘误 2 口径退守非静默降级；R1 要素②⑧ 不实现裁决已登记 P1 对账。I1 可关，M3 累计 7/21 页。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: 待独立子 agent 填写
-- Evidence: 待填写
+- Auditor / Agent: 独立子 agent（fresh session，general-purpose）
+- Evidence: verdict `approved`（零 Blocker/Major，3 Minor）——审计员独立实跑 I1 11/11（retries=0）+ W1/C3 回归 22/22 + unit 548/548 + typecheck/check 全绿；duplicateScan 双路径（natural+钩子强扫）+lastScanBody 逐字段核验；三阶段徽章迁移+盘差 24+28 差异行计数证据；四处预登记退守非静默降级核验；详见 `docs/logs/2026/10-30.md`。
 
 Follow-up:
 
-- 待收口填写
+- 全量 test:e2e 归 P1 阶段
+- §5 ② 队列项 duplicate 面 headless 验收通道登记后续观察
