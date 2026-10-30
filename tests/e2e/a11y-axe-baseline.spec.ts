@@ -24,6 +24,9 @@ const ROUTES = [
   // target pages (old home-page counts are not transferable).
   'gantt',
   'complex-pages/standard-crud',
+  // Plan 799 (D1 §4 branch A): W2 wave-picking joins the standard desktop
+  // scan set (non-mobile page — pure JSON SchemaPage, no host override).
+  'complex-pages/wms-wave-picking',
   'dashboard-demo',
 ];
 

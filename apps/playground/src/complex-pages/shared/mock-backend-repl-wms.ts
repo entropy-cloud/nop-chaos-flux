@@ -6,9 +6,10 @@
  * under the 700-line hard gate. W1 (wms-pda-receiving) ships the endpoint
  * subset its schema consumes — `asnFindPage` / `asnGet` / `asnReceive` /
  * `putawaySubmit` / `taskRecords` (D2 §4.1 original names; `validate` is a
- * barcode-input schema property, not an endpoint). W2 (`wave*`, `picking*`)
- * and W3 (`stock*`, `ledgerReport`, `reconCheck`) endpoints land with their
- * pages and extend `createReplFetcherBranches`.
+ * barcode-input schema property, not an endpoint). W2 (plan 799) adds the
+ * wave subset — `waveFindPage` / `waveBoard` / `waveMove` / `waveRelease` /
+ * `waveLines` / `pickingTasks`. W3 (`stock*`, `ledgerReport`, `reconCheck`)
+ * endpoints land with their page and extend `createReplFetcherBranches`.
  *
  * Envelopes (D1 §2): queries `{status:0, data:{items,total}}`, mutations
  * `{status:0, data:{...}}`, error paths `{status:1, msg}`. Session state
@@ -18,8 +19,10 @@
  * Opt-in e2e observation (D1 §2 / D2 §4.4): specs pre-create
  * `window.__replWmsCalls` + `window.__replWmsTestHooks` via addInitScript;
  * production never sets them, so both stay no-ops (airtable precedent).
- * Hooks: `asnMiss`, `duplicateIdempotencyKey`, `forceOffline` plus the
- * last-request-body mirrors `lastAsnReceiveBody` / `lastPutawayBody`.
+ * Hooks: `asnMiss`, `duplicateIdempotencyKey`, `forceOffline`, the
+ * last-request-body mirrors `lastAsnReceiveBody` / `lastPutawayBody`, plus
+ * the W2 mirrors `lastWaveMoveBody` (G2 field-by-field assertion, D2 §3.3 ③)
+ * and `lastWaveReleaseBody`.
  */
 
 import {
@@ -61,6 +64,54 @@ export interface ReplWmsTaskRecord {
   result: 'OK' | 'FAIL';
 }
 
+export type ReplWmsWaveStatus = 'PLANNED' | 'RELEASED' | 'PICKING' | 'DONE';
+
+export interface ReplWmsWave {
+  id: string;
+  code: string;
+  status: ReplWmsWaveStatus;
+  orderCount: number;
+  totalQty: number;
+  zone: string;
+  priority: 'HIGH' | 'MID' | 'LOW';
+}
+
+export interface ReplWmsWaveLine {
+  lineNo: number;
+  skuBarcode: string;
+  skuName: string;
+  locationCode: string;
+  qty: number;
+  pickedQty: number;
+  unitPrice: number;
+  amount: number;
+}
+
+export interface ReplWmsPickingTask {
+  id: string;
+  text: string;
+  start: string;
+  end: string;
+  progress: number;
+  zone: string;
+}
+
+export interface ReplWmsPickingLink {
+  id: string;
+  source: string;
+  target: string;
+  type: 'finish_to_start';
+}
+
+export const REPL_WMS_WAVE_STAGES: readonly ReplWmsWaveStatus[] = [
+  'PLANNED',
+  'RELEASED',
+  'PICKING',
+  'DONE',
+];
+
+export const REPL_WMS_WAVE_ZONES = ['Z-A', 'Z-B', 'Z-C'] as const;
+
 interface ReplWmsTestHooks {
   asnMiss?: boolean;
   duplicateIdempotencyKey?: boolean;
@@ -70,6 +121,11 @@ interface ReplWmsTestHooks {
   forcePutawayInvalid?: boolean;
   lastAsnReceiveBody?: Record<string, unknown>;
   lastPutawayBody?: Record<string, unknown>;
+  /** G2 (D2 §3.3 ③): mirror of the last `waveMove` request body for the
+   * field-by-field request assertion (waveId ↔ card id, fromStatus ↔ source
+   * column id, toStatus ↔ target column id). */
+  lastWaveMoveBody?: Record<string, unknown>;
+  lastWaveReleaseBody?: Record<string, unknown>;
 }
 
 const SUPPLIERS = [
@@ -156,19 +212,185 @@ function createSeedTaskRecords(): ReplWmsTaskRecord[] {
   return rows;
 }
 
+/* ── W2 entities (D2 §4.1: Wave / WaveLine / GanttTask) ─────────────────── */
+
+const WAVE_COUNT = 26;
+const WAVE_LINES_PER_WAVE = 4;
+/** Picking-path timeline window (deterministic, no runtime date drift). */
+const PICKING_BASE_DAY = 2; // 2026-11-02 (Monday)
+const PICKING_TASKS_PER_ZONE = 5;
+
+const PRIORITIES: ReplWmsWave['priority'][] = ['HIGH', 'MID', 'LOW'];
+const WAVE_STAGE_TITLES: Record<ReplWmsWaveStatus, string> = {
+  PLANNED: '计划',
+  RELEASED: '已释放',
+  PICKING: '拣货中',
+  DONE: '已完成',
+};
+
+function waveStatusFor(i: number): ReplWmsWaveStatus {
+  // 7/7/6/6 over a 26-row cycle and wave-0001 opens in PLANNED — the first
+  // card of the first column stays deterministic for the drag test.
+  const cycle = (i - 1) % 4;
+  return (['PLANNED', 'RELEASED', 'PICKING', 'DONE'] as const)[cycle];
+}
+
+function createWaveRows(): ReplWmsWave[] {
+  const rows: ReplWmsWave[] = [];
+  for (let i = 1; i <= WAVE_COUNT; i += 1) {
+    rows.push({
+      id: `wave-${pad(i, 4)}`,
+      code: `WAVE-2026-${pad(i, 4)}`,
+      status: waveStatusFor(i),
+      orderCount: 3 + (i % 7),
+      totalQty: 40 + (i % 9) * 10,
+      zone: REPL_WMS_WAVE_ZONES[(i - 1) % REPL_WMS_WAVE_ZONES.length],
+      priority: PRIORITIES[i % PRIORITIES.length],
+    });
+  }
+  return rows;
+}
+
+/**
+ * Deterministic per-wave pick lines (D2 §4.1 WaveLine). Locations are emitted
+ * in ascending pick-path order (the travel sequence the gantt tab mirrors);
+ * `amount = qty * unitPrice` precomputed so the input-table computed column
+ * and mock summary agree.
+ */
+function createWaveLines(waveIndex: number): ReplWmsWaveLine[] {
+  const lines: ReplWmsWaveLine[] = [];
+  for (let l = 1; l <= WAVE_LINES_PER_WAVE; l += 1) {
+    const seq = (waveIndex + l) % LOCATIONS.length;
+    const qty = 6 + ((waveIndex + l) % 5) * 2;
+    const pickedQty = (waveIndex + l) % 3 === 0 ? qty : Math.max(0, qty - 2);
+    const unitPrice = 10 + ((waveIndex * 3 + l) % 7) * 5;
+    const skuIndex = (waveIndex * 2 + l) % SKU_NAMES.length;
+    lines.push({
+      lineNo: l,
+      skuBarcode: `6902${pad(waveIndex, 4)}${pad(l, 2)}`,
+      skuName: SKU_NAMES[skuIndex],
+      locationCode: LOCATIONS[seq],
+      qty,
+      pickedQty,
+      unitPrice,
+      amount: qty * unitPrice,
+    });
+  }
+  return lines;
+}
+
+/**
+ * Picking-path gantt tasks (D2 §4.1 GanttTask: `text` required, no
+ * `name`/`sequence` field — the mock pre-sorts by the upstream sequence and
+ * returns the ordered array, D5 erratum). One chained task chain per zone.
+ */
+function createPickingTasks(): { tasks: ReplWmsPickingTask[]; links: ReplWmsPickingLink[] } {
+  const tasks: ReplWmsPickingTask[] = [];
+  const links: ReplWmsPickingLink[] = [];
+  let seq = 0;
+  for (const zone of REPL_WMS_WAVE_ZONES) {
+    let previousId: string | undefined;
+    for (let t = 1; t <= PICKING_TASKS_PER_ZONE; t += 1) {
+      seq += 1;
+      const id = `pick-${pad(seq, 3)}`;
+      const startDay = PICKING_BASE_DAY + (seq % 3);
+      const endDay = startDay + 1;
+      tasks.push({
+        id,
+        text: `${zone} · ${LOCATIONS[(seq - 1) % LOCATIONS.length]} → 出货口`,
+        start: `2026-11-${pad(startDay, 2)} 08:00`,
+        end: `2026-11-${pad(endDay, 2)} 12:00`,
+        progress: 10 + ((seq * 17) % 90),
+        zone,
+      });
+      if (previousId) {
+        links.push({ id: `link-${pad(seq, 3)}`, source: previousId, target: id, type: 'finish_to_start' });
+      }
+      previousId = id;
+    }
+  }
+  return { tasks, links };
+}
+
+interface ReplWmsBoardCardData {
+  title: string;
+  description: string;
+  totalQty: number;
+  orderCount: number;
+  zone: string;
+  priority: string;
+}
+
+const WAVE_PRIORITY_COLORS: Record<ReplWmsWave['priority'], string> = {
+  HIGH: '#dc2626',
+  MID: '#f59e0b',
+  LOW: '#64748b',
+};
+
+/** Build the flat kanban BoardData (root + status columns + wave cards). */
+export function buildReplWaveBoardData(waves: ReplWmsWave[], zone?: string): Record<string, unknown> {
+  const board: Record<string, unknown> = {};
+  const rootChildren: string[] = [];
+  const filtered = zone ? waves.filter((wave) => wave.zone === zone) : waves;
+
+  for (const stage of REPL_WMS_WAVE_STAGES) {
+    const columnId = stage;
+    const stageWaves = filtered.filter((wave) => wave.status === stage);
+    const cardIds: string[] = [];
+    for (const wave of stageWaves) {
+      const cardData: ReplWmsBoardCardData = {
+        title: wave.code,
+        description: `${wave.zone} · ${wave.priority} · ${wave.orderCount} 单`,
+        totalQty: wave.totalQty,
+        orderCount: wave.orderCount,
+        zone: wave.zone,
+        priority: wave.priority,
+      };
+      board[wave.id] = {
+        id: wave.id,
+        type: 'card',
+        parentId: columnId,
+        children: [],
+        data: cardData,
+        meta: { color: WAVE_PRIORITY_COLORS[wave.priority] },
+      };
+      cardIds.push(wave.id);
+    }
+    board[columnId] = {
+      id: columnId,
+      type: 'column',
+      parentId: 'root',
+      children: cardIds,
+      data: { title: WAVE_STAGE_TITLES[stage] },
+      meta: {},
+    };
+    rootChildren.push(columnId);
+  }
+
+  board['root'] = { id: 'root', type: 'root', children: rootChildren, data: {}, meta: {} };
+  return board;
+}
+
 /* ── Module export ──────────────────────────────────────────────────────── */
 
 export interface ReplWmsSessionState {
   asns: ReplWmsAsn[];
   taskRecords: ReplWmsTaskRecord[];
   usedIdempotencyKeys: Set<string>;
+  waves: ReplWmsWave[];
+  pickingTasks: ReplWmsPickingTask[];
+  pickingLinks: ReplWmsPickingLink[];
 }
 
 export function createReplWmsSession(): ReplWmsSessionState {
+  const picking = createPickingTasks();
   return {
     asns: createAsnRows(),
     taskRecords: createSeedTaskRecords(),
     usedIdempotencyKeys: new Set<string>(),
+    waves: createWaveRows(),
+    pickingTasks: picking.tasks,
+    pickingLinks: picking.links,
   };
 }
 
@@ -320,9 +542,119 @@ export function createReplWmsFetcherBranch(session: ReplWmsSessionState = create
       };
     }
 
-    // W2/W3 endpoints (`wave*`, `pickingTasks`, `stock*`, `ledgerReport`,
-    // `reconCheck`) are NOT implemented yet — fall through so the caller's
-    // unknown-endpoint face applies (they land with their own pages).
+    // ----- W2 reads (D2 §4.1 wave subset) -----
+    if (input.url.includes('/r/ReplWms__waveFindPage') && method === 'get') {
+      // Error branch: sentinel keyword flips the query to a failure envelope
+      // (same pattern as W1's REPL-E-ASN).
+      if (read('keyword') === 'REPL-E-WAVE') {
+        return { status: 1, data: { msg: 'wave query failed (sentinel keyword)' } as unknown as T };
+      }
+      const zone = read('zone') ?? '';
+      const status = read('status') ?? '';
+      const rows = session.waves.filter(
+        (wave) => (!zone || wave.zone === zone) && (!status || wave.status === status),
+      );
+      const page = Number(read('page') ?? 1) || 1;
+      const perPage = Number(read('perPage') ?? 10) || 10;
+      const { items, total } = paginateRows(rows, page, perPage, { sizeKey: 'perPage', clampPages: true });
+      return { status: 0, data: { items, total } as unknown as T };
+    }
+
+    if (input.url.includes('/r/ReplWms__waveBoard') && method === 'get') {
+      const zone = read('zone') ?? '';
+      // Error branch (D2 §4.1): unknown zone sentinel → failure envelope.
+      if (zone === 'REPL-E-ZONE') {
+        return { status: 1, data: { msg: 'unknown zone' } as unknown as T };
+      }
+      const board = buildReplWaveBoardData(session.waves, zone || undefined);
+      return { status: 0, data: board as unknown as T };
+    }
+
+    if (input.url.includes('/r/ReplWms__waveLines') && method === 'get') {
+      const waveId = read('waveId') ?? '';
+      const waveIndex = session.waves.findIndex((wave) => wave.id === waveId);
+      // D2 §4.1: waveId miss → empty set + face marker (not an error envelope).
+      if (waveIndex === -1) {
+        return {
+          status: 0,
+          data: {
+            lines: [],
+            summary: { totalQty: 0, totalAmount: 0 },
+            matched: false,
+          } as unknown as T,
+        };
+      }
+      const lines = createWaveLines(waveIndex + 1);
+      return {
+        status: 0,
+        data: {
+          lines,
+          summary: {
+            totalQty: lines.reduce((sum, line) => sum + line.qty, 0),
+            totalAmount: lines.reduce((sum, line) => sum + line.amount, 0),
+          },
+          matched: true,
+        } as unknown as T,
+      };
+    }
+
+    if (input.url.includes('/r/ReplWms__pickingTasks') && method === 'get') {
+      // Error branch: sentinel zone flips the read to a failure envelope.
+      if (read('zone') === 'REPL-E-TASK') {
+        return { status: 1, data: { msg: 'picking task query failed (sentinel zone)' } as unknown as T };
+      }
+      const zone = read('zone') ?? '';
+      const tasks = zone
+        ? session.pickingTasks.filter((task) => task.zone === zone)
+        : session.pickingTasks;
+      const links = zone
+        ? session.pickingLinks.filter(
+            (link) =>
+              tasks.some((task) => task.id === link.source) &&
+              tasks.some((task) => task.id === link.target),
+          )
+        : session.pickingLinks;
+      return { status: 0, data: { tasks, links, zones: REPL_WMS_WAVE_ZONES } as unknown as T };
+    }
+
+    // ----- W2 writes -----
+    if (input.url.includes('/r/ReplWms__waveMove') && method === 'post') {
+      if (hooks) hooks.lastWaveMoveBody = { ...input.body };
+      const waveId = String(input.body.waveId ?? '');
+      const fromStatus = String(input.body.fromStatus ?? '');
+      const toStatus = String(input.body.toStatus ?? '');
+      const wave = session.waves.find((candidate) => candidate.id === waveId);
+      // Error branches (D2 §4.1): unknown column → `unknown column`; the DONE
+      // stage is terminal → `terminal status`.
+      if (!REPL_WMS_WAVE_STAGES.includes(fromStatus as ReplWmsWaveStatus) || !REPL_WMS_WAVE_STAGES.includes(toStatus as ReplWmsWaveStatus)) {
+        return { status: 1, data: { msg: 'unknown column' } as unknown as T };
+      }
+      if (toStatus === 'DONE') {
+        return { status: 1, data: { msg: 'terminal status' } as unknown as T };
+      }
+      if (!wave) {
+        return { status: 1, data: { msg: 'wave not found' } as unknown as T };
+      }
+      wave.status = toStatus as ReplWmsWaveStatus;
+      return { status: 0, data: { waveId: wave.id, status: wave.status } as unknown as T };
+    }
+
+    if (input.url.includes('/r/ReplWms__waveRelease') && method === 'post') {
+      if (hooks) hooks.lastWaveReleaseBody = { ...input.body };
+      const planned = session.waves.filter((wave) => wave.status === 'PLANNED');
+      // Error branch (D2 §4.1): nothing left in PLANNED → `wave not in PLANNED`.
+      if (planned.length === 0) {
+        return { status: 1, data: { msg: 'wave not in PLANNED' } as unknown as T };
+      }
+      for (const wave of planned) {
+        wave.status = 'RELEASED';
+      }
+      return { status: 0, data: { releasedCount: planned.length } as unknown as T };
+    }
+
+    // W3 endpoints (`stock*`, `ledgerReport`, `reconCheck`) are NOT implemented
+    // yet — fall through so the caller's unknown-endpoint face applies (they
+    // land with their own page).
     return null;
   }
 

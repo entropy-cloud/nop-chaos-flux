@@ -1,0 +1,408 @@
+{
+  "type": "page",
+  "body": [
+    {
+      "type": "data-source",
+      "id": "wms-wave-list-source",
+      "name": "waveFindPage",
+      "action": "ajax",
+      "args": {
+        "url": "/r/ReplWms__waveFindPage",
+        "method": "get",
+        "params": {
+          "page": 1,
+          "perPage": 30
+        }
+      },
+      "testid": "wms-wave-picking-list-source"
+    },
+    {
+      "type": "data-source",
+      "id": "wms-wave-board-source",
+      "name": "waveBoard",
+      "action": "ajax",
+      "args": {
+        "url": "/r/ReplWms__waveBoard",
+        "method": "get",
+        "params": {
+          "zone": "${zoneFilter?.zone ?? ''}"
+        }
+      },
+      "dependsOn": ["zoneFilter"],
+      "testid": "wms-wave-picking-board-source"
+    },
+    {
+      "type": "data-source",
+      "id": "wms-wave-lines-source",
+      "name": "waveLines",
+      "action": "ajax",
+      "args": {
+        "url": "/r/ReplWms__waveLines",
+        "method": "get",
+        "params": {
+          "waveId": "wave-0001"
+        }
+      },
+      "testid": "wms-wave-picking-lines-source"
+    },
+    {
+      "type": "data-source",
+      "id": "wms-picking-tasks-source",
+      "name": "pickingTasks",
+      "action": "ajax",
+      "args": {
+        "url": "/r/ReplWms__pickingTasks",
+        "method": "get"
+      },
+      "testid": "wms-wave-picking-tasks-source"
+    },
+    {
+      "type": "flex",
+      "direction": "column",
+      "gap": 8,
+      "testid": "wms-wave-picking-root",
+      "body": [
+        {
+          "type": "form",
+          "id": "wms-wave-zone-filter",
+          "testid": "wms-wave-picking-zone-filter",
+          "valuesPath": "zoneFilter",
+          "mode": "inline",
+          "data": {
+            "zone": ""
+          },
+          "body": [
+            {
+              "type": "select",
+              "name": "zone",
+              "label": "库区",
+              "testid": "wms-wave-picking-zone-select",
+              "placeholder": "全部分区",
+              "options": [
+                { "label": "全部分区", "value": "" },
+                { "label": "Z-A", "value": "Z-A" },
+                { "label": "Z-B", "value": "Z-B" },
+                { "label": "Z-C", "value": "Z-C" }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "tabs",
+          "testid": "wms-wave-picking-tabs",
+          "mountOnEnter": true,
+          "items": [
+            {
+              "key": "board",
+              "title": "波次分组看板",
+              "body": [
+                {
+                  "type": "kanban",
+                  "testid": "wms-wave-picking-board",
+                  "data": "${waveBoard}",
+                  "columnWidth": 300,
+                  "draggable": true,
+                  "keyboardReorder": { "enabled": true },
+                  "columnAggregate": { "fn": "sum", "field": "totalQty", "label": "件数" },
+                  "empty": {
+                    "type": "text",
+                    "text": "该阶段暂无波次"
+                  },
+                  "onCardMove": {
+                    "action": "ajax",
+                    "args": {
+                      "url": "/r/ReplWms__waveMove",
+                      "method": "post",
+                      "data": {
+                        "waveId": "${cardId}",
+                        "fromStatus": "${fromColumnId}",
+                        "toStatus": "${toColumnId}"
+                      }
+                    },
+                    "messages": {
+                      "success": "波次已移动",
+                      "failed": "波次移动失败"
+                    },
+                    "then": [{ "action": "refreshSource", "targetId": "waveBoard" }],
+                    "onError": [
+                      { "action": "refreshSource", "targetId": "waveBoard" },
+                      {
+                        "action": "showToast",
+                        "args": {
+                          "level": "error",
+                          "message": "波次移动被拒绝（目标列不可用或该阶段已完结）"
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "key": "path",
+              "title": "拣货路径时间轴",
+              "body": [
+                {
+                  "type": "flex",
+                  "direction": "column",
+                  "gap": 8,
+                  "testid": "wms-wave-picking-gantt-panel",
+                  "body": [
+                    {
+                      "type": "text",
+                      "testid": "wms-wave-picking-zoom-label",
+                      "text": "当前缩放：${currentZoom ?? 'day'}",
+                      "className": "text-sm text-muted-foreground"
+                    },
+                    {
+                      "type": "gantt",
+                      "testid": "wms-wave-picking-gantt",
+                      "tasks": "${pickingTasks?.tasks ?? []}",
+                      "links": "${pickingTasks?.links ?? []}",
+                      "defaultZoom": "day",
+                      "zoomLevels": [
+                        {
+                          "key": "day",
+                          "label": "日",
+                          "minCellWidth": 40,
+                          "scales": [{ "unit": "day", "step": 1, "format": "%m/%d" }]
+                        },
+                        {
+                          "key": "week",
+                          "label": "周",
+                          "minCellWidth": 80,
+                          "scales": [
+                            { "unit": "week", "step": 1, "format": "%Y" },
+                            { "unit": "day", "step": 1, "format": "%d" }
+                          ]
+                        },
+                        {
+                          "key": "month",
+                          "label": "月",
+                          "minCellWidth": 60,
+                          "scales": [
+                            { "unit": "month", "step": 1, "format": "%Y" },
+                            { "unit": "day", "step": 1, "format": "%d" }
+                          ]
+                        }
+                      ],
+                      "onZoomChange": [
+                        {
+                          "action": "setValues",
+                          "args": {
+                            "values": {
+                              "currentZoom": "${zoom}"
+                            }
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "key": "lines",
+              "title": "波次明细",
+              "body": [
+                {
+                  "type": "form",
+                  "id": "wms-wave-lines-form",
+                  "testid": "wms-wave-picking-lines-form",
+                  "data": {
+                    "waveLines": "${waveLines?.lines ?? []}",
+                    "totalAmount": 0
+                  },
+                  "body": [
+                    {
+                      "type": "text",
+                      "testid": "wms-wave-picking-lines-caption",
+                      "text": "波次 wave-0001 拣货明细（按拣货路径序）",
+                      "className": "text-sm text-muted-foreground"
+                    },
+                    {
+                      "type": "input-table",
+                      "name": "waveLines",
+                      "testid": "wms-wave-picking-lines",
+                      "itemKey": "lineNo",
+                      "addable": false,
+                      "removable": false,
+                      "summaryVisible": true,
+                      "summaryBinding": {
+                        "field": "totalAmount",
+                        "column": "amount",
+                        "agg": "sum"
+                      },
+                      "onRowChange": [
+                        { "action": "component:refresh", "componentId": "wms-wave-lines-source" }
+                      ],
+                      "columns": [
+                        { "name": "lineNo", "label": "行号", "width": 70 },
+                        { "name": "skuName", "label": "商品", "width": 160 },
+                        { "name": "locationCode", "label": "库位（拣货序）", "width": 150 },
+                        { "name": "qty", "label": "应拣", "width": 110, "aggregate": "sum" },
+                        { "name": "pickedQty", "label": "实拣", "width": 110, "aggregate": "sum" },
+                        {
+                          "name": "amount",
+                          "label": "金额(元)",
+                          "width": 130,
+                          "aggregate": "sum",
+                          "computed": "qty * unitPrice"
+                        }
+                      ],
+                      "item": [
+                        { "type": "text", "text": "${lineNo}" },
+                        { "type": "text", "text": "${skuName}" },
+                        { "type": "text", "text": "${locationCode}" },
+                        { "type": "input-number", "name": "qty", "min": 0 },
+                        {
+                          "type": "input-number",
+                          "name": "pickedQty",
+                          "min": 0,
+                          "testid": "wms-wave-picking-picked-qty"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "text",
+                      "id": "wave-summary-tiles",
+                      "testid": "wms-wave-picking-amount-summary",
+                      "text": "金额合计（summaryBinding 回写）：${totalAmount ?? 0} 元",
+                      "className": "text-sm"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "form",
+          "id": "wms-wave-release-band",
+          "testid": "wms-wave-picking-release-band",
+          "mode": "inline",
+          "body": [
+            {
+              "type": "condition-builder",
+              "name": "releaseRule",
+              "testid": "wms-wave-picking-release-rule",
+              "embed": true,
+              "builderMode": "full",
+              "showAndOr": true,
+              "fields": [
+                {
+                  "type": "select",
+                  "name": "zone",
+                  "label": "库区",
+                  "options": [
+                    { "label": "Z-A", "value": "Z-A" },
+                    { "label": "Z-B", "value": "Z-B" },
+                    { "label": "Z-C", "value": "Z-C" }
+                  ]
+                },
+                { "type": "number", "name": "totalQty", "label": "件数" },
+                {
+                  "type": "select",
+                  "name": "priority",
+                  "label": "优先级",
+                  "options": [
+                    { "label": "HIGH", "value": "HIGH" },
+                    { "label": "MID", "value": "MID" },
+                    { "label": "LOW", "value": "LOW" }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "button",
+              "label": "波次释放",
+              "variant": "primary",
+              "testid": "wms-wave-picking-release-open",
+              "onClick": {
+                "action": "openDialog",
+                "args": {
+                  "title": "波次释放确认",
+                  "testid": "wms-wave-picking-release-dialog",
+                  "closeOnSubmit": true,
+                  "body": [
+                    {
+                      "type": "form",
+                      "testid": "wms-wave-picking-release-dialog-form",
+                      "submitScope": "surface",
+                      "body": [
+                        {
+                          "type": "text",
+                          "testid": "wms-wave-picking-release-summary",
+                          "text": "将把全部 PLANNED 状态波次释放为 RELEASED，释放后立即进入拣货队列。",
+                          "className": "text-sm"
+                        }
+                      ],
+                      "actions": [
+                        {
+                          "type": "button",
+                          "label": "确认释放",
+                          "variant": "primary",
+                          "testid": "wms-wave-picking-release-confirm",
+                          "onClick": { "action": "submitForm" }
+                        }
+                      ],
+                      "submitAction": {
+                        "action": "ajax",
+                        "args": {
+                          "url": "/r/ReplWms__waveRelease",
+                          "method": "post",
+                          "data": {
+                            "operator": "wms-wave-picking"
+                          }
+                        },
+                        "messages": {
+                          "success": "波次释放成功"
+                        },
+                        "onError": [
+                          {
+                            "action": "showToast",
+                            "args": {
+                              "level": "error",
+                              "message": "释放被拒绝：当前没有 PLANNED 状态的波次"
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  ],
+                  "onSubmitSuccess": [
+                    { "action": "refreshSource", "targetId": "waveBoard" },
+                    { "action": "refreshSource", "targetId": "waveFindPage" }
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "testid": "wms-wave-picking-summary-table",
+          "source": "${waveFindPage?.items ?? []}",
+          "itemKey": "id",
+          "pagination": { "enabled": false },
+          "group": {
+            "field": "zone",
+            "aggregates": [
+              { "fn": "sum", "field": "totalQty", "label": "件数" },
+              { "fn": "count", "label": "波次" }
+            ]
+          },
+          "columns": [
+            { "name": "code", "label": "波次号", "width": 150 },
+            { "name": "zone", "label": "库区", "width": 90 },
+            { "name": "status", "label": "状态", "width": 110 },
+            { "name": "orderCount", "label": "订单数", "width": 90 },
+            { "name": "totalQty", "label": "件数", "width": 90 },
+            { "name": "priority", "label": "优先级", "width": 90 }
+          ],
+          "empty": { "type": "text", "text": "暂无波次" }
+        }
+      ]
+    }
+  ]
+}

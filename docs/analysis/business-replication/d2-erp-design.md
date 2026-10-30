@@ -152,6 +152,16 @@ summaryBinding: { field: totalAmount, column: amount, agg: sum }
 onRowChange: [ { action: component:refresh, componentId: wave-summary-tiles } ]
 ```
 
+#### W2 实现勘误（M3 落地实证 2026-10-30，plan 799；以 live 为准）
+
+1. **onCardMove 请求体变量**：live 先例（linear-board）为 `${cardId}/${fromColumnId}/${toColumnId}`；`${card.id}` 虽可解析（payload 含 card）但建议统一先例形态。
+2. **ajax→refreshSource 顺序**：并列 list 两项不保证顺序，live 以 `then` 链（linear-board 同款）实现。
+3. **input-table computed**：live 为裸表达式（`"qty * unitPrice"`，渲染器自行包 `${}`）；`${qty * unitPrice}` 带包裹形态不成立。
+4. **onRowChange→component:refresh 落点**：文本节点无 refresh capability handle 不支持；改指向 data-source id（兼作触发证据通道，summaryBinding 本身 reactive 回写）。
+5. **query-filter 分区过滤**：query-filter 内嵌表单 scope 不向页面 scope 发布值，dependsOn 联动不可达；live 通道为 form+valuesPath 载体（detail-subtables 先例）。
+6. **释放操作带**：condition-builder 是 form 字段需 form 上下文；hstack 形态收进 form（notion-database 先例）。
+7. **kanban columnFooter（plan 799 收口审计 Minor-1）**：树注释/§3.1 提及 columnFooter，live schema 未实现该属性（kanban 支持但 W2 用列头 columnAggregate 承载合计）——合计展示落 columnAggregate，无行为缺口。
+
 ### 2.3 wms-stock-ledger（W3，P1）
 
 ```
@@ -570,11 +580,11 @@ indicators:
 
 ### 4.4 测试钩子（D1 §2 opt-in 模式）
 
-| 钩子（window，addInitScript 预置）        | 用途                                                                                                                |
-| ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
-| `__replWmsCalls` / `__replWmsTestHooks`   | 端点计数（prefix `ReplWms__`）；hooks：asnMiss、duplicateIdempotencyKey、forceReconDrift、forceOffline（W1 离线条） |
-| `__replCrmCalls` / `__replCrmTestHooks`   | 计数（prefix `ReplCrm__`）；hooks：moveStageReject('rollback'/'won')、forceKpiError、lastMoveStageBody（G2 断言）   |
-| `__replItamCalls` / `__replItamTestHooks` | 计数（prefix `ReplItam__`）；hooks：scanMiss、duplicateScan、forceCompleteGuard、lastScanBody                       |
+| 钩子（window，addInitScript 预置）        | 用途                                                                                                                                                                                                                                                                                              |
+| ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `__replWmsCalls` / `__replWmsTestHooks`   | 端点计数（prefix `ReplWms__`）；hooks：asnMiss、duplicateIdempotencyKey、forceReconDrift、forceOffline（W1 离线条）、forcePutawayInvalid、lastAsnReceiveBody/lastPutawayBody（W1 落地增补，plan 798）、lastWaveMoveBody/lastWaveReleaseBody（plan 799 W2 增补登记——G2 义务②请求体逐字段断言载体） |
+| `__replCrmCalls` / `__replCrmTestHooks`   | 计数（prefix `ReplCrm__`）；hooks：moveStageReject('rollback'/'won')、forceKpiError、lastMoveStageBody（G2 断言）                                                                                                                                                                                 |
+| `__replItamCalls` / `__replItamTestHooks` | 计数（prefix `ReplItam__`）；hooks：scanMiss、duplicateScan、forceCompleteGuard、lastScanBody                                                                                                                                                                                                     |
 
 生产不设置即 no-op（先例 `__airtableEndpointCalls`，mock-backend-airtable.ts L25-27）；计数器复用 replica-kit `createEndpointCounter`。静态下拉走 `PAGE_DATA['<pageId>']`（D1 §2），业务数据一律走端点。
 

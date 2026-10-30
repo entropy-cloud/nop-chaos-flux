@@ -425,4 +425,12 @@ export const COMPLEX_PAGE_ENTRIES: ComplexPageEntry[] = [
       '复刻 WMS PDA 收货/上架作业页（roadmap 21 页 W1，D2 §2.1 mobile 族整页）：375×667 移动画布（host override）内 notice-bar 离线条 + pull-refresh 扫码作业面（wheel-picker 链路 / wheel-cascader 库位 / barcode-input ASN+SKU 连续扫码 G3 校验回填 / input-number + number-keyboard 数量 / 提交确认 dialog → asnReceive 幂等键）+ infinite-scroll 作业记录（loop + swipe-cell 左滑快捷操作）+ floating-bubble 单手流入口（G4，action-sheet）。数据经 /r/ReplWms__* 端点流动。',
     features: ['移动画布 375×667', 'barcode-input 连续扫码', 'swipe-cell', 'pull-refresh', 'number-keyboard', 'ReplWms__ 端点'],
   },
+  {
+    id: 'wms-wave-picking',
+    title: 'WMS 拣货路径看板与波次管理页',
+    category: 'business-replication',
+    description:
+      '复刻 WMS 拣货路径看板与波次管理页（roadmap 21 页 W2，D2 §2.2 桌面整页）：波次分组看板（kanban 四阶段列 columnAggregate 件数合计 + 拖卡 onCardMove→waveMove 持久化 + refreshSource 回读）+ 拣货路径时间轴（gantt zoomLevels 三档缩放 onZoomChange）+ 波次明细（input-table aggregate 合计行 summaryBinding 金额回写 + computed 金额列）+ 释放操作带（button 确认 dialog→waveRelease + condition-builder 释放规则）+ 只读分组汇总（table group 按库区分组聚合）。数据经 /r/ReplWms__wave* 与 pickingTasks 端点流动。',
+    features: ['kanban 拖卡持久化', 'gantt zoomLevels', 'input-table 合计行', 'condition-builder', 'table 分组汇总', 'ReplWms__ 端点'],
+  },
 ];
