@@ -1,0 +1,616 @@
+{
+  "type": "page",
+  "testid": "mes-andon-material-root",
+  "body": [
+    {
+      "type": "flex",
+      "direction": "column",
+      "gap": 8,
+      "testid": "mes-andon-material-shell",
+      "body": [
+        {
+          "type": "notice-bar",
+          "testid": "mes-andon-material-broadcast",
+          "text": "未关闭任务 ${COUNT(ARRAYFILTER(andonItems ?? [], r => r?.status !== 'CLOSED'))} 条 · 异常 ${COUNT(ARRAYFILTER(andonItems ?? [], r => r?.type === 'ANDON' && r?.status !== 'CLOSED'))} · 叫料 ${COUNT(ARRAYFILTER(andonItems ?? [], r => r?.type === 'MATERIAL' && r?.status !== 'CLOSED'))}",
+          "scrollable": true,
+          "variant": "warning"
+        },
+        {
+          "type": "pull-refresh",
+          "testid": "mes-andon-material-pull-refresh",
+          "className": "repl-andon-scroll",
+          "threshold": 60,
+          "onRefresh": [
+            {
+              "action": "ajax",
+              "args": {
+                "url": "/r/ReplMes__andonFindPage",
+                "method": "get",
+                "params": {
+                  "page": 1,
+                  "pageSize": 10
+                }
+              },
+              "then": [
+                {
+                  "action": "setValues",
+                  "args": {
+                    "values": {
+                      "andonItems": "${result.data.items}",
+                      "andonPage": 1,
+                      "andonHasMore": "${result.data.page < result.data.pages}",
+                      "andonLoading": false
+                    }
+                  }
+                },
+                {
+                  "action": "showToast",
+                  "args": {
+                    "level": "success",
+                    "message": "任务列表已刷新"
+                  }
+                }
+              ]
+            }
+          ],
+          "body": [
+            {
+              "type": "infinite-scroll",
+              "testid": "mes-andon-material-list",
+              "hasMore": "${andonHasMore ? true : false}",
+              "loading": "${andonLoading ? true : false}",
+              "immediateCheck": false,
+              "finishedText": "没有更多任务",
+              "onLoadMore": [
+                {
+                  "action": "setValues",
+                  "args": {
+                    "values": {
+                      "andonLoading": true
+                    }
+                  }
+                },
+                {
+                  "action": "ajax",
+                  "args": {
+                    "url": "/r/ReplMes__andonFindPage",
+                    "method": "get",
+                    "params": {
+                      "page": "${(andonPage ?? 0) + 1}",
+                      "pageSize": 10
+                    }
+                  },
+                  "then": [
+                    {
+                      "action": "setValues",
+                      "args": {
+                        "values": {
+                          "andonItems": "${CONCAT(andonItems ?? [], result.data.items)}",
+                          "andonPage": "${result.data.page}",
+                          "andonHasMore": "${result.data.page < result.data.pages}",
+                          "andonLoading": false
+                        }
+                      }
+                    }
+                  ]
+                }
+              ],
+              "body": [
+                {
+                  "type": "loop",
+                  "testid": "mes-andon-material-rows",
+                  "items": "${andonItems ?? []}",
+                  "body": [
+                    {
+                      "type": "swipe-cell",
+                      "testid": "mes-andon-material-cell",
+                      "threshold": 30,
+                      "body": [
+                        {
+                          "type": "flex",
+                          "direction": "column",
+                          "gap": 4,
+                          "testid": "mes-andon-material-row-body",
+                          "className": "repl-record-row ${$slot.item.expired ? 'text-rose-600 font-medium' : ''}",
+                          "body": [
+                            {
+                              "type": "text",
+                              "testid": "mes-andon-material-row-title",
+                              "text": "${$slot.item.typeLabel} · ${$slot.item.station} · L${$slot.item.escalationLevel} · ${$slot.item.statusLabel}",
+                              "className": "text-sm font-medium"
+                            },
+                            {
+                              "type": "text",
+                              "testid": "mes-andon-material-row-desc",
+                              "text": "${$slot.item.description}",
+                              "className": "text-xs text-muted-foreground"
+                            },
+                            {
+                              "type": "countdown",
+                              "testid": "mes-andon-material-countdown",
+                              "targetTime": "${$slot.item.respondDeadline}",
+                              "format": "HH:mm:ss",
+                              "suffix": " 内响应",
+                              "onFinish": [
+                                {
+                                  "action": "showToast",
+                                  "args": {
+                                    "level": "error",
+                                    "message": "响应超时"
+                                  }
+                                }
+                              ]
+                            },
+                            {
+                              "type": "text",
+                              "testid": "mes-andon-material-issue-docno",
+                              "text": "领料单 ${$slot.item.materialIssue?.docNo ?? '-'}（已领 ${$slot.item.materialIssue?.lines[0]?.issuedQty ?? 0}/${$slot.item.materialIssue?.lines[0]?.requiredQty ?? 0}）",
+                              "className": "text-xs",
+                              "visible": "${$slot.item.type === 'MATERIAL'}"
+                            }
+                          ]
+                        }
+                      ],
+                      "right": [
+                        {
+                          "type": "button",
+                          "label": "催单",
+                          "variant": "outline",
+                          "testid": "mes-andon-material-escalate",
+                          "onClick": {
+                            "action": "ajax",
+                            "args": {
+                              "url": "/r/ReplMes__andonEscalate",
+                              "method": "post",
+                              "data": {
+                                "id": "${$slot.item.id}"
+                              }
+                            },
+                            "messages": {
+                              "success": "催单已发出"
+                            }
+                          }
+                        },
+                        {
+                          "type": "button",
+                          "label": "关闭",
+                          "variant": "destructive",
+                          "testid": "mes-andon-material-close",
+                          "onClick": {
+                            "action": "ajax",
+                            "args": {
+                              "url": "/r/ReplMes__materialIssueUpdate",
+                              "method": "post",
+                              "data": {
+                                "id": "${$slot.item.id}",
+                                "op": "close"
+                              }
+                            },
+                            "messages": {
+                              "success": "任务已关闭"
+                            }
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "floating-panel",
+          "testid": "mes-andon-material-panel",
+          "anchors": [220, 480],
+          "onChange": [
+            {
+              "action": "setValues",
+              "args": {
+                "values": {
+                  "panelAnchor": "${index}"
+                }
+              }
+            }
+          ],
+          "body": [
+            {
+              "type": "text",
+              "testid": "mes-andon-material-panel-caption",
+              "text": "异常/叫料快捷面板（拖拽切换锚点）· 当前锚点：${panelAnchor ?? 0}",
+              "className": "text-xs text-muted-foreground"
+            },
+            {
+              "type": "button",
+              "label": "发起异常/叫料",
+              "variant": "primary",
+              "testid": "mes-andon-material-open-form",
+              "onClick": {
+                "action": "openDialog",
+                "args": {
+                  "title": "发起异常/叫料",
+                  "testid": "mes-andon-material-form-dialog",
+                  "closeOnSubmit": false,
+                  "body": [
+                    {
+                      "type": "form",
+                      "id": "mes-andon-material-form",
+                      "testid": "mes-andon-material-form",
+                      "data": {
+                        "docNo": ""
+                      },
+                      "body": [
+                        {
+                          "type": "text",
+                          "testid": "mes-andon-material-form-caption",
+                          "text": "发起异常/叫料",
+                          "className": "text-xs text-muted-foreground"
+                        },
+                        {
+                          "type": "wheel-picker",
+                          "name": "type",
+                          "label": "类型",
+                          "testid": "mes-andon-material-type-picker",
+                          "placeholder": "选择异常/叫料",
+                          "columns": [
+                            [
+                              {
+                                "label": "设备异常",
+                                "value": "ANDON"
+                              },
+                              {
+                                "label": "缺料叫料",
+                                "value": "MATERIAL"
+                              }
+                            ]
+                          ],
+                          "value": ["MATERIAL"],
+                          "onConfirm": [
+                            {
+                              "action": "setValues",
+                              "args": {
+                                "values": {
+                                  "type": "${value?.[0] ?? value}"
+                                }
+                              }
+                            }
+                          ]
+                        },
+                        {
+                          "type": "input-text",
+                          "name": "station",
+                          "label": "工位",
+                          "testid": "mes-andon-material-station-input",
+                          "value": "SMT-01"
+                        },
+                        {
+                          "type": "textarea",
+                          "name": "description",
+                          "label": "描述",
+                          "testid": "mes-andon-material-desc-input",
+                          "placeholder": "异常/缺料描述"
+                        },
+                        {
+                          "type": "input-image",
+                          "name": "photos",
+                          "label": "现场拍照",
+                          "testid": "mes-andon-material-photo",
+                          "accept": "image/*",
+                          "multiple": true,
+                          "valueMode": "url",
+                          "maxFiles": 4,
+                          "uploadAction": {
+                            "action": "ajax",
+                            "args": {
+                              "url": "/r/ReplMes__uploadAndonPhoto",
+                              "method": "post",
+                              "data": {
+                                "name": "${__uploadFile.name}",
+                                "type": "${__uploadFile.type}"
+                              }
+                            }
+                          }
+                        },
+                        {
+                          "type": "flex",
+                          "direction": "row",
+                          "gap": 8,
+                          "body": [
+                            {
+                              "type": "button",
+                              "label": "查看照片",
+                              "variant": "outline",
+                              "testid": "mes-andon-material-viewer-open",
+                              "onClick": {
+                                "action": "setValues",
+                                "args": {
+                                  "values": {
+                                    "viewerOpen": true,
+                                    "viewerIndex": 0
+                                  }
+                                }
+                              }
+                            },
+                            {
+                              "type": "text",
+                              "testid": "mes-andon-material-viewer-index",
+                              "text": "查看位置：${viewerIndex ?? 0}",
+                              "className": "text-xs text-muted-foreground self-center"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "image-viewer",
+                          "testid": "mes-andon-material-viewer",
+                          "images": "${photos ?? []}",
+                          "open": "${viewerOpen ? true : false}",
+                          "initialIndex": "${viewerIndex ?? 0}",
+                          "onChange": [
+                            {
+                              "action": "setValues",
+                              "args": {
+                                "values": {
+                                  "viewerIndex": "${index}"
+                                }
+                              }
+                            }
+                          ],
+                          "onClose": [
+                            {
+                              "action": "setValues",
+                              "args": {
+                                "values": {
+                                  "viewerOpen": false
+                                }
+                              }
+                            }
+                          ]
+                        },
+                        {
+                          "type": "input-table",
+                          "name": "lines",
+                          "testid": "mes-andon-material-lines",
+                          "itemKey": "lineNo",
+                          "addable": true,
+                          "columns": [
+                            {
+                              "name": "material",
+                              "label": "物料",
+                              "width": 120
+                            },
+                            {
+                              "name": "requiredQty",
+                              "label": "应领数量",
+                              "width": 90
+                            },
+                            {
+                              "name": "location",
+                              "label": "库位",
+                              "width": 90
+                            }
+                          ],
+                          "item": [
+                            {
+                              "type": "input-text",
+                              "name": "material",
+                              "testid": "mes-andon-material-line-material"
+                            },
+                            {
+                              "type": "input-number",
+                              "name": "requiredQty",
+                              "min": 0,
+                              "testid": "mes-andon-material-line-qty"
+                            },
+                            {
+                              "type": "input-text",
+                              "name": "location",
+                              "testid": "mes-andon-material-line-location"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "flex",
+                          "direction": "row",
+                          "gap": 8,
+                          "body": [
+                            {
+                              "type": "input-number",
+                              "name": "quickQty",
+                              "label": "快捷数量",
+                              "testid": "mes-andon-material-quick-qty"
+                            },
+                            {
+                              "type": "button",
+                              "label": "键盘录入",
+                              "variant": "outline",
+                              "testid": "mes-andon-material-keyboard-open",
+                              "onClick": {
+                                "action": "setValues",
+                                "args": {
+                                  "values": {
+                                    "keyboardOpen": true
+                                  }
+                                }
+                              }
+                            }
+                          ]
+                        },
+                        {
+                          "type": "text",
+                          "testid": "mes-andon-material-quick-qty-display",
+                          "text": "已录快捷数量：${quickQty ?? ''}",
+                          "className": "text-xs text-muted-foreground"
+                        },
+                        {
+                          "type": "number-keyboard",
+                          "testid": "mes-andon-material-qty-keyboard",
+                          "title": "录入数量",
+                          "open": "${keyboardOpen ? true : false}",
+                          "onKey": [
+                            {
+                              "action": "setValues",
+                              "args": {
+                                "values": {
+                                  "quickQty": "${(quickQty ?? '')}${value}"
+                                }
+                              },
+                              "when": "${value != null}"
+                            },
+                            {
+                              "action": "setValues",
+                              "args": {
+                                "values": {
+                                  "quickQty": "${(quickQty ?? '').slice(0, -1)}"
+                                }
+                              },
+                              "when": "${value == null}"
+                            }
+                          ],
+                          "onConfirm": [
+                            {
+                              "action": "setValues",
+                              "args": {
+                                "values": {
+                                  "keyboardOpen": false
+                                }
+                              }
+                            }
+                          ],
+                          "onCancel": [
+                            {
+                              "action": "setValues",
+                              "args": {
+                                "values": {
+                                  "keyboardOpen": false
+                                }
+                              }
+                            }
+                          ]
+                        },
+                        {
+                          "type": "text",
+                          "testid": "mes-andon-material-docno",
+                          "text": "回执单号：${docNo || '-'}",
+                          "className": "text-sm font-medium"
+                        }
+                      ],
+                      "actions": [
+                        {
+                          "type": "button",
+                          "label": "提交发起",
+                          "variant": "primary",
+                          "testid": "mes-andon-material-submit",
+                          "onClick": {
+                            "action": "submitForm"
+                          }
+                        }
+                      ],
+                      "submitAction": {
+                        "action": "ajax",
+                        "args": {
+                          "url": "/r/ReplMes__andonCreate",
+                          "method": "post",
+                          "includeScope": "*"
+                        },
+                        "messages": {
+                          "success": "发起成功"
+                        },
+                        "onError": [
+                          {
+                            "action": "showToast",
+                            "args": {
+                              "level": "error",
+                              "message": "发起失败：${error?.message ?? 'UNKNOWN'}"
+                            }
+                          }
+                        ]
+                      },
+                      "onSubmitSuccess": [
+                        {
+                          "action": "setValues",
+                          "args": {
+                            "values": {
+                              "docNo": "${result.data.docNo}"
+                            }
+                          }
+                        }
+                      ],
+                      "submitScope": "surface"
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "type": "floating-bubble",
+          "testid": "mes-andon-material-bubble",
+          "magnetic": true,
+          "initialX": 311,
+          "initialY": 300,
+          "onClick": {
+            "action": "openDialog",
+            "args": {
+              "title": "快捷动作",
+              "testid": "mes-andon-material-quick-dialog",
+              "closeOnOutsideClick": false,
+              "body": [
+                {
+                  "type": "action-sheet",
+                  "testid": "mes-andon-material-sheet",
+                  "title": "快捷动作",
+                  "triggerText": "选择动作",
+                  "display": "grid",
+                  "items": [
+                    {
+                      "label": "发起异常",
+                      "value": "andon"
+                    },
+                    {
+                      "label": "发起叫料",
+                      "value": "material"
+                    },
+                    {
+                      "label": "刷新列表",
+                      "value": "refresh"
+                    }
+                  ],
+                  "onSelect": [
+                    {
+                      "action": "showToast",
+                      "args": {
+                        "level": "info",
+                        "message": "请在下方面板完成异常登记"
+                      },
+                      "when": "${value === 'andon'}"
+                    },
+                    {
+                      "action": "showToast",
+                      "args": {
+                        "level": "info",
+                        "message": "请在下方面板完成叫料登记"
+                      },
+                      "when": "${value === 'material'}"
+                    },
+                    {
+                      "action": "showToast",
+                      "args": {
+                        "level": "success",
+                        "message": "下拉列表即可刷新"
+                      },
+                      "when": "${value === 'refresh'}"
+                    },
+                    {
+                      "action": "closeSurface"
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

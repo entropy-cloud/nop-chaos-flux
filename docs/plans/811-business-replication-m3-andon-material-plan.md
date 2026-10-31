@@ -1,6 +1,6 @@
 # 811 M3-M3 MES 异常叫料移动页复刻（business-page-replication roadmap M3-M3）
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-10-31
 > Source: `docs/backlog/business-page-replication-roadmap.md` §2 M3-M3（依赖 M2 done；前置 M1/M2 done——mes mock 模块已建，M2 delegate 拆分先例在案）
 > Related: D1 总体设计；D3 §2.6/§4.4/§4.5/§5.6（M3 页设计）；R2 §2 M3；R4 §1 M3（G14 既有控件扩展——accept 注入临时口径 §6.3）；W1 先例（mobile host override + 分支 B axe）
@@ -51,25 +51,25 @@
 
 ### Phase 1 - M3 页全链实现
 
-Status: planned
+Status: completed
 Targets: `mock-backend-repl-mes-andon.ts`（新建 delegate）、`mock-backend-repl-mes.ts`（接线）、`replication/mes-andon-material-host.tsx`（新建）、`complex-pages-registry.tsx`（特例）、`page-schemas/mes-andon-material.json`、`complex-pages-entries.ts`（entry）、`tests/e2e/replication-mes-andon-material.spec.ts`、axe spec MOBILE_ROUTES/JSON
 
 - Item Types: `Fix | Proof`
 
-- [ ] mock 扩展：新建 `mock-backend-repl-mes-andon.ts` delegate（M2 拆分先例），端点**逐名对齐 D3 §4.4**——`andonFindPage`（get，≥25 行确定性 ladder，ANDON|MATERIAL 两型全占，page/pageSize 分页 + type 过滤；MATERIAL 行带 materialIssue{docNo,lines[material/requiredQty/issuedQty/location]}；**含已过 deadline fixture 行——确定性锁定：首页恰 1 条已过期，全 ladder 共 2 条**〔respondDeadline 固定过去 epoch-ms + 派生 expired 布尔〕）/`andonCreate`（post，ANDON→`AD-2026-xxxx`、MATERIAL→联动生成 MaterialIssue `MI-2026-xxxx` docNo 回显，session 列表前插）/`andonEscalate`（post，escalationLevel+1 回显）/`materialIssueUpdate`（post，op=close→status CLOSED）/`uploadAndonPhoto`（post，回 `{url:svg data-url, name}`）；写镜像 lastAndonCreateBody/lastEscalateBody/lastIssueUpdateBody（G2 同族）；接线进 `createReplMesFetcherBranch`（M2 delegate 同位）
-- [ ] mobile host override：`replication/mes-andon-material-host.tsx`（W1 同构：375×667 `.repl-mobile-canvas*` + testid `mes-andon-material-canvas/-screen` + data 种子 andonItems/andonPage/andonHasMore/andonLoading/docNo/viewerOpen/viewerIndex/panelAnchor 等）+ `complex-pages-registry.tsx` 特例
-- [ ] schema JSON（D3 §2.6 组件树：notice-bar 播报未关闭数〔ARRAYFILTER 现算〕/pull-refresh onRefresh→ajax page=1 重置 accumulator+toast/**infinite-scroll 绑定 hasMore+loading 双受控值+immediateCheck:false，onLoadMore 链=setValues{loading:true}→ajax(page+1)→then〔setValues{andonItems:CONCAT(andonItems,result.data.items), andonHasMore, andonPage:+1, loading:false}〕**（in-flight 守卫靠 loading 跳变释放）/loop×swipe-cell 行（催单 andonEscalate+关闭 materialIssueUpdate op=close+countdown targetTime=${respondDeadline}+onFinish toast+行标红 className=${$slot.item.expired}〔loop 行作用域，W1 约定〕）/floating-bubble→openDialog action-sheet display grid 三项〔发起异常/发起叫料/刷新指引——onSelect toast+closeSurface，对话框作用域隔离 W1 先例〕/floating-panel anchors [220,480]+onChange 写回 anchor index/panel 内 form：wheel-picker 异常类型〔ANDON/MATERIAL〕+input-text 工位+textarea 描述+input-image photos uploadAction+「查看照片」按钮 setValues{viewerOpen:true,viewerIndex:0} 点火 image-viewer（open 受控+initialIndex+onChange index 写回）+叫料明细 input-table（物料/应领数量/库位，addable）+快捷数量 input-number+number-keyboard 受控 open+onKey 拼接+onConfirm 收盘/submitAction→andonCreate→then setValues docNo+成功 toast；testid `<pageId>-<element>`；strict 零 error）
-- [ ] complex-pages-entries.ts 加 mes-andon-material entry
-- [ ] e2e spec（D3 §5.6 断言清单**经勘误后口径**：前置〔canvas 375×667+首屏 ≥5 行+notice-bar 播报+findPage ≥1〕/交互① pull-refresh 手势→计数+1+toast/交互② infinite-scroll 翻页→计数+1+行数 10→20+到底 finishedText/交互③ swipe-cell 催单→escalate===1+镜像 escalationLevel+1+pull-refresh 后行回显/交互④ swipe-cell 关闭→materialIssueUpdate===1+CLOSED 回显/交互⑤ countdown 已过 deadline 行→**行作用域断言**（countdown data-finished+行标红 class=${expired}）+超时 toast 以消息 locator 计数 ≥1 界定〔fixture 首页恰 1 条已过期〕/交互⑥ bubble→action-sheet grid→发起叫料→toast+dialog 关闭〔§5.6 链式口径改判的分立断言，勘误随收口落 D3 §5.6〕/交互⑦ floating-panel 拖拽 anchor 两档→onChange 写回断言/交互⑧ 拍照上传 setInputFiles 选 1 张→uploadAndonPhoto===1+缩略+「查看照片」点火 viewer 定位该图（**DOM 页面态断言**——单图 viewer 无翻页，onChange 不可达，§5.6 勘误登记）〔G14 accept 注入口径〕/交互⑨ 叫料提交→andonCreate===1+docNo 渲染+镜像逐字段/交互⑩ number-keyboard open→onKey→onConfirm 写回断言/focus ① action-sheet 展开焦点**落入面板（非首项——D2 勘误 7 既有口径：不支持首项 autofocus，Tab 兜底）**+dialog 关闭焦点返 bubble（assertDialogFocusRoundTrip 链）〔§5.6 勘误登记〕/focus ② panel 表单首字段可达/focus ③ swipe-cell 操作钮 tab 可达；显式 --retries=0）
-- [ ] axe 分支 B 登记：MOBILE_ROUTES + `complex-pages/mes-andon-material` JSON 键（首跑实测回填+\_notes）
-- [ ] 验证：`npx playwright test tests/e2e/replication-mes-andon-material.spec.ts --retries=0` 全绿 + axe spec 绿 + M1/M2 回归 + playground unit + strict 校验
+- [x] mock 扩展：新建 `mock-backend-repl-mes-andon.ts` delegate（M2 拆分先例），端点**逐名对齐 D3 §4.4**——`andonFindPage`（get，≥25 行确定性 ladder，ANDON|MATERIAL 两型全占，page/pageSize 分页 + type 过滤；MATERIAL 行带 materialIssue{docNo,lines[material/requiredQty/issuedQty/location]}；**含已过 deadline fixture 行——确定性锁定：首页恰 1 条已过期，全 ladder 共 2 条**〔respondDeadline 固定过去 epoch-ms + 派生 expired 布尔〕）/`andonCreate`（post，ANDON→`AD-2026-xxxx`、MATERIAL→联动生成 MaterialIssue `MI-2026-xxxx` docNo 回显，session 列表前插）/`andonEscalate`（post，escalationLevel+1 回显）/`materialIssueUpdate`（post，op=close→status CLOSED）/`uploadAndonPhoto`（post，回 `{url:svg data-url, name}`）；写镜像 lastAndonCreateBody/lastEscalateBody/lastIssueUpdateBody（G2 同族）；接线进 `createReplMesFetcherBranch`（M2 delegate 同位）
+- [x] mobile host override：`replication/mes-andon-material-host.tsx`（W1 同构：375×667 `.repl-mobile-canvas*` + testid `mes-andon-material-canvas/-screen` + data 种子 andonItems/andonPage/andonHasMore/andonLoading/docNo/viewerOpen/viewerIndex/panelAnchor 等）+ `complex-pages-registry.tsx` 特例
+- [x] schema JSON（D3 §2.6 组件树〔执行期重构：浮面板承载域的 submitAction/openDialog data 模板不求值〔preserve-literal 信封未在面板域表单路径解包，live 缺口〕→ 表单整体移入 openDialog 承载（W1 同款 dialog 域已证解析），提交载荷改 includeScope '\*'，panel 保留锚点拖拽+发起入口；D3 §2.6 M3 实现勘误 9 条就地落档〕：notice-bar 播报未关闭数〔ARRAYFILTER 现算〕/pull-refresh onRefresh→ajax page=1 重置 accumulator+toast/**infinite-scroll 绑定 hasMore+loading 双受控值+immediateCheck:false，onLoadMore 链=setValues{loading:true}→ajax(page+1)→then〔setValues{andonItems:CONCAT(andonItems,result.data.items), andonHasMore, andonPage:+1, loading:false}〕**（in-flight 守卫靠 loading 跳变释放）/loop×swipe-cell 行（催单 andonEscalate+关闭 materialIssueUpdate op=close+countdown targetTime=${respondDeadline}+onFinish toast+行标红 className=${$slot.item.expired}〔loop 行作用域，W1 约定〕）/floating-bubble→openDialog action-sheet display grid 三项〔发起异常/发起叫料/刷新指引——onSelect toast+closeSurface，对话框作用域隔离 W1 先例〕/floating-panel anchors [220,480]+onChange 写回 anchor index/panel 内 form：wheel-picker 异常类型〔ANDON/MATERIAL〕+input-text 工位+textarea 描述+input-image photos uploadAction+「查看照片」按钮 setValues{viewerOpen:true,viewerIndex:0} 点火 image-viewer（open 受控+initialIndex+onChange index 写回）+叫料明细 input-table（物料/应领数量/库位，addable）+快捷数量 input-number+number-keyboard 受控 open+onKey 拼接+onConfirm 收盘/submitAction→andonCreate→then setValues docNo+成功 toast；testid `<pageId>-<element>`；strict 零 error）
+- [x] complex-pages-entries.ts 加 mes-andon-material entry
+- [x] e2e spec（D3 §5.6 断言清单**经勘误后口径**：前置〔canvas 375×667+首屏 ≥5 行+notice-bar 播报+findPage ≥1〕/交互① pull-refresh 手势→计数+1+toast/交互② infinite-scroll 翻页→计数+1+行数 10→20+到底 finishedText/交互③ swipe-cell 催单→escalate===1+镜像 escalationLevel+1+pull-refresh 后行回显/交互④ swipe-cell 关闭→materialIssueUpdate===1+CLOSED 回显/交互⑤ countdown 已过 deadline 行→**行作用域断言**（countdown data-finished+行标红 class=${expired}）+超时 toast 以消息 locator 计数 ≥1 界定〔fixture 首页恰 1 条已过期〕/交互⑥ bubble→action-sheet grid→发起叫料→toast+dialog 关闭〔§5.6 链式口径改判的分立断言，勘误随收口落 D3 §5.6〕/交互⑦ floating-panel 拖拽 anchor 两档→onChange 写回断言/交互⑧ 拍照上传 setInputFiles 选 1 张→uploadAndonPhoto===1+缩略+「查看照片」点火 viewer 定位该图（**DOM 页面态断言**——单图 viewer 无翻页，onChange 不可达，§5.6 勘误登记）〔G14 accept 注入口径〕/交互⑨ 叫料提交→andonCreate===1+docNo 渲染+镜像逐字段/交互⑩ number-keyboard open→onKey→onConfirm 写回断言/focus ① action-sheet 展开焦点**落入面板（非首项——D2 勘误 7 既有口径：不支持首项 autofocus，Tab 兜底）**+dialog 关闭焦点返 bubble（assertDialogFocusRoundTrip 链）〔§5.6 勘误登记〕/focus ② panel 表单首字段可达/focus ③ swipe-cell 操作钮 tab 可达；显式 --retries=0）
+- [x] axe 分支 B 登记：MOBILE_ROUTES + `complex-pages/mes-andon-material` JSON 键（首跑实测回填+\_notes）
+- [x] 验证：`npx playwright test tests/e2e/replication-mes-andon-material.spec.ts --retries=0` 全绿 + axe spec 绿 + M1/M2 回归 + playground unit + strict 校验——focused 14/14 + axe 21/21（20 桌面 + 1 新增移动面）+ M1/M2/W1 回归 33/33 + playground unit 555/555 + strict 58/58 + typecheck/build/lint/check 全仓绿（test 触达面零新增红：layout ELOOP 系在案既有红）
 
 Exit Criteria:
 
-- [ ] M3 页 mobile canvas 可达可交互且列表页收录，strict validation 零 error
-- [ ] focused e2e `--retries=0` 全绿（断言含 \_\_replMesCalls 计数证据）
-- [ ] axe 分支 B 基线登记绿
-- [ ] roadmap §2 M3 回写 `done`（随 closure audit 通过的同一次回写提交完成，guide When Closing 9）
+- [x] M3 页 mobile canvas 可达可交互且列表页收录，strict validation 零 error
+- [x] focused e2e `--retries=0` 全绿（断言含 \_\_replMesCalls 计数证据）
+- [x] axe 分支 B 基线登记绿
+- [x] roadmap §2 M3 回写 `done`（随 closure audit 通过的同一次回写提交完成，guide When Closing 9）
 
 ## Draft Review Record
 
@@ -80,17 +80,17 @@ Exit Criteria:
 
 ## Closure Gates
 
-- [ ] in-scope 工作全部落地（M3 页 + mock 扩展 + host override + roadmap 回写）
-- [ ] 行为/契约结果已达成（D3 §5.6 M3 断言清单**经勘误后口径**全绿，--retries=0）
-- [ ] 必要 focused verification 已完成
-- [ ] 不存在被静默降级的 in-scope 缺口
-- [ ] 受影响 owner docs 已同步（daily log；D3 §2.6 与 §5.6 勘误——已在 Scope In 裁定为无条件在案工作）
-- [ ] 独立子 agent（fresh session）closure audit 通过并记录证据
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`（触达面零新增红口径）
-- [ ] `pnpm test`（触达面零新增红口径）
-- [ ] `pnpm check`（触达面零新增红口径；scanner-baselines 增量如触发就地注册+note）
+- [x] in-scope 工作全部落地（M3 页 + mock 扩展 + host override + roadmap 回写）
+- [x] 行为/契约结果已达成（D3 §5.6 M3 断言清单**经勘误后口径**全绿，--retries=0：focused 14/14）
+- [x] 必要 focused verification 已完成（axe 21/21 + M1/M2/W1 回归 33/33 + playground unit 555/555 + strict 58/58）
+- [x] 不存在被静默降级的 in-scope 缺口（B7 行级绑定缺口为既有登记；表单承载改判/链式口径改判均以 D3 §2.6+§5.6 勘误在案，§5.6 各断言面 live 均有对应断言）
+- [x] 受影响 owner docs 已同步（daily log；D3 §2.6 末 M3 实现勘误 9 条 + §5.6 就地勘误注〔审计 Finding 1 Major 条件项，随本提交落地〕）
+- [x] 独立子 agent（fresh session）closure audit 通过并记录证据
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`（触达面零新增红口径）
+- [x] `pnpm test`（触达面零新增红口径；flux-renderers-layout contract-honesty ELOOP 系 807 Deferred HEAD 既有环境红，diff 零 packages/ 改动零交集）
+- [x] `pnpm check`（触达面零新增红口径；exit 0）
 
 ## Deferred But Adjudicated
 
@@ -108,13 +108,15 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: 待收口填写
+Status Note: M3 页全链收口（2026-10-31）——mock delegate（26 卡 ladder×8 态占用+五端点+写镜像）、mobile host override、schema（notice-bar 播报现算/pull-refresh+infinite-scroll 翻页链/loop×swipe-cell+countdown 超时标红/bubble→action-sheet grid/panel anchors/dialog 表单全要素+andonCreate includeScope 提交链）、entry、focused e2e 14/14（--retries=0）、axe 分支 B 登记（21/21）、M1/M2/W1 回归 33/33、strict 58/58、playground unit 555/555、typecheck/build/lint/check 全仓绿（test 触达面零新增红）。执行期重大重构（面板承载域 action 模板不求值 → 表单移 dialog 承载 + includeScope 载荷）以 D3 §2.6 勘误 9 条 + §5.6 就地勘误注在案。closure audit 独立 fresh sub-agent approved（1 Major 条件项 §5.6 就地勘误随本提交落地 + 2 Minor：镜像注释措辞修正〔本提交〕、helper 400ms settle 等待变更在提交信息披露）。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: 待独立子 agent 填写
-- Evidence: 待填写
+- Auditor / Agent: 独立 fresh sub-agent（general-purpose，2026-10-31，不复用执行者上下文）
+- Evidence: audit 报告 Verdict: approved——独立实跑 focused e2e 14/14、axe 21/21、M1/M2/W1 回归 33/33、playground unit 555/555、typecheck/build/lint/check exit 0；逐面核对（overswipe 镜像/includeScope type 数组断言/docNo 渲染/翻页 10→20→26/viewer DOM 态/focus ①②③/notice-bar 播报算式手验）；勘误声称逐条对源（formula 无 NOW/page 型拒 onMount/infinite-scroll loading 契约/wheel-picker 数组写值/valueMode 默认/ActionSheet·FloatingPanel 无受控面）；git status 触达面 13 文件零 packages/ 改动
 
 Follow-up:
 
-- 待收口填写
+- 全量 test:e2e 归 P1 阶段（Non-Blocking Follow-ups 既有项）
+- 行级状态写回/行字段路径绑定缺口 → roadmap B7 successor（既有登记，非本计划新增）
+- 浮面板承载域 action 模板不求值（preserve-literal 信封未在面板域表单路径解包）→ 产品面缺口，既有类型扩展登记候选（归 existing-components-improvement-analysis 评估，非本 roadmap 裁决范围）

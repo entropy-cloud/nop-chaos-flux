@@ -112,6 +112,22 @@ async function cdpTouchDrag(
     });
   }
   await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+  await page.waitForTimeout(400);
+}
+
+/**
+ * Public generalization of the internal CDP touch drag (plan 811 M3: the
+ * floating-panel anchor drag needs arbitrary from→to coordinates computed
+ * from a locator's bounding box, which the swipe/pull wrappers hard-shape).
+ * Coordinates are viewport-absolute (locator.boundingBox() output).
+ */
+export async function dragTouchReplication(
+  page: Page,
+  from: { x: number; y: number },
+  to: { x: number; y: number },
+  options: SwipeCellOptions = {},
+): Promise<void> {
+  await cdpTouchDrag(page, from, to, options.steps ?? 10);
 }
 
 /**

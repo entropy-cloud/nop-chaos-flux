@@ -72,7 +72,12 @@ const ROUTES = [
 // the mobile canvas (the canvas DOM is the scan object). Per the D6 unified
 // registration, branch A and B share ONE baseline key per pageId — both scans
 // must stay within the registered counts.
-const MOBILE_ROUTES = ['complex-pages/wms-pda-receiving'];
+const MOBILE_ROUTES = [
+  'complex-pages/wms-pda-receiving',
+  // Plan 811 (D1 §4 branch B): M3 andon-material joins the mobile-canvas scan
+  // set (mobile host override page — same 375×667 frame as W1).
+  'complex-pages/mes-andon-material',
+];
 
 // map-demo is excluded: its axe analysis exceeds a practical timeout (heavy SVG DOM,
 // >120 s single-worker in the plan 781 count run). Extending the set is a baseline

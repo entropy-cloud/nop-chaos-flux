@@ -78,3 +78,15 @@
   font-size: 0.75rem;
   color: var(--muted-foreground, #6b7280);
 }
+
+/*
+ * M3 mes-andon-material (plan 811, D3 §2.6): the pull-refresh surface doubles
+ * as the infinite-scroll's scrollable ancestor — infinite-scroll walks up to
+ * the first `overflow-y: auto/scroll` ancestor and roots its sentinel observer
+ * there (infinite-scroll.tsx findScrollableAncestor); the fixed-size mobile
+ * canvas never scrolls itself, so the list area gets a fixed-height scroller.
+ */
+.repl-andon-scroll {
+  height: 300px;
+  overflow-y: auto;
+}

@@ -90,5 +90,10 @@
   "complex-pages/mes-work-reporting": {
     "aria-required-attr": 8,
     "_notes": "plan 810 first-run measurement 2026-10-30 (D1 §4 branch A registration): counts measured on #/complex-pages/mes-work-reporting. aria-required-attr = 8 hits from the crud list table's column-resize separator spans (7 data columns + the operation column — table component owner debt, same rule family as the M1/standard-crud/W2/W3/C1 registrations; count = this page's 8 crud columns). No color-contrast hit on this page's header badges (5 feature tags, unlike the 7-tag M1 header). Fixes belong to the component owner, not the page schema."
+  },
+  "complex-pages/mes-andon-material": {
+    "color-contrast": 8,
+    "scrollable-region-focusable": 1,
+    "_notes": "plan 811 first-run measurement 2026-10-31 (D1 §4 branch B registration): counts measured on #/complex-pages/mes-andon-material (mobile canvas 375×667 hasTouch). color-contrast = 8 header feature badges (data-slot=badge variant=secondary in the complex-pages shell header — same secondary-badge contrast debt as the W1/W3/C1/C2/C3/M1/M2 registrations, component owner); 8 of the page's 10 badges register (2 occluded by the floating-panel overlay at scan time, same badge family). scrollable-region-focusable = 1 on the page's list scroller (the pull-refresh surface doubles as the infinite-scroll observation root via .repl-andon-scroll overflow-y auto — pull-refresh root exposes no tabindex, component owner debt; a component-level tabindex/roving-focus fix resolves it). Fixes belong to the component owner, not the page schema."
   }
 }

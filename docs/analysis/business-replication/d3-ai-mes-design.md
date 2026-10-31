@@ -558,6 +558,18 @@ page（移动 viewport 375×667）   # testid: mes-andon-material-root（D5 深�
 
 input-table 注册于全局 registry（R4 §0 L14）；明细数量键入以 number-keyboard 辅助 input-number。
 
+#### M3 实现勘误（M3 落地实证 2026-10-31，plan 811；以 live 为准）
+
+1. **表单承载改判**（§2.6 组件树 floating-panel 内嵌 form）：浮面板承载域的 submitAction/openDialog data 模板**不求值**——模板字符串经 preserve-literal 信封原样透传（live 缺口：面板域表单的 action args 模板未解包；W1 dialog 域同构造已证解析）。表单整体移入 openDialog 承载（W1 同款 dialog 域），panel 保留锚点拖拽 + 发起入口按钮（§5.6 anchors 两档交互面照断言）。
+2. **提交载荷 includeScope**：dialog 表单直挂 submitAction args.data 模板亦不求值（W1 的 dialog 提交经 openDialog data 中转故未触雷）→ 改 `includeScope: '*'`（scope 数据直入载荷，字段值全部解析）；wheel-picker confirm 写值为**数组**（form.setValue(name, value[]) 契约）→ mock 归一化 type。
+3. **首载机制**：`onMount` 非 page 合法属性（strict unknown-property）→ infinite-scroll 观察哨初始回调承担首载（immediateCheck:false + 空列表哨兵可见）；翻页观察根 = pull-refresh 滚动容器（`.repl-andon-scroll` overflow-y auto 固定高 300px——infinite-scroll 走最近可滚祖先）。
+4. **image-viewer 点火与关闭**：无内置触发器 → 「查看照片」setValues 受控点火；单图无翻页（onChange 不可达）且指示器仅多图渲染 → DOM 页面态断言；viewer Esc 处理在自有 keydown（焦点须在其内）→ mask.focus() + Esc。
+5. **countdown 超时行**：formula 无 NOW() → fixture 派生 `expired` 布尔承担行标红（首页恰 1 条、全梯共 2 条）；onFinish toast 以消息计数 ≥1 界定。
+6. **number-keyboard 写回面**：行级路径绑定缺口（B3.2 V6/B7 同族）→ 表单级 quickQty 字段承担写回断言，行内数量仍走 input-number 直输。
+7. **swipe-cell 催单/关闭**：140px 左滑 ≥1.15× 右区宽（两紧凑钮 ≈100px）→ 走 overswipe-action 分支**直触首操作**（催单），格不驻留 open；关闭为第二操作 → 80px 短滑驻留 open-right + 显式点击；swipe 后首击被 drag-click 抑制吞（M6a）→ 非交互行标题牺牲点击消耗抑制窗。
+8. **floating-bubble 焦点**：非可焦 div（无 tabindex）→ focus ① 退守「焦点离开 dialog 层」（M1 focus ② 非可焦 trigger 退守同款）；initialY 300 避让 number-keyboard 区（560 与确认键重叠致点击被拦截）。
+9. **axe 分支 B 基线**：color-contrast 8（壳头部 badge 族，2 枚被面板遮挡未计）+ scrollable-region-focusable 1（列表滚动容器无 tabindex——pull-refresh 组件 owner 债务）。
+
 ## 3. R4 对照与双向核对记录
 
 ### 3.1 逐页对照（R4 §1 → 本设计组合）
@@ -701,6 +713,8 @@ input-table 注册于全局 registry（R4 §0 L14）；明细数量键入以 num
 - focus：dialog 内首字段 autofocus；input-table 行内 tab 序连续；提交后焦点落回触发行。
 
 ### 5.6 mes-andon-material（axe 分支 B：mobile host override 移动画布内 375×667 describe 块，D1 §4（D6 开放审计 MAJ-C 同步）；基线键同 pageId、describe 名标注 mobile；交互断言均在 mobile 画布 DOM 内）
+
+> **实现勘误（2026-10-31，plan 811 落地实证；细节见 §2.6 末「M3 实现勘误」1-9 条）**：①「选『发起叫料』→ floating-panel 展开 → 提交」链式口径不可达（ActionSheet 无受控 open / FloatingPanel 无受控 height）且面板承载域 action 模板不求值——live 为分立断言：action-sheet 选择 toast+关闭、表单经面板发起入口入 dialog 承载（W1 同款域）、提交 andonCreate===1 + docNo 渲染照断言；②「image-viewer 打开定位该图（onChange payload index 断言）」——单图无翻页 onChange 不可达且指示器仅多图，live 以受控点火 + DOM 页面态断言；③「focus：action-sheet 焦点落入面板首项、关闭后返回 floating-bubble」——首项 autofocus 不支持（D2 勘误 7 既有口径：焦点入面板 + Tab 兜底），floating-bubble 非可焦 div 无法回焦（退守「焦点离开 dialog 层」，M1 focus ② 同款）；④「countdown 已过 deadline 行 onFinish → 行标红」——formula 无 NOW()，行标红由 fixture 派生 expired 布尔承担，onFinish toast 照断言；⑤「叫料明细 input-table 数量 tap → number-keyboard 写回」——行级路径绑定缺口（B3.2 V6/B7 同族），number-keyboard 写回面为表单级 quickQty 字段。
 
 - 列表/刷新/翻页：首屏任务行 ≥5；pull-refresh onRefresh → `andonFindPage` 计数增量；infinite-scroll onLoadMore 翻页计数。
 - 拍照上传：文件注入 → input-image 选 1 张 → uploadAction → `uploadAndonPhoto === 1` → 缩略渲染 + image-viewer 打开定位该图（onChange payload index 断言）。

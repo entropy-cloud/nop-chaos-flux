@@ -464,4 +464,12 @@ export const COMPLEX_PAGE_ENTRIES: ComplexPageEntry[] = [
       '复刻 MES 工序报工页（roadmap 21 页 M2，D3 §2.5 桌面整页，plan 785 直接受益页）：作业卡列表 crud（工序/卡号/工作中心/计划数/完成数/工时比/状态列，工时比>1 条件标红 + 状态映射配色，26 行 × 8 态 fixture）+ 状态动作按钮平铺按工单状态 visible 显隐（开工/暂停/恢复/报工提交/完成 → jobCardMutation 五 mutation + ILLEGAL_TRANSITION 非法迁移守卫）+ 行操作报工 openDialog 报工表单（input-table 报工明细两行：合格/报废/准备工分/加工工分行内编辑，computed 工时/工时比/合格率即时派生，aggregate 合计行三列 sum，summaryBinding 单对象回写主单 totalCompletedQty，行级守恒表达式守卫前端半边（警示 visible + 提交钮 disabled → 提交计数 0 语义））+ submitAction→reportWork 端点守卫（GUARD_CONSERVATION 数量守恒 / GUARD_HOUR_RATIO 工时比超限，成功回写作业卡完成数 + refreshNearest 列表联动）。数据经 /r/ReplMes__jobCard* 与 reportWork* 端点流动。',
     features: ['input-table 报工明细', 'computed 工时/工时比/合格率', 'aggregate 合计行', 'summaryBinding 回写主单', '守恒/工时比双守卫', '状态动作 visible 显隐', 'ILLEGAL_TRANSITION 守卫', 'ReplMes__ 端点'],
   },
+  {
+    id: 'mes-andon-material',
+    title: 'MES 异常叫料移动页',
+    category: 'business-replication',
+    description:
+      '复刻 MES 异常叫料移动页（roadmap 21 页 M3，D3 §2.6 mobile host override 移动画布 375×667，D6 MAJ-C 裁决）：notice-bar 未关闭异常/叫料滚动播报（ARRAYFILTER 现算）+ pull-refresh 下拉刷新（ajax 重置 accumulator）+ infinite-scroll 翻页（hasMore/loading 双受控值 + CONCAT append）+ 任务卡 swipe-cell（左滑催单 andonEscalate escalationLevel+1 / 关闭 materialIssueUpdate op=close）+ countdown 响应倒计时（targetTime=respondDeadline epoch-ms，已过 deadline fixture 行 onFinish 超时 toast + 行标红）+ floating-bubble → action-sheet grid 快捷动作（发起异常/发起叫料/刷新指引）+ floating-panel 半屏发起表单（anchors 两档拖拽：wheel-picker 异常类型 + 工位 + 描述 + input-image 现场拍照 uploadAction=uploadAndonPhoto + image-viewer 受控预览 + 叫料明细 input-table + 快捷数量 number-keyboard 受控录入）+ submitAction→andonCreate（MATERIAL 联动生成 MaterialIssue docNo 回显）。数据经 /r/ReplMes__andon* 与 materialIssueUpdate/uploadAndonPhoto 端点流动。',
+    features: ['notice-bar 播报', 'pull-refresh 刷新', 'infinite-scroll 翻页', 'swipe-cell 催单/关闭', 'countdown 超时标红', 'action-sheet grid', 'floating-panel 半屏表单', 'input-image 拍照上传', 'number-keyboard 录入', 'ReplMes__ 端点'],
+  },
 ];

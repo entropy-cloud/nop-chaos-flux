@@ -30,10 +30,12 @@
  *
  * Plan 810 (M2 mes-work-reporting): the write-side subset — `jobCardFindPage` /
  * `jobCardMutation` / `reportWork` — lives in mock-backend-repl-mes-reporting.ts
- * and is delegated below (W2→stock split precedent). The `__replMesTestHooks`
- * global is shared; the M2 hook surface (forceConservationError /
- * forceIllegalTransition + write mirrors) is declared there and merged into
- * `ReplMesTestHooks` here.
+ * and is delegated below (W2→stock split precedent). Plan 811 (M3
+ * mes-andon-material): the andon subset — `andonFindPage` / `andonCreate` /
+ * `andonEscalate` / `materialIssueUpdate` / `uploadAndonPhoto` — lives in
+ * mock-backend-repl-mes-andon.ts and is delegated the same way. The
+ * `__replMesTestHooks` global is shared; the M2/M3 hook surfaces are declared
+ * in their modules and merged into `ReplMesTestHooks` here.
  */
 
 import {
@@ -49,10 +51,15 @@ import {
   handleReplMesReportingBranch,
   type ReplMesReportingTestHooks,
 } from './mock-backend-repl-mes-reporting';
+import {
+  createReplMesAndonSession,
+  handleReplMesAndonBranch,
+  type ReplMesAndonTestHooks,
+} from './mock-backend-repl-mes-andon';
 
 /* ── Opt-in hooks ───────────────────────────────────────────────────────── */
 
-export interface ReplMesTestHooks extends ReplMesReportingTestHooks {
+export interface ReplMesTestHooks extends ReplMesReportingTestHooks, ReplMesAndonTestHooks {
   /** Consume-once: the NEXT `dashboardKpi` read returns the
    * `KPI_UNAVAILABLE` failure envelope (D3 §4.4 error branch); later calls
    * succeed again so interval polling self-heals. Name follows D3 §4.6
@@ -196,6 +203,8 @@ export function createReplMesFetcherBranch(): ReplicaFetcherBranch {
   // plan 810 — the M2 work-reporting session (job cards) shares the branch
   // closure lifetime: one browser page session = one mutable card list.
   const reportingSession = createReplMesReportingSession();
+  // plan 811 — the M3 andon/material session (task rows) shares it too.
+  const andonSession = createReplMesAndonSession();
 
   const countEndpointCall = createEndpointCounter({
     countersKey: '__replMesCalls',
@@ -235,6 +244,19 @@ export function createReplMesFetcherBranch(): ReplicaFetcherBranch {
       hooks: readReplMesTestHooks(),
     });
     if (reportingHandled) return reportingHandled;
+
+    // ----- M3 andon subset (plan 811): andonFindPage / andonCreate /
+    // andonEscalate / materialIssueUpdate / uploadAndonPhoto. -----
+    const andonHandled = handleReplMesAndonBranch<T>({
+      url: input.url,
+      method,
+      params: input.params,
+      body: input.body,
+      read: createUrlParamReader(input.url, input.params, input.body),
+      session: andonSession,
+      hooks: readReplMesTestHooks(),
+    });
+    if (andonHandled) return andonHandled;
 
     return null;
   }
