@@ -283,7 +283,7 @@ HITL 卡复用口径（R3 L30）：`ai-tool-call` 为 AI 会话语境卡，inbox
 5. **§4.2 reviewDetail 契约形状增补**：`fieldDiffs[{path,before,after}]`（字段对照数据面）、`aiSuggestionItems`（ai-suggestions items 投影）、`hitlToolCall`/`hitlToolCallState`（ai-tool-call 输入投影，K3 ChatToolCall 形状）——与原 `hitl:{toolName,args,state}` 并存。
 6. **片段② 批准读意见 + 兜底直调**：批准按钮在意见 form 外，经 form `valuesPath: opinionDraft` 读意见草稿（§2.3 O1 勘误 4 同款）；驳回走 form 提交（textarea required 前端拦截，`REPL_DOC_OPINION_REQUIRED` 为服务端兜底）；staleness 下批准 disabled，服务端 `REPL_DOC_STALE_DECISION` 兜底由「越权直调批准（兜底演练）」ghost 按钮承载（W3「非法格式演练」先例）。
 7. **dialog 内刷新外部 crud**：dialog 片段运行期编译，`component:refresh` 跨片段 componentId 报 `unvalidated-component-target`（console.error）→ 改 `refreshNearest {targetType:'crud'}`（approval-tasks/S2 先例）。
-8. **HITL 卡 focus 口径**：`ai-tool-call` pending 态按组件设计在审批按钮内循环 Tab（`docs/components/flux-renderers-ai/improvement-analysis.md` §7 无障碍评估 + §5.2 [P3] HITL 审批页��焦点陷阱；`ai-tool-call.tsx` 文件头注释「P3 HITL … focus trap」，Esc 释放）——staleness 焦点断言改为「焦点落入 dialog 且非禁用批准；自卡片之后的控件起 Tab 链跳过禁用批准、可达驳回」；HITL 卡 onApproval approve → `ReplDoc__approve`（source=hitl），reject 仅写回卡片状态。
+8. **HITL 卡 focus 口径**：`ai-tool-call` pending 态按组件设计在审批按钮内循环 Tab（`docs/components/flux-renderers-ai/improvement-analysis.md` §7 无障碍评估 + §5.2 [P3] HITL 审批页脚焦点陷阱；`ai-tool-call.tsx` 文件头注释「P3 HITL … focus trap」，Esc 释放）——staleness 焦点断言改为「焦点落入 dialog 且非禁用批准；自卡片之后的控件起 Tab 链跳过禁用批准、可达驳回」；HITL 卡 onApproval approve → `ReplDoc__approve`（source=hitl），reject 仅写回卡片状态。
 9. **axe 分支 A 基线**：aria-required-attr 9（crud 列宽 separator，table owner 债）+ color-contrast 10（壳头部 badge 族）。
 
 ### 2.5 iot-telemetry-device（V1，桌面，直接组合）
