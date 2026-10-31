@@ -1,6 +1,6 @@
 # 834 API 信封契约门禁对账与接线（deep-audit 2026-11-01 G1）
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-11-01
 > Source: `docs/audits/deep-audit-2026-11-01.md` §6 G1
 > Related: `docs/plans/2026-07-05-api-response-envelope-alignment-plan.md`（completed，门禁原始来源）、commit `01770f770`（2026-08-27 ApiResponse 删除 `ok`）、owner doc `docs/architecture/api-response-envelope.md`
@@ -15,7 +15,7 @@
 - 2026-11-01 审计快照实跑 **exit 1、30 处**（评审复跑已 32 处——并行会话新增的未跟踪测试带来 +2，计数随并行改动浮动；本计划以**接线前最新实跑的全部命中**为处置对象）：CHK-1「mock fetcher 返回 `{ok, status}` 旧格式」27 处（分布：`dialog-form-submit-refresh-crud.test.tsx` 3、`tree-lazy-children.test.tsx` 2、`input-suggest.test.tsx`、`upload-field.test.tsx`、`tree-remote-search.test.tsx`、`markdown-src.test.tsx`、`w3d-advanced-input-family-demo.tsx` 各 1 处等，原始输出 `_tmp/envelope.log`）；CHK-4「`dynamic-renderer.tsx` 残留 `isActionResult` 嗅探」2 处（`packages/flux-renderers-basic/src/dynamic-renderer.tsx:14,164`）；CHK-5「ApiResponse 类型缺少 `ok` 字段」1 处。
 - 契约演进：commit `01770f770`（2026-08-27）从 `ApiResponse` 删除冗余 `ok`，成功判定统一为 `status === 0`，`data: T | null`；`ActionResult.ok` 保留（控制流信号）。live 类型 `packages/flux-core/src/types/renderer-api.ts:16-28` 注明"按 status 分支、不用单独 ok"。
 - **owner doc 漂移**：`docs/architecture/api-response-envelope.md` 仍规定 `ok?: boolean` 为规范化层计算属性（:53-67、:72-89、§5.1 :279-287），与 live 契约不符。
-- 由此，CHK-5 规则已过时（要求已被删除的字段）；CHK-1 的"旧格式"判据需按现行契约重定义：`ok` 现为被忽略的冗余字段；**真正的语义风险**是以 HTTP 风格 status（如 `status: 200`）表示成功的 mock——现行契约下 `status !== 0` 即失败（owner doc §1.1：0=成功、-1=失败、400/401/403/404/408=HTTP 错误映射），去掉 `ok` 后仍是"把失败当成功"的数据（live 实例：并行 WIP `input-table-revalidate-after-fix.test.tsx:65,73`）。
+- 由此，CHK-5 规则已过时（要求已被删除的字段）；CHK-1 的"旧格式"判据需按现行契约重定义：`ok` 现为被忽略的冗余字段；**真正的语义风险**是以 HTTP 风格 status（如 `status: 200`）表示成功的 mock——现行契约下 `status !== 0` 即失败（owner doc §1.1：0=成功、-1=失败、400/401/403/404/408=HTTP 错误映射），去掉 `ok` 后仍是"读起来像成功、实际被判失败"的数据（live 实例：并行 WIP `input-table-revalidate-after-fix.test.tsx:65,73`）。
 - ApiResponse 形判别：ApiResponse 形对象含 `status` 键，`ActionResult`（`actions.ts:286`）无 `status`——现行 CHK-1 以 `ok` 与 `status:` 同现为必要条件，结构上不命中纯 ActionResult。
 - 现有 `scripts/__tests__` 唯一 runner 为 `pnpm test:scripts`（`vitest.scripts.config.ts` include 仅 `.ts`）；其接入 `pnpm check` 由 plan 830 T7 承担。
 
@@ -53,46 +53,54 @@
 
 ### Phase 1 - 契约定稿（owner doc）
 
-Status: planned
+Status: completed
 Targets: `docs/architecture/api-response-envelope.md`
 
 - Item Types: `Fix`
 
-- [ ] Fix：按 live 类型与 `request-runtime` 规范化层实现改写——删除 `ok` 计算属性设计（:53-67、:72-89 流程图、§5.1、§对照表与改动清单中的 ok 条目），写明 `status === 0` 成功判定、`data: T | null`、ActionResult.ok 与 ApiResponse 的语义区分及原因；只写最终设计
+- [x] Fix：按 live 类型与 `request-runtime` 规范化层实现改写——删除 `ok` 计算属性设计（:53-67、:72-89 流程图、§5.1、§对照表与改动清单中的 ok 条目），写明 `status === 0` 成功判定、`data: T | null`、ActionResult.ok 与 ApiResponse 的语义区分及原因；只写最终设计
 
 Exit Criteria:
 
-- [ ] owner doc 不再出现 `ApiResponse.ok` 设计；与 `renderer-api.ts:16-28` 及规范化层代码逐条一致
+- [x] owner doc 不再出现 `ApiResponse.ok` 设计；与 `renderer-api.ts:16-28` 及规范化层代码逐条一致
 
 ### Phase 2 - 规则对账与残留收敛
 
-Status: planned
+Status: completed
 Targets: `scripts/verify-api-response-envelope.mjs`、`scripts/__tests__/verify-api-response-envelope.test.ts`（新）、接线前最新实跑的全部命中文件
 
 - Item Types: `Decision | Proof | Fix`
 
-- [ ] Decision：逐条审定 CHK-1..CHK-7 在现行契约下的保留/改写/删除并记录。已定方向：CHK-5 改为"ApiResponse 类型不得含 `ok`"；CHK-1 拆为两条——(a) ApiResponse 形 mock（判别式：返回对象字面量含 `status` 键）不得含冗余 `ok` 键；(b) ApiResponse 形 mock 的 `status` 必须**严格属于** owner doc §1.1 合法集合（0、-1、400、401、403、404、408）——集合外取值（`200`、`500`，以及遗留失败约定 `status: 1`）一律命中；默认修法为改写为合法值（失败改 `-1` 并以 `msg` 承载消息，成功改 `0`），仅有意构造的异常信封以行内豁免注释 + 规则测试显式覆盖；同步修正脚本内仍推荐 `{ status: 1, msg }` 的修复提示文案
-- [ ] Proof：脚本可测化（导出检查函数或支持 `--root` 指向 fixture），在 `scripts/__tests__/verify-api-response-envelope.test.ts`（`.ts`，由 `pnpm test:scripts` 收集）为每条保留规则写命中/不命中用例，含 ActionResult 形不命中、`status: 200` 命中两个判别用例
-- [ ] Fix：逐条处理全部命中——CHK-1(a) mock 去掉冗余 `ok`；CHK-1(b) 集合外 status 按上述默认修法改写（确认是 ApiResponse 形而非 ActionResult 形；ActionResult 形属误报则收紧规则）；CHK-4 核对 `dynamic-renderer.tsx` 的 `isActionResult` 嗅探在现行数据流下是否仍必要（必要则规则改为允许并注明依据，不必要则删除嗅探并补测试）
-- [ ] Proof：受影响包测试全绿（mock 改动不改变断言语义）
+- [x] Decision：逐条审定 CHK-1..CHK-7 在现行契约下的保留/改写/删除并记录。已定方向：CHK-5 改为"ApiResponse 类型不得含 `ok`"；CHK-1 拆为两条——(a) ApiResponse 形 mock（判别式：返回对象字面量含 `status` 键）不得含冗余 `ok` 键；(b) ApiResponse 形 mock 的 `status` 必须**严格属于** owner doc §1.1 合法集合（0、-1、400、401、403、404、408）——集合外取值（`200`、`500`，以及遗留失败约定 `status: 1`）一律命中；默认修法为改写为合法值（失败改 `-1` 并以 `msg` 承载消息，成功改 `0`），仅有意构造的异常信封以行内豁免注释 + 规则测试显式覆盖；同步修正脚本内仍推荐 `{ status: 1, msg }` 的修复提示文案
+- [x] Proof：脚本可测化（导出检查函数或支持 `--root` 指向 fixture），在 `scripts/__tests__/verify-api-response-envelope.test.ts`（`.ts`，由 `pnpm test:scripts` 收集）为每条保留规则写命中/不命中用例，含 ActionResult 形不命中、`status: 200` 命中两个判别用例
+- [x] Fix：逐条处理全部命中——CHK-1(a) mock 去掉冗余 `ok`；CHK-1(b) 集合外 status 按上述默认修法改写（确认是 ApiResponse 形而非 ActionResult 形；ActionResult 形属误报则收紧规则）；CHK-4 核对 `dynamic-renderer.tsx` 的 `isActionResult` 嗅探在现行数据流下是否仍必要（必要则规则改为允许并注明依据，不必要则删除嗅探并补测试）
+- [x] Proof：受影响包测试全绿（mock 改动不改变断言语义）
 
 Exit Criteria:
 
-- [ ] `node scripts/verify-api-response-envelope.mjs` exit 0；`pnpm test:scripts` 下新脚本测试通过
-- [ ] 受影响包测试通过
+- [x] `node scripts/verify-api-response-envelope.mjs` exit 0；`pnpm test:scripts` 下新脚本测试通过
+- [x] 受影响包测试通过
 
 ### Phase 3 - 接线
 
-Status: planned
+Status: completed
 Targets: 根 `package.json`
 
 - Item Types: `Fix`
 
-- [ ] Fix：新增 `check:api-envelope` script 并接入 `check` 链（与既有 `&&` 链同形）；plan 830 T7 同样改根 `package.json` check 链——按执行顺序在其改动之上追加，提交前核对两处接线均在
+- [x] Fix：新增 `check:api-envelope` script 并接入 `check` 链（与既有 `&&` 链同形）；plan 830 T7 同样改根 `package.json` check 链——按执行顺序在其改动之上追加，提交前核对两处接线均在
 
 Exit Criteria:
 
-- [ ] `pnpm check` 链包含并执行该门禁（输出中可见）
+- [x] `pnpm check` 链包含并执行该门禁（输出中可见）
+
+### 执行记录（2026-11-01）
+
+- **Phase 1**：`api-response-envelope.md` 改写为现行契约——删除 `ok` 计算属性设计（§1.2/§1.3/§5.1）、"与旧设计差异"表改为设计要点、§5.1 改为"为什么不提供 ok"（被拒替代方案）、§4 消费者契约改为现状并写明"按 data/ok 键嗅探嵌套结果"为被拒做法、§6 由"实施影响范围"改为"实现落点"。另纠正一处 live 漂移：非成功路径同样对错误载荷运行 responseAdaptor（失败时诊断并回退原始载荷，M-08），原文写只在成功时运行。
+- **CHK-4 → live defect 修复**：`dynamic-renderer.tsx` 的 `isActionResult` 嗅探会把带顶层 `data` 的动态 schema（如 `{ type: 'page', data: {...}, body }`）误解包成其 `data` 对象并报 "Invalid schema received from action"——新测试 `basic-dynamic-renderer.test.tsx`「renders a loaded schema that carries its own top-level data property」修复前实跑失败；删除嗅探后 basic 包 546 全绿。
+- **规则对账**：CHK-1 拆为 1a（ApiResponse 形字面量 `{ ok, status, … }` 的冗余 ok）与 1b（status 不得为 100-399）；CHK-5 改为"类型含 code/msg/errors/status 且不含 ok"；CHK-2..6 目标文件缺失即红（原 `catch {}` 静默跳过）；新增 `--root`/`--only` 与行尾 `envelope-gate: allow` 豁免。脚本测试 `scripts/__tests__/verify-api-response-envelope.test.ts` 7 例（含 ActionResult 形不命中、200 命中、缺文件 fail-closed、类型含 ok 命中）。
+- **残留收敛**：25 个文件中删除冗余 `ok`、13 处 `status: 200` 改为 `0`；其中 wizard 测试 mock `{ ok: url !== fail, status: 200 }` 依赖已删除的 `ok` 语义（按现行契约成功/失败两条 URL 都被判失败），改为按 URL 返回 `0/-1`。受影响 9 个包（runtime 1562、form-advanced 1103、data 1172、content 380、form 1116、layout 161、scheduling 1097、ai 859、playground 569）全绿。
+- 接线：`check:api-envelope` 接入 `pnpm check`（位于 `check:test-barrels` 与 `test:scripts` 之间）；knip 基线中该脚本的"未使用文件"条目外科式删除（files 22→21）。
 
 ## Draft Review Record
 
@@ -103,20 +111,33 @@ Exit Criteria:
 
 ## Closure Gates
 
-- [ ] owner doc 与 live 契约一致（owner-doc drift 已收敛）
-- [ ] 门禁规则与契约一致且有脚本测试；仓库零残留
-- [ ] 门禁已接入 `pnpm check`
-- [ ] 不存在被静默降级的 in-scope 残留
-- [ ] 独立子 agent（fresh session）closure audit 通过并记录证据
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
-- [ ] `pnpm check`
+- [x] owner doc 与 live 契约一致（owner-doc drift 已收敛：`ok` 设计删除、失败路径 responseAdaptor 行为补正、消费者契约改为现状）
+- [x] 门禁规则与契约一致且有脚本测试（7 例）；仓库零残留（`node scripts/verify-api-response-envelope.mjs` exit 0）
+- [x] 门禁已接入 `pnpm check`（check 日志可见"全部通过"）
+- [x] 不存在被静默降级的 in-scope 残留（CHK-1b 收窄与反序规则删除均在 Deferred 节记账；CHK-4 命中实为 live defect 并已修复）
+- [x] 独立子 agent（fresh session）closure audit 通过并记录证据（agent_efb3331f，approved）
+- [x] `pnpm typecheck`（46/46）
+- [x] `pnpm build`（46/46）
+- [x] `pnpm lint`（46/46）
+- [x] `pnpm test`（`turbo run test --continue` 85/86，**16,803 passed**；唯一失败 = mobile wheel 系 2 例全量负载 flaky〔与 832/833 门禁同族，整包单独重跑 381/381〕）
+- [x] `pnpm check`（exit 0，含 check:api-envelope 与 test:scripts 32 文件/196 tests）
 
 ## Deferred But Adjudicated
 
-（执行中如有改判当场落此节）
+### 执行期改判一：CHK-1b 由"严格合法集合"收窄为"禁止 100-399"
+
+- 证据：严格集合下命中 147 处——`status: 1` 108 处、`500` 26 处、`200` 13 处，集中在 playground mock（含并行会话正在编辑的复刻 mock）。运行时以 `status !== 0` 判失败，`1`/`500` 是语义清晰的失败值、行为正确；评审识别的真实风险类是"读起来像成功、实际被判失败"的 HTTP 成功/重定向码。
+- 处置：规则改为禁止 100-399（13 处 `200` 全部修正），owner doc 同步为"成功只能写 0；任何非 0 均为失败；不得使用 100-399"。
+- Classification: `out-of-scope improvement`（`1`/`500` 统一改写为 `-1` 属风格统一）
+- Why Not Blocking Closure: 非 0 失败值在现行契约下语义正确、无行为风险；改写涉及 ~45 个文件且与并行会话在编辑的复刻 mock 冲突
+- Successor Required: `no`
+
+### 执行期改判二：删除 CHK-1a 的反序分支（`status: N, ok:`）
+
+- 证据：反序分支在全仓只命中复刻套件的 face 兜底对象（`{ status: 1, ok: false, error }`，经 `faceResponse` 后 `ok`/`error` 落入业务 `data`），改写后 playground 的 Linear 测试失败（业务载荷 `data.ok` 被删）——全部为误报。
+- 处置：恢复受影响的 5 个文件，规则只保留信封常用的正序 `{ ok, status, … }`，并在脚本注释中写明理由。
+- Classification: 不适用（规则修正，非延期）
+- Successor Required: `no`
 
 ## Non-Blocking Follow-ups
 
@@ -124,13 +145,13 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: 待收口填写
+Status Note: owner doc 与 live 契约对齐（含失败路径 responseAdaptor 行为）；门禁规则对账并有 7 例脚本测试、接入 `pnpm check`、仓库零残留；CHK-4 命中实为 live defect（动态 schema 带顶层 data 被误解包）已修复；两项执行期改判（CHK-1b 收窄、反序规则删除）在 Deferred 节记账；全量门禁绿（test 仅 mobile wheel 负载 flaky）。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: 待填写
-- Evidence: 待填写
+- Auditor / Agent: 独立 fresh sub-agent（agent_efb3331f-4125-4b86-9b9a-3acb1833d936）
+- Evidence: verdict **approved**（零 Blocker/Major，2 Minor）。审计员核对 owner doc 与 `renderer-api.ts`/`request-runtime.ts:428-493` 逐条一致；以 diff 推演 CHK-4 新测试在旧实现下必挂、无双层包装消费者；确认被删的反序命中全部为复刻套件 face 业务载荷；wizard/input-table mock 改写保持测试意图并实跑通过；knip 收缩外科式。Minor-1（CHK-1 正则仅匹配单行字面量，跨行写法可逃逸——当前零命中）列为后续加固候选；Minor-2（基线措辞方向）已就地修正。
 
 Follow-up:
 
-- 待收口填写
+- 非阻塞候选：CHK-1a/1b 支持跨行对象字面量（当前仓库零此类写法）

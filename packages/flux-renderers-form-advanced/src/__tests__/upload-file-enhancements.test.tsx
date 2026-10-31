@@ -48,7 +48,7 @@ function makeUploadEnv(options: UploadFetcherOptions = {}): RendererEnv {
         return { status: 0, data: {} as T };
       }
       if (url === '/api/delete-fail' || options.deleteFail) {
-        return { ok: false, status: 500, data: { message: 'Server error' } as T };
+        return { status: 500, data: { message: 'Server error' } as T };
       }
       submitCalls.push(ctx.scope.readOwn() as Record<string, unknown>);
       return { status: 0, data: ctx.scope.readOwn() as T };

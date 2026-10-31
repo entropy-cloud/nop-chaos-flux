@@ -100,7 +100,7 @@ describe('MarkdownRenderer — DD9 remote src fetch via env.fetcher (INV-1)', ()
   it('treats a non-ok envelope as an error', async () => {
     const env = {
       fetcher: async function <T>() {
-        return { ok: false, status: 404, data: null as T };
+        return { status: 404, data: null as T };
       },
       notify: () => undefined,
     } as unknown as RendererEnv;

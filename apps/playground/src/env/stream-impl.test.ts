@@ -226,7 +226,7 @@ describe('createDefaultStream — fetch integration', () => {
   it('returns parsed SSE chunks from a 2xx fetch streaming body', async () => {
     const fetchImpl = mockFetch(mockReadableStream([encode('data: {"a":1}\n\ndata: {"a":2}\n\n')]));
     const stream = createDefaultStream({ fetchImpl });
-    const env = { fetcher: async () => ({ status: 200, data: null }), notify: vi.fn() } as never;
+    const env = { fetcher: async () => ({ status: 0, data: null }), notify: vi.fn() } as never;
     const result = await stream(
       { url: '/api/chat', streamProtocol: 'sse', streamChunkType: 'json' },
       { env, scope: {} as never },
@@ -244,7 +244,7 @@ describe('createDefaultStream — fetch integration', () => {
       statusText: 'Unauthorized',
     });
     const stream = createDefaultStream({ fetchImpl });
-    const env = { fetcher: async () => ({ status: 200, data: null }), notify: vi.fn() } as never;
+    const env = { fetcher: async () => ({ status: 0, data: null }), notify: vi.fn() } as never;
     const result = await stream(
       { url: '/api/secret', streamProtocol: 'sse' },
       { env, scope: {} as never },
@@ -261,7 +261,7 @@ describe('createDefaultStream — fetch integration', () => {
       throw new TypeError('Failed to fetch');
     }) as unknown as typeof fetch;
     const stream = createDefaultStream({ fetchImpl });
-    const env = { fetcher: async () => ({ status: 200, data: null }), notify: vi.fn() } as never;
+    const env = { fetcher: async () => ({ status: 0, data: null }), notify: vi.fn() } as never;
     const result = await stream(
       { url: 'https://down.example', streamProtocol: 'sse' },
       { env, scope: {} as never },
@@ -274,7 +274,7 @@ describe('createDefaultStream — fetch integration', () => {
   it('passes through default protocol/chunkType (sse + json) when request omits them', async () => {
     const fetchImpl = mockFetch(mockReadableStream([encode('data: 42\n\n')]));
     const stream = createDefaultStream({ fetchImpl });
-    const env = { fetcher: async () => ({ status: 200, data: null }), notify: vi.fn() } as never;
+    const env = { fetcher: async () => ({ status: 0, data: null }), notify: vi.fn() } as never;
     const result = await stream({ url: '/api/x' }, { env, scope: {} as never });
     const out: unknown[] = [];
     for await (const c of result.chunks) out.push(c);
@@ -291,7 +291,7 @@ describe('createDefaultStream — fetch integration', () => {
     });
     const fetchImpl = mockFetch(body);
     const stream = createDefaultStream({ fetchImpl });
-    const env = { fetcher: async () => ({ status: 200, data: null }), notify: vi.fn() } as never;
+    const env = { fetcher: async () => ({ status: 0, data: null }), notify: vi.fn() } as never;
 
     const result = await stream(
       { url: '/api/abort', streamProtocol: 'sse' },

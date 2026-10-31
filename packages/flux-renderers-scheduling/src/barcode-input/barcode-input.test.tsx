@@ -37,7 +37,7 @@ vi.mock('@nop-chaos/flux-react', () => ({
     asReactNode: (value: unknown) => value as object,
   useRendererRuntime: () => ({ dispatch: vi.fn() }),
   useRendererEnv: () => ({
-    fetcher: vi.fn().mockResolvedValue({ status: 200, data: new ArrayBuffer(0) }),
+    fetcher: vi.fn().mockResolvedValue({ status: 0, data: new ArrayBuffer(0) }),
   }),
   useRenderScope: () => ({ id: 'mock-scope', path: '/mock', readVisible: () => ({}), readOwn: () => ({}), update: vi.fn(), merge: vi.fn(), replace: vi.fn(), dispose: vi.fn() }),
   useCurrentComponentRegistry: () => undefined,

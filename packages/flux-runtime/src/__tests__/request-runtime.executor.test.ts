@@ -50,11 +50,11 @@ describe('executeApiSchema error path', () => {
   it('handles ok:false with undefined or null data', async () => {
     const scope = createTestScope({});
     const missingDataEnv = {
-      fetcher: vi.fn(async () => ({ ok: false, status: 404, data: undefined as any })),
+      fetcher: vi.fn(async () => ({ status: 404, data: undefined as any })),
       notify: vi.fn(),
     } as unknown as RendererEnv;
     const nullDataEnv = {
-      fetcher: vi.fn(async () => ({ ok: false, status: 500, data: null as any })),
+      fetcher: vi.fn(async () => ({ status: 500, data: null as any })),
       notify: vi.fn(),
     } as unknown as RendererEnv;
 
@@ -470,7 +470,7 @@ describe('createApiRequestExecutor', () => {
 
   it('preserves retry metadata on ok:false request failures', async () => {
     const scope = createTestScope({});
-    const failedResponse = { ok: false, status: 500, data: { message: 'server failed' } };
+    const failedResponse = { status: 500, data: { message: 'server failed' } };
     const env = {
       fetcher: vi.fn(async () => failedResponse),
     } as unknown as RendererEnv;

@@ -11,10 +11,6 @@ import { cn, Spinner } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
 import { asReactNode } from './utils.js';
 
-function isActionResult(value: unknown): value is { ok?: unknown; data?: unknown; error?: unknown } {
-  return value != null && typeof value === 'object' && ('ok' in value || 'data' in value || 'error' in value);
-}
-
 function isBaseSchemaLike(value: unknown): value is BaseSchema {
   return (
     value != null &&
@@ -161,7 +157,7 @@ export function DynamicRenderer(props: RendererComponentProps<DynamicRendererSch
           return { ok: false, error: result.error };
         }
 
-        const nextSchema = isActionResult(result.data) ? result.data.data : result.data;
+        const nextSchema = result.data;
 
         if (!isBaseSchemaLike(nextSchema)) {
           setState({

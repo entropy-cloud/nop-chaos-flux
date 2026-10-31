@@ -12,7 +12,7 @@ describe('action error notification chain propagation', () => {
       registry: createRendererRegistry([textRenderer]),
       env: {
         ...baseEnv,
-        fetcher: async () => ({ ok: false, status: 403, data: { message: 'Forbidden' } }),
+        fetcher: async () => ({ status: 403, data: { message: 'Forbidden' } }),
         notify,
       } as unknown as RendererEnv,
     });
@@ -34,7 +34,7 @@ describe('action error notification chain propagation', () => {
       registry: createRendererRegistry([textRenderer]),
       env: {
         ...baseEnv,
-        fetcher: async () => ({ ok: false, status: 500, data: { message: 'Server Error' } }),
+        fetcher: async () => ({ status: 500, data: { message: 'Server Error' } }),
         notify,
       } as unknown as RendererEnv,
     });
@@ -58,7 +58,7 @@ describe('action error notification chain propagation', () => {
       registry: createRendererRegistry([textRenderer]),
       env: {
         ...baseEnv,
-        fetcher: async () => ({ ok: false, status: 400, data: { message: 'Bad Request' } }),
+        fetcher: async () => ({ status: 400, data: { message: 'Bad Request' } }),
       } as unknown as RendererEnv,
     });
     const page = runtime.createPageRuntime({ errorMarker: 'none' });
@@ -85,7 +85,7 @@ describe('action error notification chain propagation', () => {
       registry: createRendererRegistry([textRenderer]),
       env: {
         ...baseEnv,
-        fetcher: async () => ({ ok: false, status: 500, data: { message: 'Server Error' } }),
+        fetcher: async () => ({ status: 500, data: { message: 'Server Error' } }),
       } as unknown as RendererEnv,
     });
     const page = runtime.createPageRuntime({ settled: 'no' });

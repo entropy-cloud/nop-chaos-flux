@@ -4,7 +4,7 @@
     "knipVersion": "6.9.0",
     "lastUpdated": "2026-10-30",
     "counts": {
-      "files": 22,
+      "files": 21,
       "exports": 346,
       "types": 571,
       "dependencies": 0,
@@ -38,7 +38,6 @@
     "scripts/scan-jsdom-usage.mjs",
     "scripts/three-perf/bench-scene-graph.mjs",
     "scripts/validate-happy-dom-migration.mjs",
-    "scripts/verify-api-response-envelope.mjs",
     "scripts/visual-quality/leafer-stub.ts",
     "stryker.formula.conf.mjs",
     "stryker.runtime.conf.mjs",

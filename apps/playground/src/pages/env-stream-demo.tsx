@@ -81,7 +81,7 @@ export function EnvStreamDemoPage({ onBack }: Props) {
     const fetchImpl = makeMockStreamFetch(protocol, events, 250);
     const stream = createDefaultStream({ fetchImpl });
     const env = {
-      fetcher: async () => ({ status: 200, data: null }),
+      fetcher: async () => ({ status: 0, data: null }),
       notify: (lvl: string, msg: string) => toast.info(`${lvl}: ${msg}`),
     } as never;
 

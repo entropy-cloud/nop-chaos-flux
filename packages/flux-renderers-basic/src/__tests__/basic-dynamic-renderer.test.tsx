@@ -81,6 +81,33 @@ describe('basicRendererDefinitions dynamic-renderer', () => {
     cleanup();
   });
 
+  it('renders a loaded schema that carries its own top-level data property', async () => {
+    const fetcher = createMockFetcher(async () => ({
+      status: 0,
+      data: { type: 'page', data: { greeting: 'Hello from scope' }, body: [{ type: 'text', text: '${greeting}' }] },
+    }));
+    const SchemaRenderer = createBasicSchemaRenderer();
+    render(
+      <SchemaRenderer
+        schemaUrl="test://basic/dynamic-renderer-data-schema"
+        schema={{
+          type: 'page',
+          body: [
+            {
+              type: 'dynamic-renderer',
+              loadAction: { action: 'ajax', args: { url: '/api/schema' } },
+              body: { type: 'text', text: 'Loading...' },
+            },
+          ],
+        }}
+        env={{ ...env, fetcher }}
+        formulaCompiler={formulaCompiler}
+      />,
+    );
+    await waitFor(() => expect(screen.getByText('Hello from scope')).toBeTruthy());
+    cleanup();
+  });
+
   it('shows request error when loadAction fails', async () => {
     const fetcher = createMockFetcher(async () => ({
       ok: false,

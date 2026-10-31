@@ -395,7 +395,7 @@ describe('data-source request-layer lifecycle (X4)', () => {
     const fetcher = vi.fn(async <T>(api: { url: string }) => {
       fetcherCount += 1;
       if (rejectNext) {
-        return { ok: false, status: 500, data: null as T };
+        return { status: 500, data: null as T };
       }
       return { status: 0, data: { url: api.url, seq: fetcherCount } as T };
     });

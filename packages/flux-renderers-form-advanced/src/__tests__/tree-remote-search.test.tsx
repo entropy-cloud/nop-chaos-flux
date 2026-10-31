@@ -196,7 +196,7 @@ describe('tree controls - remote search (E2d searchSource)', () => {
 
   it('shows inline error when remote search source fails (tree-select popover)', async () => {
     const failingEnv: RendererEnv = {
-      fetcher: async () => ({ ok: false, status: 500, data: null as never }),
+      fetcher: async () => ({ status: 500, data: null as never }),
       notify: () => undefined,
     };
 

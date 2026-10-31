@@ -66,7 +66,7 @@ describe('WizardRenderer — schema event dispatch ctx (CX-10 / bug-83 family)',
     const urls: string[] = [];
     const fetcher = vi.fn(async (api: { url?: string }) => {
       urls.push(api?.url ?? '');
-      return { ok: api?.url !== '/api/commit-fail', status: 200, data: null as never };
+      return { status: api?.url === '/api/commit-fail' ? -1 : 0, data: null as never };
     }) as unknown as RendererEnv['fetcher'];
     const SchemaRenderer = createLayoutSchemaRenderer();
     render(

@@ -95,7 +95,7 @@ describe('tree controls - async lazy loading (E2d childrenSource)', () => {
 
   it('shows inline error + retry when childrenSource fails, keeps existing field value', async () => {
     const failingEnv: RendererEnv = {
-      fetcher: async () => ({ ok: false, status: 500, data: null as never }),
+      fetcher: async () => ({ status: 500, data: null as never }),
       notify: () => undefined,
     };
 
@@ -140,7 +140,7 @@ describe('tree controls - async lazy loading (E2d childrenSource)', () => {
     const env: RendererEnv = {
       fetcher: async function <T>() {
         if (shouldFail) {
-          return { ok: false, status: 500, data: null as never };
+          return { status: 500, data: null as never };
         }
         return { status: 0, data: [{ label: 'Loaded Child', value: 'loaded' }] as T };
       },

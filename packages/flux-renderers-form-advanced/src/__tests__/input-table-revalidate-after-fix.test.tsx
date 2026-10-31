@@ -62,7 +62,7 @@ async function submitBlockedThenFixAndResubmit(fetcher: ReturnType<typeof vi.fn>
 
 describe('input-table: required cell revalidates after a failed submit', () => {
   it('a pre-existing empty required cell, once fixed, lets the next submit through', async () => {
-    const fetcher = vi.fn(async () => ({ ok: true, status: 200, data: {} }));
+    const fetcher = vi.fn(async () => ({ status: 0, data: {} }));
     renderRowsForm([{ sku: 'A' }, { sku: '' }], fetcher);
     await waitFor(() => expect(screen.getAllByPlaceholderText('SKU')).toHaveLength(2));
 
@@ -70,7 +70,7 @@ describe('input-table: required cell revalidates after a failed submit', () => {
   });
 
   it('an added empty row, once filled, lets the next submit through', async () => {
-    const fetcher = vi.fn(async () => ({ ok: true, status: 200, data: {} }));
+    const fetcher = vi.fn(async () => ({ status: 0, data: {} }));
     renderRowsForm([{ sku: 'A' }], fetcher);
     await waitFor(() => expect(screen.getAllByPlaceholderText('SKU')).toHaveLength(1));
     fireEvent.click(document.querySelector('[data-slot="input-table-add"]')!);

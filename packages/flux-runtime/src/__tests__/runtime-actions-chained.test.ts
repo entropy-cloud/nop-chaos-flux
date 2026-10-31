@@ -16,7 +16,7 @@ describe('createRendererRuntime', () => {
       registry: createRendererRegistry([textRenderer]),
       env: {
         ...env,
-        fetcher: async <T>() => ({ ok: false, status: 500, data: { message: 'boom' } as T }),
+        fetcher: async <T>() => ({ status: 500, data: { message: 'boom' } as T }),
       },
       expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
     });
@@ -57,7 +57,7 @@ describe('createRendererRuntime', () => {
       registry: createRendererRegistry([textRenderer]),
       env: {
         ...env,
-        fetcher: async <T>() => ({ ok: false, status: 500, data: { message: 'boom' } as T }),
+        fetcher: async <T>() => ({ status: 500, data: { message: 'boom' } as T }),
       },
       expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
     });
@@ -172,7 +172,7 @@ describe('createRendererRuntime', () => {
       registry: createRendererRegistry([textRenderer]),
       env: {
         ...env,
-        fetcher: async <T>() => ({ ok: false, status: 500, data: { message: 'boom' } as T }),
+        fetcher: async <T>() => ({ status: 500, data: { message: 'boom' } as T }),
       },
       expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
     });
@@ -246,7 +246,7 @@ describe('createRendererRuntime', () => {
       registry: createRendererRegistry([textRenderer]),
       env: {
         ...env,
-        fetcher: async <T>() => ({ ok: false, status: 500, data: { message: 'boom' } as T }),
+        fetcher: async <T>() => ({ status: 500, data: { message: 'boom' } as T }),
       },
       expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
     });
@@ -281,7 +281,7 @@ describe('createRendererRuntime', () => {
       registry: createRendererRegistry([textRenderer]),
       env: {
         ...env,
-        fetcher: async <T>() => ({ ok: false, status: 500, data: { message: 'settled-failed' } as T }),
+        fetcher: async <T>() => ({ status: 500, data: { message: 'settled-failed' } as T }),
       },
       expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
     });
@@ -317,7 +317,7 @@ describe('createRendererRuntime', () => {
       registry: createRendererRegistry([textRenderer]),
       env: {
         ...env,
-        fetcher: async <T>() => ({ ok: false, status: 500, data: { message: 'boom' } as T }),
+        fetcher: async <T>() => ({ status: 500, data: { message: 'boom' } as T }),
       },
       expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
     });

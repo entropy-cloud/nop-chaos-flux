@@ -11,7 +11,7 @@ import type { AiConnectorRequest } from '../../engine/types.js';
 
 function makeEnv(stream: StreamFetcher): RendererEnv {
   return {
-    fetcher: (async () => ({ status: 200, data: null })) as RendererEnv['fetcher'],
+    fetcher: (async () => ({ status: 0, data: null })) as RendererEnv['fetcher'],
     stream,
     notify: () => undefined,
   };
@@ -91,7 +91,7 @@ describe('createStreamBasedAiConnector', () => {
 
   it('throws when env.stream is missing', async () => {
     const env: RendererEnv = {
-      fetcher: (async () => ({ status: 200, data: null })) as RendererEnv['fetcher'],
+      fetcher: (async () => ({ status: 0, data: null })) as RendererEnv['fetcher'],
       notify: () => undefined,
     };
     const connector = createStreamBasedAiConnector({ env, buildRequest: () => buildReq('x', {}) });

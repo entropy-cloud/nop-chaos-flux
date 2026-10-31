@@ -5,7 +5,7 @@
 本文档定义 Flux 前端与 nop-entropy 后端之间的 API 响应/请求标准契约。
 
 - `ApiResponse` 标准信封格式（与 nop-entropy `io.nop.api.core.beans.ApiResponse` 对齐）
-- `ok` 计算属性的设计（镜像后端 `isOk()`）
+- 成功判定 `status === 0`（镜像后端 `isOk()`），`ApiResponse` 不携带 `ok` 字段
 - `selection` 字段选择参数（对应 `FieldSelectionBean`）
 - 响应规范化层的位置和职责
 - 消费者契约（`ActionResult.data` 的语义）
@@ -50,55 +50,43 @@ JSON 序列化后的实际传输格式：
 
 ### 1.2 Flux ApiResponse 类型
 
-Flux 的 `ApiResponse` 类型必须与后端标准对齐，同时增加计算属性 `ok`：
+Flux 的 `ApiResponse` 与后端标准一一对齐（`packages/flux-core/src/types/renderer-api.ts`）：
 
 ```typescript
 interface ApiResponse<T = unknown> {
-  status: number; // 0=成功, 非0=失败
+  status: number; // 0=成功，任何其他值=失败
+  data: T | null; // 业务数据；失败/异常路径与无数据成功均为 null，只在 status === 0 时读取
   code?: string; // 错误码
-  msg?: string; // 错误消息
-  data?: T; // 业务数据
+  msg?: string; // 人类可读错误消息（顶层字段）
   errors?: Record<string, string>; // 字段级校验错误
-  headers?: Record<string, unknown>; // 响应头
-  ok?: boolean; // 计算属性: status === 0（由规范化层设置）
+  headers?: Record<string, string>;
+  raw?: unknown;
 }
 ```
 
-**`ok` 的来源**：后端 Java 对象有 `@JsonIgnore boolean isOk() { return status == 0; }`，它不出现在 JSON 中，但是一个合法的计算属性。Flux 在规范化层计算 `ok = (response.status === 0)`，与后端 `isOk()` 语义一致。`ok` 在类型上是可选的，因为 fetcher 返回的原始信封不含 `ok`；规范化层在 responseAdaptor 之前必定设置它，消费者读到的 `ok` 始终已计算完成。
+`ApiResponse` **没有 `ok` 字段**：成功判定只看 `status === 0`，消费者按 `status` 分支。宿主 fetcher 原样返回后端 JSON 即可，不做任何成功/失败翻译。成功只能写 `status: 0`；任何非 0 值都是失败（后端取值为 `-1` 与 `400/401/403/404/408` HTTP 错误映射）。mock fetcher 不得使用 `100-399` 的 HTTP 成功/重定向码——它们在 `status === 0` 判定下是失败，读起来却像成功。
+
+`ActionResult.ok` 与此无关：它是动作派发的控制流信号（`then`/`onError` 分支依据），由动作执行层设置，保留。
 
 ### 1.3 规范化层
 
 ```
-env.fetcher() → { status, code?, msg?, data?, errors?, headers? }   (后端原始 JSON，无 ok)
+env.fetcher() → { status, code?, msg?, data, errors?, headers? }   (后端原始 JSON)
       │
-      ▼  规范化层 (executeApiSchema 内，responseAdaptor 之前)
-      │  response.ok = (response.status === 0)
+      ▼  规范化层（flux-runtime request-runtime.ts executeApiSchema）
+      │  isOk = (response.status === 0)
       │
-      ▼  responseAdaptor (对 data 做用户自定义变形)
+      ├── isOk=false → 对错误载荷运行 responseAdaptor（若其抛错：console.warn 诊断并回退原始载荷）
+      │               → throw ApiError(msg || `status=${status}`, code, errors, status)
       │
-      ├── ok=false → throw ApiError(msg || `status=${status}`, code, errors)
-      │
-      └── ok=true  → ActionResult { ok:true, data: response.data }
+      └── isOk=true  → responseAdaptor(response.data) → { ok: true, data: adapted }
 ```
 
-规范化层的职责（按顺序）：
+规范化层的职责：
 
-1. **计算 `ok`**：`response.ok = response.status === 0`
-2. **分支**：
-   - `ok === false`：提取 `msg` 作为错误消息（不再在 `data.message`/`data.msg` 里猜测），构造 `ApiError`，包含 `code`/`msg`/`errors`/`status`
-   - `ok === true`：对 `response.data` 运行 `responseAdaptor`（如有），结果作为业务 payload
-3. **消费者看到的 `ActionResult.data`** 始终是 `response.data`（post-adaptor），即干净的业务 payload
-
-### 1.4 与旧设计的差异
-
-| 维度         | 旧设计                               | 新设计                                          |
-| ------------ | ------------------------------------ | ----------------------------------------------- |
-| 成功判断     | `ApiResponse.ok`（fetcher 自己设置） | `ApiResponse.status === 0`（runtime 计算 `ok`） |
-| 错误消息     | 在 `data.message`/`data.msg` 里猜测  | 直接读 `response.msg`（一等公民）               |
-| 错误码       | 无                                   | `response.code`（一等公民）                     |
-| 字段错误     | 无                                   | `response.errors`（一等公民）                   |
-| `data` 解包  | 消费者各自猜测（3 种启发式）         | runtime 保证 `ActionResult.data` = 业务 payload |
-| fetcher 职责 | 翻译 `ok` + 丢失 `msg`/`code`        | 返回后端原始 JSON 即可                          |
+1. **判定**：`isOk = response.status === 0`。
+2. **失败分支**：错误消息取 `response.msg`（不在 `data.message`/`data.msg` 里猜测），构造携带 `code`/`msg`/`errors`/`status` 与重试元数据的 `ApiError` 抛出；配置了 `responseAdaptor` 时先对错误载荷求值，适配器自身抛错时以结构化诊断报告并回退原始载荷，保证后端消息不丢失。
+3. **成功分支**：对 `response.data` 运行 `responseAdaptor`（如有），结果作为业务 payload；消费者看到的 `ActionResult.data` 始终是 post-adaptor 的 `response.data`。
 
 ---
 
@@ -238,22 +226,16 @@ interface ExecutableApiRequest extends SchemaObject {
 
 ### 4.1 ActionResult.data 语义
 
-规范化后，`ActionResult.data` **始终是后端 `ApiResponse.data`**（post-`responseAdaptor`），即干净的业务 payload。
+规范化后，`ActionResult.data` **始终是后端 `ApiResponse.data`**（post-`responseAdaptor`），即干净的业务 payload。消费者直接使用 `result.data`，不做任何信封解包或嗅探：
 
-消费者**不再需要**：
+| 消费者            | 读取方式                                                                 |
+| ----------------- | ------------------------------------------------------------------------ |
+| Form `loadAction` | 直接用 `result.data`                                                     |
+| Page `loadAction` | 直接用 `result.data`                                                     |
+| DynamicRenderer   | 直接把 `result.data` 当作 schema（再做 `type` 形状校验）                 |
+| CRUD `loadAction` | `normalizeCrudSourceValue(result.data)`（list-shape 归一化，非信封解包） |
 
-- 检查 `result.data.data`（信封解包）—— 已由规范化层完成
-- 检查 `'data' in payload`（Form/Page 的双模式猜测）—— 应删除
-- 嗅探 `isActionResult`（DynamicRenderer 的启发式）—— 应删除
-
-### 4.2 各消费者应删除的启发式
-
-| 消费者            | 当前启发式                              | 改为                                             |
-| ----------------- | --------------------------------------- | ------------------------------------------------ |
-| Form `loadAction` | `'data' in payload` → 解包              | 直接用 `result.data`                             |
-| Page `loadAction` | `'data' in payload` → 解包              | 直接用 `result.data`                             |
-| DynamicRenderer   | `isActionResult(result.data)` 嗅探      | 直接用 `result.data`                             |
-| CRUD `loadAction` | `normalizeCrudSourceValue(result.data)` | 保持（它做的是 list-shape 归一化，不是信封解包） |
+被拒绝的做法：按 `'data' in payload` / `'ok' in payload` 嗅探"嵌套结果"再解包。业务 payload 本身合法地含有 `data` 键（例如带顶层 `data` 的动态 schema `{ type: 'page', data: {...}, body: [...] }`），嗅探会把它误解包成内部对象并拒绝。
 
 ### 4.3 `${result.data}` 在 then 链中
 
@@ -276,15 +258,13 @@ interface ExecutableApiRequest extends SchemaObject {
 
 ## 5. 设计裁定记录
 
-### 5.1 为什么 `ok` 是计算属性而非传输字段
+### 5.1 为什么 `ApiResponse` 不提供 `ok`
 
-后端 `ApiResponse.isOk()` 是 `@JsonIgnore` 的计算方法，不出现在 JSON 中。如果 Flux 要求 fetcher 返回 `ok`，则每个宿主集成都需要自己翻译 `status === 0 → ok: true`，这是重复逻辑且容易出错。
+被拒绝的替代方案：在 `ApiResponse` 上保留 `ok`（由 fetcher 设置，或由规范化层回填的计算属性）。
 
-在规范化层计算 `ok`：
-
-- 与后端 `isOk()` 语义一致
-- 宿主 fetcher 返回原始 JSON 即可，无需翻译
-- 既有消费代码（`if (!response.ok)`）零改动
+- 后端 `isOk()` 是 `@JsonIgnore` 计算方法，不出现在 JSON 中；任何 `ok` 字段都只能是派生冗余，与 `status` 并存时会出现两个真相源（例如 `{ ok: true, status: 200 }` 在 `status === 0` 约定下其实是失败）。
+- 只保留 `status` 让宿主 fetcher 零翻译，mock 与真实 fetcher 行为天然一致。
+- 动作层需要的控制流信号由 `ActionResult.ok` 承担，与传输信封分离。
 
 ### 5.2 为什么错误消息从 `response.msg` 读而非 `data.message`
 
@@ -300,38 +280,17 @@ interface ExecutableApiRequest extends SchemaObject {
 
 | 在 fetcher 层                                               | 在 runtime 层（裁定）                        |
 | ----------------------------------------------------------- | -------------------------------------------- |
-| 每个宿主重复实现 `ok` 计算                                  | 实现一次，所有宿主受益                       |
+| 每个宿主重复实现成功判定                                    | 实现一次，所有宿主受益                       |
 | fetcher 既管 transport 又管业务语义                         | 职责分离：fetcher=transport，runtime=语义    |
 | responseAdaptor 拿到已翻译数据，无法访问原始 `status`/`msg` | responseAdaptor 运行在规范化之后，上下文完整 |
 | mock fetcher 和真实 fetcher 行为不一致                      | 统一行为                                     |
 
 ---
 
-## 6. 实施影响范围
+## 6. 实现落点
 
-### 类型层（`flux-core`）
-
-- `renderer-api.ts`: `ApiResponse` 增加 `code`/`msg`/`errors`，`ok` 改为计算属性语义
-- `schema-base-types.ts`: `ApiSchema` / `ExecutableApiRequest` 增加 `selection`
-
-### 运行时层（`flux-runtime`）
-
-- `request-runtime.ts`: 规范化层计算 `ok`，错误消息从 `response.msg` 提取
-- `runtime-action-helpers.ts`: `executeRuntimeAjaxAction` 错误处理路径使用 `ApiError.msg`/`code`/`errors`
-- `request-runtime-adaptor.ts`: responseAdaptor 上下文已有 `status`（`session` 相关字段未变更——adaptor 上下文结构不在本轮 scope 内）
-
-### 消费者层
-
-- `form.tsx`: 删除 `'data' in payload` 解包启发式
-- `page.tsx`: 删除同样的启发式
-- `dynamic-renderer.tsx`: 删除 `isActionResult` 嗅探
-- CRUD `normalizeCrudSourceValue`: 保持不变（list-shape 归一化）
-
-### 宿主层
-
-- mock fetcher: 返回 `{status, code?, msg?, data?, errors?}` 格式
-- `flux-guide/flux-types/common.d.ts`: `ApiSchemaObject` 增加 `selection`
-
-### flux-guide 类型
-
-- `common.d.ts`: 增加 `ApiResponse` 类型定义，`ApiSchemaObject` 增加 `selection`
+- 类型：`packages/flux-core/src/types/renderer-api.ts`（`ApiResponse`）、`schema-base-types.ts`（`ApiSchema`/`ExecutableApiRequest.selection`）。
+- 规范化：`packages/flux-runtime/src/async-data/request-runtime.ts`（`status === 0` 判定、`ApiError` 构造、失败载荷适配）；`runtime-action-helpers.ts`（`executeRuntimeAjaxAction` 错误路径使用 `ApiError.msg`/`code`/`errors`）。
+- 消费者：`form.tsx`、`page.tsx`、`dynamic-renderer.tsx` 直接读取 `result.data`；CRUD 保留 list-shape 归一化。
+- 宿主与 mock：fetcher 返回 `{ status, code?, msg?, data, errors? }`；`flux-guide/flux-types/common.d.ts` 含 `ApiResponse` 与 `ApiSchemaObject.selection`。
+- 门禁：`scripts/verify-api-response-envelope.mjs`（`pnpm check:api-envelope`，接入 `pnpm check`）检查 mock 不含冗余 `ok`、不使用 100-399 的 `status`、类型不含 `ok`、消费者无信封嗅探、目标文件缺失即红。

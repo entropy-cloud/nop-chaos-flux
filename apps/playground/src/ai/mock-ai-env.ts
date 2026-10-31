@@ -173,7 +173,7 @@ export function createMockAiEnv(options?: MockAiEnvOptions): RendererEnv {
   const delayMs = options?.delayMs ?? 15;
   const fixtures = options?.fixtures ?? false;
   return {
-    fetcher: (async () => ({ status: 200, data: null })) as RendererEnv['fetcher'],
+    fetcher: (async () => ({ status: 0, data: null })) as RendererEnv['fetcher'],
     stream: createMockAiStream(delayMs, fixtures),
     // Plan 461: route `showToast` to the playground's sonner Toaster so wiring
     // actions like `ai-prompts.onSelect` produce visible feedback.

@@ -319,7 +319,7 @@ describe('input-text suggest — empty / error state', () => {
 
   it('shows empty state when fetch fails (does not throw, does not block input)', async () => {
     const fetcher = async function <T>() {
-      return { ok: false, status: 500, data: null as T };
+      return { status: 500, data: null as T };
     };
     renderForm(
       {

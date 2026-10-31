@@ -38,7 +38,7 @@ function makeUploadEnv(options: UploadFetcherOptions = {}): RendererEnv {
       const url = api?.url;
       const body = ctx.scope?.readOwn?.() ?? {};
       if (url === '/api/upload-fail' || options.fail) {
-        return { ok: false, status: 500, data: { message: 'rejected' } as T };
+        return { status: 500, data: { message: 'rejected' } as T };
       }
       if (url === '/api/upload' || url === '/api/upload-image') {
         const file = (body as { __uploadFile?: { name?: string; size?: number } }).__uploadFile ?? {
@@ -417,10 +417,10 @@ describe('input-file — schema event dispatch ctx (CX-10 / bug-83 family)', () 
           };
         }
         if (api?.url === '/api/upload-fail') {
-          return { ok: false, status: 500, data: { message: 'rejected' } as T };
+          return { status: 500, data: { message: 'rejected' } as T };
         }
         if (api?.url === '/api/delete-fail') {
-          return { ok: false, status: 500, data: { message: 'gone' } as T };
+          return { status: 500, data: { message: 'gone' } as T };
         }
         return { status: 0, data: ctx.scope?.readOwn?.() as T };
       },
