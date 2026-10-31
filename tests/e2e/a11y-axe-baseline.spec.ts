@@ -61,6 +61,9 @@ const ROUTES = [
   // scan set (non-mobile page — pure JSON SchemaPage, no host override; the
   // scada canvas is a panel-inside-desktop page, not a mobile canvas).
   'complex-pages/mes-shopfloor-board',
+  // Plan 810 (D1 §4 branch A): M2 work-reporting joins the standard desktop
+  // scan set (non-mobile page — pure JSON SchemaPage, no host override).
+  'complex-pages/mes-work-reporting',
   'dashboard-demo',
 ];
 

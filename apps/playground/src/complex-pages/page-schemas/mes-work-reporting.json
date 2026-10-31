@@ -1,0 +1,526 @@
+{
+  "type": "page",
+  "testid": "mes-work-reporting-root",
+  "body": [
+    {
+      "type": "flex",
+      "direction": "column",
+      "gap": 8,
+      "testid": "mes-work-reporting-shell",
+      "body": [
+        {
+          "type": "text",
+          "testid": "mes-work-reporting-caption",
+          "text": "工序报工：行内报工明细 + 状态动作按工单状态显隐（开工/暂停/恢复/报工提交/完成）",
+          "className": "text-sm text-muted-foreground"
+        },
+        {
+          "type": "crud",
+          "id": "mes-work-reporting-cards",
+          "testid": "mes-work-reporting-cards",
+          "itemKey": "id",
+          "loadAllData": true,
+          "loadAction": {
+            "dependsOn": ["__init_load__"],
+            "action": "ajax",
+            "args": {
+              "url": "/r/ReplMes__jobCardFindPage",
+              "method": "get"
+            }
+          },
+          "columns": [
+            {
+              "name": "opNo",
+              "label": "工序",
+              "width": 90
+            },
+            {
+              "name": "cardNo",
+              "label": "卡号",
+              "width": 130
+            },
+            {
+              "name": "workCenter",
+              "label": "工作中心",
+              "width": 150
+            },
+            {
+              "name": "plannedQty",
+              "label": "计划数",
+              "width": 80
+            },
+            {
+              "name": "completedQty",
+              "label": "完成数",
+              "width": 80
+            },
+            {
+              "name": "hourRatioColumn",
+              "label": "工时比",
+              "width": 90,
+              "cell": {
+                "type": "container",
+                "className": "flex items-center",
+                "body": [
+                  {
+                    "type": "text",
+                    "testid": "mes-work-reporting-card-hour-ratio",
+                    "text": "${ROUND((setupMins + runMins) / stdMins, 2)}",
+                    "className": "${(setupMins + runMins) / stdMins > 1 ? \"text-rose-600 font-medium\" : \"\"}"
+                  }
+                ]
+              }
+            },
+            {
+              "name": "statusLabel",
+              "label": "状态",
+              "width": 110,
+              "cell": {
+                "type": "container",
+                "className": "flex items-center",
+                "body": [
+                  {
+                    "type": "text",
+                    "testid": "mes-work-reporting-card-status",
+                    "text": "${statusLabel}",
+                    "className": "${status === \"RELEASED\" ? \"text-xs text-blue-700 bg-blue-50 rounded px-1.5 py-0.5\" : status === \"RUNNING\" ? \"text-xs text-emerald-700 bg-emerald-50 rounded px-1.5 py-0.5\" : status === \"ON_HOLD\" ? \"text-xs text-amber-700 bg-amber-50 rounded px-1.5 py-0.5\" : status === \"SUBMITTED\" ? \"text-xs text-violet-700 bg-violet-50 rounded px-1.5 py-0.5\" : status === \"COMPLETED\" ? \"text-xs text-teal-700 bg-teal-50 rounded px-1.5 py-0.5\" : \"text-xs text-slate-600 bg-slate-100 rounded px-1.5 py-0.5\"}"
+                  }
+                ]
+              }
+            },
+            {
+              "type": "operation",
+              "label": "操作",
+              "fixed": "right",
+              "width": 210,
+              "buttons": [
+                {
+                  "type": "button",
+                  "label": "报工",
+                  "variant": "outline",
+                  "testid": "mes-work-reporting-report",
+                  "onClick": {
+                    "action": "openDialog",
+                    "args": {
+                      "title": "工序报工",
+                      "testid": "mes-work-reporting-report-dialog",
+                      "closeOnSubmit": true,
+                      "data": {
+                        "cardId": "${$slot.record.id}"
+                      },
+                      "body": [
+                        {
+                          "type": "form",
+                          "id": "mes-work-reporting-report-form",
+                          "testid": "mes-work-reporting-report-form",
+                          "validateOn": ["change", "blur", "submit"],
+                          "showErrorOn": ["touched", "submit"],
+                          "loadAction": {
+                            "action": "ajax",
+                            "args": {
+                              "url": "/r/ReplMes__jobCardFindPage",
+                              "method": "get",
+                              "params": {
+                                "cardId": "${cardId}"
+                              }
+                            }
+                          },
+                          "data": {
+                            "totalCompletedQty": 0,
+                            "lastRowChanged": ""
+                          },
+                          "body": [
+                            {
+                              "type": "text",
+                              "testid": "mes-work-reporting-report-caption",
+                              "text": "作业卡 ${cardNo} · ${workCenter} · 计划 ${plannedQty} 件 · 单件标准工分 ${stdMins}",
+                              "className": "text-sm text-muted-foreground"
+                            },
+                            {
+                              "type": "input-table",
+                              "name": "lines",
+                              "testid": "mes-work-reporting-lines",
+                              "itemKey": "lineNo",
+                              "addable": false,
+                              "removable": false,
+                              "reorderable": false,
+                              "summaryVisible": true,
+                              "summaryBinding": {
+                                "field": "totalCompletedQty",
+                                "column": "completedQty",
+                                "agg": "sum"
+                              },
+                              "onRowChange": [
+                                {
+                                  "action": "setValue",
+                                  "args": {
+                                    "path": "lastRowChanged",
+                                    "value": "${name}"
+                                  }
+                                }
+                              ],
+                              "columns": [
+                                {
+                                  "name": "completedQty",
+                                  "label": "合格数",
+                                  "width": 110,
+                                  "aggregate": "sum"
+                                },
+                                {
+                                  "name": "scrappedQty",
+                                  "label": "报废数",
+                                  "width": 110,
+                                  "aggregate": "sum"
+                                },
+                                {
+                                  "name": "setupMins",
+                                  "label": "准备工分",
+                                  "width": 110
+                                },
+                                {
+                                  "name": "runMins",
+                                  "label": "加工工分",
+                                  "width": 110
+                                },
+                                {
+                                  "name": "totalMins",
+                                  "label": "工时",
+                                  "width": 90,
+                                  "aggregate": {
+                                    "expr": "SUM(ARRAYMAP(rows, r => (r?.setupMins ?? 0) + (r?.runMins ?? 0)))"
+                                  },
+                                  "computed": "setupMins + runMins"
+                                },
+                                {
+                                  "name": "hourRatio",
+                                  "label": "工时比",
+                                  "width": 90
+                                },
+                                {
+                                  "name": "qualifiedRate",
+                                  "label": "合格率",
+                                  "width": 90,
+                                  "computed": "ROUND((completedQty + scrappedQty) > 0 ? completedQty / (completedQty + scrappedQty) : 0, 2)"
+                                }
+                              ],
+                              "item": [
+                                {
+                                  "type": "input-number",
+                                  "name": "completedQty",
+                                  "min": 0,
+                                  "testid": "mes-work-reporting-completed-qty"
+                                },
+                                {
+                                  "type": "input-number",
+                                  "name": "scrappedQty",
+                                  "min": 0,
+                                  "testid": "mes-work-reporting-scrapped-qty"
+                                },
+                                {
+                                  "type": "input-number",
+                                  "name": "setupMins",
+                                  "min": 0,
+                                  "testid": "mes-work-reporting-setup-mins"
+                                },
+                                {
+                                  "type": "input-number",
+                                  "name": "runMins",
+                                  "min": 0,
+                                  "testid": "mes-work-reporting-run-mins"
+                                },
+                                {
+                                  "type": "text",
+                                  "testid": "mes-work-reporting-hour-ratio",
+                                  "text": "${ROUND((setupMins + runMins) / stdMins, 2)}",
+                                  "className": "${(setupMins + runMins) / stdMins > 1 ? \"text-rose-600 font-medium\" : \"\"}"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "text",
+                              "testid": "mes-work-reporting-conservation-warning",
+                              "text": "数量守恒校验未通过（GUARD_CONSERVATION）：合格 + 报废不得超过该行计划数",
+                              "visible": "${COUNT(ARRAYFILTER(lines ?? [], l => (l?.completedQty ?? 0) + (l?.scrappedQty ?? 0) > (l?.plannedQty ?? 0))) > 0}",
+                              "className": "text-sm text-rose-600"
+                            },
+                            {
+                              "type": "text",
+                              "testid": "mes-work-reporting-total-completed",
+                              "text": "合计回写（totalCompletedQty）：${totalCompletedQty ?? 0}",
+                              "className": "text-sm"
+                            },
+                            {
+                              "type": "text",
+                              "testid": "mes-work-reporting-row-change-hint",
+                              "text": "最近编辑行字段：${lastRowChanged || '-'}",
+                              "className": "text-xs text-muted-foreground"
+                            }
+                          ],
+                          "actions": [
+                            {
+                              "type": "button",
+                              "label": "取消",
+                              "variant": "outline",
+                              "testid": "mes-work-reporting-report-cancel",
+                              "onClick": {
+                                "action": "closeSurface"
+                              }
+                            },
+                            {
+                              "type": "button",
+                              "label": "提交报工",
+                              "variant": "primary",
+                              "testid": "mes-work-reporting-report-submit",
+                              "onClick": {
+                                "action": "submitForm"
+                              },
+                              "disabled": "${COUNT(ARRAYFILTER(lines ?? [], l => (l?.completedQty ?? 0) + (l?.scrappedQty ?? 0) > (l?.plannedQty ?? 0))) > 0}"
+                            }
+                          ],
+                          "submitAction": {
+                            "action": "ajax",
+                            "args": {
+                              "url": "/r/ReplMes__reportWork",
+                              "method": "post",
+                              "data": {
+                                "cardId": "${id}",
+                                "lines": "${lines}",
+                                "totalCompletedQty": "${totalCompletedQty}"
+                              }
+                            },
+                            "messages": {
+                              "success": "报工提交成功"
+                            },
+                            "onError": [
+                              {
+                                "action": "showToast",
+                                "args": {
+                                  "level": "error",
+                                  "message": "报工被拒绝：${error?.message ?? 'UNKNOWN'}"
+                                }
+                              }
+                            ]
+                          },
+                          "submitScope": "surface"
+                        }
+                      ],
+                      "onSubmitSuccess": [
+                        {
+                          "action": "refreshNearest",
+                          "args": {
+                            "targetType": "crud",
+                            "notFound": "error"
+                          }
+                        }
+                      ]
+                    }
+                  }
+                },
+                {
+                  "type": "button",
+                  "label": "开工",
+                  "variant": "outline",
+                  "testid": "mes-work-reporting-start",
+                  "visible": "${$slot.record.status === 'RELEASED'}",
+                  "onClick": {
+                    "action": "ajax",
+                    "args": {
+                      "url": "/r/ReplMes__jobCardMutation",
+                      "method": "post",
+                      "data": {
+                        "id": "${$slot.record.id}",
+                        "mutation": "startJob"
+                      }
+                    },
+                    "messages": {
+                      "success": "作业卡已开工"
+                    },
+                    "then": [
+                      {
+                        "action": "component:refresh",
+                        "componentId": "mes-work-reporting-cards"
+                      }
+                    ],
+                    "onError": [
+                      {
+                        "action": "component:refresh",
+                        "componentId": "mes-work-reporting-cards"
+                      },
+                      {
+                        "action": "showToast",
+                        "args": {
+                          "level": "error",
+                          "message": "状态迁移被拒绝（ILLEGAL_TRANSITION）：当前状态不允许该操作"
+                        }
+                      }
+                    ]
+                  }
+                },
+                {
+                  "type": "button",
+                  "label": "暂停",
+                  "variant": "outline",
+                  "testid": "mes-work-reporting-hold",
+                  "visible": "${$slot.record.status === 'RUNNING'}",
+                  "onClick": {
+                    "action": "ajax",
+                    "args": {
+                      "url": "/r/ReplMes__jobCardMutation",
+                      "method": "post",
+                      "data": {
+                        "id": "${$slot.record.id}",
+                        "mutation": "holdJob"
+                      }
+                    },
+                    "messages": {
+                      "success": "作业卡已暂停"
+                    },
+                    "then": [
+                      {
+                        "action": "component:refresh",
+                        "componentId": "mes-work-reporting-cards"
+                      }
+                    ],
+                    "onError": [
+                      {
+                        "action": "component:refresh",
+                        "componentId": "mes-work-reporting-cards"
+                      },
+                      {
+                        "action": "showToast",
+                        "args": {
+                          "level": "error",
+                          "message": "状态迁移被拒绝（ILLEGAL_TRANSITION）：当前状态不允许该操作"
+                        }
+                      }
+                    ]
+                  }
+                },
+                {
+                  "type": "button",
+                  "label": "恢复",
+                  "variant": "outline",
+                  "testid": "mes-work-reporting-resume",
+                  "visible": "${$slot.record.status === 'ON_HOLD'}",
+                  "onClick": {
+                    "action": "ajax",
+                    "args": {
+                      "url": "/r/ReplMes__jobCardMutation",
+                      "method": "post",
+                      "data": {
+                        "id": "${$slot.record.id}",
+                        "mutation": "resumeJob"
+                      }
+                    },
+                    "messages": {
+                      "success": "作业卡已恢复加工"
+                    },
+                    "then": [
+                      {
+                        "action": "component:refresh",
+                        "componentId": "mes-work-reporting-cards"
+                      }
+                    ],
+                    "onError": [
+                      {
+                        "action": "component:refresh",
+                        "componentId": "mes-work-reporting-cards"
+                      },
+                      {
+                        "action": "showToast",
+                        "args": {
+                          "level": "error",
+                          "message": "状态迁移被拒绝（ILLEGAL_TRANSITION）：当前状态不允许该操作"
+                        }
+                      }
+                    ]
+                  }
+                },
+                {
+                  "type": "button",
+                  "label": "报工提交",
+                  "variant": "outline",
+                  "testid": "mes-work-reporting-submit",
+                  "visible": "${$slot.record.status === 'RUNNING'}",
+                  "onClick": {
+                    "action": "ajax",
+                    "args": {
+                      "url": "/r/ReplMes__jobCardMutation",
+                      "method": "post",
+                      "data": {
+                        "id": "${$slot.record.id}",
+                        "mutation": "submitJob"
+                      }
+                    },
+                    "messages": {
+                      "success": "报工已提交，待完工确认"
+                    },
+                    "then": [
+                      {
+                        "action": "component:refresh",
+                        "componentId": "mes-work-reporting-cards"
+                      }
+                    ],
+                    "onError": [
+                      {
+                        "action": "component:refresh",
+                        "componentId": "mes-work-reporting-cards"
+                      },
+                      {
+                        "action": "showToast",
+                        "args": {
+                          "level": "error",
+                          "message": "状态迁移被拒绝（ILLEGAL_TRANSITION）：当前状态不允许该操作"
+                        }
+                      }
+                    ]
+                  }
+                },
+                {
+                  "type": "button",
+                  "label": "完成",
+                  "variant": "outline",
+                  "testid": "mes-work-reporting-complete",
+                  "visible": "${$slot.record.status === 'SUBMITTED'}",
+                  "onClick": {
+                    "action": "ajax",
+                    "args": {
+                      "url": "/r/ReplMes__jobCardMutation",
+                      "method": "post",
+                      "data": {
+                        "id": "${$slot.record.id}",
+                        "mutation": "completeJob"
+                      }
+                    },
+                    "messages": {
+                      "success": "作业卡已完工"
+                    },
+                    "then": [
+                      {
+                        "action": "component:refresh",
+                        "componentId": "mes-work-reporting-cards"
+                      }
+                    ],
+                    "onError": [
+                      {
+                        "action": "component:refresh",
+                        "componentId": "mes-work-reporting-cards"
+                      },
+                      {
+                        "action": "showToast",
+                        "args": {
+                          "level": "error",
+                          "message": "状态迁移被拒绝（ILLEGAL_TRANSITION）：当前状态不允许该操作"
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

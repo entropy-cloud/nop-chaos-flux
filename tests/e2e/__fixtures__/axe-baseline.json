@@ -86,5 +86,9 @@
     "aria-required-attr": 5,
     "color-contrast": 7,
     "_notes": "plan 809 first-run measurement 2026-10-30 (D1 §4 branch A registration): counts measured on #/complex-pages/mes-shopfloor-board. aria-required-attr = the downtime panel table's 5 column-resize separator spans (table component owner debt, same rule family as standard-crud/W2/W3/C1; count = the 5 downtime columns); color-contrast = 7 header feature badges (data-slot=badge variant=secondary in the complex-pages shell header — same secondary-badge contrast debt as W3/C1/C2/C3 registrations, component owner; count = this entry's 7 feature tags). Fixes belong to the component owner, not the page schema."
+  },
+  "complex-pages/mes-work-reporting": {
+    "aria-required-attr": 8,
+    "_notes": "plan 810 first-run measurement 2026-10-30 (D1 §4 branch A registration): counts measured on #/complex-pages/mes-work-reporting. aria-required-attr = 8 hits from the crud list table's column-resize separator spans (7 data columns + the operation column — table component owner debt, same rule family as the M1/standard-crud/W2/W3/C1 registrations; count = this page's 8 crud columns). No color-contrast hit on this page's header badges (5 feature tags, unlike the 7-tag M1 header). Fixes belong to the component owner, not the page schema."
   }
 }

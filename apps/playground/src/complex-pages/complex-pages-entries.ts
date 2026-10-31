@@ -456,4 +456,12 @@ export const COMPLEX_PAGE_ENTRIES: ComplexPageEntry[] = [
       '复刻 MES 车间大屏页（roadmap 21 页 M1，D3 §2.4 桌面整页）：dashboard 网格 panels（C3 先例 PAGE_DATA 表达式绑定通道）内 stat-tile KPI×4（计划/完成/报废/完成率，G10 翻牌器近似：decimals 显式 + delta 方向色 + plannedSpark 迷你趋势）+ echarts 当日报工趋势（48 半小时点确定性序列，onClick 下钻该时段预警明细 dialog，W1 勘误 5 实例级 seam 观察锚）+ scada-canvas 车间工位组态（scada-group/scada-rect/scada-text/scada-device-motor/scada-sensor-control-indicator 静态注入，__flux_scada_<cid> 测试句柄）+ 当前停机 stat-tile 与停机明细表 + notice-bar 未关闭异常滚动播报（mobile 族桌面共享注册）。数据源 name=kpi interval=15s silent 轮询 + 手动刷新入口，mock 按调用计数相位推进（第 N 次调用返回第 N 相位数据）。数据经 /r/ReplMes__dashboardKpi 单端点聚合流动。',
     features: ['dashboard 网格 panels', 'stat-tile KPI×4', 'echarts 趋势下钻', 'scada-canvas 工位组态', 'notice-bar 异常播报', 'interval 轮询相位推进', 'ReplMes__ 端点'],
   },
+  {
+    id: 'mes-work-reporting',
+    title: 'MES 工序报工页',
+    category: 'business-replication',
+    description:
+      '复刻 MES 工序报工页（roadmap 21 页 M2，D3 §2.5 桌面整页，plan 785 直接受益页）：作业卡列表 crud（工序/卡号/工作中心/计划数/完成数/工时比/状态列，工时比>1 条件标红 + 状态映射配色，26 行 × 8 态 fixture）+ 状态动作按钮平铺按工单状态 visible 显隐（开工/暂停/恢复/报工提交/完成 → jobCardMutation 五 mutation + ILLEGAL_TRANSITION 非法迁移守卫）+ 行操作报工 openDialog 报工表单（input-table 报工明细两行：合格/报废/准备工分/加工工分行内编辑，computed 工时/工时比/合格率即时派生，aggregate 合计行三列 sum，summaryBinding 单对象回写主单 totalCompletedQty，行级守恒表达式守卫前端半边（警示 visible + 提交钮 disabled → 提交计数 0 语义））+ submitAction→reportWork 端点守卫（GUARD_CONSERVATION 数量守恒 / GUARD_HOUR_RATIO 工时比超限，成功回写作业卡完成数 + refreshNearest 列表联动）。数据经 /r/ReplMes__jobCard* 与 reportWork* 端点流动。',
+    features: ['input-table 报工明细', 'computed 工时/工时比/合格率', 'aggregate 合计行', 'summaryBinding 回写主单', '守恒/工时比双守卫', '状态动作 visible 显隐', 'ILLEGAL_TRANSITION 守卫', 'ReplMes__ 端点'],
+  },
 ];

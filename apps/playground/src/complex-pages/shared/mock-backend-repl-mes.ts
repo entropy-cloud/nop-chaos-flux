@@ -27,24 +27,38 @@
  * Opt-in e2e observation: specs pre-create `window.__replMesCalls` +
  * `window.__replMesTestHooks` via addInitScript; production never sets them,
  * so both stay no-ops (replica-kit precedent).
+ *
+ * Plan 810 (M2 mes-work-reporting): the write-side subset — `jobCardFindPage` /
+ * `jobCardMutation` / `reportWork` — lives in mock-backend-repl-mes-reporting.ts
+ * and is delegated below (W2→stock split precedent). The `__replMesTestHooks`
+ * global is shared; the M2 hook surface (forceConservationError /
+ * forceIllegalTransition + write mirrors) is declared there and merged into
+ * `ReplMesTestHooks` here.
  */
 
 import {
   createEndpointCounter,
+  createUrlParamReader,
   readOptInHooks,
   withOptInHooks,
   type ReplicaBranchInput,
   type ReplicaFetcherBranch,
 } from './mock-backend-replica-kit';
+import {
+  createReplMesReportingSession,
+  handleReplMesReportingBranch,
+  type ReplMesReportingTestHooks,
+} from './mock-backend-repl-mes-reporting';
 
 /* ── Opt-in hooks ───────────────────────────────────────────────────────── */
 
-export interface ReplMesTestHooks {
+export interface ReplMesTestHooks extends ReplMesReportingTestHooks {
   /** Consume-once: the NEXT `dashboardKpi` read returns the
    * `KPI_UNAVAILABLE` failure envelope (D3 §4.4 error branch); later calls
    * succeed again so interval polling self-heals. Name follows D3 §4.6
-   * verbatim (`failNextMutation` — no MES mutation endpoint exists in the M1
-   * subset). */
+   * verbatim (`failNextMutation` — no MES mutation endpoint existed in the
+   * M1 subset; plan 810 adds the M2 write faces + their own hook surface,
+   * declared in ReplMesReportingTestHooks). */
   failNextMutation?: boolean;
 }
 
@@ -179,6 +193,9 @@ export function createReplMesFetcherBranch(): ReplicaFetcherBranch {
   const PHASE_WAVE_WINDOW_MS = 1500;
   let phase = 0;
   let lastCallAt = 0;
+  // plan 810 — the M2 work-reporting session (job cards) shares the branch
+  // closure lifetime: one browser page session = one mutable card list.
+  const reportingSession = createReplMesReportingSession();
 
   const countEndpointCall = createEndpointCounter({
     countersKey: '__replMesCalls',
@@ -204,6 +221,20 @@ export function createReplMesFetcherBranch(): ReplicaFetcherBranch {
       }
       return { status: 0, data: buildDashboardKpi(Math.max(phase, 1)) as unknown as T };
     }
+
+    // ----- M2 work-reporting subset (plan 810): jobCardFindPage /
+    // jobCardMutation / reportWork — the counter above already counted the
+    // call. -----
+    const reportingHandled = handleReplMesReportingBranch<T>({
+      url: input.url,
+      method,
+      params: input.params,
+      body: input.body,
+      read: createUrlParamReader(input.url, input.params, input.body),
+      session: reportingSession,
+      hooks: readReplMesTestHooks(),
+    });
+    if (reportingHandled) return reportingHandled;
 
     return null;
   }

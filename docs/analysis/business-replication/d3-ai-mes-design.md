@@ -458,6 +458,17 @@ page                        # testid: mes-work-reporting-root（D5 深审勘误 
 }
 ```
 
+#### M2 实现勘误（M3 落地实证 2026-10-31，plan 810；以 live 为准）
+
+1. **守恒前端半边机制改判**（§2.5 校验行 + §5.5「前端侧由 item 区内字段 validate 承担行级校验」句）：input-table 行字段声明 validate 规则在 live 不生效——规则编译到幻影静态路径 `lines.<field>`（B3.2 V6 裁定 B 族：无行级路径绑定，roadmap B7 successor），行值到不了规则。live 以前端表达式守卫承担同一语义：行级守恒表达式 `COUNT(ARRAYFILTER(lines, l => completedQty+scrappedQty > plannedQty)) > 0` → 警示文案 visible + 提交钮 disabled（提交动作不可达）——「提交计数 0」语义保留在守卫路径，非字段校验路径。
+2. **单卡查询面未命名**（§4.4 jobCardFindPage 行）：端点表未命名单卡查询面；报工 dialog form loadAction 消费 `jobCardFindPage?cardId=` 收窄面（行级 plannedQty/stdMins 进 input-table 行 scope 所需）。
+3. **lines 字段未命名**（§4.5 ReplMesJobCard）：数据集形状无 lines 字段；报工 dialog 需行级 plannedQty/stdMins，卡片附确定性 2 行报工草稿（planned/std 各对半拆）。
+4. **ILLEGAL_TRANSITION 触达口径**（§5.5「对 CLOSED 行直调 startJob」）：行操作按钮按状态 visible 显隐，CLOSED 行无 startJob 按钮可点——live 以同拍双击真实 UI 管线触达（第一次 holdJob 合法迁移，第二次 fromStatus 已推进 → 守卫拦截 + 行状态不变），行为等价且更强（不经 UI 管线的直调无验收意义）。
+5. **GUARD_HOUR_RATIO 阈值定死**（§4.4「工时比超限」未给值）：显示标红阈值 >1.0（R2 L58 佐证），端点硬守卫阈值 >1.2（两常数导出；硬守卫取更宽阈值——标红是预警、守卫是拦截）。
+6. **工时比列承载形态**（§2.5 片段 1 hourRatio 为 computed 列）：live 列表页工时比为 cell 内 text 表达式（条件 className 标红），dialog 内为行尾 text 表达式单元格；computed 列仅 totalMins/qualifiedRate。
+7. **totalScrappedQty 双绑定收口裁决**（§2.5 片段 1 注预告「M3 收口时拆两处/先立约，不静默」——本条即该裁决）：页面落**单绑定**（summaryBinding → totalCompletedQty）；totalScrappedQty 不做主单回写面——报工载荷 lines 明细逐行携带 scrappedQty（mock Σ 行回写作业卡 scrappedQty），主单无第二回写消费面；数组语义扩展归 composite-schemas 契约 owner（后续页面需要时再立约），本页不扩约。
+8. **dialog 观测面新增**：onRowChange 编辑联动提示（最后编辑字段名）、合计回写显示行（totalCompletedQty）、取消按钮 closeSurface——设计片段未枚举，验收断言所需观测面。
+
 ### 2.6 M3 mes-andon-material（P1，直接组合，涉 G14；axe 分支 B mobile）
 
 > 实现形态（D6 开放审计 MAJ-C 裁决，2026-10-30）：**mobile host override 移动画布 375×667**——registry 特例 host 以居中手机框形态承载（桌面壳内固定宽度画布，D1 §0 决策①例外注 + §4 分支 B），非桌面壳全宽铺开。
