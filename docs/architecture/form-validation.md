@@ -827,6 +827,7 @@ Current live baseline note:
 - the rule loop in `validateCompiledField` runs every effective rule, and when a path produces no errors the owner writes an empty error set (clearing) through `setPathErrors` / `commitPathValidationState`
 - `commitPathValidationState` deletes `errors` from the field state when the produced error list is empty
 - `validateForm()` merges per-path results and removes stored errors for paths the run validates as passing
+- array-row child rules compile under the template path (`rows.sku`) and expand per row instance; `validateForm()` records their failures under each error's **instance** path (`assignValidatedPathErrors`, `form-runtime-validation-array-template.ts`), never under the template path — the expansion commits instance states itself and nothing re-commits a template path, so a template-keyed error would survive every later passing run (`docs/bugs/171-input-table-required-cell-stale-after-fix.md`)
 - dependency-closure revalidation (`revalidateDependents`) re-runs real validation for impacted peers rather than only toggling which paths were visited, so a peer that becomes valid has its error cleared
 
 ## Participation Rules

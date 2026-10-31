@@ -97,3 +97,25 @@ export async function validateArrayTemplateChildInstances(
   }
   return createValidationResult(errors);
 }
+
+/**
+ * Record a failed validatePath result into the validateForm field-error map.
+ * Array-template expansion reports errors under the row-instance paths and
+ * commits those instance states itself; keying them under the template path
+ * would leave a field state nothing ever re-commits, so a fixed row stayed
+ * invalid on every later submit.
+ */
+export function assignValidatedPathErrors(
+  sharedState: FormRuntimeValidationState,
+  fieldErrors: Record<string, ValidationError[]>,
+  path: string,
+  errors: ValidationError[],
+): void {
+  if (!resolveArrayTemplateChildExpansion(sharedState, path)) {
+    fieldErrors[path] = errors;
+    return;
+  }
+  for (const error of errors) {
+    (fieldErrors[error.path] ??= []).push(error);
+  }
+}

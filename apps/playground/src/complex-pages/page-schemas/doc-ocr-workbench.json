@@ -1,0 +1,568 @@
+{
+  "type": "page",
+  "body": [
+    {
+      "type": "data-source",
+      "id": "doc-ocr-workbench-case-source",
+      "name": "ocrCase",
+      "action": "ajax",
+      "args": {
+        "url": "/r/ReplDoc__ocrCase",
+        "method": "get",
+        "params": {
+          "id": "ocr-case-0001"
+        }
+      },
+      "testid": "doc-ocr-workbench-case-source"
+    },
+    {
+      "type": "flex",
+      "direction": "column",
+      "gap": 8,
+      "testid": "doc-ocr-workbench-root",
+      "body": [
+        {
+          "type": "text",
+          "testid": "doc-ocr-workbench-case-title",
+          "text": "识别单据 ${ocrCase?.caseId ?? '-'} · 目标实体 ${ocrCase?.targetEntity ?? '-'}",
+          "className": "text-sm text-muted-foreground"
+        },
+        {
+          "type": "grid",
+          "testid": "doc-ocr-workbench-grid",
+          "columns": "2fr 3fr",
+          "gap": 16,
+          "alignItems": "start",
+          "items": [
+            {
+              "body": [
+                {
+                  "type": "flex",
+                  "direction": "column",
+                  "gap": 12,
+                  "testid": "doc-ocr-workbench-source-pane",
+                  "body": [
+                    {
+                      "type": "text",
+                      "text": "原件（点击放大）",
+                      "className": "text-sm font-medium"
+                    },
+                    {
+                      "type": "image",
+                      "testid": "doc-ocr-workbench-original",
+                      "src": "${ocrCase?.imageUrl ?? ''}",
+                      "alt": "发票原件",
+                      "preview": true,
+                      "fit": "contain",
+                      "width": "100%",
+                      "height": 260
+                    },
+                    {
+                      "type": "text",
+                      "text": "原件 vs 识别参考（拖动分隔线对照识别区域）",
+                      "className": "text-sm font-medium"
+                    },
+                    {
+                      "type": "image-compare",
+                      "testid": "doc-ocr-workbench-compare",
+                      "before": "${ocrCase?.imageUrl ?? ''}",
+                      "after": "${ocrCase?.annotatedUrl ?? ''}",
+                      "alt": "发票原件与识别参考对照",
+                      "defaultPosition": 50
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "body": [
+                {
+                  "type": "wizard",
+                  "testid": "doc-ocr-workbench-wizard",
+                  "actionNextLabel": "下一步",
+                  "actionPrevLabel": "上一步",
+                  "steps": [
+                    {
+                      "key": "source",
+                      "title": "原件对照",
+                      "body": [
+                        {
+                          "type": "text",
+                          "testid": "doc-ocr-workbench-step-source",
+                          "text": "核对左侧原件与识别参考图后进入字段确认；低置信字段（< 0.7）须校正后方可继续。"
+                        }
+                      ]
+                    },
+                    {
+                      "key": "fields",
+                      "title": "字段确认",
+                      "beforeLeave": {
+                        "action": "ajax",
+                        "args": {
+                          "url": "/r/ReplDoc__ocrValidate",
+                          "method": "post",
+                          "data": {
+                            "caseId": "${ocrCase?.caseId ?? ''}",
+                            "fields": "${ocrFieldDraft}"
+                          }
+                        },
+                        "onError": [
+                          {
+                            "action": "showToast",
+                            "args": {
+                              "level": "error",
+                              "message": "字段未确认（${error?.message ?? 'UNKNOWN'}）：请校正低置信字段"
+                            }
+                          }
+                        ]
+                      },
+                      "body": [
+                        {
+                          "type": "form",
+                          "id": "doc-ocr-workbench-fields-form",
+                          "testid": "doc-ocr-workbench-fields-form",
+                          "valuesPath": "ocrFieldDraft",
+                          "loadAction": {
+                            "action": "ajax",
+                            "args": {
+                              "url": "/r/ReplDoc__ocrCase",
+                              "method": "get",
+                              "params": {
+                                "id": "ocr-case-0001"
+                              }
+                            }
+                          },
+                          "body": [
+                            {
+                              "type": "detail-field",
+                              "name": "invoiceNo",
+                              "label": "发票号码",
+                              "testid": "doc-ocr-workbench-field-invoiceNo",
+                              "triggerLabel": "校正",
+                              "surface": {
+                                "mode": "dialog",
+                                "title": "校正字段：发票号码"
+                              },
+                              "labelRemark": {
+                                "content": "原值：${invoiceNo?.originalValue}（置信度 ${invoiceNo?.confidence}）"
+                              },
+                              "viewer": [
+                                {
+                                  "type": "flex",
+                                  "direction": "row",
+                                  "gap": 8,
+                                  "className": "items-center",
+                                  "body": [
+                                    {
+                                      "type": "text",
+                                      "text": "${invoiceNo?.value}",
+                                      "testid": "doc-ocr-workbench-value-invoiceNo"
+                                    },
+                                    {
+                                      "type": "badge",
+                                      "testid": "doc-ocr-workbench-conf-invoiceNo",
+                                      "text": "${invoiceNo?.confidence >= 0.9 ? '高置信' : invoiceNo?.confidence >= 0.7 ? '中置信' : '低置信'} ${invoiceNo?.confidence}",
+                                      "level": "${invoiceNo?.confidence >= 0.9 ? 'success' : invoiceNo?.confidence >= 0.7 ? 'warning' : 'danger'}",
+                                      "className": "${invoiceNo?.confidence >= 0.9 ? 'repl-conf-high' : invoiceNo?.confidence >= 0.7 ? 'repl-conf-mid' : 'repl-conf-low'}"
+                                    }
+                                  ]
+                                }
+                              ],
+                              "content": [
+                                {
+                                  "type": "input-text",
+                                  "name": "value",
+                                  "label": "发票号码（校正值）",
+                                  "required": true,
+                                  "testid": "doc-ocr-workbench-edit-invoiceNo"
+                                }
+                              ],
+                              "className": "${invoiceNo?.confidence < 0.7 ? 'repl-low-confidence' : ''}"
+                            },
+                            {
+                              "type": "detail-field",
+                              "name": "invoiceDate",
+                              "label": "开票日期",
+                              "testid": "doc-ocr-workbench-field-invoiceDate",
+                              "triggerLabel": "校正",
+                              "surface": {
+                                "mode": "dialog",
+                                "title": "校正字段：开票日期"
+                              },
+                              "labelRemark": {
+                                "content": "原值：${invoiceDate?.originalValue}（置信度 ${invoiceDate?.confidence}）"
+                              },
+                              "viewer": [
+                                {
+                                  "type": "flex",
+                                  "direction": "row",
+                                  "gap": 8,
+                                  "className": "items-center",
+                                  "body": [
+                                    {
+                                      "type": "text",
+                                      "text": "${invoiceDate?.value}",
+                                      "testid": "doc-ocr-workbench-value-invoiceDate"
+                                    },
+                                    {
+                                      "type": "badge",
+                                      "testid": "doc-ocr-workbench-conf-invoiceDate",
+                                      "text": "${invoiceDate?.confidence >= 0.9 ? '高置信' : invoiceDate?.confidence >= 0.7 ? '中置信' : '低置信'} ${invoiceDate?.confidence}",
+                                      "level": "${invoiceDate?.confidence >= 0.9 ? 'success' : invoiceDate?.confidence >= 0.7 ? 'warning' : 'danger'}",
+                                      "className": "${invoiceDate?.confidence >= 0.9 ? 'repl-conf-high' : invoiceDate?.confidence >= 0.7 ? 'repl-conf-mid' : 'repl-conf-low'}"
+                                    }
+                                  ]
+                                }
+                              ],
+                              "content": [
+                                {
+                                  "type": "input-text",
+                                  "name": "value",
+                                  "label": "开票日期（校正值）",
+                                  "required": true,
+                                  "testid": "doc-ocr-workbench-edit-invoiceDate"
+                                }
+                              ],
+                              "className": "${invoiceDate?.confidence < 0.7 ? 'repl-low-confidence' : ''}"
+                            },
+                            {
+                              "type": "detail-field",
+                              "name": "sellerName",
+                              "label": "销售方名称",
+                              "testid": "doc-ocr-workbench-field-sellerName",
+                              "triggerLabel": "校正",
+                              "surface": {
+                                "mode": "dialog",
+                                "title": "校正字段：销售方名称"
+                              },
+                              "labelRemark": {
+                                "content": "原值：${sellerName?.originalValue}（置信度 ${sellerName?.confidence}）"
+                              },
+                              "viewer": [
+                                {
+                                  "type": "flex",
+                                  "direction": "row",
+                                  "gap": 8,
+                                  "className": "items-center",
+                                  "body": [
+                                    {
+                                      "type": "text",
+                                      "text": "${sellerName?.value}",
+                                      "testid": "doc-ocr-workbench-value-sellerName"
+                                    },
+                                    {
+                                      "type": "badge",
+                                      "testid": "doc-ocr-workbench-conf-sellerName",
+                                      "text": "${sellerName?.confidence >= 0.9 ? '高置信' : sellerName?.confidence >= 0.7 ? '中置信' : '低置信'} ${sellerName?.confidence}",
+                                      "level": "${sellerName?.confidence >= 0.9 ? 'success' : sellerName?.confidence >= 0.7 ? 'warning' : 'danger'}",
+                                      "className": "${sellerName?.confidence >= 0.9 ? 'repl-conf-high' : sellerName?.confidence >= 0.7 ? 'repl-conf-mid' : 'repl-conf-low'}"
+                                    }
+                                  ]
+                                }
+                              ],
+                              "content": [
+                                {
+                                  "type": "input-text",
+                                  "name": "value",
+                                  "label": "销售方名称（校正值）",
+                                  "required": true,
+                                  "testid": "doc-ocr-workbench-edit-sellerName"
+                                }
+                              ],
+                              "className": "${sellerName?.confidence < 0.7 ? 'repl-low-confidence' : ''}"
+                            },
+                            {
+                              "type": "detail-field",
+                              "name": "buyerTaxId",
+                              "label": "购买方税号",
+                              "testid": "doc-ocr-workbench-field-buyerTaxId",
+                              "triggerLabel": "校正",
+                              "surface": {
+                                "mode": "dialog",
+                                "title": "校正字段：购买方税号"
+                              },
+                              "labelRemark": {
+                                "content": "原值：${buyerTaxId?.originalValue}（置信度 ${buyerTaxId?.confidence}）"
+                              },
+                              "viewer": [
+                                {
+                                  "type": "flex",
+                                  "direction": "row",
+                                  "gap": 8,
+                                  "className": "items-center",
+                                  "body": [
+                                    {
+                                      "type": "text",
+                                      "text": "${buyerTaxId?.value}",
+                                      "testid": "doc-ocr-workbench-value-buyerTaxId"
+                                    },
+                                    {
+                                      "type": "badge",
+                                      "testid": "doc-ocr-workbench-conf-buyerTaxId",
+                                      "text": "${buyerTaxId?.confidence >= 0.9 ? '高置信' : buyerTaxId?.confidence >= 0.7 ? '中置信' : '低置信'} ${buyerTaxId?.confidence}",
+                                      "level": "${buyerTaxId?.confidence >= 0.9 ? 'success' : buyerTaxId?.confidence >= 0.7 ? 'warning' : 'danger'}",
+                                      "className": "${buyerTaxId?.confidence >= 0.9 ? 'repl-conf-high' : buyerTaxId?.confidence >= 0.7 ? 'repl-conf-mid' : 'repl-conf-low'}"
+                                    }
+                                  ]
+                                }
+                              ],
+                              "content": [
+                                {
+                                  "type": "input-text",
+                                  "name": "value",
+                                  "label": "购买方税号（校正值）",
+                                  "required": true,
+                                  "testid": "doc-ocr-workbench-edit-buyerTaxId"
+                                }
+                              ],
+                              "className": "${buyerTaxId?.confidence < 0.7 ? 'repl-low-confidence' : ''}"
+                            },
+                            {
+                              "type": "detail-field",
+                              "name": "totalAmount",
+                              "label": "价税合计",
+                              "testid": "doc-ocr-workbench-field-totalAmount",
+                              "triggerLabel": "校正",
+                              "surface": {
+                                "mode": "dialog",
+                                "title": "校正字段：价税合计"
+                              },
+                              "labelRemark": {
+                                "content": "原值：${totalAmount?.originalValue}（置信度 ${totalAmount?.confidence}）"
+                              },
+                              "viewer": [
+                                {
+                                  "type": "flex",
+                                  "direction": "row",
+                                  "gap": 8,
+                                  "className": "items-center",
+                                  "body": [
+                                    {
+                                      "type": "text",
+                                      "text": "${totalAmount?.value}",
+                                      "testid": "doc-ocr-workbench-value-totalAmount"
+                                    },
+                                    {
+                                      "type": "badge",
+                                      "testid": "doc-ocr-workbench-conf-totalAmount",
+                                      "text": "${totalAmount?.confidence >= 0.9 ? '高置信' : totalAmount?.confidence >= 0.7 ? '中置信' : '低置信'} ${totalAmount?.confidence}",
+                                      "level": "${totalAmount?.confidence >= 0.9 ? 'success' : totalAmount?.confidence >= 0.7 ? 'warning' : 'danger'}",
+                                      "className": "${totalAmount?.confidence >= 0.9 ? 'repl-conf-high' : totalAmount?.confidence >= 0.7 ? 'repl-conf-mid' : 'repl-conf-low'}"
+                                    }
+                                  ]
+                                }
+                              ],
+                              "content": [
+                                {
+                                  "type": "input-text",
+                                  "name": "value",
+                                  "label": "价税合计（校正值）",
+                                  "required": true,
+                                  "testid": "doc-ocr-workbench-edit-totalAmount"
+                                }
+                              ],
+                              "className": "${totalAmount?.confidence < 0.7 ? 'repl-low-confidence' : ''}"
+                            },
+                            {
+                              "type": "detail-field",
+                              "name": "taxAmount",
+                              "label": "税额",
+                              "testid": "doc-ocr-workbench-field-taxAmount",
+                              "triggerLabel": "校正",
+                              "surface": {
+                                "mode": "dialog",
+                                "title": "校正字段：税额"
+                              },
+                              "labelRemark": {
+                                "content": "原值：${taxAmount?.originalValue}（置信度 ${taxAmount?.confidence}）"
+                              },
+                              "viewer": [
+                                {
+                                  "type": "flex",
+                                  "direction": "row",
+                                  "gap": 8,
+                                  "className": "items-center",
+                                  "body": [
+                                    {
+                                      "type": "text",
+                                      "text": "${taxAmount?.value}",
+                                      "testid": "doc-ocr-workbench-value-taxAmount"
+                                    },
+                                    {
+                                      "type": "badge",
+                                      "testid": "doc-ocr-workbench-conf-taxAmount",
+                                      "text": "${taxAmount?.confidence >= 0.9 ? '高置信' : taxAmount?.confidence >= 0.7 ? '中置信' : '低置信'} ${taxAmount?.confidence}",
+                                      "level": "${taxAmount?.confidence >= 0.9 ? 'success' : taxAmount?.confidence >= 0.7 ? 'warning' : 'danger'}",
+                                      "className": "${taxAmount?.confidence >= 0.9 ? 'repl-conf-high' : taxAmount?.confidence >= 0.7 ? 'repl-conf-mid' : 'repl-conf-low'}"
+                                    }
+                                  ]
+                                }
+                              ],
+                              "content": [
+                                {
+                                  "type": "input-text",
+                                  "name": "value",
+                                  "label": "税额（校正值）",
+                                  "required": true,
+                                  "testid": "doc-ocr-workbench-edit-taxAmount"
+                                }
+                              ],
+                              "className": "${taxAmount?.confidence < 0.7 ? 'repl-low-confidence' : ''}"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "key": "rows",
+                      "title": "明细行",
+                      "formId": "doc-ocr-workbench-rows-form",
+                      "body": [
+                        {
+                          "type": "form",
+                          "id": "doc-ocr-workbench-rows-form",
+                          "testid": "doc-ocr-workbench-rows-form",
+                          "valuesPath": "ocrRowsDraft",
+                          "loadAction": {
+                            "action": "ajax",
+                            "args": {
+                              "url": "/r/ReplDoc__ocrCase",
+                              "method": "get",
+                              "params": {
+                                "id": "ocr-case-0001"
+                              }
+                            }
+                          },
+                          "body": [
+                            {
+                              "type": "input-table",
+                              "name": "detailRows",
+                              "testid": "doc-ocr-workbench-rows",
+                              "addable": true,
+                              "removable": true,
+                              "reorderable": false,
+                              "columns": [
+                                {
+                                  "name": "rowNo",
+                                  "label": "行号",
+                                  "width": 70
+                                },
+                                {
+                                  "name": "description",
+                                  "label": "货物名称",
+                                  "width": 200
+                                },
+                                {
+                                  "name": "quantity",
+                                  "label": "数量",
+                                  "width": 110
+                                },
+                                {
+                                  "name": "amount",
+                                  "label": "金额",
+                                  "width": 130,
+                                  "aggregate": "sum"
+                                }
+                              ],
+                              "item": [
+                                {
+                                  "type": "text",
+                                  "text": "${rowNo ?? '新'}"
+                                },
+                                {
+                                  "type": "input-text",
+                                  "name": "description",
+                                  "required": true,
+                                  "testid": "doc-ocr-workbench-row-description"
+                                },
+                                {
+                                  "type": "input-number",
+                                  "name": "quantity",
+                                  "min": 0,
+                                  "testid": "doc-ocr-workbench-row-quantity"
+                                },
+                                {
+                                  "type": "input-number",
+                                  "name": "amount",
+                                  "min": 0,
+                                  "testid": "doc-ocr-workbench-row-amount"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "key": "commit",
+                      "title": "回流提交",
+                      "body": [
+                        {
+                          "type": "text",
+                          "testid": "doc-ocr-workbench-commit-summary",
+                          "text": "确认后提交校正结果并回流训练样本（目标实体 ${ocrCase?.targetEntity ?? '-'}）。"
+                        },
+                        {
+                          "type": "text",
+                          "testid": "doc-ocr-workbench-commit-result",
+                          "visible": "${!!ocrCommitResult}",
+                          "text": "已生成单据 ${ocrCommitResult?.docId}，样本已回流",
+                          "className": "text-sm text-emerald-700"
+                        }
+                      ],
+                      "actions": [
+                        {
+                          "type": "button",
+                          "testid": "doc-ocr-workbench-commit",
+                          "label": "提交并回流样本",
+                          "variant": "primary",
+                          "onClick": {
+                            "action": "ajax",
+                            "args": {
+                              "url": "/r/ReplDoc__ocrCommit",
+                              "method": "post",
+                              "data": {
+                                "caseId": "${ocrCase?.caseId ?? ''}",
+                                "fields": "${ocrFieldDraft}",
+                                "detailRows": "${ocrRowsDraft?.detailRows ?? []}"
+                              }
+                            },
+                            "then": [
+                              {
+                                "action": "setValue",
+                                "args": {
+                                  "path": "ocrCommitResult",
+                                  "value": "${result.data}"
+                                }
+                              },
+                              {
+                                "action": "showToast",
+                                "args": {
+                                  "level": "success",
+                                  "message": "回流提交成功"
+                                }
+                              }
+                            ],
+                            "onError": [
+                              {
+                                "action": "showToast",
+                                "args": {
+                                  "level": "error",
+                                  "message": "回流提交失败（${error?.message ?? 'UNKNOWN'}）"
+                                }
+                              }
+                            ]
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

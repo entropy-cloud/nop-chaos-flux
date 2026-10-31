@@ -144,3 +144,26 @@
   height: 320px;
   overflow-y: auto;
 }
+
+/* O1 OCR 校正工作台（plan 814）：低置信字段高亮读 CSS 变量（getComputedStyle 可断言）
+   + 置信度三档 badge 文本色。 */
+:root {
+  --repl-low-confidence-bg: rgb(254, 226, 226);
+}
+
+.repl-low-confidence {
+  background-color: var(--repl-low-confidence-bg);
+  border-radius: 0.375rem;
+}
+
+.repl-conf-high {
+  color: #15803d;
+}
+
+.repl-conf-mid {
+  color: #b45309;
+}
+
+.repl-conf-low {
+  color: #b91c1c;
+}

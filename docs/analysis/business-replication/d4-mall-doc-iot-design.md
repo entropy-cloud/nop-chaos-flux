@@ -231,6 +231,18 @@ page(mobile)   # testid: mall-sku-picker-root（D5 深审勘误 MIN-3：补主�
 }
 ```
 
+#### O1 实现勘误（M3 落地实证 2026-11-01，plan 814；以 live 为准）
+
+1. **逐字段确认承载 detail-view → form 宿主 + detail-field**：无 content 的 detail-field 仅能只读展示（`crm-customer-360.json` 先例）；逐字段**可编辑**确认须 form 宿主 + `content`（surface 草稿编辑体）。落地：步骤 2 form（`loadAction` ocrCase，`valuesPath: ocrFieldDraft`）内 6 个 detail-field，name=按字段名键控的字段对象（mock 同时返回契约 `fields` 数组 + 键控对象），`content` = input-text `value` required，viewer = 值文本 + 置信度 badge，triggerLabel「校正」——surface 草稿确认写回即 G20「草稿+逐字段提交」近似。
+2. **片段① inputClassName → className**：flux-core `BoundFieldSchemaBase.inputClassName`（types/schema.ts L158）只存在于类型声明——仓内零运行时消费者、无字段 renderer 声明（strict 报 unknown-property），设了即静默 no-op（已登记 improvement-analysis §4 #9）。低置信高亮改 detail-field `className`（落控件根 `.nop-detail-field`），背景读 `--repl-low-confidence-bg`（replication.css）。
+3. **labelRemark 呈现面**：`[data-slot="field-label-remark"]` 的 `title` 属性承载 content（原生悬浮提示），断言读 title。
+4. **片段② beforeLeave 载荷**：wizard beforeLeave 在 wizard 作用域派发、读不到步骤 form 的本地值 → 经 form `valuesPath` 发布草稿（`ocrFieldDraft`），ajax data 映射 `{caseId, fields: "${ocrFieldDraft}"}`；失败经 onError toast 后仍为 `ok:false`（failureHandled）→ 阻断导航。
+5. **明细行 input-table 不设 itemKey**：可增行时新行无 `rowNo`，以 `rowNo` 为 itemKey 会令新行无身份键 → 改索引身份；步骤 3 `formId` 指向包裹 form（form 暴露 validate）。
+6. **live 缺陷修复（docs/bugs/171）**：input-table 必填单元格一次校验失败后修正、再提交仍被阻断——`validateForm` 把数组模板展开的错误记在模板路径（`rows.sku`）键下，该路径无人重新提交 → 陈旧错误永久保留。修复：`assignValidatedPathErrors` 按错误自身实例路径记账（flux-runtime，判别性回归测试修复前 2/2 挂、修复后 2/2 过）。
+7. **§4.2 静态资产 PNG → SVG**：直出确定性 SVG（`apps/playground/public/repl-assets/ocr-invoice-{original,annotated}.svg`，各 <3KB），免光栅化工具链，`<img>` 渲染等价；image 渲染器 testid 落在 `<img>` 元素本身。
+8. **步骤 4 回流结果**：commit 成功链 `setValue ocrCommitResult = ${result.data}` → 结果文本回显 docId；载荷 `{caseId, fields: ${ocrFieldDraft}, detailRows: ${ocrRowsDraft.detailRows}}`。
+9. **axe 分支 A 基线**：仅 color-contrast 10（壳头部 badge 族，同 S1/S2）。
+
 ### 2.4 doc-hitl-inbox（O2，桌面，能力扩展）
 
 组件树（R3 L29 交互①-⑫ → L30 映射；八列契约=maker-checker 04，R3 L27；主容器 # testid: doc-hitl-inbox-root——D5 深审勘误 MIN-3）：`query-filter`（业务对象/动作/高危）→ `crud` 待办八列（时限升序，selection multiple + keepOnPageChange ←R4 §4.1 强制，onRowClick→dialog）+ `batch-bar` 批量通过（countTemplate 影响行数）→ `dialog`：`alert` staleness 横幅（过期禁用批准）+ `alert` 高危横幅 + `ai-suggestions` AI 预审建议 + `ai-tool-call` HITL 交接卡 + `tabs` 变更对比三视图（Mode A=labelRemark+inputClassName≈G22 / Mode B=tree 承载 diffTree≈G21 / Mode C=json-view rawRequest）+ form 意见（reject 必填）+ 批准/驳回按钮（reaction 联动）。
@@ -430,7 +442,7 @@ HITL 卡复用口径（R3 L30）：`ai-tool-call` 为 AI 会话语境卡，inbox
 | ReplDoc\_\_reject (post)          | O2  | `{ approvalNo,result:'REJECTED' }`                                                                                                                                                                                    | REPL_DOC_OPINION_REQUIRED                                                    |
 | ReplDoc\_\_batchApprove (post)    | O2  | `{ approved,skipped,affectedRows }`                                                                                                                                                                                   | REPL_DOC_BATCH_STALE（含 stale 项整批拒绝）                                  |
 
-钩子：`forceApproveStale()`（当前 review remainingSeconds 置 0）、`setInboxOrder('remainingSeconds asc')`。静态资产：`public/repl-assets/ocr-invoice-original.png`（原件）+`ocr-invoice-annotated.png`（识别参考），程序化生成（SVG 光栅化）各 <50KB 入库（功能 asset，非视觉回归产物，不受 tests/e2e/artifacts 纪律约束）。
+钩子：`forceApproveStale()`（当前 review remainingSeconds 置 0）、`setInboxOrder('remainingSeconds asc')`。（plan 814 勘误：静态资产落地为 SVG `public/repl-assets/ocr-invoice-*.svg`，见 §2.3 O1 勘误 7）静态资产：`public/repl-assets/ocr-invoice-original.png`（原件）+`ocr-invoice-annotated.png`（识别参考），程序化生成（SVG 光栅化）各 <50KB 入库（功能 asset，非视觉回归产物，不受 tests/e2e/artifacts 纪律约束）。
 
 ### 4.3 iot 模块（V1/V2/V3）
 
@@ -477,6 +489,7 @@ HITL 卡复用口径（R3 L30）：`ai-tool-call` 为 AI 会话语境卡，inbox
 **O1 doc-ocr-workbench**（axe 分支 A）
 
 - 交互：① 逐字段确认流：改 invoiceNo→草稿提交→wizard 步骤 2→3；② 低置信高亮：confidence<0.7 字段 wrapper `getComputedStyleValue(background-color)`=`--repl-low-confidence-bg` 解析值+类存在；③ 分档 badge 高/中/低文本断言；④ 明细行 input-table 增改+校验；⑤ ocrCommit 计数+1；未确认字段 beforeLeave 拦截（wizard 停留步骤断言）。
+  - plan 814 落地勘误（2026-11-01，详见 §2.3「O1 实现勘误」）：② 高亮落 detail-field `className`（inputClassName 为类型死字段，勘误 2）；① 草稿提交 = detail-field surface 确认写回、门禁读 valuesPath 草稿（勘误 1/4）；④ 增改+校验在 form 宿主内经 step formId 阻断，并实证修复 input-table 修正后仍阻断缺陷（勘误 6）。
 - focus：wizard 步进后焦点落当前步首控件；image preview Esc 返回；detail-field 编辑焦点。
 
 **O2 doc-hitl-inbox**（axe 分支 A）

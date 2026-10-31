@@ -68,6 +68,9 @@ const ROUTES = [
   // desktop scan set (non-mobile page — pure JSON SchemaPage, no host
   // override).
   'complex-pages/mall-distribution',
+  // Plan 814 (D1 §4 branch A): O1 ocr-workbench joins the standard desktop
+  // scan set (non-mobile page — pure JSON SchemaPage, no host override).
+  'complex-pages/doc-ocr-workbench',
   'dashboard-demo',
 ];
 

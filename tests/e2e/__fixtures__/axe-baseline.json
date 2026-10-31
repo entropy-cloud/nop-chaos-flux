@@ -106,5 +106,9 @@
     "aria-required-children": 1,
     "color-contrast": 11,
     "_notes": "plan 813 first-run measurement 2026-10-31 (D1 §4 branch A registration): counts measured on #/complex-pages/mall-distribution. aria-required-attr = the commission crud table's 7 column-resize separator spans (table component owner debt, same rule as standard-crud/W2/W3); aria-required-children = the tree renderer's role=tree container (mall-distribution-tree, tree component owner debt); color-contrast = the 11 shell header feature badges (secondary badge family, same as S1). Fixes belong to the component owners, not the page schema."
+  },
+  "complex-pages/doc-ocr-workbench": {
+    "color-contrast": 10,
+    "_notes": "plan 814 first-run measurement 2026-11-01 (D1 §4 branch A registration): counts measured on #/complex-pages/doc-ocr-workbench (wizard step 1 initial face). color-contrast = the 10 shell header feature badges (secondary badge family, same as S1/S2). Fixes belong to the badge component owner, not the page schema."
   }
 }

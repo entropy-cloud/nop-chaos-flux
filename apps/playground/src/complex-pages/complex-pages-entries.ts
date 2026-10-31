@@ -488,4 +488,12 @@ export const COMPLEX_PAGE_ENTRIES: ComplexPageEntry[] = [
       '复刻商城分销后台页（roadmap 21 页 S2，D4 §2.2 桌面整页）：dashboard 网格（stat-tile KPI×4 ← 佣金明细表达式聚合 + echarts 月度趋势）+ 佣金明细 crud（query-filter 首个 JSON 用法筛选 + batch-bar 结算入口 + operation 提现审核 dialog：驳回/通过 payoutAudit，意见必填）+ 导出佣金明细（ajax commissionExport→download CSV data-url，G6，空集 EXPORT_EMPTY）+ pivot-table 分销层级透视（level×distributorName SUM/COUNT + 行总计 + pivot:cell-click→drillDistributor 下钻 dialog ARRAYFILTER 过滤）+ 分销关系树（distTree 三级）+ 邀请码 qrcode（merchant 权限区块，G17 visible 裁剪）+ 佣金规则配置（form 包裹 input-table 品类/门槛/三级比例，合计≠100% RULE_INVALID）。数据经 /r/ReplMall__ S2 端点流动。',
     features: ['dashboard KPI×4', 'query-filter 筛选', 'batch-bar 结算入口', '提现审核 dialog', 'download CSV 导出', 'pivot 层级透视下钻', '三级关系树', 'qrcode 邀请码', 'input-table 佣金规则', '权限层 visible 裁剪', 'ReplMall__ 端点'],
   },
+  {
+    id: 'doc-ocr-workbench',
+    title: 'OCR 校正工作台页',
+    category: 'business-replication',
+    description:
+      '复刻智能单据 OCR 校正工作台页（roadmap 21 页 O1，D4 §2.3 桌面整页，新 type 临时形态）：grid 两栏——左 image 原件（preview 放大）+ image-compare 原件 vs 识别参考整图（≈bbox 整图近似，G19 不实现）；右 wizard 四步（原件对照 → 字段确认 → 明细行 → 回流提交）：步骤 2 form 宿主内 detail-field 逐字段确认（surface 草稿校正 + 写回 ≈G20、labelRemark 原值悬浮、低置信 className 高亮读 CSS 变量、badge 置信度三档），beforeLeave → ocrValidate 服务端门禁（REPL_DOC_FIELD_UNCONFIRMED 阻断）；步骤 3 form 包裹 input-table 明细行增改 + formId 校验；步骤 4 ocrCommit 回流（docId 回显 + 失败分支）。数据经 /r/ReplDoc__ 端点流动，原件/识别参考为 /repl-assets/ 静态 SVG。',
+    features: ['image preview 原件', 'image-compare 对照', 'wizard 四步门禁', 'detail-field 逐字段确认', 'labelRemark 原值', '低置信高亮', 'badge 置信度三档', 'input-table 明细行', 'ocrCommit 回流', 'ReplDoc__ 端点'],
+  },
 ];

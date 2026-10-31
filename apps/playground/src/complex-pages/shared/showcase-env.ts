@@ -30,6 +30,7 @@ import { createReplItamFetcherBranches } from './mock-backend-repl-itam';
 import { createReplAiFetcherBranches } from './mock-backend-repl-ai';
 import { createReplMesFetcherBranches } from './mock-backend-repl-mes';
 import { createReplMallFetcherBranches } from './mock-backend-repl-mall';
+import { createReplDocFetcherBranches } from './mock-backend-repl-doc';
 import { createReplFetcherBranches } from './mock-backend-repl-wms';
 import { confirmBridge } from './confirm-bridge';
 import { createMockAiStream, createMockAiConnector, createAiImportLoader } from '../../ai/mock-ai-env';
@@ -136,6 +137,8 @@ export function createShowcaseEnv(): { env: RendererEnv; db: MockDatabase } {
     ...createReplMesFetcherBranches(),
     // Plan 812 (D4 §4.1): the S1 sku-picker opens the MALL face.
     ...createReplMallFetcherBranches(),
+    // Plan 814 (D4 §4.2): the O1 ocr-workbench opens the DOC face.
+    ...createReplDocFetcherBranches(),
   ]);
 
   const fetcher = async function fetcher<T>(api: FetcherApi): Promise<{ status: number; data: T }> {

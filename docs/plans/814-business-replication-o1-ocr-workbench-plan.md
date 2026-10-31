@@ -1,6 +1,6 @@
 # 814 M3-O1 OCR 校正工作台页复刻（business-page-replication roadmap M3-O1）
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-10-31
 > Source: `docs/backlog/business-page-replication-roadmap.md` §2 M3-O1（依赖 M2 done；roadmap 现值 `todo`，本 plan 激活时置 `planned`，收口置 `done`）
 > Related: D1 总体设计；D4 §2.3（O1 页设计）/§4.2（doc 模块端点）/§5 O1（断言）/§6.1（临时形态边界）；R3 §1 O1；R4 §1 L36、§2 G19/G20；plan 813（mall 域先例）、plan 810（form 包裹 input-table 先例）、plan 802（C2 detail 族先例）
@@ -57,25 +57,32 @@
 
 ### Phase 1 - O1 页全链实现
 
-Status: planned
+Status: completed
 Targets: `apps/playground/src/complex-pages/shared/mock-backend-repl-doc.ts`（新）、`showcase-env.ts`（挂载）、`apps/playground/public/repl-assets/`（新）、`shared/replication.css`、`page-schemas/doc-ocr-workbench.json`（新）、`complex-pages-entries.ts`、`tests/e2e/replication-doc-ocr-workbench.spec.ts`（新）、`tests/e2e/a11y-axe-baseline.spec.ts` + `__fixtures__/axe-baseline.json`
 
 - Item Types: `Fix | Proof`
 
-- [ ] mock：新建 `mock-backend-repl-doc.ts`（mall 单工厂形态）——`ocrCase`（get ?id=；确定性 case：caseId、imageUrl/annotatedUrl 指向 `/repl-assets/` 静态资产、`fields` 数组 6 字段〔invoiceNo 0.62 低 / invoiceDate 0.95 高 / sellerName 0.88 中 / buyerTaxId 0.72 中 / totalAmount 0.93 高 / taxAmount 0.78 中；`{name,label,value,originalValue,confidence,valueType}`〕+ 按 name 键控的字段对象（form 绑定面，多余键容忍）+ `detailRows` 3 行 `{rowNo,description,quantity,amount}` + targetEntity；id miss → placeholder）/`ocrValidate`（post；规则：confidence<0.7 且 value===originalValue 视为未确认 → `REPL_DOC_FIELD_UNCONFIRMED`；成功 `{valid:true, unconfirmedFields:[]}`；写镜像 `lastOcrValidateBody`）/`ocrCommit`（post；consume-once 钩子 `forceOcrCommitError` → `REPL_DOC_COMMIT_VALIDATION_FAILED`；成功 `{docId, sampleReflowed:true}`；写镜像 `lastOcrCommitBody`）；showcase-env `createReplDocFetcherBranches()` 挂载
-- [ ] 静态资产：`apps/playground/public/repl-assets/ocr-invoice-original.svg` + `ocr-invoice-annotated.svg`（手写确定性 SVG 发票样张；annotated 版叠加识别框着色，各 <50KB）——D4 §4.2 写「PNG（SVG 光栅化）」，本 plan 裁决直出 SVG（同为程序化确定性功能资产、免光栅化工具链、`<img>` 渲染等价），收口时就地勘误 D4
-- [ ] replication.css：`.repl-low-confidence`（背景读 `--repl-low-confidence-bg`）+ `.repl-conf-high/mid/low` 置信度分档类
-- [ ] schema JSON（D4 §2.3 组件树，live 契约落地）：data-source `ocrCase`；`grid` 两栏 `2fr 3fr`（左：image preview 原件 + image-compare before=原件/after=识别参考；右：wizard 四步）；步骤 1 原件对照摘要；步骤 2 form（id `doc-ocr-workbench-fields-form`，`loadAction` ocrCase，`valuesPath` 发布字段草稿）内 6 个 `detail-field`（name=字段对象键；`labelRemark {content:"原值：…（置信度 …）"}`；`inputClassName` 低置信条件类；viewer=值文本 + badge 三档〔text 三元 + `repl-conf-*` 类〕；content=input-text `value` required；triggerLabel 校正），步骤 `beforeLeave` ajax ocrValidate（data 读 valuesPath 草稿）+ onError 错误 toast；步骤 3 form（id `doc-ocr-workbench-rows-form`，loadAction 取 detailRows，`valuesPath` 发布）包裹 input-table（addable，item：rowNo 文本/description input-text required/quantity input-number/amount input-number），步骤 `formId` 指向该 form；步骤 4 actions 回流提交按钮 ajax ocrCommit（data：caseId + 字段草稿 + 明细行）+ 成功结果文本（docId）+ onError toast；testid `doc-ocr-workbench-<element>`；strict 零诊断
-- [ ] entry（`complex-pages-entries.ts`，category `business-replication`）
-- [ ] e2e spec（D4 §5 O1）：前置〔原件 img src 命中 `/repl-assets/ocr-invoice-original`、image-compare 双图、wizard 首步、ocrCase 计数〕/〔步序：交互②③ 在步骤 2 内、交互① 点下一步之前断言〕交互① 校正 invoiceNo（detail-field surface 草稿 → 确认写回）→ 下一步 → ocrValidate +1 + 请求镜像含校正值 → 步骤 3/交互② 低置信 wrapper `getComputedStyle(background-color)` = `--repl-low-confidence-bg` 解析值 + 类存在（仅 invoiceNo）/交互③ badge 三档文本计数（高 2/中 3/低 1）+ labelRemark 原值悬浮内容/交互④ 步骤 3 增行 + 改数 + description 空 → formId 校验阻断（停留步骤 3）→ 填写后进入步骤 4/交互⑤ ocrCommit +1 + 载荷镜像（校正后 invoiceNo + 明细行数）+ 成功 docId 文本；`forceOcrCommitError` → 错误 toast；未确认直接下一步 → UNCONFIRMED toast + 停留步骤 2/focus ① wizard 步进后焦点落新步首控件 ② image preview 打开 Esc 关闭 ③ detail-field 编辑 surface 焦点落入 + Esc 返回；预期拒绝分支 `allowConsoleErrors` 按 W3 先例登记；显式 `--retries=0`
-- [ ] axe 分支 A 登记：ROUTES + `complex-pages/doc-ocr-workbench` 基线键（首跑实测回填 + `_notes` 节点溯源）
-- [ ] 验证：focused e2e `--retries=0` 全绿 + axe spec 绿 + replication 全族回归 + strict 校验 + playground unit
+- [x] mock：新建 `mock-backend-repl-doc.ts`（mall 单工厂形态）——`ocrCase`（get ?id=；确定性 case：caseId、imageUrl/annotatedUrl 指向 `/repl-assets/` 静态资产、`fields` 数组 6 字段〔invoiceNo 0.62 低 / invoiceDate 0.95 高 / sellerName 0.88 中 / buyerTaxId 0.72 中 / totalAmount 0.93 高 / taxAmount 0.78 中；`{name,label,value,originalValue,confidence,valueType}`〕+ 按 name 键控的字段对象（form 绑定面，多余键容忍）+ `detailRows` 3 行 `{rowNo,description,quantity,amount}` + targetEntity；id miss → placeholder）/`ocrValidate`（post；规则：confidence<0.7 且 value===originalValue 视为未确认 → `REPL_DOC_FIELD_UNCONFIRMED`；成功 `{valid:true, unconfirmedFields:[]}`；写镜像 `lastOcrValidateBody`）/`ocrCommit`（post；consume-once 钩子 `forceOcrCommitError` → `REPL_DOC_COMMIT_VALIDATION_FAILED`；成功 `{docId, sampleReflowed:true}`；写镜像 `lastOcrCommitBody`）；showcase-env `createReplDocFetcherBranches()` 挂载
+- [x] 静态资产：`apps/playground/public/repl-assets/ocr-invoice-original.svg` + `ocr-invoice-annotated.svg`（手写确定性 SVG 发票样张；annotated 版叠加识别框着色，各 <50KB）——D4 §4.2 写「PNG（SVG 光栅化）」，本 plan 裁决直出 SVG（同为程序化确定性功能资产、免光栅化工具链、`<img>` 渲染等价），收口时就地勘误 D4
+- [x] replication.css：`.repl-low-confidence`（背景读 `--repl-low-confidence-bg`）+ `.repl-conf-high/mid/low` 置信度分档类
+- [x] schema JSON（D4 §2.3 组件树，live 契约落地）：data-source `ocrCase`；`grid` 两栏 `2fr 3fr`（左：image preview 原件 + image-compare before=原件/after=识别参考；右：wizard 四步）；步骤 1 原件对照摘要；步骤 2 form（id `doc-ocr-workbench-fields-form`，`loadAction` ocrCase，`valuesPath` 发布字段草稿）内 6 个 `detail-field`（name=字段对象键；`labelRemark {content:"原值：…（置信度 …）"}`；`inputClassName` 低置信条件类；viewer=值文本 + badge 三档〔text 三元 + `repl-conf-*` 类〕；content=input-text `value` required；triggerLabel 校正），步骤 `beforeLeave` ajax ocrValidate（data 读 valuesPath 草稿）+ onError 错误 toast；步骤 3 form（id `doc-ocr-workbench-rows-form`，loadAction 取 detailRows，`valuesPath` 发布）包裹 input-table（addable，item：rowNo 文本/description input-text required/quantity input-number/amount input-number），步骤 `formId` 指向该 form；步骤 4 actions 回流提交按钮 ajax ocrCommit（data：caseId + 字段草稿 + 明细行）+ 成功结果文本（docId）+ onError toast；testid `doc-ocr-workbench-<element>`；strict 零诊断
+- [x] entry（`complex-pages-entries.ts`，category `business-replication`）
+- [x] e2e spec（D4 §5 O1）：前置〔原件 img src 命中 `/repl-assets/ocr-invoice-original`、image-compare 双图、wizard 首步、ocrCase 计数〕/〔步序：交互②③ 在步骤 2 内、交互① 点下一步之前断言〕交互① 校正 invoiceNo（detail-field surface 草稿 → 确认写回）→ 下一步 → ocrValidate +1 + 请求镜像含校正值 → 步骤 3/交互② 低置信 wrapper `getComputedStyle(background-color)` = `--repl-low-confidence-bg` 解析值 + 类存在（仅 invoiceNo）/交互③ badge 三档文本计数（高 2/中 3/低 1）+ labelRemark 原值悬浮内容/交互④ 步骤 3 增行 + 改数 + description 空 → formId 校验阻断（停留步骤 3）→ 填写后进入步骤 4/交互⑤ ocrCommit +1 + 载荷镜像（校正后 invoiceNo + 明细行数）+ 成功 docId 文本；`forceOcrCommitError` → 错误 toast；未确认直接下一步 → UNCONFIRMED toast + 停留步骤 2/focus ① wizard 步进后焦点落新步首控件 ② image preview 打开 Esc 关闭 ③ detail-field 编辑 surface 焦点落入 + Esc 返回；预期拒绝分支 `allowConsoleErrors` 按 W3 先例登记；显式 `--retries=0`
+- [x] axe 分支 A 登记：ROUTES + `complex-pages/doc-ocr-workbench` 基线键（首跑实测回填 + `_notes` 节点溯源）
+- [x] 验证：focused e2e `--retries=0` 全绿 + axe spec 绿 + replication 全族回归 + strict 校验 + playground unit
+
+执行期适配（以 live 为准；D4 §2.3「O1 实现勘误」9 条就地落档）：
+
+- **Fix（新增，live 缺陷）**：input-table 必填单元格一次校验失败后修正、再次 `validate()` 仍失败（wizard 步骤 3 永久停留「步骤校验未通过」）。根因 `validateForm` 将数组模板展开错误记在模板路径键下、该路径无人重新提交。修复 `assignValidatedPathErrors`（`packages/flux-runtime/src/form-runtime-validation-array-template.ts`，`form-runtime-owner.ts` 调用，行数不变 735）；判别性回归测试 `packages/flux-renderers-form-advanced/src/__tests__/input-table-revalidate-after-fix.test.tsx`（修复前 2 failed / 修复后 2 passed，git stash 实证）；bug 记录 `docs/bugs/171-input-table-required-cell-stale-after-fix.md`；owner doc `docs/architecture/form-validation.md` 清错契约 live baseline 注记。
+- 低置信高亮：`inputClassName` 为 flux-core 类型死字段（零运行时消费者、strict unknown-property）→ 改 detail-field `className`；类型死字段登记 `docs/components/existing-components-improvement-analysis.md` §4 #9（只登记不越权）。
+- labelRemark 内容落 `[data-slot="field-label-remark"]` 的 `title`；image 渲染器 testid 在 `<img>` 本身；明细 input-table 去 itemKey（新行无 rowNo）。
+- ocrCase 计数 ≥3（页面 data-source + 两个 form loadAction）。
 
 Exit Criteria:
 
-- [ ] O1 页可达可交互且列表页收录，strict validation 零诊断
-- [ ] focused e2e `--retries=0` 全绿（`__replDocCalls` 计数证据 + 写镜像载荷断言在）
-- [ ] axe 分支 A 基线登记绿
+- [x] O1 页可达可交互且列表页收录，strict validation 零诊断
+- [x] focused e2e `--retries=0` 全绿（`__replDocCalls` 计数证据 + 写镜像载荷断言在）
+- [x] axe 分支 A 基线登记绿
 
 ## Draft Review Record
 
@@ -86,17 +93,17 @@ Exit Criteria:
 
 ## Closure Gates
 
-- [ ] in-scope 工作全部落地（O1 页 + ReplDoc 域 + 静态资产 + roadmap 回写）
-- [ ] 行为/契约结果已达成（D4 §5 O1 断言清单全绿，`--retries=0`）
-- [ ] 必要 focused verification 已完成
-- [ ] 不存在被静默降级的 in-scope 缺口
-- [ ] 受影响 owner docs 已同步（daily log；D4 §2.3/§4.2/§5 O1 勘误）
-- [ ] 独立子 agent（fresh session）closure audit 通过并记录证据
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`（触达面零新增红口径）
-- [ ] `pnpm check`（零新增未登记命中）
+- [x] in-scope 工作全部落地（O1 页 + ReplDoc 域 + 静态资产 + roadmap 回写）
+- [x] 行为/契约结果已达成（D4 §5 O1 断言清单全绿，`--retries=0`：focused 9/9）
+- [x] 必要 focused verification 已完成（focused 9/9 + axe 24/24 + strict 61/61 + 判别性回归测试 2/2 + form-advanced 1237 + flux-runtime 1557 全绿；replication 全族回归 173/174，唯一失败系 HEAD 既有 C2 calendar 时区窗口红，见 Deferred）
+- [x] 不存在被静默降级的 in-scope 缺口
+- [x] 受影响 owner docs 已同步（daily log；D4 §2.3 O1 勘误 9 条 + §4.2/§5 就地注；form-validation.md；improvement-analysis §4 #9；docs/bugs/171）
+- [x] 独立子 agent（fresh session）closure audit 通过并记录证据（agent_328a1ed6，approved）
+- [x] `pnpm typecheck`（exit 0）
+- [x] `pnpm build`（exit 0）
+- [x] `pnpm lint`（exit 0）
+- [x] `pnpm test`（exit 0，86/86 tasks 全绿）
+- [x] `pnpm check`（exit 0）
 
 ## Deferred But Adjudicated
 
@@ -107,6 +114,13 @@ Exit Criteria:
 - Successor Required: `no`
 - Successor Path: 不适用
 
+### C2 calendar 月初时区窗口红（HEAD 既有，非本 diff）
+
+- Classification: `watch-only residual`
+- Why Not Blocking Closure: `replication-crm-customer-360.spec.ts` 交互② 在 2026-11-01 01:29 CST 运行时日历零事件渲染；剔除本 plan 全部改动（git stash）后在 HEAD 同样失败——与本 diff 零交集。疑似 C2 mock 按本地月夹取事件日期、calendar 渲染器混用 `toISOString`（UTC）日键，于 UTC+8 每月 1 日 00:00-08:00 窗口失配；不属 O1 结果面。
+- Successor Required: `yes`
+- Successor Path: roadmap M3-P1 开发阶段深度审计（全量 replication e2e 复跑 + 根因裁决：calendar 渲染器 UTC/本地混用或 mock 夹取口径）
+
 ## Non-Blocking Follow-ups
 
 - 全量 test:e2e 归 P1 阶段
@@ -114,13 +128,13 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: 待收口填写
+Status Note: O1 页全链落地（ReplDoc 域 O1 三端点 + SVG 静态资产 + schema strict 零诊断 + entry + focused e2e 9 测试 + axe 分支 A 登记），D4 §5 O1 断言清单（①-⑤ + 失败分支 + focus 三条）全部 `--retries=0` 实跑通过；执行期发现并修复 live 产品缺陷（input-table 必填单元格修正后仍阻断，docs/bugs/171，判别性回归测试修复前 2 failed / 修复后 2 passed）；inputClassName 类型死字段登记 improvement-analysis §4 #9；D4 §2.3「O1 实现勘误」9 条 + §4.2/§5 就地注。唯一 Deferred（C2 calendar 月初时区窗口红）经执行者与审计员各自于 HEAD 复现、与本 diff 零交集，Successor 归 M3-P1。独立 closure audit approved，无剩余 plan-owned work。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: 待独立子 agent 填写
-- Evidence: 待填写
+- Auditor / Agent: 独立 fresh sub-agent（agent_328a1ed6-14e3-44d5-8074-71454a8263f2）
+- Evidence: verdict **approved**（零 Blocker / 零 Major / 3 Minor）。审计员实跑 focused 9/9、axe 24/24、strict 61/61；独立复核判别性（stash 两个 flux-runtime 文件 → 回归测试 2 failed，pop 还原 → 2 passed）；HEAD 复跑 C2 交互② 1 failed 证实 Deferred 归因；审查 `assignValidatedPathErrors` 对非数组字段零行为变化、bug note 根因与代码一致；e2e 断言逐条覆盖无空断言、allowConsoleErrors 仅两处预期拒绝分支。Minor-①（共享工作树——收口提交只暂存 814 自有文件）已遵守；Minor-②（交互④ 阻断停留用 500ms 负等待，弱口径）列 Non-Blocking 由 P1 断言审计复核；Minor-③（同 commit 回写纪律）已遵守。
 
 Follow-up:
 
-- 待收口填写
+- no remaining plan-owned work（Non-Blocking：交互④ 负等待断言加强归 P1 断言真实性审计；全量 test:e2e 与 C2 calendar 时区窗口根因归 P1）

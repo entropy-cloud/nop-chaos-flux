@@ -36,6 +36,7 @@ import {
   validateSubtreeByNode,
   waitForActiveLifecycle,
 } from './form-runtime-validation.js';
+import { assignValidatedPathErrors } from './form-runtime-validation-array-template.js';
 import { defaultReportDependentRevalidationFailure } from './form-runtime-values.js';
 import type { ManagedFormRuntimeSharedState } from './form-runtime-types.js';
 import {
@@ -415,7 +416,7 @@ export function buildFormOwnerRuntime(input: {
 
         const result = await validatePath(input.sharedState, path, reason, options);
         if (!result.ok) {
-          fieldErrors[path] = result.errors;
+          assignValidatedPathErrors(input.sharedState, fieldErrors, path, result.errors);
           pushAggregateErrors(result.errors);
         }
       } catch (error) {
