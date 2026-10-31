@@ -28,6 +28,7 @@ import {
 import { createReplCrmFetcherBranches } from './mock-backend-repl-crm';
 import { createReplItamFetcherBranches } from './mock-backend-repl-itam';
 import { createReplAiFetcherBranches } from './mock-backend-repl-ai';
+import { createReplMesFetcherBranches } from './mock-backend-repl-mes';
 import { createReplFetcherBranches } from './mock-backend-repl-wms';
 import { confirmBridge } from './confirm-bridge';
 import { createMockAiStream, createMockAiConnector, createAiImportLoader } from '../../ai/mock-ai-env';
@@ -129,6 +130,9 @@ export function createShowcaseEnv(): { env: RendererEnv; db: MockDatabase } {
     ...createReplItamFetcherBranches(),
     // Plan 806 (D3 §4.3): the K1 knowledge-chat joins the AI face.
     ...createReplAiFetcherBranches(),
+    // Plan 809 (D3 §4.1/§4.4): the M1 shopfloor-board opens the MES face
+    // (M1 subset = the single dashboardKpi aggregate endpoint).
+    ...createReplMesFetcherBranches(),
   ]);
 
   const fetcher = async function fetcher<T>(api: FetcherApi): Promise<{ status: number; data: T }> {

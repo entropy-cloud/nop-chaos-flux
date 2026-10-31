@@ -144,6 +144,11 @@ export const workspacePackageAliases: Record<string, string> = {
   '@nop-chaos/flux-renderers-industrial/editor': fileURLToPath(
     new URL('./packages/flux-renderers-industrial/src/editor/index.ts', import.meta.url),
   ),
+  // plan 809 M1：runtime 子路径（jsdom/node-safe 注册面）须在裸键之前（前缀匹配，
+  // editor/styles.css 同排布纪律）。
+  '@nop-chaos/flux-renderers-industrial/runtime': fileURLToPath(
+    new URL('./packages/flux-renderers-industrial/src/runtime.ts', import.meta.url),
+  ),
   '@nop-chaos/flux-renderers-industrial': fileURLToPath(
     new URL('./packages/flux-renderers-industrial/src/index.ts', import.meta.url),
   ),

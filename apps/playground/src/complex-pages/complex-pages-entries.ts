@@ -448,4 +448,12 @@ export const COMPLEX_PAGE_ENTRIES: ComplexPageEntry[] = [
       '复刻 AI 审批轨迹页（roadmap 21 页 K3，D3 §2.3 桌面整页）：待办列表（crud 行点击 openDrawer 详情，approvalTaskFindPage 四值 approveStatus fixture）+ 详情 drawer（steps 审批状态轴〔mock 投影 wait/process/finish/error 权威映射〕/ timeline 审批轨迹 approvalTrailFind〔reject 节点 level=error 配色〕/ ai-tool-call HITL 审批卡〔onApproval 事件→hitlDecision 持久化，engine 不自改 approval、宿主 action 链持卡状态〕/ 动作区 approve→approvalAct + reject 意见必填 dialog + 转办 dialog〔user-select 选人 + 原因必填→approvalTransfer，G13 组合口径〕）。数据经 /r/ReplAi__approval* 与 hitlDecision 端点流动。',
     features: ['crud 待办列表', 'steps 状态轴', 'timeline 审批轨迹', 'ai-tool-call HITL 卡', 'reject 意见必填', 'user-select 转办', 'approvalAct 守卫', 'ReplAi__ 端点'],
   },
+  {
+    id: 'mes-shopfloor-board',
+    title: 'MES 车间大屏页',
+    category: 'business-replication',
+    description:
+      '复刻 MES 车间大屏页（roadmap 21 页 M1，D3 §2.4 桌面整页）：dashboard 网格 panels（C3 先例 PAGE_DATA 表达式绑定通道）内 stat-tile KPI×4（计划/完成/报废/完成率，G10 翻牌器近似：decimals 显式 + delta 方向色 + plannedSpark 迷你趋势）+ echarts 当日报工趋势（48 半小时点确定性序列，onClick 下钻该时段预警明细 dialog，W1 勘误 5 实例级 seam 观察锚）+ scada-canvas 车间工位组态（scada-group/scada-rect/scada-text/scada-device-motor/scada-sensor-control-indicator 静态注入，__flux_scada_<cid> 测试句柄）+ 当前停机 stat-tile 与停机明细表 + notice-bar 未关闭异常滚动播报（mobile 族桌面共享注册）。数据源 name=kpi interval=15s silent 轮询 + 手动刷新入口，mock 按调用计数相位推进（第 N 次调用返回第 N 相位数据）。数据经 /r/ReplMes__dashboardKpi 单端点聚合流动。',
+    features: ['dashboard 网格 panels', 'stat-tile KPI×4', 'echarts 趋势下钻', 'scada-canvas 工位组态', 'notice-bar 异常播报', 'interval 轮询相位推进', 'ReplMes__ 端点'],
+  },
 ];

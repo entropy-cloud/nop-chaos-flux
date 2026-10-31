@@ -347,6 +347,19 @@ scada-canvas：`config` 为组态 JSON 单一字段（quick-reference.md §Indus
 }
 ```
 
+#### M1 实现勘误（M3 落地实证 2026-10-30，plan 809；以 live 为准——D3 §2.4 片段为内联 panels 形态，实现按 C3 先例转写 PAGE_DATA 表达式绑定）
+
+1. **panels 表达式绑定**：内联 panels 片段在 strict 校验下不可达（每面板固定产出 conflicting-field-definition warning，编译器 pinned 语义）——panels 落 PAGE_DATA `mesShopfloorBoardPanels`，schema 侧表达式通道（C3 先例同款）。
+2. **数据源 name 与表达式根匹配**：源 name=kpi 则表达式 `${kpi.*}`；原片段 kpiSource 名下 `${kpi.*}` 全链静默 undefined（source-compiler name→targetPath 契约）。
+3. **trendOption 内联于 panels 载体**：表达式求值不做嵌套模板深度解析——独立 `${trendOption}` 载体不可行；scadaConfig 无内层表达式故独立载体可行。
+4. **相位计数须波次去重**（dev StrictMode 双挂载——第 N *波*调用返回第 N 相位，首帧保持相位 1）。
+5. **KPI_UNAVAILABLE 可见面走 refreshSource onError**：data-source onError 系 intentional-non-declared 字段被 strict 校验拦截，且与 silent 轮询语义自洽。
+6. **notice-bar 条数摘要须每条轮播文本重复**（单时刻单条渲染）；notice-bar 页级而非 panel。
+7. **scada-group 本体入 getSymbols 叶子表**（11 leaves 实测）。
+8. **D3 §2.4 树内「工单四阶段进度 table」未落**（任务执行清单/§5.4 均未含——登记剪裁）。
+9. **手动刷新钮为新增**（D3 无刷新入口；15s 第二帧不等待防 flake 需用户驱动取数）。
+10. **echarts pixel click 不可达**（引用 C3 已登记 chart owner live gap，非新勘误）。
+
 ### 2.5 M2 mes-work-reporting（P0，直接组合，无缺口——plan 785 直接受益页）
 
 ```

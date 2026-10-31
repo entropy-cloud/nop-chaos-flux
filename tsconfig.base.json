@@ -76,6 +76,9 @@
       ],
       "@nop-chaos/flux-renderers-3d": ["./packages/flux-renderers-3d/src/index.ts"],
       "@nop-chaos/flux-renderers-industrial": ["./packages/flux-renderers-industrial/src/index.ts"],
+      "@nop-chaos/flux-renderers-industrial/runtime": [
+        "./packages/flux-renderers-industrial/src/runtime.ts"
+      ],
       "@nop-chaos/flux-renderers-industrial/editor": [
         "./packages/flux-renderers-industrial/src/editor/index.ts"
       ],

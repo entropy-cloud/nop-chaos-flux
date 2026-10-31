@@ -81,5 +81,10 @@
     "aria-required-attr": 6,
     "color-contrast": 8,
     "_notes": "plan 808 first-run measurement 2026-10-30 (D1 §4 branch A registration): counts measured on #/complex-pages/ai-approval-trail. aria-required-attr = 6 table column-resize separator handles (role=separator missing aria-valuenow — the standard-crud/wms-wave-picking family debt, table component owner; K2 scanned zero only because its table tab sits behind mountOnEnter). color-contrast = 8 shell header feature badges (data-slot=badge variant=secondary — same as the crm-customer-360=8 registration count, component owner). The K3 page DOM itself (crud todo list/steps/timeline/ai-tool-call/drawer widgets) contributes zero violations beyond these two registered families. Fixes belong to the component owner, not the page schema."
+  },
+  "complex-pages/mes-shopfloor-board": {
+    "aria-required-attr": 5,
+    "color-contrast": 7,
+    "_notes": "plan 809 first-run measurement 2026-10-30 (D1 §4 branch A registration): counts measured on #/complex-pages/mes-shopfloor-board. aria-required-attr = the downtime panel table's 5 column-resize separator spans (table component owner debt, same rule family as standard-crud/W2/W3/C1; count = the 5 downtime columns); color-contrast = 7 header feature badges (data-slot=badge variant=secondary in the complex-pages shell header — same secondary-badge contrast debt as W3/C1/C2/C3 registrations, component owner; count = this entry's 7 feature tags). Fixes belong to the component owner, not the page schema."
   }
 }

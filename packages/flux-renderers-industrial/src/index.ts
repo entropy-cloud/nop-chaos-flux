@@ -1,6 +1,3 @@
-import { registerRendererDefinitions, type RendererRegistry } from '@nop-chaos/flux-core';
-import { industrialRendererDefinitions } from './renderer-definitions.js';
-
 /**
  * 包公共面（design-renderer.md §11 授权面）：
  * - 注册入口：`registerScadaRenderers` / `registerScadaSymbols` / 符号注册表 API（`registerScadaSymbol` 等）
@@ -66,18 +63,11 @@ export { diffScadaConfig } from './serialization/diff.js';
  * 内置 renderer 定义数组（design-renderer.md §11）。plan 2026-08-08-1931-2 Phase 3 / P2-3：与所有兄弟
  * `flux-renderers-*` 包注册模式对齐——导出 definitions 数组，供 host 自定义注册（选择性注册 / 自建 registry
  * / 顺序控制）。`registerScadaRenderers` 仍是一键全注册便捷入口。
- */
-export { industrialRendererDefinitions } from './renderer-definitions.js';
-
-/**
- * `scada-canvas` renderer 注册入口（design-renderer.md §11）。
  *
- * 注册 `scada-canvas` renderer 定义；renderer 组件经统一延迟加载机制
- * （`scada-canvas-lazy.ts`，flux-react `createLazyRendererComponent`）在首次挂载时装载，
- * 内置 SCADA 图元（`registerScadaSymbols()`，幂等）随同一异步 chunk 自注册——本函数保持
- * 同步且不静态触达 leafer-ui（plan 2026-08-04-1558-1 Phase 1 移除模块加载副作用的延续：
- * 现连注册期调用也不再拖入 leafer）。需提前消费符号注册表的宿主显式调 `registerScadaSymbols()`。
+ * plan 809：两者的单一来源改为 `./runtime.js`（jsdom/node-safe 子路径
+ * `@nop-chaos/flux-renderers-industrial/runtime` 的 re-export 面）。入口 `. ` 因
+ * registerScadaSymbols/serialization re-export 静态触达 leafer-ui，共享 happy-dom/jsdom
+ * 测试环境下的宿主（playground complex-pages render-host 先例）注册 scada-canvas 须走
+ * runtime 子路径；浏览器宿主两者等价。
  */
-export function registerScadaRenderers(registry: RendererRegistry) {
-  return registerRendererDefinitions(registry, industrialRendererDefinitions);
-}
+export { industrialRendererDefinitions, registerScadaRenderers } from './runtime.js';

@@ -4,6 +4,8 @@
  * have entries here. Most pages (pure data-source driven) need none.
  */
 
+import { MES_SHOPFLOOR_BOARD_PAGE_DATA } from './page-data-mes';
+
 export const PAGE_DATA: Record<string, Record<string, unknown>> = {};
 
 // ── Linear 问题列表：筛选根声明默认值（ux-r11 n2 作者契约加固，非缺陷修复——
@@ -352,3 +354,8 @@ PAGE_DATA['crm-sales-dashboard'] = {
     },
   ],
 };
+
+// ── M1 MES 车间大屏：dashboard 网格布局 + scada 组态载体（plan 809）──
+// 按页拆分于 page-data-mes.ts（584 行触发 oversized warn 后的抽分；
+// page-data.ts 只保留合并点，per-page 载体块归各自模块）。
+PAGE_DATA['mes-shopfloor-board'] = MES_SHOPFLOOR_BOARD_PAGE_DATA;

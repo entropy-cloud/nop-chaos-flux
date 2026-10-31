@@ -13,6 +13,7 @@ import { registerLayoutRenderers } from '@nop-chaos/flux-renderers-layout';
 import { registerSchedulingRenderers } from '@nop-chaos/flux-renderers-scheduling';
 import { registerAiRenderers } from '@nop-chaos/flux-renderers-ai';
 import { registerMobileRenderers } from '@nop-chaos/flux-renderers-mobile';
+import { registerScadaRenderers } from '@nop-chaos/flux-renderers-industrial/runtime';
 import { registerFlowDesignerRenderers } from '@nop-chaos/flow-designer-renderers';
 import type { ActionScope, RendererEnv } from '@nop-chaos/flux-core';
 import { ConfirmHost } from './confirm-bridge';
@@ -38,6 +39,11 @@ registerPivotRenderers(registry);
 // already covers; only the dashboard wrapper type was missing here (same
 // registration gap the pivot family had, W3 勘误 4 同型).
 registerDashboardRenderers(registry);
+// Industrial family (plan 809 M1 / 评审 MAJ-1, W3 勘误 4 + C3 Major-1 同型):
+// mes-shopfloor-board is the first complex-pages consumer of the `scada-canvas`
+// renderer — the registration gap is the same shape the pivot/dashboard
+// families had (the scada demo page registers its own copy).
+registerScadaRenderers(registry);
 registerFlowDesignerRenderers(registry);
 
 function toNumber(value: unknown): number {

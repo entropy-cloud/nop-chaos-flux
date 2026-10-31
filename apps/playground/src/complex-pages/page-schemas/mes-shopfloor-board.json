@@ -1,0 +1,76 @@
+{
+  "type": "page",
+  "testid": "mes-shopfloor-board-root",
+  "body": [
+    {
+      "type": "data-source",
+      "id": "mes-shopfloor-board-kpi-source",
+      "name": "kpi",
+      "action": "ajax",
+      "args": {
+        "url": "/r/ReplMes__dashboardKpi",
+        "method": "get"
+      },
+      "interval": 15000,
+      "silent": true,
+      "initFetch": true,
+      "testid": "mes-shopfloor-board-kpi-source"
+    },
+    {
+      "type": "flex",
+      "direction": "column",
+      "gap": 8,
+      "testid": "mes-shopfloor-board-shell",
+      "body": [
+        {
+          "type": "flex",
+          "direction": "row",
+          "gap": 12,
+          "className": "items-center",
+          "testid": "mes-shopfloor-board-toolbar",
+          "body": [
+            {
+              "type": "text",
+              "testid": "mes-shopfloor-board-poll-caption",
+              "text": "KPI / 趋势每 15 秒自动轮询刷新（数据源 interval）",
+              "className": "text-sm text-muted-foreground"
+            },
+            {
+              "type": "button",
+              "label": "手动刷新",
+              "variant": "outline",
+              "testid": "mes-shopfloor-board-refresh",
+              "onClick": {
+                "action": "refreshSource",
+                "targetId": "kpi",
+                "onError": {
+                  "action": "showToast",
+                  "args": {
+                    "level": "error",
+                    "message": "KPI 数据暂不可用（KPI_UNAVAILABLE）"
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "type": "notice-bar",
+          "testid": "mes-shopfloor-board-notice",
+          "text": "${kpi?.abnormalityTexts ?? []}",
+          "scrollable": true,
+          "speed": 60,
+          "variant": "warning",
+          "closable": true
+        },
+        {
+          "type": "dashboard",
+          "testid": "mes-shopfloor-board-grid",
+          "cols": 12,
+          "rowHeight": 44,
+          "panels": "${mesShopfloorBoardPanels}"
+        }
+      ]
+    }
+  ]
+}
