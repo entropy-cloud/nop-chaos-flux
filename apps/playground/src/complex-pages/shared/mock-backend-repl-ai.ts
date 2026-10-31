@@ -13,7 +13,13 @@
  * `mock-backend-repl-ai-connector.ts` under the same line-gate delegation
  * pattern as the CRM C2/C3 delegates (`mock-backend-repl-crm-c2.ts`): shared
  * entity/hook types flow in from this module, the counter here stays the
- * single per-request count site for the fetcher face.
+ * single per-request count site for the fetcher face. The K2 ticket-console
+ * endpoint subset (plan 807; D3 §4.3 K2 five — ticketFindPage/ticketActionFind/
+ * ticketMutation/ticketReply/suggestionFind) is delegated to
+ * `mock-backend-repl-ai-k2.ts` the same way: the branch hands unmatched K2
+ * urls to `handleReplAiK2Branch`, and the K2 session rows (tickets/actions)
+ * live in this module's factory closure so writes stay observable across
+ * pages in one session.
  *
  * D6 复审前置义务 (plan 806 强制项): the engine's final message must carry
  * sources/refused/usage by the time `ai-chat` snapshots it into the
@@ -30,6 +36,12 @@
  */
 
 import type { AiConversationInfo } from '@nop-chaos/flux-renderers-ai';
+import {
+  createReplAiK2Seed,
+  handleReplAiK2Branch,
+  type ReplAiTicket,
+  type ReplAiTicketAction,
+} from './mock-backend-repl-ai-k2';
 import {
   createEndpointCounter,
   createUrlParamReader,
@@ -97,6 +109,10 @@ export interface ReplAiTestHooks {
   lastMessageSaveBody?: Record<string, unknown>;
   /** Mirror: last `feedbackCreate` request body. */
   lastFeedbackBody?: Record<string, unknown>;
+  /** K2 mirror: last `ticketMutation` request body (field-by-field evidence). */
+  lastTicketMutationBody?: Record<string, unknown>;
+  /** K2 mirror: last `ticketReply` request body. */
+  lastTicketReplyBody?: Record<string, unknown>;
 }
 
 function readReplAiTestHooks(): ReplAiTestHooks | undefined {
@@ -200,6 +216,10 @@ export interface ReplAiSessionState {
   /** Flat message store, filtered by conversationId on read (ASC by createdAt). */
   messages: ReplAiMessage[];
   dbSeq: number;
+  /** K2 ticket-console rows (plan 807): ticket queue + trajectory actions. */
+  tickets: ReplAiTicket[];
+  ticketActions: ReplAiTicketAction[];
+  actionSeq: number;
 }
 
 export function createReplAiSession(): ReplAiSessionState {
@@ -210,6 +230,7 @@ export function createReplAiSession(): ReplAiSessionState {
     ],
     messages: seedMessages(),
     dbSeq: 0,
+    ...createReplAiK2Seed(),
   };
 }
 
@@ -333,6 +354,17 @@ export function createReplAiFetcherBranch(
       }
       return { status: 0, data: { ok: true } as unknown as T };
     }
+
+    // ----- K2 ticket-console subset (plan 807; delegate module) -----
+    const k2Handled = handleReplAiK2Branch<T>({
+      url: input.url,
+      method,
+      read,
+      body: input.body,
+      session,
+      hooks,
+    });
+    if (k2Handled) return k2Handled;
 
     return null;
   }

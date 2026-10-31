@@ -1,6 +1,6 @@
 # 807 M3-K2 工单处理台页复刻（business-page-replication roadmap M3-K2）
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-10-30
 > Source: `docs/backlog/business-page-replication-roadmap.md` §2 M3-K2（依赖 M2 done；前置 K1 done——ai mock 模块与 ReplAi 分支已接）
 > Related: D1 总体设计；D3 §2.2/§4.3/§5.2（K2 页设计）；R2 §1 K2；R4 §1 K2（G9/G11/G12）
@@ -50,23 +50,23 @@
 
 ### Phase 1 - K2 页全链实现
 
-Status: planned
+Status: completed（执行会话 2026-10-30；focused e2e/axe/七 spec 回归/typecheck/strict 校验/check 触达面全绿，见 `docs/logs/2026/10-30.md` M3-K2 节；`pnpm build`/`pnpm lint`/`pnpm test` 全仓面与 closure audit 归收口）
 Targets: `mock-backend-repl-ai.ts`（扩展）、`page-schemas/ai-ticket-console.json`、`complex-pages-model.ts`（entry）、`tests/e2e/replication-ai-ticket-console.spec.ts`、axe spec/JSON
 
 - Item Types: `Fix | Proof`
 
-- [ ] mock 扩展：K2 子集端点**逐名对齐 D3 §4.3 ai 表原五名**（ticketFindPage/ticketActionFind?ticketId=/ticketMutation〔六态路由 assign/start/resolve/close/reopen/escalate〕/ticketReply/suggestionFind?ticketId=，含 ILLEGAL_TRANSITION 错误分支；钩子 lastTicketMutationBody 增补——评审 MAJ-1 勘误：aiSuggestion/操作日志/SLA 数据系描述词非端点名，四真名补入）
-- [ ] complex-pages-model.ts 加 ai-ticket-console entry
-- [ ] schema JSON（D3 §2.2 组件树：kanban 六态 onCardMove 路由/**过滤载体预裁决 form+valuesPath〔W2 勘误 5，live page-schemas 零 query-filter 使用——评审 m2，focus 断言载体同步裁定〕**/stat-tile+sparkline〔溯源 R2 K2 映射〕/steps 状态轴/timeline 操作日志/columnAggregate 计数/ai-suggestions 推荐采用→写回 action 编排〔G12〕/SLA 静态文本〔G9〕/置信度门 alert〔G11，溯源 R4 §2〕/确认 dialog〔plan 侧补充设计，依据 R2 K2 映射弹窗〕；testid `<pageId>-<element>`；strict 零 error）
-- [ ] e2e spec 三支柱（D3 §5.2 K2 断言清单：拖卡路由 mutation 计数+逐字段/SLA 文本可见/AI 推荐采用→写回/timeline 渲染/确认 dialog 焦点往返；axe 分支 A；focus 3 条）
-- [ ] axe ROUTES + JSON 登记（分支 A；首跑实测回填+\_notes）
-- [ ] 验证：`npx playwright test tests/e2e/replication-ai-ticket-console.spec.ts --retries=0` 全绿 + axe spec 绿 + W1-W3/C1-C3/K1 回归 + playground typecheck + strict 校验
+- [x] mock 扩展：K2 子集端点**逐名对齐 D3 §4.3 ai 表原五名**（ticketFindPage/ticketActionFind?ticketId=/ticketMutation〔六态路由 assign/start/resolve/close/reopen/escalate〕/ticketReply/suggestionFind?ticketId=，含 ILLEGAL_TRANSITION 错误分支；钩子 lastTicketMutationBody 增补——评审 MAJ-1 勘误：aiSuggestion/操作日志/SLA 数据系描述词非端点名，四真名补入）。落地：delegate 模块 `mock-backend-repl-ai-k2.ts`（450 行门槛拆分，467 行 <500 warn）+ 主模块接线（382 行）+ lastTicketReplyBody 增补
+- [x] complex-pages-model.ts 加 ai-ticket-console entry（随 entry 增补触发 501 行 oversized warn，按拆分纪律抽 `complex-pages-entries.ts` 443 行，model 67 行 re-export——entry↔registry/route-matrix 断言过）
+- [x] schema JSON（D3 §2.2 组件树：kanban 六态 onCardMove 路由/**过滤载体预裁决 form+valuesPath〔W2 勘误 5，live page-schemas 零 query-filter 使用——评审 m2，focus 断言载体同步裁定〕**/stat-tile+sparkline〔溯源 R2 K2 映射〕/steps 状态轴/timeline 操作日志/columnAggregate 计数/ai-suggestions 推荐采用→写回 action 编排〔G12〕/SLA 静态文本〔G9〕/置信度门 alert〔G11，溯源 R4 §2〕/确认 dialog〔plan 侧补充设计，依据 R2 K2 映射弹窗〕；testid `<pageId>-<element>`；strict 零 error）。live 裁定：双详情源内联 drawer body（页面级源+setValue scope 载体不可行——勘误①）；ticketFindPage 扩展 {board,stats}
+- [x] e2e spec 三支柱（D3 §5.2 K2 断言清单：拖卡路由 mutation 计数+逐字段/SLA 文本可见/AI 推荐采用→写回/timeline 渲染/确认 dialog 焦点往返；axe 分支 A；focus 3 条）。落地 11 测试 `--retries=0` 11/11（含 steps 当前值映射/columnAggregate 计数差值/ILLEGAL_TRANSITION→toast/G11/G9 ±1 分钟/G12 逐字段——§5.2 全清单转写）
+- [x] axe ROUTES + JSON 登记（分支 A；首跑实测回填+\_notes——实测零违规，空棘轮+两次实测含 +2s settle 复核注记）
+- [x] 验证：`npx playwright test tests/e2e/replication-ai-ticket-console.spec.ts --retries=0` 全绿 + axe spec 绿 + W1-W3/C1-C3/K1 回归 + playground typecheck + strict 校验（11/11、17/17、68/68、typecheck 绿、unit 551/551 含 strict 54/54；check 触达面 oversized 236/3/3 与 HEAD 同值零新增、scanner-baselines 0、duplicates 869/17.05% 与 Deferred 登记值逐字同值）
 
 Exit Criteria:
 
-- [ ] K2 页可达可交互且列表页收录，strict validation 零 error
-- [ ] focused e2e `--retries=0` 全绿（断言含 \_\_replAiCalls 计数证据）
-- [ ] axe 基线登记绿
+- [x] K2 页可达可交互且列表页收录，strict validation 零 error
+- [x] focused e2e `--retries=0` 全绿（断言含 \_\_replAiCalls 计数证据）
+- [x] axe 基线登记绿
 - [ ] roadmap §2 K2 回写 `done`（随 closure audit 通过的同一次回写提交完成，guide When Closing 9）
 
 ## Draft Review Record

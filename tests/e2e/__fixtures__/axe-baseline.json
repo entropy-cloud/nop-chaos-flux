@@ -73,5 +73,8 @@
   "complex-pages/ai-knowledge-chat": {
     "color-contrast": 7,
     "_notes": "plan 806 first-run measurement 2026-10-30 (D1 §4 branch A registration): counts measured on #/complex-pages/ai-knowledge-chat. color-contrast = 7 header feature badges (data-slot=badge variant=secondary in the complex-pages shell header — same secondary-badge contrast debt as W3/C1/C2/C3/I1/I2 registrations, component owner). The K1 page DOM itself (ai-conversations/ai-chat/afterMessages widgets) contributes zero violations. Fixes belong to the component owner, not the page schema."
+  },
+  "complex-pages/ai-ticket-console": {
+    "_notes": "plan 807 first-run measurement 2026-10-30 (D1 §4 branch A registration): counts measured on #/complex-pages/ai-ticket-console — live violations are ZERO (verified twice, second pass with +2s settle): the K2 page DOM (kanban/steps/timeline/stat-tile/alert/drawer widgets) and the shell header contribute no WCAG 2.1 A/AA violations on this run. Registered as an empty ratchet — any future violation fails the scan. Fixes belong to the component owner, not the page schema."
   }
 }

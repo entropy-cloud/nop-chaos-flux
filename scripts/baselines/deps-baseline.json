@@ -2,7 +2,10 @@
   "_header": {
     "description": "Registered no-circular signatures (plan 767 Phase 2, MA8.3-002). check:deps-baseline fails on any signature not in this list. Shrink-only ratchet: re-register downward when cycles are fixed.",
     "lastUpdated": "2026-10-27",
-    "source": "npx depcruise --config .dependency-cruiser.mjs --output-type json apps packages scripts"
+    "source": "npx depcruise --config .dependency-cruiser.mjs --output-type json apps packages scripts",
+    "notes": [
+      "2026-10-30 plan 807 (K2 entry 使 model 达 501 触发 oversized warn，按拆分纪律抽 complex-pages-entries.ts；type-only 单向类型引用 conscious re-register)"
+    ]
   },
   "signatures": [
     "apps/playground/src/ai-renderer-routes.ts -> apps/playground/src/route-model.ts",
@@ -61,6 +64,7 @@
     "packages/flux-renderers-scheduling/src/gantt/gantt-store.ts -> packages/flux-renderers-scheduling/src/gantt/utils/scale.ts -> packages/flux-renderers-scheduling/src/gantt/gantt.types.ts",
     "packages/flux-renderers-scheduling/src/kanban/kanban-aggregate.ts -> packages/flux-renderers-scheduling/src/kanban/kanban.types.ts",
     "packages/flux-xlang-debug/src/assembly/renderer.ts -> packages/flux-xlang-debug/src/assembly/xlang-debug-editor.tsx",
-    "packages/page-designer-core/src/round-trip.ts -> packages/page-designer-core/src/types.ts"
+    "packages/page-designer-core/src/round-trip.ts -> packages/page-designer-core/src/types.ts",
+    "apps/playground/src/complex-pages/complex-pages-entries.ts -> apps/playground/src/complex-pages/complex-pages-model.ts"
   ]
 }

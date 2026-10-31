@@ -227,6 +227,15 @@ page
 // D5 深审勘误：AlertSchema 无 message 属性（content/schemas.ts L267-284：title/body），反馈内容改 body——原 message 被静默丢弃渲染空壳
 ```
 
+#### K2 实现勘误（M3 落地实证 2026-10-30，plan 807；以 live 为准）
+
+1. **页面级源+setValue scope 参数链不可行**（kanban 派发 scope≠源注册 scope 时 params 恒空，W3 形态失效）——详情双源内联 drawer body 读 drawer data。
+2. **ticketFindPage 扩展 {board,stats} 投影**；statusPath+columnsConfig 按 live 收窄（columnsConfig 不创建列，六列由 mock BoardData 承载）。
+3. **G9 求值点改 mock 取数时现算字段 slaRemainingMinutes**（渲染时 `$Date.now()` formula 数值运算不可靠），e2e 以 ±1 分钟兑现 <60s 容差。
+4. **G12 写回 setValue→setValues**（textarea 在 form 内，live 路径写 ctx.form）。
+5. **onCardMove when 路由需五 mutation 各一 action**（D3 三态合并 when 不可表达单 mutation）；reopen 仅 RESOLVED→REOPENED。
+6. **complex-pages-entries.ts 拆分**（K2 entry 使 model 达 501 行触发 oversized warn——COMPLEX_PAGE_ENTRIES 按 oversized 拆分纪律抽出）。
+
 ### 2.3 K3 ai-approval-trail（P1，直接组合，涉 G13/G18）
 
 ```

@@ -51,6 +51,9 @@ const ROUTES = [
   // scan set (non-mobile page — host override host, but a plain desktop page
   // in the shared shell, no mobile canvas).
   'complex-pages/ai-knowledge-chat',
+  // Plan 807 (D1 §4 branch A): K2 ticket-console joins the standard desktop
+  // scan set (non-mobile page — pure JSON SchemaPage, no host override).
+  'complex-pages/ai-ticket-console',
   'dashboard-demo',
 ];
 

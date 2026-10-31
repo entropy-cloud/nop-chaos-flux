@@ -1,0 +1,514 @@
+{
+  "type": "page",
+  "testid": "ai-ticket-console-root",
+  "body": [
+    {
+      "type": "data-source",
+      "id": "ai-ticket-console-board-source",
+      "name": "ticketBoard",
+      "action": "ajax",
+      "args": {
+        "url": "/r/ReplAi__ticketFindPage",
+        "method": "get"
+      },
+      "testid": "ai-ticket-console-board-source"
+    },
+    {
+      "type": "data-source",
+      "id": "ai-ticket-console-rows-source",
+      "name": "ticketRows",
+      "action": "ajax",
+      "args": {
+        "url": "/r/ReplAi__ticketFindPage",
+        "method": "get",
+        "params": {
+          "status": "${ticketFilter?.status ?? ''}"
+        }
+      },
+      "dependsOn": ["ticketFilter"],
+      "testid": "ai-ticket-console-rows-source"
+    },
+    {
+      "type": "flex",
+      "direction": "column",
+      "gap": 8,
+      "testid": "ai-ticket-console-main",
+      "body": [
+        {
+          "type": "flex",
+          "direction": "row",
+          "gap": 12,
+          "className": "items-center flex-wrap",
+          "testid": "ai-ticket-console-toolbar",
+          "body": [
+            {
+              "type": "text",
+              "testid": "ai-ticket-console-caption",
+              "text": "工单队列（ticketFindPage）：${ticketBoard?.total ?? '-'} 张 · 拖卡流转工单状态，非法迁移会被拒绝（ILLEGAL_TRANSITION）",
+              "className": "text-sm text-muted-foreground"
+            },
+            {
+              "type": "button",
+              "label": "手工刷新",
+              "variant": "outline",
+              "testid": "ai-ticket-console-refresh",
+              "onClick": {
+                "action": "refreshSource",
+                "targetId": "ticketBoard"
+              }
+            }
+          ]
+        },
+        {
+          "type": "flex",
+          "direction": "row",
+          "gap": 12,
+          "className": "flex-wrap",
+          "testid": "ai-ticket-console-kpi-band",
+          "body": [
+            {
+              "type": "stat-tile",
+              "testid": "ai-ticket-console-kpi-open",
+              "label": "待派单",
+              "value": "${ticketBoard?.stats?.openCount ?? 0}"
+            },
+            {
+              "type": "stat-tile",
+              "testid": "ai-ticket-console-kpi-sla",
+              "label": "超 SLA",
+              "value": "${ticketBoard?.stats?.slaBreachedCount ?? 0}"
+            },
+            {
+              "type": "stat-tile",
+              "testid": "ai-ticket-console-kpi-resolved",
+              "label": "今日解决",
+              "value": "${ticketBoard?.stats?.resolvedTodayCount ?? 0}"
+            },
+            {
+              "type": "stat-tile",
+              "testid": "ai-ticket-console-kpi-response",
+              "label": "平均首次响应（分钟）",
+              "value": "${ticketBoard?.stats?.avgFirstResponseMinutes ?? 0}",
+              "sparkline": "${ticketBoard?.stats?.responseSpark ?? []}"
+            }
+          ]
+        },
+        {
+          "type": "form",
+          "id": "ai-ticket-console-filter-form",
+          "testid": "ai-ticket-console-filter",
+          "valuesPath": "ticketFilter",
+          "mode": "inline",
+          "data": {
+            "status": ""
+          },
+          "body": [
+            {
+              "type": "select",
+              "name": "status",
+              "label": "工单状态",
+              "testid": "ai-ticket-console-filter-status",
+              "placeholder": "全部状态",
+              "options": [
+                { "label": "全部状态", "value": "" },
+                { "label": "待受理", "value": "OPEN" },
+                { "label": "已派单", "value": "ASSIGNED" },
+                { "label": "处理中", "value": "PROCESSING" },
+                { "label": "已解决", "value": "RESOLVED" },
+                { "label": "已关闭", "value": "CLOSED" },
+                { "label": "已重开", "value": "REOPENED" }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "tabs",
+          "testid": "ai-ticket-console-tabs",
+          "mountOnEnter": true,
+          "items": [
+            {
+              "key": "board",
+              "title": "工单看板",
+              "body": [
+                {
+                  "type": "kanban",
+                  "testid": "ai-ticket-console-kanban",
+                  "data": "${ticketBoard?.board}",
+                  "columnWidth": 280,
+                  "draggable": true,
+                  "columnAggregate": { "fn": "count", "label": "工单" },
+                  "cardTemplate": {
+                    "type": "flex",
+                    "direction": "column",
+                    "gap": 4,
+                    "body": [
+                      {
+                        "type": "text",
+                        "text": "${$slot.card.data.subject}",
+                        "className": "text-sm font-medium"
+                      },
+                      {
+                        "type": "text",
+                        "text": "${$slot.card.data.id} · ${$slot.card.data.priority} · ${$slot.card.data.assignee}",
+                        "className": "text-xs text-muted-foreground"
+                      },
+                      {
+                        "type": "text",
+                        "testid": "ai-ticket-console-card-sla",
+                        "text": "${$slot.card.data.slaRemainingMinutes < 0 ? 'SLA 超时' : 'SLA 剩余'} ${$slot.card.data.slaRemainingMinutes} 分",
+                        "className": "text-xs"
+                      }
+                    ]
+                  },
+                  "onCardMove": [
+                    {
+                      "action": "ajax",
+                      "when": "${toColumnId === 'ASSIGNED'}",
+                      "args": {
+                        "url": "/r/ReplAi__ticketMutation",
+                        "method": "post",
+                        "data": { "id": "${cardId}", "mutation": "assign" }
+                      },
+                      "then": [{ "action": "refreshSource", "targetId": "ticketBoard" }],
+                      "onError": [
+                        { "action": "refreshSource", "targetId": "ticketBoard" },
+                        {
+                          "action": "showToast",
+                          "args": {
+                            "level": "error",
+                            "message": "迁移被拒绝（ILLEGAL_TRANSITION）：当前状态不允许该操作"
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "action": "ajax",
+                      "when": "${toColumnId === 'PROCESSING'}",
+                      "args": {
+                        "url": "/r/ReplAi__ticketMutation",
+                        "method": "post",
+                        "data": { "id": "${cardId}", "mutation": "start" }
+                      },
+                      "then": [{ "action": "refreshSource", "targetId": "ticketBoard" }],
+                      "onError": [
+                        { "action": "refreshSource", "targetId": "ticketBoard" },
+                        {
+                          "action": "showToast",
+                          "args": {
+                            "level": "error",
+                            "message": "迁移被拒绝（ILLEGAL_TRANSITION）：当前状态不允许该操作"
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "action": "ajax",
+                      "when": "${toColumnId === 'RESOLVED'}",
+                      "args": {
+                        "url": "/r/ReplAi__ticketMutation",
+                        "method": "post",
+                        "data": { "id": "${cardId}", "mutation": "resolve" }
+                      },
+                      "then": [{ "action": "refreshSource", "targetId": "ticketBoard" }],
+                      "onError": [
+                        { "action": "refreshSource", "targetId": "ticketBoard" },
+                        {
+                          "action": "showToast",
+                          "args": {
+                            "level": "error",
+                            "message": "迁移被拒绝（ILLEGAL_TRANSITION）：当前状态不允许该操作"
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "action": "ajax",
+                      "when": "${toColumnId === 'CLOSED'}",
+                      "args": {
+                        "url": "/r/ReplAi__ticketMutation",
+                        "method": "post",
+                        "data": { "id": "${cardId}", "mutation": "close" }
+                      },
+                      "then": [{ "action": "refreshSource", "targetId": "ticketBoard" }],
+                      "onError": [
+                        { "action": "refreshSource", "targetId": "ticketBoard" },
+                        {
+                          "action": "showToast",
+                          "args": {
+                            "level": "error",
+                            "message": "迁移被拒绝（ILLEGAL_TRANSITION）：当前状态不允许该操作"
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "action": "ajax",
+                      "when": "${toColumnId === 'REOPENED'}",
+                      "args": {
+                        "url": "/r/ReplAi__ticketMutation",
+                        "method": "post",
+                        "data": { "id": "${cardId}", "mutation": "reopen" }
+                      },
+                      "then": [{ "action": "refreshSource", "targetId": "ticketBoard" }],
+                      "onError": [
+                        { "action": "refreshSource", "targetId": "ticketBoard" },
+                        {
+                          "action": "showToast",
+                          "args": {
+                            "level": "error",
+                            "message": "迁移被拒绝（ILLEGAL_TRANSITION）：当前状态不允许该操作"
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "empty": {
+                    "type": "text",
+                    "text": "该状态暂无工单"
+                  },
+                  "onCardClick": {
+                    "action": "openDrawer",
+                    "args": {
+                      "title": "工单详情 ${card.data.subject}",
+                      "testid": "ai-ticket-console-detail",
+                      "side": "right",
+                      "data": {
+                        "ticketId": "${card.data.id}",
+                        "ticketStatus": "${card.data.status}",
+                        "subject": "${card.data.subject}",
+                        "deadlineDateTime": "${card.data.deadlineDateTime}",
+                        "slaRemainingMinutes": "${card.data.slaRemainingMinutes}"
+                      },
+                      "body": [
+                        {
+                          "type": "data-source",
+                          "id": "ai-ticket-console-actions-source",
+                          "name": "ticketActions",
+                          "action": "ajax",
+                          "args": {
+                            "url": "/r/ReplAi__ticketActionFind",
+                            "method": "get",
+                            "params": {
+                              "ticketId": "${ticketId}"
+                            }
+                          },
+                          "testid": "ai-ticket-console-actions-source"
+                        },
+                        {
+                          "type": "data-source",
+                          "id": "ai-ticket-console-suggestions-source",
+                          "name": "ticketSuggestions",
+                          "action": "ajax",
+                          "args": {
+                            "url": "/r/ReplAi__suggestionFind",
+                            "method": "get",
+                            "params": {
+                              "ticketId": "${ticketId}"
+                            }
+                          },
+                          "testid": "ai-ticket-console-suggestions-source"
+                        },
+                        {
+                          "type": "steps",
+                          "testid": "ai-ticket-console-steps",
+                          "items": [
+                            { "value": "OPEN", "title": "待受理" },
+                            { "value": "ASSIGNED", "title": "已派单" },
+                            { "value": "PROCESSING", "title": "处理中" },
+                            { "value": "RESOLVED", "title": "已解决" },
+                            { "value": "CLOSED", "title": "已关闭" }
+                          ],
+                          "value": "${ticketStatus}"
+                        },
+                        {
+                          "type": "text",
+                          "testid": "ai-ticket-console-sla-text",
+                          "text": "G9 SLA 静态口径：剩余约 ${slaRemainingMinutes} 分钟 · 截止 ${$Date.format(deadlineDateTime, 'datetime')}",
+                          "className": "text-sm"
+                        },
+                        {
+                          "type": "timeline",
+                          "testid": "ai-ticket-console-timeline",
+                          "items": "${ticketActions?.items ?? []}"
+                        },
+                        {
+                          "type": "alert",
+                          "level": "warning",
+                          "testid": "ai-ticket-console-confidence-gate",
+                          "visible": "${((ticketSuggestions?.items ?? [])[0]?.confidence ?? 1) < 0.6}",
+                          "body": "AI 置信度低于门限，建议人工接管后回复。"
+                        },
+                        {
+                          "type": "form",
+                          "id": "ai-ticket-console-reply-form",
+                          "testid": "ai-ticket-console-reply-form",
+                          "data": {
+                            "ticketId": "${ticketId}",
+                            "replyDraft": ""
+                          },
+                          "body": [
+                            {
+                              "type": "ai-suggestions",
+                              "testid": "ai-ticket-console-suggestions",
+                              "items": "${ticketSuggestions?.items ?? []}",
+                              "overflowMode": "expand",
+                              "onSelect": [
+                                {
+                                  "action": "setValues",
+                                  "args": {
+                                    "values": {
+                                      "replyDraft": "${item.text}"
+                                    }
+                                  }
+                                },
+                                {
+                                  "action": "showToast",
+                                  "args": {
+                                    "level": "success",
+                                    "message": "已采用 AI 推荐回复"
+                                  }
+                                }
+                              ]
+                            },
+                            {
+                              "type": "textarea",
+                              "name": "replyDraft",
+                              "label": "回复草稿（G12：点推荐回复写回）",
+                              "testid": "ai-ticket-console-reply-input",
+                              "rows": 4,
+                              "placeholder": "点击上方推荐回复快速写回，或直接输入"
+                            }
+                          ],
+                          "actions": [
+                            {
+                              "type": "button",
+                              "label": "提交回复",
+                              "variant": "primary",
+                              "testid": "ai-ticket-console-reply-submit",
+                              "onClick": { "action": "submitForm" }
+                            }
+                          ],
+                          "submitAction": {
+                            "action": "ajax",
+                            "args": {
+                              "url": "/r/ReplAi__ticketReply",
+                              "method": "post",
+                              "data": {
+                                "ticketId": "${ticketId}",
+                                "reply": "${replyDraft}"
+                              }
+                            },
+                            "messages": {
+                              "success": "回复已提交"
+                            },
+                            "then": [{ "action": "refreshSource", "targetId": "ticketActions" }],
+                            "onError": [
+                              {
+                                "action": "showToast",
+                                "args": {
+                                  "level": "error",
+                                  "message": "回复提交失败：工单不存在或内容为空"
+                                }
+                              }
+                            ]
+                          }
+                        },
+                        {
+                          "type": "button",
+                          "label": "升级工单",
+                          "variant": "outline",
+                          "testid": "ai-ticket-console-escalate",
+                          "onClick": {
+                            "action": "openDialog",
+                            "args": {
+                              "title": "升级确认",
+                              "testid": "ai-ticket-console-escalate-dialog",
+                              "closeOnSubmit": true,
+                              "body": [
+                                {
+                                  "type": "form",
+                                  "testid": "ai-ticket-console-escalate-dialog-form",
+                                  "submitScope": "surface",
+                                  "body": [
+                                    {
+                                      "type": "text",
+                                      "testid": "ai-ticket-console-escalate-summary",
+                                      "text": "将把工单 ${ticketId} 升级处理（escalationLevel +1），并通知值班经理介入。",
+                                      "className": "text-sm"
+                                    }
+                                  ],
+                                  "actions": [
+                                    {
+                                      "type": "button",
+                                      "label": "确认升级",
+                                      "variant": "primary",
+                                      "testid": "ai-ticket-console-escalate-confirm",
+                                      "onClick": { "action": "submitForm" }
+                                    }
+                                  ],
+                                  "submitAction": {
+                                    "action": "ajax",
+                                    "args": {
+                                      "url": "/r/ReplAi__ticketMutation",
+                                      "method": "post",
+                                      "data": {
+                                        "id": "${ticketId}",
+                                        "mutation": "escalate"
+                                      }
+                                    },
+                                    "messages": {
+                                      "success": "工单已升级"
+                                    },
+                                    "onError": [
+                                      {
+                                        "action": "showToast",
+                                        "args": {
+                                          "level": "error",
+                                          "message": "升级被拒绝（ILLEGAL_TRANSITION）：已关闭工单不可升级"
+                                        }
+                                      }
+                                    ]
+                                  }
+                                }
+                              ],
+                              "onSubmitSuccess": [
+                                { "action": "refreshSource", "targetId": "ticketBoard" }
+                              ]
+                            }
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "key": "list",
+              "title": "工单列表",
+              "body": [
+                {
+                  "type": "table",
+                  "testid": "ai-ticket-console-table",
+                  "source": "${ticketRows?.items ?? []}",
+                  "itemKey": "id",
+                  "pagination": { "enabled": true, "pageSize": 10 },
+                  "columns": [
+                    { "name": "id", "label": "工单号", "width": 110 },
+                    { "name": "subject", "label": "主题", "width": 220 },
+                    { "name": "status", "label": "状态", "width": 110 },
+                    { "name": "priority", "label": "优先级", "width": 90 },
+                    { "name": "assignee", "label": "处理人", "width": 110 },
+                    { "name": "slaRemainingMinutes", "label": "SLA 剩余（分）", "width": 130 },
+                    { "name": "escalationLevel", "label": "升级次数", "width": 90 }
+                  ],
+                  "empty": { "type": "text", "text": "当前筛选条件下没有工单" }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
