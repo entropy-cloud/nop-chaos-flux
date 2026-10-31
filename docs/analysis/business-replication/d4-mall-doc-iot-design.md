@@ -303,6 +303,16 @@ HITL 卡复用口径（R3 L30）：`ai-tool-call` 为 AI 会话语境卡，inbox
 
 `interval: 5000`：上游既有页实证 30000（R3 L39），复刻页取小值适配 e2e 时限；数据由 mock 确定性序列驱动（§4.3）。
 
+#### V1 实现勘误（M3 落地实证 2026-11-01，plan 816；以 live 为准）
+
+1. **过滤承载**：`form`（`valuesPath: telemetryFilter`，deviceKey + 时间窗）——免去 query-filter 与 metric 控件（三指标同屏并列 stat-tile/曲线，无需按指标切换）；data-source `dependsOn: [telemetryFilter]` 重取、crud `loadAction.dependsOn` 含 telemetryFilter 联动告警（W3 先例）。
+2. **§4.3 telemetryQuery 契约形状**：确定性 288 点序列 `series{metric:number[]}` + `timeAxis` + `latest{metric:number}` + `spark{metric}`（序列尾 24 点，stat-tile sparkline 数据面）+ 按设备 `quality`（DEV-1001 GOOD / DEV-1002 UNCERTAIN / DEV-1003 BAD）；原「quality 按点 + mock 下发 chartOption」改为 echarts option 在 schema 内结构化声明（三 series 表达式绑定，C3/M1 先例），mock 不再下发 chartOption。相位仅由 `tickTelemetry()` 推进（每 tick 序列窗口平移 6 点），轮询不漂移。
+3. **§4.3 增补错误分支 `REPL_IOT_ALARM_ACK_FAILED`**：`forceAlarmAckError`（consume-once）强制 ack 失败码——原表只列 `REPL_IOT_ALARM_ALREADY_CLOSED`（已关闭告警确认/再关闭）。
+4. **告警 dialog 动作**：确认（ACTIVE 可见）+ 关闭两动作承担 AlarmLifecycle 语义，免去「开始处理」；dialog 内刷新告警列表用 `refreshNearest {targetType:'crud'}`（§2.4 O2 勘误 7）。
+5. **echarts 实例观察锚**：`__flux_echarts_<componentId>`（W1 勘误 5）读 `getOption().series` 断三曲线 × 288 点。
+6. **select testid 双落点**：flux select 的 testid 同时落在 field 外框与控件，交互取 `[data-slot="combobox-trigger"]`（C3/I2 先例）。
+7. **axe 分支 A 基线**：aria-required-attr 8（告警 crud 列宽 separator）+ color-contrast 8（壳头部 badge 族）。
+
 ### 2.6 iot-ota-rollout（V2，桌面，直接组合）
 
 组件树（R3 L49 交互①-⑦ → L50；主容器 # testid: iot-ota-rollout-root——D5 深审勘误 MIN-3）：`crud` 固件列表（input-file 上传/verifySignature/废弃）→ `wizard` 灰度指派三步（选设备→分批→确认下发，onStepCommit 门禁，内嵌 table 多选）→ `steps` 八态（QUEUED→INITIATED→DOWNLOADING→DOWNLOADED→VERIFIED→UPDATING→UPDATED，FAILED=error 分叉）→ `timeline` statusTime（items.time=statusTime）→ `table` 进度矩阵（设备×批次×状态+lastError，mapping 状态色）→ `button-group` 门控（推进/暂停→dialog）→ `dialog` 回滚确认（alert ROLLED_BACK+textarea 原因）。断点续传（要素⑦）不呈现（D1 §1 #20）。
@@ -475,7 +485,7 @@ HITL 卡复用口径（R3 L30）：`ai-tool-call` 为 AI 会话语境卡，inbox
 | ReplIot\_\_checkFence (post)            | V3  | `{ deviceId,inside,distanceMeters }`（DeviceGeoService 语义，R3 L55）                                                                                               | REPL_IOT_DEVICE_NOT_FOUND         |
 | ReplIot\_\_videoChannels (get)          | V3  | `{ channels:{ channelId,name,status:'online',streamUrl } }`                                                                                                         | —                                 |
 
-钩子：`tickTelemetry(metric?)`（推进序列相位，V1 轮询断言）、`appendFenceEvent(event)`（V3 轮询增量）、`forceAlarmAckError()`、`setAssignmentStatus(deviceId,status)`（V2 推态）、`setVideoAsset(channelId,url)`（CI 替换 src，正常不用）。
+钩子：`tickTelemetry(metric?)`（推进序列相位，V1 轮询断言；plan 816 勘误：落地为无参全指标推进，telemetryQuery 形状与新增 ACK_FAILED 见 §2.5 V1 勘误 2/3）、`appendFenceEvent(event)`（V3 轮询增量）、`forceAlarmAckError()`、`setAssignmentStatus(deviceId,status)`（V2 推态）、`setVideoAsset(channelId,url)`（CI 替换 src，正常不用）。
 
 **V3 mp4 样例流资产来源**（G26 收窄后验收载体，R4 §2 L73）：
 
@@ -513,6 +523,7 @@ HITL 卡复用口径（R3 L30）：`ai-tool-call` 为 AI 会话语境卡，inbox
 **V1 iot-telemetry-device**（axe 分支 A）
 
 - 交互：① 轮询刷新（D6 开放审计勘误 MIN-6，2026-10-30，对齐 D3 §5.4 M1 防flake口径）：`tickTelemetry` 钩子推进序列相位后**直接断数据面**——latest-tile 文本 = 推进后相位值，`expect(...).toHaveText(...)` 显式 waitFor timeout 给足 interval+余量（interval=5000，timeout ≥7s）；不采用原「≤6s 内文本变化」窄窗口口径（interval 5000 + 6s 窗余量仅 1s，双 webServer/workers 2 下 flake 面偏大，与 D3 M1「只断首帧/钩子推进后断数据面」同族页面两套口径）；② 告警 ack：行点击→dialog→ack-btn→alarmAck 计数+1+status mapping 变化；③ 错误分支：`forceAlarmAckError`→toast；④ 查询：换 deviceKey→telemetryQuery 计数+1+tile 更新。
+  - plan 816 落地勘误（2026-11-01，详见 §2.5「V1 实现勘误」）：① 钩子推进后断数据面、timeout 9s（勘误 2）；③ 强制失败码 REPL_IOT_ALARM_ACK_FAILED 为 §4.3 增补（勘误 3）；④ 换设备经 form valuesPath 驱动 telemetry + 告警联动（勘误 1）。
 - focus：查询表单首字段 tab 首站；告警 dialog 焦点落入+Esc 返回。
 
 **V2 iot-ota-rollout**（axe 分支 A）

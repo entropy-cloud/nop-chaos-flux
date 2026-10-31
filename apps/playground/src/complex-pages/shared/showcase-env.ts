@@ -31,6 +31,7 @@ import { createReplAiFetcherBranches } from './mock-backend-repl-ai';
 import { createReplMesFetcherBranches } from './mock-backend-repl-mes';
 import { createReplMallFetcherBranches } from './mock-backend-repl-mall';
 import { createReplDocFetcherBranches } from './mock-backend-repl-doc';
+import { createReplIotFetcherBranches } from './mock-backend-repl-iot';
 import { createReplFetcherBranches } from './mock-backend-repl-wms';
 import { confirmBridge } from './confirm-bridge';
 import { createMockAiStream, createMockAiConnector, createAiImportLoader } from '../../ai/mock-ai-env';
@@ -139,6 +140,8 @@ export function createShowcaseEnv(): { env: RendererEnv; db: MockDatabase } {
     ...createReplMallFetcherBranches(),
     // Plan 814 (D4 §4.2): the O1 ocr-workbench opens the DOC face.
     ...createReplDocFetcherBranches(),
+    // Plan 816 (D4 §4.3): the V1 telemetry-device opens the IOT face.
+    ...createReplIotFetcherBranches(),
   ]);
 
   const fetcher = async function fetcher<T>(api: FetcherApi): Promise<{ status: number; data: T }> {

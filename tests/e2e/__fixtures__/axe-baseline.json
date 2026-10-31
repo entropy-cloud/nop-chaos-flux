@@ -115,5 +115,10 @@
     "aria-required-attr": 9,
     "color-contrast": 10,
     "_notes": "plan 815 first-run measurement 2026-11-01 (D1 §4 branch A registration): counts measured on #/complex-pages/doc-hitl-inbox. aria-required-attr = the inbox crud table's 9 column-resize separator spans (table component owner debt, same rule as standard-crud/W2/W3/S2); color-contrast = the 10 shell header feature badges (secondary badge family, same as S1/S2/O1). Fixes belong to the component owners, not the page schema."
+  },
+  "complex-pages/iot-telemetry-device": {
+    "aria-required-attr": 8,
+    "color-contrast": 8,
+    "_notes": "plan 816 first-run measurement 2026-11-01 (D1 §4 branch A registration): counts measured on #/complex-pages/iot-telemetry-device. aria-required-attr = the alarm crud table's 8 column-resize separator spans (table component owner debt, same rule as standard-crud/W2/W3/S2/O2); color-contrast = the 8 shell header badges (secondary badge family, same as S1/S2/O1/O2). Fixes belong to the component owners, not the page schema."
   }
 }

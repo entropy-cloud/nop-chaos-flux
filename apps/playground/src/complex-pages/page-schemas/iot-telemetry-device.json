@@ -1,0 +1,418 @@
+{
+  "type": "page",
+  "body": [
+    {
+      "type": "data-source",
+      "id": "iot-telemetry-device-telemetry-source",
+      "name": "telemetry",
+      "action": "ajax",
+      "args": {
+        "url": "/r/ReplIot__telemetryQuery",
+        "method": "get",
+        "params": {
+          "deviceKey": "${telemetryFilter?.deviceKey ?? 'DEV-1001'}",
+          "window": "${telemetryFilter?.window ?? '24h'}"
+        }
+      },
+      "dependsOn": ["telemetryFilter"],
+      "interval": 5000,
+      "silent": true,
+      "initFetch": true,
+      "testid": "iot-telemetry-device-telemetry-source"
+    },
+    {
+      "type": "flex",
+      "direction": "column",
+      "gap": 10,
+      "testid": "iot-telemetry-device-root",
+      "body": [
+        {
+          "type": "form",
+          "id": "iot-telemetry-device-filter",
+          "testid": "iot-telemetry-device-filter",
+          "valuesPath": "telemetryFilter",
+          "mode": "inline",
+          "data": {
+            "deviceKey": "DEV-1001",
+            "window": "24h"
+          },
+          "body": [
+            {
+              "type": "select",
+              "name": "deviceKey",
+              "label": "设备",
+              "testid": "iot-telemetry-device-filter-device",
+              "options": [
+                {
+                  "label": "DEV-1001 冷库温控",
+                  "value": "DEV-1001"
+                },
+                {
+                  "label": "DEV-1002 配电柜",
+                  "value": "DEV-1002"
+                },
+                {
+                  "label": "DEV-1003 空压机",
+                  "value": "DEV-1003"
+                }
+              ]
+            },
+            {
+              "type": "select",
+              "name": "window",
+              "label": "时间窗",
+              "testid": "iot-telemetry-device-filter-window",
+              "options": [
+                {
+                  "label": "近 24 小时",
+                  "value": "24h"
+                },
+                {
+                  "label": "近 6 小时",
+                  "value": "6h"
+                },
+                {
+                  "label": "近 1 小时",
+                  "value": "1h"
+                }
+              ]
+            }
+          ],
+          "actions": []
+        },
+        {
+          "type": "flex",
+          "direction": "row",
+          "gap": 12,
+          "className": "flex-wrap items-center",
+          "testid": "iot-telemetry-device-tiles",
+          "body": [
+            {
+              "type": "stat-tile",
+              "testid": "iot-telemetry-device-latest-tile-temperature",
+              "label": "温度最新值（°C）",
+              "value": "${telemetry?.latest?.temperature ?? 0}",
+              "sparkline": "${telemetry?.spark?.temperature ?? []}",
+              "formatter": {
+                "thousands": false,
+                "decimals": 1
+              }
+            },
+            {
+              "type": "stat-tile",
+              "testid": "iot-telemetry-device-latest-tile-humidity",
+              "label": "湿度最新值（%RH）",
+              "value": "${telemetry?.latest?.humidity ?? 0}",
+              "sparkline": "${telemetry?.spark?.humidity ?? []}",
+              "formatter": {
+                "thousands": false,
+                "decimals": 1
+              }
+            },
+            {
+              "type": "stat-tile",
+              "testid": "iot-telemetry-device-latest-tile-voltage",
+              "label": "电压最新值（V）",
+              "value": "${telemetry?.latest?.voltage ?? 0}",
+              "sparkline": "${telemetry?.spark?.voltage ?? []}",
+              "formatter": {
+                "thousands": false,
+                "decimals": 1
+              }
+            },
+            {
+              "type": "flex",
+              "direction": "column",
+              "gap": 4,
+              "testid": "iot-telemetry-device-quality",
+              "body": [
+                {
+                  "type": "text",
+                  "text": "数据质量位",
+                  "className": "text-xs text-muted-foreground"
+                },
+                {
+                  "type": "status",
+                  "testid": "iot-telemetry-device-quality-status",
+                  "value": "${telemetry?.quality ?? 'UNCERTAIN'}",
+                  "labelMap": {
+                    "GOOD": "GOOD",
+                    "UNCERTAIN": "UNCERTAIN",
+                    "BAD": "BAD"
+                  },
+                  "levelMap": {
+                    "GOOD": "success",
+                    "UNCERTAIN": "warning",
+                    "BAD": "error"
+                  }
+                },
+                {
+                  "type": "mapping",
+                  "testid": "iot-telemetry-device-quality-mapping",
+                  "value": "${telemetry?.quality}",
+                  "map": {
+                    "GOOD": "数据可信",
+                    "UNCERTAIN": "数据存疑（通讯抖动）",
+                    "BAD": "数据不可用（传感器离线）"
+                  },
+                  "defaultLabel": "未知"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "echarts",
+          "testid": "iot-telemetry-device-trend-chart",
+          "componentId": "iot-telemetry-device-trend-chart",
+          "height": 260,
+          "option": {
+            "tooltip": {
+              "trigger": "axis"
+            },
+            "legend": {
+              "data": ["温度", "湿度", "电压"]
+            },
+            "xAxis": {
+              "type": "category",
+              "data": "${telemetry?.timeAxis ?? []}"
+            },
+            "yAxis": {
+              "type": "value"
+            },
+            "series": [
+              {
+                "name": "温度",
+                "type": "line",
+                "showSymbol": false,
+                "data": "${telemetry?.series?.temperature ?? []}"
+              },
+              {
+                "name": "湿度",
+                "type": "line",
+                "showSymbol": false,
+                "data": "${telemetry?.series?.humidity ?? []}"
+              },
+              {
+                "name": "电压",
+                "type": "line",
+                "showSymbol": false,
+                "data": "${telemetry?.series?.voltage ?? []}"
+              }
+            ]
+          }
+        },
+        {
+          "type": "crud",
+          "id": "iot-telemetry-device-alarms",
+          "testid": "iot-telemetry-device-alarms",
+          "itemKey": "alarmId",
+          "loadAction": {
+            "dependsOn": ["__init_load__", "telemetryFilter"],
+            "action": "ajax",
+            "args": {
+              "url": "/r/ReplIot__alarmPage",
+              "method": "get",
+              "data": {
+                "deviceId": "${telemetryFilter?.deviceKey ?? 'DEV-1001'}"
+              }
+            }
+          },
+          "onRowClick": {
+            "action": "openDialog",
+            "args": {
+              "title": "告警 ${alarmId}",
+              "testid": "iot-telemetry-device-alarm-dialog",
+              "data": {
+                "alarmId": "${alarmId}",
+                "deviceId": "${deviceId}",
+                "severity": "${severity}",
+                "status": "${status}",
+                "triggerValue": "${triggerValue}",
+                "thresholdValue": "${thresholdValue}"
+              },
+              "body": [
+                {
+                  "type": "flex",
+                  "direction": "column",
+                  "gap": 10,
+                  "body": [
+                    {
+                      "type": "text",
+                      "testid": "iot-telemetry-device-alarm-detail",
+                      "className": "text-sm",
+                      "text": "设备 ${deviceId} · 级别 ${severity} · 触发值 ${triggerValue} / 阈值 ${thresholdValue} · 当前状态 ${status}"
+                    },
+                    {
+                      "type": "flex",
+                      "direction": "row",
+                      "gap": 8,
+                      "className": "justify-end",
+                      "body": [
+                        {
+                          "type": "button",
+                          "label": "关闭告警",
+                          "variant": "outline",
+                          "testid": "iot-telemetry-device-alarm-close",
+                          "onClick": {
+                            "action": "ajax",
+                            "args": {
+                              "url": "/r/ReplIot__alarmClose",
+                              "method": "post",
+                              "data": {
+                                "alarmId": "${alarmId}"
+                              }
+                            },
+                            "messages": {
+                              "success": "告警已关闭"
+                            },
+                            "then": [
+                              {
+                                "action": "refreshNearest",
+                                "args": {
+                                  "targetType": "crud",
+                                  "notFound": "error"
+                                }
+                              },
+                              {
+                                "action": "closeSurface"
+                              }
+                            ],
+                            "onError": [
+                              {
+                                "action": "showToast",
+                                "args": {
+                                  "level": "error",
+                                  "message": "关闭失败（${error?.message ?? 'UNKNOWN'}）"
+                                }
+                              }
+                            ]
+                          }
+                        },
+                        {
+                          "type": "button",
+                          "label": "确认告警",
+                          "variant": "primary",
+                          "testid": "iot-telemetry-device-alarm-ack",
+                          "visible": "${status === 'ACTIVE'}",
+                          "onClick": {
+                            "action": "ajax",
+                            "args": {
+                              "url": "/r/ReplIot__alarmAck",
+                              "method": "post",
+                              "data": {
+                                "alarmId": "${alarmId}"
+                              }
+                            },
+                            "messages": {
+                              "success": "告警已确认"
+                            },
+                            "then": [
+                              {
+                                "action": "refreshNearest",
+                                "args": {
+                                  "targetType": "crud",
+                                  "notFound": "error"
+                                }
+                              },
+                              {
+                                "action": "closeSurface"
+                              }
+                            ],
+                            "onError": [
+                              {
+                                "action": "showToast",
+                                "args": {
+                                  "level": "error",
+                                  "message": "确认失败（${error?.message ?? 'UNKNOWN'}）"
+                                }
+                              }
+                            ]
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          },
+          "columns": [
+            {
+              "name": "alarmId",
+              "label": "告警编号",
+              "width": 110
+            },
+            {
+              "name": "deviceId",
+              "label": "设备",
+              "width": 110
+            },
+            {
+              "name": "severity",
+              "label": "级别",
+              "width": 100,
+              "cell": {
+                "type": "status",
+                "value": "${severity}",
+                "labelMap": {
+                  "CRITICAL": "紧急",
+                  "MAJOR": "重要",
+                  "MINOR": "次要"
+                },
+                "levelMap": {
+                  "CRITICAL": "error",
+                  "MAJOR": "warning",
+                  "MINOR": "info"
+                }
+              }
+            },
+            {
+              "name": "status",
+              "label": "状态",
+              "width": 100,
+              "cell": {
+                "type": "status",
+                "value": "${status}",
+                "labelMap": {
+                  "ACTIVE": "待处理",
+                  "ACKED": "已确认",
+                  "CLOSED": "已关闭"
+                },
+                "levelMap": {
+                  "ACTIVE": "error",
+                  "ACKED": "warning",
+                  "CLOSED": "neutral"
+                }
+              }
+            },
+            {
+              "name": "triggerValue",
+              "label": "触发值",
+              "width": 90
+            },
+            {
+              "name": "thresholdValue",
+              "label": "阈值",
+              "width": 90
+            },
+            {
+              "name": "ackAt",
+              "label": "确认时间",
+              "width": 140
+            },
+            {
+              "name": "escalationTier",
+              "label": "升级层级",
+              "width": 90
+            }
+          ],
+          "empty": {
+            "type": "text",
+            "text": "该设备暂无告警"
+          }
+        }
+      ]
+    }
+  ]
+}

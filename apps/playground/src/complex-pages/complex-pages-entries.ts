@@ -504,4 +504,12 @@ export const COMPLEX_PAGE_ENTRIES: ComplexPageEntry[] = [
       '复刻智能单据 HITL 审批收件箱页（roadmap 21 页 O2，D4 §2.4 桌面整页，maker-checker 04 契约）：query-filter（业务对象/动作/仅高危）经 component:querySubmit 驱动 crud 待办 9 字段（时限升序、selection keepOnPageChange 跨页保留）+ batch-bar 批量通过（影响行数，batchApprove 含过期项整批拒绝）→ 行点击审批 dialog：staleness 横幅（过期禁用批准 + 越权直调兜底 STALE_DECISION）+ 高危横幅 + ai-suggestions AI 预审 + ai-tool-call HITL 交接卡（onApproval → approve）+ tabs 三视图（字段对照 table / tree diffTree / json-view rawRequest）+ 意见 form（驳回必填、valuesPath 草稿供批准读取）+ SoD 校验（制单人=审核人拒绝）。数据经 /r/ReplDoc__ 端点流动。',
     features: ['query-filter 筛选', 'keepOnPageChange 跨页批量', 'batch-bar 影响行数', 'staleness 禁用批准', 'ai-suggestions 预审', 'ai-tool-call HITL 卡', 'tabs 三视图', '驳回意见必填', 'SoD 校验', 'ReplDoc__ 端点'],
   },
+  {
+    id: 'iot-telemetry-device',
+    title: 'IoT 设备遥测详情页',
+    category: 'business-replication',
+    description:
+      '复刻 IoT 设备遥测详情页（roadmap 21 页 V1，D4 §2.5 桌面整页）：设备/时间窗过滤（form valuesPath）→ data-source interval 5s 静默轮询遥测（确定性相位，tickTelemetry 钩子推进）→ stat-tile×3 温度/湿度/电压最新值 + sparkline 迷你趋势 + echarts 24h 三曲线 → status + mapping 数据质量位（GOOD/UNCERTAIN/BAD）→ 告警 crud 随设备联动（级别/状态标色，行点击 dialog 确认/关闭：ACK_FAILED 强制失败与 ALREADY_CLOSED 分支）。数据经 /r/ReplIot__ 端点流动。',
+    features: ['interval 轮询', 'stat-tile sparkline×3', 'echarts 三曲线', '质量位 status+mapping', '告警联动 crud', 'dialog 确认/关闭', 'ReplIot__ 端点'],
+  },
 ];

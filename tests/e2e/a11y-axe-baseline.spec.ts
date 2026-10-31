@@ -74,6 +74,9 @@ const ROUTES = [
   // Plan 815 (D1 §4 branch A): O2 hitl-inbox joins the standard desktop scan
   // set (non-mobile page — pure JSON SchemaPage, no host override).
   'complex-pages/doc-hitl-inbox',
+  // Plan 816 (D1 §4 branch A): V1 telemetry-device joins the standard desktop
+  // scan set (non-mobile page — pure JSON SchemaPage, no host override).
+  'complex-pages/iot-telemetry-device',
   'dashboard-demo',
 ];
 
