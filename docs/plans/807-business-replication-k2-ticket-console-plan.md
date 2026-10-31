@@ -67,7 +67,7 @@ Exit Criteria:
 - [x] K2 页可达可交互且列表页收录，strict validation 零 error
 - [x] focused e2e `--retries=0` 全绿（断言含 \_\_replAiCalls 计数证据）
 - [x] axe 基线登记绿
-- [ ] roadmap §2 K2 回写 `done`（随 closure audit 通过的同一次回写提交完成，guide When Closing 9）
+- [x] roadmap §2 K2 回写 `done`（随 closure audit 通过的同一次回写提交完成，guide When Closing 9）
 
 ## Draft Review Record
 
@@ -85,17 +85,17 @@ Exit Criteria:
 
 ## Closure Gates
 
-- [ ] in-scope 工作全部落地（K2 页 + mock 扩展 + roadmap 回写）
-- [ ] 行为/契约结果已达成（D3 §5.2 K2 断言清单全绿，--retries=0）
-- [ ] 必要 focused verification 已完成
-- [ ] 不存在被静默降级的 in-scope 缺口
-- [ ] 受影响 owner docs 已同步（daily log；设计勘误如有）
-- [ ] 独立子 agent（fresh session）closure audit 通过并记录证据
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`（触达面零新增红口径）
-- [ ] `pnpm test`（触达面零新增红口径）
-- [ ] `pnpm check`（触达面零新增红口径；scanner-baselines 增量如触发就地注册+note）
+- [x] in-scope 工作全部落地（K2 页 + mock 扩展 + roadmap 回写）
+- [x] 行为/契约结果已达成（D3 §5.2 K2 断言清单全绿，--retries=0）
+- [x] 必要 focused verification 已完成
+- [x] 不存在被静默降级的 in-scope 缺口
+- [x] 受影响 owner docs 已同步（daily log；设计勘误如有）
+- [x] 独立子 agent（fresh session）closure audit 通过并记录证据
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`（触达面零新增红口径）
+- [x] `pnpm test`（触达面零新增红口径）
+- [x] `pnpm check`（触达面零新增红口径；scanner-baselines 增量如触发就地注册+note）
 
 ## Deferred But Adjudicated
 
@@ -116,8 +116,8 @@ Status Note: 待收口填写
 
 Closure Audit Evidence:
 
-- Auditor / Agent: 待独立子 agent 填写
-- Evidence: 待填写
+- Auditor / Agent: 独立子 agent（fresh session，general-purpose）
+- Evidence: verdict `approved` 零 Blocker/Major（独立实跑 K2 11/11 retries=0、C1/C2 回归 19/19、axe 17/17、unit 551/551、build/lint 46/46、全链 check exit 0；layout contract-honesty 加载失败归因实证 HEAD 既有红零交集；duplicates 归因审计时点扫描面零交集）——2 Major 收口簿记修复已并入本 commit（forward-only 勘误标注+roadmap done 回写补齐）；详见 `docs/logs/2026/10-30.md`。
 
 Follow-up:
 

@@ -628,6 +628,7 @@ input-table 注册于全局 registry（R4 §0 L14）；明细数量键入以 num
 
 - `__replAiCalls` / `__replMesCalls`：createEndpointCounter 端点计数（prefix `ReplAi__`/`ReplMes__`），spec 经 `page.addInitScript` 预置（先例 airtable-replica-interactions.spec.ts L40-53）。
 - `__replAiTestHooks`：`{failNextMutation, forceStreamError, forceGuardrail, streamDelayMs}`；`__replMesTestHooks`：`{failNextMutation, forceConservationError, forceIllegalTransition}`（replica-kit L222/L227）。
+  > 2026-10-30 就地勘误（plan 807 收口审计 Minor-2）：ReplAi 钩子面无 forceIllegalTransition 键（系 ReplMes 借名）——live 以真实非法拖卡路径触发同一 ILLEGAL_TRANSITION 分支（行为等价且更强）。
 
 ## 5. 验收断言清单（三支柱，D1 §3 模板）
 
