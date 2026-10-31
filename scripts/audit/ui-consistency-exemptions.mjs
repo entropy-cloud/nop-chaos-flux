@@ -514,6 +514,13 @@ export const EXEMPTIONS = [
     source: 'plan 805 收口（M3-I2）；先例：mock-backend-repl-crm-c3.ts（C3/plan 803）+ mock-backend-repl-wms-stock.ts（W3/plan 800）',
   },
   {
+    path: 'apps/playground/src/complex-pages/shared/mock-backend-repl-mall.ts',
+    rule: 'data-blob-href-without-download',
+    reason:
+      'S2 分销后台佣金明细 CSV 导出（commissionExport）的 data URL 生成点（mock 层无 download 语义可表达）；运行时 download action 路径对 data: URL 走 dataUrlToBlob → downloadBlob，不存在顶层导航（e2e 交互② waitForEvent download 实证）——同 mock-backend-repl-itam-depreciation.ts 误报裁决',
+    source: 'plan 813 收口（M3-S2）；先例：mock-backend-repl-itam-depreciation.ts（I2/plan 805）+ mock-backend-repl-crm-c3.ts（C3/plan 803）',
+  },
+  {
     path: 'apps/playground/src/complex-pages/shared/mock-backend-repl-wms-stock.ts',
     rule: 'data-blob-href-without-download',
     reason:

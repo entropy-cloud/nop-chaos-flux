@@ -144,6 +144,19 @@ page(mobile)   # testid: mall-sku-picker-root（D5 深审勘误 MIN-3：补主�
 
 权限层口径（G17）：裁剪非 renderer 机制——区块 `visible: "${tenantRole === 'merchant'}"`（R2 L88），`tenantRole` 由 `PAGE_DATA['mall-distribution']` 注入。
 
+#### S2 实现勘误（M3 落地实证 2026-10-31，plan 813；以 live 为准）
+
+1. **片段② 下钻键 event.value → cellHeaderPaths**：`pivot:cell-click` payload 的 value 是聚合数非维度键；live 已证面（W3 交互②）为 `cellHeaderPaths.rowHeaderPaths[i].value`——下钻写回 `drillDistributor=${cellHeaderPaths?.rowHeaderPaths?.[1]?.value}`（distributorName 为叶维）。
+2. **片段② 顶层 totals → dataConfig.totals**：PivotTableSchema 无顶层 `totals` 键（schemas.ts 仅 `dataConfig?`）——行总计置 `dataConfig.totals.row`（W3 已证路径）。
+3. **片段② openDialog url → body table**：openDialog 不按 `url` 取数渲染——dialog body 内 `table`，source 以 `ARRAYFILTER(commissionAll?.items, r => r?.distributorName == drillDistributor)` 客户端过滤（佣金全集由 `commissionAll` data-source 预取，同时供 KPI 聚合）。
+4. **§5 ⑤ 空原因拦截口径**：空原因由 textarea `required` 在前端拦截（payoutAudit 计数不变 + dialog 停留，K3 已证口径）；`REPL_MALL_PAYOUT_REJECTED_REQUIRED` 保留为服务端兜底，经 whitespace-only 输入绕过 required 命中。
+5. **query-filter → crud 通道**：query-filter 内嵌 form 提交管线里的 `setValue` 写入 form 自身作用域（scope.update 写本层 store），到不了页面作用域——live 正确通道为 crud 外部提交 `component:querySubmit` + `args.values`（crud-renderer-state.ts querySubmit「external target-submission values (AMIS form.target)」），crud loadAction 读 `${query.xxx}`。本页为 query-filter 首个 JSON 用法。
+6. **form 初始 data 为快照**：form `data: { rules: "${rulesSource?.items}" }` 在 form 初始化时求值、不随 data-source 到达而更新（规则表首帧空）→ 改 form `loadAction`（GET commissionRules，`{items}` 直入 form 值，input-table `name: items`，提交映射 `{rules: "${items}"}`）。
+7. **导出与筛选解耦 + 空集钩子**：crud 查询状态私有于 `$_crud.<id>.query`，页面级导出按钮无公开读取面 → commissionExport 导出全量（G6 服务端报表）；`REPL_MALL_EXPORT_EMPTY` 分支由 consume-once 钩子 `forceExportEmpty` 触发（mock 端点仍接受 level/status/distributor 过滤参数，空集同样命中）。
+8. **pivot 无列维的表头层级**：无 columnDimensions 时 `colHeaderPaths` 只有指标一层（`[0].indicatorKey`），表头仅 1 行——spec 定位按「路径任一层含 indicatorKey」匹配、扫描上界取 `rowCount`（W3 `[1]` 口径为有月列维时的形态）。
+9. **KPI 无专用端点**：§4.1 S2 六端点不含 KPI 聚合端点——stat-tile×4 值以表达式聚合页面 data-source（GMV=Σ ROUND(commissionAmount/rate)、佣金=Σ commissionAmount、分销员数=COUNT(distPivot 行)、待结算=COUNT(ARRAYFILTER status=pending)），趋势月序列为 PAGE_DATA 确定性静态值。
+10. **axe 分支 A 基线**：aria-required-attr 7（crud 列宽 separator，table owner 债）+ aria-required-children 1（tree role=tree 容器，tree owner 债）+ color-contrast 11（壳头部 badge 族，同 S1）。
+
 ### 2.3 doc-ocr-workbench（O1，桌面，新 type 临时形态）
 
 组件树（R3 L21 交互①-⑩ → L22 映射；主容器 # testid: doc-ocr-workbench-root——D5 深审勘误 MIN-3）：`grid` 两栏 2fr/3fr——左 `image` 原件（preview 放大）+ `image-compare`（before=原件/after=识别参考整图，≈要素② 非 bbox）；右 `wizard` 四步（原件对照→字段确认→明细行→回流提交），步骤 2 内嵌 `detail-view` 逐字段确认（草稿+逐字段提交+再校验≈G20）+ `detail-field`（labelRemark 原值悬浮≈要素⑤、inputClassName 低置信高亮≈要素④）+ `badge` 置信度分档（≥0.9 高/0.7-0.9 中/<0.7 低）；步骤 3 明细行以 **`form` 包裹 `input-table`**（要素⑧——D6 开放审计勘误 MIN-2，2026-10-30：InputTableSchema extends BoundFieldSchemaBase（composite-schemas.ts），input-table 是绑定 form 状态的字段，合计回写 "parent form field"（input-table-renderer.tsx L228 注释），裸放有绑定落空面；D2 W2（§2.2 form→input-table）与 D3 M2（§2.5 dialog 内 form 包裹）同属性用法均包 form，唯本页原树裸放——补 form 包裹对齐同款；§5 交互④的增改+校验断言在该 form 宿主内进行）；步骤 4 `ocrCommit`（要素⑨）。
@@ -458,6 +471,7 @@ HITL 卡复用口径（R3 L30）：`ai-tool-call` 为 AI 会话语境卡，inbox
 **S2 mall-distribution**（axe 分支 A）
 
 - 交互：① 筛选/分页：query-filter→行数+首行字段+commissionPage 计数；② 导出：export-btn→commissionExport 计数+1+download 触发断言；③ 下钻：pivot cell click→dialog 数据按 event.value 过滤；④ 规则提交：改比例→payload 断言，合计≠100%→RULE_INVALID toast；⑤ 打回：空原因→PAYOUT_REJECTED_REQUIRED。
+  - plan 813 落地勘误（2026-10-31，详见 §2.2「S2 实现勘误」）：③ 过滤键为 `cellHeaderPaths.rowHeaderPaths[1].value` 非 event.value（勘误 1/3）；⑤ 空原因由前端 required 拦截（计数不变），PAYOUT_REJECTED_REQUIRED 为服务端兜底、经 whitespace-only 输入命中（勘误 4）；① query-filter 经 `component:querySubmit` 外部提交驱动 crud（勘误 5）；导出空集分支经 `forceExportEmpty` 钩子触发（勘误 7）；focus「导出按钮 tab 首站」落地为「focus()+Enter 键盘可达并触发导出」（W3 focus ③ 同款口径——页内 dashboard/query-filter/crud 控件均先于导出按钮，tab 首站不成立）。
 - focus：审批 dialog 焦点落入+Esc 返回；导出按钮 tab 首站。
 
 **O1 doc-ocr-workbench**（axe 分支 A）

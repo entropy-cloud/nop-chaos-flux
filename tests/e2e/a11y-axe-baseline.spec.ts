@@ -64,6 +64,10 @@ const ROUTES = [
   // Plan 810 (D1 §4 branch A): M2 work-reporting joins the standard desktop
   // scan set (non-mobile page — pure JSON SchemaPage, no host override).
   'complex-pages/mes-work-reporting',
+  // Plan 813 (D1 §4 branch A): S2 mall-distribution joins the standard
+  // desktop scan set (non-mobile page — pure JSON SchemaPage, no host
+  // override).
+  'complex-pages/mall-distribution',
   'dashboard-demo',
 ];
 

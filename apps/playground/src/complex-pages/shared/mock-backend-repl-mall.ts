@@ -25,6 +25,24 @@
  * - post `skuLocate` — formula-fallback spare (§3.3 ③); the successful page
  *   never calls it (求交 skuLocate=0 assertion) — the counter face is the point.
  *
+ * S2 distribution segment (plan 813):
+ * - get `commissionPage` — 27 deterministic commission rows (orderNo/payoutId/
+ *   distributorName/level 1-3/rate/commissionAmount/status), page/pageSize
+ *   pagination + level/status/distributor filters; `lastCommissionPageParams`
+ *   hook mirror is the filter evidence face.
+ * - post `commissionExport` — filtered row set → CSV data:url payload
+ *   {url, downloadUrl, filename, rowCount} (dual field names: url feeds the
+ *   runtime download form-3 face, downloadUrl feeds the D4 then-chain);
+ *   empty set (filters matching nothing, or the consume-once
+ *   `forceExportEmpty` hook) → REPL_MALL_EXPORT_EMPTY.
+ * - get `distPivot` — level×distributor aggregates for the pivot-table source.
+ * - get `distTree` — three-level distributor tree {tree:[{id,name,level,children}]}.
+ * - get/post `commissionRules` — GET returns the 3-row rule set (sums = 100);
+ *   POST validates each row L1+L2+L3 = 100 → REPL_MALL_RULE_INVALID.
+ * - post `payoutAudit` — {payoutId, auditResult, reason}; rejected with empty
+ *   reason → REPL_MALL_PAYOUT_REJECTED_REQUIRED (server-side fallback behind
+ *   the UI required rule).
+ *
  * Opt-in e2e observation: specs pre-create `window.__replMallCalls` +
  * `window.__replMallTestHooks` via addInitScript; production never sets them.
  * Hook surface: `advanceFlashSaleClock(deltaMs)`, `forcePlaceOrderError(msg)`
@@ -54,6 +72,17 @@ export interface ReplMallTestHooks {
   lastAddToCartBody?: Record<string, unknown>;
   /** Mirror: last `placeOrder` request body. */
   lastPlaceOrderBody?: Record<string, unknown>;
+  /** S2 consume-once: the NEXT `commissionExport` sees an empty row set
+   * (REPL_MALL_EXPORT_EMPTY branch). */
+  forceExportEmpty?: boolean;
+  /** S2 mirror: last `commissionPage` query params (filter evidence). */
+  lastCommissionPageParams?: Record<string, unknown>;
+  /** S2 mirror: last successful `commissionExport` payload. */
+  lastCommissionExportData?: { url: string; downloadUrl: string; filename: string; rowCount: number };
+  /** S2 mirror: last `commissionRules` POST body. */
+  lastCommissionRulesBody?: Record<string, unknown>;
+  /** S2 mirror: last `payoutAudit` POST body. */
+  lastPayoutAuditBody?: Record<string, unknown>;
 }
 
 function readReplMallTestHooks(): ReplMallTestHooks | undefined {
@@ -197,6 +226,122 @@ function unwrapArrayValue(raw: unknown): string | undefined {
   return Array.isArray(raw) ? (raw[0] as string | undefined) : (raw as string | undefined);
 }
 
+/* ── S2 distribution fixtures (plan 813; D4 §4.1 S2 rows) ───────────────── */
+
+export const MALL_DISTRIBUTORS: Array<{ name: string; level: 1 | 2 | 3 }> = [
+  { name: '星辉传媒', level: 1 },
+  { name: '蓝海优选', level: 1 },
+  { name: '橙意供应链', level: 2 },
+  { name: '云集市', level: 2 },
+  { name: '快马分销', level: 2 },
+  { name: '优选家', level: 3 },
+  { name: '汇客来', level: 3 },
+  { name: '小鹿严选', level: 3 },
+];
+
+const MALL_LEVEL_RATE: Record<number, number> = { 1: 0.05, 2: 0.03, 3: 0.02 };
+
+export interface MallCommissionRow {
+  orderNo: string;
+  payoutId: string;
+  distributorName: string;
+  level: number;
+  rate: number;
+  commissionAmount: number;
+  status: 'pending' | 'settled' | 'rejected';
+}
+
+const MALL_COMMISSION_TOTAL = 27;
+
+export function buildCommissionRows(): MallCommissionRow[] {
+  return Array.from({ length: MALL_COMMISSION_TOTAL }, (_, i) => {
+    const n = i + 1;
+    const dist = MALL_DISTRIBUTORS[(n * 3) % MALL_DISTRIBUTORS.length];
+    // Statuses cycle pending→settled with a rejected tail; row 1 stays
+    // pending so交互⑤'s audit flow always has a live first row.
+    const status: MallCommissionRow['status'] =
+      n === 1 ? 'pending' : n % 7 === 0 ? 'rejected' : n % 2 === 0 ? 'settled' : 'pending';
+    const rate = MALL_LEVEL_RATE[dist.level];
+    return {
+      orderNo: `ORD-2026-${String(1000 + n)}`,
+      payoutId: `payout-${String(n).padStart(3, '0')}`,
+      distributorName: dist.name,
+      level: dist.level,
+      rate,
+      commissionAmount: 50 + ((n * 37) % 400),
+      status,
+    };
+  });
+}
+
+function filterCommissionRows(rows: MallCommissionRow[], filters: Record<string, unknown>): MallCommissionRow[] {
+  let out = rows;
+  const level = asNumber(filters.level);
+  if (level) out = out.filter((r) => r.level === level);
+  const status = typeof filters.status === 'string' ? filters.status : '';
+  if (status) out = out.filter((r) => r.status === status);
+  const distributor = typeof filters.distributor === 'string' ? filters.distributor.trim() : '';
+  if (distributor) out = out.filter((r) => r.distributorName.includes(distributor));
+  return out;
+}
+
+function buildDistPivotItems() {
+  const byKey = new Map<string, { level: number; distributorName: string; commissionAmount: number; orderCount: number }>();
+  for (const row of buildCommissionRows()) {
+    const key = `${row.level}|${row.distributorName}`;
+    const entry = byKey.get(key) ?? {
+      level: row.level,
+      distributorName: row.distributorName,
+      commissionAmount: 0,
+      orderCount: 0,
+    };
+    entry.commissionAmount += row.commissionAmount;
+    entry.orderCount += 1;
+    byKey.set(key, entry);
+  }
+  return [...byKey.values()].sort((a, b) => a.level - b.level || b.commissionAmount - a.commissionAmount);
+}
+
+function buildDistTree() {
+  const roots = MALL_DISTRIBUTORS.filter((d) => d.level === 1);
+  const level2 = MALL_DISTRIBUTORS.filter((d) => d.level === 2);
+  const level3 = MALL_DISTRIBUTORS.filter((d) => d.level === 3);
+  return roots.map((root, i) => ({
+    id: `dist-l1-${i + 1}`,
+    name: root.name,
+    level: 1,
+    children: level2.slice(i % 2, (i % 2) + 2).map((mid, j) => ({
+      id: `dist-l2-${i + 1}-${j + 1}`,
+      name: mid.name,
+      level: 2,
+      children: [
+        {
+          id: `dist-l3-${i + 1}-${j + 1}-1`,
+          name: level3[(i + j) % level3.length].name,
+          level: 3,
+          children: [],
+        },
+      ],
+    })),
+  }));
+}
+
+export interface MallCommissionRule {
+  category: string;
+  minAmount: number;
+  L1Rate: number;
+  L2Rate: number;
+  L3Rate: number;
+}
+
+export function defaultCommissionRules(): MallCommissionRule[] {
+  return [
+    { category: '数码家电', minAmount: 0, L1Rate: 50, L2Rate: 30, L3Rate: 20 },
+    { category: '服饰鞋包', minAmount: 0, L1Rate: 40, L2Rate: 35, L3Rate: 25 },
+    { category: '美妆个护', minAmount: 199, L1Rate: 45, L2Rate: 30, L3Rate: 25 },
+  ];
+}
+
 /* ── The /r/ReplMall__ fetcher branch ───────────────────────────────────── */
 
 export function createReplMallFetcherBranch(): ReplicaFetcherBranch {
@@ -280,6 +425,87 @@ export function createReplMallFetcherBranch(): ReplicaFetcherBranch {
       // Formula-fallback spare (§3.3 ③) — the successful page never calls it;
       // the counter face is the assertion.
       return { status: 0, data: { sku: null } as unknown as T };
+    }
+
+    // ── S2 distribution segment (plan 813; D4 §4.1 S2 endpoints verbatim) ──
+    if (input.url.includes('/r/ReplMall__commissionPage') && method === 'get') {
+      if (hooks) {
+        hooks.lastCommissionPageParams = {
+          page: read('page'),
+          pageSize: read('pageSize'),
+          level: read('level'),
+          status: read('status'),
+          distributor: read('distributor'),
+        };
+      }
+      const page = asNumber(read('page')) ?? 1;
+      const pageSize = asNumber(read('pageSize')) ?? 10;
+      const filtered = filterCommissionRows(buildCommissionRows(), {
+        level: read('level'),
+        status: read('status'),
+        distributor: read('distributor'),
+      });
+      const result = paginateRows(filtered, page, pageSize, { sizeKey: 'pageSize', clampPages: true });
+      return { status: 0, data: JSON.parse(JSON.stringify(result)) as unknown as T };
+    }
+
+    if (input.url.includes('/r/ReplMall__commissionExport') && method === 'post') {
+      const forceEmpty = hooks?.forceExportEmpty === true;
+      if (hooks && forceEmpty) hooks.forceExportEmpty = undefined;
+      const filtered = forceEmpty
+        ? []
+        : filterCommissionRows(buildCommissionRows(), {
+            level: input.body?.level,
+            status: input.body?.status,
+            distributor: input.body?.distributor,
+          });
+      if (filtered.length === 0) {
+        return { status: 1, data: { msg: 'REPL_MALL_EXPORT_EMPTY' } as unknown as T };
+      }
+      const header = 'orderNo,distributorName,level,rate,commissionAmount,status';
+      const csv = [header, ...filtered.map((r) => `${r.orderNo},${r.distributorName},${r.level},${r.rate},${r.commissionAmount},${r.status}`)].join('\n');
+      const url = `data:text/csv;charset=utf-8,${encodeURIComponent(csv)}`;
+      const payload = { url, downloadUrl: url, filename: '佣金明细.csv', rowCount: filtered.length };
+      if (hooks) hooks.lastCommissionExportData = JSON.parse(JSON.stringify(payload));
+      return { status: 0, data: payload as unknown as T };
+    }
+
+    if (input.url.includes('/r/ReplMall__distPivot') && method === 'get') {
+      return { status: 0, data: { items: buildDistPivotItems() } as unknown as T };
+    }
+
+    if (input.url.includes('/r/ReplMall__distTree') && method === 'get') {
+      return { status: 0, data: { tree: buildDistTree() } as unknown as T };
+    }
+
+    if (input.url.includes('/r/ReplMall__commissionRules')) {
+      if (method === 'get') {
+        return { status: 0, data: { items: defaultCommissionRules() } as unknown as T };
+      }
+      if (method === 'post') {
+        if (hooks) hooks.lastCommissionRulesBody = JSON.parse(JSON.stringify(bodyView(input)));
+        const rules = (input.body?.rules ?? input.body?.items) as MallCommissionRule[] | undefined;
+        if (Array.isArray(rules) && rules.some((rule) => Math.round((rule?.L1Rate ?? 0) + (rule?.L2Rate ?? 0) + (rule?.L3Rate ?? 0)) !== 100)) {
+          return { status: 1, data: { msg: 'REPL_MALL_RULE_INVALID' } as unknown as T };
+        }
+        return { status: 0, data: { saved: Array.isArray(rules) ? rules.length : 0 } as unknown as T };
+      }
+    }
+
+    if (input.url.includes('/r/ReplMall__payoutAudit') && method === 'post') {
+      if (hooks) hooks.lastPayoutAuditBody = JSON.parse(JSON.stringify(bodyView(input)));
+      const auditResult = typeof input.body?.auditResult === 'string' ? input.body.auditResult : '';
+      const reason = typeof input.body?.reason === 'string' ? input.body.reason.trim() : '';
+      if (auditResult === 'rejected' && !reason) {
+        // Server-side fallback; the UI required rule blocks the empty case first
+        // (K3 口径 — the e2e hits this branch via whitespace-only input).
+        return { status: 1, data: { msg: 'REPL_MALL_PAYOUT_REJECTED_REQUIRED' } as unknown as T };
+      }
+      const payoutId = typeof input.body?.payoutId === 'string' ? input.body.payoutId : '';
+      return {
+        status: 0,
+        data: { payoutId, status: auditResult === 'rejected' ? 'rejected' : 'settled' } as unknown as T,
+      };
     }
 
     return null;

@@ -480,4 +480,12 @@ export const COMPLEX_PAGE_ENTRIES: ComplexPageEntry[] = [
       '复刻商城商品 SKU 选择页（roadmap 21 页 S1，D4 §2.1 mobile host override 移动画布 375×667，D6 MAJ-C 裁决）：pull-refresh + infinite-scroll 商品卡瀑布流（cards tpl 价格，27 卡 ≥3 页翻页）+ carousel 画廊（goods.images，onChange 计数）+ image-viewer 放大（受控点火）+ 促销横幅（repl-price 大小字划线价 + countdown 秒杀倒计时 onFinish 切态 + progress 抢购进度）+ 场次三态 button-group-select 切换 + floating-panel SKU 半屏面板（picker-view×2 规格列 + G16 formula 求交：ARRAYFILTER 前端定位 SKU，skuLocate 计数 0 证前端求交 + 数量步进 purchaseLimit 钳制 + 缺货标识）+ grid repl-sticky-footer 吸底双按钮（加入购物车 addToCart / 立即抢购 placeOrder，SOLD_OUT/LIMIT_EXCEEDED 错误分支 + forcePlaceOrderError 钩子）。数据经 /r/ReplMall__ 端点流动。',
     features: ['商品卡瀑布流', 'carousel 画廊', 'image-viewer 放大', 'repl-price 大小字', 'countdown 切态', 'progress 抢购进度', '场次三态切换', 'picker-view 规格求交', '数量步进钳制', '吸底双按钮', 'ReplMall__ 端点'],
   },
+  {
+    id: 'mall-distribution',
+    title: '商城分销后台页',
+    category: 'business-replication',
+    description:
+      '复刻商城分销后台页（roadmap 21 页 S2，D4 §2.2 桌面整页）：dashboard 网格（stat-tile KPI×4 ← 佣金明细表达式聚合 + echarts 月度趋势）+ 佣金明细 crud（query-filter 首个 JSON 用法筛选 + batch-bar 结算入口 + operation 提现审核 dialog：驳回/通过 payoutAudit，意见必填）+ 导出佣金明细（ajax commissionExport→download CSV data-url，G6，空集 EXPORT_EMPTY）+ pivot-table 分销层级透视（level×distributorName SUM/COUNT + 行总计 + pivot:cell-click→drillDistributor 下钻 dialog ARRAYFILTER 过滤）+ 分销关系树（distTree 三级）+ 邀请码 qrcode（merchant 权限区块，G17 visible 裁剪）+ 佣金规则配置（form 包裹 input-table 品类/门槛/三级比例，合计≠100% RULE_INVALID）。数据经 /r/ReplMall__ S2 端点流动。',
+    features: ['dashboard KPI×4', 'query-filter 筛选', 'batch-bar 结算入口', '提现审核 dialog', 'download CSV 导出', 'pivot 层级透视下钻', '三级关系树', 'qrcode 邀请码', 'input-table 佣金规则', '权限层 visible 裁剪', 'ReplMall__ 端点'],
+  },
 ];

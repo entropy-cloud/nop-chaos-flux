@@ -359,3 +359,97 @@ PAGE_DATA['crm-sales-dashboard'] = {
 // 按页拆分于 page-data-mes.ts（584 行触发 oversized warn 后的抽分；
 // page-data.ts 只保留合并点，per-page 载体块归各自模块）。
 PAGE_DATA['mes-shopfloor-board'] = MES_SHOPFLOOR_BOARD_PAGE_DATA;
+
+// ── S2 商城分销后台：dashboard panels 载体 + 权限层注入（plan 813）──
+// panels 走 C3 先例的 PAGE_DATA 表达式绑定通道；stat-tile 数值全部表达式绑定
+// 页面 data-source（commissionAll/distPivotRows），趋势月序列为确定性静态值。
+// tenantRole 驱动权限层区块 visible 裁剪（G17 近似面）。
+PAGE_DATA['mall-distribution'] = {
+  tenantRole: 'merchant',
+  mallTrendMonths: ['2026-08', '2026-09', '2026-10'],
+  mallTrendAmounts: [2860, 3425, 3118],
+  mallDistributionPanels: [
+    {
+      id: 'kpi-gmv',
+      type: 'stat-tile',
+      x: 0,
+      y: 0,
+      w: 3,
+      h: 2,
+      title: '分销 GMV',
+      props: {
+        testid: 'mall-distribution-kpi-gmv',
+        label: '分销 GMV（元）',
+        value:
+          '${SUM(ARRAYMAP(commissionAll?.items ?? [], r => ROUND((r?.commissionAmount ?? 0) / (r?.rate ?? 1))))}',
+        prefix: '￥',
+        formatter: { thousands: true, decimals: 0 },
+      },
+    },
+    {
+      id: 'kpi-commission',
+      type: 'stat-tile',
+      x: 3,
+      y: 0,
+      w: 3,
+      h: 2,
+      title: '佣金总额',
+      props: {
+        testid: 'mall-distribution-kpi-commission',
+        label: '佣金总额（元）',
+        value: '${SUM(ARRAYMAP(commissionAll?.items ?? [], r => r?.commissionAmount ?? 0))}',
+        prefix: '￥',
+        formatter: { thousands: true, decimals: 0 },
+      },
+    },
+    {
+      id: 'kpi-distributors',
+      type: 'stat-tile',
+      x: 6,
+      y: 0,
+      w: 3,
+      h: 2,
+      title: '分销员数',
+      props: {
+        testid: 'mall-distribution-kpi-distributors',
+        label: '分销员数',
+        value: '${COUNT(ARRAYMAP(distPivotRows?.items ?? [], r => r?.distributorName))}',
+        formatter: { thousands: false, decimals: 0 },
+      },
+    },
+    {
+      id: 'kpi-pending',
+      type: 'stat-tile',
+      x: 9,
+      y: 0,
+      w: 3,
+      h: 2,
+      title: '待结算笔数',
+      props: {
+        testid: 'mall-distribution-kpi-pending',
+        label: '待结算笔数',
+        value: "${COUNT(ARRAYFILTER(commissionAll?.items ?? [], r => r?.status == 'pending'))}",
+        formatter: { thousands: false, decimals: 0 },
+      },
+    },
+    {
+      id: 'trend',
+      type: 'echarts',
+      x: 0,
+      y: 2,
+      w: 12,
+      h: 5,
+      title: '月度佣金趋势',
+      props: {
+        testid: 'mall-distribution-trend',
+        componentId: 'mall-distribution-trend',
+        height: 240,
+        option: {
+          xAxis: { type: 'category', data: '${mallTrendMonths ?? []}' },
+          yAxis: { type: 'value' },
+          series: [{ type: 'line', data: '${mallTrendAmounts ?? []}' }],
+        },
+      },
+    },
+  ],
+};

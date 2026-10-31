@@ -1,0 +1,607 @@
+{
+  "type": "page",
+  "body": [
+    {
+      "type": "data-source",
+      "id": "mall-distribution-commission-all-source",
+      "name": "commissionAll",
+      "action": "ajax",
+      "args": {
+        "url": "/r/ReplMall__commissionPage",
+        "method": "get",
+        "params": { "page": 1, "pageSize": 100 }
+      },
+      "testid": "mall-distribution-commission-all-source"
+    },
+    {
+      "type": "data-source",
+      "id": "mall-distribution-pivot-source",
+      "name": "distPivotRows",
+      "action": "ajax",
+      "args": { "url": "/r/ReplMall__distPivot", "method": "get" },
+      "testid": "mall-distribution-pivot-source"
+    },
+    {
+      "type": "data-source",
+      "id": "mall-distribution-tree-source",
+      "name": "distTreeRows",
+      "action": "ajax",
+      "args": { "url": "/r/ReplMall__distTree", "method": "get" },
+      "testid": "mall-distribution-tree-source"
+    },
+    {
+      "type": "flex",
+      "direction": "column",
+      "gap": 8,
+      "testid": "mall-distribution-root",
+      "body": [
+        {
+          "type": "dashboard",
+          "testid": "mall-distribution-dashboard",
+          "cols": 12,
+          "rowHeight": 48,
+          "panels": "${mallDistributionPanels}"
+        },
+        {
+          "type": "query-filter",
+          "id": "mall-distribution-filter",
+          "testid": "mall-distribution-filter",
+          "columnCount": 3,
+          "submitLabel": "查询",
+          "resetLabel": "重置",
+          "onSubmit": {
+            "action": "component:querySubmit",
+            "componentId": "mall-distribution-crud",
+            "args": {
+              "values": {
+                "level": "${queryLevel ?? ''}",
+                "status": "${queryStatus ?? ''}",
+                "distributor": "${queryDistributor ?? ''}"
+              }
+            }
+          },
+          "body": [
+            {
+              "type": "select",
+              "name": "queryLevel",
+              "label": "层级",
+              "testid": "mall-distribution-filter-level",
+              "placeholder": "全部层级",
+              "clearable": true,
+              "options": [
+                { "label": "一级分销商", "value": "1" },
+                { "label": "二级分销商", "value": "2" },
+                { "label": "三级分销商", "value": "3" }
+              ]
+            },
+            {
+              "type": "select",
+              "name": "queryStatus",
+              "label": "状态",
+              "testid": "mall-distribution-filter-status",
+              "placeholder": "全部状态",
+              "clearable": true,
+              "options": [
+                { "label": "待结算", "value": "pending" },
+                { "label": "已结算", "value": "settled" },
+                { "label": "已打回", "value": "rejected" }
+              ]
+            },
+            {
+              "type": "input-text",
+              "name": "queryDistributor",
+              "label": "分销商",
+              "testid": "mall-distribution-filter-distributor",
+              "placeholder": "分销商名称关键字"
+            }
+          ]
+        },
+        {
+          "type": "crud",
+          "id": "mall-distribution-crud",
+          "testid": "mall-distribution-crud",
+          "itemKey": "orderNo",
+          "loadAction": {
+            "dependsOn": ["__init_load__"],
+            "action": "ajax",
+            "args": {
+              "url": "/r/ReplMall__commissionPage",
+              "method": "get",
+              "data": {
+                "level": "${query.level ?? ''}",
+                "status": "${query.status ?? ''}",
+                "distributor": "${query.distributor ?? ''}"
+              }
+            }
+          },
+          "selection": {},
+          "toolbar": [
+            {
+              "type": "button",
+              "label": "刷新",
+              "icon": "rotate-cw",
+              "variant": "outline",
+              "testid": "mall-distribution-crud-refresh",
+              "onClick": {
+                "action": "component:refresh",
+                "componentId": "mall-distribution-crud"
+              }
+            },
+            {
+              "type": "batch-bar",
+              "testid": "mall-distribution-batch-bar",
+              "selectionPath": "$crud.selectedRowKeys",
+              "countTemplate": "已选 ${count} 条佣金记录",
+              "clearTarget": "mall-distribution-crud",
+              "clearLabel": "清空选择",
+              "actions": [
+                {
+                  "type": "button",
+                  "label": "发起结算（G17 批次模拟）",
+                  "variant": "outline",
+                  "testid": "mall-distribution-batch-settle",
+                  "onClick": {
+                    "action": "showToast",
+                    "args": {
+                      "level": "info",
+                      "message": "结算批次已提交（${count} 条进入结算队列）"
+                    }
+                  }
+                }
+              ]
+            }
+          ],
+          "columns": [
+            { "name": "orderNo", "label": "订单号", "width": 140 },
+            { "name": "distributorName", "label": "分销商", "width": 120 },
+            {
+              "name": "level",
+              "label": "层级",
+              "width": 110,
+              "cell": {
+                "type": "text",
+                "text": "${level === 1 ? '一级分销商' : level === 2 ? '二级分销商' : '三级分销商'}"
+              }
+            },
+            {
+              "name": "rate",
+              "label": "佣金比例",
+              "width": 100,
+              "cell": { "type": "text", "text": "${rate * 100}%" }
+            },
+            { "name": "commissionAmount", "label": "佣金（元）", "width": 100 },
+            {
+              "name": "status",
+              "label": "状态",
+              "width": 100,
+              "cell": {
+                "type": "status",
+                "value": "${status}",
+                "labelMap": {
+                  "pending": "待结算",
+                  "settled": "已结算",
+                  "rejected": "已打回"
+                },
+                "levelMap": {
+                  "pending": "warning",
+                  "settled": "success",
+                  "rejected": "error"
+                }
+              }
+            },
+            {
+              "type": "operation",
+              "label": "操作",
+              "fixed": "right",
+              "width": 100,
+              "buttons": [
+                {
+                  "type": "button",
+                  "label": "审核",
+                  "variant": "outline",
+                  "testid": "mall-distribution-audit-open",
+                  "visible": "${status === \"pending\"}",
+                  "onClick": {
+                    "action": "openDialog",
+                    "args": {
+                      "title": "提现审核 · ${$slot.record.distributorName}",
+                      "testid": "mall-distribution-audit-dialog",
+                      "data": {
+                        "payoutId": "${$slot.record.payoutId}",
+                        "distributorName": "${$slot.record.distributorName}",
+                        "commissionAmount": "${$slot.record.commissionAmount}"
+                      },
+                      "body": [
+                        {
+                          "type": "form",
+                          "id": "mall-distribution-audit-form",
+                          "testid": "mall-distribution-audit-form",
+                          "submitScope": "surface",
+                          "data": {
+                            "auditReason": ""
+                          },
+                          "submitAction": {
+                            "action": "ajax",
+                            "args": {
+                              "url": "/r/ReplMall__payoutAudit",
+                              "method": "post",
+                              "data": {
+                                "payoutId": "${payoutId}",
+                                "auditResult": "${auditResult}",
+                                "reason": "${auditReason ?? ''}"
+                              }
+                            },
+                            "messages": { "success": "审核已提交" },
+                            "onError": [
+                              {
+                                "action": "showToast",
+                                "args": {
+                                  "level": "error",
+                                  "message": "审核被拒绝（${error?.message ?? 'UNKNOWN'}）"
+                                }
+                              }
+                            ],
+                            "then": [
+                              {
+                                "action": "refreshNearest",
+                                "args": { "targetType": "crud", "notFound": "error" }
+                              },
+                              { "action": "closeSurface" }
+                            ]
+                          },
+                          "body": [
+                            {
+                              "type": "text",
+                              "text": "分销商：${distributorName ?? '-'}　提现佣金：￥${commissionAmount ?? 0}",
+                              "className": "text-sm text-muted-foreground"
+                            },
+                            {
+                              "type": "textarea",
+                              "name": "auditReason",
+                              "label": "审核意见",
+                              "testid": "mall-distribution-audit-reason",
+                              "required": true,
+                              "rows": 3,
+                              "placeholder": "通过或打回均需填写审核意见"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "flex",
+                          "direction": "row",
+                          "gap": 8,
+                          "className": "justify-end",
+                          "body": [
+                            {
+                              "type": "button",
+                              "label": "驳回打款",
+                              "variant": "destructive",
+                              "testid": "mall-distribution-audit-reject",
+                              "onClick": [
+                                {
+                                  "action": "setValue",
+                                  "args": { "path": "auditResult", "value": "rejected" }
+                                },
+                                {
+                                  "action": "component:submit",
+                                  "componentId": "mall-distribution-audit-form"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "button",
+                              "label": "通过打款",
+                              "variant": "primary",
+                              "testid": "mall-distribution-audit-approve",
+                              "onClick": [
+                                {
+                                  "action": "setValue",
+                                  "args": { "path": "auditResult", "value": "approved" }
+                                },
+                                {
+                                  "action": "component:submit",
+                                  "componentId": "mall-distribution-audit-form"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  }
+                }
+              ]
+            }
+          ],
+          "empty": { "type": "text", "text": "暂无佣金明细" }
+        },
+        {
+          "type": "flex",
+          "direction": "row",
+          "gap": 12,
+          "className": "flex-wrap items-center",
+          "testid": "mall-distribution-export-band",
+          "body": [
+            {
+              "type": "button",
+              "label": "导出佣金明细",
+              "variant": "outline",
+              "testid": "mall-distribution-export-btn",
+              "onClick": {
+                "action": "ajax",
+                "args": {
+                  "url": "/r/ReplMall__commissionExport",
+                  "method": "post",
+                  "data": { "scope": "all" }
+                },
+                "then": [
+                  {
+                    "action": "download",
+                    "args": {
+                      "url": "${result.data.downloadUrl ?? result.data.url}",
+                      "filename": "${result.data.filename ?? '佣金明细.csv'}"
+                    }
+                  },
+                  {
+                    "action": "showToast",
+                    "args": { "level": "success", "message": "佣金明细已生成并开始下载" }
+                  }
+                ],
+                "onError": [
+                  {
+                    "action": "showToast",
+                    "args": {
+                      "level": "error",
+                      "message": "导出失败（${error?.message ?? 'UNKNOWN'}）"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "type": "text",
+              "text": "导出全量佣金明细（G6 服务端报表生成 CSV）",
+              "className": "text-sm text-muted-foreground"
+            }
+          ]
+        },
+        {
+          "type": "pivot-table",
+          "id": "mall-distribution-pivot",
+          "testid": "mall-distribution-pivot",
+          "label": "分销层级透视（层级×分销商）",
+          "source": "${distPivotRows?.items ?? []}",
+          "rowDimensions": ["level", "distributorName"],
+          "indicators": [
+            { "field": "commissionAmount", "title": "佣金合计", "aggregationType": "SUM" },
+            { "field": "orderCount", "title": "订单数", "aggregationType": "COUNT" }
+          ],
+          "dataConfig": {
+            "totals": {
+              "row": { "showGrandTotals": true, "grandTotalLabel": "总计" }
+            }
+          },
+          "height": 320,
+          "onCellClick": {
+            "action": "setValue",
+            "args": {
+              "path": "drillDistributor",
+              "value": "${cellHeaderPaths?.rowHeaderPaths?.[1]?.value ?? ''}"
+            },
+            "then": {
+              "action": "openDialog",
+              "args": {
+                "title": "分销商下钻 · ${drillDistributor}",
+                "testid": "mall-distribution-drill-dialog",
+                "body": [
+                  {
+                    "type": "table",
+                    "testid": "mall-distribution-drill-table",
+                    "source": "${ARRAYFILTER(commissionAll?.items ?? [], r => r?.distributorName == drillDistributor)}",
+                    "itemKey": "orderNo",
+                    "pagination": { "enabled": false },
+                    "columns": [
+                      { "name": "orderNo", "label": "订单号", "width": 150 },
+                      { "name": "distributorName", "label": "分销商", "width": 130 },
+                      { "name": "commissionAmount", "label": "佣金（元）", "width": 110 },
+                      {
+                        "name": "status",
+                        "label": "状态",
+                        "width": 100,
+                        "cell": {
+                          "type": "status",
+                          "value": "${status}",
+                          "labelMap": {
+                            "pending": "待结算",
+                            "settled": "已结算",
+                            "rejected": "已打回"
+                          },
+                          "levelMap": {
+                            "pending": "warning",
+                            "settled": "success",
+                            "rejected": "error"
+                          }
+                        }
+                      }
+                    ],
+                    "empty": { "type": "text", "text": "该分销商无佣金明细" }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "type": "container",
+          "testid": "mall-distribution-merchant-zone",
+          "visible": "${tenantRole === 'merchant'}",
+          "className": "rounded-lg border p-4",
+          "body": [
+            {
+              "type": "flex",
+              "direction": "row",
+              "gap": 24,
+              "className": "flex-wrap items-start",
+              "body": [
+                {
+                  "type": "flex",
+                  "direction": "column",
+                  "gap": 6,
+                  "className": "min-w-[280px] flex-1",
+                  "body": [
+                    {
+                      "type": "text",
+                      "text": "分销关系树（三级）",
+                      "className": "text-sm font-medium"
+                    },
+                    {
+                      "type": "tree",
+                      "testid": "mall-distribution-tree",
+                      "label": "分销关系树",
+                      "data": "${distTreeRows?.tree ?? []}",
+                      "childrenKey": "children",
+                      "labelField": "name",
+                      "keyField": "id",
+                      "initiallyExpanded": 1
+                    }
+                  ]
+                },
+                {
+                  "type": "flex",
+                  "direction": "column",
+                  "gap": 6,
+                  "className": "items-center",
+                  "body": [
+                    {
+                      "type": "text",
+                      "text": "邀请分销员",
+                      "className": "text-sm font-medium"
+                    },
+                    {
+                      "type": "qrcode",
+                      "testid": "mall-distribution-qrcode",
+                      "value": "https://mall.example.com/invite?shop=nop-mall&role=distributor",
+                      "size": 128
+                    },
+                    {
+                      "type": "text",
+                      "text": "扫码加入分销网络",
+                      "className": "text-xs text-muted-foreground"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "container",
+          "testid": "mall-distribution-platform-zone",
+          "visible": "${tenantRole === 'platform'}",
+          "className": "rounded-lg border p-4",
+          "body": [
+            {
+              "type": "alert",
+              "level": "info",
+              "body": [
+                {
+                  "type": "text",
+                  "text": "平台运营视图：跨商家结算批次与佣金资金池看板（当前租户角色为 platform 时可见）。"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "card",
+          "testid": "mall-distribution-rules-card",
+          "title": "佣金规则配置（品类 → 三级比例，合计须为 100%）",
+          "body": [
+            {
+              "type": "form",
+              "id": "mall-distribution-rules-form",
+              "testid": "mall-distribution-rules-form",
+              "loadAction": {
+                "action": "ajax",
+                "args": { "url": "/r/ReplMall__commissionRules", "method": "get" }
+              },
+              "submitAction": {
+                "action": "ajax",
+                "args": {
+                  "url": "/r/ReplMall__commissionRules",
+                  "method": "post",
+                  "data": { "rules": "${items}" }
+                },
+                "messages": { "success": "佣金规则已保存" },
+                "onError": [
+                  {
+                    "action": "showToast",
+                    "args": {
+                      "level": "error",
+                      "message": "规则被拒绝（${error?.message ?? 'UNKNOWN'}）：每行三级比例合计须为 100%"
+                    }
+                  }
+                ]
+              },
+              "body": [
+                {
+                  "type": "input-table",
+                  "name": "items",
+                  "testid": "mall-distribution-rules-table",
+                  "addable": false,
+                  "removable": false,
+                  "reorderable": false,
+                  "columns": [
+                    { "name": "category", "label": "品类", "width": 140 },
+                    { "name": "minAmount", "label": "门槛金额（元）", "width": 120 },
+                    { "name": "L1Rate", "label": "一级比例（%）", "width": 120 },
+                    { "name": "L2Rate", "label": "二级比例（%）", "width": 120 },
+                    { "name": "L3Rate", "label": "三级比例（%）", "width": 120 }
+                  ],
+                  "item": [
+                    {
+                      "type": "text",
+                      "text": "${category}",
+                      "testid": "mall-distribution-rules-category"
+                    },
+                    { "type": "input-number", "name": "minAmount", "min": 0 },
+                    {
+                      "type": "input-number",
+                      "name": "L1Rate",
+                      "min": 0,
+                      "max": 100,
+                      "testid": "mall-distribution-rules-l1rate"
+                    },
+                    {
+                      "type": "input-number",
+                      "name": "L2Rate",
+                      "min": 0,
+                      "max": 100,
+                      "testid": "mall-distribution-rules-l2rate"
+                    },
+                    {
+                      "type": "input-number",
+                      "name": "L3Rate",
+                      "min": 0,
+                      "max": 100,
+                      "testid": "mall-distribution-rules-l3rate"
+                    }
+                  ]
+                }
+              ],
+              "actions": [
+                {
+                  "type": "button",
+                  "label": "保存规则",
+                  "variant": "primary",
+                  "testid": "mall-distribution-rules-submit",
+                  "onClick": { "action": "submitForm" }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
