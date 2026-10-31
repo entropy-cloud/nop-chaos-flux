@@ -54,6 +54,9 @@ const ROUTES = [
   // Plan 807 (D1 §4 branch A): K2 ticket-console joins the standard desktop
   // scan set (non-mobile page — pure JSON SchemaPage, no host override).
   'complex-pages/ai-ticket-console',
+  // Plan 808 (D1 §4 branch A): K3 approval-trail joins the standard desktop
+  // scan set (non-mobile page — pure JSON SchemaPage, no host override).
+  'complex-pages/ai-approval-trail',
   'dashboard-demo',
 ];
 

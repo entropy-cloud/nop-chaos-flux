@@ -440,4 +440,12 @@ export const COMPLEX_PAGE_ENTRIES: ComplexPageEntry[] = [
       '复刻 AI 工单处理台页（roadmap 21 页 K2，D3 §2.2 桌面整页）：工单看板六态（kanban 拖卡 onCardMove 按目标列路由 ticketMutation assign/start/resolve/close/reopen + ILLEGAL_TRANSITION 守卫 + columnAggregate 工单计数 + refreshSource 回读）+ 双视图（crud 表格配色分页 + form+valuesPath 状态过滤载体）+ stat-tile KPI×4（含 sparkline）+ 详情 drawer（steps 状态轴 / G9 SLA 静态剩余时长文本 / timeline 处理轨迹 ticketActionFind / G11 置信度门 alert / G12 ai-suggestions 推荐回复采用→setValues 写回 textarea→ticketReply 提交 / 升级确认 dialog→ticketMutation escalate）。数据经 /r/ReplAi__ticket* 与 suggestionFind 端点流动。',
     features: ['kanban 六态拖卡路由', 'ILLEGAL_TRANSITION 守卫', 'columnAggregate 计数', 'steps 状态轴', 'timeline 操作日志', 'G11 置信度门 alert', 'G12 推荐回复写回', 'G9 SLA 静态文本', '确认 dialog', 'ReplAi__ 端点'],
   },
+  {
+    id: 'ai-approval-trail',
+    title: 'AI 审批轨迹页',
+    category: 'business-replication',
+    description:
+      '复刻 AI 审批轨迹页（roadmap 21 页 K3，D3 §2.3 桌面整页）：待办列表（crud 行点击 openDrawer 详情，approvalTaskFindPage 四值 approveStatus fixture）+ 详情 drawer（steps 审批状态轴〔mock 投影 wait/process/finish/error 权威映射〕/ timeline 审批轨迹 approvalTrailFind〔reject 节点 level=error 配色〕/ ai-tool-call HITL 审批卡〔onApproval 事件→hitlDecision 持久化，engine 不自改 approval、宿主 action 链持卡状态〕/ 动作区 approve→approvalAct + reject 意见必填 dialog + 转办 dialog〔user-select 选人 + 原因必填→approvalTransfer，G13 组合口径〕）。数据经 /r/ReplAi__approval* 与 hitlDecision 端点流动。',
+    features: ['crud 待办列表', 'steps 状态轴', 'timeline 审批轨迹', 'ai-tool-call HITL 卡', 'reject 意见必填', 'user-select 转办', 'approvalAct 守卫', 'ReplAi__ 端点'],
+  },
 ];

@@ -1,0 +1,437 @@
+{
+  "type": "page",
+  "testid": "ai-approval-trail-root",
+  "body": [
+    {
+      "type": "data-source",
+      "id": "ai-approval-trail-tasks-source",
+      "name": "approvalTaskSource",
+      "action": "ajax",
+      "args": {
+        "url": "/r/ReplAi__approvalTaskFindPage",
+        "method": "get"
+      },
+      "testid": "ai-approval-trail-tasks-source"
+    },
+    {
+      "type": "flex",
+      "direction": "column",
+      "gap": 8,
+      "testid": "ai-approval-trail-main",
+      "body": [
+        {
+          "type": "flex",
+          "direction": "row",
+          "gap": 12,
+          "className": "items-center flex-wrap",
+          "testid": "ai-approval-trail-toolbar",
+          "body": [
+            {
+              "type": "text",
+              "testid": "ai-approval-trail-caption",
+              "text": "审批待办（approvalTaskFindPage）：${approvalTaskSource?.total ?? '-'} 条 · 行点击打开审批轨迹详情，HITL 卡片决定经 hitlDecision 持久化",
+              "className": "text-sm text-muted-foreground"
+            },
+            {
+              "type": "button",
+              "label": "手工刷新",
+              "variant": "outline",
+              "testid": "ai-approval-trail-refresh",
+              "onClick": {
+                "action": "refreshNearest",
+                "args": { "targetType": "crud", "notFound": "error" }
+              }
+            }
+          ]
+        },
+        {
+          "type": "crud",
+          "id": "ai-approval-trail-todos",
+          "testid": "ai-approval-trail-todos",
+          "itemKey": "id",
+          "loadAllData": true,
+          "loadAction": {
+            "dependsOn": ["__init_load__"],
+            "action": "ajax",
+            "args": {
+              "url": "/r/ReplAi__approvalTaskFindPage",
+              "method": "get"
+            }
+          },
+          "columns": [
+            { "name": "id", "label": "单号", "width": 100 },
+            { "name": "subject", "label": "申请主题", "width": 240 },
+            { "name": "submitter", "label": "申请人", "width": 100 },
+            { "name": "currentNode", "label": "当前节点", "width": 120 },
+            { "name": "approveStatusLabel", "label": "审批状态", "width": 100 },
+            { "name": "hitlToolCallId", "label": "HITL 调用", "width": 160 }
+          ],
+          "onRowClick": {
+            "action": "openDrawer",
+            "args": {
+              "title": "审批详情 ${subject}",
+              "testid": "ai-approval-trail-detail",
+              "side": "right",
+              "data": {
+                "taskId": "${id}",
+                "subject": "${subject}",
+                "approveStatus": "${approveStatus}",
+                "submitter": "${submitter}",
+                "currentNode": "${currentNode}",
+                "hitlToolCall": "${hitlToolCall}",
+                "hitlToolCallState": "${hitlToolCallState}",
+                "approveSteps": "${approveSteps}"
+              },
+              "body": [
+                {
+                  "type": "data-source",
+                  "id": "ai-approval-trail-trail-source",
+                  "name": "approvalTrail",
+                  "action": "ajax",
+                  "args": {
+                    "url": "/r/ReplAi__approvalTrailFind",
+                    "method": "get",
+                    "params": {
+                      "taskId": "${taskId}"
+                    }
+                  },
+                  "testid": "ai-approval-trail-trail-source"
+                },
+                {
+                  "type": "steps",
+                  "testid": "ai-approval-trail-steps",
+                  "items": "${approveSteps}",
+                  "value": "${approveStatus}"
+                },
+                {
+                  "type": "timeline",
+                  "testid": "ai-approval-trail-timeline",
+                  "items": "${approvalTrail?.items ?? []}"
+                },
+                {
+                  "type": "ai-tool-call",
+                  "testid": "ai-approval-trail-hitl-card",
+                  "visible": "${hitlToolCall != null}",
+                  "toolCall": "${hitlToolCall}",
+                  "state": "${hitlToolCallState}",
+                  "defaultOpen": false,
+                  "onApproval": [
+                    {
+                      "action": "ajax",
+                      "when": "${action === 'approve'}",
+                      "args": {
+                        "url": "/r/ReplAi__hitlDecision",
+                        "method": "post",
+                        "data": {
+                          "callId": "${toolCallId}",
+                          "decision": "approve"
+                        }
+                      },
+                      "messages": {
+                        "success": "HITL 决定已持久化（approve）"
+                      },
+                      "onError": [
+                        {
+                          "action": "showToast",
+                          "args": {
+                            "level": "error",
+                            "message": "HITL 决定被拒绝（HITL_ALREADY_DECIDED）：该调用已决定或不存在"
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "action": "ajax",
+                      "when": "${action === 'reject'}",
+                      "args": {
+                        "url": "/r/ReplAi__hitlDecision",
+                        "method": "post",
+                        "data": {
+                          "callId": "${toolCallId}",
+                          "decision": "reject"
+                        }
+                      },
+                      "messages": {
+                        "success": "HITL 决定已持久化（reject）"
+                      },
+                      "onError": [
+                        {
+                          "action": "showToast",
+                          "args": {
+                            "level": "error",
+                            "message": "HITL 决定被拒绝（HITL_ALREADY_DECIDED）：该调用已决定或不存在"
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "action": "setValue",
+                      "args": {
+                        "path": "hitlToolCallState",
+                        "value": {
+                          "status": "success",
+                          "approval": "${action === 'approve' ? 'approved' : 'rejected'}"
+                        }
+                      }
+                    },
+                    {
+                      "action": "refreshSource",
+                      "targetId": "approvalTrail"
+                    }
+                  ]
+                },
+                {
+                  "type": "flex",
+                  "direction": "row",
+                  "gap": 12,
+                  "className": "flex-wrap",
+                  "testid": "ai-approval-trail-actions",
+                  "body": [
+                    {
+                      "type": "button",
+                      "label": "审批通过",
+                      "variant": "primary",
+                      "testid": "ai-approval-trail-approve",
+                      "onClick": {
+                        "action": "ajax",
+                        "args": {
+                          "url": "/r/ReplAi__approvalAct",
+                          "method": "post",
+                          "data": {
+                            "taskId": "${taskId}",
+                            "decision": "approve"
+                          }
+                        },
+                        "messages": {
+                          "success": "审批完成：已通过"
+                        },
+                        "then": [
+                          { "action": "refreshSource", "targetId": "approvalTrail" },
+                          {
+                            "action": "refreshNearest",
+                            "args": { "targetType": "crud", "notFound": "silent" }
+                          }
+                        ],
+                        "onError": [
+                          {
+                            "action": "showToast",
+                            "args": {
+                              "level": "error",
+                              "message": "审批被拒绝（APPROVAL_CONFLICT）：该任务不在待审批状态"
+                            }
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "type": "button",
+                      "label": "驳回",
+                      "variant": "outline",
+                      "testid": "ai-approval-trail-reject",
+                      "onClick": {
+                        "action": "openDialog",
+                        "args": {
+                          "title": "驳回意见",
+                          "testid": "ai-approval-trail-reject-dialog",
+                          "closeOnSubmit": true,
+                          "body": [
+                            {
+                              "type": "form",
+                              "testid": "ai-approval-trail-reject-form",
+                              "submitScope": "surface",
+                              "data": {
+                                "comment": ""
+                              },
+                              "body": [
+                                {
+                                  "type": "textarea",
+                                  "name": "comment",
+                                  "label": "驳回意见（必填）",
+                                  "testid": "ai-approval-trail-reject-comment",
+                                  "required": true,
+                                  "rows": 4,
+                                  "placeholder": "请填写驳回意见"
+                                }
+                              ],
+                              "actions": [
+                                {
+                                  "type": "button",
+                                  "label": "确认驳回",
+                                  "variant": "primary",
+                                  "testid": "ai-approval-trail-reject-confirm",
+                                  "onClick": { "action": "submitForm" }
+                                }
+                              ],
+                              "submitAction": {
+                                "action": "ajax",
+                                "args": {
+                                  "url": "/r/ReplAi__approvalAct",
+                                  "method": "post",
+                                  "data": {
+                                    "taskId": "${taskId}",
+                                    "decision": "reject",
+                                    "comment": "${comment}"
+                                  }
+                                },
+                                "messages": {
+                                  "success": "审批完成：已驳回"
+                                },
+                                "onError": [
+                                  {
+                                    "action": "showToast",
+                                    "args": {
+                                      "level": "error",
+                                      "message": "驳回被拒绝（APPROVAL_CONFLICT）：该任务不在待审批状态"
+                                    }
+                                  }
+                                ]
+                              }
+                            }
+                          ],
+                          "onSubmitSuccess": [
+                            { "action": "refreshSource", "targetId": "approvalTrail" },
+                            {
+                              "action": "refreshNearest",
+                              "args": { "targetType": "crud", "notFound": "silent" }
+                            }
+                          ]
+                        }
+                      }
+                    },
+                    {
+                      "type": "button",
+                      "label": "转办",
+                      "variant": "outline",
+                      "testid": "ai-approval-trail-transfer",
+                      "onClick": {
+                        "action": "openDialog",
+                        "args": {
+                          "title": "转办",
+                          "testid": "ai-approval-trail-transfer-dialog",
+                          "closeOnSubmit": true,
+                          "body": [
+                            {
+                              "type": "form",
+                              "testid": "ai-approval-trail-transfer-form",
+                              "submitScope": "surface",
+                              "data": {
+                                "targetUserId": "",
+                                "reason": ""
+                              },
+                              "body": [
+                                {
+                                  "type": "user-select",
+                                  "name": "targetUserId",
+                                  "label": "转办给",
+                                  "testid": "ai-approval-trail-transfer-user",
+                                  "required": true,
+                                  "options": [
+                                    {
+                                      "id": "dept-rd",
+                                      "name": "研发部",
+                                      "type": "department",
+                                      "children": [
+                                        {
+                                          "id": "user-zhangsan",
+                                          "name": "张三",
+                                          "type": "user",
+                                          "leaf": true
+                                        },
+                                        {
+                                          "id": "user-lisi",
+                                          "name": "李四",
+                                          "type": "user",
+                                          "leaf": true
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "id": "dept-ops",
+                                      "name": "运营部",
+                                      "type": "department",
+                                      "children": [
+                                        {
+                                          "id": "user-wangwu",
+                                          "name": "王五",
+                                          "type": "user",
+                                          "leaf": true
+                                        },
+                                        {
+                                          "id": "user-zhaoliu",
+                                          "name": "赵六",
+                                          "type": "user",
+                                          "leaf": true
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                },
+                                {
+                                  "type": "textarea",
+                                  "name": "reason",
+                                  "label": "转办原因（必填）",
+                                  "testid": "ai-approval-trail-transfer-reason",
+                                  "required": true,
+                                  "rows": 3,
+                                  "placeholder": "请填写转办原因"
+                                }
+                              ],
+                              "actions": [
+                                {
+                                  "type": "button",
+                                  "label": "确认转办",
+                                  "variant": "primary",
+                                  "testid": "ai-approval-trail-transfer-confirm",
+                                  "onClick": { "action": "submitForm" }
+                                }
+                              ],
+                              "submitAction": {
+                                "action": "ajax",
+                                "args": {
+                                  "url": "/r/ReplAi__approvalTransfer",
+                                  "method": "post",
+                                  "data": {
+                                    "taskId": "${taskId}",
+                                    "targetUserId": "${targetUserId}",
+                                    "reason": "${reason}"
+                                  }
+                                },
+                                "messages": {
+                                  "success": "转办成功"
+                                },
+                                "onError": [
+                                  {
+                                    "action": "showToast",
+                                    "args": {
+                                      "level": "error",
+                                      "message": "转办被拒绝（TRANSFER_PAYLOAD_INVALID）：任务不存在或转办人/原因缺失"
+                                    }
+                                  }
+                                ]
+                              }
+                            }
+                          ],
+                          "onSubmitSuccess": [
+                            { "action": "refreshSource", "targetId": "approvalTrail" },
+                            {
+                              "action": "refreshNearest",
+                              "args": { "targetType": "crud", "notFound": "silent" }
+                            }
+                          ]
+                        }
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          },
+          "empty": {
+            "type": "text",
+            "text": "暂无审批待办"
+          }
+        }
+      ]
+    }
+  ]
+}

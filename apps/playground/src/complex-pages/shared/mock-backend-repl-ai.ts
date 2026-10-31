@@ -19,7 +19,11 @@
  * `mock-backend-repl-ai-k2.ts` the same way: the branch hands unmatched K2
  * urls to `handleReplAiK2Branch`, and the K2 session rows (tickets/actions)
  * live in this module's factory closure so writes stay observable across
- * pages in one session.
+ * pages in one session. The K3 approval-trail endpoint subset (plan 808; D3
+ * §4.3 K3 five — approvalTaskFindPage/approvalTrailFind/approvalAct/
+ * approvalTransfer/hitlDecision) follows the same delegation via
+ * `mock-backend-repl-ai-k3.ts` (`handleReplAiK3Branch`), with the K3 session
+ * rows (approvalTasks/approvalTrail) in this module's factory closure.
  *
  * D6 复审前置义务 (plan 806 强制项): the engine's final message must carry
  * sources/refused/usage by the time `ai-chat` snapshots it into the
@@ -42,6 +46,12 @@ import {
   type ReplAiTicket,
   type ReplAiTicketAction,
 } from './mock-backend-repl-ai-k2';
+import {
+  createReplAiK3Seed,
+  handleReplAiK3Branch,
+  type ReplAiApprovalTask,
+  type ReplAiApprovalTrailNode,
+} from './mock-backend-repl-ai-k3';
 import {
   createEndpointCounter,
   createUrlParamReader,
@@ -113,6 +123,12 @@ export interface ReplAiTestHooks {
   lastTicketMutationBody?: Record<string, unknown>;
   /** K2 mirror: last `ticketReply` request body. */
   lastTicketReplyBody?: Record<string, unknown>;
+  /** K3 mirror: last `approvalAct` request body. */
+  lastApprovalActBody?: Record<string, unknown>;
+  /** K3 mirror: last `approvalTransfer` request body. */
+  lastApprovalTransferBody?: Record<string, unknown>;
+  /** K3 mirror: last `hitlDecision` request body. */
+  lastHitlDecisionBody?: Record<string, unknown>;
 }
 
 function readReplAiTestHooks(): ReplAiTestHooks | undefined {
@@ -220,6 +236,10 @@ export interface ReplAiSessionState {
   tickets: ReplAiTicket[];
   ticketActions: ReplAiTicketAction[];
   actionSeq: number;
+  /** K3 approval-trail rows (plan 808): todo queue + trajectory nodes. */
+  approvalTasks: ReplAiApprovalTask[];
+  approvalTrail: ReplAiApprovalTrailNode[];
+  approvalSeq: number;
 }
 
 export function createReplAiSession(): ReplAiSessionState {
@@ -231,6 +251,7 @@ export function createReplAiSession(): ReplAiSessionState {
     messages: seedMessages(),
     dbSeq: 0,
     ...createReplAiK2Seed(),
+    ...createReplAiK3Seed(),
   };
 }
 
@@ -365,6 +386,17 @@ export function createReplAiFetcherBranch(
       hooks,
     });
     if (k2Handled) return k2Handled;
+
+    // ----- K3 approval-trail subset (plan 808; delegate module) -----
+    const k3Handled = handleReplAiK3Branch<T>({
+      url: input.url,
+      method,
+      read,
+      body: input.body,
+      session,
+      hooks,
+    });
+    if (k3Handled) return k3Handled;
 
     return null;
   }

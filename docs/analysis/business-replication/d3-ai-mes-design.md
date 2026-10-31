@@ -295,6 +295,13 @@ page
 }
 ```
 
+#### K3 实现勘误（M3 落地实证 2026-10-30，plan 808；以 live 为准）
+
+1. **refreshSource isolate 面**：crud 行 scope isolate 使 drawer 内 action 走到 isolate 边界，页面级 data-source 不可达（Source not found）——crud 须走 loadAction + refreshNearest targetType crud（D3 §2.3 片段 1 的 refreshSource approvalTaskSource 在 drawer 内不可表达）。
+2. **steps 无 error 推导**：deriveStatus 仅产 wait/process/finish——REJECTED 步进 status:'error' 须由 mock approveSteps 数据投影（StepsItemSchema.status 为字面量非表达式）。
+3. **HITL 卡 decided 翻转**：D3 片段 1 无状态写回；engine 不自改 approval（ai-tool-call.tsx L24-27），pure-JSON 形态须 onApproval 链 setValue hitlToolCallState 写回 drawer scope。
+4. **focus ① 口径收窄**：ai-tool-call Esc 不阻断冒泡，drawer 同步关闭（AI-11 卸载还原生效）——"Esc 还原入面前焦点"独立断言在 drawer 宿主下不可观测，按 live 收窄为"Tab 圈内循环 + Esc 关 drawer 焦点回触发行"。
+
 ### 2.4 M1 mes-shopfloor-board（P1，直接组合，涉 G10）
 
 ```
