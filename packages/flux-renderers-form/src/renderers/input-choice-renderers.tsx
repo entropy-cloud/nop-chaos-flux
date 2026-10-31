@@ -148,6 +148,7 @@ export function SelectRenderer(props: RendererComponentProps<SelectSchema>) {
     : t('flux.common.noResults');
   const loadingText = t('flux.common.loading');
   const virtualEnabled = virtual && allOptions.length > virtualThreshold;
+  const [highlightedOption, setHighlightedOption] = useState<ChoiceOption | undefined>(undefined);
 
   const optionTemplateRegion = props.regions.optionTemplate as
     | RenderRegionHandle<ReactNode>
@@ -368,6 +369,11 @@ export function SelectRenderer(props: RendererComponentProps<SelectSchema>) {
           disabled={comboboxFrozen}
           itemToStringLabel={(option: ChoiceOption) => option.label}
           isItemEqualToValue={(a: ChoiceOption, b: ChoiceOption) => Object.is(a.value, b.value)}
+          virtualized={virtualEnabled}
+          items={virtualEnabled ? allOptions : undefined}
+          onItemHighlighted={
+            virtualEnabled ? (option: ChoiceOption | undefined) => setHighlightedOption(option) : undefined
+          }
           onInputValueChange={(nextQuery: string) => setInputValue(nextQuery)}
           filteredItems={visibleOptions}
           filter={null}
@@ -419,6 +425,7 @@ export function SelectRenderer(props: RendererComponentProps<SelectSchema>) {
                 flatOptions={visibleOptions}
                 renderOptionTemplate={renderOptionTemplate}
                 query={query}
+                highlightedOption={highlightedOption}
               />
             ) : (
               <StaticComboboxList

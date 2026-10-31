@@ -98,7 +98,6 @@ const optionTemplateSelect = {
                 {
                   type: 'badge',
                   text: '${$slot.option.badge}',
-                  variant: 'secondary',
                   className: 'ml-auto',
                 },
               ],
@@ -296,6 +295,27 @@ const controlledEchoPage = {
   ],
 };
 
+const virtualizedSelect = {
+  type: 'page',
+  body: [
+    {
+      type: 'form',
+      name: 'virtualForm',
+      body: [
+        {
+          type: 'select',
+          name: 'sku',
+          label: 'SKU (500 options)',
+          testid: 'virtual-select',
+          virtual: true,
+          searchable: true,
+          options: Array.from({ length: 500 }, (_, index) => ({ label: `SKU ${index}`, value: `sku-${index}` })),
+        },
+      ],
+    },
+  ],
+};
+
 export function SelectLabPage() {
   return (
     <MultiScenarioLabPage
@@ -343,6 +363,12 @@ export function SelectLabPage() {
           description:
             'select and switch bound to page scope: an external setValue action updates the scope value and the controls must echo the new state (no stale value, no loop).',
           schema: controlledEchoPage,
+        },
+        {
+          title: 'Virtualized long list keyboard navigation',
+          description:
+            'virtual: true with 500 options renders only the visible window. Arrow-key navigation past the first window keeps the highlighted option scrolled into view.',
+          schema: virtualizedSelect,
         },
       ]}
     />

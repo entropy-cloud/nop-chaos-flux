@@ -239,6 +239,50 @@ describe('plan 785 — input-table computed columns + onRowChange + summaryBindi
     });
   });
 
+  it('does not dispatch onRowChange for a pure row reorder (onReorder owns it)', async () => {
+    renderSchema({
+      type: 'form',
+      id: 'f',
+      data: { rows: [{ sku: 'A', amount: 1 }, { sku: 'B', amount: 2 }], lastName: 'none', reorders: 0 },
+      body: [
+        {
+          type: 'input-table',
+          id: 't',
+          name: 'rows',
+          columns: tableTwoColumns(),
+          item: itemRegion,
+          onRowChange: {
+            action: 'setValue',
+            args: { path: 'lastName', value: '${name}@${index}:${value}' },
+          },
+          onReorder: {
+            action: 'setValue',
+            args: { path: 'reorders', value: 1 },
+          },
+        },
+        { type: 'form-state-probe', name: 'lastName' },
+        { type: 'form-state-probe', name: 'reorders' },
+        { type: 'form-state-probe', name: 'rows' },
+      ],
+    });
+
+    const moveDownButtons = document.querySelectorAll<HTMLButtonElement>('button[aria-label*="moveDown"], button[aria-label*="Move down"], button[aria-label*="Move Down"]');
+    expect(moveDownButtons.length).toBeGreaterThan(0);
+    fireEvent.click(moveDownButtons[0]);
+
+    await waitFor(() => {
+      expect(resolveFormState('form-state:reorders')).toBe(1);
+    });
+    expect((resolveFormState('form-state:rows') as Array<{ sku: string }>).map((row) => row.sku)).toEqual(['B', 'A']);
+    expect(resolveFormState('form-state:lastName')).toBe('none');
+
+    const amountInputs = screen.getAllByPlaceholderText('Amount') as HTMLInputElement[];
+    fireEvent.change(amountInputs[0], { target: { value: '9' } });
+    await waitFor(() => {
+      expect(resolveFormState('form-state:lastName')).toBe('amount@0:9');
+    });
+  });
+
   it('writes summaryBinding aggregates into the parent form field on row changes', async () => {
     renderSchema({
       type: 'form',

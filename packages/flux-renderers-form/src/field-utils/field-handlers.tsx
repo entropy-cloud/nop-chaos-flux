@@ -68,6 +68,10 @@ function armControlEngagement(target: unknown) {
   controlEngagement.get(target)?.cleanup();
   const state: ControlEngagementState = { engaged: false, cleanup: () => {} };
   const markEngaged = (event: Event) => {
+    if (!target.isConnected) {
+      disarmControlEngagement(target);
+      return;
+    }
     if (event.target instanceof Node && (target === event.target || target.contains(event.target))) {
       state.engaged = true;
     }
@@ -122,13 +126,17 @@ export function createFieldHandlers(args: {
   setValue: (value: unknown) => void | Promise<void>;
   readOnly?: boolean;
   onError?: (error: unknown, operation: string) => void;
+  onEngagementArmed?: (target: Element) => void;
 }) {
-  const { name, currentForm, currentValidationScope, setValue, readOnly, onError } = args;
+  const { name, currentForm, currentValidationScope, setValue, readOnly, onError, onEngagementArmed } = args;
   const validationOwnerWithFieldState = currentValidationScope as Partial<FormRuntime> | undefined;
 
   return {
     onFocus(handlerEvent?: { target?: unknown }) {
       armControlEngagement(handlerEvent?.target);
+      if (handlerEvent?.target instanceof Element) {
+        onEngagementArmed?.(handlerEvent.target);
+      }
       if (currentForm) {
         currentForm.visitField(name);
         return;
@@ -228,6 +236,18 @@ export function useFieldHandlers(args: {
   const currentValidationScope = useCurrentValidationScope();
   const runtime = useRendererRuntime();
   const generationRef = useRef(0);
+  const armedTargetRef = useRef<Element | null>(null);
+
+  // A focused control removed from the DOM never fires blur, so the
+  // document-level engagement listeners must also be released on unmount.
+  useEffect(() => {
+    const armedTarget = armedTargetRef;
+    return () => {
+      if (armedTarget.current) {
+        disarmControlEngagement(armedTarget.current);
+      }
+    };
+  }, []);
 
   const handleAsyncFieldError = (error: unknown, operation: string) => {
         if (!runtime) {
@@ -258,6 +278,9 @@ export function useFieldHandlers(args: {
         currentValidationScope,
         readOnly: adapterContext?.readOnly,
         onError: handleAsyncFieldError,
+        onEngagementArmed(target) {
+          armedTargetRef.current = target;
+        },
         setValue(nextValue) {
           const convertedValue = adapter
             ? adapter.out(nextValue, adapterContext ?? { name, readOnly: false })

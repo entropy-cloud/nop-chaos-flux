@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import type { ReactNode } from 'react';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { ComboboxGroup, ComboboxItem, ComboboxLabel, ComboboxList } from '@nop-chaos/ui';
@@ -35,10 +35,16 @@ function highlightText(text: string, query: string): ReactNode {
   }
 
   const parts = text.split(getHighlightRegex(query));
+  let offset = 0;
+  const segments = parts.map((part) => {
+    const start = offset;
+    offset += part.length;
+    return { part, start };
+  });
 
-  return parts.map((part) =>
+  return segments.map(({ part, start }) =>
     part.toLowerCase() === query.toLowerCase() ? (
-      <mark key={part} className="rounded bg-warning/30 px-0.5 dark:bg-warning/50">
+      <mark key={start} className="rounded bg-warning/30 px-0.5 dark:bg-warning/50">
         {part}
       </mark>
     ) : (
@@ -55,6 +61,7 @@ function renderComboboxItem(
   index: number,
   renderOptionTemplate?: OptionTemplateRenderer,
   query?: string,
+  listIndex?: number,
 ) {
   let content: ReactNode = option.label;
   if (renderOptionTemplate) {
@@ -78,6 +85,7 @@ function renderComboboxItem(
     <ComboboxItem
       key={getChoiceOptionKey(option.value)}
       value={option}
+      index={listIndex}
       disabled={option.disabled}
       data-value={String(option.value)}
     >
@@ -123,6 +131,7 @@ export function VirtualizedComboboxList(props: {
   flatOptions: ChoiceOption[];
   renderOptionTemplate?: OptionTemplateRenderer;
   query?: string;
+  highlightedOption?: ChoiceOption;
 }) {
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const flatItems: ChoiceOption[] = props.renderGroups
@@ -136,6 +145,19 @@ export function VirtualizedComboboxList(props: {
     overscan: VIRTUAL_OVERSCAN,
     getItemKey: (index) => getChoiceOptionKey(flatItems[index]?.value ?? index),
   });
+  const highlightedOption = props.highlightedOption;
+  const highlightedIndex = highlightedOption
+    ? flatItems.findIndex((option) => Object.is(option.value, highlightedOption.value))
+    : -1;
+
+  // The root runs in `virtualized` mode: keyboard navigation moves over the
+  // full option list by index, so the highlighted row must be scrolled into
+  // the rendered window here (unmounted rows cannot scroll themselves).
+  useEffect(() => {
+    if (highlightedIndex >= 0) {
+      virtualizer.scrollToIndex(highlightedIndex, { align: 'auto' });
+    }
+  }, [highlightedIndex, virtualizer]);
 
   return (
     <ComboboxList ref={scrollRef} data-slot="combobox-list">
@@ -162,7 +184,7 @@ export function VirtualizedComboboxList(props: {
                 transform: `translateY(${virtualItem.start}px)`,
               }}
             >
-              {renderComboboxItem(option, virtualItem.index, props.renderOptionTemplate, props.query)}
+              {renderComboboxItem(option, virtualItem.index, props.renderOptionTemplate, props.query, virtualItem.index)}
             </div>
           );
         })}

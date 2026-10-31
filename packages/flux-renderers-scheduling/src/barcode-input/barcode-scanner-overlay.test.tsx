@@ -465,3 +465,19 @@ describe('BarcodeScannerOverlay — loading spinner uses ui Spinner (P2 承接 b
     expect(loading.querySelector('div.animate-spin')).toBeNull();
   });
 });
+
+describe('BarcodeScannerOverlay online subscription', () => {
+  afterEach(() => {
+    cleanup();
+    vi.restoreAllMocks();
+  });
+
+  it('subscribes to window online/offline once across re-renders', () => {
+    const addSpy = vi.spyOn(window, 'addEventListener');
+    const { rerender } = render(<BarcodeScannerOverlay open={true} onClose={vi.fn()} onScan={vi.fn()} />);
+    rerender(<BarcodeScannerOverlay open={true} onClose={vi.fn()} onScan={vi.fn()} />);
+    rerender(<BarcodeScannerOverlay open={true} onClose={vi.fn()} onScan={vi.fn()} />);
+
+    expect(addSpy.mock.calls.filter(([type]) => type === 'online')).toHaveLength(1);
+  });
+});

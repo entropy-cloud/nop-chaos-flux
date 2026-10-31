@@ -22,7 +22,7 @@ function normalizeItems(value: unknown): CarouselItemSchema[] {
 
 function toSlideKey(item: CarouselItemSchema | undefined, index: number): string {
   const candidate = item ? asString(item.image) ?? asString(item.title) : undefined;
-  return candidate ? `slide:${candidate}` : `slide:${index}`;
+  return `slide:${index}:${candidate ?? ''}`;
 }
 
 function asString(value: unknown): string | undefined {

@@ -194,6 +194,10 @@ export function InputTableRenderer(props: RendererComponentProps<InputTableSchem
     const prev = prevItemsSnapshotRef.current;
     prevItemsSnapshotRef.current = items;
     if (!prev || prev.length !== items.length || prev === items) return;
+    // A reorder keeps every row object and only permutes them (onReorder owns
+    // that); an edit replaces the edited row with a new object.
+    const previousRows = new Set(prev);
+    if (items.every((item) => previousRows.has(item))) return;
     const changedIndex = items.findIndex((item, index) => item !== prev[index]);
     if (changedIndex === -1) return;
     const record = items[changedIndex];

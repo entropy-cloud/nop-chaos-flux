@@ -48,6 +48,19 @@ interface BarcodeScannerOverlayProps {
   children?: ReactNode;
 }
 
+function subscribeOnline(onStoreChange: () => void) {
+  window.addEventListener('online', onStoreChange);
+  window.addEventListener('offline', onStoreChange);
+  return () => {
+    window.removeEventListener('online', onStoreChange);
+    window.removeEventListener('offline', onStoreChange);
+  };
+}
+
+function getOnlineSnapshot() {
+  return barcodeMediaIO().isOnline();
+}
+
 export function BarcodeScannerOverlay(props: BarcodeScannerOverlayProps) {
   const {
     open,
@@ -74,17 +87,6 @@ export function BarcodeScannerOverlay(props: BarcodeScannerOverlayProps) {
   const [phase, setPhase] = useState<'loading' | 'scanning' | 'error'>('loading');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
-
-  const subscribeOnline = (onStoreChange: () => void) => {
-    window.addEventListener('online', onStoreChange);
-    window.addEventListener('offline', onStoreChange);
-    return () => {
-      window.removeEventListener('online', onStoreChange);
-      window.removeEventListener('offline', onStoreChange);
-    };
-  };
-
-  const getOnlineSnapshot = () => barcodeMediaIO().isOnline();
 
   const isOnline = useSyncExternalStore(subscribeOnline, getOnlineSnapshot, () => true);
   const camera = useBarcodeCamera({ videoRef });

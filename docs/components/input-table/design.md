@@ -26,7 +26,7 @@
   - `computed`（可选）：行作用域表达式字符串，输出只读派生单元格（`data-slot="input-table-computed-cell"`），依赖行字段变化时同 tick 重算。**优先级裁定**：computed 列不消耗 `item` region 模板节点——模板节点按位置映射到非 computed 列，因此 computed 与 region 自定义单元格不会同时占用同一列。
 - `summaryVisible`（可选）：无 aggregate 列时强制渲染空合计行。
 - `summaryBinding`（可选）：`{ field, column, agg: 'sum'|'count'|'avg' }`——把某列聚合值回写父表单字段（ERP 主单合计联动），行内容变化时刷新。写回口径与合计行一致：非数值单元格跳过计入（部分和照常写回）；仅当聚合值本身未定义（sum/avg 零数值单元格）时暂停写回。
-- `onRowChange`（可选）：行内任一字段编辑后派发的 schema 事件；payload `{ record, index, name, value }` 经 `evaluationBindings` 以裸名在 action args 模板中解析（Event Passthrough Contract）。行增删不派发（归 `onAdd`/`onRemove`）。变更检测按行对象引用 diff（snapshot-replace 纪律）；单次提交多字段变更时 `name`/`value` 取第一个差异键。
+- `onRowChange`（可选）：行内任一字段编辑后派发的 schema 事件；payload `{ record, index, name, value }` 经 `evaluationBindings` 以裸名在 action args 模板中解析（Event Passthrough Contract）。行增删不派发（归 `onAdd`/`onRemove`），纯重排（行对象引用集合不变、仅顺序变化）也不派发（归 `onReorder`）。变更检测按行对象引用 diff（snapshot-replace 纪律）；单次提交多字段变更时 `name`/`value` 取第一个差异键。
 
 ## 5. 字段分类
 

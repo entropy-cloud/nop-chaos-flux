@@ -240,3 +240,23 @@ describe('[G1-视角8-06] carousel indicator touch target', () => {
     expect(active?.getAttribute('aria-label')).toBe(t('flux.carousel.goToSlide', { index: 1 }));
   });
 });
+
+describe('CarouselRenderer slide keys', () => {
+  it('renders repeated image-only slides without duplicate React keys', () => {
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+    try {
+      const props = createMockRendererProps<CarouselSchema>({
+        schema: { type: 'carousel' },
+        props: { items: [{ image: '/placeholder.png' }, { image: '/placeholder.png' }, { image: '/placeholder.png' }] },
+      });
+      const { container } = render(<CarouselRenderer {...props} />);
+      expect(container.querySelectorAll('[data-slot="carousel-item"]').length).toBe(3);
+      const duplicateKeyWarnings = consoleError.mock.calls.filter((call) =>
+        call.some((arg) => typeof arg === 'string' && arg.includes('same key')),
+      );
+      expect(duplicateKeyWarnings).toEqual([]);
+    } finally {
+      consoleError.mockRestore();
+    }
+  });
+});
