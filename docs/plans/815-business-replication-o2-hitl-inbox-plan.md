@@ -68,7 +68,7 @@ Targets: `apps/playground/src/complex-pages/shared/mock-backend-repl-doc.ts`（O
 执行期适配（以 live 为准；D4 §2.4「O2 实现勘误」9 条 + §4.2/§5 就地注）：
 
 - dialog 内刷新外部 crud：`component:refresh` 跨运行期片段 componentId 报 `unvalidated-component-target`（console.error）→ 改 `refreshNearest {targetType:'crud'}`（approval-tasks / S2 先例）。
-- focus ②：`ai-tool-call` pending 态按组件设计（a11y §7 P3）在审批按钮内循环 Tab、Esc 释放——非缺陷不改组件；断言改为焦点落入 dialog 且非禁用批准 + 自卡片之后控件起 Tab 链跳过禁用批准、可达驳回。
+- focus ②：`ai-tool-call` pending 态按组件设计（`docs/components/flux-renderers-ai/improvement-analysis.md` §7/§5.2 [P3] HITL 焦点陷阱）在审批按钮内循环 Tab、Esc 释放——非缺陷不改组件；断言改为焦点落入 dialog 且非禁用批准 + 自卡片之后控件起 Tab 链跳过禁用批准、可达驳回。
 - 交互⑤b 新增 SoD 分支断言（D4 §4.2 错误分支覆盖）。
 - 全仓 `pnpm typecheck` exit 1 系并行会话未提交 WIP（`packages/flux-compiler/src/validation-lowering*.ts`，本 diff 零触达）；本 diff 触达面 playground typecheck exit 0。
 
