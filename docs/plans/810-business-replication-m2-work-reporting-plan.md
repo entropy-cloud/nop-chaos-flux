@@ -12,7 +12,7 @@
 ## Current Baseline
 
 - 设施就绪：replication.ts 六件套、showcase-env `/r/ReplMes__` 分支已接（M1 交付）、mock-backend-repl-mes.ts 单端点 dashboardKpi+相位推进、input-table aggregate/computed/summaryBinding（plan 785 落地）、strict 校验机制。
-- D3 §2.5 M2 设计（D5 核对过+**D5 深审 MAJ-7 勘误**〔评审 M-1 文档号勘误：原错标 D6〕：summaryBinding 单对象/validateValueAction 已删/端点守卫 GUARD_CONSERVATION+GUARD_HOUR_RATIO）：input-table 行内报工 + computed 列 + aggregate 合计 + 状态动作按钮 visible 表达式 + 确认 dialog + refreshNearest/refreshSource 回写。
+- D3 §2.5 M2 设计（D5 核对过+**D5 深审 MAJ-7 勘误**〔评审 M-1 文档号勘误：原错标 D6〕：summaryBinding 单对象/validateValueAction 已删/端点守卫 GUARD_CONSERVATION+GUARD_HOUR_RATIO）：input-table 行内报工 + computed 列 + aggregate 合计 + 状态动作按钮 visible 表达式 + 报工 dialog + refreshNearest/refreshSource 回写（确认 dialog 与 refresh 回写系 R2 §2 M2 renderer 映射行出处——评审 M-4 归属标注）。
 - mock 端点：M2 子集逐名对齐 D3 §4.4 mes 表（jobCard findPage/ticketMutation 式 jobCardMutation 七态/reportWork 守恒守卫等——实现时以表原名逐一核对，防臆造名——七次教训）。
 
 ## Goals
@@ -54,10 +54,10 @@ Targets: `mock-backend-repl-mes.ts`（扩展）、`page-schemas/mes-work-reporti
 
 - Item Types: `Fix | Proof`
 
-- [ ] mock 扩展：M2 子集端点**逐名对齐 D3 §4.4 mes 表**（jobCard findPage 作业卡列表/jobCardMutation 七态〔start/hold/resume/submit/complete 等〕/reportWork 守恒守卫〔GUARD_CONSERVATION/GUARD_HOUR_RATIO——D5 深审 MAJ-7 勘误口径〕，含错误分支；数据 ≥10 行作业卡多状态）
+- [ ] mock 扩展：M2 子集端点**逐名对齐 D3 §4.4 mes 表**（jobCard findPage 作业卡列表/jobCardMutation 五 mutation 逐名〔startJob/holdJob/resumeJob/submitJob/completeJob + ILLEGAL_TRANSITION 守卫——评审 M-2 勘误：原"七态"无出处锚点，D3 §4.4 表仅五名〕/reportWork〔GUARD_CONSERVATION+GUARD_HOUR_RATIO 守卫——D5 MAJ-7 勘误口径〕，含错误分支；数据 ≥25 行作业卡多状态〔评审 M-3：对齐 D3 §4.4/D1 §2 口径〕）
 - [ ] complex-pages-entries.ts 加 mes-work-reporting entry
 - [ ] schema JSON（D3 §2.5 组件树：input-table 行内报工〔columns aggregate 合计+computed 工时/工时比/合格率+summaryBinding 单对象回写+onRowChange〕/状态动作按钮 visible 表达式 start/hold/resume/submit/complete/dialog 确认/refreshNearest 或 component:refresh 回写；testid `<pageId>-<element>`；strict 零 error）
-- [ ] e2e spec 三支柱（D3 §5.5 M2 断言清单：行内编辑→computed 派生即时更新/合计行 aggregate 数值/守恒校验拦截〔超计划 toast〕/状态动作按钮 visible 按工单状态显隐/确认 dialog 焦点往返/focus 3 条；axe 分支 A）
+- [ ] e2e spec 三支柱（D3 §5.5 M2 断言清单：行内编辑→computed 派生即时更新/合计行 aggregate 数值/**summaryBinding 回写主单 totalCompletedQty〔plan-785 验收核心〕**/守恒校验拦截〔超计划 toast〕/**GUARD_HOUR_RATIO 超限断言**/**守恒拦截前端半边——item 区字段 validate 提交计数 0 语义**/**ILLEGAL_TRANSITION 非法迁移断言**/**hourRatio>1 标红 class 断言**/状态动作按钮 visible 按工单状态显隐/报工 dialog 焦点往返/focus 3 条；axe 分支 A）
 - [ ] axe ROUTES + JSON 登记（分支 A；首跑实测回填+\_notes）
 - [ ] 验证：`npx playwright test tests/e2e/replication-mes-work-reporting.spec.ts --retries=0` 全绿 + axe spec 绿 + 前序回归 + playground typecheck + strict 校验
 
@@ -93,7 +93,7 @@ Exit Criteria:
 
 ### （继承）check/lint 链状态
 
-- Classification: 无已知红（HEAD e5f572a53 后各页收口维持 full-green；layout contract-honesty 系 807 Deferred HEAD 既有红环境级 ELOOP 零交集）
+- Classification: `watch-only residual`（layout contract-honesty 加载失败——807 Deferred HEAD 既有红环境级 ELOOP，与本计划触达面零交集）
 - Why Not Blocking: 不适用（现无已知红；收口实跑零新增口径维持）
 - Successor Required: `no`
 - Successor Path: 不适用（并行会话后续 WIP 引入新红归其自有义务）
