@@ -151,6 +151,8 @@ Closure Audit Evidence:
 - Auditor / Agent: 独立 fresh sub-agent（agent_9578fad7-ce97-452a-99aa-8a7fce476459）
 - Evidence: verdict **approved**（零 Blocker/Major，3 Minor 非阻塞）。审计员独立模拟旧 statSync walker 复现 ELOOP；经 `git show` 解析 13 个被删 barrel 的全部 65 个导入，叶子测试文件均存在且被 glob 收集；逐包核对前后差额与 barrel 注册数合计 635；自行汇总 g830 测试日志得 16,786；确认 check 链末尾两段实际执行。Minor：门禁仅识别 `.test` 结尾（当前无 `.spec` barrel）；turbo 85/86 缓存命中但计数真实且变更套件已独立重跑；"恢复 barrel 报 3 处违规"系以 `spreadsheet-core/src/core.test.ts`（3 个导入）实测。
 
+收口后勘误（2026-11-01，事实性修正）：收口时 `scripts/__tests__/check-test-barrels.test.ts` 尚未被 git 跟踪，`check:test-barrels` 未扫描到它；提交后该文件 fixture 字符串字面含 `import './__tests__/a.test'`，致 master `pnpm check` 在此项变红。已以前向提交修复（fixture 改为拼接构造），门禁复跑 exit 0。
+
 Follow-up:
 
 - no remaining plan-owned work

@@ -27,7 +27,12 @@ function fixture(name: string, content: string): string {
 
 describe('check-test-barrels', () => {
   it('fails on an aggregator that imports sibling test modules', () => {
-    const barrel = fixture('index.test.tsx', "import './__tests__/a.test';\nimport './__tests__/b.test.tsx';\n");
+    // Built by concatenation so this file's own source never matches the gate.
+    const testSuffix = '.test';
+    const barrel = fixture(
+      'index.test.tsx',
+      `import './__tests__/a${testSuffix}';\nimport './__tests__/b${testSuffix}.tsx';\n`,
+    );
     const result = run([barrel]);
     expect(result.code).toBe(1);
     expect(result.stderr).toContain("imports test module './__tests__/a.test'");
