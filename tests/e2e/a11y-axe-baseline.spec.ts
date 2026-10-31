@@ -80,6 +80,11 @@ const ROUTES = [
   // Plan 817 (D1 §4 branch A): V2 ota-rollout joins the standard desktop scan
   // set (non-mobile page — pure JSON SchemaPage, no host override).
   'complex-pages/iot-ota-rollout',
+  // Plan 818 (D4 §3.4 branch C): V3 geofence-videowall measured first — the
+  // axe analysis stays well under the 30 s switch threshold (two OL canvases
+  // with a local blank basemap + 4 video elements), so it joins the ratchet
+  // instead of the map-demo exclusion.
+  'complex-pages/iot-geofence-videowall',
   'dashboard-demo',
 ];
 

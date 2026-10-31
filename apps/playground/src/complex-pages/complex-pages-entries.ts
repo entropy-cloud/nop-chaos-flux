@@ -520,4 +520,12 @@ export const COMPLEX_PAGE_ENTRIES: ComplexPageEntry[] = [
       '复刻 IoT OTA 灰度管理页（roadmap 21 页 V2，D4 §2.6 桌面整页）：固件 crud（废弃态标色）→ wizard 灰度指派三步（选设备：form 宿主 checkbox-group required + step formId 门禁 → 分批 → 确认下发 assignBatched）→ steps 八态状态轴（mock 投影 stepItems，FAILED error 分叉）+ timeline 历史轨迹（选中设备）+ 进度矩阵（设备×批次×状态+lastError 标色）→ 门控推进下一批（GATE_NOT_PASSED 时经 error.responseData.gate 呈现完成率/失败率且不推进）→ 回滚确认 dialog（原因必填 → rollbackPackage → ROLLED_BACK alert）。数据经 /r/ReplIot__ 端点流动。',
     features: ['wizard formId 门禁', 'checkbox-group 多选', 'steps 八态 error 分叉', 'timeline 轨迹', '进度矩阵', '门控 gate 呈现', '回滚 dialog', 'ReplIot__ 端点'],
   },
+  {
+    id: 'iot-geofence-videowall',
+    title: 'IoT 围栏地图与视频墙页',
+    category: 'business-replication',
+    description:
+      '复刻 IoT 围栏地图与视频墙页（roadmap 21 页 V3，D4 §2.7 桌面整页，新 type 临时形态，绘制/轨迹/流媒体不做交互验收——D4 §6.2 显式收窄）：左 pin 地图设备点位（cluster 关闭，点击点位 → checkFence 判定 + 事件列表按设备过滤）+ 围栏回显 region 地图（geojsonSource action → 圆形围栏 FeatureCollection）+ 围栏事件表（interval 5s 轮询增量）+ timeline 事件流；右 video×4 本地 mp4 样例墙（card 通道名 + 在线状态）+ 通道树 drawer。数据经 /r/ReplIot__ 端点流动，视频资产为 ffmpeg testsrc 程序化生成。',
+    features: ['map pin 点位联动', 'checkFence 判定', '围栏 region 回显', '事件轮询增量', 'timeline 事件流', 'video 视频墙', '通道树 drawer', 'ReplIot__ 端点'],
+  },
 ];

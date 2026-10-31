@@ -1,6 +1,6 @@
 # 818 M3-V3 IoT 围栏地图与视频墙页复刻（business-page-replication roadmap M3-V3）
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-10-31
 > Source: `docs/backlog/business-page-replication-roadmap.md` §2 M3-V3（依赖 M2 done；roadmap 现值 `todo`；交互验收收窄裁决见 roadmap V3 行说明列 + D4 §6.2；本 plan 激活时置 `planned`，收口置 `done`）
 > Related: D1 总体设计；D4 §2.7（V3 页设计）/§3.4（axe 分支 C）/§4.3（iot 模块 V3 端点 + mp4 资产方案）/§5 V3（断言）/§6.2（临时形态边界）；R4 §1 L40、§2 G24-G26、§3 结论 2；plan 816/817（ReplIot 域 + delegate 先例）、plan 814（public/repl-assets 静态资产先例）、map-demo.spec.ts（`__flux_map_<id>` 实例句柄先例）
@@ -55,25 +55,36 @@
 
 ### Phase 1 - V3 页全链实现
 
-Status: planned
+Status: completed
 Targets: `apps/playground/src/complex-pages/shared/mock-backend-repl-iot-v3.ts`（新 delegate）、`mock-backend-repl-iot.ts`（接入）、`shared/render-host`（map 补注册）、`apps/playground/public/repl-assets/sample-clip-{1..4}.mp4` + `sample-poster-{1..4}.png`（新）、`page-schemas/iot-geofence-videowall.json`（新）、`complex-pages-entries.ts`、`tests/e2e/replication-iot-geofence-videowall.spec.ts`（新）、`tests/e2e/a11y-axe-baseline.spec.ts` + `__fixtures__/axe-baseline.json`
 
 - Item Types: `Fix | Proof`
 
-- [ ] mock delegate `mock-backend-repl-iot-v3.ts`：`devicePins`（6 台 `{deviceId,name,latitude,longitude,fenceId}` 投影 pinData `{name,lat,lng,value}`）/`fenceList`（3 个圆形围栏 `{fenceId,fenceName,centerLat,centerLng,radiusMeters}` + FeatureCollection 视图〔toCircleGeojson 多边形近似，properties.name=fenceName〕）/`fenceEvents`（会话事件 `{eventId,deviceId,eventType:'enter'|'exit'|'dwell',ts,distanceMeters}`；`appendFenceEvent(event)` 钩子追加——下一轮询增量）/`checkFence`（post `{deviceId}` → `{deviceId,inside,distanceMeters}`，按设备坐标与所属围栏半径确定性计算；未知 → DEVICE_NOT_FOUND；写镜像 `lastCheckFenceBody`）/`videoChannels`（4 路 `{channelId,name,status:'online',streamUrl:'/repl-assets/sample-clip-N.mp4'}`）
-- [ ] 资产：ffmpeg testsrc 生成 `sample-clip-{1..4}.mp4`（4 路不同 testsrc 参数：testsrc/testsrc2/smptebars/rgbtestsrc，2s，320×180，H.264 yuv420p，静音，单个 <100KB）+ 同源首帧 `sample-poster-{1..4}.png`；生成命令记入执行期适配段
-- [ ] render-host 补注册 `registerMapRenderers`（`apps/playground/src/complex-pages/shared/render-host*`）
-- [ ] schema JSON：data-sources（devicePins / fenceEvents interval 5000 silent / videoChannels）；`grid` 左图右墙 `3fr 2fr`——左：pin 地图（id `iot-geofence-videowall-map`，cluster false，center 设备群中心，onClick → setValue selectedDevice=`${event.name}` + ajax checkFence + setValue fenceCheck=`${result.data}`）+ 判定结果文本 + 围栏回显 region 地图（id `iot-geofence-videowall-fence-map`，geojsonSource action → fenceList FeatureCollection，regionData 按 fenceName）+ 事件 table（source 按 selectedDevice ARRAYFILTER）+ timeline 事件流；右：video-grid 2×2（card 包裹通道名 + status + video controls muted poster）+ 通道树按钮 → drawer（tree videoChannels）；testid `iot-geofence-videowall-<element>`；strict 零诊断
-- [ ] entry（category `business-replication`）
-- [ ] e2e spec（D4 §5 V3）：前置〔两张地图实例句柄在位 + pin 要素数 = 6 + 围栏 region 要素数 = fenceGeojson features 数 3（④）+ 端点计数〕/交互① 经 `__flux_map_<id>` 换算 pin 像素真实点击 → checkFence +1 + 载荷 deviceId + 判定文本（inside/distance）+ 事件列表按设备过滤/交互② 视频墙：`<video>` 计数 = 4 + src 含 `/repl-assets/sample-clip-` + 页内无 iframe/交互③ `appendFenceEvent` → 下一轮询 fenceEvents 计数增长 + 事件行数 +1 + timeline 增长（timeout ≥ interval + 余量）/交互④ 围栏回显要素计数/focus ① map 画布容器 tab 可达抽样 ② video controls 可聚焦 1 条 ③ 通道 drawer 焦点落 tree 首项 + Esc 返回；预期拒绝分支 `allowConsoleErrors` 按 W3 先例登记；`--retries=0`
-- [ ] axe 分支 C 实测：ROUTES 纳入 + 计时；≤30s → JSON 从首跑计数起棘轮；>30s → 排除裁决（ROUTES 移除 + 注释 + `_header.excludedRoutes` 登记 + 耗时证据入执行期适配段）
-- [ ] 验证：focused e2e `--retries=0` 全绿 + axe spec 绿 + replication 全族回归 + strict 校验
+- [x] mock delegate `mock-backend-repl-iot-v3.ts`：`devicePins`（6 台 `{deviceId,name,latitude,longitude,fenceId}` 投影 pinData `{name,lat,lng,value}`）/`fenceList`（3 个圆形围栏 `{fenceId,fenceName,centerLat,centerLng,radiusMeters}` + FeatureCollection 视图〔toCircleGeojson 多边形近似，properties.name=fenceName〕）/`fenceEvents`（会话事件 `{eventId,deviceId,eventType:'enter'|'exit'|'dwell',ts,distanceMeters}`；`appendFenceEvent(event)` 钩子追加——下一轮询增量）/`checkFence`（post `{deviceId}` → `{deviceId,inside,distanceMeters}`，按设备坐标与所属围栏半径确定性计算；未知 → DEVICE_NOT_FOUND；写镜像 `lastCheckFenceBody`）/`videoChannels`（4 路 `{channelId,name,status:'online',streamUrl:'/repl-assets/sample-clip-N.mp4'}`）
+- [x] 资产：ffmpeg testsrc 生成 `sample-clip-{1..4}.mp4`（4 路不同 testsrc 参数：testsrc/testsrc2/smptebars/rgbtestsrc，2s，320×180，H.264 yuv420p，静音，单个 <100KB）+ 同源首帧 `sample-poster-{1..4}.png`；生成命令记入执行期适配段
+- [x] render-host 补注册 `registerMapRenderers`（`apps/playground/src/complex-pages/shared/render-host*`）
+- [x] schema JSON：data-sources（devicePins / fenceEvents interval 5000 silent / videoChannels）；`grid` 左图右墙 `3fr 2fr`——左：pin 地图（id `iot-geofence-videowall-map`，cluster false，center 设备群中心，onClick → setValue selectedDevice=`${event.name}` + ajax checkFence + setValue fenceCheck=`${result.data}`）+ 判定结果文本 + 围栏回显 region 地图（id `iot-geofence-videowall-fence-map`，geojsonSource action → fenceList FeatureCollection，regionData 按 fenceName）+ 事件 table（source 按 selectedDevice ARRAYFILTER）+ timeline 事件流；右：video-grid 2×2（card 包裹通道名 + status + video controls muted poster）+ 通道树按钮 → drawer（tree videoChannels）；testid `iot-geofence-videowall-<element>`；strict 零诊断
+- [x] entry（category `business-replication`）
+- [x] e2e spec（D4 §5 V3）：前置〔两张地图实例句柄在位 + pin 要素数 = 6 + 围栏 region 要素数 = fenceGeojson features 数 3（④）+ 端点计数〕/交互① 经 `__flux_map_<id>` 换算 pin 像素真实点击 → checkFence +1 + 载荷 deviceId + 判定文本（inside/distance）+ 事件列表按设备过滤/交互② 视频墙：`<video>` 计数 = 4 + src 含 `/repl-assets/sample-clip-` + 页内无 iframe/交互③ `appendFenceEvent` → 下一轮询 fenceEvents 计数增长 + 事件行数 +1 + timeline 增长（timeout ≥ interval + 余量）/交互④ 围栏回显要素计数/focus ① map 画布容器 tab 可达抽样 ② video controls 可聚焦 1 条 ③ 通道 drawer 焦点落 tree 首项 + Esc 返回；（勘误：D4 §5 V3 清单无拒绝分支断言，spec 全部测试零 console 容差收尾——`allowConsoleErrors` 未使用；DEVICE_NOT_FOUND 仅 mock 层实现）；`--retries=0`
+- [x] axe 分支 C 实测：ROUTES 纳入 + 计时；≤30s → JSON 从首跑计数起棘轮；>30s → 排除裁决（ROUTES 移除 + 注释 + `_header.excludedRoutes` 登记 + 耗时证据入执行期适配段）
+- [x] 验证：focused e2e `--retries=0` 全绿 + axe spec 绿 + replication 全族回归 + strict 校验
+
+执行期适配（以 live 为准；D4 §2.7「V3 实现勘误」11 条 + §5 就地注；评审逐名六项全部落档为勘误 1-6）：
+
+- **离线确定性底图**：缺省 OSM 瓦片在 e2e 网络沙箱被拒（`net::ERR_CONNECTION_REFUSED` ×12 计入 console.error）→ 两张地图 `basemap.url` 指向本地空白瓦片 `public/repl-assets/map-tile-blank.png`（ffmpeg color 源生成），不扩大 fixtures known-noise 口径（勘误 7）。
+- **点位叠压**：DEV-1001/DEV-1002 在 zoom 9 下约 5px 间距、点击命中上层点位 → DEV-1002 外移至 31.24/121.65（仍在 800m 围栏外，判定语义不变）（勘误 3）。
+- **资产生成命令**（可复现）：`ffmpeg -f lavfi -i "<testsrc|testsrc2|smptebars|rgbtestsrc>=size=320x180:rate=15:duration=2" -c:v libx264 -pix_fmt yuv420p -an -preset veryslow -crf 30 -movflags +faststart sample-clip-N.mp4`（3-21KB）+ 同源单帧 `sample-poster-N.png`（勘误 9）。
+- **axe 分支 C**：首跑 axe analyze ≈650 ms（≪30 s）→ 纳入棘轮，基线 aria-required-attr 5 + color-contrast 8（勘误 10）。
+- **scanner 名称碰撞**：`find-non-retained-renderer-references` 158→160（flux geo `map` ×2 被误判为 matrix L225 遗留 AMIS mapping 别名）→ `scripts/baselines/scanner-baselines.json` 手工登记 + reRegistrationNotes（勘误 11）。
+- **improvement 登记**：pin+geojson 单图叠加候选写入 `docs/components/existing-components-improvement-analysis.md` §3（地图族 P3，demand-gated）。
+- timeline/tree 由 mock 投影（formula 无对象字面量，勘误 8）；video 断言改读 `HTMLVideoElement.controls` 属性（布尔属性匹配器口径）。
+- 收口时点 `pnpm check` 唯一红为并行会话未跟踪 `scripts/__tests__/check-test-barrels.test.ts`（check:test-barrels），本 diff 零触达。
 
 Exit Criteria:
 
-- [ ] V3 页可达可交互且列表页收录，strict validation 零诊断
-- [ ] focused e2e `--retries=0` 全绿（`__replIotCalls` 计数 + checkFence 写镜像 + 轮询增量断言在；视频墙存在性 + 无 iframe 断言在）
-- [ ] axe 分支 C 裁决落地（纳入棘轮或排除登记，二选一且附耗时证据）
+- [x] V3 页可达可交互且列表页收录，strict validation 零诊断
+- [x] focused e2e `--retries=0` 全绿（`__replIotCalls` 计数 + checkFence 写镜像 + 轮询增量断言在；视频墙存在性 + 无 iframe 断言在）
+- [x] axe 分支 C 裁决落地（纳入棘轮或排除登记，二选一且附耗时证据）
 
 ## Draft Review Record
 
@@ -84,17 +95,17 @@ Exit Criteria:
 
 ## Closure Gates
 
-- [ ] in-scope 工作全部落地（V3 页 + ReplIot V3 段 + 资产 + map 补注册 + roadmap 回写）
-- [ ] 行为/契约结果已达成（D4 §5 V3 断言清单全绿，`--retries=0`）
-- [ ] 必要 focused verification 已完成
-- [ ] 不存在被静默降级的 in-scope 缺口（收窄项均有 D4 §6.2 显式裁决出处）
-- [ ] 受影响 owner docs 已同步（daily log；D4 §2.7/§4.3/§5/§6.2 勘误逐名六项；improvement-analysis map 族候选登记）
-- [ ] 独立子 agent（fresh session）closure audit 通过并记录证据
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
-- [ ] `pnpm check`（零新增未登记命中）
+- [x] in-scope 工作全部落地（V3 页 + ReplIot V3 段 + 资产 + map 补注册 + roadmap 回写）
+- [x] 行为/契约结果已达成（D4 §5 V3 断言清单全绿，`--retries=0`：focused 7/7）
+- [x] 必要 focused verification 已完成（focused 7/7 + axe 28/28〔分支 C 纳入〕+ strict 65/65 + playground unit 567/567；replication 全族 203/204，唯一失败 C2 calendar 既有时区窗口红）
+- [x] 不存在被静默降级的 in-scope 缺口（收窄项均有 D4 §6.2 显式裁决出处）
+- [x] 受影响 owner docs 已同步（daily log；D4 §2.7 V3 勘误 11 条——含评审逐名六项 + §5 就地注；improvement-analysis 地图族候选登记；scanner-baselines 登记）
+- [x] 独立子 agent（fresh session）closure audit 通过并记��证据（agent_c0f9ab08，approved）
+- [x] `pnpm typecheck`（exit 0）
+- [x] `pnpm build`（exit 0）
+- [x] `pnpm lint`（exit 0）
+- [x] `pnpm test`（exit 0，86/86；playground unit 567/567）
+- [x] `pnpm check`（本 diff 零新增未登记命中：scanner 名称碰撞 +2 已登记；执行时点残留红 check:test-barrels 为并行会话未跟踪文件——closure audit 时点已被并行会话落地消除，复跑 exit 0）
 
 ## Deferred But Adjudicated
 
@@ -105,6 +116,13 @@ Exit Criteria:
 - Successor Required: `yes`
 - Successor Path: roadmap M3-P1 开发阶段深度审计
 
+### 并行会话 check:test-barrels 红
+
+- Classification: `watch-only residual`
+- Why Not Blocking Closure: `scripts/__tests__/check-test-barrels.test.ts`（未跟踪）属并行会话 830-836 队列 WIP，本 plan 零触达；plan 817 closure audit 亦已独立指认同一归因。
+- Successor Required: `no`
+- Successor Path: 不适用（归并行会话自有收口义务）
+
 ## Non-Blocking Follow-ups
 
 - 全量 test:e2e 归 P1 阶段
@@ -112,13 +130,13 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: 待收口填写
+Status Note: V3 页全链落地（ReplIot V3 delegate 五端点 + mp4/poster/空白瓦片资产 + render-host map 补注册 + schema strict 零诊断 + entry + focused e2e 7 测试 + axe 分支 C 实测纳入棘轮），D4 §5 V3 断言清单（①-④ + focus 三条）全部 `--retries=0` 实跑通过；D4 §6.2 收窄（绘制/轨迹/流媒体）原样保留、无静默删功能；评审逐名六项 + 执行期五项共 11 条勘误就地落档；pin+围栏单图叠加登记 improvement 地图族候选；scanner 名称碰撞 +2 登记。独立 closure audit approved，无剩余 plan-owned work。M3 六个复刻页（S2/O1/O2/V1/V2/V3）至此全部收口。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: 待独立子 agent 填写
-- Evidence: 待填写
+- Auditor / Agent: 独立 fresh sub-agent（agent_c0f9ab08-f0dc-462f-822c-655cb8c67689）
+- Evidence: verdict **approved**（零 Blocker / 零 Major / 3 Minor）。审计员独立实跑 focused 7/7、axe `-g geofence` 绿、strict 65/65、scanner Found 160（命中恰为本页两处 map）、`pnpm check` exit 0、typecheck/lint exit 0、playground unit 567/567、replication 全族（C2 既有红复现 + S1 负载抖动单跑复绿）；资产体积与可复现命令双落档核验；离线底图未扩大 known-noise。Minor-①（plan e2e 条目「allowConsoleErrors 按 W3 登记」措辞超出 live）——已就地勘误；Minor-②（S1 负载抖动，同 817 M1 族）——非本 plan 触达面，归 P1 flake 面复核；Minor-③（check 红时点描述）——已刷新。
 
 Follow-up:
 
-- 待收口填写
+- no remaining plan-owned work（Non-Blocking：全量 test:e2e、C2 calendar 时区窗口根因、replication 族负载抖动面〔M1/S1〕归 M3-P1；map pin+geojson 叠加归 improvement 地图族候选）

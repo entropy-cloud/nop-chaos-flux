@@ -126,5 +126,10 @@
     "aria-required-attr": 10,
     "color-contrast": 9,
     "_notes": "plan 817 first-run measurement 2026-11-01 (D1 §4 branch A registration): counts measured on #/complex-pages/iot-ota-rollout. aria-allowed-attr = the checkbox-group wrapper (role=group) carrying aria-required=\"true\" — ARIA does not allow aria-required on role=group (flux-renderers-form checkbox-group owner debt; required semantics should move to the inputs or be conveyed via description); aria-required-attr = the firmware crud + progress matrix tables' 10 column-resize separator spans (table component owner debt); color-contrast = the 9 shell header badges (secondary badge family). Fixes belong to the component owners, not the page schema."
+  },
+  "complex-pages/iot-geofence-videowall": {
+    "aria-required-attr": 5,
+    "color-contrast": 8,
+    "_notes": "plan 818 first-run measurement 2026-11-01 (D4 §3.4 branch C: measured first — axe analyze took ~650 ms, far below the 30 s exclusion threshold, so the route joins the ratchet rather than the map-demo excludedRoutes path). aria-required-attr = the fence-event table's 5 column-resize separator spans (table component owner debt); color-contrast = the 8 shell header badges (secondary badge family). The two OL map canvases (local blank basemap tile) and the 4 video elements report no violations. Fixes belong to the component owners."
   }
 }

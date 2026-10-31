@@ -14,6 +14,7 @@ import { registerSchedulingRenderers } from '@nop-chaos/flux-renderers-schedulin
 import { registerAiRenderers } from '@nop-chaos/flux-renderers-ai';
 import { registerMobileRenderers } from '@nop-chaos/flux-renderers-mobile';
 import { registerScadaRenderers } from '@nop-chaos/flux-renderers-industrial/runtime';
+import { registerMapRenderers } from '@nop-chaos/flux-renderers-map';
 import { registerFlowDesignerRenderers } from '@nop-chaos/flow-designer-renderers';
 import type { ActionScope, RendererEnv } from '@nop-chaos/flux-core';
 import { ConfirmHost } from './confirm-bridge';
@@ -44,6 +45,11 @@ registerDashboardRenderers(registry);
 // renderer — the registration gap is the same shape the pivot/dashboard
 // families had (the scada demo page registers its own copy).
 registerScadaRenderers(registry);
+// Map family (plan 818 V3): the geofence page is the first complex-pages
+// consumer of the `map` renderer (registerMapRenderers was only wired in
+// App.tsx / map-demo before — same registration-gap shape as
+// pivot/dashboard/scada).
+registerMapRenderers(registry);
 registerFlowDesignerRenderers(registry);
 
 function toNumber(value: unknown): number {

@@ -152,6 +152,8 @@ drawer 缺 `closeOnOutside`（与 dialog 不对称 bug）；两者缺 `closeOnEs
 > 2026-10-30 勘误（D5 深审）：本行 button "不采纳 amis level/hotKey/countDown/isMenuItem" 中的 countDown/countDownTpl 两 props 已被 `docs/components/button/design.md` L31 决策表（2026-08-03）推翻——live `flux-renderers-basic/src/schemas.ts` L324-327 声明且 button.tsx L86-101 真实消费（含 countDownStorage 契约）。§5 L186 同；其余不采纳项维持。历史行不改写、就地附注。
 > | 代码/结构/杂项族 | `code-editor`(P2) `data-source`(P2) `dynamic-renderer`(P2) `text`(P2) `icon`(P2) `loop`/`recurse`/`fragment`/`reaction`(P3) `badge`(P3) | code-editor: diff 模式+语言扩展+editorDidMount；data-source: 统一请求层增强(sendOn/initFetch gate/生命周期事件，见 X4)；text: 事件/copyable/maxLine/placeholder；icon: schema size/color（修硬编码 size=16 违背 design）；loop: maxLength 安全上限+对象迭代 |
 
+> 2026-11-01 登记（plan 818 V3 复刻实证）：**地图族 `map`(P3) 候选**——pin 模式不消费 geojson（`flux-renderers-map/src/map-renderer.tsx` L238 geojson 仅 region 模式），单图无法「设备点位 + 围栏面」叠加；V3 页以同页第二张 region 地图承载围栏回显。改进方向：pin 模式可选叠加 geojson 面图层（围栏/区域边界，非交互）。demand-gated，只登记不越权（retention 权威在 amis-baseline-matrix；注意 matrix L225 的 `map` 行指遗留 AMIS mapping 别名，与 flux geo `map` 渲染器同名不同物）。
+
 **Flux 优于 amis 的组件（结构性优势，不掩盖）：** `loop`（强于 amis Each）、`recurse`/`fragment`/`reaction`（amis 无对应物）、`data-source`（统一 source 模型）、action graph（优于 amis 散落 actionType）。
 
 ---

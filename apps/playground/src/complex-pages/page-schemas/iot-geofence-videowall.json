@@ -1,0 +1,469 @@
+{
+  "type": "page",
+  "body": [
+    {
+      "type": "data-source",
+      "id": "iot-geofence-videowall-pins-source",
+      "name": "devicePins",
+      "action": "ajax",
+      "args": {
+        "url": "/r/ReplIot__devicePins",
+        "method": "get"
+      },
+      "testid": "iot-geofence-videowall-pins-source"
+    },
+    {
+      "type": "data-source",
+      "id": "iot-geofence-videowall-fences-source",
+      "name": "fenceList",
+      "action": "ajax",
+      "args": {
+        "url": "/r/ReplIot__fenceList",
+        "method": "get"
+      },
+      "testid": "iot-geofence-videowall-fences-source"
+    },
+    {
+      "type": "data-source",
+      "id": "iot-geofence-videowall-events-source",
+      "name": "fenceEvents",
+      "action": "ajax",
+      "args": {
+        "url": "/r/ReplIot__fenceEvents",
+        "method": "get"
+      },
+      "interval": 5000,
+      "silent": true,
+      "initFetch": true,
+      "testid": "iot-geofence-videowall-events-source"
+    },
+    {
+      "type": "data-source",
+      "id": "iot-geofence-videowall-channels-source",
+      "name": "videoChannels",
+      "action": "ajax",
+      "args": {
+        "url": "/r/ReplIot__videoChannels",
+        "method": "get"
+      },
+      "testid": "iot-geofence-videowall-channels-source"
+    },
+    {
+      "type": "flex",
+      "direction": "column",
+      "gap": 10,
+      "testid": "iot-geofence-videowall-root",
+      "body": [
+        {
+          "type": "grid",
+          "testid": "iot-geofence-videowall-grid",
+          "columns": "3fr 2fr",
+          "gap": 16,
+          "alignItems": "start",
+          "items": [
+            {
+              "body": [
+                {
+                  "type": "flex",
+                  "direction": "column",
+                  "gap": 10,
+                  "testid": "iot-geofence-videowall-map-pane",
+                  "body": [
+                    {
+                      "type": "text",
+                      "text": "设备点位（点击点位进行围栏判定）",
+                      "className": "text-sm font-medium"
+                    },
+                    {
+                      "type": "map",
+                      "id": "iot-geofence-videowall-map",
+                      "testid": "iot-geofence-videowall-map",
+                      "mapType": "pin",
+                      "pinData": "${devicePins?.pinData ?? []}",
+                      "cluster": false,
+                      "center": [121.76, 31.13],
+                      "zoom": 9,
+                      "height": 360,
+                      "onClick": [
+                        {
+                          "action": "setValue",
+                          "args": {
+                            "path": "selectedDevice",
+                            "value": "${event.name}"
+                          }
+                        },
+                        {
+                          "action": "ajax",
+                          "args": {
+                            "url": "/r/ReplIot__checkFence",
+                            "method": "post",
+                            "data": {
+                              "deviceId": "${event.name}"
+                            }
+                          },
+                          "then": [
+                            {
+                              "action": "setValue",
+                              "args": {
+                                "path": "fenceCheck",
+                                "value": "${result.data}"
+                              }
+                            }
+                          ],
+                          "onError": [
+                            {
+                              "action": "showToast",
+                              "args": {
+                                "level": "error",
+                                "message": "围栏判定失败（${error?.message ?? 'UNKNOWN'}）"
+                              }
+                            }
+                          ]
+                        }
+                      ],
+                      "basemap": {
+                        "type": "xyz",
+                        "url": "/repl-assets/map-tile-blank.png"
+                      }
+                    },
+                    {
+                      "type": "text",
+                      "testid": "iot-geofence-videowall-fence-check",
+                      "visible": "${!!fenceCheck}",
+                      "className": "text-sm",
+                      "text": "设备 ${fenceCheck?.deviceId ?? '-'} · ${fenceCheck?.fenceName ?? '-'} · ${fenceCheck?.inside ? '围栏内' : '围栏外'} · 距中心 ${fenceCheck?.distanceMeters ?? '-'} m"
+                    },
+                    {
+                      "type": "text",
+                      "text": "电子围栏回显（圆形围栏，非交互）",
+                      "className": "text-sm font-medium"
+                    },
+                    {
+                      "type": "map",
+                      "id": "iot-geofence-videowall-fence-map",
+                      "testid": "iot-geofence-videowall-fence-map",
+                      "mapType": "region",
+                      "geojsonSource": {
+                        "action": "ajax",
+                        "args": {
+                          "url": "/r/ReplIot__fenceList",
+                          "method": "get",
+                          "params": {
+                            "view": "geojson"
+                          }
+                        }
+                      },
+                      "regionData": "${fenceList?.regionData ?? []}",
+                      "center": [121.76, 31.13],
+                      "zoom": 9,
+                      "height": 240,
+                      "basemap": {
+                        "type": "xyz",
+                        "url": "/repl-assets/map-tile-blank.png"
+                      }
+                    },
+                    {
+                      "type": "flex",
+                      "direction": "row",
+                      "gap": 8,
+                      "className": "items-center",
+                      "body": [
+                        {
+                          "type": "text",
+                          "text": "围栏事件",
+                          "className": "text-sm font-medium"
+                        },
+                        {
+                          "type": "text",
+                          "testid": "iot-geofence-videowall-event-filter",
+                          "className": "text-xs text-muted-foreground",
+                          "text": "${selectedDevice ? '已按 ' + selectedDevice + ' 过滤' : '全部设备'}"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "table",
+                      "testid": "iot-geofence-videowall-events",
+                      "source": "${ARRAYFILTER(fenceEvents?.items ?? [], e => !selectedDevice || e.deviceId == selectedDevice)}",
+                      "itemKey": "eventId",
+                      "pagination": {
+                        "enabled": false
+                      },
+                      "columns": [
+                        {
+                          "name": "eventId",
+                          "label": "事件",
+                          "width": 90
+                        },
+                        {
+                          "name": "deviceId",
+                          "label": "设备",
+                          "width": 100
+                        },
+                        {
+                          "name": "eventType",
+                          "label": "类型",
+                          "width": 90,
+                          "cell": {
+                            "type": "status",
+                            "value": "${eventType}",
+                            "labelMap": {
+                              "enter": "进入",
+                              "exit": "离开",
+                              "dwell": "驻留"
+                            },
+                            "levelMap": {
+                              "enter": "success",
+                              "exit": "warning",
+                              "dwell": "info"
+                            }
+                          }
+                        },
+                        {
+                          "name": "ts",
+                          "label": "时间",
+                          "width": 130
+                        },
+                        {
+                          "name": "distanceMeters",
+                          "label": "距中心(m)",
+                          "width": 100
+                        }
+                      ],
+                      "empty": {
+                        "type": "text",
+                        "text": "暂无围栏事件"
+                      }
+                    },
+                    {
+                      "type": "timeline",
+                      "testid": "iot-geofence-videowall-timeline",
+                      "items": "${fenceEvents?.timeline ?? []}",
+                      "reverse": true
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "body": [
+                {
+                  "type": "flex",
+                  "direction": "column",
+                  "gap": 10,
+                  "testid": "iot-geofence-videowall-wall-pane",
+                  "body": [
+                    {
+                      "type": "flex",
+                      "direction": "row",
+                      "gap": 8,
+                      "className": "items-center justify-between",
+                      "body": [
+                        {
+                          "type": "text",
+                          "text": "视频墙（本地 mp4 样例流）",
+                          "className": "text-sm font-medium"
+                        },
+                        {
+                          "type": "button",
+                          "label": "通道列表",
+                          "variant": "outline",
+                          "testid": "iot-geofence-videowall-channels-open",
+                          "onClick": {
+                            "action": "openDrawer",
+                            "args": {
+                              "title": "视频通道",
+                              "testid": "iot-geofence-videowall-channel-drawer",
+                              "side": "right",
+                              "body": [
+                                {
+                                  "type": "tree",
+                                  "testid": "iot-geofence-videowall-channel-tree",
+                                  "label": "视频通道",
+                                  "data": "${videoChannels?.tree ?? []}",
+                                  "labelField": "name",
+                                  "keyField": "id",
+                                  "childrenKey": "children",
+                                  "initiallyExpanded": true
+                                },
+                                {
+                                  "type": "text",
+                                  "className": "text-xs text-muted-foreground",
+                                  "text": "点播控制仅 UI 摆放（流媒体交互不做验收，D4 §6.2）"
+                                }
+                              ]
+                            }
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "type": "grid",
+                      "testid": "iot-geofence-videowall-video-grid",
+                      "columns": 2,
+                      "gap": 10,
+                      "items": [
+                        {
+                          "body": [
+                            {
+                              "type": "card",
+                              "testid": "iot-geofence-videowall-channel-1",
+                              "title": "张江园区北门（CH-01）",
+                              "body": [
+                                {
+                                  "type": "flex",
+                                  "direction": "column",
+                                  "gap": 6,
+                                  "body": [
+                                    {
+                                      "type": "status",
+                                      "value": "online",
+                                      "labelMap": {
+                                        "online": "在线"
+                                      },
+                                      "levelMap": {
+                                        "online": "success"
+                                      }
+                                    },
+                                    {
+                                      "type": "video",
+                                      "testid": "iot-geofence-videowall-video-1",
+                                      "src": "/repl-assets/sample-clip-1.mp4",
+                                      "poster": "/repl-assets/sample-poster-1.png",
+                                      "controls": true,
+                                      "muted": true,
+                                      "loop": true,
+                                      "width": "100%"
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "body": [
+                            {
+                              "type": "card",
+                              "testid": "iot-geofence-videowall-channel-2",
+                              "title": "外高桥仓装卸区（CH-02）",
+                              "body": [
+                                {
+                                  "type": "flex",
+                                  "direction": "column",
+                                  "gap": 6,
+                                  "body": [
+                                    {
+                                      "type": "status",
+                                      "value": "online",
+                                      "labelMap": {
+                                        "online": "在线"
+                                      },
+                                      "levelMap": {
+                                        "online": "success"
+                                      }
+                                    },
+                                    {
+                                      "type": "video",
+                                      "testid": "iot-geofence-videowall-video-2",
+                                      "src": "/repl-assets/sample-clip-2.mp4",
+                                      "poster": "/repl-assets/sample-poster-2.png",
+                                      "controls": true,
+                                      "muted": true,
+                                      "loop": true,
+                                      "width": "100%"
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "body": [
+                            {
+                              "type": "card",
+                              "testid": "iot-geofence-videowall-channel-3",
+                              "title": "临港 AGV 通道（CH-03）",
+                              "body": [
+                                {
+                                  "type": "flex",
+                                  "direction": "column",
+                                  "gap": 6,
+                                  "body": [
+                                    {
+                                      "type": "status",
+                                      "value": "online",
+                                      "labelMap": {
+                                        "online": "在线"
+                                      },
+                                      "levelMap": {
+                                        "online": "success"
+                                      }
+                                    },
+                                    {
+                                      "type": "video",
+                                      "testid": "iot-geofence-videowall-video-3",
+                                      "src": "/repl-assets/sample-clip-3.mp4",
+                                      "poster": "/repl-assets/sample-poster-3.png",
+                                      "controls": true,
+                                      "muted": true,
+                                      "loop": true,
+                                      "width": "100%"
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "body": [
+                            {
+                              "type": "card",
+                              "testid": "iot-geofence-videowall-channel-4",
+                              "title": "配电房（CH-04）",
+                              "body": [
+                                {
+                                  "type": "flex",
+                                  "direction": "column",
+                                  "gap": 6,
+                                  "body": [
+                                    {
+                                      "type": "status",
+                                      "value": "online",
+                                      "labelMap": {
+                                        "online": "在线"
+                                      },
+                                      "levelMap": {
+                                        "online": "success"
+                                      }
+                                    },
+                                    {
+                                      "type": "video",
+                                      "testid": "iot-geofence-videowall-video-4",
+                                      "src": "/repl-assets/sample-clip-4.mp4",
+                                      "poster": "/repl-assets/sample-poster-4.png",
+                                      "controls": true,
+                                      "muted": true,
+                                      "loop": true,
+                                      "width": "100%"
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

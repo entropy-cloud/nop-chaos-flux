@@ -391,6 +391,20 @@ HITL 卡复用口径（R3 L30）：`ai-tool-call` 为 AI 会话语境卡，inbox
 }
 ```
 
+#### V3 实现勘误（M3 落地实证 2026-11-01，plan 818；以 live 为准）
+
+1. **片段① geojsonSource 为 action**：MapSchema.geojsonSource 是 ActionSchema（非表达式，`"${fenceGeojson}"` 写法不成立）；action 结果须为 FeatureCollection **本体**（`sanitizeGeojsonActionResult`）→ mock `fenceList?view=geojson` 直接返回 FeatureCollection。
+2. **pin 模式不消费 geojson**：`map-renderer.tsx` L238 geojson 仅 region 模式使用——pin 地图无法叠加围栏；围栏回显改为同页第二张 `region` 模式地图（geojsonSource → 3 个圆形围栏 32 边形近似，regionData 按 fenceName 着色）；pin+围栏单图叠加登记 `docs/components/existing-components-improvement-analysis.md` §3 map 族候选（只登记不越权）。
+3. **pin 点击 e2e**：实例句柄 `window.__flux_map_<schema id>`（键为 schema id 非 testid）→ VectorLayer 要素坐标 `getPixelFromCoordinate` 换算视口像素真实点击；cluster 关闭（多成员聚合点击只放大不派发）；相邻点位在 zoom 9 下需 ≥ 约 20px 间距防叠压误命中（DEV-1002 外移至 31.24/121.65，仍在 800m 围栏外）。
+4. **fenceList 取用面**：默认视图 `{fences, regionData, fenceGeojson}` 供 region 着色，`?view=geojson` 供 geojsonSource。
+5. **map 补注册**：complex-pages 渲染宿主（`shared/render-host.tsx`）补 `registerMapRenderers`（此前仅 App.tsx/map-demo 注册——pivot/dashboard/scada 同型注册缺口）。
+6. **片段① checkFence 载荷 `${event.value}` → `${event.name}`**：pin 点击 payload.name 取自 pinData.name（= deviceId），value 不承载设备键；onClick 数组链 setValue selectedDevice → ajax checkFence → setValue fenceCheck，事件表 ARRAYFILTER 按 selectedDevice 过滤。
+7. **离线确定性底图**：两张地图 `basemap.url` 指向本地空白瓦片 `/repl-assets/map-tile-blank.png`——缺省 OSM 瓦片在 e2e 网络沙箱被拒（`net::ERR_CONNECTION_REFUSED` 计入 console.error），不扩大 known-noise 口径。
+8. **timeline/tree 投影**：formula 无对象字面量（§2.1 S1 勘误 2 同源）→ fenceEvents 返回 `timeline`、videoChannels 返回 `tree` 投影。
+9. **§4.3 mp4 资产落地**：ffmpeg 8.1 testsrc/testsrc2/smptebars/rgbtestsrc 生成 `sample-clip-{1..4}.mp4`（2s/320×180/H.264 yuv420p/静音，3-21KB）+ 同源 `sample-poster-{1..4}.png`；命令：`ffmpeg -f lavfi -i "<src>=size=320x180:rate=15:duration=2" -c:v libx264 -pix_fmt yuv420p -an -preset veryslow -crf 30 -movflags +faststart sample-clip-N.mp4`。
+10. **§3.4 分支 C 裁决**：首跑实测 axe analyze ≈650 ms（≪30 s 阈值）→ 纳入棘轮（非排除）：aria-required-attr 5（事件表列宽 separator）+ color-contrast 8（壳头部 badge）；两张 OL 画布与 4 路 video 零违规。
+11. **scanner 名称碰撞**：`find-non-retained-renderer-references` 把 flux geo `map` 误判为 amis-baseline-matrix L225 的遗留 AMIS `map`（mapping 别名）→ 基线 158→160 登记（scanner-baselines.json reRegistrationNotes）。
+
 ## 3. R4 对照与双向核对
 
 ### 3.1 R4 §1 → 本设计组合对照
@@ -546,6 +560,7 @@ HITL 卡复用口径（R3 L30）：`ai-tool-call` 为 AI 会话语境卡，inbox
 **V3 iot-geofence-videowall**（axe 分支 C：先纳入实测→>30s 切排除→排除≠功能验收排除，§3.4）
 
 - 交互：① pin 点击联动：pin feature click→checkFence 计数+1+事件列表按 deviceKey 过滤/详情更新；② 视频墙存在性：video-grid 内 `<video>` 计数=4+src 含 `/repl-assets/sample-clip-`+无 iframe 元素断言；③ 事件轮询增量：`appendFenceEvent`→下一轮询行数+1+timeline 增长；④ 围栏回显：map geojson 图层 feature 计数=fenceGeojson features 数。
+  - plan 818 落地勘误（2026-11-01，详见 §2.7「V3 实现勘误」）：① pin 经 `__flux_map_<id>` 像素真实点击、载荷 event.name（勘误 3/6）；④ 围栏回显为第二张 region 地图（勘误 2）；axe 分支 C 实测纳入棘轮（勘误 10）。
 - 义务：axe 耗时证据与决定记入 M3 验收计划（§3.4）。
 - focus：map 画布容器 tab 可达抽样；video controls focus 1 条；通道 drawer 焦点落 tree 首项+Esc 返回。
 
