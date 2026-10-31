@@ -35,6 +35,7 @@ describe('PrintPreview', () => {
     fireEvent.click(screen.getByLabelText('预览'));
     const frame = screen.getByTestId('print-preview-frame') as HTMLIFrameElement;
     expect(frame.srcdoc).toContain('Acme 贸易');
+    expect(frame.getAttribute('sandbox')).toBe('allow-same-origin');
     expect(screen.getByTestId('print-preview-page-count').textContent).toBe('1');
   });
 

@@ -1,16 +1,15 @@
 import type { SpreadsheetDocument, SpreadsheetCellRef } from '../types.js';
 import { cellAddress } from '../types.js';
 import type { FindResult } from '../commands.js';
+import { isBacktrackingSafePattern } from '@nop-chaos/flux-core';
 import { ensureSheetCells, replaceSheet } from './document-access.js';
-
-const UNSAFE_REGEX_PATTERN = /(\([^)]*[+*][^)]*\)[+*])|(\.\*)|(\.\+)|(\[[^\]]*\][+*]\+?)/;
 
 function hasSearchQuery(query: string) {
   return query.length > 0;
 }
 
 function createSearchRegex(query: string, matchCase?: boolean) {
-  if (!hasSearchQuery(query) || UNSAFE_REGEX_PATTERN.test(query)) {
+  if (!hasSearchQuery(query) || !isBacktrackingSafePattern(query)) {
     return null;
   }
 

@@ -13,6 +13,10 @@ export interface PrintPrintOptions extends RenderHtmlOptions {
 /** 隐藏打印 iframe 挂载：写入 srcdoc 并返回元素（单独导出便于测试注入）。 */
 export function mountPrintFrame(html: string, doc: Document = document): HTMLIFrameElement {
   const iframe = doc.createElement('iframe');
+  // Same-origin is required so the host can read contentDocument and call
+  // contentWindow.print(); allow-modals keeps print() user-visible instead of
+  // silently ignored (sandboxed documents without it are print-blocked).
+  iframe.setAttribute('sandbox', 'allow-same-origin allow-modals');
   iframe.setAttribute('style', 'position:fixed;right:0;bottom:0;width:0;height:0;border:0;');
   iframe.title = 'print-frame';
   iframe.setAttribute('data-print-frame', '');

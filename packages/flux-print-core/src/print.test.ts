@@ -33,6 +33,11 @@ describe('mountPrintFrame / printFrame', () => {
     expect(iframe.getAttribute('style')).toContain('width:0');
   });
 
+  it('sandboxes the print frame: same-origin for host print access, modals for print(), no scripts', () => {
+    const iframe = mountPrintFrame(renderHtml());
+    expect(iframe.getAttribute('sandbox')).toBe('allow-same-origin allow-modals');
+  });
+
   it('calls window.print on the frame window and cleans up', () => {
     const iframe = mountPrintFrame(renderHtml());
     const printSpy = vi.fn();

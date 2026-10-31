@@ -104,6 +104,7 @@ export { validationErrorsEqual } from './utils/validation-utils.js';
 export { normalizeInstancePath } from './utils/instance-path.js';
 export { cancelPendingDebounce, scheduleDebounce } from './utils/debounce.js';
 export { isSafeNavigationUrl } from './utils/url.js';
+export { isBacktrackingSafePattern } from './utils/safe-regex.js';
 export type { SafeNavigationUrlOptions } from './utils/url.js';
 export { composeAbortSignals } from './utils/abort-signals.js';
 export type { AbortSignalLike } from './utils/abort-signals.js';

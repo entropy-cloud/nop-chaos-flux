@@ -3,8 +3,12 @@
 // (DOMPurify's reference DOM) to assert true sanitization behavior.
 // @vitest-environment jsdom
 
+import { createElement } from 'react';
+import { render } from '@testing-library/react';
+import ReactMarkdown from 'react-markdown';
+import rehypeRaw from 'rehype-raw';
 import { describe, expect, it } from 'vitest';
-import { isSafeNavigationUrl, sanitizeHtml } from './sanitize.js';
+import { isSafeNavigationUrl, rehypeStripUnsafeHtml, sanitizeHtml } from './sanitize.js';
 
 describe('sanitizeHtml — controlled HTML sanitization gate', () => {
   it('strips <script> tags entirely', () => {
@@ -122,5 +126,51 @@ describe('isSafeNavigationUrl — URL protocol allowlist for navigation hrefs', 
     // the download channel never unlocks script-execution schemes
     expect(isSafeNavigationUrl('javascript:alert(1)', { download: true })).toBe(false);
     expect(isSafeNavigationUrl('file:///etc/passwd', { download: true })).toBe(false);
+  });
+});
+
+describe('rehypeStripUnsafeHtml', () => {
+  function element(tagName: string, properties: Record<string, unknown> = {}, children: unknown[] = []) {
+    return { type: 'element', tagName, properties, children };
+  }
+
+  it('removes executable elements, event-handler properties and unsafe URLs from the parsed tree', () => {
+    const tree = {
+      type: 'root',
+      children: [
+        element('script', {}, [{ type: 'text', value: 'alert(1)' }]),
+        element('p', { className: ['note'] }, [
+          element('img', { src: 'x', onError: 'alert(1)', onerror: 'alert(2)', alt: 'pic' }),
+          element('a', { href: 'javascript:alert(1)' }, [{ type: 'text', value: 'bad' }]),
+          element('a', { href: 'https://example.com', title: 't' }, [{ type: 'text', value: 'ok' }]),
+          element('iframe', { srcDoc: '<script>alert(1)</script>' }),
+        ]),
+        element('style', {}, [{ type: 'text', value: 'body{}' }]),
+      ],
+    };
+
+    rehypeStripUnsafeHtml()(tree as never);
+
+    expect(tree.children.map((child) => child.tagName)).toEqual(['p']);
+    const paragraph = tree.children[0] as ReturnType<typeof element>;
+    const [img, badLink, goodLink] = paragraph.children as ReturnType<typeof element>[];
+    expect(paragraph.children).toHaveLength(3);
+    expect(paragraph.properties).toEqual({ className: ['note'] });
+    expect(img.properties).toEqual({ src: 'x', alt: 'pic' });
+    expect(badLink.properties).toEqual({});
+    expect(goodLink.properties).toEqual({ href: 'https://example.com', title: 't' });
+  });
+
+  it('strips unsanitized raw HTML that reaches react-markdown through rehype-raw', () => {
+    const { container } = render(
+      createElement(
+        ReactMarkdown,
+        { rehypePlugins: [rehypeRaw, rehypeStripUnsafeHtml] },
+        'hello <img src="x" onerror="alert(1)"> <a href="javascript:alert(1)">x</a> <script>alert(1)</script>',
+      ),
+    );
+    expect(container.querySelector('script')).toBeNull();
+    expect(container.querySelector('img')?.getAttribute('onerror')).toBeNull();
+    expect(container.querySelector('a')?.getAttribute('href')).toBeNull();
   });
 });

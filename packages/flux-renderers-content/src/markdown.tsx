@@ -11,7 +11,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
 import { cn, Spinner } from '@nop-chaos/ui';
-import { sanitizeHtml } from './sanitize.js';
+import { rehypeStripUnsafeHtml, sanitizeHtml } from './sanitize.js';
 import { HighlightedFence } from './markdown-code-highlight.js';
 import type { MarkdownSchema } from './schemas.js';
 
@@ -138,7 +138,7 @@ export function MarkdownRenderer(props: RendererComponentProps<MarkdownSchema>) 
   // handlers/javascript: URIs; preserves markdown punctuation as text), then
   // rehype-raw renders the surviving safe tags.
   const source = allowHtml ? sanitizeHtml(effectiveContent) : effectiveContent;
-  const rehypePlugins = allowHtml ? [rehypeRaw] : [];
+  const rehypePlugins = allowHtml ? [rehypeRaw, rehypeStripUnsafeHtml] : [];
 
   return (
     <div

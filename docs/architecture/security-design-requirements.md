@@ -73,11 +73,34 @@ This is a normative design requirements document.
 - Security-sensitive assumptions must be documented at architecture boundary points.
 - Public config/schema contracts must not imply unsupported security responsibilities.
 
+## R6. Dangerous-key guard for external data
+
+- Any code that copies or merges keys from externally supplied data (server/model JSON, streamed deltas, schema-authored paths) into objects must skip `__proto__`, `constructor`, and `prototype`. `JSON.parse` produces `__proto__` as an own key, so a plain `Object.keys` loop writing `target[key]` reaches `Object.prototype`.
+- Shared path utilities (`flux-core` `getIn`/`setIn`, `flux-runtime` scope sanitization) already enforce this; local helpers must apply the same guard rather than reimplementing an unguarded walk. Live sites: the AI streaming delta merge (`flux-renderers-ai/src/engine/utils.ts`) and the condition-builder right-value paths (`flux-renderers-form-advanced/src/condition-builder/utils.ts`).
+
+## R7. Schema- and user-supplied regular expressions
+
+- Every sink that compiles a schema- or user-supplied pattern (validation `pattern`, barcode `pattern`, spreadsheet regex search) must consult `isBacktrackingSafePattern` from `@nop-chaos/flux-core` before `new RegExp(...)`, including fallback paths that bypass compile-time precompilation.
+- The gate rejects super-linear backtracking: quantified ambiguous groups (alternation or variable-width quantifiers inside a group under an unbounded or wide quantifier, at any depth) and polynomial forms (directly adjacent unbounded atoms, three or more unbounded `.` wildcards). Linear patterns such as quantified character classes separated by literals stay accepted — a blanket ban on quantified classes was rejected because it turns ordinary patterns (for example the email example in `flux-guide/06-form-validation.md`) into permanent configuration errors.
+- A rejected pattern surfaces through the sink's existing configuration-error channel (validation configuration error, `flux.barcode.invalidPattern`, empty search result); it is never executed.
+
+## R8. Layered HTML sanitization
+
+- HTML rendering defaults to sanitize-on: `html` uses DOMPurify, and markdown `allowHtml` defaults to off.
+- When raw HTML is rendered through `rehype-raw` (content markdown with `allowHtml`, AI bubble markdown), the DOMPurify string pass is followed by `rehypeStripUnsafeHtml` on the re-parsed tree, because the string sanitizer and `rehype-raw` use different parsers. The tree pass removes executable elements, `on*` properties, `srcdoc`, and URL properties that fail `isSafeNavigationUrl`.
+
+## R9. Print iframes
+
+- The hidden print frame (`flux-print-core` `mountPrintFrame`) is sandboxed `allow-same-origin allow-modals`: same-origin lets the host read the document and call `contentWindow.print()`, `allow-modals` keeps `print()` from being silently ignored, and scripts never run. The preview frame (`flux-print-renderers` `PrintPreview`) is sandboxed `allow-same-origin` only.
+- PDF export renders pages into the top document for `html2canvas`; its safety rests on `render-html.ts` escaping every data-bound sink, and new sinks must keep that invariant.
+
 ## Prohibited Patterns
 
 - Runtime permission expression evaluation in renderer/core.
 - Inline JS execution for user-provided expressions.
 - Silent catch that hides policy wiring failure.
+- `new RegExp(...)` on a schema- or user-supplied pattern without `isBacktrackingSafePattern`.
+- Key-copy loops over external data without the dangerous-key guard.
 - Security-by-UI-hiding (render-and-hide) for sensitive nodes.
 
 ## Design Review Checklist

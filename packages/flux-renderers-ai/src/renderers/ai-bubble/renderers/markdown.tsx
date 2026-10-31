@@ -5,7 +5,7 @@ import remarkMath from 'remark-math';
 import rehypeRaw from 'rehype-raw';
 import rehypeKatex from 'rehype-katex';
 import { createLowlight, common } from 'lowlight';
-import { sanitizeHtml } from '@nop-chaos/flux-renderers-content';
+import { rehypeStripUnsafeHtml, sanitizeHtml } from '@nop-chaos/flux-renderers-content';
 /* Adjudication 01-05: cross-package coupling ai→content for sanitizeHtml. Minimal scope (1 utility function, same dependency form-advanced also uses). Accept-and-annotate: not worth extracting without a 3rd consumer. */
 import { Button, cn } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
@@ -107,7 +107,7 @@ export function MarkdownContentRenderer({ message, content, streaming: streaming
     <div data-slot="ai-bubble-markdown" className="max-w-none break-words">
       <ReactMarkdown
         remarkPlugins={[remarkGfm, remarkMath]}
-        rehypePlugins={[rehypeRaw, rehypeKatex]}
+        rehypePlugins={[rehypeRaw, rehypeStripUnsafeHtml, rehypeKatex]}
         components={markdownComponentOverrides}
       >
         {safe}

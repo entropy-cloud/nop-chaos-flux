@@ -1,6 +1,7 @@
 import type { ChangeEvent } from 'react';
 import { useState, useEffect, useRef, useCallback, useId } from 'react';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
+import { isBacktrackingSafePattern } from '@nop-chaos/flux-core';
 import { useCurrentForm, useCurrentFormError, useCurrentFormState, useInputComponentHandle, useRenderScope, useRendererEnv } from '@nop-chaos/flux-react';
 import { useSchedulingEventCtx } from '../shared/scheduling-event-ctx.js';
 import { useFluxTranslation } from '@nop-chaos/flux-i18n';
@@ -143,6 +144,9 @@ export function BarcodeInputRenderer(props: RendererComponentProps<BarcodeInputS
       return t('flux.barcode.maxLength', { max: maxL });
     }
     if (resolved.pattern) {
+      if (!isBacktrackingSafePattern(String(resolved.pattern))) {
+        return t('flux.barcode.invalidPattern', { pattern: String(resolved.pattern) });
+      }
       try {
         const re = new RegExp(resolved.pattern);
         if (!re.test(val)) {

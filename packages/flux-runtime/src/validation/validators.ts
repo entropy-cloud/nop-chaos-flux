@@ -5,7 +5,7 @@ import type {
   ValidationError,
   ValidationRule,
 } from '@nop-chaos/flux-core';
-import { formatRegistry, getIn, resolveRelativePath } from '@nop-chaos/flux-core';
+import { formatRegistry, getIn, isBacktrackingSafePattern, resolveRelativePath } from '@nop-chaos/flux-core';
 import { createValidationError } from './errors.js';
 import { buildValidationMessage } from './message.js';
 
@@ -193,6 +193,12 @@ export const builtInValidators: SyncValidatorMap = {
     const precompiled = input.compiledRule.precompiled;
     if (precompiled?.error) {
       return createPatternConfigurationError(input, `Invalid validation pattern: ${precompiled.error}`);
+    }
+    if (!precompiled?.regex && !isBacktrackingSafePattern(String(input.rule.value))) {
+      return createPatternConfigurationError(
+        input,
+        'Invalid validation pattern: Pattern uses unsupported backtracking-prone constructs',
+      );
     }
     const regex = precompiled?.regex ?? new RegExp(input.rule.value);
     return typeof input.value === 'string' && input.value !== '' && !regex.test(input.value)

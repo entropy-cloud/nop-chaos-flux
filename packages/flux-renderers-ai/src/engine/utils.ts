@@ -21,6 +21,9 @@ function isPlainObject(value: unknown): value is AnyRecord {
   return value !== null && typeof value === 'object' && !Array.isArray(value);
 }
 
+// Deltas are parsed from server/model JSON, where `__proto__` is an own key.
+const DANGEROUS_DELTA_KEYS = new Set(['__proto__', 'constructor', 'prototype']);
+
 function deepClone<T>(value: T): T {
   if (value === null || typeof value !== 'object') {
     return value;
@@ -30,6 +33,7 @@ function deepClone<T>(value: T): T {
   }
   const out: AnyRecord = {};
   for (const key of Object.keys(value as AnyRecord)) {
+    if (DANGEROUS_DELTA_KEYS.has(key)) continue;
     out[key] = deepClone((value as AnyRecord)[key]);
   }
   return out as unknown as T;
@@ -88,6 +92,7 @@ export function combineDeltaData<T>(target: T, source: unknown): T {
   if (isPlainObject(target) && isPlainObject(source)) {
     const obj = target as AnyRecord;
     for (const key of Object.keys(source)) {
+      if (DANGEROUS_DELTA_KEYS.has(key)) continue;
       // The `type` field identifies a content part; never overwrite once set.
       if (key === 'type' && obj[key] !== undefined) {
         continue;

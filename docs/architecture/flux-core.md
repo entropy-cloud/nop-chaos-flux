@@ -528,6 +528,10 @@ identity 列表**按 resolved 顺序完整输出**，且每个元素都带上身
 
 - **`isSafeNavigationUrl(url, options?)`** — allowlist check for navigation hrefs (`http:`/`https:`/`mailto:`/`tel:`/`data:`; scheme-less relative strings are safe; `javascript:`/`vbscript:`/`file:`/`blob:` are rejected). `options.download: true` unlocks `blob:` only (same-origin object-URL export links, delivered as downloads via the anchor's `download` attribute — ui-review audit 15-02); without it `blob:` stays rejected, and script-execution schemes stay rejected regardless. Promoted here as the root-cause location for the shared href-protocol gap (content `link` + basic `button` were each guarding or leaking independently); `flux-renderers-content/src/sanitize.ts` re-exports it so existing content-package consumers keep a stable import path.
 
+## Regex Safety Utility
+
+`packages/flux-core/src/utils/safe-regex.ts` hosts **`isBacktrackingSafePattern(pattern)`**, the single gate every schema- or user-supplied regex sink consults before compiling (validation-lowering precompile and its runtime fallback in `validators.ts`, barcode-input `pattern`, spreadsheet regex search). A single-pass atom scanner rejects exponential backtracking (a group under an unbounded or wide quantifier whose body contains alternation or a variable-width quantifier, propagated through nesting) and polynomial backtracking (directly adjacent unbounded atoms, more than two unbounded `.` wildcards); linear patterns such as `^[^@]+@[^@]+\.[^@]+$` are accepted. Rejected alternative: a blacklist that bans every quantified character class and single wildcard — it turns ordinary documented patterns into permanent configuration errors without adding protection against the forms that actually backtrack. See `docs/architecture/security-design-requirements.md` R7.
+
 ## Designs No Longer Preferred
 
 - prototype-chain objects used directly as the expression execution context

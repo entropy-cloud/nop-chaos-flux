@@ -229,6 +229,22 @@ describe('pattern edge cases', () => {
   it('passes for empty regex pattern on non-empty string', () => {
     expect(invoke('pattern', { kind: 'pattern', value: '' }, 'anything')).toBeUndefined();
   });
+
+  it('evaluates a linear quantified-class pattern instead of reporting a configuration error', () => {
+    const rule = { kind: 'pattern', value: '^[^@]+@[^@]+\\.[^@]+$' } as const;
+    expect(invoke('pattern', rule, 'user@example.com')).toBeUndefined();
+    expect(invoke('pattern', rule, '')).toBeUndefined();
+    const err = invoke('pattern', rule, 'not-an-email');
+    expect(err!.rule).toBe('pattern');
+    expect(err!.message).not.toContain('backtracking-prone');
+  });
+
+  it('rejects a backtracking-prone pattern on the uncompiled fallback path instead of executing it', () => {
+    const err = invoke('pattern', { kind: 'pattern', value: '^(?:a|aa)+$' }, 'aaaa');
+    expect(err).toBeDefined();
+    expect(err!.rule).toBe('pattern');
+    expect(err!.message).toContain('backtracking-prone');
+  });
 });
 
 describe('email edge cases', () => {

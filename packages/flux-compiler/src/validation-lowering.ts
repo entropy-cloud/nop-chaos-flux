@@ -5,6 +5,7 @@ import type {
   ValidationTrigger,
   ValidationVisibilityTrigger,
 } from '@nop-chaos/flux-core';
+import { isBacktrackingSafePattern } from '@nop-chaos/flux-core';
 
 type ValidationRuleSource = BaseSchema & {
   required?: boolean;
@@ -213,16 +214,12 @@ export function compileValidationRules(
   }));
 }
 
-function isSafeValidationPattern(patternValue: string): boolean {
-  return !/(\([^)]*[+*][^)]*\)[+*])|(\.\*)|(\.\+)|(\[[^\]]*\][+*]\+?)/.test(patternValue);
-}
-
 function compilePatternPrecompiled(
   patternValue: string,
   path: string,
   _index: number,
 ): { regex?: RegExp; error?: string; safe?: boolean } {
-  if (!isSafeValidationPattern(patternValue)) {
+  if (!isBacktrackingSafePattern(patternValue)) {
     return {
       error: 'Pattern uses unsupported backtracking-prone constructs',
       safe: false,

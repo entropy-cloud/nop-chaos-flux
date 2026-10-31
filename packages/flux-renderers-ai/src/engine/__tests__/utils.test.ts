@@ -86,3 +86,46 @@ describe('combineDeltaData', () => {
     expect(combineDeltaData(true, false)).toBe(false);
   });
 });
+
+describe('combineDeltaData — dangerous keys from streamed JSON', () => {
+  const PROBE = '__fluxDeltaPollutionProbe__';
+
+  function cleanupPrototype() {
+    delete (Object.prototype as Record<string, unknown>)[PROBE];
+  }
+
+  it('merging a parsed `__proto__` delta into an existing object does not pollute Object.prototype', () => {
+    try {
+      const target: Record<string, unknown> = { content: 'a' };
+      combineDeltaData(target, JSON.parse(`{"__proto__":{"${PROBE}":true},"content":"b"}`));
+      expect(({} as Record<string, unknown>)[PROBE]).toBeUndefined();
+      expect(target.content).toBe('ab');
+      expect(Object.getPrototypeOf(target)).toBe(Object.prototype);
+    } finally {
+      cleanupPrototype();
+    }
+  });
+
+  it('adopting a parsed `__proto__` delta into an empty slot does not replace the clone prototype', () => {
+    try {
+      const target: Record<string, unknown> = {};
+      combineDeltaData(target, JSON.parse(`{"nested":{"__proto__":{"${PROBE}":true},"x":1}}`));
+      const nested = target.nested as Record<string, unknown>;
+      expect(nested.x).toBe(1);
+      expect(nested[PROBE]).toBeUndefined();
+      expect(Object.getPrototypeOf(nested)).toBe(Object.prototype);
+      expect(({} as Record<string, unknown>)[PROBE]).toBeUndefined();
+    } finally {
+      cleanupPrototype();
+    }
+  });
+
+  it('ignores `constructor` and `prototype` keys in deltas', () => {
+    const target: Record<string, unknown> = { a: 'x' };
+    combineDeltaData(target, JSON.parse('{"constructor":{"prototype":{"y":1}},"prototype":{"z":1},"a":"y"}'));
+    expect(target.a).toBe('xy');
+    expect(Object.prototype.hasOwnProperty.call(target, 'constructor')).toBe(false);
+    expect(Object.prototype.hasOwnProperty.call(target, 'prototype')).toBe(false);
+    expect(({} as Record<string, unknown>).y).toBeUndefined();
+  });
+});

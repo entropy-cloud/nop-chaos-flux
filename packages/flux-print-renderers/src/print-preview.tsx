@@ -51,6 +51,7 @@ export function PrintPreview({ controller, open, onOpenChange }: PrintPreviewPro
           <iframe
             title="print-preview"
             data-testid="print-preview-frame"
+            sandbox="allow-same-origin"
             className="w-full rounded border border-border bg-white"
             style={{ height: 420 }}
             srcDoc={html}

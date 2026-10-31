@@ -109,3 +109,47 @@ export function rewriteItemRight(
   });
   return walk(group);
 }
+
+const DANGEROUS_PATH_SEGMENTS = new Set(['__proto__', 'constructor', 'prototype']);
+
+export function readNestedPath(value: unknown, path: string): unknown {
+  if (!path) {
+    return value;
+  }
+
+  return path.split('.').reduce<unknown>((current, segment) => {
+    if (!current || typeof current !== 'object' || DANGEROUS_PATH_SEGMENTS.has(segment)) {
+      return undefined;
+    }
+
+    return (current as Record<string, unknown>)[segment];
+  }, value);
+}
+
+export function setNestedPath(value: unknown, path: string, nextValue: unknown): unknown {
+  if (!path) {
+    return nextValue;
+  }
+
+  const segments = path.split('.');
+  if (segments.some((segment) => DANGEROUS_PATH_SEGMENTS.has(segment))) {
+    return value;
+  }
+  const root = value && typeof value === 'object' && !Array.isArray(value)
+    ? { ...(value as Record<string, unknown>) }
+    : {};
+  let cursor: Record<string, unknown> = root;
+
+  for (let index = 0; index < segments.length - 1; index += 1) {
+    const segment = segments[index];
+    const current = cursor[segment];
+    const next = current && typeof current === 'object' && !Array.isArray(current)
+      ? { ...(current as Record<string, unknown>) }
+      : {};
+    cursor[segment] = next;
+    cursor = next;
+  }
+
+  cursor[segments[segments.length - 1]] = nextValue;
+  return root;
+}

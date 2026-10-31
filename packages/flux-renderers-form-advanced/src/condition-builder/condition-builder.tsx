@@ -26,7 +26,7 @@ import type {
 } from './types.js';
 import { ConditionGroup } from './condition-group.js';
 import { genId } from './id-utils.js';
-import { groupValuesEqual, rewriteItemRight, sanitizeNode, sanitizeRight } from './utils.js';
+import { groupValuesEqual, readNestedPath, rewriteItemRight, sanitizeNode, sanitizeRight, setNestedPath } from './utils.js';
 
 import { createProjectedInlineForm } from '../composite-field/projected-inline-form.js';
 import { createProjectedValidationRuntime } from '../detail-view/projected-validation-runtime.js';
@@ -398,45 +398,6 @@ export function ConditionBuilderRenderer(props: RendererComponentProps<Condition
       />
     </div>
   );
-}
-
-function readNestedPath(value: unknown, path: string): unknown {
-  if (!path) {
-    return value;
-  }
-
-  return path.split('.').reduce<unknown>((current, segment) => {
-    if (!current || typeof current !== 'object') {
-      return undefined;
-    }
-
-    return (current as Record<string, unknown>)[segment];
-  }, value);
-}
-
-function setNestedPath(value: unknown, path: string, nextValue: unknown): unknown {
-  if (!path) {
-    return nextValue;
-  }
-
-  const segments = path.split('.');
-  const root = value && typeof value === 'object' && !Array.isArray(value)
-    ? { ...(value as Record<string, unknown>) }
-    : {};
-  let cursor: Record<string, unknown> = root;
-
-  for (let index = 0; index < segments.length - 1; index += 1) {
-    const segment = segments[index];
-    const current = cursor[segment];
-    const next = current && typeof current === 'object' && !Array.isArray(current)
-      ? { ...(current as Record<string, unknown>) }
-      : {};
-    cursor[segment] = next;
-    cursor = next;
-  }
-
-  cursor[segments[segments.length - 1]] = nextValue;
-  return root;
 }
 
 function PickerModeContent({

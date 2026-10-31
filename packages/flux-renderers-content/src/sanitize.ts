@@ -43,3 +43,67 @@ export function sanitizeHtml(html: string, options: SanitizeOptions = {}): strin
     FORBID_TAGS: ['style'],
   });
 }
+
+interface HastNode {
+  type: string;
+  tagName?: string;
+  properties?: Record<string, unknown>;
+  children?: HastNode[];
+}
+
+const UNSAFE_HAST_TAGS = new Set([
+  'script',
+  'style',
+  'iframe',
+  'frame',
+  'frameset',
+  'object',
+  'embed',
+  'base',
+  'link',
+  'meta',
+  'noscript',
+  'template',
+]);
+
+const URL_HAST_PROPERTIES = new Set(['href', 'src', 'action', 'formAction', 'xLinkHref', 'poster', 'cite', 'background']);
+
+function stripUnsafeHastProperties(properties: Record<string, unknown>): void {
+  for (const name of Object.keys(properties)) {
+    const value = properties[name];
+    if (/^on/i.test(name) || name === 'srcDoc' || name === 'srcdoc') {
+      delete properties[name];
+    } else if (URL_HAST_PROPERTIES.has(name) && typeof value === 'string' && !isSafeNavigationUrl(value)) {
+      delete properties[name];
+    }
+  }
+}
+
+function stripUnsafeHastChildren(node: HastNode): void {
+  if (!node.children) {
+    return;
+  }
+  node.children = node.children.filter(
+    (child) => !(child.type === 'element' && child.tagName && UNSAFE_HAST_TAGS.has(child.tagName.toLowerCase())),
+  );
+  for (const child of node.children) {
+    if (child.type === 'element' && child.properties) {
+      stripUnsafeHastProperties(child.properties);
+    }
+    stripUnsafeHastChildren(child);
+  }
+}
+
+/**
+ * Rehype plugin that re-checks the parsed HTML tree after `rehype-raw`.
+ * `sanitizeHtml` cleans the markdown source as a string, but `rehype-raw`
+ * re-parses that string with a different parser, so a parser-differential
+ * mutation could reconstitute markup between the two steps. This pass removes
+ * executable elements, inline event-handler properties and unsafe URL
+ * properties from the final tree that React will render.
+ */
+export function rehypeStripUnsafeHtml() {
+  return (tree: HastNode) => {
+    stripUnsafeHastChildren(tree);
+  };
+}

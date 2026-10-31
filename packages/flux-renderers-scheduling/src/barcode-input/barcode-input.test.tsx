@@ -431,6 +431,18 @@ describe('BarcodeInputRenderer', () => {
       });
     });
 
+    it('should reject a backtracking-prone pattern as invalid instead of executing it', async () => {
+      mockDetectResult.value = { barcode: 'aaaa', format: 'qr_code' };
+      const { container } = render(<BarcodeInputRenderer {...createMockProps({
+        props: { name: 'barcode', pattern: '^(?:a|aa)+$' },
+      })} />);
+      await scanViaButton(container);
+      await waitFor(() => {
+        const errEl = container.querySelector('[data-slot="barcode-validation-error"]');
+        expect(errEl?.textContent).toContain('invalidPattern');
+      });
+    });
+
     it('should show validate.message when the validate prop declares one', async () => {
       mockDetectResult.value = { barcode: 'AB12', format: 'qr_code' };
       const { container } = render(<BarcodeInputRenderer {...createMockProps({

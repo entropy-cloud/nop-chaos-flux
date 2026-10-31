@@ -57,7 +57,7 @@ export { CarouselRenderer } from './carousel.js';
 export { QrCodeRenderer } from './qrcode.js';
 export { ResultRenderer } from './result.js';
 export { DiffViewRenderer } from './diff-view/diff-view-renderer.js';
-export { sanitizeHtml, type SanitizeOptions } from './sanitize.js';
+export { rehypeStripUnsafeHtml, sanitizeHtml, type SanitizeOptions } from './sanitize.js';
 
 export { contentRendererDefinitions } from './content-renderer-definitions.js';
 export type { ContentRendererSchema } from './content-renderer-definitions.js';
