@@ -100,7 +100,7 @@ Exit Criteria:
 - [x] 必要 focused verification 已完成（focused 7/7 + axe 28/28〔分支 C 纳入〕+ strict 65/65 + playground unit 567/567；replication 全族 203/204，唯一失败 C2 calendar 既有时区窗口红）
 - [x] 不存在被静默降级的 in-scope 缺口（收窄项均有 D4 §6.2 显式裁决出处）
 - [x] 受影响 owner docs 已同步（daily log；D4 §2.7 V3 勘误 11 条——含评审逐名六项 + §5 就地注；improvement-analysis 地图族候选登记；scanner-baselines 登记）
-- [x] 独立子 agent（fresh session）closure audit 通过并记��证据（agent_c0f9ab08，approved）
+- [x] 独立子 agent（fresh session）closure audit 通过并记录证据（agent_c0f9ab08，approved）
 - [x] `pnpm typecheck`（exit 0）
 - [x] `pnpm build`（exit 0）
 - [x] `pnpm lint`（exit 0）
