@@ -1,6 +1,6 @@
 # 815 M3-O2 HITL 审批收件箱页复刻（business-page-replication roadmap M3-O2）
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-11-01
 > Source: `docs/backlog/business-page-replication-roadmap.md` §2 M3-O2（依赖 M2 done；roadmap 现值 `todo`，本 plan 激活时置 `planned`，收口置 `done`）
 > Related: D1 总体设计；D4 §2.4（O2 页设计）/§4.2（doc 模块 O2 端点）/§5 O2（断言）；R3 §1 O2（maker-checker 04 契约）；R4 §4.1（keepOnPageChange 强制）；plan 814（ReplDoc 域、valuesPath 草稿先例）、plan 813（query-filter→crud `component:querySubmit` 先例）、plan 808（K3 crud 行详情 + ai-tool-call HITL onApproval 先例）、plan 804（I1 batch-bar 先例）、plan 807（K2 ai-suggestions 先例）
@@ -53,23 +53,30 @@
 
 ### Phase 1 - O2 页全链实现
 
-Status: planned
+Status: completed
 Targets: `apps/playground/src/complex-pages/shared/mock-backend-repl-doc.ts`（O2 段）、`page-schemas/doc-hitl-inbox.json`（新）、`complex-pages-entries.ts`、`tests/e2e/replication-doc-hitl-inbox.spec.ts`（新）、`tests/e2e/a11y-axe-baseline.spec.ts` + `__fixtures__/axe-baseline.json`
 
 - Item Types: `Fix | Proof`
 
-- [ ] mock：ReplDoc 分支加 O2 段——`inboxPage`（27 行确定性 ladder，`{approvalNo,bizObject,bizKey,action,maker,submittedAt,remainingSeconds,changeSummary,riskFlag}`，remainingSeconds 升序；page/pageSize + bizObject/action/riskOnly 过滤；固定 1 行 maker = 当前 checker 供 SoD 分支）/`reviewDetail`（`{beforeData,expectedAfter,changedPaths,fieldDiffs[{path,before,after}],diffTree,rawRequest,remainingSeconds,riskFlag,aiSuggestion{verdict,confidence,risks[]},aiSuggestionItems,hitl,hitlToolCall,hitlToolCallState}`——diffTree 节点数确定、hitl 构造 ChatToolCall 形状（K3 先例）；id miss → placeholder）/`approve`（stale → STALE_DECISION；maker=checker → SOD_VIOLATION；写镜像 `lastApproveBody`）/`reject`（空意见 → OPINION_REQUIRED；写镜像 `lastRejectBody`）/`batchApprove`（`approvalNos[]` 含 stale → BATCH_STALE；成功 `{approved,skipped,affectedRows}`；写镜像 `lastBatchApproveBody`）；`forceApproveStale(approvalNo)` 由分支发布到 opt-in hooks（S1 `advanceFlashSaleClock` 同款形态），标记会话级 stale 集合
-- [ ] schema JSON：query-filter（bizObject/action select + riskOnly）→ `component:querySubmit` crud；crud（loadAction inboxPage 读 `${query.*}`、`selection {type:'checkbox', keepOnPageChange:true}`、itemKey approvalNo、表头钉死为 D4/04 契约 9 字段〔审批单号/业务对象/业务键/动作/制单人/提交时间/剩余时限/变更摘要/高危；D4「八列」命名与 9 字段清单不一致，收口勘误 §2.4 命名〕〔剩余时限文本、高危 status 标色〕、toolbar batch-bar〔countTemplate「批量通过：影响 ${count} 行」+ actions 批量通过 ajax batchApprove `{approvalNos: ${$crud.selectedRowKeys}}` + onError toast〕、`onRowClick` → openDialog（data approvalNo））；dialog body：data-source review（reviewDetail?id=）+ staleness alert（visible remainingSeconds≤0）+ 高危 alert + ai-suggestions + ai-tool-call HITL 卡（onApproval approve → ReplDoc__approve；reject → 仅写回卡片状态）+ tabs 三视图（字段对照 table / tree diffTree / json-view rawRequest）+ 意见 form（textarea opinion required、`valuesPath`发布草稿、submitAction → reject）+ 按钮组（驳回 = component:submit 意见 form；批准 = ajax approve 读意见草稿、disabled 表达式；兜底演练 ghost 按钮直调 approve，W3「非法格式演练」先例）；成功链 closeSurface +`component:refresh`crud；testid`doc-hitl-inbox-<element>`；strict 零诊断
-- [ ] entry（category `business-replication`）
-- [ ] e2e spec（D4 §5 O2）：前置〔crud 首页行集按 remainingSeconds 升序 + 9 字段表头集合 + inboxPage 计数〕/交互① 跨页批量：页 1 勾 2 行 → 翻页 → 页 2 勾 1 行 → batch-bar「影响 3 行」+ data-count=3 → 批量通过 → batchApprove +1 且载荷 approvalNos 恰为所勾 3 键/交互② staleness：`forceApproveStale` → 开行 → staleness 横幅可见 + 批准 disabled → 兜底直调 → STALE_DECISION toast/交互③ 驳回空意见 → reject 计数 0 + dialog 停留 → 填写 → reject +1 + 载荷意见逐字段 + dialog 关闭/交互④ 三视图：字段对照行数 = fieldDiffs 数、tree 节点数 = diffTree 节点数、json-view 含 rawRequest 键/交互⑤ HITL 卡 pending `data-requires-approval` → approve → approve 计数 +1 + 卡片转 approved/附加 SoD 分支 toast/focus ① dialog 焦点落入 + Esc 关闭后焦点回文档 ② staleness 场景焦点落入 dialog 且不在禁用的批准按钮；预期拒绝分支 `allowConsoleErrors` 按 W3 先例登记；`--retries=0`
-- [ ] axe 分支 A 登记：ROUTES + `complex-pages/doc-hitl-inbox` 基线键（首跑实测 + `_notes` 节点溯源）
-- [ ] 验证：focused e2e `--retries=0` 全绿 + axe spec 绿 + replication 全族回归 + strict 校验
+- [x] mock：ReplDoc 分支加 O2 段——`inboxPage`（27 行确定性 ladder，`{approvalNo,bizObject,bizKey,action,maker,submittedAt,remainingSeconds,changeSummary,riskFlag}`，remainingSeconds 升序；page/pageSize + bizObject/action/riskOnly 过滤；固定 1 行 maker = 当前 checker 供 SoD 分支）/`reviewDetail`（`{beforeData,expectedAfter,changedPaths,fieldDiffs[{path,before,after}],diffTree,rawRequest,remainingSeconds,riskFlag,aiSuggestion{verdict,confidence,risks[]},aiSuggestionItems,hitl,hitlToolCall,hitlToolCallState}`——diffTree 节点数确定、hitl 构造 ChatToolCall 形状（K3 先例）；id miss → placeholder）/`approve`（stale → STALE_DECISION；maker=checker → SOD_VIOLATION；写镜像 `lastApproveBody`）/`reject`（空意见 → OPINION_REQUIRED；写镜像 `lastRejectBody`）/`batchApprove`（`approvalNos[]` 含 stale → BATCH_STALE；成功 `{approved,skipped,affectedRows}`；写镜像 `lastBatchApproveBody`）；`forceApproveStale(approvalNo)` 由分支发布到 opt-in hooks（S1 `advanceFlashSaleClock` 同款形态），标记会话级 stale 集合
+- [x] schema JSON：query-filter（bizObject/action select + riskOnly）→ `component:querySubmit` crud；crud（loadAction inboxPage 读 `${query.*}`、`selection {type:'checkbox', keepOnPageChange:true}`、itemKey approvalNo、表头钉死为 D4/04 契约 9 字段〔审批单号/业务对象/业务键/动作/制单人/提交时间/剩余时限/变更摘要/高危；D4「八列」命名与 9 字段清单不一致，收口勘误 §2.4 命名〕〔剩余时限文本、高危 status 标色〕、toolbar batch-bar〔countTemplate「批量通过：影响 ${count} 行」+ actions 批量通过 ajax batchApprove `{approvalNos: ${$crud.selectedRowKeys}}` + onError toast〕、`onRowClick` → openDialog（data approvalNo））；dialog body：data-source review（reviewDetail?id=）+ staleness alert（visible remainingSeconds≤0）+ 高危 alert + ai-suggestions + ai-tool-call HITL 卡（onApproval approve → ReplDoc__approve；reject → 仅写回卡片状态）+ tabs 三视图（字段对照 table / tree diffTree / json-view rawRequest）+ 意见 form（textarea opinion required、`valuesPath`发布草稿、submitAction → reject）+ 按钮组（驳回 = component:submit 意见 form；批准 = ajax approve 读意见草稿、disabled 表达式；兜底演练 ghost 按钮直调 approve，W3「非法格式演练」先例）；成功链 closeSurface +`component:refresh`crud；testid`doc-hitl-inbox-<element>`；strict 零诊断
+- [x] entry（category `business-replication`）
+- [x] e2e spec（D4 §5 O2）：前置〔crud 首页行集按 remainingSeconds 升序 + 9 字段表头集合 + inboxPage 计数〕/交互① 跨页批量：页 1 勾 2 行 → 翻页 → 页 2 勾 1 行 → batch-bar「影响 3 行」+ data-count=3 → 批量通过 → batchApprove +1 且载荷 approvalNos 恰为所勾 3 键/交互② staleness：`forceApproveStale` → 开行 → staleness 横幅可见 + 批准 disabled → 兜底直调 → STALE_DECISION toast/交互③ 驳回空意见 → reject 计数 0 + dialog 停留 → 填写 → reject +1 + 载荷意见逐字段 + dialog 关闭/交互④ 三视图：字段对照行数 = fieldDiffs 数、tree 节点数 = diffTree 节点数、json-view 含 rawRequest 键/交互⑤ HITL 卡 pending `data-requires-approval` → approve → approve 计数 +1 + 卡片转 approved/附加 SoD 分支 toast/focus ① dialog 焦点落入 + Esc 关闭后焦点回文档 ② staleness 场景焦点落入 dialog 且不在禁用的批准按钮；预期拒绝分支 `allowConsoleErrors` 按 W3 先例登记；`--retries=0`
+- [x] axe 分支 A 登记：ROUTES + `complex-pages/doc-hitl-inbox` 基线键（首跑实测 + `_notes` 节点溯源）
+- [x] 验证：focused e2e `--retries=0` 全绿 + axe spec 绿 + replication 全族回归 + strict 校验
+
+执行期适配（以 live 为准；D4 §2.4「O2 实现勘误」9 条 + §4.2/§5 就地注）：
+
+- dialog 内刷新外部 crud：`component:refresh` 跨运行期片段 componentId 报 `unvalidated-component-target`（console.error）→ 改 `refreshNearest {targetType:'crud'}`（approval-tasks / S2 先例）。
+- focus ②：`ai-tool-call` pending 态按组件设计（a11y §7 P3）在审批按钮内循环 Tab、Esc 释放——非缺陷不改组件；断言改为焦点落入 dialog 且非禁用批准 + 自卡片之后控件起 Tab 链跳过禁用批准、可达驳回。
+- 交互⑤b 新增 SoD 分支断言（D4 §4.2 错误分支覆盖）。
+- 全仓 `pnpm typecheck` exit 1 系并行会话未提交 WIP（`packages/flux-compiler/src/validation-lowering*.ts`，本 diff 零触达）；本 diff 触达面 playground typecheck exit 0。
 
 Exit Criteria:
 
-- [ ] O2 页可达可交互且列表页收录，strict validation 零诊断
-- [ ] focused e2e `--retries=0` 全绿（`__replDocCalls` 计数 + 写镜像载荷断言在，跨页批量载荷恰 3 键）
-- [ ] axe 分支 A 基线登记绿
+- [x] O2 页可达可交互且列表页收录，strict validation 零诊断
+- [x] focused e2e `--retries=0` 全绿（`__replDocCalls` 计数 + 写镜像载荷断言在，跨页批量载荷恰 3 键）
+- [x] axe 分支 A 基线登记绿
 
 ## Draft Review Record
 
@@ -80,17 +87,17 @@ Exit Criteria:
 
 ## Closure Gates
 
-- [ ] in-scope 工作全部落地（O2 页 + ReplDoc O2 段 + roadmap 回写）
-- [ ] 行为/契约结果已达成（D4 §5 O2 断言清单全绿，`--retries=0`）
-- [ ] 必要 focused verification 已完成
-- [ ] 不存在被静默降级的 in-scope 缺口
-- [ ] 受影响 owner docs 已同步（daily log；D4 §2.4/§4.2/§5 O2 勘误——含 §4.2 reviewDetail 契约形状增补）
-- [ ] 独立子 agent（fresh session）closure audit 通过并记录证据
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
-- [ ] `pnpm check`（零新增未登记命中）
+- [x] in-scope 工作全部落地（O2 页 + ReplDoc O2 段 + roadmap 回写）
+- [x] 行为/契约结果已达成（D4 §5 O2 断言清单全绿，`--retries=0`：focused 9/9）
+- [x] 必要 focused verification 已完成（focused 9/9 + axe 25/25 + strict 62/62 + playground unit 564/564；replication 全族回归 182/183，唯一失败系 C2 calendar 既有时区窗口红，见 Deferred）
+- [x] 不存在被静默降级的 in-scope 缺口
+- [x] 受影响 owner docs 已同步（daily log；D4 §2.4 O2 勘误 9 条 + §4.2 reviewDetail 契约形状增补注 + §5 就地注）
+- [x] 独立子 agent（fresh session）closure audit 通过并记录证据（agent_720fdb1c，approved）
+- [x] `pnpm typecheck`（本 diff 触达面零新增红：playground typecheck exit 0；全仓 exit 1 唯一来源为并行会话未提交 WIP `packages/flux-compiler/src/validation-lowering*.ts`，见 Deferred）
+- [x] `pnpm build`（exit 0）
+- [x] `pnpm lint`（exit 0）
+- [x] `pnpm test`（exit 0，86/86；首跑 flux-renderers-mobile wheel-picker 负载抖动 1 例，单跑 3/3 绿、复跑全绿，mobile 包本 diff 零触达）
+- [x] `pnpm check`（exit 0）
 
 ## Deferred But Adjudicated
 
@@ -101,6 +108,13 @@ Exit Criteria:
 - Successor Required: `yes`
 - Successor Path: roadmap M3-P1 开发阶段深度审计
 
+### 并行会话 flux-compiler WIP 致全仓 typecheck 红
+
+- Classification: `watch-only residual`
+- Why Not Blocking Closure: 共享工作树内并行会话（plans 830-835 队列）未提交改动 `packages/flux-compiler/src/validation-lowering{,.test}.ts` 引入 TS2591 等错误；本 plan 未触达该包，触达面（apps/playground）typecheck exit 0，build/lint/test/check 全绿。
+- Successor Required: `no`
+- Successor Path: 不适用（归并行会话自有收口义务）
+
 ## Non-Blocking Follow-ups
 
 - 全量 test:e2e 归 P1 阶段
@@ -108,13 +122,13 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: 待收口填写
+Status Note: O2 页全链落地（ReplDoc O2 五端点 + schema strict 零诊断 + entry + focused e2e 9 测试 + axe 分支 A 登记），D4 §5 O2 断言清单（①-⑤ + SoD 附加分支 + focus 两条）全部 `--retries=0` 实跑通过；跨页 keepOnPageChange 批量载荷恰 3 键、staleness 禁批 + STALE_DECISION 兜底、驳回 required 双侧、三视图、HITL 卡转态全部载荷级断言；评审 Major-1 承诺的 D4 §4.2 reviewDetail 契约形状增补勘误落档（§2.4 勘误 5）；focus ② 按组件设计（a11y §7 P3 Tab 循环）就地勘误。Deferred（并行会话 flux-compiler WIP typecheck 红、C2 calendar 时区窗口红）均与本 diff 零交集且审计员独立复核归因。独立 closure audit approved，无剩余 plan-owned work。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: 待独立子 agent 填写
-- Evidence: 待填写
+- Auditor / Agent: 独立 fresh sub-agent（agent_720fdb1c-c298-4f6f-a8d0-d73c6f13dc62）
+- Evidence: verdict **approved**（零 Blocker / 零 Major / 3 Minor）。审计员独立复现 focused 9/9、axe 绿、strict 62/62、playground typecheck exit 0；逐项核对 mock O2 段/schema/entry/D4 勘误；全仓 typecheck 红逐文件归因并行会话 flux-compiler WIP；e2e 断言双向覆盖审查（reject 计数 0→+1、批量载荷排序比对）；Minor-① 暂存区纪律已遵守（只暂存 815 自有文件）、Minor-②（勘误 8 出处补全）已补、Minor-③（全族回归未复跑）按口径接受。
 
 Follow-up:
 
-- 待收口填写
+- no remaining plan-owned work（Non-Blocking：全量 test:e2e 与 C2 calendar 时区窗口根因归 P1）

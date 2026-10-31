@@ -274,6 +274,18 @@ page(mobile)   # testid: mall-sku-picker-root（D5 深审勘误 MIN-3：补主�
 
 HITL 卡复用口径（R3 L30）：`ai-tool-call` 为 AI 会话语境卡，inbox 复用由页面 schema 构造 toolCall/state 输入并接管持久化；`onApproval` → ajax 写回；engine 不自改 `state.approval`（ai-tool-call.tsx L24-41）。
 
+#### O2 实现勘误（M3 落地实证 2026-11-01，plan 815；以 live 为准）
+
+1. **「八列」→ 9 字段表头**：04 契约字段清单为 9 项（审批单号/业务对象/业务键/动作/制单人/提交时间/剩余时限/变更摘要/高危），原「八列」命名与清单不符——表头按 9 字段钉死。
+2. **query-filter → crud 通道**：同 §2.2 S2 勘误 5，onSubmit `component:querySubmit` + `args.values`，crud loadAction 读 `${query.*}`；loadAction 显式携带 `page/perPage = ${pagination.currentPage/pageSize}`。
+3. **片段① batch-bar 载荷**：actions 渲染于 crud toolbar 作用域（非 countTemplate 子作用域），批量载荷读 `${$crud.selectedRowKeys}`；`keepOnPageChange` 在服务端分页下跨页保留键（页 1 勾 2 + 页 2 勾 1 → data-count=3，载荷恰 3 键实证）。
+4. **片段③ Mode A 字段对照 → table**：原「labelRemark+inputClassName」承载不成立（inputClassName 为类型死字段，improvement §4 #9；变更路径是动态集合，静态字段树无法表达）→ 改 `table`（source `review.fieldDiffs`，path/before/after 三列）。
+5. **§4.2 reviewDetail 契约形状增补**：`fieldDiffs[{path,before,after}]`（字段对照数据面）、`aiSuggestionItems`（ai-suggestions items 投影）、`hitlToolCall`/`hitlToolCallState`（ai-tool-call 输入投影，K3 ChatToolCall 形状）——与原 `hitl:{toolName,args,state}` 并存。
+6. **片段② 批准读意见 + 兜底直调**：批准按钮在意见 form 外，经 form `valuesPath: opinionDraft` 读意见草稿（§2.3 O1 勘误 4 同款）；驳回走 form 提交（textarea required 前端拦截，`REPL_DOC_OPINION_REQUIRED` 为服务端兜底）；staleness 下批准 disabled，服务端 `REPL_DOC_STALE_DECISION` 兜底由「越权直调批准（兜底演练）」ghost 按钮承载（W3「非法格式演练」先例）。
+7. **dialog 内刷新外部 crud**：dialog 片段运行期编译，`component:refresh` 跨片段 componentId 报 `unvalidated-component-target`（console.error）→ 改 `refreshNearest {targetType:'crud'}`（approval-tasks/S2 先例）。
+8. **HITL 卡 focus 口径**：`ai-tool-call` pending 态按组件设计在审批按钮内循环 Tab（a11y §7 P3，Esc 释放）——staleness 焦点断言改为「焦点落入 dialog 且非禁用批准；自卡片之后的控件起 Tab 链跳过禁用批准、可达驳回」；HITL 卡 onApproval approve → `ReplDoc__approve`（source=hitl），reject 仅写回卡片状态。
+9. **axe 分支 A 基线**：aria-required-attr 9（crud 列宽 separator，table owner 债）+ color-contrast 10（壳头部 badge 族）。
+
 ### 2.5 iot-telemetry-device（V1，桌面，直接组合）
 
 组件树（R3 L41 交互①-⑥ → L42；主容器 # testid: iot-telemetry-device-root——D5 深审勘误 MIN-3）：`form`+`query-filter`（deviceKey/metric/时间窗）→ `data-source` interval 轮询 → `stat-tile`×3+`sparkline` 最新值概览 + `echarts` line 实时曲线 → `status`+`mapping` 质量位（GOOD/UNCERTAIN/BAD，要素⑤ flux 侧预期）→ `crud` 告警联动（severity mapping 色，onRowClick→`dialog` ack/开始处理/关闭，AlarmLifecycleService 语义，R3 L39）。
@@ -442,7 +454,7 @@ HITL 卡复用口径（R3 L30）：`ai-tool-call` 为 AI 会话语境卡，inbox
 | ReplDoc\_\_reject (post)          | O2  | `{ approvalNo,result:'REJECTED' }`                                                                                                                                                                                    | REPL_DOC_OPINION_REQUIRED                                                    |
 | ReplDoc\_\_batchApprove (post)    | O2  | `{ approved,skipped,affectedRows }`                                                                                                                                                                                   | REPL_DOC_BATCH_STALE（含 stale 项整批拒绝）                                  |
 
-钩子：`forceApproveStale()`（当前 review remainingSeconds 置 0）、`setInboxOrder('remainingSeconds asc')`。（plan 814 勘误：静态资产落地为 SVG `public/repl-assets/ocr-invoice-*.svg`，见 §2.3 O1 勘误 7）静态资产：`public/repl-assets/ocr-invoice-original.png`（原件）+`ocr-invoice-annotated.png`（识别参考），程序化生成（SVG 光栅化）各 <50KB 入库（功能 asset，非视觉回归产物，不受 tests/e2e/artifacts 纪律约束）。
+钩子：`forceApproveStale()`（当前 review remainingSeconds 置 0）、`setInboxOrder('remainingSeconds asc')`。（plan 815 勘误：reviewDetail 契约形状增补 `fieldDiffs`/`aiSuggestionItems`/`hitlToolCall`/`hitlToolCallState`，见 §2.4 O2 勘误 5；`forceApproveStale(approvalNo)` 带参落地、`setInboxOrder` 不实现——时限升序由端点固定保证）（plan 814 勘误：静态资产落地为 SVG `public/repl-assets/ocr-invoice-*.svg`，见 §2.3 O1 勘误 7）静态资产：`public/repl-assets/ocr-invoice-original.png`（原件）+`ocr-invoice-annotated.png`（识别参考），程序化生成（SVG 光栅化）各 <50KB 入库（功能 asset，非视觉回归产物，不受 tests/e2e/artifacts 纪律约束）。
 
 ### 4.3 iot 模块（V1/V2/V3）
 
@@ -495,6 +507,7 @@ HITL 卡复用口径（R3 L30）：`ai-tool-call` 为 AI 会话语境卡，inbox
 **O2 doc-hitl-inbox**（axe 分支 A）
 
 - 交互：① 批量通过计数（跨页 keepOnPageChange）：页 1 选 2 行→翻页选 1 行→batch-bar"影响 3 行"→payload 恰 3 键；② staleness 禁用：`forceApproveStale`→staleness-alert 可见+approve-btn disabled+直调 approve 走 STALE_DECISION 兜底；③ reject 意见必填：空拦/填后成；④ 三视图：Mode B tree 行数=diffTree 节点数、Mode C 含 rawRequest 键；⑤ HITL：pending 呈现 `data-requires-approval`→approve→计数+1。
+  - plan 815 落地勘误（2026-11-01，详见 §2.4「O2 实现勘误」）：① 载荷读 `${$crud.selectedRowKeys}`（勘误 3）；② 直调兜底由 ghost 演练按钮承载（勘误 6）；④ Mode A 改 table 字段对照（勘误 4）；focus staleness 场景按 HITL 卡 Tab 循环设计调整口径（勘误 8）。
 - focus：dialog 焦点落入（staleness 场景落驳回按钮而非禁用批准按钮，对齐 ai-tool-call pending 焦点先例）；Esc 返回行。
 
 **V1 iot-telemetry-device**（axe 分支 A）

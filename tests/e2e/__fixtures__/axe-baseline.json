@@ -110,5 +110,10 @@
   "complex-pages/doc-ocr-workbench": {
     "color-contrast": 10,
     "_notes": "plan 814 first-run measurement 2026-11-01 (D1 §4 branch A registration): counts measured on #/complex-pages/doc-ocr-workbench (wizard step 1 initial face). color-contrast = the 10 shell header feature badges (secondary badge family, same as S1/S2). Fixes belong to the badge component owner, not the page schema."
+  },
+  "complex-pages/doc-hitl-inbox": {
+    "aria-required-attr": 9,
+    "color-contrast": 10,
+    "_notes": "plan 815 first-run measurement 2026-11-01 (D1 §4 branch A registration): counts measured on #/complex-pages/doc-hitl-inbox. aria-required-attr = the inbox crud table's 9 column-resize separator spans (table component owner debt, same rule as standard-crud/W2/W3/S2); color-contrast = the 10 shell header feature badges (secondary badge family, same as S1/S2/O1). Fixes belong to the component owners, not the page schema."
   }
 }

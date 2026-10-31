@@ -496,4 +496,12 @@ export const COMPLEX_PAGE_ENTRIES: ComplexPageEntry[] = [
       '复刻智能单据 OCR 校正工作台页（roadmap 21 页 O1，D4 §2.3 桌面整页，新 type 临时形态）：grid 两栏——左 image 原件（preview 放大）+ image-compare 原件 vs 识别参考整图（≈bbox 整图近似，G19 不实现）；右 wizard 四步（原件对照 → 字段确认 → 明细行 → 回流提交）：步骤 2 form 宿主内 detail-field 逐字段确认（surface 草稿校正 + 写回 ≈G20、labelRemark 原值悬浮、低置信 className 高亮读 CSS 变量、badge 置信度三档），beforeLeave → ocrValidate 服务端门禁（REPL_DOC_FIELD_UNCONFIRMED 阻断）；步骤 3 form 包裹 input-table 明细行增改 + formId 校验；步骤 4 ocrCommit 回流（docId 回显 + 失败分支）。数据经 /r/ReplDoc__ 端点流动，原件/识别参考为 /repl-assets/ 静态 SVG。',
     features: ['image preview 原件', 'image-compare 对照', 'wizard 四步门禁', 'detail-field 逐字段确认', 'labelRemark 原值', '低置信高亮', 'badge 置信度三档', 'input-table 明细行', 'ocrCommit 回流', 'ReplDoc__ 端点'],
   },
+  {
+    id: 'doc-hitl-inbox',
+    title: 'HITL 审批收件箱页',
+    category: 'business-replication',
+    description:
+      '复刻智能单据 HITL 审批收件箱页（roadmap 21 页 O2，D4 §2.4 桌面整页，maker-checker 04 契约）：query-filter（业务对象/动作/仅高危）经 component:querySubmit 驱动 crud 待办 9 字段（时限升序、selection keepOnPageChange 跨页保留）+ batch-bar 批量通过（影响行数，batchApprove 含过期项整批拒绝）→ 行点击审批 dialog：staleness 横幅（过期禁用批准 + 越权直调兜底 STALE_DECISION）+ 高危横幅 + ai-suggestions AI 预审 + ai-tool-call HITL 交接卡（onApproval → approve）+ tabs 三视图（字段对照 table / tree diffTree / json-view rawRequest）+ 意见 form（驳回必填、valuesPath 草稿供批准读取）+ SoD 校验（制单人=审核人拒绝）。数据经 /r/ReplDoc__ 端点流动。',
+    features: ['query-filter 筛选', 'keepOnPageChange 跨页批量', 'batch-bar 影响行数', 'staleness 禁用批准', 'ai-suggestions 预审', 'ai-tool-call HITL 卡', 'tabs 三视图', '驳回意见必填', 'SoD 校验', 'ReplDoc__ 端点'],
+  },
 ];

@@ -1,0 +1,596 @@
+{
+  "type": "page",
+  "body": [
+    {
+      "type": "flex",
+      "direction": "column",
+      "gap": 8,
+      "testid": "doc-hitl-inbox-root",
+      "body": [
+        {
+          "type": "query-filter",
+          "id": "doc-hitl-inbox-filter",
+          "testid": "doc-hitl-inbox-filter",
+          "columnCount": 3,
+          "submitLabel": "查询",
+          "resetLabel": "重置",
+          "onSubmit": {
+            "action": "component:querySubmit",
+            "componentId": "doc-hitl-inbox-crud",
+            "args": {
+              "values": {
+                "bizObject": "${bizObject ?? ''}",
+                "action": "${action ?? ''}",
+                "riskOnly": "${riskOnly ?? ''}"
+              }
+            }
+          },
+          "body": [
+            {
+              "type": "select",
+              "name": "bizObject",
+              "label": "业务对象",
+              "testid": "doc-hitl-inbox-filter-object",
+              "placeholder": "全部对象",
+              "clearable": true,
+              "options": [
+                {
+                  "label": "采购订单",
+                  "value": "采购订单"
+                },
+                {
+                  "label": "付款申请",
+                  "value": "付款申请"
+                },
+                {
+                  "label": "供应商主数据",
+                  "value": "供应商主数据"
+                },
+                {
+                  "label": "费用报销",
+                  "value": "费用报销"
+                }
+              ]
+            },
+            {
+              "type": "select",
+              "name": "action",
+              "label": "动作",
+              "testid": "doc-hitl-inbox-filter-action",
+              "placeholder": "全部动作",
+              "clearable": true,
+              "options": [
+                {
+                  "label": "新建",
+                  "value": "CREATE"
+                },
+                {
+                  "label": "修改",
+                  "value": "UPDATE"
+                },
+                {
+                  "label": "删除",
+                  "value": "DELETE"
+                },
+                {
+                  "label": "付款审批",
+                  "value": "APPROVE_PAYMENT"
+                }
+              ]
+            },
+            {
+              "type": "select",
+              "name": "riskOnly",
+              "label": "风险",
+              "testid": "doc-hitl-inbox-filter-risk",
+              "placeholder": "全部",
+              "clearable": true,
+              "options": [
+                {
+                  "label": "仅高危",
+                  "value": "true"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "crud",
+          "id": "doc-hitl-inbox-crud",
+          "testid": "doc-hitl-inbox-crud",
+          "itemKey": "approvalNo",
+          "loadAction": {
+            "dependsOn": ["__init_load__"],
+            "action": "ajax",
+            "args": {
+              "url": "/r/ReplDoc__inboxPage",
+              "method": "get",
+              "data": {
+                "page": "${pagination.currentPage}",
+                "perPage": "${pagination.pageSize}",
+                "bizObject": "${query.bizObject ?? ''}",
+                "action": "${query.action ?? ''}",
+                "riskOnly": "${query.riskOnly ?? ''}"
+              }
+            }
+          },
+          "selection": {
+            "type": "checkbox",
+            "keepOnPageChange": true
+          },
+          "toolbar": [
+            {
+              "type": "batch-bar",
+              "testid": "doc-hitl-inbox-batch-bar",
+              "selectionPath": "$crud.selectedRowKeys",
+              "countTemplate": "批量通过：影响 ${count} 行",
+              "clearTarget": "doc-hitl-inbox-crud",
+              "clearLabel": "清空选择",
+              "actions": [
+                {
+                  "type": "button",
+                  "label": "批量通过",
+                  "variant": "primary",
+                  "testid": "doc-hitl-inbox-batch-approve",
+                  "onClick": {
+                    "action": "ajax",
+                    "args": {
+                      "url": "/r/ReplDoc__batchApprove",
+                      "method": "post",
+                      "data": {
+                        "approvalNos": "${$crud.selectedRowKeys}"
+                      }
+                    },
+                    "then": [
+                      {
+                        "action": "showToast",
+                        "args": {
+                          "level": "success",
+                          "message": "批量通过完成：通过 ${result.data.approved} 行，跳过 ${result.data.skipped} 行"
+                        }
+                      }
+                    ],
+                    "onError": [
+                      {
+                        "action": "showToast",
+                        "args": {
+                          "level": "error",
+                          "message": "批量通过被拒绝（${error?.message ?? 'UNKNOWN'}）"
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          ],
+          "onRowClick": {
+            "action": "openDialog",
+            "args": {
+              "title": "审批详情 ${approvalNo}",
+              "testid": "doc-hitl-inbox-review-dialog",
+              "size": "lg",
+              "data": {
+                "approvalNo": "${approvalNo}"
+              },
+              "body": [
+                {
+                  "type": "data-source",
+                  "id": "doc-hitl-inbox-review-source",
+                  "name": "review",
+                  "action": "ajax",
+                  "args": {
+                    "url": "/r/ReplDoc__reviewDetail",
+                    "method": "get",
+                    "params": {
+                      "id": "${approvalNo}"
+                    }
+                  },
+                  "testid": "doc-hitl-inbox-review-source"
+                },
+                {
+                  "type": "flex",
+                  "direction": "column",
+                  "gap": 10,
+                  "testid": "doc-hitl-inbox-review",
+                  "body": [
+                    {
+                      "type": "alert",
+                      "testid": "doc-hitl-inbox-staleness-alert",
+                      "level": "error",
+                      "visible": "${review?.remainingSeconds <= 0}",
+                      "body": [
+                        {
+                          "type": "text",
+                          "text": "审批已过期（staleness），禁止批准——请驳回或退回制单人重新提交"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "alert",
+                      "testid": "doc-hitl-inbox-risk-alert",
+                      "level": "warning",
+                      "visible": "${!!review?.riskFlag}",
+                      "body": [
+                        {
+                          "type": "text",
+                          "text": "高危变更：涉及收款账户/额度，需双人复核"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "text",
+                      "testid": "doc-hitl-inbox-review-meta",
+                      "className": "text-sm text-muted-foreground",
+                      "text": "${review?.bizObject ?? '-'} · 制单人 ${review?.maker ?? '-'} · 剩余 ${review?.remainingSeconds ?? '-'} 秒 · AI 结论：${review?.aiSuggestion?.verdict ?? '-'}（置信度 ${review?.aiSuggestion?.confidence ?? '-'}）"
+                    },
+                    {
+                      "type": "ai-suggestions",
+                      "testid": "doc-hitl-inbox-ai-suggestions",
+                      "items": "${review?.aiSuggestionItems ?? []}",
+                      "overflowMode": "expand",
+                      "onSelect": [
+                        {
+                          "action": "showToast",
+                          "args": {
+                            "level": "info",
+                            "message": "已参考 AI 预审建议"
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "type": "ai-tool-call",
+                      "testid": "doc-hitl-inbox-hitl-card",
+                      "visible": "${review?.hitlToolCall != null}",
+                      "toolCall": "${review?.hitlToolCall}",
+                      "state": "${hitlState ?? review?.hitlToolCallState}",
+                      "defaultOpen": false,
+                      "onApproval": [
+                        {
+                          "action": "ajax",
+                          "when": "${action === 'approve'}",
+                          "args": {
+                            "url": "/r/ReplDoc__approve",
+                            "method": "post",
+                            "data": {
+                              "approvalNo": "${approvalNo}",
+                              "opinion": "HITL 交接批准",
+                              "source": "hitl"
+                            }
+                          },
+                          "messages": {
+                            "success": "HITL 批准已提交"
+                          },
+                          "onError": [
+                            {
+                              "action": "showToast",
+                              "args": {
+                                "level": "error",
+                                "message": "HITL 批准被拒绝（${error?.message ?? 'UNKNOWN'}）"
+                              }
+                            }
+                          ]
+                        },
+                        {
+                          "action": "setValue",
+                          "args": {
+                            "path": "hitlState",
+                            "value": {
+                              "status": "success",
+                              "approval": "${action === 'approve' ? 'approved' : 'rejected'}"
+                            }
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "type": "tabs",
+                      "testid": "doc-hitl-inbox-diff-tabs",
+                      "items": [
+                        {
+                          "key": "fields",
+                          "title": "字段对照",
+                          "body": [
+                            {
+                              "type": "table",
+                              "testid": "doc-hitl-inbox-diff-fields",
+                              "source": "${review?.fieldDiffs ?? []}",
+                              "itemKey": "path",
+                              "pagination": {
+                                "enabled": false
+                              },
+                              "columns": [
+                                {
+                                  "name": "path",
+                                  "label": "字段",
+                                  "width": 150
+                                },
+                                {
+                                  "name": "before",
+                                  "label": "变更前",
+                                  "width": 200
+                                },
+                                {
+                                  "name": "after",
+                                  "label": "变更后",
+                                  "width": 200
+                                }
+                              ],
+                              "empty": {
+                                "type": "text",
+                                "text": "无字段变更"
+                              }
+                            }
+                          ]
+                        },
+                        {
+                          "key": "tree",
+                          "title": "变更树",
+                          "body": [
+                            {
+                              "type": "tree",
+                              "testid": "doc-hitl-inbox-diff-tree",
+                              "label": "变更树",
+                              "data": "${review?.diffTree ?? []}",
+                              "labelField": "label",
+                              "keyField": "id",
+                              "childrenKey": "children",
+                              "initiallyExpanded": true
+                            }
+                          ]
+                        },
+                        {
+                          "key": "raw",
+                          "title": "原始请求",
+                          "body": [
+                            {
+                              "type": "json-view",
+                              "testid": "doc-hitl-inbox-diff-json",
+                              "value": "${review?.rawRequest}",
+                              "collapsed": false
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "form",
+                      "id": "doc-hitl-inbox-opinion-form",
+                      "testid": "doc-hitl-inbox-opinion-form",
+                      "valuesPath": "opinionDraft",
+                      "data": {
+                        "opinion": ""
+                      },
+                      "submitAction": {
+                        "action": "ajax",
+                        "args": {
+                          "url": "/r/ReplDoc__reject",
+                          "method": "post",
+                          "data": {
+                            "approvalNo": "${approvalNo}",
+                            "opinion": "${opinion}"
+                          }
+                        },
+                        "messages": {
+                          "success": "已驳回"
+                        },
+                        "then": [
+                          {
+                            "action": "refreshNearest",
+                            "args": {
+                              "targetType": "crud",
+                              "notFound": "error"
+                            }
+                          },
+                          {
+                            "action": "closeSurface"
+                          }
+                        ],
+                        "onError": [
+                          {
+                            "action": "showToast",
+                            "args": {
+                              "level": "error",
+                              "message": "驳回被拒绝（${error?.message ?? 'UNKNOWN'}）"
+                            }
+                          }
+                        ]
+                      },
+                      "body": [
+                        {
+                          "type": "textarea",
+                          "name": "opinion",
+                          "label": "审批意见（驳回必填）",
+                          "testid": "doc-hitl-inbox-opinion",
+                          "required": true,
+                          "rows": 3,
+                          "placeholder": "驳回时必须填写意见"
+                        }
+                      ],
+                      "actions": []
+                    },
+                    {
+                      "type": "flex",
+                      "direction": "row",
+                      "gap": 8,
+                      "className": "justify-end flex-wrap",
+                      "body": [
+                        {
+                          "type": "button",
+                          "label": "越权直调批准（兜底演练）",
+                          "variant": "ghost",
+                          "testid": "doc-hitl-inbox-approve-bypass",
+                          "onClick": {
+                            "action": "ajax",
+                            "args": {
+                              "url": "/r/ReplDoc__approve",
+                              "method": "post",
+                              "data": {
+                                "approvalNo": "${approvalNo}",
+                                "opinion": "${opinionDraft?.opinion ?? ''}",
+                                "source": "bypass"
+                              }
+                            },
+                            "messages": {
+                              "success": "已批准"
+                            },
+                            "then": [
+                              {
+                                "action": "refreshNearest",
+                                "args": {
+                                  "targetType": "crud",
+                                  "notFound": "error"
+                                }
+                              },
+                              {
+                                "action": "closeSurface"
+                              }
+                            ],
+                            "onError": [
+                              {
+                                "action": "showToast",
+                                "args": {
+                                  "level": "error",
+                                  "message": "审批被拒绝（${error?.message ?? 'UNKNOWN'}）"
+                                }
+                              }
+                            ]
+                          }
+                        },
+                        {
+                          "type": "button",
+                          "label": "驳回",
+                          "variant": "destructive",
+                          "testid": "doc-hitl-inbox-reject-btn",
+                          "onClick": {
+                            "action": "component:submit",
+                            "componentId": "doc-hitl-inbox-opinion-form"
+                          }
+                        },
+                        {
+                          "type": "button",
+                          "label": "批准",
+                          "variant": "primary",
+                          "testid": "doc-hitl-inbox-approve-btn",
+                          "disabled": "${review?.remainingSeconds <= 0}",
+                          "onClick": {
+                            "action": "ajax",
+                            "args": {
+                              "url": "/r/ReplDoc__approve",
+                              "method": "post",
+                              "data": {
+                                "approvalNo": "${approvalNo}",
+                                "opinion": "${opinionDraft?.opinion ?? ''}",
+                                "source": "button"
+                              }
+                            },
+                            "messages": {
+                              "success": "已批准"
+                            },
+                            "then": [
+                              {
+                                "action": "refreshNearest",
+                                "args": {
+                                  "targetType": "crud",
+                                  "notFound": "error"
+                                }
+                              },
+                              {
+                                "action": "closeSurface"
+                              }
+                            ],
+                            "onError": [
+                              {
+                                "action": "showToast",
+                                "args": {
+                                  "level": "error",
+                                  "message": "审批被拒绝（${error?.message ?? 'UNKNOWN'}）"
+                                }
+                              }
+                            ]
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          },
+          "columns": [
+            {
+              "name": "approvalNo",
+              "label": "审批单号",
+              "width": 120
+            },
+            {
+              "name": "bizObject",
+              "label": "业务对象",
+              "width": 110
+            },
+            {
+              "name": "bizKey",
+              "label": "业务键",
+              "width": 110
+            },
+            {
+              "name": "action",
+              "label": "动作",
+              "width": 90,
+              "cell": {
+                "type": "text",
+                "text": "${action === 'CREATE' ? '新建' : action === 'UPDATE' ? '修改' : action === 'DELETE' ? '删除' : '付款审批'}"
+              }
+            },
+            {
+              "name": "maker",
+              "label": "制单人",
+              "width": 100
+            },
+            {
+              "name": "submittedAt",
+              "label": "提交时间",
+              "width": 140
+            },
+            {
+              "name": "remainingSeconds",
+              "label": "剩余时限",
+              "width": 100,
+              "cell": {
+                "type": "text",
+                "text": "${remainingSeconds <= 0 ? '已过期' : ROUND(remainingSeconds / 60) + ' 分钟'}"
+              }
+            },
+            {
+              "name": "changeSummary",
+              "label": "变更摘要",
+              "width": 200
+            },
+            {
+              "name": "riskFlag",
+              "label": "高危",
+              "width": 80,
+              "cell": {
+                "type": "status",
+                "value": "${riskFlag ? 'high' : 'normal'}",
+                "labelMap": {
+                  "high": "高危",
+                  "normal": "常规"
+                },
+                "levelMap": {
+                  "high": "error",
+                  "normal": "neutral"
+                }
+              }
+            }
+          ],
+          "empty": {
+            "type": "text",
+            "text": "暂无待审批"
+          }
+        }
+      ]
+    }
+  ]
+}
