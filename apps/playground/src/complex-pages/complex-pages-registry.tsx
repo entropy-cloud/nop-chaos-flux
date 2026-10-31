@@ -6,6 +6,7 @@ import { PihWorkspaceHost } from './pih-workspace-host';
 import { WmsPdaReceivingHost } from './replication/wms-pda-receiving-host';
 import { AiKnowledgeChatHost } from './replication/ai-knowledge-chat-host';
 import { MesAndonMaterialHost } from './replication/mes-andon-material-host';
+import { MallSkuPickerHost } from './replication/mall-sku-picker-host';
 
 export interface ComplexPageComponentProps {
   /** The shared showcase env (fetcher/notify/confirm/dict). */
@@ -28,6 +29,9 @@ export const COMPLEX_PAGE_REGISTRY: Record<string, ComponentType<ComplexPageComp
   // mes-andon-material is a mobile-form page (D3 §2.6 / D6 MAJ-C): same
   // 375×667 mobile-canvas host as W1 (plan 811).
   'mes-andon-material': MesAndonMaterialHost,
+  // mall-sku-picker is a mobile-form page (D4 §2.1 / D6 MAJ-C): same
+  // 375×667 mobile-canvas host (plan 812).
+  'mall-sku-picker': MallSkuPickerHost,
   // ai-knowledge-chat is a host-override page (D3 §2.1 裁决块 / D6 MAJ-B): the
   // ai-chat `conversationController`/`engine` are host-injected resolved props
   // (host objects), so the page renders through the K1 host (useConversation +

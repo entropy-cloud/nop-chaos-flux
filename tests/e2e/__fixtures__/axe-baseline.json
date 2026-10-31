@@ -95,5 +95,10 @@
     "color-contrast": 8,
     "scrollable-region-focusable": 1,
     "_notes": "plan 811 first-run measurement 2026-10-31 (D1 §4 branch B registration): counts measured on #/complex-pages/mes-andon-material (mobile canvas 375×667 hasTouch). color-contrast = 8 header feature badges (data-slot=badge variant=secondary in the complex-pages shell header — same secondary-badge contrast debt as the W1/W3/C1/C2/C3/M1/M2 registrations, component owner); 8 of the page's 10 badges register (2 occluded by the floating-panel overlay at scan time, same badge family). scrollable-region-focusable = 1 on the page's list scroller (the pull-refresh surface doubles as the infinite-scroll observation root via .repl-andon-scroll overflow-y auto — pull-refresh root exposes no tabindex, component owner debt; a component-level tabindex/roving-focus fix resolves it). Fixes belong to the component owner, not the page schema."
+  },
+  "complex-pages/mall-sku-picker": {
+    "color-contrast": 11,
+    "aria-progressbar-name": 1,
+    "_notes": "plan 812 first-run measurement 2026-10-31 (D1 §4 branch B registration): counts measured on #/complex-pages/mall-sku-picker (mobile canvas 375×667 hasTouch). color-contrast = 11 header feature badges (data-slot=badge variant=secondary in the complex-pages shell header — same secondary-badge contrast debt as the W1/W3/C1/C2/C3/M1/M2/M3 registrations, component owner; this page registers all 11 — none occluded at scan time). aria-progressbar-name = 1 on the seckill progress (content ProgressSchema renders no accessible-name prop — component owner debt; a label/aria-label surface on Progress resolves it). Fixes belong to the component owner, not the page schema."
   }
 }

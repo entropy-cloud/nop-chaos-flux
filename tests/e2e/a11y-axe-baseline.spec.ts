@@ -77,6 +77,8 @@ const MOBILE_ROUTES = [
   // Plan 811 (D1 §4 branch B): M3 andon-material joins the mobile-canvas scan
   // set (mobile host override page — same 375×667 frame as W1).
   'complex-pages/mes-andon-material',
+  // Plan 812 (D1 §4 branch B): S1 sku-picker joins the mobile-canvas scan set.
+  'complex-pages/mall-sku-picker',
 ];
 
 // map-demo is excluded: its axe analysis exceeds a practical timeout (heavy SVG DOM,

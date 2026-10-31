@@ -1,0 +1,571 @@
+{
+  "type": "page",
+  "testid": "mall-sku-picker-root",
+  "body": [
+    {
+      "type": "form",
+      "id": "mall-sku-picker-form",
+      "testid": "mall-sku-picker-form",
+      "data": {
+        "channel": "seckill",
+        "couponAllowed": false,
+        "addressCity": "上海",
+        "quantity": 1,
+        "skuId": ""
+      },
+      "body": [
+        {
+          "type": "flex",
+          "direction": "column",
+          "gap": 8,
+          "testid": "mall-sku-picker-shell",
+          "body": [
+            {
+              "type": "data-source",
+              "name": "goodsDetail",
+              "action": "ajax",
+              "args": {
+                "url": "/r/ReplMall__goodsDetail",
+                "method": "get"
+              },
+              "testid": "mall-sku-picker-goods-source"
+            },
+            {
+              "type": "data-source",
+              "name": "flashSaleSource",
+              "action": "ajax",
+              "args": {
+                "url": "/r/ReplMall__flashSaleSession",
+                "method": "get"
+              },
+              "testid": "mall-sku-picker-session-source"
+            },
+            {
+              "type": "flex",
+              "direction": "column",
+              "gap": 6,
+              "testid": "mall-sku-picker-promo-banner",
+              "className": "repl-banner",
+              "body": [
+                {
+                  "type": "flex",
+                  "direction": "row",
+                  "gap": 8,
+                  "className": "items-baseline",
+                  "body": [
+                    {
+                      "type": "text",
+                      "testid": "mall-sku-picker-price",
+                      "text": "¥${goodsDetail?.goods?.seckillPrice ?? '-'}",
+                      "className": "repl-price"
+                    },
+                    {
+                      "type": "text",
+                      "testid": "mall-sku-picker-price-original",
+                      "text": "¥${goodsDetail?.goods?.price ?? '-'}",
+                      "className": "repl-price-original"
+                    },
+                    {
+                      "type": "text",
+                      "testid": "mall-sku-picker-session-badge",
+                      "text": "${activeSession === 'active' ? '正在进行' : activeSession === 'upcoming' ? '即将开始' : '已结束'}",
+                      "className": "text-xs text-rose-600"
+                    }
+                  ]
+                },
+                {
+                  "type": "flex",
+                  "direction": "row",
+                  "gap": 8,
+                  "className": "items-center",
+                  "body": [
+                    {
+                      "type": "countdown",
+                      "testid": "mall-sku-picker-countdown",
+                      "targetTime": "${goodsDetail?.promo?.seckillEndAt}",
+                      "format": "HH:mm:ss",
+                      "prefix": "距结束 ",
+                      "onFinish": [
+                        {
+                          "action": "ajax",
+                          "args": {
+                            "url": "/r/ReplMall__flashSaleSession",
+                            "method": "get"
+                          }
+                        },
+                        {
+                          "action": "refreshSource",
+                          "args": {},
+                          "targetId": "goodsDetail"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "progress",
+                      "testid": "mall-sku-picker-seckill-progress",
+                      "value": "${flashSaleSource?.sessions[1]?.progressPercent ?? 0}",
+                      "max": 100,
+                      "showValue": true,
+                      "className": "flex-1"
+                    }
+                  ]
+                },
+                {
+                  "type": "button-group-select",
+                  "name": "activeSession",
+                  "label": "场次",
+                  "testid": "mall-sku-picker-session-switch",
+                  "options": [
+                    {
+                      "label": "已结束",
+                      "value": "ended"
+                    },
+                    {
+                      "label": "进行中",
+                      "value": "active"
+                    },
+                    {
+                      "label": "即将开始",
+                      "value": "upcoming"
+                    }
+                  ],
+                  "value": "active"
+                }
+              ]
+            },
+            {
+              "type": "pull-refresh",
+              "testid": "mall-sku-picker-pull-refresh",
+              "className": "repl-mall-scroll",
+              "threshold": 60,
+              "onRefresh": [
+                {
+                  "action": "ajax",
+                  "args": {
+                    "url": "/r/ReplMall__goodsFeed",
+                    "method": "get",
+                    "params": {
+                      "page": 1,
+                      "pageSize": 9
+                    }
+                  },
+                  "then": [
+                    {
+                      "action": "setValues",
+                      "args": {
+                        "values": {
+                          "goodsFeedItems": "${result.data.items}",
+                          "goodsFeedPage": 1,
+                          "goodsFeedHasMore": "${result.data.page < result.data.pages}",
+                          "goodsFeedLoading": false
+                        }
+                      }
+                    },
+                    {
+                      "action": "showToast",
+                      "args": {
+                        "level": "success",
+                        "message": "商品已刷新"
+                      }
+                    }
+                  ]
+                }
+              ],
+              "body": [
+                {
+                  "type": "infinite-scroll",
+                  "testid": "mall-sku-picker-feed",
+                  "hasMore": "${goodsFeedHasMore ? true : false}",
+                  "loading": "${goodsFeedLoading ? true : false}",
+                  "immediateCheck": false,
+                  "finishedText": "没有更多商品",
+                  "onLoadMore": [
+                    {
+                      "action": "setValues",
+                      "args": {
+                        "values": {
+                          "goodsFeedLoading": true
+                        }
+                      }
+                    },
+                    {
+                      "action": "ajax",
+                      "args": {
+                        "url": "/r/ReplMall__goodsFeed",
+                        "method": "get",
+                        "params": {
+                          "page": "${(goodsFeedPage ?? 0) + 1}",
+                          "pageSize": 9
+                        }
+                      },
+                      "then": [
+                        {
+                          "action": "setValues",
+                          "args": {
+                            "values": {
+                              "goodsFeedItems": "${CONCAT(goodsFeedItems ?? [], result.data.items)}",
+                              "goodsFeedPage": "${result.data.page}",
+                              "goodsFeedHasMore": "${result.data.page < result.data.pages}",
+                              "goodsFeedLoading": false
+                            }
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "body": [
+                    {
+                      "type": "flex",
+                      "direction": "column",
+                      "gap": 6,
+                      "body": [
+                        {
+                          "type": "carousel",
+                          "testid": "mall-sku-picker-gallery",
+                          "items": "${goodsDetail?.goods?.images ?? []}",
+                          "autoPlay": false,
+                          "controls": true,
+                          "onChange": [
+                            {
+                              "action": "setValues",
+                              "args": {
+                                "values": {
+                                  "viewerIndex": "${activeIndex}"
+                                }
+                              }
+                            }
+                          ]
+                        },
+                        {
+                          "type": "flex",
+                          "direction": "row",
+                          "gap": 8,
+                          "body": [
+                            {
+                              "type": "button",
+                              "label": "查看大图",
+                              "variant": "outline",
+                              "testid": "mall-sku-picker-viewer-open",
+                              "onClick": {
+                                "action": "setValues",
+                                "args": {
+                                  "values": {
+                                    "viewerOpen": true
+                                  }
+                                }
+                              }
+                            },
+                            {
+                              "type": "text",
+                              "testid": "mall-sku-picker-viewer-index",
+                              "text": "查看位置：${viewerIndex ?? 0}",
+                              "className": "text-xs text-muted-foreground self-center"
+                            },
+                            {
+                              "type": "image-viewer",
+                              "testid": "mall-sku-picker-viewer",
+                              "images": "${ARRAYMAP(goodsDetail?.goods?.images ?? [], i => i?.image)}",
+                              "open": "${viewerOpen ? true : false}",
+                              "initialIndex": "${viewerIndex ?? 0}",
+                              "onClose": [
+                                {
+                                  "action": "setValues",
+                                  "args": {
+                                    "values": {
+                                      "viewerOpen": false
+                                    }
+                                  }
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "cards",
+                      "testid": "mall-sku-picker-feed-cards",
+                      "items": "${goodsFeedItems ?? []}",
+                      "columns": 2,
+                      "keyField": "goodsId",
+                      "card": {
+                        "type": "flex",
+                        "direction": "column",
+                        "gap": 2,
+                        "className": "repl-goods-card",
+                        "body": [
+                          {
+                            "type": "image",
+                            "testid": "mall-sku-picker-feed-image",
+                            "className": "repl-goods-card-img",
+                            "src": "${$slot.item.image}"
+                          },
+                          {
+                            "type": "text",
+                            "testid": "mall-sku-picker-feed-title",
+                            "text": "${$slot.item.title}",
+                            "className": "text-xs line-clamp-2"
+                          },
+                          {
+                            "type": "flex",
+                            "direction": "row",
+                            "gap": 4,
+                            "className": "items-baseline",
+                            "body": [
+                              {
+                                "type": "text",
+                                "text": "¥${$slot.item.seckillPrice}",
+                                "className": "repl-price"
+                              },
+                              {
+                                "type": "text",
+                                "text": "¥${$slot.item.price}",
+                                "className": "repl-price-original"
+                              }
+                            ]
+                          },
+                          {
+                            "type": "text",
+                            "text": "已抢 ${$slot.item.sold} 件",
+                            "className": "text-xs text-muted-foreground"
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "floating-panel",
+              "testid": "mall-sku-picker-panel",
+              "anchors": [200, 480],
+              "onChange": [
+                {
+                  "action": "setValues",
+                  "args": {
+                    "values": {
+                      "panelAnchor": "${index}"
+                    }
+                  }
+                }
+              ],
+              "body": [
+                {
+                  "type": "flex",
+                  "direction": "column",
+                  "gap": 8,
+                  "body": [
+                    {
+                      "type": "text",
+                      "testid": "mall-sku-picker-panel-caption",
+                      "text": "选择规格（求交定位 SKU）· 当前锚点：${panelAnchor ?? 0}",
+                      "className": "text-xs text-muted-foreground"
+                    },
+                    {
+                      "type": "flex",
+                      "direction": "row",
+                      "gap": 8,
+                      "body": [
+                        {
+                          "type": "picker-view",
+                          "testid": "mall-sku-picker-spec-color",
+                          "columns": [
+                            [
+                              {
+                                "label": "曜石黑",
+                                "value": "曜石黑"
+                              },
+                              {
+                                "label": "冰川白",
+                                "value": "冰川白"
+                              },
+                              {
+                                "label": "霞光紫",
+                                "value": "霞光紫"
+                              }
+                            ]
+                          ],
+                          "value": "${[selectedColor]}",
+                          "rowHeight": 36,
+                          "visibleRows": 3,
+                          "onChange": [
+                            {
+                              "action": "setValues",
+                              "args": {
+                                "values": {
+                                  "selectedColor": "${value}",
+                                  "skuId": "${ARRAYFILTER(goodsDetail?.skuMatrix ?? [], r => r?.specs?.color === value && r?.specs?.size === (selectedSize ?? ''))[0]?.skuId ?? ''}"
+                                }
+                              }
+                            }
+                          ]
+                        },
+                        {
+                          "type": "picker-view",
+                          "testid": "mall-sku-picker-spec-size",
+                          "columns": [
+                            [
+                              {
+                                "label": "128G",
+                                "value": "128G"
+                              },
+                              {
+                                "label": "256G",
+                                "value": "256G"
+                              },
+                              {
+                                "label": "512G",
+                                "value": "512G"
+                              }
+                            ]
+                          ],
+                          "value": "${[selectedSize]}",
+                          "rowHeight": 36,
+                          "visibleRows": 3,
+                          "onChange": [
+                            {
+                              "action": "setValues",
+                              "args": {
+                                "values": {
+                                  "selectedSize": "${value}",
+                                  "skuId": "${ARRAYFILTER(goodsDetail?.skuMatrix ?? [], r => r?.specs?.color === (selectedColor ?? '') && r?.specs?.size === value)[0]?.skuId ?? ''}"
+                                }
+                              }
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "flex",
+                      "direction": "row",
+                      "gap": 8,
+                      "className": "items-baseline",
+                      "body": [
+                        {
+                          "type": "text",
+                          "testid": "mall-sku-picker-sku",
+                          "text": "SKU：${ARRAYFILTER(goodsDetail?.skuMatrix ?? [], r => r?.specs?.color === selectedColor && r?.specs?.size === selectedSize)[0]?.skuId ?? '-'}",
+                          "className": "text-xs text-muted-foreground"
+                        },
+                        {
+                          "type": "text",
+                          "testid": "mall-sku-picker-sku-price",
+                          "text": "¥${ARRAYFILTER(goodsDetail?.skuMatrix ?? [], r => r?.specs?.color === selectedColor && r?.specs?.size === selectedSize)[0]?.price ?? '-'}",
+                          "className": "repl-price"
+                        },
+                        {
+                          "type": "text",
+                          "testid": "mall-sku-picker-stock",
+                          "text": "库存 ${ARRAYFILTER(goodsDetail?.skuMatrix ?? [], r => r?.specs?.color === selectedColor && r?.specs?.size === selectedSize)[0]?.stock ?? '-'}"
+                        },
+                        {
+                          "type": "text",
+                          "testid": "mall-sku-picker-stock-badge",
+                          "text": "${(ARRAYFILTER(goodsDetail?.skuMatrix ?? [], r => r?.specs?.color === selectedColor && r?.specs?.size === selectedSize)[0]?.stock ?? 0) <= 0 ? '缺货' : '有货'}",
+                          "className": "${(ARRAYFILTER(goodsDetail?.skuMatrix ?? [], r => r?.specs?.color === selectedColor && r?.specs?.size === selectedSize)[0]?.stock ?? 0) <= 0 ? 'text-xs text-rose-600 font-medium' : 'text-xs text-emerald-700'}"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "flex",
+                      "direction": "row",
+                      "gap": 8,
+                      "className": "items-center",
+                      "body": [
+                        {
+                          "type": "input-number",
+                          "name": "quantity",
+                          "label": "数量",
+                          "testid": "mall-sku-picker-quantity",
+                          "min": 1,
+                          "max": "${goodsDetail?.goods?.purchaseLimit ?? 2}",
+                          "step": 1,
+                          "showStepper": true
+                        },
+                        {
+                          "type": "text",
+                          "testid": "mall-sku-picker-limit-hint",
+                          "text": "限购 ${goodsDetail?.goods?.purchaseLimit ?? 2} 件",
+                          "className": "text-xs text-muted-foreground"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "grid",
+              "testid": "mall-sku-picker-footer",
+              "columns": "1fr 1fr",
+              "gap": 8,
+              "className": "repl-sticky-footer",
+              "items": [
+                {
+                  "body": {
+                    "type": "button",
+                    "label": "加入购物车",
+                    "variant": "outline",
+                    "testid": "mall-sku-picker-add-cart",
+                    "disabled": "${(ARRAYFILTER(goodsDetail?.skuMatrix ?? [], r => r?.specs?.color === selectedColor && r?.specs?.size === selectedSize)[0]?.stock ?? 0) <= 0}",
+                    "onClick": {
+                      "action": "ajax",
+                      "args": {
+                        "url": "/r/ReplMall__addToCart",
+                        "method": "post",
+                        "includeScope": "*"
+                      },
+                      "messages": {
+                        "success": "已加入购物车"
+                      },
+                      "onError": [
+                        {
+                          "action": "showToast",
+                          "args": {
+                            "level": "error",
+                            "message": "加入购物车失败：${error?.message ?? 'UNKNOWN'}"
+                          }
+                        }
+                      ]
+                    }
+                  }
+                },
+                {
+                  "body": {
+                    "type": "button",
+                    "label": "立即抢购",
+                    "variant": "primary",
+                    "testid": "mall-sku-picker-buy-now",
+                    "disabled": "${(ARRAYFILTER(goodsDetail?.skuMatrix ?? [], r => r?.specs?.color === selectedColor && r?.specs?.size === selectedSize)[0]?.stock ?? 0) <= 0}",
+                    "onClick": {
+                      "action": "ajax",
+                      "args": {
+                        "url": "/r/ReplMall__placeOrder",
+                        "method": "post",
+                        "includeScope": "*"
+                      },
+                      "messages": {
+                        "success": "抢购成功"
+                      },
+                      "onError": [
+                        {
+                          "action": "showToast",
+                          "args": {
+                            "level": "error",
+                            "message": "抢购失败：${error?.message ?? 'UNKNOWN'}"
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

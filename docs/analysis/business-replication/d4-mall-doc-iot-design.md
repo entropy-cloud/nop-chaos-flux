@@ -89,6 +89,17 @@ page(mobile)   # testid: mall-sku-picker-root（D5 深审勘误 MIN-3：补主�
 
 **G15 四项近似口径**（R4 §2 L62 逐项落位）：价格文本=text/card tpl 大小字+划线价（`repl-price` 类+CSS 变量）；吸底栏=grid 双列+`repl-sticky-footer`（sticky bottom）；加购动效=不做动效，`showToast` 反馈+`__replMallCalls` 计数过验收；场次切换=form 包 `button-group-select` 三值分段。
 
+#### S1 实现勘误（M3 落地实证 2026-10-31，plan 812；以 live 为准）
+
+1. **cards 卡区域槽约定**：cards 单卡模板 region 内字段经 `$slot.item.xxx` 访问（cards-renderer itemScope merge {item,index}）——原「card 内 text 拼 price」未指名槽前缀。
+2. **picker-view columns 静态域值**：规格列展开表达式（ARRAYMAP→{label,value} 对象字面量）在箭头体不可达（formula 无对象字面量）→ 规格列固定域值（颜色/尺寸为静态枚举），缺货置灰不可行（WheelPickerOption 无 disabled）→ 求交结果缺货标识 + 吸底按钮 disabled 表达式承担。
+3. **refreshSource targetId 顶层键**（D5 深审勘误同款同步）：`refreshSource requires targetId`——targetId 置 action 顶层非 args。
+4. **countdown 基线与推进钩子**：模块闭包基线在 spec reload 时随模块图重建复位 → 推进量改 sessionStorage 累积（`__replMallClockAdvance`，生产空值零影响），goodsDetail 服务 `baseline - 累积偏移`（推进=拉近截止）；基线 now+1h（计数恒走，确定性由推进钩子承担——M1 相位窗口同款）。
+5. **image-viewer images 投影**：goods.images 为 {image} 对象数组（CarouselItemSchema 形状）——image-viewer images 需字符串数组 → ARRAYMAP 投影 `i?.image`。
+6. **includeScope 载荷含 data-source 名值**：页级 form 包裹下 data-source 名（goodsDetail/flashSaleSource/goodsFeed\*）入 form scope → 载荷为域值全量（mock 择字段消费，多余键容忍——plan 812 Major-1 契约的实测形态）。
+7. **floating-panel 手势仲裁 vs 轮盘**：非顶锚时面板拥有全部纵向手势 → panel 内 picker-view 旋动被劫持——spec 以先拖顶锚再旋轮承担（产品面无影响：真实用户顶锚交互）。
+8. **axe 分支 B 基线**：color-contrast 11（壳头部 badge 族全量）+ aria-progressbar-name 1（content Progress 无可访问名 prop——组件 owner 债务）。
+
 ### 2.2 mall-distribution（S2，桌面，直接组合）
 
 组件树（R2 L86 交互①-⑩ → L87 映射；主容器 # testid: mall-distribution-root——D5 深审勘误 MIN-3）：`dashboard`（stat-tile×4 GMV/佣金/人数/待结算 + sparkline；echarts line 趋势）→ `crud` 佣金明细（query-filter+batch-bar+pagination ≥25 行，operation 列 审核）→ 导出按钮（download action，G6）→ `pivot-table` 层级透视（pivot:cell-click 下钻）→ `tree` 关系树（三级）+ `qrcode` 邀请码 → `dialog` 提现审核/打回（form+input-number+textarea 原因）→ batch-bar 结算批次入口（≈G17 调度 action 模拟）→ `input-table` 佣金规则配置（品类/金额区间→三级比例）→ page 权限层两视图裁剪（≈G17 SAAS-15）。

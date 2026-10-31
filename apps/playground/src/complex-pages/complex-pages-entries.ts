@@ -472,4 +472,12 @@ export const COMPLEX_PAGE_ENTRIES: ComplexPageEntry[] = [
       '复刻 MES 异常叫料移动页（roadmap 21 页 M3，D3 §2.6 mobile host override 移动画布 375×667，D6 MAJ-C 裁决）：notice-bar 未关闭异常/叫料滚动播报（ARRAYFILTER 现算）+ pull-refresh 下拉刷新（ajax 重置 accumulator）+ infinite-scroll 翻页（hasMore/loading 双受控值 + CONCAT append）+ 任务卡 swipe-cell（左滑催单 andonEscalate escalationLevel+1 / 关闭 materialIssueUpdate op=close）+ countdown 响应倒计时（targetTime=respondDeadline epoch-ms，已过 deadline fixture 行 onFinish 超时 toast + 行标红）+ floating-bubble → action-sheet grid 快捷动作（发起异常/发起叫料/刷新指引）+ floating-panel 半屏发起表单（anchors 两档拖拽：wheel-picker 异常类型 + 工位 + 描述 + input-image 现场拍照 uploadAction=uploadAndonPhoto + image-viewer 受控预览 + 叫料明细 input-table + 快捷数量 number-keyboard 受控录入）+ submitAction→andonCreate（MATERIAL 联动生成 MaterialIssue docNo 回显）。数据经 /r/ReplMes__andon* 与 materialIssueUpdate/uploadAndonPhoto 端点流动。',
     features: ['notice-bar 播报', 'pull-refresh 刷新', 'infinite-scroll 翻页', 'swipe-cell 催单/关闭', 'countdown 超时标红', 'action-sheet grid', 'floating-panel 半屏表单', 'input-image 拍照上传', 'number-keyboard 录入', 'ReplMes__ 端点'],
   },
+  {
+    id: 'mall-sku-picker',
+    title: '商城商品 SKU 选择页',
+    category: 'business-replication',
+    description:
+      '复刻商城商品 SKU 选择页（roadmap 21 页 S1，D4 §2.1 mobile host override 移动画布 375×667，D6 MAJ-C 裁决）：pull-refresh + infinite-scroll 商品卡瀑布流（cards tpl 价格，27 卡 ≥3 页翻页）+ carousel 画廊（goods.images，onChange 计数）+ image-viewer 放大（受控点火）+ 促销横幅（repl-price 大小字划线价 + countdown 秒杀倒计时 onFinish 切态 + progress 抢购进度）+ 场次三态 button-group-select 切换 + floating-panel SKU 半屏面板（picker-view×2 规格列 + G16 formula 求交：ARRAYFILTER 前端定位 SKU，skuLocate 计数 0 证前端求交 + 数量步进 purchaseLimit 钳制 + 缺货标识）+ grid repl-sticky-footer 吸底双按钮（加入购物车 addToCart / 立即抢购 placeOrder，SOLD_OUT/LIMIT_EXCEEDED 错误分支 + forcePlaceOrderError 钩子）。数据经 /r/ReplMall__ 端点流动。',
+    features: ['商品卡瀑布流', 'carousel 画廊', 'image-viewer 放大', 'repl-price 大小字', 'countdown 切态', 'progress 抢购进度', '场次三态切换', 'picker-view 规格求交', '数量步进钳制', '吸底双按钮', 'ReplMall__ 端点'],
+  },
 ];
