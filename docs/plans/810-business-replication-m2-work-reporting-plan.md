@@ -18,7 +18,7 @@
 ## Goals
 
 - mock 扩展（M2 子集端点+GUARD 守卫）+ `page-schemas/mes-work-reporting.json` + entry + e2e `tests/e2e/replication-mes-work-reporting.spec.ts`（三支柱）+ axe 分支 A 登记。
-- e2e 断言按 D3 §5.5 M2 清单（行内报工编辑+computed 派生/合计行/守恒校验拦截/状态动作按钮 visible/确认 dialog/focus 3 条）。
+- e2e 断言按 D3 §5.5 M2 清单（行内报工编辑+computed 派生/合计行+summaryBinding 回写主单/守恒校验拦截+GUARD_HOUR_RATIO/状态动作按钮 visible/报工 dialog 焦点往返+守恒前端 validate 半边/ILLEGAL_TRANSITION 断言/hourRatio>1 标红/focus 3 条）。
 
 ## Non-Goals
 
