@@ -35,6 +35,7 @@ import {
   type ReplicaBranchInput,
   type ReplicaFetcherBranch,
 } from './mock-backend-replica-kit';
+import { createReplIotV2Surface } from './mock-backend-repl-iot-v2';
 
 /* ── Opt-in hooks ───────────────────────────────────────────────────────── */
 
@@ -46,6 +47,11 @@ export interface ReplIotTestHooks {
   /** Mirrors: last `alarmAck` / `alarmClose` request bodies. */
   lastAlarmAckBody?: Record<string, unknown>;
   lastAlarmCloseBody?: Record<string, unknown>;
+  /** V2 (OTA): device-status push + request mirrors (delegate surface). */
+  setAssignmentStatus?: (deviceId: string, status: string) => void;
+  lastAssignBatchedBody?: Record<string, unknown>;
+  lastActivateBatchBody?: Record<string, unknown>;
+  lastRollbackBody?: Record<string, unknown>;
 }
 
 function readReplIotTestHooks(): ReplIotTestHooks | undefined {
@@ -137,6 +143,7 @@ export function buildIotAlarms(): IotAlarm[] {
 export function createReplIotFetcherBranch(): ReplicaFetcherBranch {
   let phase = 0;
   const alarms = buildIotAlarms();
+  const handleReplIotV2 = createReplIotV2Surface();
 
   const countEndpointCall = createEndpointCounter({
     countersKey: '__replIotCalls',
@@ -192,6 +199,10 @@ export function createReplIotFetcherBranch(): ReplicaFetcherBranch {
       alarm.ackAt = '2026-10-31 12:00';
       return { status: 0, data: { alarmId: alarm.alarmId, status: alarm.status } as unknown as T };
     }
+
+    // ── V2 OTA segment (plan 817; delegate module mock-backend-repl-iot-v2) ──
+    const v2Result = handleReplIotV2<T>({ url: input.url, method, read, body: input.body, hooks });
+    if (v2Result) return v2Result;
 
     if (input.url.includes('/r/ReplIot__alarmClose') && method === 'post') {
       if (hooks) hooks.lastAlarmCloseBody = JSON.parse(JSON.stringify(input.body ?? {}));

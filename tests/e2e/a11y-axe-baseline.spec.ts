@@ -77,6 +77,9 @@ const ROUTES = [
   // Plan 816 (D1 §4 branch A): V1 telemetry-device joins the standard desktop
   // scan set (non-mobile page — pure JSON SchemaPage, no host override).
   'complex-pages/iot-telemetry-device',
+  // Plan 817 (D1 §4 branch A): V2 ota-rollout joins the standard desktop scan
+  // set (non-mobile page — pure JSON SchemaPage, no host override).
+  'complex-pages/iot-ota-rollout',
   'dashboard-demo',
 ];
 

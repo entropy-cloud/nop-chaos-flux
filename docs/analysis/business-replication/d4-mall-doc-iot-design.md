@@ -329,6 +329,17 @@ HITL 卡复用口径（R3 L30）：`ai-tool-call` 为 AI 会话语境卡，inbox
 { "type": "timeline", "testid": "iot-ota-rollout-assign-timeline", "items": "${selectedAssignment.history}" }
 ```
 
+#### V2 实现勘误（M3 落地实证 2026-11-01，plan 817；以 live 为准）
+
+1. **§4.3 assignmentMatrix 形状**：返回 `{rolloutId, currentBatch, rolledBack, items:[{deviceId,batchNo,status,statusTime,lastError,history:[{status,statusTime}]}], selected:{deviceId,status,stepItems,timeline}}`，按 `?deviceId=` 查询参数锚定选中设备（原表无查询参数与 history 锚定）。
+2. **门控失败呈现面**：`activateNextBatch` 失败信封 `status:1 msg REPL_IOT_GATE_NOT_PASSED` + `data:{gate}`；onError `setValue otaGate = ${error?.responseData?.gate}`（`createApiResponseError` 的 responseData 承载信封 data 字段）由 alert 呈现完成率/失败率；种子批次 1 = 1/2 UPDATED（50%）→ 不推进，推送 DEV-1002 UPDATED 后推进批次 2。
+3. **steps 投影**：items 为 mock 投影 `selected.stepItems`（八态 finish/process/wait；终态 UPDATED 记 finish；FAILED 行显式 `status:'error'`，否则当前项派生为 process）——非片段 `${selectedAssignment.status}` 单值；value 绑 `selected.status`；timeline items = `selected.timeline`（history 投影 time/title/level）。
+4. **步骤 1/2 门禁**：「table 多选 + onStepCommit」→ form 宿主（`valuesPath: otaSelect/otaBatch`）`checkbox-group` 设备多选 required / batchSize required + 步骤 `formId` 校验阻断（table selection 非 form 字段、不可被 formId 校验；O1 formId 实证机制）；步骤 3 确认按钮 ajax assignBatched（不用 beforeLeave）。
+5. **免做项**：固件 crud 免 input-file 上传/verifySignature/废弃操作，门控免「暂停」（§5 V2 清单不含、无端点承载）。
+6. **§4.3 载荷形状**：`assignBatched` 请求 `{packageId, deviceIds, batchSize}`、响应 `{rolloutId, batches}`；`rollbackPackage` 请求 `{rolloutId, reason}`、响应 `{rolloutId, status:'ROLLED_BACK'}`（成功后矩阵全设备 ROLLED_BACK + history）。
+7. **回滚 alert 承载**：回滚成功链 `setValue rollbackResult` 落在回滚 form 本层作用域（scope.update 写本层 store，§2.2 S2 勘误 5 同源）→ ROLLED_BACK alert 置于该 form body 内方能读到。
+8. **axe 分支 A 基线**：aria-allowed-attr 1（checkbox-group `role=group` 携 `aria-required`——ARIA 不允许，form 渲染器 owner 债）+ aria-required-attr 10（两表列宽 separator）+ color-contrast 9（壳头部 badge 族）。
+
 ### 2.7 iot-geofence-videowall（V3，桌面，新 type 临时形态，axe 分支 C）
 
 组件树（R3 L57 交互①-⑦ → L58，收窄见 §6；主容器 # testid: iot-geofence-videowall-root——D5 深审勘误 MIN-3）：`grid` 左图右墙（3fr/2fr）——左 `map`（mapType pin、pinData、cluster、geojsonSource 围栏圆回显非交互、onClick 联动）+ 左下 `table` 事件列表（interval 轮询增量）+`timeline` 事件流；右 `grid` 视频墙（`video`×4 mp4 样例，controls/muted，`card` 包裹通道名+status）+ `drawer` 通道树（tree，点播控制仅 UI 摆放）。
@@ -485,7 +496,7 @@ HITL 卡复用口径（R3 L30）：`ai-tool-call` 为 AI 会话语境卡，inbox
 | ReplIot\_\_checkFence (post)            | V3  | `{ deviceId,inside,distanceMeters }`（DeviceGeoService 语义，R3 L55）                                                                                               | REPL_IOT_DEVICE_NOT_FOUND         |
 | ReplIot\_\_videoChannels (get)          | V3  | `{ channels:{ channelId,name,status:'online',streamUrl } }`                                                                                                         | —                                 |
 
-钩子：`tickTelemetry(metric?)`（推进序列相位，V1 轮询断言；plan 816 勘误：落地为无参全指标推进，telemetryQuery 形状与新增 ACK_FAILED 见 §2.5 V1 勘误 2/3）、`appendFenceEvent(event)`（V3 轮询增量）、`forceAlarmAckError()`、`setAssignmentStatus(deviceId,status)`（V2 推态）、`setVideoAsset(channelId,url)`（CI 替换 src，正常不用）。
+钩子：`tickTelemetry(metric?)`（推进序列相位，V1 轮询断言；plan 816 勘误：落地为无参全指标推进，telemetryQuery 形状与新增 ACK_FAILED 见 §2.5 V1 勘误 2/3）、`appendFenceEvent(event)`（V3 轮询增量）、`forceAlarmAckError()`、`setAssignmentStatus(deviceId,status)`（V2 推态；plan 817 勘误：matrix/载荷/门控信封形状见 §2.6 V2 勘误 1/2/6）、`setVideoAsset(channelId,url)`（CI 替换 src，正常不用）。
 
 **V3 mp4 样例流资产来源**（G26 收窄后验收载体，R4 §2 L73）：
 
@@ -529,6 +540,7 @@ HITL 卡复用口径（R3 L30）：`ai-tool-call` 为 AI 会话语境卡，inbox
 **V2 iot-ota-rollout**（axe 分支 A）
 
 - 交互：① 向导推进：未选设备 next 被拦→选 3 台→assignBatched payload batches 断言；② steps 八态：`setAssignmentStatus('DEV-1','FAILED')`→当前项 error 分叉（value=FAILED）；③ 回滚确认：空原因拦→填原因→rollbackPackage 计数+1+ROLLED_BACK alert；④ 矩阵 mapping 状态文本（UPDATED/FAILED）；⑤ 门控：activateNextBatch 返回 GATE_NOT_PASSED→呈现 gate 数据且不推进。
+  - plan 817 落地勘误（2026-11-01，详见 §2.6「V2 实现勘误」）：① next 拦截机制为 form checkbox-group required + step formId（勘误 4）；② error 分叉由投影 FAILED 行 status:'error' 承担（勘误 3）；③ ROLLED_BACK alert 在回滚 form 内（勘误 7）；⑤ gate 数据经 error.responseData.gate 呈现（勘误 2）。
 - focus：wizard 步进按钮 tab 可达；回滚 dialog 焦点落入+Esc 返回。
 
 **V3 iot-geofence-videowall**（axe 分支 C：先纳入实测→>30s 切排除→排除≠功能验收排除，§3.4）

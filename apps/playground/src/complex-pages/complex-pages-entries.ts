@@ -512,4 +512,12 @@ export const COMPLEX_PAGE_ENTRIES: ComplexPageEntry[] = [
       '复刻 IoT 设备遥测详情页（roadmap 21 页 V1，D4 §2.5 桌面整页）：设备/时间窗过滤（form valuesPath）→ data-source interval 5s 静默轮询遥测（确定性相位，tickTelemetry 钩子推进）→ stat-tile×3 温度/湿度/电压最新值 + sparkline 迷你趋势 + echarts 24h 三曲线 → status + mapping 数据质量位（GOOD/UNCERTAIN/BAD）→ 告警 crud 随设备联动（级别/状态标色，行点击 dialog 确认/关闭：ACK_FAILED 强制失败与 ALREADY_CLOSED 分支）。数据经 /r/ReplIot__ 端点流动。',
     features: ['interval 轮询', 'stat-tile sparkline×3', 'echarts 三曲线', '质量位 status+mapping', '告警联动 crud', 'dialog 确认/关闭', 'ReplIot__ 端点'],
   },
+  {
+    id: 'iot-ota-rollout',
+    title: 'IoT OTA 灰度管理页',
+    category: 'business-replication',
+    description:
+      '复刻 IoT OTA 灰度管理页（roadmap 21 页 V2，D4 §2.6 桌面整页）：固件 crud（废弃态标色）→ wizard 灰度指派三步（选设备：form 宿主 checkbox-group required + step formId 门禁 → 分批 → 确认下发 assignBatched）→ steps 八态状态轴（mock 投影 stepItems，FAILED error 分叉）+ timeline 历史轨迹（选中设备）+ 进度矩阵（设备×批次×状态+lastError 标色）→ 门控推进下一批（GATE_NOT_PASSED 时经 error.responseData.gate 呈现完成率/失败率且不推进）→ 回滚确认 dialog（原因必填 → rollbackPackage → ROLLED_BACK alert）。数据经 /r/ReplIot__ 端点流动。',
+    features: ['wizard formId 门禁', 'checkbox-group 多选', 'steps 八态 error 分叉', 'timeline 轨迹', '进度矩阵', '门控 gate 呈现', '回滚 dialog', 'ReplIot__ 端点'],
+  },
 ];

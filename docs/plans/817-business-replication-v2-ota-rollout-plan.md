@@ -1,6 +1,6 @@
 # 817 M3-V2 IoT OTA 灰度管理页复刻（business-page-replication roadmap M3-V2）
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-10-31
 > Source: `docs/backlog/business-page-replication-roadmap.md` §2 M3-V2（依赖 M2 done；roadmap 现值 `todo`，本 plan 激活时置 `planned`，收口置 `done`）
 > Related: D1 总体设计；D4 §2.6（V2 页设计）/§4.3（iot 模块 V2 端点）/§5 V2（断言）；R3 §1 V2；plan 816（ReplIot 域）、plan 814（wizard beforeLeave/焦点先例）、plan 808（K3 steps 状态轴/timeline 先例）、plan 815（refreshNearest/dialog 先例）
@@ -51,23 +51,30 @@
 
 ### Phase 1 - V2 页全链实现
 
-Status: planned
+Status: completed
 Targets: `apps/playground/src/complex-pages/shared/mock-backend-repl-iot-v2.ts`（新 delegate）、`mock-backend-repl-iot.ts`（会话/钩子扩展）、`showcase-env.ts`、`page-schemas/iot-ota-rollout.json`（新）、`complex-pages-entries.ts`、`tests/e2e/replication-iot-ota-rollout.spec.ts`（新）、`tests/e2e/a11y-axe-baseline.spec.ts` + `__fixtures__/axe-baseline.json`
 
 - Item Types: `Fix | Proof`
 
-- [ ] mock：delegate 模块 `mock-backend-repl-iot-v2.ts`（复用 kit 的 counter——同 `__replIotCalls` 前缀段）——`firmwarePage`（4 行 `{packageId,title,versionNo,checksum,fileUrl,deprecated}`）/`assignBatched`（`{batches:[{batchNo,deviceIds[]}]}`；空集 → BATCH_EMPTY；写镜像 `lastAssignBatchedBody`；会话矩阵初始化 QUEUED）/`assignmentMatrix`（`{items:[{deviceId,batchNo,status,statusTime,lastError,history}]}` 八态；`setAssignmentStatus(deviceId,status)` 钩子推态并追加 history；FAILED 行带 lastError）/`activateNextBatch`（`{batchNo}`；完成率/失败率门：矩阵中该批次 UPDATED 比例 ≥ 阈值且 FAILED 比例 ≤ 阈值 → `{batchNo,gate:{completionRate,failRate,passed:true}}` 推进批次；否则 `status:1 msg REPL_IOT_GATE_NOT_PASSED` + 信封 `data:{gate}`；写镜像 `lastActivateBatchBody`）/`rollbackPackage`（`{rolloutId,reason}`；空原因 → ROLLBACK_REASON_REQUIRED；成功矩阵全批 → ROLLED_BACK + history；写镜像 `lastRollbackBody`）；`setAssignmentStatus` 挂入 `__replIotTestHooks`（plan 816 `tickTelemetry` 同款分支发布）
-- [ ] schema JSON：`crud` 固件列表（firmwarePage；deprecated status 列）→ `wizard` 三步（步骤 1 选设备：form `iot-ota-rollout-select-form`〔`valuesPath: otaSelect`，固件 select + 设备 `checkbox-group` required〕+ 步骤 `formId` 指向该 form——空选 next 被校验阻断；步骤 2 分批：form〔`valuesPath: otaBatch`，batchSize select required〕+ formId；步骤 3 确认下发：beforeLeave 不用，确认按钮 ajax assignBatched 读 `${otaSelect}`/`${otaBatch}`，onError toast）→ `steps` 八态（items 表达式投影选中设备状态映射——mock 投影 stepItems，FAILED 行显式 `status:'error'`〔否则当前项派生为 process〕，error 分叉）+ `timeline` history（选中设备）+ `table` 进度矩阵（mapping 状态色：UPDATED success/FAILED error/UPDATING warning/其余 info）→ 门控按钮组（activateNextBatch；onError `setValue otaGate = ${error?.responseData?.gate ?? null}` + toast；otaGate alert 呈现完成率/失败率）→ 回滚 dialog（textarea required + rollbackPackage；成功 ROLLED_BACK alert + refreshNearest）；testid `iot-ota-rollout-<element>`；strict 零诊断
-- [ ] entry（category `business-replication`）
-- [ ] e2e spec（D4 §5 V2）：前置〔固件 4 行 + 矩阵 QUEUED + steps 首态〕/交互① 未选设备 next 被 formId 校验拦截（停留步骤 1、assignBatched 计数 0）→ 选 3 台 → assignBatched 载荷 batches 断言 + 进入矩阵态/交互② `setAssignmentStatus('DEV-1001','FAILED')` → steps 当前项 error 分叉（data-status=error）+ 矩阵行 FAILED + lastError/交互③ 回滚：空原因 required 拦（rollbackPackage 计数 0）→ 填原因 → rollbackPackage +1 + 载荷 + ROLLED_BACK alert/交互④ 门控：未达标批次 activateNextBatch → GATE_NOT_PASSED toast + gate alert（完成率/失败率文本）+ 批次不推进；达标批次推进成功/交互⑤ 矩阵 mapping 状态文本（UPDATED/FAILED）；focus ① wizard 步进按钮 tab 可达 ② 回滚 dialog 焦点落入 + Esc 返回；预期拒绝分支 `allowConsoleErrors` 按 W3 先例登记；`--retries=0`
-- [ ] axe 分支 A 登记：ROUTES + `complex-pages/iot-ota-rollout` 基线键（首跑实测 + `_notes`）
-- [ ] 验证：focused e2e `--retries=0` 全绿 + axe spec 绿 + replication 全族回归 + strict 校验
+- [x] mock：delegate 模块 `mock-backend-repl-iot-v2.ts`（复用 kit 的 counter——同 `__replIotCalls` 前缀段）——`firmwarePage`（4 行 `{packageId,title,versionNo,checksum,fileUrl,deprecated}`）/`assignBatched`（`{batches:[{batchNo,deviceIds[]}]}`；空集 → BATCH_EMPTY；写镜像 `lastAssignBatchedBody`；会话矩阵初始化 QUEUED）/`assignmentMatrix`（`{items:[{deviceId,batchNo,status,statusTime,lastError,history}]}` 八态；`setAssignmentStatus(deviceId,status)` 钩子推态并追加 history；FAILED 行带 lastError）/`activateNextBatch`（`{batchNo}`；完成率/失败率门：矩阵中该批次 UPDATED 比例 ≥ 阈值且 FAILED 比例 ≤ 阈值 → `{batchNo,gate:{completionRate,failRate,passed:true}}` 推进批次；否则 `status:1 msg REPL_IOT_GATE_NOT_PASSED` + 信封 `data:{gate}`；写镜像 `lastActivateBatchBody`）/`rollbackPackage`（`{rolloutId,reason}`；空原因 → ROLLBACK_REASON_REQUIRED；成功矩阵全批 → ROLLED_BACK + history；写镜像 `lastRollbackBody`）；`setAssignmentStatus` 挂入 `__replIotTestHooks`（plan 816 `tickTelemetry` 同款分支发布）
+- [x] schema JSON：`crud` 固件列表（firmwarePage；deprecated status 列）→ `wizard` 三步（步骤 1 选设备：form `iot-ota-rollout-select-form`〔`valuesPath: otaSelect`，固件 select + 设备 `checkbox-group` required〕+ 步骤 `formId` 指向该 form——空选 next 被校验阻断；步骤 2 分批：form〔`valuesPath: otaBatch`，batchSize select required〕+ formId；步骤 3 确认下发：beforeLeave 不用，确认按钮 ajax assignBatched 读 `${otaSelect}`/`${otaBatch}`，onError toast）→ `steps` 八态（items 表达式投影选中设备状态映射——mock 投影 stepItems，FAILED 行显式 `status:'error'`〔否则当前项派生为 process〕，error 分叉）+ `timeline` history（选中设备）+ `table` 进度矩阵（mapping 状态色：UPDATED success/FAILED error/UPDATING warning/其余 info）→ 门控按钮组（activateNextBatch；onError `setValue otaGate = ${error?.responseData?.gate ?? null}` + toast；otaGate alert 呈现完成率/失败率）→ 回滚 dialog（textarea required + rollbackPackage；成功 ROLLED_BACK alert + refreshNearest）；testid `iot-ota-rollout-<element>`；strict 零诊断
+- [x] entry（category `business-replication`）
+- [x] e2e spec（D4 §5 V2）：前置〔固件 4 行 + 矩阵种子（批次 1 = 1/2 UPDATED + UPDATING、批次 2 QUEUED）+ steps 首态〕/交互① 未选设备 next 被 formId 校验拦截（停留步骤 1、assignBatched 计数 0）→ 选 3 台 → assignBatched 载荷 batches 断言 + 进入矩阵态/交互② `setAssignmentStatus('DEV-1001','FAILED')` → steps 当前项 error 分叉（data-status=error）+ 矩阵行 FAILED + lastError/交互③ 回滚：空原因 required 拦（rollbackPackage 计数 0）→ 填原因 → rollbackPackage +1 + 载荷 + ROLLED_BACK alert/交互④ 门控：未达标批次 activateNextBatch → GATE_NOT_PASSED toast + gate alert（完成率/失败率文本）+ 批次不推进；达标批次推进成功/交互⑤ 矩阵 mapping 状态文本（UPDATED/FAILED）；focus ① wizard 步进按钮 tab 可达 ② 回滚 dialog 焦点落入 + Esc 返回；预期拒绝分支 `allowConsoleErrors` 按 W3 先例登记；`--retries=0`
+- [x] axe 分支 A 登记：ROUTES + `complex-pages/iot-ota-rollout` 基线键（首跑实测 + `_notes`）
+- [x] 验证：focused e2e `--retries=0` 全绿 + axe spec 绿 + replication 全族回归 + strict 校验
+
+执行期适配（以 live 为准；D4 §2.6「V2 实现勘误」8 条 + §4.3/§5 就地注——评审逐名六项全部落档为勘误 1-6）：
+
+- delegate 模块 `mock-backend-repl-iot-v2.ts` 由 IoT 分支直接传入共享 opt-in hooks 对象（`ReplIotTestHooks` 结构上为 `ReplIotV2Hooks` 超集），计数沿用 `__replIotCalls`。
+- 回滚成功链 `setValue rollbackResult` 写入回滚 form 本层作用域 → ROLLED_BACK alert 移入该 form body（勘误 7，§2.2 S2 勘误 5 同源）。
+- axe 新发现：checkbox-group `role=group` 携 `aria-required`（ARIA 不允许）——form 渲染器 owner 债，基线登记 `_notes` 溯源（勘误 8），不越权修组件。
+- replication 全族回归 195/197：C2 calendar（既有时区窗口红，03:51 CST 仍在 00:00-08:00 窗口内）+ M1 交互① 一例负载抖动（单跑 8/8、`--repeat-each=3` 3/3，本 diff 零触达 MES 面）。
 
 Exit Criteria:
 
-- [ ] V2 页可达可交互且列表页收录，strict validation 零诊断
-- [ ] focused e2e `--retries=0` 全绿（`__replIotCalls` 计数 + 写镜像载荷断言在；gate 呈现与不推进断言在）
-- [ ] axe 分支 A 基线登记绿
+- [x] V2 页可达可交互且列表页收录，strict validation 零诊断
+- [x] focused e2e `--retries=0` 全绿（`__replIotCalls` 计数 + 写镜像载荷断言在；gate 呈现与不推进断言在）
+- [x] axe 分支 A 基线登记绿
 
 ## Draft Review Record
 
@@ -78,17 +85,17 @@ Exit Criteria:
 
 ## Closure Gates
 
-- [ ] in-scope 工作全部落地（V2 页 + ReplIot V2 段 + roadmap 回写）
-- [ ] 行为/契约结果已达成（D4 §5 V2 断言清单全绿，`--retries=0`）
-- [ ] 必要 focused verification 已完成
-- [ ] 不存在被静默降级的 in-scope 缺口
-- [ ] 受影响 owner docs 已同步（daily log；D4 §2.6/§4.3/§5 V2 勘误——含逐名六项）
-- [ ] 独立子 agent（fresh session）closure audit 通过并记录证据
-- [ ] `pnpm typecheck`（触达面口径）
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
-- [ ] `pnpm check`（零新增未登记命中）
+- [x] in-scope 工作全部落地（V2 页 + ReplIot V2 段 + roadmap 回写）
+- [x] 行为/契约结果已达成（D4 §5 V2 断言清单全绿，`--retries=0`：focused 7/7）
+- [x] 必要 focused verification 已完成（focused 7/7 + axe 27/27 + strict 64/64 + playground unit 566/566；replication 全族 195/197——C2 calendar 既有红 + M1 负载抖动单跑 8/8 复核绿）
+- [x] 不存在被静默降级的 in-scope 缺口
+- [x] 受影响 owner docs 已同步（daily log；D4 §2.6 V2 勘误 8 条——含评审逐名六项 + §4.3/§5 就地注）
+- [x] 独立子 agent（fresh session）closure audit 通过并记录证据（agent_f9f6dcbb，approved）
+- [x] `pnpm typecheck`（exit 0）
+- [x] `pnpm build`（exit 0）
+- [x] `pnpm lint`（exit 0）
+- [x] `pnpm test`（exit 0，86/86）
+- [x] `pnpm check`（exit 0）
 
 ## Deferred But Adjudicated
 
@@ -106,13 +113,13 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: 待收口填写
+Status Note: V2 页全链落地（ReplIot V2 delegate 五端点 + schema strict 零诊断 + entry + focused e2e 7 测试 + axe 分支 A 登记），D4 §5 V2 断言清单（①-⑤ + focus 两条）全部 `--retries=0` 实跑通过；评审三轮（revised→pass）逐名六项 D4 偏离全部落档（§2.6 勘误 8 条）；axe 新发现 checkbox-group aria-required 归组件 owner 债登记。全仓五门禁（typecheck/build/lint/test/check）收口时点全绿。Deferred（C2 calendar 时区窗口红、并行会话 WIP）与本 diff 零交集。独立 closure audit approved，无剩余 plan-owned work。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: 待独立子 agent 填写
-- Evidence: 待填写
+- Auditor / Agent: 独立 fresh sub-agent（agent_f9f6dcbb-efc5-45b6-b8ff-4e485eaeabd3）
+- Evidence: verdict **approved**（零 Blocker / 零 Major / 3 Minor）。审计员独立实跑 focused 7/7、strict 64/64、axe 27/27、M1 单跑 8/8、playground unit 566/566、typecheck exit 0；e2e 五项断言逐条覆盖审查（allowConsoleErrors 仅一处预期分支）；评审六项勘误落档核验；delegate hooks 传递正确性核验（写镜像与 spec 读取为同一 window 对象）。Minor-①（focus ① 以 focus()+Enter 驱动，未走真实 Tab 遍历——口径差已登记）；Minor-②（plan 前置「矩阵 QUEUED」措辞与种子不一致）——已随本回写同步；Minor-③（收口时点并行会话 check:test-barrels 未跟踪文件红）非本 plan 触达面。
 
 Follow-up:
 
-- 待收口填写
+- no remaining plan-owned work（Non-Blocking：全量 test:e2e 与 C2 calendar 根因归 P1；checkbox-group aria-required 修组件归 form 渲染器 owner）

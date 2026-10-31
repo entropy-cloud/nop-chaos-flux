@@ -120,5 +120,11 @@
     "aria-required-attr": 8,
     "color-contrast": 8,
     "_notes": "plan 816 first-run measurement 2026-11-01 (D1 §4 branch A registration): counts measured on #/complex-pages/iot-telemetry-device. aria-required-attr = the alarm crud table's 8 column-resize separator spans (table component owner debt, same rule as standard-crud/W2/W3/S2/O2); color-contrast = the 8 shell header badges (secondary badge family, same as S1/S2/O1/O2). Fixes belong to the component owners, not the page schema."
+  },
+  "complex-pages/iot-ota-rollout": {
+    "aria-allowed-attr": 1,
+    "aria-required-attr": 10,
+    "color-contrast": 9,
+    "_notes": "plan 817 first-run measurement 2026-11-01 (D1 §4 branch A registration): counts measured on #/complex-pages/iot-ota-rollout. aria-allowed-attr = the checkbox-group wrapper (role=group) carrying aria-required=\"true\" — ARIA does not allow aria-required on role=group (flux-renderers-form checkbox-group owner debt; required semantics should move to the inputs or be conveyed via description); aria-required-attr = the firmware crud + progress matrix tables' 10 column-resize separator spans (table component owner debt); color-contrast = the 9 shell header badges (secondary badge family). Fixes belong to the component owners, not the page schema."
   }
 }

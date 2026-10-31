@@ -1,0 +1,610 @@
+{
+  "type": "page",
+  "body": [
+    {
+      "type": "data-source",
+      "id": "iot-ota-rollout-matrix-source",
+      "name": "otaMatrix",
+      "action": "ajax",
+      "args": {
+        "url": "/r/ReplIot__assignmentMatrix",
+        "method": "get",
+        "params": {
+          "deviceId": "${otaView?.deviceId ?? 'DEV-1002'}"
+        }
+      },
+      "dependsOn": ["otaView"],
+      "testid": "iot-ota-rollout-matrix-source"
+    },
+    {
+      "type": "flex",
+      "direction": "column",
+      "gap": 12,
+      "testid": "iot-ota-rollout-root",
+      "body": [
+        {
+          "type": "crud",
+          "id": "iot-ota-rollout-firmware",
+          "testid": "iot-ota-rollout-firmware",
+          "itemKey": "packageId",
+          "loadAction": {
+            "dependsOn": ["__init_load__"],
+            "action": "ajax",
+            "args": {
+              "url": "/r/ReplIot__firmwarePage",
+              "method": "get"
+            }
+          },
+          "columns": [
+            {
+              "name": "packageId",
+              "label": "固件包",
+              "width": 130
+            },
+            {
+              "name": "title",
+              "label": "名称",
+              "width": 160
+            },
+            {
+              "name": "versionNo",
+              "label": "版本",
+              "width": 110
+            },
+            {
+              "name": "checksum",
+              "label": "校验和",
+              "width": 150
+            },
+            {
+              "name": "deprecated",
+              "label": "状态",
+              "width": 90,
+              "cell": {
+                "type": "status",
+                "value": "${deprecated ? 'deprecated' : 'active'}",
+                "labelMap": {
+                  "deprecated": "已废弃",
+                  "active": "可用"
+                },
+                "levelMap": {
+                  "deprecated": "neutral",
+                  "active": "success"
+                }
+              }
+            }
+          ],
+          "empty": {
+            "type": "text",
+            "text": "暂无固件"
+          }
+        },
+        {
+          "type": "card",
+          "title": "灰度指派",
+          "testid": "iot-ota-rollout-assign-card",
+          "body": [
+            {
+              "type": "wizard",
+              "testid": "iot-ota-rollout-wizard",
+              "actionNextLabel": "下一步",
+              "actionPrevLabel": "上一步",
+              "steps": [
+                {
+                  "key": "select",
+                  "title": "选设备",
+                  "formId": "iot-ota-rollout-select-form",
+                  "body": [
+                    {
+                      "type": "form",
+                      "id": "iot-ota-rollout-select-form",
+                      "testid": "iot-ota-rollout-select-form",
+                      "valuesPath": "otaSelect",
+                      "data": {
+                        "packageId": "PKG-2026-10",
+                        "deviceIds": []
+                      },
+                      "actions": [],
+                      "body": [
+                        {
+                          "type": "select",
+                          "name": "packageId",
+                          "label": "固件包",
+                          "testid": "iot-ota-rollout-select-package",
+                          "required": true,
+                          "options": [
+                            {
+                              "label": "PKG-2026-09 v1.3.0",
+                              "value": "PKG-2026-09"
+                            },
+                            {
+                              "label": "PKG-2026-10 v1.4.0",
+                              "value": "PKG-2026-10"
+                            },
+                            {
+                              "label": "PKG-2026-10B v1.4.1-rc1",
+                              "value": "PKG-2026-10B"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "checkbox-group",
+                          "name": "deviceIds",
+                          "label": "目标设备（至少 1 台）",
+                          "testid": "iot-ota-rollout-select-devices",
+                          "required": true,
+                          "options": [
+                            {
+                              "label": "DEV-1001",
+                              "value": "DEV-1001"
+                            },
+                            {
+                              "label": "DEV-1002",
+                              "value": "DEV-1002"
+                            },
+                            {
+                              "label": "DEV-1003",
+                              "value": "DEV-1003"
+                            },
+                            {
+                              "label": "DEV-1004",
+                              "value": "DEV-1004"
+                            },
+                            {
+                              "label": "DEV-1005",
+                              "value": "DEV-1005"
+                            },
+                            {
+                              "label": "DEV-1006",
+                              "value": "DEV-1006"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "key": "batch",
+                  "title": "分批",
+                  "formId": "iot-ota-rollout-batch-form",
+                  "body": [
+                    {
+                      "type": "form",
+                      "id": "iot-ota-rollout-batch-form",
+                      "testid": "iot-ota-rollout-batch-form",
+                      "valuesPath": "otaBatch",
+                      "data": {
+                        "batchSize": 2
+                      },
+                      "actions": [],
+                      "body": [
+                        {
+                          "type": "select",
+                          "name": "batchSize",
+                          "label": "每批台数",
+                          "testid": "iot-ota-rollout-batch-size",
+                          "required": true,
+                          "options": [
+                            {
+                              "label": "每批 1 台",
+                              "value": 1
+                            },
+                            {
+                              "label": "每批 2 台",
+                              "value": 2
+                            },
+                            {
+                              "label": "每批 3 台",
+                              "value": 3
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "key": "confirm",
+                  "title": "确认下发",
+                  "body": [
+                    {
+                      "type": "text",
+                      "testid": "iot-ota-rollout-confirm-summary",
+                      "text": "固件 ${otaSelect?.packageId ?? '-'} · 目标 ${COUNT(otaSelect?.deviceIds ?? [])} 台 · 每批 ${otaBatch?.batchSize ?? '-'} 台"
+                    },
+                    {
+                      "type": "text",
+                      "testid": "iot-ota-rollout-assign-result",
+                      "visible": "${!!otaRollout}",
+                      "className": "text-sm text-emerald-700",
+                      "text": "已创建灰度任务 ${otaRollout?.rolloutId}，共 ${COUNT(otaRollout?.batches ?? [])} 批"
+                    }
+                  ],
+                  "actions": [
+                    {
+                      "type": "button",
+                      "label": "确认下发",
+                      "variant": "primary",
+                      "testid": "iot-ota-rollout-assign-submit",
+                      "onClick": {
+                        "action": "ajax",
+                        "args": {
+                          "url": "/r/ReplIot__assignBatched",
+                          "method": "post",
+                          "data": {
+                            "packageId": "${otaSelect?.packageId}",
+                            "deviceIds": "${otaSelect?.deviceIds ?? []}",
+                            "batchSize": "${otaBatch?.batchSize}"
+                          }
+                        },
+                        "then": [
+                          {
+                            "action": "setValue",
+                            "args": {
+                              "path": "otaRollout",
+                              "value": "${result.data}"
+                            }
+                          },
+                          {
+                            "action": "showToast",
+                            "args": {
+                              "level": "success",
+                              "message": "灰度任务已创建：${result.data.rolloutId}"
+                            }
+                          },
+                          {
+                            "action": "refreshSource",
+                            "targetId": "otaMatrix"
+                          }
+                        ],
+                        "onError": [
+                          {
+                            "action": "showToast",
+                            "args": {
+                              "level": "error",
+                              "message": "下发失败（${error?.message ?? 'UNKNOWN'}）"
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "card",
+          "title": "灰度进度",
+          "testid": "iot-ota-rollout-progress-card",
+          "body": [
+            {
+              "type": "flex",
+              "direction": "column",
+              "gap": 10,
+              "body": [
+                {
+                  "type": "flex",
+                  "direction": "row",
+                  "gap": 12,
+                  "className": "items-center flex-wrap",
+                  "body": [
+                    {
+                      "type": "text",
+                      "testid": "iot-ota-rollout-rollout-meta",
+                      "className": "text-sm text-muted-foreground",
+                      "text": "任务 ${otaMatrix?.rolloutId ?? '-'} · 当前批次 ${otaMatrix?.currentBatch ?? '-'}"
+                    },
+                    {
+                      "type": "form",
+                      "id": "iot-ota-rollout-view-form",
+                      "testid": "iot-ota-rollout-view-form",
+                      "valuesPath": "otaView",
+                      "mode": "inline",
+                      "data": {
+                        "deviceId": "DEV-1002"
+                      },
+                      "actions": [],
+                      "body": [
+                        {
+                          "type": "select",
+                          "name": "deviceId",
+                          "label": "查看设备",
+                          "testid": "iot-ota-rollout-view-device",
+                          "options": [
+                            {
+                              "label": "DEV-1001",
+                              "value": "DEV-1001"
+                            },
+                            {
+                              "label": "DEV-1002",
+                              "value": "DEV-1002"
+                            },
+                            {
+                              "label": "DEV-1003",
+                              "value": "DEV-1003"
+                            },
+                            {
+                              "label": "DEV-1004",
+                              "value": "DEV-1004"
+                            },
+                            {
+                              "label": "DEV-1005",
+                              "value": "DEV-1005"
+                            },
+                            {
+                              "label": "DEV-1006",
+                              "value": "DEV-1006"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "button",
+                      "label": "刷新矩阵",
+                      "variant": "outline",
+                      "testid": "iot-ota-rollout-refresh",
+                      "onClick": {
+                        "action": "refreshSource",
+                        "targetId": "otaMatrix"
+                      }
+                    }
+                  ]
+                },
+                {
+                  "type": "steps",
+                  "testid": "iot-ota-rollout-batch-steps",
+                  "items": "${otaMatrix?.selected?.stepItems ?? []}",
+                  "value": "${otaMatrix?.selected?.status ?? 'QUEUED'}"
+                },
+                {
+                  "type": "timeline",
+                  "testid": "iot-ota-rollout-assign-timeline",
+                  "items": "${otaMatrix?.selected?.timeline ?? []}",
+                  "reverse": true
+                },
+                {
+                  "type": "table",
+                  "testid": "iot-ota-rollout-matrix",
+                  "source": "${otaMatrix?.items ?? []}",
+                  "itemKey": "deviceId",
+                  "pagination": {
+                    "enabled": false
+                  },
+                  "columns": [
+                    {
+                      "name": "deviceId",
+                      "label": "设备",
+                      "width": 110
+                    },
+                    {
+                      "name": "batchNo",
+                      "label": "批次",
+                      "width": 70
+                    },
+                    {
+                      "name": "status",
+                      "label": "状态",
+                      "width": 100,
+                      "cell": {
+                        "type": "status",
+                        "value": "${status}",
+                        "labelMap": {
+                          "QUEUED": "排队",
+                          "INITIATED": "已下发",
+                          "DOWNLOADING": "下载中",
+                          "DOWNLOADED": "已下载",
+                          "VERIFIED": "已校验",
+                          "UPDATING": "升级中",
+                          "UPDATED": "已完成",
+                          "FAILED": "失败",
+                          "ROLLED_BACK": "已回滚"
+                        },
+                        "levelMap": {
+                          "QUEUED": "info",
+                          "INITIATED": "info",
+                          "DOWNLOADING": "info",
+                          "DOWNLOADED": "info",
+                          "VERIFIED": "info",
+                          "UPDATING": "warning",
+                          "UPDATED": "success",
+                          "FAILED": "error",
+                          "ROLLED_BACK": "neutral"
+                        }
+                      }
+                    },
+                    {
+                      "name": "statusTime",
+                      "label": "状态时间",
+                      "width": 140
+                    },
+                    {
+                      "name": "lastError",
+                      "label": "最近错误",
+                      "width": 240
+                    }
+                  ],
+                  "empty": {
+                    "type": "text",
+                    "text": "暂无灰度任务"
+                  }
+                },
+                {
+                  "type": "alert",
+                  "testid": "iot-ota-rollout-gate-alert",
+                  "visible": "${!!otaGate}",
+                  "level": "${otaGate?.passed ? 'success' : 'warning'}",
+                  "body": [
+                    {
+                      "type": "text",
+                      "testid": "iot-ota-rollout-gate-text",
+                      "text": "批次 ${otaGate?.batchNo} 门控：完成率 ${ROUND((otaGate?.completionRate ?? 0) * 100)}% · 失败率 ${ROUND((otaGate?.failRate ?? 0) * 100)}% · ${otaGate?.passed ? '已通过' : '未通过'}"
+                    }
+                  ]
+                },
+                {
+                  "type": "flex",
+                  "direction": "row",
+                  "gap": 8,
+                  "testid": "iot-ota-rollout-gate-actions",
+                  "body": [
+                    {
+                      "type": "button",
+                      "label": "推进下一批",
+                      "variant": "primary",
+                      "testid": "iot-ota-rollout-activate-next",
+                      "onClick": {
+                        "action": "ajax",
+                        "args": {
+                          "url": "/r/ReplIot__activateNextBatch",
+                          "method": "post",
+                          "data": {
+                            "rolloutId": "${otaMatrix?.rolloutId}"
+                          }
+                        },
+                        "then": [
+                          {
+                            "action": "setValue",
+                            "args": {
+                              "path": "otaGate",
+                              "value": "${result.data.gate}"
+                            }
+                          },
+                          {
+                            "action": "showToast",
+                            "args": {
+                              "level": "success",
+                              "message": "已推进至第 ${result.data.batchNo} 批"
+                            }
+                          },
+                          {
+                            "action": "refreshSource",
+                            "targetId": "otaMatrix"
+                          }
+                        ],
+                        "onError": [
+                          {
+                            "action": "setValue",
+                            "args": {
+                              "path": "otaGate",
+                              "value": "${error?.responseData?.gate ?? null}"
+                            }
+                          },
+                          {
+                            "action": "showToast",
+                            "args": {
+                              "level": "error",
+                              "message": "门控未通过（${error?.message ?? 'UNKNOWN'}）"
+                            }
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "type": "button",
+                      "label": "回滚当前任务",
+                      "variant": "destructive",
+                      "testid": "iot-ota-rollout-rollback-open",
+                      "onClick": {
+                        "action": "openDialog",
+                        "args": {
+                          "title": "回滚确认 ${otaMatrix?.rolloutId}",
+                          "testid": "iot-ota-rollout-rollback-dialog",
+                          "data": {
+                            "rolloutId": "${otaMatrix?.rolloutId}"
+                          },
+                          "body": [
+                            {
+                              "type": "form",
+                              "id": "iot-ota-rollout-rollback-form",
+                              "testid": "iot-ota-rollout-rollback-form",
+                              "data": {
+                                "reason": ""
+                              },
+                              "body": [
+                                {
+                                  "type": "alert",
+                                  "testid": "iot-ota-rollout-rolled-back-alert",
+                                  "level": "success",
+                                  "visible": "${rollbackResult?.status === 'ROLLED_BACK'}",
+                                  "body": [
+                                    {
+                                      "type": "text",
+                                      "text": "已回滚 ${rollbackResult?.rolloutId}（ROLLED_BACK）——所有设备恢复至上一版本"
+                                    }
+                                  ]
+                                },
+                                {
+                                  "type": "textarea",
+                                  "name": "reason",
+                                  "label": "回滚原因（必填）",
+                                  "testid": "iot-ota-rollout-rollback-reason",
+                                  "required": true,
+                                  "rows": 3
+                                }
+                              ],
+                              "actions": [
+                                {
+                                  "type": "button",
+                                  "label": "确认回滚",
+                                  "variant": "destructive",
+                                  "testid": "iot-ota-rollout-rollback-confirm",
+                                  "onClick": {
+                                    "action": "submitForm"
+                                  }
+                                }
+                              ],
+                              "submitAction": {
+                                "action": "ajax",
+                                "args": {
+                                  "url": "/r/ReplIot__rollbackPackage",
+                                  "method": "post",
+                                  "data": {
+                                    "rolloutId": "${rolloutId}",
+                                    "reason": "${reason}"
+                                  }
+                                },
+                                "then": [
+                                  {
+                                    "action": "setValue",
+                                    "args": {
+                                      "path": "rollbackResult",
+                                      "value": "${result.data}"
+                                    }
+                                  },
+                                  {
+                                    "action": "showToast",
+                                    "args": {
+                                      "level": "success",
+                                      "message": "回滚已执行"
+                                    }
+                                  }
+                                ],
+                                "onError": [
+                                  {
+                                    "action": "showToast",
+                                    "args": {
+                                      "level": "error",
+                                      "message": "回滚失败（${error?.message ?? 'UNKNOWN'}）"
+                                    }
+                                  }
+                                ]
+                              }
+                            }
+                          ]
+                        }
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
