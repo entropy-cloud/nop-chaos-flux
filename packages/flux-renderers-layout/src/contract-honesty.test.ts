@@ -5,6 +5,6 @@ import { layoutRendererDefinitions } from './index.js';
 runContractHonestyGuardSuite({
   packageName: 'flux-renderers-layout',
   definitions: layoutRendererDefinitions,
-  srcDir: `${import.meta.dirname}/..`,
+  srcDir: import.meta.dirname,
   discoveryBaseline: { renderers: 9, eventKeys: 9, capabilityHandles: 3 },
 });

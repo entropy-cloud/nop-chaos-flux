@@ -12,7 +12,7 @@
 ## Current Baseline
 
 - 2026-11-01 隔离全量（`PLAYWRIGHT_PORT=4275 E2E_EXCLUDE_WATCH_ONLY=1`，2140 tests）：1839 passed / 250 failed / 5 flaky / 46 skipped；与台账逐名对账：231 项在册、19 项台账外；19 项隔离复跑（`--retries=0`，`_tmp/e2e-triage.log`）18 稳定红、1 转绿（`data-viz-interaction-state` map toast，flaky）。
-- **E1 时间边界族**：审计时刻为 CST 2026-11-01 02:42 = UTC 10-31 18:42。`packages/flux-renderers-scheduling/src/calendar/calendar.tsx` 采用"UTC 零点"日期模型（事件日期 `new Date('YYYY-MM-DD')`、UTC 日期运算、`toISOString().slice(0,10)` 写回，`calendar-timezone.test.ts` 已钉 UTC 运算），但"今天"由 `new Date()`（本地此刻，:68-69）构造且未归一到"本地日历日的 UTC 零点"——UTC+ 时区每天本地 00:00 至时差小时数内，"今天"被当作前一天（月份标题、Today 跳转、`data-today` 高亮、scope 写回日期）。疑似受此族影响的台账外红：`cal-replica-interactions` ×2（Today 后期望 "November 2026" 实得 "October 2026"）、`cal-replica-visual` 01、`calendar-demo` 导航（期望「2026年11月」实得「2026年10月」）、`replication-crm-customer-360` 交互②（日历 tab 事件不可见）。同类“今天”构造另见 `calendar-date-utils.ts:68-71`（`isToday()` 内建 `Date.now()`，直接决定 `data-today` 高亮）、`gantt.tsx:319`、`gantt-markers.tsx:23`；同类 `toISOString().slice(0,10)` 转换另见 `calendar.tsx:110,256,320,503,510`、`gantt.tsx:239,244`、`gantt-store.ts:251`、`use-gantt-drag.ts:115` 及 playground demo（`calendar-demo.tsx:98-128`、`calendar-perf-scale-demo.tsx`、`gantt-perf-scale-demo.tsx`、`mock-backend-notion-views.ts:131`、`data-c9-host.ts:41`）——需逐处判定输入是否为 UTC 零点日期（是则正确，否则为同一缺陷）。测试侧 `cal-replica-interactions.spec.ts:84,87,99` 亦以本地 `new Date()` 计算期望值。
+- **E1 时间边界族**：审计时刻为 CST 2026-11-01 02:42 = UTC 10-31 18:42。`packages/flux-renderers-scheduling/src/calendar/calendar.tsx` 采用"UTC 零点"日期模型（事件日期 `new Date('YYYY-MM-DD')`、UTC 日期运算、`toISOString().slice(0,10)` 写回，`calendar-timezone.test.ts` 已钉 UTC 运算），但"今天"由 `new Date()`（本地此刻，:68-69）构造且未归一到"本地日历日的 UTC 零点"——UTC+ 时区每天本地 00:00 至时差小时数内，"今天"被当作前一天（月份标题、Today 跳转、`data-today` 高亮、scope 写回日期）。疑似受此族影响的台账外红：`cal-replica-interactions` ×2（Today 后期望 "November 2026" 实得 "October 2026"）、`cal-replica-visual` 01、`calendar-demo` 导航（期望「2026年11月」实得「2026年10月」）、`replication-crm-customer-360` 交互②（日历 tab 事件不可见）。同类“今天”构造另见 `calendar/utils/calendar-date-utils.ts:68-71`（`isToday()` 内建 `Date.now()`，直接决定 `data-today` 高亮）、`gantt.tsx:319`、`gantt-markers.tsx:23`；同类 `toISOString().slice(0,10)` 转换另见 `calendar.tsx:110,256,320,503,510`、`gantt.tsx:239,244`、`gantt-store.ts:251`、`use-gantt-drag.ts:115` 及 playground demo（`calendar-demo.tsx:98-128`、`calendar-perf-scale-demo.tsx`、`gantt-perf-scale-demo.tsx`、`mock-backend-notion-views.ts:131`、`data-c9-host.ts:41`）——需逐处判定输入是否为 UTC 零点日期（是则正确，否则为同一缺陷）。测试侧 `cal-replica-interactions.spec.ts:84,87,99` 亦以本地 `new Date()` 计算期望值。
 - **E2 漂移族**（逐项待定根因）：`playground-entry-pages` 路由清单缺 11 项（`input-table-erp`、`m6-gesture-lab`…`m11-number-keyboard`、`scada-gallery` 等）；`linear-replica-visual` 03（期望「归档所选」实得「全部归档」）、05（progress 比值 NaN）、`linear-replica-interactions` 15；`antdpro-replica-visual` 01/03（`complex-page-title` 不可达）；`editor-demos-ux-r10` sc2（调色板缩略图 44→37）；`w3d-editor` TipTap 列表切换（值为 `<p>` 非 `<ul>`）；`cron-editor` ×2（文本模式值为空）；`c7-host-surfaces` swipe-cell（`open-left` 未达成）；`simple-form` 密码确认（遮罩计数）；`c2-4-host-surfaces` range-host（选区终点 06-10 vs 期望 06-18）。
 - 台账外项分诊时须排除"并行会话 WIP 经共享 dev server 生效"的干扰：本计划所有复跑使用自有端口（`PLAYWRIGHT_PORT`）与 `--output=_tmp/...`。
 
@@ -109,9 +109,9 @@ Exit Criteria:
 
 ## Draft Review Record
 
-- Reviewer / Agent: 独立 fresh sub-agent（agent_62bcbb95-6c2b-46de-b52f-4d425560ff19）
-- Verdict: pass（round-1 fail：1 Major + 3 Minor → 修订 → 达成共识，Minor 就地修正）
-- Rounds: 1
+- Reviewer / Agent: 独立 fresh sub-agent（round-1 agent_62bcbb95-6c2b-46de-b52f-4d425560ff19；round-2 agent_507ee0a8-dc67-42e2-aeff-637eb93b5ba3）
+- Verdict: pass（round-1 fail：1 Major + 3 Minor → 修订 → round-2 零 Blocker/Major，2 Minor 就地修正）
+- Rounds: 2
 - Findings addressed: Major-1 总用例计数 2131→2140（日志为 2140 且与结果自洽），审计报告 §7 就地勘误；Minor-1 补 today 构造点（isToday/gantt/gantt-markers）；Minor-2 TZ 断言改 worker 启动前注入 + 前置守卫；Minor-3 triage 日志口径澄清。评审同时实证：headless Chromium 继承宿主 TZ、page.clock/timezoneId 在 Playwright 1.63.0 可用。
 
 ## Closure Gates

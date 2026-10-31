@@ -16,7 +16,7 @@
 | `pnpm lint`      | ✅         | 46/46                                                                                                                                                                                                                                                                                                      |
 | `pnpm check`     | ✅ exit 0  | 33 项全链；oversized 输出含「ERROR: 3 files … MUST split」但三者均为豁免且 exit 0（见 G2 输出误导）                                                                                                                                                                                                        |
 | `pnpm test`      | ❌→✅      | 首跑 **exit 1**：`flux-renderers-layout` `contract-honesty.test.ts` ELOOP 加载失败，且 turbo 因此中断 5 个任务未跑（"零新增红"口径下被掩盖的未执行面）。根因修复后（§1）`turbo run test --continue --force` **86/86 任务全绿，17,367 passed / 0 failed**——但该计数含重复注册（T2），真实唯一用例数小于此值 |
-| e2e              | 隔离重跑中 | 首跑因与并行会话共享 `test-results/` 被对方清空（trace ENOENT 连锁失败）作废；改 `PLAYWRIGHT_PORT=4275 --output=_tmp/e2e-out-1101` 隔离重跑（2131 tests），结果见 §7                                                                                                                                       |
+| e2e              | 隔离重跑中 | 首跑因与并行会话共享 `test-results/` 被对方清空（trace ENOENT 连锁失败）作废；改 `PLAYWRIGHT_PORT=4275 --output=_tmp/e2e-out-1101` 隔离重跑（2140 tests〔评审勘误：原写 2131〕），结果见 §7                                                                                                                |
 
 ## 1. 环境根因：「807 Deferred 既有环境红 ELOOP」实为一条误建符号链接（✅ 复核并已修复）
 

@@ -1,4 +1,4 @@
-import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { extname, join, relative } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import {
@@ -57,13 +57,16 @@ function findWorkspaceRoot(start: string): string {
   throw new Error('Could not locate workspace root (pnpm-workspace.yaml).');
 }
 
-function readSourceFiles(root: string): ContractHonestySourceFile[] {
+const SKIPPED_SOURCE_DIRECTORIES = new Set(['node_modules', 'dist']);
+
+export function readContractHonestySourceFiles(root: string): ContractHonestySourceFile[] {
   const out: ContractHonestySourceFile[] = [];
   function walk(current: string): void {
-    for (const entry of readdirSync(current)) {
-      const full = join(current, entry);
-      if (statSync(full).isDirectory()) {
-        walk(full);
+    for (const entry of readdirSync(current, { withFileTypes: true })) {
+      const full = join(current, entry.name);
+      if (entry.isSymbolicLink()) continue;
+      if (entry.isDirectory()) {
+        if (!SKIPPED_SOURCE_DIRECTORIES.has(entry.name)) walk(full);
         continue;
       }
       if (!/\.(ts|tsx)$/.test(extname(full))) continue;
@@ -110,7 +113,7 @@ export function computeContractHonestyDiscoveryCounts(
 export function runContractHonestyGuardSuite(options: ContractHonestyHarnessOptions): void {
   const capabilityProbe = options.capabilityProbe ?? true;
   const h7Mode = options.h7Mode ?? 'dynamic';
-  const files = readSourceFiles(options.srcDir);
+  const files = readContractHonestySourceFiles(options.srcDir);
   const factories = readRuntimeHandleFactories();
   const resolver = buildPerRendererSourceResolver(
     files,

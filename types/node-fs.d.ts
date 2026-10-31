@@ -1,8 +1,24 @@
 declare module 'node:fs' {
+  export interface Dirent {
+    name: string;
+    isDirectory(): boolean;
+    isFile(): boolean;
+    isSymbolicLink(): boolean;
+  }
   export function readFileSync(path: string | URL, encoding: string): string;
   export function readdirSync(path: string | URL): string[];
+  export function readdirSync(path: string | URL, options: { withFileTypes: true }): Dirent[];
   export function statSync(path: string | URL): { isDirectory(): boolean; isFile(): boolean };
   export function existsSync(path: string | URL): boolean;
+  export function writeFileSync(path: string | URL, data: string): void;
+  export function mkdirSync(path: string | URL, options?: { recursive?: boolean }): string | undefined;
+  export function mkdtempSync(prefix: string): string;
+  export function rmSync(path: string | URL, options?: { recursive?: boolean; force?: boolean }): void;
+  export function symlinkSync(target: string, path: string, type?: 'dir' | 'file' | 'junction'): void;
+}
+
+declare module 'node:os' {
+  export function tmpdir(): string;
 }
 
 declare module 'node:fs/promises' {

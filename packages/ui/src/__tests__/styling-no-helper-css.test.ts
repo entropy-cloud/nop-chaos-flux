@@ -2,11 +2,12 @@
 // repo-structure guard。锁定「Flux 全仓不引入平行 helper.css，也无 .amis-scope scope-prefix」。
 // 一旦有人重新引入 helper.css / .amis-scope / 移除 `@source`，此 guard fail 并阻止合入。
 
-import { readFileSync, readdirSync } from 'node:fs';
-import { join, resolve } from 'node:path';
+import { existsSync, readFileSync, readdirSync } from 'node:fs';
+import { dirname, join, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 
-const workspaceRoot = resolve(process.cwd(), '../..');
+const workspaceRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../../../..');
 
 const SKIP_DIRS = new Set(['node_modules', 'dist', '.git', '.turbo', 'coverage', '.cache']);
 
@@ -30,6 +31,12 @@ function walkSourceFiles(dir: string, extensions: string[], acc: string[] = []):
   }
   return acc;
 }
+
+describe('styling guard scan root', () => {
+  it('resolves the workspace root independently of the invocation directory', () => {
+    expect(existsSync(join(workspaceRoot, 'pnpm-workspace.yaml'))).toBe(true);
+  });
+});
 
 describe('STY2: no helper.css / no .amis-scope / @source present (B6.2)', () => {
   it('has zero helper.css files in source tree (packages + apps)', () => {

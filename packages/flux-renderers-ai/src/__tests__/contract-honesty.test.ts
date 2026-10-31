@@ -19,12 +19,7 @@ const FORBIDDEN_TIPTAP_IMPORTS = /^\s*import\s+.*\sfrom\s+['"]@tiptap\//m;
 
 function listSourceFiles(dir: string, exts: string[]): string[] {
   const out: string[] = [];
-  let entries: Dirent[];
-  try {
-    entries = readdirSync(dir, { withFileTypes: true });
-  } catch {
-    return out;
-  }
+  const entries: Dirent[] = readdirSync(dir, { withFileTypes: true });
   for (const entry of entries) {
     const full = join(dir, entry.name);
     if (entry.isDirectory()) {
@@ -35,6 +30,16 @@ function listSourceFiles(dir: string, exts: string[]): string[] {
   }
   return out;
 }
+
+describe('contract-honesty scan roots', () => {
+  it.each([
+    ['engine', ENGINE_DIR, ['.ts']],
+    ['renderers', RENDERERS_DIR, ['.ts', '.tsx']],
+    ['adapters', ADAPTERS_DIR, ['.ts', '.tsx']],
+  ])('%s scan root exists and yields source files', (_name, dir, exts) => {
+    expect(listSourceFiles(dir, exts).length).toBeGreaterThan(0);
+  });
+});
 
 describe('INV-1: engine + renderers do not touch external IO APIs', () => {
   it('src/engine/ has zero react imports', () => {

@@ -1,6 +1,6 @@
 # 830 测试基建诚实性收口（deep-audit 2026-11-01 T1-T7）
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-11-01
 > Source: `docs/audits/deep-audit-2026-11-01.md` §1、§2（T1-T6）+ 评审轮发现 T7（test:scripts 未接线）
 > Related: plan 594（contract-honesty harness 合并）、plan 807（ELOOP 原登记为环境红）
@@ -59,58 +59,59 @@
 
 ### Phase 1 - contract-honesty 扫描面（T1）
 
-Status: planned
-Targets: `packages/flux-react/src/test-support/contract-honesty-harness.ts`、`packages/flux-renderers-{content,layout}/src/contract-honesty.test.ts`、`packages/flux-react/src/__tests__/test-support-subpath.test.tsx`
+Status: completed
+Targets: `packages/flux-react/src/test-support/contract-honesty-harness.ts`、`packages/flux-renderers-{content,layout}/src/contract-honesty.test.ts`、`packages/flux-react/src/__tests__/contract-honesty-source-walk.test.ts`、`types/node-fs.d.ts`
 
 - Item Types: `Proof | Fix`
 
-- [ ] Proof：在 `test-support-subpath.test.tsx`（或同目录新测试）以临时 fixture 目录构造 `node_modules/x.ts`、`dist/y.d.ts` 与一条指回父目录的符号链接，断言 harness 收集的文件列表不含 `node_modules`/`dist` 路径且不抛 ELOOP（旧实现：收集到 node_modules 文件并在符号链接处抛 ELOOP → 挂）。需要的话从 harness 导出一个仅供测试的 `readSourceFiles`（经 test-support 子路径，不进包主入口）
-- [ ] Fix：`readSourceFiles` 改用 `lstatSync`/`readdirSync({withFileTypes:true})`，跳过符号链接目录与 `node_modules`、`dist`
-- [ ] Fix：content/layout wrapper `srcDir` 改为 `import.meta.dirname`
+- [x] Proof：新增 `packages/flux-react/src/__tests__/contract-honesty-source-walk.test.ts`——运行期临时目录构造 `node_modules/dep/index.ts`、`dist/button.d.ts`、`renderers/loop -> <root>` 自引用链接，断言收集结果恰为 `['renderers/button.tsx']`；旧 walker 实跑抛出与 §1 完全相同的 ELOOP。walker 以 `readContractHonestySourceFiles` 名义从 harness 模块导出（仅 test-support 目录内，不进包主入口）
+- [x] Fix：walker 改用 `readdirSync({withFileTypes:true})`，跳过符号链接与 `node_modules`/`dist` 目录（移除 `statSync`）
+- [x] Fix：content/layout wrapper `srcDir` 改为 `import.meta.dirname`
+- [x] Fix（执行期补充）：仓库级类型 shim `types/node-fs.d.ts`（31 个包经 tsconfig `include` 引用，无 `@types/node`）补 `Dirent`、`readdirSync(…, { withFileTypes: true })` 重载、`writeFileSync`/`mkdirSync`/`mkdtempSync`/`rmSync`/`symlinkSync` 与 `node:os` `tmpdir`——首轮全量 typecheck/build 因 walker 与 fixture 测试使用这些 API 而红（additive，ui 等用 `@types/node` 的包不引用该 shim）
 
 Exit Criteria:
 
-- [ ] fixture 回归测试通过，且在还原旧 walker 时失败（执行时记录一次反向验证）
-- [ ] `flux-renderers-content`、`flux-renderers-layout`、`flux-react` 三包测试通过
+- [x] fixture 回归测试通过；旧 walker 下失败（ELOOP）已实跑记录
+- [x] content 379、layout 161、flux-react 656 全绿（srcDir 改 `import.meta.dirname` 后无新违规）
 
 ### Phase 2 - 套件单次注册（T2）
 
-Status: planned
+Status: completed
 Targets: 上述 13 个 barrel 文件、`scripts/check-test-barrels.mjs`、`scripts/__tests__/check-test-barrels.test.ts`、根 `package.json` check 链
 
 - Item Types: `Proof | Fix`
 
-- [ ] Proof：记录受影响 7 个包删除前的 vitest 测试数（per-package `vitest run` 汇总）
-- [ ] Fix：删除 13 个 barrel 文件（先逐个确认只含 test import、无 setup 副作用）
-- [ ] Fix：新增 `check-test-barrels.mjs`（默认扫描 git 跟踪的 `*.test.ts(x)`；导出扫描函数/接受注入的文件列表，使 fixture 命中用例无需 `git add`；模块说明符以 `.test` / `.test.ts(x)` / `.test.js` **结尾**即 exit 1；`.test-support` 等不结尾者不命中），接入 `pnpm check`；`scripts/__tests__/check-test-barrels.test.ts` 覆盖命中（barrel fixture）与不命中（`.test-support` 导入 fixture）
-- [ ] Proof：删除后各包测试数 = 删除前 − 重复数，且被导入文件的用例仍全部执行（按文件计数核对，不得有套件因失去 barrel 而不再运行）
+- [x] Proof：删除前计数（`_tmp/barrel-before.txt`）：flux-react 656、basic 676、data 1264、form 1160、form-advanced 1240、report-designer-core 215、spreadsheet-core 339；各 barrel 单跑注册数（`_tmp/barrel-dup-counts.txt`）合计 635（basic index 90 已含嵌套 page-layout 41，叶子跑三次）
+- [x] Fix：删除 13 个 barrel 文件（先逐个确认只含 test import、无 setup 副作用）
+- [x] Fix：新增 `check-test-barrels.mjs`（默认扫描 git 跟踪的 `*.test.ts(x)`；导出扫描函数/接受注入的文件列表，使 fixture 命中用例无需 `git add`；模块说明符以 `.test` / `.test.ts(x)` / `.test.js` **结尾**即 exit 1；`.test-support` 等不结尾者不命中），接入 `pnpm check`；`scripts/__tests__/check-test-barrels.test.ts` 覆盖命中（barrel fixture）与不命中（`.test-support` 导入 fixture）
+- [x] Proof：删除后（`_tmp/barrel-after.txt`）606/545/1172/1113/1102/141/236——7 包逐一精确等于删除前 − barrel 注册数，无套件丢失
 
 Exit Criteria:
 
-- [ ] 仓库内零 barrel 测试文件，`node scripts/check-test-barrels.mjs` exit 0，对一个人造 barrel 输入 exit 1（脚本测试证明）
-- [ ] 7 个受影响包测试全绿，前后计数差与重复数一致并记录
-- [ ] `check-test-barrels.test.ts` 在 `pnpm test:scripts` 下通过
+- [x] 仓库内零 barrel 测试文件，`node scripts/check-test-barrels.mjs` exit 0，对一个人造 barrel 输入 exit 1（脚本测试证明）
+- [x] 7 个受影响包测试全绿，前后计数差 = 635 与重复数一致
+- [x] `check-test-barrels.test.ts` 3 例（barrel 命中 / `.test-support` 不命中 / 全仓通过）通过；恢复一个 barrel 时门禁实跑报出 3 处违规
 
 ### Phase 3 - 零断言、fail-closed 与门禁测试接线（T3-T7）
 
-Status: planned
+Status: completed
 Targets: `debug-combobox-dom.test.tsx`、`flux-renderers-ai/src/__tests__/contract-honesty.test.ts`、`ui/src/__tests__/styling-no-helper-css.test.ts`、T6 两文件
 
 - Item Types: `Fix | Decision | Proof`
 
-- [ ] Fix（T3）：若 `fireEvent.input` 设置 searchable-select 值的路径在既有测试中无覆盖，则将其改写为带断言的回归测试并改名去掉 `debug-`；否则删除。结论记入执行记录
-- [ ] Fix（T4）：去掉 `listSourceFiles` 的 catch（ENOENT 直接抛），并对每个扫描根断言文件数 > 0
-- [ ] Proof+Fix（T5）：守卫新增断言"推导出的仓库根含 `pnpm-workspace.yaml`"（旧 `process.cwd()` 推导在仓库根调用 vitest 时失败——执行时以仓库根调用一次做反向验证），仓库根改由 `import.meta.dirname` 推导
-- [ ] Fix（T7）：根 `package.json` `check` 链末尾追加 `&& pnpm test:scripts`
-- [ ] Decision（T6）：核实 `pnpm typecheck` 是否真的类型检查这两个文件（人为破坏一个 `expectTypeOf` 断言确认 tsc 报错后还原）；成立则保留现状并在 daily log 记录"类型钉由 tsc 执行、vitest 计数含 30 个运行期 no-op"；不成立则转为 Fix（开启 vitest typecheck 或改名排除）
+- [x] Fix（T3）：`select-enhancements.test.tsx` 的 `typeAndFilter`（同一 `fireEvent.input` 流程）已带断言覆盖 → 删除 `debug-combobox-dom.test.tsx`
+- [x] Fix（T4）：去掉 catch，新增 3 个扫描根非空断言；扫描根改名时 4 项失败（反向验证）
+- [x] Proof+Fix（T5）：守卫新增断言"推导出的仓库根含 `pnpm-workspace.yaml`"（旧 `process.cwd()` 推导在仓库根调用 vitest 时失败——执行时以仓库根调用一次做反向验证），仓库根改由 `import.meta.dirname` 推导
+- [x] Fix（T7）：根 `package.json` `check` 链末尾追加 `&& pnpm test:scripts`
+- [x] Decision（T6）：破坏 `renderer-contract-types.test.ts` 一处 `toEqualTypeOf` 后 `tsc -p packages/flux-core` 报错、还原后干净；两包 tsconfig `include: ["src", …]` 覆盖 → 保留现状，daily log 记录"类型钉由 tsc 执行，vitest 计数含 30 个运行期 no-op"
 
 Exit Criteria:
 
-- [ ] `grep` 全仓 `packages/*/src` 无零 `expect` 的调试测试文件（`debug-combobox-dom` 已删除或已含断言）
-- [ ] ai 守卫在把扫描根改成不存在目录时失败（执行时反向验证一次）
-- [ ] ui 守卫从仓库根直接 `npx vitest run <file>` 调用时通过（旧实现下其根断言失败）
-- [ ] T6 裁决有实证记录
-- [ ] `pnpm check` 输出中可见 test:scripts 段且 exit 0
+- [x] `debug-combobox-dom.test.tsx` 已删除
+- [x] ai 守卫扫描根改名时失败（已反向验证）
+- [x] ui 守卫从包目录与仓库根两种调用均 4/4 通过；旧 `process.cwd()` 推导在仓库根调用时根断言失败（已反向验证）
+- [x] T6 裁决有实证记录
+- [x] `pnpm check` 输出中可见 test:scripts 段且 exit 0
 
 ## Draft Review Record
 
@@ -121,17 +122,17 @@ Exit Criteria:
 
 ## Closure Gates
 
-- [ ] T1-T5、T7 全部修复，T6 已裁决
-- [ ] 判别性测试均已做反向验证
-- [ ] `check-test-barrels` 已接入 `pnpm check`
-- [ ] 不存在被静默降级的 in-scope 缺陷
-- [ ] daily log 记录修正后的真实唯一测试数基线
-- [ ] 独立子 agent（fresh session）closure audit 通过并记录证据
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
-- [ ] `pnpm check`
+- [x] T1-T5、T7 全部修复，T6 已裁决
+- [x] 判别性测试均已做反向验证
+- [x] `check-test-barrels` 已接入 `pnpm check`
+- [x] 不存在被静默降级的 in-scope 缺陷
+- [x] daily log 记录修正后的真实唯一测试数基线
+- [x] 独立子 agent（fresh session）closure audit 通过并记录证据（agent_9578fad7，approved）
+- [x] `pnpm typecheck`（46/46；首轮因 node-fs shim 缺签名红 → shim 扩展后复跑绿）
+- [x] `pnpm build`（46/46）
+- [x] `pnpm lint`（46/46）
+- [x] `pnpm test`（`turbo run test --continue` 86/86 任务，**16,786 passed / 0 failed**——去重后真实唯一用例数）
+- [x] `pnpm check`（exit 0；链中可见 `check:test-barrels` OK〔1970 test files〕与 `test:scripts` 30 文件/189 tests）
 
 ## Deferred But Adjudicated
 
@@ -143,13 +144,13 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: 待收口填写
+Status Note: T1-T5、T7 全部修复并逐项反向验证，T6 以 tsc 实证裁决保留；`pnpm test` 真实唯一用例基线 16,786（去掉 635 个 barrel 重复执行）；门禁脚本测试随 `pnpm check` 自动执行；全量门禁绿。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: 待填写
-- Evidence: 待填写
+- Auditor / Agent: 独立 fresh sub-agent（agent_9578fad7-ce97-452a-99aa-8a7fce476459）
+- Evidence: verdict **approved**（零 Blocker/Major，3 Minor 非阻塞）。审计员独立模拟旧 statSync walker 复现 ELOOP；经 `git show` 解析 13 个被删 barrel 的全部 65 个导入，叶子测试文件均存在且被 glob 收集；逐包核对前后差额与 barrel 注册数合计 635；自行汇总 g830 测试日志得 16,786；确认 check 链末尾两段实际执行。Minor：门禁仅识别 `.test` 结尾（当前无 `.spec` barrel）；turbo 85/86 缓存命中但计数真实且变更套件已独立重跑；"恢复 barrel 报 3 处违规"系以 `spreadsheet-core/src/core.test.ts`（3 个导入）实测。
 
 Follow-up:
 
-- 待收口填写
+- no remaining plan-owned work
