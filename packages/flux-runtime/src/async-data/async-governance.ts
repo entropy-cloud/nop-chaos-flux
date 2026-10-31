@@ -138,7 +138,25 @@ export function createAsyncGovernanceStore(options?: { retention?: number }): As
     },
 
     settleRun(handle, input) {
-      const owner = getOrCreateOwner(handle);
+      const owner = owners.get(handle.ownerId);
+      if (!owner) {
+        // beginRun always creates the owner, so a missing owner means it was
+        // cleared (scope disposed) while this run was in flight — recreating it
+        // here would leak one record per mount for the runtime's lifetime.
+        return {
+          ownerKind: handle.ownerKind,
+          ownerId: handle.ownerId,
+          scopeId: handle.scopeId,
+          runId: handle.runId,
+          cause: handle.cause,
+          startedAt: handle.startedAt,
+          settledAt: Date.now(),
+          outcome: 'stale-dropped',
+          cancelled: input.cancelled,
+          timedOut: input.timedOut,
+          error: summarizeError(input.error),
+        };
+      }
       const stale = owner.currentRun?.runId !== handle.runId;
       const settled: AsyncOwnerRunDebugEntry = {
         ownerKind: handle.ownerKind,

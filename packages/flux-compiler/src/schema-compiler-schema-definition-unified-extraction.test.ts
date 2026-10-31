@@ -331,3 +331,52 @@ describe('unified fieldRules value-or-region (crud columns[].searchable)', () =>
     expect(node.regions['columns.0.searchable']).toBeTruthy();
   });
 });
+
+describe('unified fieldRules region extraction keeps the compiled reference (non-nested source)', () => {
+  const fixture: RegisteredRendererDefinition = {
+    type: 'reference-fixture',
+    displayName: 'Reference Fixture',
+    component: () => null,
+    fields: [{ key: 'columns', kind: 'prop', contract: {
+        shape: {
+          kind: 'array',
+          item: {
+            kind: 'schema-definition',
+            fieldRules: {
+              popOver: {
+                kind: 'region',
+                sourceKey: 'content',
+                regionKey: 'popOver.contentRegionKey',
+                regionKeySuffix: 'popOver.content',
+              },
+              detail: {
+                kind: 'region',
+                regionKey: 'detail',
+              },
+            },
+          },
+        },
+        displayName: 'Columns',
+      } }],
+  };
+
+  it('a directly authored popOver schema keeps a dotted compiled reference to its region', () => {
+    const node = compileFixture(fixture, {
+      columns: [{ name: 'name', popOver: { type: 'text', text: 'Detail' } }],
+    });
+
+    const column = compiledPropValue<Array<Record<string, unknown>>>(node, 'columns')![0];
+    expect(node.regions['columns.0.popOver.content']).toBeTruthy();
+    expect(column.popOver).toEqual({ contentRegionKey: 'columns.0.popOver.content' });
+  });
+
+  it('a compiled key equal to the field key keeps the region reference in place', () => {
+    const node = compileFixture(fixture, {
+      columns: [{ name: 'name', detail: { type: 'text', text: 'More' } }],
+    });
+
+    const column = compiledPropValue<Array<Record<string, unknown>>>(node, 'columns')![0];
+    expect(node.regions['columns.0.detail']).toBeTruthy();
+    expect(column.detail).toBe('columns.0.detail');
+  });
+});

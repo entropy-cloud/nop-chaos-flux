@@ -173,6 +173,10 @@ export async function withRetry<T>(
         resolve();
         return;
       }
+      if (options.signal?.aborted) {
+        reject(abortError());
+        return;
+      }
       const timeoutId = setTimeout(() => {
         cleanup();
         resolve();

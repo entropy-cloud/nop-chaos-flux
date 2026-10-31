@@ -103,6 +103,23 @@ describe('createAsyncGovernanceStore', () => {
     expect(store.getOwnerState('owner-x')).toBeUndefined();
   });
 
+  it('does not resurrect an owner cleared while one of its runs was still in flight', () => {
+    const store = createAsyncGovernanceStore();
+    const handle = store.beginRun({
+      ownerKind: 'reaction',
+      ownerId: 'reaction:scope-gone:r1',
+      scopeId: 'scope-gone',
+      cause: 'dependency-change',
+    });
+
+    store.clearOwner('reaction:scope-gone:r1');
+    const settled = store.settleRun(handle, { outcome: 'succeeded' });
+
+    expect(settled.outcome).toBe('stale-dropped');
+    expect(store.getOwnerState('reaction:scope-gone:r1')).toBeUndefined();
+    expect(store.getSnapshot().owners.map((owner) => owner.ownerId)).not.toContain('reaction:scope-gone:r1');
+  });
+
   it('preserves error stack and nested cause in debug summaries', () => {
     const store = createAsyncGovernanceStore();
     const handle = store.beginRun({

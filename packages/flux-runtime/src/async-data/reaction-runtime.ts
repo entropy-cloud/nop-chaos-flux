@@ -400,6 +400,10 @@ export function registerReaction(input: {
     unsubscribe?.();
     pendingChangedPaths.clear();
     pendingForce = false;
+    if (pendingRun && input.asyncGovernance) {
+      input.asyncGovernance.settleRun(pendingRun, { outcome: 'cancelled', cancelled: true });
+    }
+    pendingRun = undefined;
 
     if (debounceTimer) {
       clearTimeout(debounceTimer);

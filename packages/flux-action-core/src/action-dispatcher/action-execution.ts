@@ -228,6 +228,10 @@ async function runParallelActions(
     return undefined;
   }
 
+  // Formal spec §parallel: one result per child, siblings never cancelled by a
+  // failing child. A child can still reject (a timed request-backed child
+  // rejects with AbortError when the batch is aborted), so each branch is
+  // normalized here instead of letting Promise.all drop the whole aggregate.
   const results = await Promise.all(
     action.parallel.map((entry) =>
       runActionWithDebounce(ctx, entry, {
@@ -235,7 +239,9 @@ async function runParallelActions(
         interactionId: actionCtx.interactionId ?? createInteractionId(),
         signal: actionCtx.signal,
         prevResult: actionCtx.prevResult,
-      }),
+      }).catch((error: unknown): ActionResult =>
+        isAbortError(error) ? createCancelledResult(error) : { ok: false, error },
+      ),
     ),
   );
 

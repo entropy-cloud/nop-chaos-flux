@@ -232,6 +232,12 @@ export async function executeRuntimeAjaxAction(
           sharing.apiCache.set(cacheKey, response.data, cacheTTL as number);
         }
 
+        // M-06: the shared fetch runs on the registry signal, so a caller that
+        // aborted while waiting must still observe its own cancellation.
+        if (signal?.aborted) {
+          return createCancelledResult(signal.reason);
+        }
+
         return {
           ok: true,
           data: response.data,

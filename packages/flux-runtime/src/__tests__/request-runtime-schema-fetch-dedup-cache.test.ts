@@ -192,4 +192,57 @@ describe('schema-fetch cross-subscriber dedup + cache (A11)', () => {
     // Cache was served (no new fetch); the shared fetch is never initiated.
     expect(executeApiRequest).not.toHaveBeenCalled();
   });
+
+  it('returns a cancelled result to a caller that aborts while awaiting a shared in-flight fetch (M-06 acquire path)', async () => {
+    const { executeRuntimeAjaxAction } = await import('../runtime-action-helpers.js');
+    const { createApiCacheStore } = await import('../async-data/api-cache.js');
+    const { createRequestInFlightRegistry } = await import('../async-data/request-in-flight-registry.js');
+    const sharing = { apiCache: createApiCacheStore(), inFlight: createRequestInFlightRegistry() };
+
+    const localRuntime = createRendererRuntime({
+      registry: createRendererRegistry([textRenderer]),
+      env: { ...baseEnv } as unknown as RendererEnv,
+      expressionCompiler,
+    });
+    const localPage = localRuntime.createPageRuntime({});
+    const scope = localRuntime.createChildScope(localPage.scope, { tag: 'A' });
+    let release: ((value: { status: number; data: unknown }) => void) | undefined;
+    const executeApiRequest = Object.assign(
+      vi.fn(
+        () =>
+          new Promise<{ status: number; data: unknown }>((resolve) => {
+            release = resolve;
+          }),
+      ),
+      { dispose: vi.fn() },
+    ) as unknown as import('../async-data/request-runtime.js').ApiRequestExecutor;
+    const helpers = {
+      getEnv: () => ({ ...baseEnv } as unknown as RendererEnv),
+      expressionCompiler,
+      evaluate: <T>(target: unknown) => target as T,
+      executeApiRequest,
+      sharing,
+    };
+    const node = { control: { control: { cacheTTL: 5000 } } } as any;
+    const api = { url: '/api/schema', method: 'get' };
+
+    const callerB = new AbortController();
+    const resultA = executeRuntimeAjaxAction(api, node, { scope } as any, new AbortController().signal, helpers as any);
+    const resultB = executeRuntimeAjaxAction(api, node, { scope } as any, callerB.signal, helpers as any);
+
+    await vi.waitFor(() => {
+      expect(executeApiRequest).toHaveBeenCalledTimes(1);
+    });
+    const reason = new Error('caller B cancelled');
+    callerB.abort(reason);
+    release?.({ status: 0, data: { type: 'text', text: 'shared' } });
+
+    const [a, b] = await Promise.all([resultA, resultB]);
+    expect(a.ok).toBe(true);
+    expect(a.data).toEqual({ type: 'text', text: 'shared' });
+    expect(b.ok).toBe(false);
+    expect(b.cancelled).toBe(true);
+    expect(b.error).toBe(reason);
+    expect(executeApiRequest).toHaveBeenCalledTimes(1);
+  });
 });

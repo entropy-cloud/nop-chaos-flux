@@ -433,3 +433,48 @@ describe('registerReaction dispose race with scheduled microtask', () => {
     registration.dispose();
   });
 });
+
+describe('registerReaction dispose with a queued run', () => {
+  it('settles the queued run handle as cancelled so governance never shows a phantom running run', async () => {
+    const { createAsyncGovernanceStore } = await import('../async-data/async-governance.js');
+    const asyncGovernance = createAsyncGovernanceStore();
+    const runtime = createRuntime();
+    const page = runtime.createPageRuntime({ count: 0 });
+    let releaseDispatch: ((value: { ok: boolean }) => void) | undefined;
+    const dispatch = vi.fn(
+      () =>
+        new Promise<{ ok: boolean }>((resolve) => {
+          releaseDispatch = resolve;
+        }),
+    );
+
+    const registration = registerOwnedReaction({
+      id: 'queued-dispose',
+      runtime,
+      scope: page.scope,
+      asyncGovernance,
+      compiledReaction: compileReaction(
+        'queued-dispose',
+        { type: 'reaction', watch: '${count}', actions: { action: 'custom:noop' } },
+        expressionCompiler,
+      ),
+      helpers: { dispatch } as never,
+    });
+
+    page.scope.update('count', 1);
+    await vi.waitFor(() => expect(dispatch).toHaveBeenCalledTimes(1));
+    page.scope.update('count', 2);
+    await Promise.resolve();
+
+    registration.dispose();
+    releaseDispatch?.({ ok: true });
+    await Promise.resolve();
+    await Promise.resolve();
+
+    const owners = asyncGovernance.getSnapshot().owners;
+    expect(owners.length).toBeGreaterThan(0);
+    for (const owner of owners) {
+      expect(owner.currentRun?.outcome).not.toBe('running');
+    }
+  });
+});

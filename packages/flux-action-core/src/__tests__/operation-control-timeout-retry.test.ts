@@ -237,3 +237,21 @@ describe('createAbortScope', () => {
     expect(signal.aborted).toBe(true);
   });
 });
+
+describe('withRetry abort before backoff', () => {
+  it('rejects promptly when the signal aborts during a failing attempt instead of sleeping the full delay', async () => {
+    const controller = new AbortController();
+    const startedAt = Date.now();
+    const promise = withRetry(
+      async () => {
+        controller.abort(new Error('caller cancelled'));
+        throw new Error('attempt failed');
+      },
+      { times: 3, delay: 5000, signal: controller.signal },
+      () => true,
+    );
+
+    await expect(promise).rejects.toMatchObject({ name: 'AbortError' });
+    expect(Date.now() - startedAt).toBeLessThan(1000);
+  });
+});

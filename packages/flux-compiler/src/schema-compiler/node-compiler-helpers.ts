@@ -160,23 +160,17 @@ function isPlainRecord(value: unknown): value is Record<string, unknown> {
  * Copy-on-write along a dotted key path so authored schema objects are never
  * mutated at compile time. Returns the innermost object that owns the leaf.
  */
-function copyAlongPath(
-  record: Record<string, unknown>,
-  keyPath: string,
-): Record<string, unknown> | undefined {
+function writeAlongPath(record: Record<string, unknown>, keyPath: string, value: unknown): void {
   const segments = keyPath.split('.');
   let cursor = record;
   for (let i = 0; i < segments.length - 1; i += 1) {
     const seg = segments[i];
     const next = cursor[seg];
-    if (!isPlainRecord(next)) {
-      return undefined;
-    }
-    const copy = { ...next };
+    const copy: Record<string, unknown> = isPlainRecord(next) ? { ...next } : {};
     cursor[seg] = copy;
     cursor = copy;
   }
-  return cursor;
+  cursor[segments[segments.length - 1]] = value;
 }
 
 function resolveRegionSpec(
@@ -256,27 +250,23 @@ function extractSchemaDefinitionRegion(input: {
     regionMeta,
   );
 
+  // The schema moved into the region, so a directly authored field is removed
+  // before the compiled reference is written — the reference may live at the
+  // same key or under it (`popOver.contentRegionKey`).
+  if (!nestedSource && resolved.compiledKey) {
+    delete item[fieldKey];
+  }
+
   if (resolved.compiledKey) {
-    if (resolved.compiledKey.includes('.')) {
-      const owner = copyAlongPath(item, resolved.compiledKey);
-      if (owner) {
-        owner[resolved.compiledKey.split('.').pop() as string] = regionKey;
-      } else {
-        item[fieldKey] = regionKey;
-      }
-    } else {
-      item[resolved.compiledKey] = regionKey;
-    }
+    writeAlongPath(item, resolved.compiledKey, regionKey);
   } else {
     item[fieldKey] = regionKey;
   }
 
-  if (nestedSource) {
+  if (nestedSource && isPlainRecord(item[fieldKey])) {
     const copy = { ...(item[fieldKey] as Record<string, unknown>) };
     delete copy[spec.sourceKey as string];
     item[fieldKey] = copy;
-  } else if (resolved.compiledKey) {
-    delete item[fieldKey];
   }
 
   return true;
