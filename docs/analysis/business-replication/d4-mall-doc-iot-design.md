@@ -442,6 +442,8 @@ HITL 卡复用口径（R3 L30）：`ai-tool-call` 为 AI 会话语境卡，inbox
 | G25 | 新 type（L72）                                 | missing-components 需求行 demand-gated                         | V3 不做轨迹（§6.2）                             | ✓    |
 | G26 | 登记冲突 iframe 半条/新 type 播放器半条（L73） | iframe 不登记（keep-out L183，§3 结论 2）；播放器 demand-gated | V3 video(mp4)+grid，无 iframe 无 HLS/RTSP       | ✓    |
 
+> 2026-11-02 勘误（P2 开放审计 MAJ-1，plan 837）：本表九行「✓」落表时点（2026-10-29，plan 795）所指向的底账行**实际不存在**——G15/G19/G21/G23/G25/G26-播放器在 missing-components 零行、G22/G24 在 improvement-analysis 零行（R4 §2 的「需求行/新增条目」声称未落账；P1 审计只补了 G5/G9/G10 三项）。现 G15/G19/G21/G23/G25/G26-播放器已补登 **missing-components L7.10**、G22/G24 已补登 **improvement-analysis 2026-11-02 登记**（连同 G14）；本表「✓」自补登时点起以该两处为实锚。历史表格不改写、就地附注。
+
 ### 3.3 散落验证项归集（R4 §4.1 L94）
 
 | 验证项                          | 底账状态                                                              | 验证方法（M3 执行）                                                                                                                                                                                           |

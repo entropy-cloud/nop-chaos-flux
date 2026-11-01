@@ -412,6 +412,7 @@ onSubmit: [ { action: refreshSource, targetId: dashboardKpi }, { action: refresh
 - P1-C3-1（P1 审计裁决，2026-11-01，plan 819；`docs/audits/business-replication/p1-dev-deep-audit.md`）：**修复**——全局筛选 territoryId/teamId 此前仅 UI 呈现、零取数作用（静默收窄）；现 dashboardKpi/dashboardTrend data-source 携带三维参数，mock 按大区×团队份额切片金额面（比率类 KPI 与范围无关不切），e2e 交互①b 断言请求参数 + 漏斗总额 720×0.5×0.6=216。
 - P1-C3-2（P1 审计裁决，2026-11-01，plan 819；`docs/audits/business-replication/p1-dev-deep-audit.md`）：R1 要素⑥「指标卡钻取跳转」并入 G8 echarts 钻取通道（stat-tile 不单做钻取）。
 - P1-C3-3（P1 审计裁决，2026-11-01，plan 819；`docs/audits/business-replication/p1-dev-deep-audit.md`）：C3 勘误 5「类别分布 pie 待 D5/P1 裁决」终态裁决——**从组件树移除、不补实现**（pie 非 R1 C3 要素①-⑥ 清单项，为 D2 自加项）。
+- P2-C3（P2 开放审计裁决，2026-11-02，plan 837；`docs/audits/business-replication/p2-dev-open-audit.md` MIN-1/MIN-3/MIN-6）：① 全局筛选残余收窄显式化——territoryId/teamId 只切 kpi/trend 两源金额面，drillRows/forecastAccuracy/funnelSummary 不随大区/团队（比率类/静态 fixture 语义），登记 watch-only residual 不另验收；② mock `invalid period` 错误分支 UI 不可达、spec 零断言——与 download 非法演练不对等，登记 residual（错误分支可达性归 query-filter 门禁面，非复刻页职责）；③ drillRows 空集 face 无断言——空态分支为系统性观测（P2 MIN-6），非本页单独缺口，登记 residual。
 
 ### 2.7 itam-asset-inventory（I1，P1）
 
@@ -688,7 +689,7 @@ indicators:
 
 | 项                | 页    | 做 / 不做                                                                                                                                                                   | 裁决引用                                                                         |
 | ----------------- | ----- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
-| G5 库位 2D 平面图 | W2    | 做：gantt 时间轴形态验收（sequence + zone 列 + zoomLevels + onZoomChange）；不做 2D 平面/动线绘制                                                                           | R4 §1 W2 行；R4 §2 G5 watch-only 需求行，不实现不登记                            |
+| G5 库位 2D 平面图 | W2    | 做：gantt 时间轴形态验收（sequence + zone 列 + zoomLevels + onZoomChange）；不做 2D 平面/动线绘制                                                                           | R4 §1 W2 行；R4 §2 G5 watch-only 需求行，不实现；G5 已于 missing-components L7.9 登记（2026-11-01 plan 819 补登；P2 开放审计 MIN-8 勘误本行「不登记」措辞——2026-11-02 plan 837） |
 | G6 导出内建       | W3/I2 | 做：button → ajax → {downloadUrl} 服务端报表下载 + §4 端点；不做内建 export 字段                                                                                            | R4 §3-1（improvement L23/L182）；L3.3 declarative download（proposed）落地后替换 |
 | G1 funnel/gauge   | C1/C3 | 做：漏斗以 chart `'bar'` 水平条近似（阶段降序+conversion 标签）；gauge 指标以 stat-tile 承载（D5 复审轮1 R4 勘误：value panel 为 MAJ-3 旧措辞残留）；不做 funnel/gauge 图型 | R4 §2 G1 → improvement chart P3 族；echarts 透传不受 L183 约束                   |
 | G4 单手操作流     | W1    | 做：floating-bubble + action-sheet 近似；不做专用单手布局/手势族                                                                                                            | R4 §1 W1 / §2 G4                                                                 |

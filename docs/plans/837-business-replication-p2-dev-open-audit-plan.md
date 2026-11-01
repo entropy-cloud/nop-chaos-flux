@@ -1,7 +1,7 @@
 # 837 M3-P2 开发阶段开放审计（business-page-replication roadmap M3-P2）
 
-> Plan Status: active
-> Last Reviewed: 2026-11-01
+> Plan Status: completed
+> Last Reviewed: 2026-11-02
 > Source: `docs/backlog/business-page-replication-roadmap.md` §2 M3-P2（依赖 P1 done——plan 819 收口后满足）
 > Related: P1 深审（`docs/audits/business-replication/p1-dev-deep-audit.md`、plan 819）；开放审计先例 R6/D6（`docs/audits/business-replication/{r6-research,d6-design}-open-audit.md`、plans 791/797）；`docs/audits/00-audit-execution-guide.md`
 
@@ -51,21 +51,23 @@
 
 ### Phase 1 - 开放审计组织与归档
 
-Status: planned
+Status: completed
 Targets: `docs/audits/business-replication/p2-dev-open-audit.md`
 
 - Item Types: `Fix | Decision | Proof`
 
-- [ ] 撰写开放审计任务书（三件套=二十一页清单+P1 diff 摘要+全族 e2e 输出摘要；三个评审面；P1 深审已覆盖范围摘要；Pass 判定对齐 `docs/audits/00-audit-execution-guide.md` 零 Blocker 零 Major）
-- [ ] 派独立 fresh 子 agent 执行开放评审（不复用执行者上下文）；发现逐条分级
-- [ ] 发现处置：Blocker/Major 修复→复审循环（≤2 轮）；Minor 当场修复或登记 residual；对应 spec 修复后 `--retries=0` 复跑
-- [ ] 报告归档（verdict + findings 表 + 证据命令）；roadmap §2 P2 回写 planned→done（closure audit 后）
+- [x] 撰写开放审计任务书（三件套=二十一页清单+P1 diff 摘要+全族 e2e 输出摘要；三个评审面；P1 深审已覆盖范围摘要；Pass 判定对齐 `docs/audits/00-audit-execution-guide.md` 零 Blocker 零 Major）
+- [x] 派独立 fresh 子 agent 执行开放评审（不复用执行者上下文）；发现逐条分级（round-1：Fail——0 Blocker / 1 Major / 8 Minor；保真度对抗验证五页全覆盖正面结论）
+- [x] 发现处置：MAJ-1 登记残余补登（missing-components **L7.10** 收 G15/G19/G21/G23/G25/G26-播放器；improvement-analysis 2026-11-02 登记收 G14/G22/G24 + MIN-7 aria-live）；D4 §3.2 九行 ✓ 就地勘误注实锚；D2 MIN-8 措辞勘误；MIN-1/2/3/6 以 P2-C3/P2-K2 裁决条就地落 D2/D3；MIN-4/5 进 Deferred；无 spec 改动、无需 e2e 复跑
+- [x] 报告归档（verdict + findings 表 + 证据命令）；round-2 复审（原审计员）确认 MAJ-1 消除
+
+执行期证据（2026-11-02）：round-1 报告落档（verdict Fail 1M/8m）；处置后 round-2 复审 verdict **Pass**（agent_1211acf8-78a8-4bc5-ab00-746d174fe3ce）。
 
 Exit Criteria:
 
-- [ ] `docs/audits/business-replication/p2-dev-open-audit.md` 落档，verdict 终态 Pass（或 Failure Paths 触发的显式非 Pass 状态）
-- [ ] 全部 Blocker/Major 已处置（修复+复跑或人工裁决记录）
-- [ ] roadmap §2 P2 行状态与头部说明一致
+- [x] `docs/audits/business-replication/p2-dev-open-audit.md` 落档，verdict 终态 Pass（或 Failure Paths 触发的显式非 Pass 状态）
+- [x] 全部 Blocker/Major 已处置（修复+复跑或人工裁决记录）
+- [x] roadmap §2 P2 行状态与头部说明一致（done 回写于 closure audit 通过时）
 
 ## Draft Review Record
 
@@ -76,21 +78,33 @@ Exit Criteria:
 
 ## Closure Gates
 
-- [ ] in-scope 工作全部落地（任务书 + 派遣 + 处置 + 报告 + roadmap 回写）
-- [ ] 全部 Blocker/Major 已闭环
-- [ ] 必要 focused verification 已完成（涉及 spec 修复时的复跑证据）
-- [ ] 不存在被静默降级的 in-scope 缺口
-- [ ] 受影响 owner docs 已同步（daily log）
-- [ ] 独立子 agent（fresh session）closure audit 通过并记录证据
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
-- [ ] `pnpm check`
+- [x] in-scope 工作全部落地（任务书 + 派遣 + 处置 + 报告 + roadmap 回写）
+- [x] 全部 Blocker/Major 已闭环（MAJ-1 修复 + round-2 复审消除）
+- [x] 必要 focused verification 已完成（本 plan 无 spec 改动，无需复跑——报告 L95 明示）
+- [x] 不存在被静默降级的 in-scope 缺口（8 Minor 全部可追溯：MIN-1/3/6→P2-C3、MIN-2→P2-K2、MIN-4/5→Deferred、MIN-7→improvement 登记、MIN-8→就地勘误）
+- [x] 受影响 owner docs 已同步（D2/D3/D4/missing-components/improvement-analysis/daily log）
+- [x] 独立子 agent（fresh session）closure audit 通过并记录证据
+- [x] `pnpm typecheck`（与 819 收口同一代码基线 `2e4faac41` 五项门禁全绿 `_tmp/p1-gates.log`；本 plan 零代码变更）
+- [x] `pnpm build`（同上）
+- [x] `pnpm lint`（同上）
+- [x] `pnpm test`（同上 turbo 86/86）
+- [x] `pnpm check`（同上全链 exit 0）
 
 ## Deferred But Adjudicated
 
-（执行期如有裁决当场落节）
+### MIN-4 双击/重复提交防护断言（跨页系统性观测）
+
+- Classification: `watch-only residual`
+- Why Not Blocking Closure: 21 份 spec 零双击/重复提交断言属测试面系统性增强（现有写路径均有 mock 守卫幂等/required 门禁承载业务语义），非复刻保真度或断言真实性缺陷；O2 BATCH_STALE 已覆盖批量 staleness 面。
+- Successor Required: `no`
+- Successor Path: 随 F1 后续验收轮或 spec 演进时逐页补；不单独立项
+
+### MIN-5 replication.css 深色主题未验证
+
+- Classification: `watch-only residual`
+- Why Not Blocking Closure: axe 基线与 21 spec 均按 D1 §4 浅色口径登记执行（复刻页 CSS 变量设计本身主题中立，硬编码浅色为页面临时形态）；深色主题验证属组件/主题 owner 面（theme-compatibility 域），非本 roadmap 验收口径。
+- Successor Required: `no`
+- Successor Path: 主题兼容治理统一收口时纳入 repl-* 页面族
 
 ## Non-Blocking Follow-ups
 
@@ -98,13 +112,14 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: 待收口填写
+Status Note: 2026-11-02 收口。开放审计 round-1 Fail（1 Major + 8 Minor）→ MAJ-1 登记残余全数补登（missing-components L7.10 六项 + improvement-analysis 四项）+ Minor 全部可追溯处置 → round-2 复审 Pass。保真度对抗验证五页（C3/K2/M1/M2/S1）正面结论：P1 修复均为真承载，无「改测试不改页」伪装收敛。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: 待独立子 agent 填写
-- Evidence: 待填写
+- Auditor / Agent: 独立 fresh sub-agent（agent_3c9fa092-cf29-4cd5-a8c2-b9b9173699ec），2026-11-02
+- Evidence: verdict **approved**（零 Blocker/Major）。逐条实证：报告与 plan 双处 round 轨迹一致；L7.10/improvement 登记/D4 勘误注实地核验在案；Minor 处置六落点逐条可追溯；git diff 证实 837 触达面仅 6 个 docs 文件（+31/-10），零代码变更，门禁以 819 收口基线（`2e4faac41`，`_tmp/p1-gates.log`）为有效引用。
 
 Follow-up:
 
-- 待收口填写
+- MIN-4 双击防护断言、MIN-5 深色主题验证（Deferred watch-only residual，见 Deferred 节）
+- 上游 demand gate 触发时 L7.10 各候选按 demand gate 升级——no remaining plan-owned work

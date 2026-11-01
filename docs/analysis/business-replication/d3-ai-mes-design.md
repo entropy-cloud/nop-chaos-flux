@@ -237,6 +237,7 @@ page
 5. **onCardMove when 路由需五 mutation 各一 action**（D3 三态合并 when 不可表达单 mutation）；reopen 仅 RESOLVED→REOPENED。
 6. **complex-pages-entries.ts 拆分**（K2 entry 使 model 达 501 行触发 oversized warn——COMPLEX_PAGE_ENTRIES 按 oversized 拆分纪律抽出）。
 - P1-K2（P1 审计裁决，2026-11-01，plan 819；`docs/audits/business-replication/p1-dev-deep-audit.md`）：**修复**——R2 要素⑥「AI 自动分类/优先级（可人工改写）」与要素⑧「内部备注」此前静默缺失；现 mock 工单携 aiCategory/category/internalNote，详情 drawer 增分类表单（AI 分类/定级只读提示 + 分类/优先级可改写 + 内部备注）→ ticketMutation `classify`（非状态迁移），e2e 断言载荷逐字段。要素①「多维筛选」收窄为单维 status 过滤（form+valuesPath 载体）——多维为同机制扩列，不另验收。
+- P2-K2（P2 开放审计裁决，2026-11-02，plan 837；`docs/audits/business-replication/p2-dev-open-audit.md` MIN-2）：internalNote 现为「只写不读」——classify 落 mock 持久化但 schema 无回显消费端；R1 要素⑧ 的上游语义为客服录入侧备忘，回显非当期验收面，登记 watch-only residual（回显列表/详情列为 demand-gated 增强）。
 
 ### 2.3 K3 ai-approval-trail（P1，直接组合，涉 G13/G18）
 

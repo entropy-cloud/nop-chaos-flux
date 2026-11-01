@@ -156,6 +156,8 @@ drawer 缺 `closeOnOutside`（与 dialog 不对称 bug）；两者缺 `closeOnEs
 
 > 2026-11-01 登记（plan 819 P1）：**scheduling 族 `calendar`(P3) 观察项——UTC 日模型**——月视图区间与「今天」按 UTC 组件计算（`calendar-date-utils.ts` getUTCMonth、`calendar.tsx` 初始 `new Date()`），UTC±N 时区的用户在每月 1 日 00:00–08:00（UTC+8）看到上月的月份网格。复刻页侧 mock 已改为 UTC 夹取对齐（plan 819）；组件语义是否切本地日/可配置时区归 scheduling 组件 owner 裁决。
 
+> 2026-11-02 登记（plan 837 P2 开放审计补登——R4 §2 声称 improvement-analysis 新增条目但底账缺行的三项 + MIN-7）：**`input-image` capture 属性**（G14，M3 现场拍照以 action-sheet+file input 近似，input 族扩展，demand-gated）；**字段渲染器 compare 变体**（G22，O2 以 labelRemark+字段对照行近似删除线/差异样式，input 族扩展，demand-gated——上游 maker-checker 04 亦为二期）；**`map` draw/modify 绘制编辑**（G24，V3 收窄裁决不做绘制交互，仅 geojsonSource 回显，map 族扩展，demand-gated）；**轮询刷新 aria-live 播报通道**（MIN-7，M1/V1 轮询数据面更新对读屏静默，data 族可及性扩展候选，demand-gated）。四项均只登记不立项。
+
 **Flux 优于 amis 的组件（结构性优势，不掩盖）：** `loop`（强于 amis Each）、`recurse`/`fragment`/`reaction`（amis 无对应物）、`data-source`（统一 source 模型）、action graph（优于 amis 散落 actionType）。
 
 ---

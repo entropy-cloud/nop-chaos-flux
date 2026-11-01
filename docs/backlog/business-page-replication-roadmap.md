@@ -1,7 +1,7 @@
 # Business Page Replication Roadmap（上游业务项目典型复杂页面复刻）
 
 > Created: 2026-10-28（用户下达：对 nop-app-erp 五条业务线、nop-app-mall、nop-entropy 智能单据、nop-app-iot 的典型复杂页面，在 flux playground 中复刻，要求实现对应 UI/UX 能力）
-> Status: **active**（M1 调研、M2 设计里程碑均达成：R1-R6/D1-D6 全 done；M3 开发中——W1-V3+P1 全 done、P2 planned〔plan 837〕；M4 待启动。头部状态于 2026-10-30 随 plan 797 收口就地勘误，2026-11-02 随 plan 819 收口更新）
+> Status: **active**（M1-M3 里程碑均达成：R1-R6/D1-D6/W1-V3+P1+P2 全 done；M4 验证进行中——F1〔plan 838〕/F2〔plan 842〕active。头部状态于 2026-10-30 随 plan 797 收口就地勘误，2026-11-02 随 plan 819/837 收口更新）
 > 拟制与共识流程：`docs/skills/roadmap-and-mission-authoring-with-consensus-review.md`
 > Sources:
 >
@@ -80,7 +80,7 @@
 | V2 IoT OTA 灰度管理页（wizard 分批推送 + 状态机步骤条 + 失败回滚操作 + 进度表）                                            | `done`    | M2 done        | plan 817（completed）——交付 V2 页全链（ReplIot V2 delegate 五端点〔firmwarePage/assignBatched BATCH_EMPTY/assignmentMatrix 契约增补+selected 投影/activateNextBatch GATE_NOT_PASSED+data:{gate}/rollbackPackage REASON_REQUIRED〕+setAssignmentStatus 钩子/schema strict 零诊断〔固件 crud、wizard 三步 form 宿主 checkbox-group required+formId 门禁、steps 八态 FAILED error 分叉、timeline、进度矩阵、门控 gate alert、回滚 dialog ROLLED_BACK〕/e2e 7 测试/axe 分支 A 登记〔含 checkbox-group aria-required owner 债〕；评审三轮 revised→pass；D4 §2.6 V2 实现勘误 8 条） |
 | V3 IoT 围栏地图与视频墙页（flux-renderers-map 围栏绘制 + 地理点标注；iframe/video 面板墙）                                 | `done` | M2 done        | ；交互验收收窄裁决：绘制/轨迹/流媒体不做交互验收（R4 §1 V3 行+开放审计 Minor-④，D4 设计 §6 落位）；plan 818（completed）——交付 V3 页全链（ReplIot V3 delegate 五端点+ffmpeg mp4/poster+本地空白瓦片/render-host map 补注册/schema strict 零诊断〔pin 地图 cluster 关 + __flux_map 像素点击→checkFence 联动、围栏 region 地图 geojsonSource action 回显、事件 interval 轮询增量+timeline、video×4 视频墙无 iframe、通道树 drawer〕/e2e 7 测试/axe 分支 C 实测 ≈650ms 纳入棘轮；D4 §2.7 V3 实现勘误 11 条；pin+围栏叠加登记 improvement 地图族候选） |
 | P1 开发阶段深度审计（逐页对照 live repo 与上游 roadmap 核对复刻保真度、断言真实性；缺口登记项与 §Authority 无冲突）        | `done`    | W1-V3 all done | deep audit；plan 819（completed，closure audit approved）——交付 `docs/audits/business-replication/p1-dev-deep-audit.md`（6 Major 全闭环+TZ-1 判别性回归+5 Minor 断言加强+12 处文档裁决）；复刻全族+axe 237/237 `--retries=0`；全仓 e2e 242 failed 逐红归因无未归因（3 项新红归 owner/836 域、C1 棘轮翻转按 contention 登记 flake 台账） |
-| P2 开发阶段开放审计（独立 fresh sub-agent 开放评审，不复用执行者上下文；输入"页面清单 + diff 摘要 + e2e 输出"）            | `planned` | P1             | open audit；plan 837（active，draft review round-2 pass）——依赖 P1 已满足，待派遣执行                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| P2 开发阶段开放审计（独立 fresh sub-agent 开放评审，不复用执行者上下文；输入"页面清单 + diff 摘要 + e2e 输出"）            | `done`    | P1             | open audit；plan 837（completed，closure audit approved）——交付 `docs/audits/business-replication/p2-dev-open-audit.md`（round-1 Fail 1M+8m → MAJ-1 登记残余补登〔missing-components L7.10 + improvement-analysis〕+ Minor 六落点处置 → round-2 Pass；保真度对抗验证五页正面结论）；M3 里程碑达成（W1-V3+P1+P2 全 done） |
 
 ### Milestone 4: 验证（统一 UX 验收与收口）
 
