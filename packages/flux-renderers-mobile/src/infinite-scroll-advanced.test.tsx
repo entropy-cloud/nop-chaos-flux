@@ -430,3 +430,111 @@ describe('InfiniteScrollRenderer advanced behaviour', () => {
     expect(MockIntersectionObserver.lastInstance!.options?.root).toBeUndefined();
   });
 });
+
+// plan 839 N2: immediateCheck previously re-fired unconditionally on every
+// loading true→false release, draining the whole dataset regardless of scroll
+// position. The schemas.ts contract ("内容不足一屏时自动加载") requires the
+// immediate path to honor the same viewport proximity as the intersection path.
+describe('InfiniteScrollRenderer immediateCheck viewport gating (plan 839 N2)', () => {
+  beforeEach(() => {
+    MockIntersectionObserver.instances = [];
+    MockIntersectionObserver.lastInstance = undefined;
+    (globalThis as { IntersectionObserver?: unknown }).IntersectionObserver = MockIntersectionObserver;
+  });
+
+  afterEach(() => {
+    delete (globalThis as { IntersectionObserver?: unknown }).IntersectionObserver;
+  });
+
+  function makeProps(onLoadMore: ReturnType<typeof vi.fn>, overrides: Record<string, unknown>) {
+    return createMockRendererProps<InfiniteScrollSchema>({
+      schema: { type: 'infinite-scroll' },
+      props: { immediateCheck: true, hasMore: true, ...overrides },
+      regions: { body: <div data-testid="body-content">Body</div> },
+      events: { onLoadMore: onLoadMore as never },
+    });
+  }
+
+  it('does not auto-load when the sentinel sits below the viewport, even across loading cycles', async () => {
+    const onLoadMore = vi.fn(async () => {
+      /* no-op */
+    });
+    const farRect = {
+      top: 5000,
+      bottom: 5001,
+      height: 1,
+      width: 100,
+      left: 0,
+      right: 100,
+      x: 0,
+      y: 5000,
+      toJSON: () => ({}),
+    } as DOMRect;
+    const spy = vi
+      .spyOn(Element.prototype, 'getBoundingClientRect')
+      .mockImplementation(function (this: Element) {
+        if (this.getAttribute?.('data-slot') === 'infinite-scroll-sentinel') {
+          return farRect;
+        }
+        return {
+          top: 0,
+          bottom: 768,
+          height: 768,
+          width: 375,
+          left: 0,
+          right: 375,
+          x: 0,
+          y: 0,
+          toJSON: () => ({}),
+        } as DOMRect;
+      });
+
+    try {
+      const { rerender } = render(<InfiniteScrollRenderer {...makeProps(onLoadMore, {})} />);
+      await waitFor(() =>
+        expect(document.querySelector('[data-slot="infinite-scroll"]')).toBeTruthy(),
+      );
+      await Promise.resolve();
+      expect(onLoadMore).not.toHaveBeenCalled();
+
+      // A full host load cycle (loading true→false) must not re-arm the
+      // immediate path while the sentinel stays out of range.
+      rerender(<InfiniteScrollRenderer {...makeProps(onLoadMore, { loading: true })} />);
+      rerender(<InfiniteScrollRenderer {...makeProps(onLoadMore, { loading: false })} />);
+      await Promise.resolve();
+      await new Promise((resolve) => setTimeout(resolve, 20));
+      expect(onLoadMore).not.toHaveBeenCalled();
+    } finally {
+      spy.mockRestore();
+    }
+  });
+
+  it('keeps auto-filling while content stays shorter than the viewport (contract preserved)', async () => {
+    const onLoadMore = vi.fn(async () => {
+      /* no-op */
+    });
+    // jsdom rects are all zero → the sentinel counts as visible, which is the
+    // documented "内容不足一屏时自动加载" situation: every finished page may
+    // arm the next one until hasMore goes false.
+    const { rerender } = render(<InfiniteScrollRenderer {...makeProps(onLoadMore, {})} />);
+    await waitFor(() => expect(onLoadMore).toHaveBeenCalledTimes(1));
+
+    rerender(<InfiniteScrollRenderer {...makeProps(onLoadMore, { loading: true })} />);
+    await Promise.resolve();
+    expect(onLoadMore).toHaveBeenCalledTimes(1);
+
+    rerender(<InfiniteScrollRenderer {...makeProps(onLoadMore, { loading: false })} />);
+    await waitFor(() => expect(onLoadMore).toHaveBeenCalledTimes(2));
+
+    rerender(<InfiniteScrollRenderer {...makeProps(onLoadMore, { loading: true })} />);
+    rerender(
+      <InfiniteScrollRenderer {...makeProps(onLoadMore, { loading: false, hasMore: false })} />,
+    );
+    await Promise.resolve();
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect(onLoadMore).toHaveBeenCalledTimes(2);
+    expect(
+      document.querySelector('[data-slot="infinite-scroll"]')?.getAttribute('data-status'),
+    ).toBe('finished');
+  });
+});

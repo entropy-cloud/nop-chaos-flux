@@ -1,5 +1,9 @@
-import { describe, expect, it } from 'vitest';
+import { afterAll, describe, expect, it } from 'vitest';
 import { dateHelper } from './date-helper.js';
+
+declare const process: {
+  env: Record<string, string | undefined>;
+};
 
 describe('dateHelper', () => {
   it('parses, formats, and reads date parts', () => {
@@ -56,5 +60,38 @@ describe('dateHelper', () => {
     expect(today.getUTCHours()).toBe(0);
     expect(today.getUTCMinutes()).toBe(0);
     expect(today.getUTCSeconds()).toBe(0);
+  });
+
+  // plan 839 N4: zoneless ISO date-time used to parse as *local* time while all
+  // extraction reads UTC parts — the same input produced different wall-clock
+  // output per host timezone. The module's convention is UTC, so naive inputs
+  // are pinned to UTC (matching date-only behavior).
+  describe('zoneless ISO date-time parses as UTC (plan 839 N4)', () => {
+    const origTz = process.env.TZ;
+    afterAll(() => {
+      process.env.TZ = origTz;
+    });
+
+    it('formats identically across host timezones', () => {
+      process.env.TZ = 'Asia/Shanghai';
+      expect(dateHelper.format('2026-04-13T12:34:56', 'datetime')).toBe('2026-04-13 12:34:56');
+      expect(dateHelper.hours('2026-04-13T12:34:56')).toBe(12);
+
+      process.env.TZ = 'America/New_York';
+      expect(dateHelper.format('2026-04-13T12:34:56', 'datetime')).toBe('2026-04-13 12:34:56');
+      expect(dateHelper.hours('2026-04-13T12:34:56')).toBe(12);
+    });
+
+    it('leaves date-only, Z-suffixed, and offset-suffixed inputs untouched', () => {
+      process.env.TZ = 'Asia/Shanghai';
+      expect(dateHelper.format('2026-04-13', 'datetime')).toBe('2026-04-13 00:00:00');
+      expect(dateHelper.format('2026-04-13T12:34:56Z', 'datetime')).toBe('2026-04-13 12:34:56');
+      expect(dateHelper.format('2026-04-13T12:34:56+08:00', 'datetime')).toBe(
+        '2026-04-13 04:34:56',
+      );
+      expect(dateHelper.format('2026-04-13T12:34:56.250', 'datetime')).toBe(
+        '2026-04-13 12:34:56',
+      );
+    });
   });
 });

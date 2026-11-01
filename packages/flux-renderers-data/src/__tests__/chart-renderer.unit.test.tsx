@@ -451,6 +451,48 @@ describe('ChartRenderer', () => {
     expect(screen.getByTestId('ChartContainer').getAttribute('data-props')).toContain('Revenue');
   });
 
+  // plan 839 N5: H22 keyed legend/cell on name+value, which still collides when
+  // both name AND value repeat across rows — React warns on duplicate keys and
+  // drops one of the siblings, losing a legend entry.
+  it('renders duplicate name+value pie rows without duplicate-key warnings', () => {
+    const keyWarnings: string[] = [];
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation((...args: unknown[]) => {
+      const message = args
+        .map((item) => (typeof item === 'string' ? item : ''))
+        .join(' ');
+      if (/same key/i.test(message)) {
+        keyWarnings.push(message);
+      }
+    });
+
+    try {
+      render(
+        <ChartRenderer
+          {...makeProps({
+            props: {
+              chartType: 'pie',
+              legend: true,
+              xAxis: { dataKey: 'label' },
+              source: [
+                { label: 'A', value: 1 },
+                { label: 'A', value: 1 },
+              ],
+              series: [{ name: 'Revenue', dataRegionKey: 'value' }],
+            },
+          })}
+        />,
+      );
+    } finally {
+      errorSpy.mockRestore();
+    }
+
+    expect(keyWarnings).toHaveLength(0);
+    expect(screen.getAllByText('A')).toHaveLength(2);
+    expect(screen.getAllByTestId('Cell')).toHaveLength(2);
+    const equivalent = document.querySelector('[data-slot="chart-data-equivalent"]');
+    expect(equivalent?.querySelectorAll('li')).toHaveLength(2);
+  });
+
   it('renders scatter data mappings, line fallback series, and bar fallback config branches', () => {
     const { rerender } = render(
       <ChartRenderer

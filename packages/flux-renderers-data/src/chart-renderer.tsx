@@ -62,7 +62,8 @@ function PieSliceLegend({
     <div className={cn('flex flex-wrap items-center justify-center gap-x-4 gap-y-1', className)}>
       {items.map((item, i) => (
         <div
-          key={`pie-legend-${item.name}:${item.value}`}
+          // eslint-disable-next-line react/no-array-index-key -- 图例纯展示不重排，name+value 可重复（H22 家族），index 是唯一稳定区分位
+          key={`pie-legend-${i}-${item.name}:${item.value}`}
           className="flex items-center gap-1.5 text-xs text-muted-foreground"
         >
           <div
@@ -430,9 +431,12 @@ export function ChartRenderer(props: RendererComponentProps<ChartSchema>) {
           <Pie data={pieData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius="80%">
             {pieData.map((item, i) => (
               // H22: key on name+value so same-named Pie cells no longer collide
-              // (previously keyed on `item.name` alone).
+              // (previously keyed on `item.name` alone); the index joins the key
+              // because H22's scheme still collides when both name AND value are
+              // duplicated across rows. Cells are display-only and never reorder.
               <Cell
-                key={`pie-cell-${item.name}:${item.value}`}
+                // eslint-disable-next-line react/no-array-index-key -- 纯展示不重排，index 是重复 name+value 行的唯一稳定区分位（H22 家族）
+                key={`pie-cell-${i}-${item.name}:${item.value}`}
                 fill={palette[i % palette.length]}
               />
             ))}
@@ -654,8 +658,9 @@ export function ChartRenderer(props: RendererComponentProps<ChartSchema>) {
           <div className="sr-only" data-slot="chart-data-equivalent">
             <p>{chartAccessibleName}</p>
             <ul>
-              {chartDataSummary.map((line) => (
-                <li key={line}>{line}</li>
+              {chartDataSummary.map((line, i) => (
+                // eslint-disable-next-line react/no-array-index-key -- 纯展示列表不重排，summary 行可重复，index 是唯一稳定区分位
+                <li key={`${i}-${line}`}>{line}</li>
               ))}
               {referenceSummary ? <li>{referenceSummary}</li> : null}
               {summaryTruncatedNote ? <li>{summaryTruncatedNote}</li> : null}

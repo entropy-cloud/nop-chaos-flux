@@ -269,7 +269,10 @@ export function EChartsRenderer(props: RendererComponentProps<EChartsSchema>) {
     };
     // componentId joins the deps: the observation anchor is keyed by it, so an
     // id change re-inits (and re-exposes) — same lifecycle as the instance.
-  }, [optionIsObject, mapUnavailable, mapInfo, rendererMode, theme, initOptions, componentId]);
+    // `loading` joins the deps: the canvas container only mounts after loading
+    // resolves, so an init attempt made while loading=true (container null)
+    // must be retried once the spinner branch swaps to the canvas branch.
+  }, [optionIsObject, mapUnavailable, mapInfo, rendererMode, theme, initOptions, componentId, loading]);
 
   useEffect(() => {
     const instance = chartRef.current;

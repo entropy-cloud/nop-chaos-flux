@@ -1,3 +1,10 @@
+// Zoneless ISO date-time (e.g. "2026-04-13T12:34:56") parses as *local* time
+// per ECMA-262, while every extraction below reads UTC parts — pin these to
+// UTC so output does not drift with the host timezone (plan 839 N4). Date-only
+// strings are already UTC by spec; offset/Z-suffixed forms carry their own
+// zone and stay untouched.
+const NAIVE_ISO_DATETIME_PATTERN = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2}(\.\d{1,3})?)?$/;
+
 function toDate(input: string | number | Date | null | undefined): Date | null {
   if (input instanceof Date) {
     return Number.isNaN(input.getTime()) ? null : new Date(input.getTime());
@@ -7,7 +14,9 @@ function toDate(input: string | number | Date | null | undefined): Date | null {
     return null;
   }
 
-  const value = new Date(input);
+  const normalized =
+    typeof input === 'string' && NAIVE_ISO_DATETIME_PATTERN.test(input) ? `${input}Z` : input;
+  const value = new Date(normalized);
   return Number.isNaN(value.getTime()) ? null : value;
 }
 

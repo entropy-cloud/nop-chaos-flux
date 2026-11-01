@@ -46,6 +46,18 @@ function findScrollableAncestor(node: HTMLElement | null): HTMLElement | null {
   return null;
 }
 
+// plan 839 N2: the immediate-check path must honor the same viewport proximity
+// contract as the intersection path (schemas.ts: "内容不足一屏时自动加载") —
+// without it, the loading true→false release cycle re-fired the effect once per
+// finished page and drained the whole dataset regardless of scroll position.
+function isSentinelNearViewport(node: HTMLElement, distance: number): boolean {
+  const root = findScrollableAncestor(node);
+  const rootTop = root ? root.getBoundingClientRect().top : 0;
+  const rootBottom = root ? root.getBoundingClientRect().bottom : window.innerHeight;
+  const rect = node.getBoundingClientRect();
+  return rect.top < rootBottom + distance && rect.bottom > rootTop - distance;
+}
+
 export function InfiniteScrollRenderer(props: RendererComponentProps<InfiniteScrollSchema>) {
   const slotProps = props.props;
   const disabled = slotProps.disabled === true;
@@ -193,8 +205,10 @@ export function InfiniteScrollRenderer(props: RendererComponentProps<InfiniteScr
     if (loading === true) return;
     if (hasError) return;
     if (isLoadingRef.current) return;
+    const node = sentinelRef.current;
+    if (node && !isSentinelNearViewport(node, distance)) return;
     fireLoadMore('immediate');
-  }, [immediateCheck, disabled, isFinished, loading, hasError, fireLoadMore]);
+  }, [immediateCheck, disabled, isFinished, loading, hasError, fireLoadMore, distance]);
 
   const triggerLoadMore = () => {
     if (disabled) return;

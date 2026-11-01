@@ -5,6 +5,12 @@ import { toEvalContext } from '../scope.js';
 import type { FormulaRegistrySnapshot } from '../registry.js';
 import { buildMemberPath } from './symbol-diagnostics.js';
 
+// Impure namespace members must stay call-time (same contract as the `t()`
+// builtin's "not collapsed into a static literal" precedent in builtins.ts) —
+// folding them freezes the compile-time value into the compile cache for the
+// whole session (plan 839 N3).
+const IMPURE_NAMESPACE_MEMBERS = new Set(['$Date.now', '$Date.today', '$Math.random']);
+
 function evaluateStaticAst(
   ast: FormulaAstNode,
   registry: FormulaRegistrySnapshot,
@@ -139,6 +145,10 @@ function evaluateStaticAst(
 
         const rootSymbol = symbolTable?.resolve(calleePath[0]);
         if (rootSymbol?.kind !== 'builtin-namespace') {
+          return { static: false };
+        }
+
+        if (IMPURE_NAMESPACE_MEMBERS.has(`${calleePath[0]}.${calleePath[1]}`)) {
           return { static: false };
         }
 
