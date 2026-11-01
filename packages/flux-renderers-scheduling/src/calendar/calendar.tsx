@@ -31,7 +31,7 @@ import { CalendarDragTypeSelector } from './components/calendar-drag-type-select
 import { useCalendarExport } from './hooks/use-calendar-export.js';
 import { useCalendarOwnership } from './hooks/use-calendar-ownership.js';
 import { useCalendarConfirmDialog } from './hooks/use-calendar-confirm-dialog.js';
-import { parseISODate, flattenResources } from './utils/calendar-date-utils.js';
+import { parseISODate, flattenResources , localCalendarDayToday } from './utils/calendar-date-utils.js';
 import './utils/calendar-print.css';
 import { useSchedulingEventCtx } from '../shared/scheduling-event-ctx.js';
 
@@ -65,8 +65,8 @@ export function Calendar(props: RendererComponentProps<CalendarSchema> & { ref?:
   useEffect(() => { reactionsRef.current = props.reactions; }, [props.reactions]);
 
   const initialDate = resolved.date
-    ? (parseISODate(resolved.date as string) ?? new Date())
-    : new Date();
+    ? (parseISODate(resolved.date as string) ?? localCalendarDayToday())
+    : localCalendarDayToday();
   const initialView = (resolved.view as CalendarView) ?? 'month';
   const firstDayOfWeek = (resolved.firstDayOfWeek as 0 | 1) ?? 1;
   const showWeekends = resolved.showWeekends !== false;

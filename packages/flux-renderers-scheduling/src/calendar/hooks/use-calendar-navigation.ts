@@ -1,6 +1,6 @@
 
 import type { CalendarView } from '../../schemas.js';
-import { addMonths, addWeeks, addDays } from '../utils/calendar-date-utils.js';
+import { addMonths, addWeeks, addDays, localCalendarDayToday } from '../utils/calendar-date-utils.js';
 
 export interface CalendarNavigationOptions {
   currentDate: Date;
@@ -47,7 +47,7 @@ export function useCalendarNavigation(options: CalendarNavigationOptions): Calen
   };
 
   const goToday = () => {
-    onDateChange(new Date());
+    onDateChange(localCalendarDayToday());
   };
 
   const goToDate = (date: Date) => {

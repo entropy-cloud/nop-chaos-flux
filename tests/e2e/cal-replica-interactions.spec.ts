@@ -49,6 +49,17 @@ function calDateHash(date: string): number {
   return hash;
 }
 
+// plan 836 E1: the Today-restore path depends on the wall clock. Pin the
+// browser to CST 2026-11-01 02:00 (= UTC 10-31 18:00, the exact instant that
+// used to break the UTC-day construction) so expectations are deterministic;
+// the constants below are the Asia/Shanghai local-calendar-day derivations of
+// that instant (old product impl rendered October / data-today 10-31 here).
+test.use({ timezoneId: 'Asia/Shanghai' });
+
+const E1_CLOCK = new Date('2026-11-01T02:00:00+08:00');
+const E1_TODAY_LOCAL_DATE = '2026-11-01';
+const E1_TODAY_MONTH_LABEL = 'November 2026';
+
 test.describe('Cal booking — I2 选日刷新 + I4 月份导航', () => {
   test('01 I2 month navigation rewrites the scope date and refetches slots', async ({ page }) => {
     await openPage(page, 'cal-booking', 'Cal 预约 · 选时段');
@@ -80,13 +91,12 @@ test.describe('Cal booking — I2 选日刷新 + I4 月份导航', () => {
       await expect(page.getByTestId('cal-booking-slot').first()).toBeVisible({ timeout: 10_000 });
     }
 
-    // Today 回当月并携带当日日期（cal-book-expired 空日样本随日期而异，标签断言为主）
-    const todayAnchor = new Date().toISOString().slice(0, 10);
+    // Today 回当月并携带当日日期（cal-book-expired 空日样本随日期而异，标签断言为主）。
+    // 固定钟放在页面加载之后：setFixedTime 在启动前冻结 Date 会让应用引导挂起。
+    await page.clock.setFixedTime(E1_CLOCK);
     await headerButtons.nth(1).click();
-    await expect(monthHeader).toContainText(
-      new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long' }),
-    );
-    await expect(selectedDate).toContainText(toUtcDateText(todayAnchor), { timeout: 10_000 });
+    await expect(monthHeader).toContainText(E1_TODAY_MONTH_LABEL);
+    await expect(selectedDate).toContainText(toUtcDateText(E1_TODAY_LOCAL_DATE), { timeout: 10_000 });
 
     await snap(page, 'i2-date-refresh.png');
   });
@@ -96,7 +106,7 @@ test.describe('Cal booking — I2 选日刷新 + I4 月份导航', () => {
     const calendar = page.getByTestId('cal-booking-calendar');
     const headerButtons = calendar.locator('[data-slot="calendar-header"] button');
     const monthHeader = calendar.locator('[data-slot="calendar-header"] h2');
-    const currentMonth = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long' });
+    const currentMonth = E1_TODAY_MONTH_LABEL;
     // 初屏月份跟随种子 scope date（2026-09-03），不是"今天"所在月
     await expect(monthHeader).toContainText('September 2026');
 
@@ -106,6 +116,7 @@ test.describe('Cal booking — I2 选日刷新 + I4 月份导航', () => {
     await headerButtons.nth(2).click();
     await expect(monthHeader).toContainText('September 2026');
 
+    await page.clock.setFixedTime(E1_CLOCK);
     await headerButtons.nth(1).click();
     await expect(monthHeader).toContainText(currentMonth);
     await expect(

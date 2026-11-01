@@ -48,35 +48,35 @@
 
 ### Phase 1 - 分诊（时间边界 vs 漂移）
 
-Status: planned
+Status: completed
 Targets: 18 项所在 spec、`_tmp/` 分诊日志
 
 - Item Types: `Proof | Decision`
 
-- [ ] Proof：以 `TZ=UTC`（Node 与浏览器同时区，消除本地/UTC 日界错位）复跑 18 项，记录转绿项（= 时间边界族候选）与仍红项（= 漂移族）。口径注：`_tmp/e2e-triage.log` 汇总 33 failed 系整文件复跑连带在册项复红，台账外口径以上述 18 项为准
-- [ ] Proof：对时间边界候选，以 Playwright `page.clock`（固定 `2026-11-01T02:00:00+08:00`）+ `timezoneId: 'Asia/Shanghai'` 确定性复现
-- [ ] Decision：18 项逐项初判处置类别并写入本计划执行记录（后续 Phase 可改判，改判当场记账）
+- [x] Proof：以 `TZ=UTC`（Node 与浏览器同时区，消除本地/UTC 日界错位）复跑 18 项，记录转绿项（= 时间边界族候选）与仍红项（= 漂移族）。口径注：`_tmp/e2e-triage.log` 汇总 33 failed 系整文件复跑连带在册项复红，台账外口径以上述 18 项为准
+- [x] Proof：对时间边界候选，以 Playwright `page.clock`（固定 `2026-11-01T02:00:00+08:00`）+ `timezoneId: 'Asia/Shanghai'` 确定性复现
+- [x] Decision：18 项逐项初判处置类别并写入本计划执行记录（后续 Phase 可改判，改判当场记账）
 
 Exit Criteria:
 
-- [ ] 18 项均有初判类别与证据（日志路径）
+- [x] 18 项均有初判类别与证据（日志路径）
 
 ### Phase 2 - 时间边界产品缺陷（E1）
 
-Status: planned
+Status: completed
 Targets: `packages/flux-renderers-scheduling/src/calendar/**`、`gantt/**`（按判定）、对应单测；涉事 e2e spec
 
 - Item Types: `Proof | Fix`
 
-- [ ] Proof：scheduling 单测——vitest worker 启动前注入 `TZ='Asia/Shanghai'`（package test script env 或 config env，测试体内赋值在非 UTC+8 宿主可能因时区缓存失效；测试开头以 `resolvedOptions().timeZone` 前置守卫）+ fake timers 固定本地 `2026-11-01 02:00`，断言 calendar 初始"今天"为 2026-11-01（月份 11 月、`data-today` 落在 1 日、scope 写回 `2026-11-01`）（旧实现得 10-31 → 挂）
-- [ ] Fix：引入"本地日历日 → UTC 零点"的今天构造（单一 helper），替换 `new Date()` 作为"今天/默认日期"的用法；对 `toISOString().slice(0,10)` 各处逐一判定输入是否已是 UTC 零点日期——不是则改用该 helper/本地日期格式化
-- [ ] Fix：涉事 e2e 的期望值计算与产品同口径（或以 `page.clock` 固定时间），使其与当前时刻无关
-- [ ] Proof：e2e——固定时钟 `2026-11-01T02:00:00+08:00` 下 cal-replica Today 跳转与 calendar-demo 导航通过（旧实现挂）
+- [x] Proof：scheduling 单测——vitest worker 启动前注入 `TZ='Asia/Shanghai'`（package test script env 或 config env，测试体内赋值在非 UTC+8 宿主可能因时区缓存失效；测试开头以 `resolvedOptions().timeZone` 前置守卫）+ fake timers 固定本地 `2026-11-01 02:00`，断言 calendar 初始"今天"为 2026-11-01（月份 11 月、`data-today` 落在 1 日、scope 写回 `2026-11-01`）（旧实现得 10-31 → 挂）
+- [x] Fix：引入"本地日历日 → UTC 零点"的今天构造（单一 helper），替换 `new Date()` 作为"今天/默认日期"的用法；对 `toISOString().slice(0,10)` 各处逐一判定输入是否已是 UTC 零点日期——不是则改用该 helper/本地日期格式化
+- [x] Fix：涉事 e2e 的期望值计算与产品同口径（或以 `page.clock` 固定时间），使其与当前时刻无关
+- [x] Proof：e2e——固定时钟 `2026-11-01T02:00:00+08:00` 下 cal-replica Today 跳转与 calendar-demo 导航通过（旧实现挂）
 
 Exit Criteria:
 
-- [ ] 判别性单测与固定时钟 e2e 通过且反向验证
-- [ ] `flux-renderers-scheduling` 包测试通过；E1 涉事 spec `--retries=0` 通过
+- [x] 判别性单测与固定时钟 e2e 通过且反向验证
+- [x] `flux-renderers-scheduling` 包测试通过；E1 涉事 spec `--retries=0` 通过
 
 ### Phase 3 - 漂移项逐项收敛（E2）
 

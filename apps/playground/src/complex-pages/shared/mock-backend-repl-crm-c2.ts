@@ -273,17 +273,18 @@ function findPartner(session: ReplCrmC2BranchInput['session'], partnerId: string
   return session.partners.find((partner) => partner.id === partnerId);
 }
 
-/** Date `offsetDays` from today, clamped into the current month so every
- * seeded calendar event renders inside the default month view regardless of
- * the run date. UTC components throughout: the scheduling calendar is a
- * UTC-day model (calendar-date-utils.ts getUTCMonth, initial date = now), so a
- * local-month clamp leaves the grid empty in the first hours of a month for
- * UTC+N viewers (plan 819). */
+/** Date `offsetDays` from today, clamped into the current LOCAL calendar month
+ * so every seeded calendar event renders inside the default month view
+ * regardless of the run date. LOCAL components feed UTC-midnight dates: the
+ * scheduling calendar renders the LOCAL calendar day/month since plan 836 (the
+ * previous UTC-month clamp — plan 819, aligned to the old "today = raw now"
+ * model — left the grid empty for UTC+N viewers in the first hours of a
+ * month). */
 function currentMonthDate(offsetDays: number): Date {
   const now = new Date();
-  const monthStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
-  const monthEnd = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 0));
-  const target = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + offsetDays));
+  const monthStart = new Date(Date.UTC(now.getFullYear(), now.getMonth(), 1));
+  const monthEnd = new Date(Date.UTC(now.getFullYear(), now.getMonth() + 1, 0));
+  const target = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate() + offsetDays));
   if (target < monthStart) return monthStart;
   if (target > monthEnd) return monthEnd;
   return target;

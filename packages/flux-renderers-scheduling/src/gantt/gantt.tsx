@@ -6,6 +6,7 @@ import { useCurrentComponentRegistry, useRenderScope } from '@nop-chaos/flux-rea
 import type { RenderRegionHandle } from '@nop-chaos/flux-react';
 import type { GanttSchema } from '../schemas.js';
 import { createGanttStore } from './gantt-store.js';
+import { localCalendarDayToday } from '../calendar/utils/calendar-date-utils.js';
 import type { GanttStoreApi } from './gantt.types.js';
 import { GanttLayout } from './gantt-layout.js';
 import { GanttHeader } from './gantt-header.js';
@@ -316,7 +317,7 @@ export const Gantt = React.forwardRef<GanttHandle, RendererComponentProps<GanttS
     });
 
     const scrollToToday = useCallback(() => {
-      const today = new Date();
+      const today = localCalendarDayToday();
       const x = dateToPixel(today, store.scaleRange, store.cellWidth);
       const container = timelineRef.current;
       if (container) {

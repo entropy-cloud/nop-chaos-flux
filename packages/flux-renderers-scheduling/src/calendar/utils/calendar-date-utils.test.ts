@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { vi, describe, it, expect } from 'vitest';
 
 declare const process: {
   env: Record<string, string | undefined>;
@@ -144,22 +144,26 @@ describe('calendar-date-utils', () => {
   });
 
   describe('isToday', () => {
-    it('should return true for today (UTC-based)', () => {
+    // plan 836 E1: "today" is the LOCAL calendar day (UTC-midnight normalized),
+    // so expectations derive today from local wall-clock parts — the previous
+    // UTC-part construction went red between local midnight and the timezone
+    // offset hours (e.g. CST 00:00-08:00).
+    it('should return true for today (local calendar day)', () => {
       const now = new Date();
-      const utcToday = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
-      expect(isToday(utcToday)).toBe(true);
+      const localToday = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
+      expect(isToday(localToday)).toBe(true);
     });
 
     it('should return false for yesterday', () => {
       const now = new Date();
-      const utcYesterday = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - 1));
-      expect(isToday(utcYesterday)).toBe(false);
+      const localYesterday = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate() - 1));
+      expect(isToday(localYesterday)).toBe(false);
     });
 
     it('should return false for tomorrow', () => {
       const now = new Date();
-      const utcTomorrow = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1));
-      expect(isToday(utcTomorrow)).toBe(false);
+      const localTomorrow = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate() + 1));
+      expect(isToday(localTomorrow)).toBe(false);
     });
 
     it('should return correct result near midnight boundary in non-UTC timezone', () => {
@@ -167,28 +171,37 @@ describe('calendar-date-utils', () => {
       process.env.TZ = 'Asia/Shanghai';
       try {
         const now = new Date();
-        const utcToday = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
-        expect(isToday(utcToday)).toBe(true);
-        const utcYesterday = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - 1));
-        expect(isToday(utcYesterday)).toBe(false);
-        const utcTomorrow = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1));
-        expect(isToday(utcTomorrow)).toBe(false);
+        const localToday = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
+        expect(isToday(localToday)).toBe(true);
+        const localYesterday = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate() - 1));
+        expect(isToday(localYesterday)).toBe(false);
+        const localTomorrow = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate() + 1));
+        expect(isToday(localTomorrow)).toBe(false);
       } finally {
         process.env.TZ = origTz;
       }
     });
 
-    it('should use UTC date methods, not local date methods', () => {
+    // plan 836 E1: today normalizes to the LOCAL calendar day of the current
+    // instant. At CST 2026-07-23 06:00 (= UTC 07-22 22:00) today is Jul 23;
+    // the same instant in UTC yields Jul 22. The old contract (raw UTC parts
+    // of now) returned Jul 22 in both zones.
+    it('should normalize today to the local calendar day of the current instant', () => {
       const july22Utc = new Date(Date.UTC(2026, 6, 22));
       const july23Utc = new Date(Date.UTC(2026, 6, 23));
-      const now = new Date('2026-07-22T22:00:00Z');
-      const origNow = Date.now;
-      Date.now = () => now.getTime();
+      const origTz = process.env.TZ;
+      vi.useFakeTimers({ toFake: ['Date'] });
       try {
+        vi.setSystemTime(new Date('2026-07-22T22:00:00Z'));
+        process.env.TZ = 'Asia/Shanghai';
+        expect(isToday(july23Utc)).toBe(true);
+        expect(isToday(july22Utc)).toBe(false);
+        process.env.TZ = 'UTC';
         expect(isToday(july22Utc)).toBe(true);
         expect(isToday(july23Utc)).toBe(false);
       } finally {
-        Date.now = origNow;
+        vi.useRealTimers();
+        process.env.TZ = origTz;
       }
     });
   });

@@ -65,10 +65,17 @@ export function isWeekend(date: Date): boolean {
   return day === 0 || day === 6;
 }
 
+// plan 836 E1: the calendar's date model is "UTC-midnight of a calendar day",
+// but "today" must be the *local* calendar day — a raw `new Date()` in UTC+
+// timezones resolves to the previous UTC day between local midnight and the
+// offset hours (e.g. CST 2026-11-01 02:00 → UTC 10-31 18:00). Normalize local
+// wall-clock parts onto a UTC-midnight Date.
+export function localCalendarDayToday(now: Date = new Date()): Date {
+  return new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
+}
+
 export function isToday(date: Date): boolean {
-  const now = new Date(Date.now());
-  const utcToday = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
-  return isSameDay(date, utcToday);
+  return isSameDay(date, localCalendarDayToday());
 }
 
 export function formatDate(date: Date, locale?: string): string {

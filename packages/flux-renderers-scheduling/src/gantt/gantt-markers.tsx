@@ -3,6 +3,7 @@ import { cn } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
 import type { GanttStoreApi } from './gantt.types.js';
 import { dateToPixel } from './utils/layout.js';
+import { localCalendarDayToday } from '../calendar/utils/calendar-date-utils.js';
 
 interface GanttMarkersProps {
   store: GanttStoreApi;
@@ -20,8 +21,7 @@ export function GanttMarkers({ store, showToday = true, className }: GanttMarker
 
   const todayX = (() => {
     if (!showToday) return -1;
-    const now = new Date();
-    const today = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
+    const today = localCalendarDayToday();
     return dateToPixel(today, store.scaleRange, store.cellWidth);
   })();
 

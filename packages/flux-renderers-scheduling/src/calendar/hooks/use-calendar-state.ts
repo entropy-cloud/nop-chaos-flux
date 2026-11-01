@@ -1,7 +1,12 @@
 import { useMemo, useState } from 'react';
 import type { CalendarView } from '../../schemas.js';
 import type { CalendarDateRange } from '../calendar.types.js';
-import { getMonthStartEnd, getWeekStartEnd, getDayStartEnd } from '../utils/calendar-date-utils.js';
+import {
+  getMonthStartEnd,
+  getWeekStartEnd,
+  getDayStartEnd,
+  localCalendarDayToday,
+} from '../utils/calendar-date-utils.js';
 
 export interface CalendarStateOptions {
   initialDate?: Date;
@@ -23,7 +28,7 @@ export interface CalendarStateResult {
 
 export function useCalendarState(options: CalendarStateOptions = {}): CalendarStateResult {
   const {
-    initialDate = new Date(),
+    initialDate = localCalendarDayToday(),
     initialView = 'month',
     firstDayOfWeek = 0,
     onDateChange,

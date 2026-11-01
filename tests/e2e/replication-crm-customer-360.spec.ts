@@ -377,14 +377,14 @@ test('focus ③ seek 后 activeElement 保持文档内（命中被 seek 的 time
 // Plan 819 (P1) — month-boundary timezone regression. The scheduling calendar
 // is a UTC-day model (calendar-date-utils.ts getUTCMonth; initial date = now),
 // so at 2026-11-01 01:30 in UTC+8 (= 2026-10-31 17:30 UTC) it shows OCTOBER.
-// The mock used to clamp event dates into the LOCAL month (November), leaving
-// the October grid empty. Pinning the browser clock + timezone to that window
-// makes the regression deterministic: zero events before the fix, all four
-// seed events after it.
+// plan 836 勘误（前提就地标注）：本用例最初固化的是「UTC 月渲染」的旧产品行为
+// （mock 按 UTC 月 clamp）。plan 836 将日历「今天」修正为本地日历日后，月初
+// UTC+N 窗口内产品渲染本地月（11 月），mock 事件日期也随之回改本地月 clamp。
+// 固定钟 + 时区使该窗口确定性可测：四个种子事件在 11 月网格上全部可见。
 test.describe('C2 日历月初时区窗口回归（UTC+8 · 每月 1 日 08:00 前）', () => {
   test.use({ timezoneId: 'Asia/Shanghai' });
 
-  test('2026-11-01 01:30 CST（UTC 仍为 10 月）→ 日历事件按 UTC 月渲染，四个种子事件可见', async ({ page }) => {
+  test('2026-11-01 01:30 CST（UTC 仍为 10 月）→ 日历按本地月（11 月）渲染，四个种子事件可见', async ({ page }) => {
     await page.clock.install({ time: new Date('2026-11-01T01:30:00+08:00') });
     await openC2(page);
 
