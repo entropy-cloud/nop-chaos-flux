@@ -1,7 +1,7 @@
 # Business Page Replication Roadmap（上游业务项目典型复杂页面复刻）
 
 > Created: 2026-10-28（用户下达：对 nop-app-erp 五条业务线、nop-app-mall、nop-entropy 智能单据、nop-app-iot 的典型复杂页面，在 flux playground 中复刻，要求实现对应 UI/UX 能力）
-> Status: **active**（M1-M3 里程碑均达成：R1-R6/D1-D6/W1-V3+P1+P2 全 done；M4 验证进行中——F1〔plan 838〕/F2〔plan 842〕active。头部状态于 2026-10-30 随 plan 797 收口就地勘误，2026-11-02 随 plan 819/837 收口更新）
+> Status: **active**（M1-M3 里程碑均达成：R1-R6/D1-D6/W1-V3+P1+P2 全 done；M4 验证进行中——F1〔plan 838〕/F2〔plan 842〕done、F3〔plan 843〕planned、F4 todo。头部状态于 2026-10-30 随 plan 797 收口就地勘误，2026-11-02 随 plan 819/837/838/842 收口更新〔F3 深审 MAJ-1 勘误：838/842 收口时头部漏更〕）
 > 拟制与共识流程：`docs/skills/roadmap-and-mission-authoring-with-consensus-review.md`
 > Sources:
 >
@@ -88,7 +88,7 @@
 | ---------------------------------------------------------------------------------------------------------------------------------------- | ------ | ------- | ---------- |
 | F1 统一 UX 验收（全部复刻页浏览器快照评审 + axe 基线全绿 + focus 管理抽查 + 移动端页 viewport 适配验证；pass/fail 程序化断言）           | `done` | M3 done | plan 838（completed，closure audit approved）——交付 `docs/audits/business-replication/f1-unified-ux-acceptance.md`（四支柱 Pass：快照 21/21 无页面级缺陷〔4 项观测级 residual〕/ axe 28 项零新增 / focus 抽查 15/15 / mobile viewport 分支 B+页 spec 断言；复跑唯一红 K2 focus③ 三证 contention 登记 flake 台账） |
 | F2 复刻总结与缺口沉淀（复刻中新登记的 missing-components / improvement-analysis 条目汇总；对上游各 roadmap 回写"flux 侧能力已验证"备忘） | `done` | F1      | plan 842（completed，closure audit approved）——交付 `docs/analysis/business-replication/f2-replication-summary-and-gap-ledger.md`（§1 二十一页终态 / §2 缺口登记汇总逐条底账锚点 / §3 八域备忘 / §4 跨仓库回写裁决）。**就地勘误注（2026-11-02 plan 842）**：「对上游各 roadmap 回写」以仓内备忘文本沉淀交付（§Authority 不改上游项目），跨仓库写回另行授权 |
-| F3 验证阶段深度审计（对照 live repo 核对验收覆盖与 contract drift）                                                                      | `todo` | F1      | deep audit |
+| F3 验证阶段深度审计（对照 live repo 核对验收覆盖与 contract drift）                                                                      | `done` | F1      | deep audit；plan 843（completed，closure audit approved）——交付 `docs/audits/business-replication/f3-verification-deep-audit.md`（round-1 Fail 1M+4m：MAJ-1 roadmap 头部漏更勘误 + MIN-1/2 f1 口径勘误 + MIN-3/4 观测 → round-2 Pass final；F1 证据链全过、F2 双向核对零遗漏） |
 | F4 验证阶段开放审计（独立 fresh sub-agent 开放评审，不复用执行者上下文；通过后本 roadmap 收口 ★）                                        | `todo` | F3      | open audit |
 
 ★ **Milestone: 上游典型页面复刻 1.0**（unlocks when M1-M4 all done）

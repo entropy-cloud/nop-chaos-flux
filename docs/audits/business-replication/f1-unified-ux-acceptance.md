@@ -16,7 +16,7 @@
 | 快照评审（21/21） | Pass，4 项观测级 residual | `_tmp/f1-snapshots/*.png`（1440×900，dev server strict 模式）逐页目检；发现清单见下节 |
 | axe 基线全绿 | Pass | `a11y-axe-baseline.spec.ts` 28 项（桌面 25 + mobile 3）随 family 复跑 `--retries=0` 零新增违规（`_tmp/f1-family.log`） |
 | focus 抽查 | Pass | W2/C3/O1/V3/W1 五页 `-g "focus"` `--retries=0` **15/15 绿**（`_tmp/f1-focus`）；`check:focus-ledger` exit 0 |
-| mobile viewport | Pass | 分支 B（W1/M3/S1 mobile 画布 375×667 axe 扫描）+ 三页 spec 既有 mobile context（375×667 hasTouch）交互断言全绿——程序化验证在案，无覆盖缺口 |
+| mobile viewport | Pass | 分支 B（W1/M3/S1 mobile 画布 375×667 axe 扫描）+ 三页 spec 既有 hasTouch 交互断言（页 spec viewport 为 1280×800/1080 桌面壳；375×667 为 host override 固定画布，经 bbox `toBe(375)`/`toBe(667)` 断言承载）——程序化验证在案，无覆盖缺口（分支 C V3 已在 axe ROUTES ≈650ms 棘轮内，随 family 复跑覆盖） |
 
 复跑口径：replication 全族 + axe 于 2026-11-02 以共享 dev server（strict 校验开启，端口 4203）`--retries=0` 实跑 **236 passed / 1 failed**；唯一失败 K2 `focus ③`（drawer 10s 未现）经单 spec 隔离 `--repeat-each=3`（12 test × 3 = **36/36 绿**，`_tmp/f1-k2-flake/.last-run.json` status passed）+ 同代码 1 小时前 P1 复跑全绿（无相关代码变更）→ 三证构成 contention，按 flake 台账口径登记 `docs/testing/e2e-flake-ledger.md`（plan 838 F1 登记行）；不属页面缺陷。
 
