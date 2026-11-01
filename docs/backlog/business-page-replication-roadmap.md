@@ -86,7 +86,7 @@
 
 | Work item                                                                                                                                | 状态   | 依赖    | 说明       |
 | ---------------------------------------------------------------------------------------------------------------------------------------- | ------ | ------- | ---------- |
-| F1 统一 UX 验收（全部复刻页浏览器快照评审 + axe 基线全绿 + focus 管理抽查 + 移动端页 viewport 适配验证；pass/fail 程序化断言）           | `todo` | M3 done |            |
+| F1 统一 UX 验收（全部复刻页浏览器快照评审 + axe 基线全绿 + focus 管理抽查 + 移动端页 viewport 适配验证；pass/fail 程序化断言）           | `done` | M3 done | plan 838（completed，closure audit approved）——交付 `docs/audits/business-replication/f1-unified-ux-acceptance.md`（四支柱 Pass：快照 21/21 无页面级缺陷〔4 项观测级 residual〕/ axe 28 项零新增 / focus 抽查 15/15 / mobile viewport 分支 B+页 spec 断言；复跑唯一红 K2 focus③ 三证 contention 登记 flake 台账） |
 | F2 复刻总结与缺口沉淀（复刻中新登记的 missing-components / improvement-analysis 条目汇总；对上游各 roadmap 回写"flux 侧能力已验证"备忘） | `todo` | F1      |            |
 | F3 验证阶段深度审计（对照 live repo 核对验收覆盖与 contract drift）                                                                      | `todo` | F1      | deep audit |
 | F4 验证阶段开放审计（独立 fresh sub-agent 开放评审，不复用执行者上下文；通过后本 roadmap 收口 ★）                                        | `todo` | F3      | open audit |

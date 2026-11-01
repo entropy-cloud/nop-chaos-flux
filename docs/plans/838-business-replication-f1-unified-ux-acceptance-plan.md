@@ -1,7 +1,7 @@
 # 838 M4-F1 统一 UX 验收（business-page-replication roadmap M4-F1）
 
-> Plan Status: active
-> Last Reviewed: 2026-11-01
+> Plan Status: completed
+> Last Reviewed: 2026-11-02
 > Source: `docs/backlog/business-page-replication-roadmap.md` §2 M4-F1（依赖 M3 done——P2 收口后满足）；D1 §3 验收断言模板、§4 axe 三分支策略
 > Related: P1 深审（`docs/audits/business-replication/p1-dev-deep-audit.md`）；P2 开放审计（plan 837）；PH-17/PH-18 设施（`a11y-axe-baseline.spec.ts`、`check:focus-ledger`）
 
@@ -56,23 +56,25 @@
 
 ### Phase 1 - 统一验收执行与报告
 
-Status: planned
+Status: completed
 Targets: `docs/audits/business-replication/f1-unified-ux-acceptance.md`（新）；`_tmp/f1-snapshots/`（评审归档，不入库）
 
 - Item Types: `Proof | Fix | Decision`
 
-- [ ] Proof：axe 28 项扫描 + replication 全族 `--retries=0` 实跑（M3 终态确认）
-- [ ] Proof：二十一页快照采集与逐页目检（multimodal 评审），发现项分级处置
-- [ ] Proof：focus 抽查 5 页 + `check:focus-ledger`
-- [ ] Proof/Fix：mobile 三页 viewport 适配程序化验证（覆盖缺口补最小断言）
-- [ ] 验收报告落档（结论 + 逐页表 + 证据命令）；roadmap §2 F1 回写
+- [x] Proof：axe 28 项扫描 + replication 全族 `--retries=0` 实跑（M3 终态确认）——236 passed / 1 failed（K2 focus③，contention 三证判定后按 flake 台账登记，非页面缺陷）
+- [x] Proof：二十一页快照采集与逐页目检（multimodal 评审），发现项分级处置——无页面级缺陷；4 项观测级 residual 登记（I1 双按钮对/I2 趋势量纲/W3 透视列序/V3 围栏可视性）
+- [x] Proof：focus 抽查 5 页（W2/C3/O1/V3/W1）15/15 绿 + `check:focus-ledger` exit 0
+- [x] Proof/Fix：mobile 三页 viewport 适配程序化验证——分支 B 扫描 + 页 spec mobile context 断言覆盖齐备，无新增缺口、未新写重复设施
+- [x] 验收报告落档（结论 + 四支柱表 + 证据命令）；roadmap §2 F1 回写
+
+执行期证据（2026-11-02）：报告 `docs/audits/business-replication/f1-unified-ux-acceptance.md`（verdict Pass）；快照 21 张 `_tmp/f1-snapshots/`；family 复跑 `_tmp/f1-family.log`（236+1，唯一红 K2 focus③ 隔离 3×36/36 绿 `_tmp/f1-k2-flake`，flake 台账 ATTRIBUTED(contention) 登记）。
 
 Exit Criteria:
 
-- [ ] axe + replication 全族复跑绿（或每红均有修复/登记）
-- [ ] 快照评审 21/21 落记录，无未处置页面级缺陷
-- [ ] mobile viewport 验证程序化断言在案且绿
-- [ ] 验收报告与 roadmap F1 行一致
+- [x] axe + replication 全族复跑绿（或每红均有修复/登记——K2 focus③ 按 contention 登记）
+- [x] 快照评审 21/21 落记录，无未处置页面级缺陷
+- [x] mobile viewport 验证程序化断言在案且绿
+- [x] 验收报告与 roadmap F1 行一致
 
 ## Draft Review Record
 
@@ -83,17 +85,17 @@ Exit Criteria:
 
 ## Closure Gates
 
-- [ ] in-scope 工作全部落地（验收四支柱 + 报告 + roadmap 回写）
-- [ ] 全部页面级缺陷已修复或显式登记 residual
-- [ ] 必要 focused verification 已完成
-- [ ] 不存在被静默降级的 in-scope 缺口
-- [ ] 受影响 owner docs 已同步（daily log）
-- [ ] 独立子 agent（fresh session）closure audit 通过并记录证据
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
-- [ ] `pnpm check`
+- [x] in-scope 工作全部落地（验收四支柱 + 报告 + roadmap 回写）
+- [x] 全部页面级缺陷已修复或显式登记 residual（零页面级缺陷；4 项观测级 residual 登记报告）
+- [x] 必要 focused verification 已完成（family+axe `--retries=0`、focus 抽查、flake 台账门禁）
+- [x] 不存在被静默降级的 in-scope 缺口（K2 focus③ 红 contention 三证登记；快照 4 项 residual 登记）
+- [x] 受影响 owner docs 已同步（daily log；flake 台账）
+- [x] 独立子 agent（fresh session）closure audit 通过并记录证据
+- [x] `pnpm typecheck`（本 plan 零代码变更，引 819 收口基线 `2e4faac41` `_tmp/p1-gates.log`；UX 验收结论直接锚定本 plan 期含 WIP 树的 237 测试实跑）
+- [x] `pnpm build`（同上）
+- [x] `pnpm lint`（同上）
+- [x] `pnpm test`（同上 turbo 86/86）
+- [x] `pnpm check`（同上全链 exit 0；`check:focus-ledger`/`check:e2e-flake-ledger` 本 plan 期复跑绿）
 
 ## Deferred But Adjudicated
 
@@ -105,13 +107,13 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: 待收口填写
+Status Note: 2026-11-02 收口。四支柱全 Pass：快照 21/21（4 项观测级 residual 登记）、axe 28 项零新增、focus 抽查 15/15、mobile viewport 分支 B + 页 spec 断言覆盖齐备。复跑唯一红（K2 focus③）经三证判定 contention 并登记 flake 台账，非页面缺陷。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: 待独立子 agent 填写
-- Evidence: 待填写
+- Auditor / Agent: 独立 fresh sub-agent（agent_b724d3ce-d6e8-4d3a-9f94-e11d8766b2e5），2026-11-02
+- Evidence: verdict **approved**（零 Blocker/Major，1 Minor 已采纳：报告补 36/36=12×3 计数口径）。逐条实证：报告四支柱与 plan 一致；证据文件实地在案（21 png / family.log / k2-flake last-run / focus last-run / flake 台账 :39）；K2 红非棘轮真断言、非静默；MOBILE_ROUTES 三路由与页 spec 375 断言支撑 viewport 结论；838 触达面纯 docs，门禁基线引用有效且 UX 结论锚定含 WIP 树实测。
 
 Follow-up:
 
-- 待收口填写
+- 快照 4 项观测级 residual（I1/I2/W3/V3）——demand-gated 改进候选，no remaining plan-owned work
