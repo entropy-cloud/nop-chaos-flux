@@ -1,7 +1,7 @@
 # 842 M4-F2 复刻总结与缺口沉淀（business-page-replication roadmap M4-F2）
 
-> Plan Status: draft
-> Last Reviewed: 2026-11-01
+> Plan Status: completed
+> Last Reviewed: 2026-11-02
 > Source: `docs/backlog/business-page-replication-roadmap.md` §2 M4-F2（依赖 F1 done）
 > Related: P1 深审登记一致性节（`docs/audits/business-replication/p1-dev-deep-audit.md`）；`docs/backlog/missing-components-and-designer-roadmap.md` L7.9；`docs/components/existing-components-improvement-analysis.md`（§3 地图族/日历观察、§4 #9 inputClassName）；roadmap §Authority
 
@@ -48,38 +48,38 @@
 
 ### Phase 1 - 沉淀文档与回写
 
-Status: planned
+Status: completed
 Targets: `docs/analysis/business-replication/f2-replication-summary-and-gap-ledger.md`（新）
 
 - Item Types: `Proof | Fix | Decision`
 
-> 前置：plan 838（F1）已 `done`；未满足则本 Phase 状态保持 `blocked`（F1 执行可能产生新登记/新缺口，先写汇总会产出不完整台账）。
+> 前置：plan 838（F1）已 `done`；未满足则本 Phase 状态保持 `blocked`（F1 执行可能产生新登记/新缺口，先写汇总会产出不完整台账）。——2026-11-02 plan 838 收口后满足。
 
-- [ ] 逐条核对底账（missing-components L7.9、improvement-analysis 新登记、axe 基线各 route `_notes` 的 owner 债、scanner-baselines）与二十一页终态，撰写沉淀文档四节
-- [ ] 发现漏登条目则先补登底账再汇总（Failure Path missing-entry）
-- [ ] roadmap §2 F2 回写 + **F2 行就地勘误注**（不改写原文，附注：上游回写以仓内备忘沉淀交付，跨仓库写回另行授权，见 plan 842）
+- [x] 逐条核对底账（missing-components L7.9/L7.10、improvement-analysis 2026-11-01/11-02 登记 + §4 #9、axe 基线各 route `_notes` 的 owner 债、scanner-baselines `_header.reRegistrationNotes`、flake 台账）与二十一页终态，撰写沉淀文档四节
+- [x] 发现漏登条目则先补登底账再汇总（Failure Path missing-entry）——无新漏登（P2 MAJ-1 补登后底账齐备）；F1 快照 4 项观测 residual 纳入汇总 §2
+- [x] roadmap §2 F2 回写 + **F2 行就地勘误注**（不改写原文，附注：上游回写以仓内备忘沉淀交付，跨仓库写回另行授权，见 plan 842）
 
 Exit Criteria:
 
-- [ ] 沉淀文档落档且每条登记项可在底账文件观测到（文件+行级对应）
-- [ ] roadmap F2 行状态回写 + 就地勘误注在案
+- [x] 沉淀文档落档且每条登记项可在底账文件观测到（文件+行级对应）
+- [x] roadmap F2 行状态回写 + 就地勘误注在案
 
 ## Draft Review Record
 
-- Reviewer / Agent: 待独立子 agent 填写
-- Verdict: 待审
-- Rounds: —
-- Findings addressed: —
+- Reviewer / Agent: 独立 fresh sub-agent（agent_248cf80c-fadc-44d1-a1b6-b53c1f3f2287）
+- Verdict: pass（round-1 fail：2 Major〔roadmap F2 行就地勘误缺失 / F1 前置未作执行门〕+ 3 Minor → 修订〔改号 842、前置块、勘误注执行项、`_notes` 措辞、纯文档门禁删除〕→ round-2 pass）
+- Rounds: 2
+- Findings addressed: Major-1 增 F2 行就地勘误注执行项 + Exit Criterion；Major-2 Phase 1 前置块（838 done 否则 blocked）；Minor-1/2/3 就地修正（`_notes` 措辞、纯文档门禁注记删除、839→842 改号〔839-841 被并行会话占用〕）。
 
 ## Closure Gates
 
 > 纯文档计划（仅 `docs/` 变更）：`pnpm typecheck/build/lint/test/check` 按 guide 模板注记删除，不需执行。
 
-- [ ] in-scope 工作全部落地（沉淀文档 + roadmap 回写与就地勘误注）
-- [ ] 全部登记项底账对应在案，无「汇总有底账无」幻条目
-- [ ] 不存在被静默降级的 in-scope 缺口
-- [ ] 受影响 owner docs 已同步（daily log）
-- [ ] 独立子 agent（fresh session）closure audit 通过并记录证据
+- [x] in-scope 工作全部落地（沉淀文档 + roadmap 回写与就地勘误注）
+- [x] 全部登记项底账对应在案，无「汇总有底账无」幻条目（closure audit 逐条核验 L7.9/L7.10/improvement/axe/_notes/scanner/flake/residual 九类锚点）
+- [x] 不存在被静默降级的 in-scope 缺口（无新漏登；F1 residual 纳入 §2）
+- [x] 受影响 owner docs 已同步（daily log）
+- [x] 独立子 agent（fresh session）closure audit 通过并记录证据
 
 ## Deferred But Adjudicated
 
@@ -91,13 +91,13 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: 待收口填写
+Status Note: 2026-11-02 收口。沉淀文档四节落档（二十一页终态 / 缺口登记汇总逐条底账锚点 / 八域备忘 / 跨仓库回写裁决），roadmap F2 行 done + 就地勘误注在案。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: 待独立子 agent 填写
-- Evidence: 待填写
+- Auditor / Agent: 独立 fresh sub-agent（agent_4dbfd36d-df4b-4e21-9c0b-fd0490a8ac4c），2026-11-02
+- Evidence: verdict **approved**（零 Blocker/Major）。逐条实证：§2 全部锚点实地存在（L7.9 :182 / L7.10 :183 / improvement :155,:157,:159,:179 / axe `_notes` / scanner `_header` :7 / flake :38-39 / f1 报告 residual :23-30）；§1 表 21 行与 page-schemas 实地清点一致；§3 抽查 WMS/IoT 两域与底账吻合；§4 与 Non-Goals/Follow-up 一致；roadmap :90 done+勘误注在案。
 
 Follow-up:
 
-- 待收口填写
+- 上游仓库跨仓库写回（Non-Blocking Follow-ups 在案，需上游 owner/用户授权）——no remaining plan-owned work
