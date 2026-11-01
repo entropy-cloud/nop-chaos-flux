@@ -107,6 +107,14 @@ Exit Criteria:
 
 - [ ] 台账更新且与复跑结果一致
 
+### Phase 1-2 执行记录（2026-11-02）
+
+- TZ=UTC 分诊（`_tmp/audit-2026-11-02-logs/p836-triage-tzutc.log`，14 个涉事 spec 全量复跑）：**7 项台账外红转绿 = 时间边界族实证**（cal-replica-interactions 01/02、calendar-demo 导航、replication-crm-customer-360 交互②、c2-4-host-surfaces range-host、c7-host-surfaces swipe-cell、simple-form 密码确认）——E2 初判的 c7/c2-4/simple-form 三项实为同族时间边界（改判记账）；**11 项仍红 = 真漂移族**（w3d-editor:70、playground-entry-pages、linear-replica-visual :206/:301、linear-replica-interactions、editor-demos-ux-r10、cron-editor :12/:89、antdpro-replica-visual :31/:110、cal-replica-visual :32）。
+- 产品修复落点共 **6 处**（初判 3 处漏网）：calendar.tsx initialDate、isToday、**use-calendar-navigation.goToday**（执行期发现：Today 恢复仍走 raw now，e2e 复跑抓到）、**use-calendar-state initialDate 默认值**（执行期发现）、gantt scrollToToday、gantt-markers（内联归一改统一 helper `localCalendarDayToday`）。判别单测 `calendar-today-local.test.tsx`（CST 2026-11-01 02:00 → data-date=2026-11-01；旧实现 2026-10-31，stash 反向验证挂）+ calendar-date-utils 契约测试改本地日历日语义（含双时区确定性断言，fake-timer 冻结内部时钟——`Date.now` 属性覆写对 `new Date()` 不可见的教训在案）。
+- **crm-c2 mock 前提勘误（就地标注）**：plan 819 期间 mock 事件日期按 UTC 月 clamp（对齐旧产品行为）；836 修正后回改本地月 clamp，:387 用例改判「按本地月渲染」并附前提勘误注——复跑绿。
+- e2e 验证：cal-replica-interactions 16/16（含固定钟 page.clock + timezoneId 硬化；setFixedTime 须置于页面加载后，启动前冻结 Date 会让应用引导挂起——教训在案）；calendar-demo/c2-4/c7/simple-form/crm-360 复跑全绿。**simple-form 另 3 条在册红同为时间炸弹**（TZ=UTC 下转绿）→ Phase 4 台账记账。
+- **Phase 3 前置复测（E1 修复落地后，`_tmp/.../p836-e2-current.log`）**：11 项漂移族维持原样（E1 无顺带修复）。**entry-pages 根因细化（修正 11-01 初判）**：`:591` 冒烟失败为具体路由的 console.error 门禁命中（`component-handles`、`w4a-multimedia`、`ai-component-handle` 等，各 +4/+8 条），**并非** 11-01 §7 所述「路由清单缺 11 项」形态。Phase 3 执行时须以逐路由 console 输出定根因（产品缺陷 vs mock 噪声 vs 门禁豁免缺失）。
+
 ## Draft Review Record
 
 - Reviewer / Agent: 独立 fresh sub-agent（round-1 agent_62bcbb95-6c2b-46de-b52f-4d425560ff19；round-2 agent_507ee0a8-dc67-42e2-aeff-637eb93b5ba3）

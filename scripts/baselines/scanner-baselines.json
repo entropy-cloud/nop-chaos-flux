@@ -47,6 +47,6 @@
     "find-fieldframe-bypasses": 12,
     "find-reactive-render-reads": 21,
     "find-performance-suspects": 30,
-    "find-non-retained-renderer-references": 160
+    "find-non-retained-renderer-references": 161
   }
 }
