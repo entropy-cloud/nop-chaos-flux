@@ -173,6 +173,12 @@
                                   "aggregate": "sum"
                                 },
                                 {
+                                  "name": "reworkQty",
+                                  "label": "返工数",
+                                  "width": 100,
+                                  "aggregate": "sum"
+                                },
+                                {
                                   "name": "setupMins",
                                   "label": "准备工分",
                                   "width": 110
@@ -215,6 +221,12 @@
                                   "name": "scrappedQty",
                                   "min": 0,
                                   "testid": "mes-work-reporting-scrapped-qty"
+                                },
+                                {
+                                  "type": "input-number",
+                                  "name": "reworkQty",
+                                  "min": 0,
+                                  "testid": "mes-work-reporting-rework-qty"
                                 },
                                 {
                                   "type": "input-number",

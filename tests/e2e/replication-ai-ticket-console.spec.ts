@@ -369,6 +369,32 @@ test.describe('K2 AI 工单处理台页 (#/complex-pages/ai-ticket-console)', ()
     await assertTrackedPageErrors(page);
   });
 
+  test('要素⑥⑧（plan 819 P1）AI 自动分类/定级可人工改写 + 内部备注 → ticketMutation classify 逐字段', async ({ page }) => {
+    await openK2(page);
+    await openTicketDrawer(page, 'TCK-0002');
+
+    // TCK-0002: index 2 → AI 分类「订单与物流」、定级 MID（K2_CATEGORIES/K2_PRIORITIES 序）。
+    await expect(page.getByTestId('ai-ticket-console-ai-category')).toContainText('AI 自动分类：订单与物流');
+    await expect(page.getByTestId('ai-ticket-console-ai-category')).toContainText('AI 定级：MID');
+
+    await page.getByTestId('ai-ticket-console-classify-category').locator('[data-slot="combobox-trigger"]').click();
+    await page.getByRole('option', { name: '支付与退款' }).click();
+    await page.getByTestId('ai-ticket-console-classify-priority').locator('[data-slot="combobox-trigger"]').click();
+    await page.getByRole('option', { name: '高' }).click();
+    await page.getByTestId('ai-ticket-console-internal-note').locator('textarea').fill('客户为 VIP，优先电话回访');
+    await page.getByTestId('ai-ticket-console-classify-submit').click();
+
+    await expect(page.getByText('分类与内部备注已保存')).toBeVisible({ timeout: 10_000 });
+    expect(await lastHookBody(page, 'lastTicketMutationBody')).toEqual({
+      id: 'TCK-0002',
+      mutation: 'classify',
+      category: '支付与退款',
+      priority: 'HIGH',
+      internalNote: '客户为 VIP，优先电话回访',
+    });
+    await assertTrackedPageErrors(page);
+  });
+
   test('focus ① drawer 焦点入面、Esc 返回触发卡（卡片触发表面焦点往返）', async ({ page }) => {
     await openK2(page);
 

@@ -144,7 +144,7 @@
                     "action": "showToast",
                     "args": {
                       "level": "info",
-                      "message": "结算批次已提交（${count} 条进入结算队列）"
+                      "message": "结算批次已提交（${COUNT($crud.selectedRowKeys ?? [])} 条进入结算队列）"
                     }
                   }
                 }

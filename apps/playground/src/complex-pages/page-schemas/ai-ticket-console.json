@@ -110,13 +110,34 @@
               "testid": "ai-ticket-console-filter-status",
               "placeholder": "全部状态",
               "options": [
-                { "label": "全部状态", "value": "" },
-                { "label": "待受理", "value": "OPEN" },
-                { "label": "已派单", "value": "ASSIGNED" },
-                { "label": "处理中", "value": "PROCESSING" },
-                { "label": "已解决", "value": "RESOLVED" },
-                { "label": "已关闭", "value": "CLOSED" },
-                { "label": "已重开", "value": "REOPENED" }
+                {
+                  "label": "全部状态",
+                  "value": ""
+                },
+                {
+                  "label": "待受理",
+                  "value": "OPEN"
+                },
+                {
+                  "label": "已派单",
+                  "value": "ASSIGNED"
+                },
+                {
+                  "label": "处理中",
+                  "value": "PROCESSING"
+                },
+                {
+                  "label": "已解决",
+                  "value": "RESOLVED"
+                },
+                {
+                  "label": "已关闭",
+                  "value": "CLOSED"
+                },
+                {
+                  "label": "已重开",
+                  "value": "REOPENED"
+                }
               ]
             }
           ]
@@ -136,7 +157,10 @@
                   "data": "${ticketBoard?.board}",
                   "columnWidth": 280,
                   "draggable": true,
-                  "columnAggregate": { "fn": "count", "label": "工单" },
+                  "columnAggregate": {
+                    "fn": "count",
+                    "label": "工单"
+                  },
                   "cardTemplate": {
                     "type": "flex",
                     "direction": "column",
@@ -167,11 +191,22 @@
                       "args": {
                         "url": "/r/ReplAi__ticketMutation",
                         "method": "post",
-                        "data": { "id": "${cardId}", "mutation": "assign" }
+                        "data": {
+                          "id": "${cardId}",
+                          "mutation": "assign"
+                        }
                       },
-                      "then": [{ "action": "refreshSource", "targetId": "ticketBoard" }],
+                      "then": [
+                        {
+                          "action": "refreshSource",
+                          "targetId": "ticketBoard"
+                        }
+                      ],
                       "onError": [
-                        { "action": "refreshSource", "targetId": "ticketBoard" },
+                        {
+                          "action": "refreshSource",
+                          "targetId": "ticketBoard"
+                        },
                         {
                           "action": "showToast",
                           "args": {
@@ -187,11 +222,22 @@
                       "args": {
                         "url": "/r/ReplAi__ticketMutation",
                         "method": "post",
-                        "data": { "id": "${cardId}", "mutation": "start" }
+                        "data": {
+                          "id": "${cardId}",
+                          "mutation": "start"
+                        }
                       },
-                      "then": [{ "action": "refreshSource", "targetId": "ticketBoard" }],
+                      "then": [
+                        {
+                          "action": "refreshSource",
+                          "targetId": "ticketBoard"
+                        }
+                      ],
                       "onError": [
-                        { "action": "refreshSource", "targetId": "ticketBoard" },
+                        {
+                          "action": "refreshSource",
+                          "targetId": "ticketBoard"
+                        },
                         {
                           "action": "showToast",
                           "args": {
@@ -207,11 +253,22 @@
                       "args": {
                         "url": "/r/ReplAi__ticketMutation",
                         "method": "post",
-                        "data": { "id": "${cardId}", "mutation": "resolve" }
+                        "data": {
+                          "id": "${cardId}",
+                          "mutation": "resolve"
+                        }
                       },
-                      "then": [{ "action": "refreshSource", "targetId": "ticketBoard" }],
+                      "then": [
+                        {
+                          "action": "refreshSource",
+                          "targetId": "ticketBoard"
+                        }
+                      ],
                       "onError": [
-                        { "action": "refreshSource", "targetId": "ticketBoard" },
+                        {
+                          "action": "refreshSource",
+                          "targetId": "ticketBoard"
+                        },
                         {
                           "action": "showToast",
                           "args": {
@@ -227,11 +284,22 @@
                       "args": {
                         "url": "/r/ReplAi__ticketMutation",
                         "method": "post",
-                        "data": { "id": "${cardId}", "mutation": "close" }
+                        "data": {
+                          "id": "${cardId}",
+                          "mutation": "close"
+                        }
                       },
-                      "then": [{ "action": "refreshSource", "targetId": "ticketBoard" }],
+                      "then": [
+                        {
+                          "action": "refreshSource",
+                          "targetId": "ticketBoard"
+                        }
+                      ],
                       "onError": [
-                        { "action": "refreshSource", "targetId": "ticketBoard" },
+                        {
+                          "action": "refreshSource",
+                          "targetId": "ticketBoard"
+                        },
                         {
                           "action": "showToast",
                           "args": {
@@ -247,11 +315,22 @@
                       "args": {
                         "url": "/r/ReplAi__ticketMutation",
                         "method": "post",
-                        "data": { "id": "${cardId}", "mutation": "reopen" }
+                        "data": {
+                          "id": "${cardId}",
+                          "mutation": "reopen"
+                        }
                       },
-                      "then": [{ "action": "refreshSource", "targetId": "ticketBoard" }],
+                      "then": [
+                        {
+                          "action": "refreshSource",
+                          "targetId": "ticketBoard"
+                        }
+                      ],
                       "onError": [
-                        { "action": "refreshSource", "targetId": "ticketBoard" },
+                        {
+                          "action": "refreshSource",
+                          "targetId": "ticketBoard"
+                        },
                         {
                           "action": "showToast",
                           "args": {
@@ -277,7 +356,10 @@
                         "ticketStatus": "${card.data.status}",
                         "subject": "${card.data.subject}",
                         "deadlineDateTime": "${card.data.deadlineDateTime}",
-                        "slaRemainingMinutes": "${card.data.slaRemainingMinutes}"
+                        "slaRemainingMinutes": "${card.data.slaRemainingMinutes}",
+                        "aiCategory": "${card.data.aiCategory}",
+                        "category": "${card.data.category}",
+                        "priority": "${card.data.priority}"
                       },
                       "body": [
                         {
@@ -312,11 +394,26 @@
                           "type": "steps",
                           "testid": "ai-ticket-console-steps",
                           "items": [
-                            { "value": "OPEN", "title": "待受理" },
-                            { "value": "ASSIGNED", "title": "已派单" },
-                            { "value": "PROCESSING", "title": "处理中" },
-                            { "value": "RESOLVED", "title": "已解决" },
-                            { "value": "CLOSED", "title": "已关闭" }
+                            {
+                              "value": "OPEN",
+                              "title": "待受理"
+                            },
+                            {
+                              "value": "ASSIGNED",
+                              "title": "已派单"
+                            },
+                            {
+                              "value": "PROCESSING",
+                              "title": "处理中"
+                            },
+                            {
+                              "value": "RESOLVED",
+                              "title": "已解决"
+                            },
+                            {
+                              "value": "CLOSED",
+                              "title": "已关闭"
+                            }
                           ],
                           "value": "${ticketStatus}"
                         },
@@ -337,6 +434,112 @@
                           "testid": "ai-ticket-console-confidence-gate",
                           "visible": "${((ticketSuggestions?.items ?? [])[0]?.confidence ?? 1) < 0.6}",
                           "body": "AI 置信度低于门限，建议人工接管后回复。"
+                        },
+                        {
+                          "type": "form",
+                          "id": "ai-ticket-console-classify-form",
+                          "testid": "ai-ticket-console-classify-form",
+                          "data": {
+                            "category": "${category}",
+                            "priority": "${priority}",
+                            "internalNote": ""
+                          },
+                          "body": [
+                            {
+                              "type": "text",
+                              "testid": "ai-ticket-console-ai-category",
+                              "className": "text-xs text-muted-foreground",
+                              "text": "AI 自动分类：${aiCategory} · AI 定级：${priority}（可人工改写）"
+                            },
+                            {
+                              "type": "select",
+                              "name": "category",
+                              "label": "分类",
+                              "testid": "ai-ticket-console-classify-category",
+                              "options": [
+                                {
+                                  "label": "账户与登录",
+                                  "value": "账户与登录"
+                                },
+                                {
+                                  "label": "订单与物流",
+                                  "value": "订单与物流"
+                                },
+                                {
+                                  "label": "支付与退款",
+                                  "value": "支付与退款"
+                                },
+                                {
+                                  "label": "产品故障",
+                                  "value": "产品故障"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "select",
+                              "name": "priority",
+                              "label": "优先级",
+                              "testid": "ai-ticket-console-classify-priority",
+                              "options": [
+                                {
+                                  "label": "高",
+                                  "value": "HIGH"
+                                },
+                                {
+                                  "label": "中",
+                                  "value": "MID"
+                                },
+                                {
+                                  "label": "低",
+                                  "value": "LOW"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "textarea",
+                              "name": "internalNote",
+                              "label": "内部备注（仅坐席可见）",
+                              "testid": "ai-ticket-console-internal-note",
+                              "rows": 2
+                            }
+                          ],
+                          "actions": [
+                            {
+                              "type": "button",
+                              "label": "保存分类与备注",
+                              "variant": "outline",
+                              "testid": "ai-ticket-console-classify-submit",
+                              "onClick": {
+                                "action": "submitForm"
+                              }
+                            }
+                          ],
+                          "submitAction": {
+                            "action": "ajax",
+                            "args": {
+                              "url": "/r/ReplAi__ticketMutation",
+                              "method": "post",
+                              "data": {
+                                "id": "${ticketId}",
+                                "mutation": "classify",
+                                "category": "${category}",
+                                "priority": "${priority}",
+                                "internalNote": "${internalNote}"
+                              }
+                            },
+                            "messages": {
+                              "success": "分类与内部备注已保存"
+                            },
+                            "onError": [
+                              {
+                                "action": "showToast",
+                                "args": {
+                                  "level": "error",
+                                  "message": "保存失败（${error?.message ?? 'UNKNOWN'}）"
+                                }
+                              }
+                            ]
+                          }
                         },
                         {
                           "type": "form",
@@ -385,7 +588,9 @@
                               "label": "提交回复",
                               "variant": "primary",
                               "testid": "ai-ticket-console-reply-submit",
-                              "onClick": { "action": "submitForm" }
+                              "onClick": {
+                                "action": "submitForm"
+                              }
                             }
                           ],
                           "submitAction": {
@@ -401,7 +606,12 @@
                             "messages": {
                               "success": "回复已提交"
                             },
-                            "then": [{ "action": "refreshSource", "targetId": "ticketActions" }],
+                            "then": [
+                              {
+                                "action": "refreshSource",
+                                "targetId": "ticketActions"
+                              }
+                            ],
                             "onError": [
                               {
                                 "action": "showToast",
@@ -443,7 +653,9 @@
                                       "label": "确认升级",
                                       "variant": "primary",
                                       "testid": "ai-ticket-console-escalate-confirm",
-                                      "onClick": { "action": "submitForm" }
+                                      "onClick": {
+                                        "action": "submitForm"
+                                      }
                                     }
                                   ],
                                   "submitAction": {
@@ -472,7 +684,10 @@
                                 }
                               ],
                               "onSubmitSuccess": [
-                                { "action": "refreshSource", "targetId": "ticketBoard" }
+                                {
+                                  "action": "refreshSource",
+                                  "targetId": "ticketBoard"
+                                }
                               ]
                             }
                           }
@@ -492,17 +707,51 @@
                   "testid": "ai-ticket-console-table",
                   "source": "${ticketRows?.items ?? []}",
                   "itemKey": "id",
-                  "pagination": { "enabled": true, "pageSize": 10 },
+                  "pagination": {
+                    "enabled": true,
+                    "pageSize": 10
+                  },
                   "columns": [
-                    { "name": "id", "label": "工单号", "width": 110 },
-                    { "name": "subject", "label": "主题", "width": 220 },
-                    { "name": "status", "label": "状态", "width": 110 },
-                    { "name": "priority", "label": "优先级", "width": 90 },
-                    { "name": "assignee", "label": "处理人", "width": 110 },
-                    { "name": "slaRemainingMinutes", "label": "SLA 剩余（分）", "width": 130 },
-                    { "name": "escalationLevel", "label": "升级次数", "width": 90 }
+                    {
+                      "name": "id",
+                      "label": "工单号",
+                      "width": 110
+                    },
+                    {
+                      "name": "subject",
+                      "label": "主题",
+                      "width": 220
+                    },
+                    {
+                      "name": "status",
+                      "label": "状态",
+                      "width": 110
+                    },
+                    {
+                      "name": "priority",
+                      "label": "优先级",
+                      "width": 90
+                    },
+                    {
+                      "name": "assignee",
+                      "label": "处理人",
+                      "width": 110
+                    },
+                    {
+                      "name": "slaRemainingMinutes",
+                      "label": "SLA 剩余（分）",
+                      "width": 130
+                    },
+                    {
+                      "name": "escalationLevel",
+                      "label": "升级次数",
+                      "width": 90
+                    }
                   ],
-                  "empty": { "type": "text", "text": "当前筛选条件下没有工单" }
+                  "empty": {
+                    "type": "text",
+                    "text": "当前筛选条件下没有工单"
+                  }
                 }
               ]
             }

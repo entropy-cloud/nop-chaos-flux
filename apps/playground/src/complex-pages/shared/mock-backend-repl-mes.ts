@@ -140,6 +140,30 @@ function downtimeMinutes(rows: readonly ReplMesDowntime[]): number {
     .reduce((sum, row) => sum + row.durationMins, 0);
 }
 
+/** Work-order four-stage progress (D3 §2.4 片段 2 / R2 M1 要素③; plan 819
+ * P1 F1-1): progressBand full ≥100% / half ≥50% / low >0% / zero 0%. */
+const MES_WORK_ORDERS = [
+  { woNo: 'WO-2026-1101', product: '变速箱壳体', plannedQty: 400, completedQty: 400 },
+  { woNo: 'WO-2026-1102', product: '主轴法兰', plannedQty: 300, completedQty: 210 },
+  { woNo: 'WO-2026-1103', product: '齿轮坯', plannedQty: 500, completedQty: 120 },
+  { woNo: 'WO-2026-1104', product: '轴承座', plannedQty: 260, completedQty: 0 },
+  { woNo: 'WO-2026-1105', product: '端盖', plannedQty: 180, completedQty: 96 },
+];
+
+export function workOrderBand(progress: number): 'full' | 'half' | 'low' | 'zero' {
+  if (progress >= 100) return 'full';
+  if (progress >= 50) return 'half';
+  if (progress > 0) return 'low';
+  return 'zero';
+}
+
+function buildWorkOrders() {
+  return MES_WORK_ORDERS.map((order) => {
+    const progress = Math.round((order.completedQty / order.plannedQty) * 100);
+    return { ...order, progress, progressBand: workOrderBand(progress) };
+  });
+}
+
 export function buildDashboardKpi(phase: number): Record<string, unknown> {
   const completed = MES_COMPLETED_BASE + (phase - 1) * MES_COMPLETED_STEP;
   const scrapped = MES_SCRAPPED_BASE + (phase - 1) * MES_SCRAPPED_STEP;
@@ -181,6 +205,7 @@ export function buildDashboardKpi(phase: number): Record<string, unknown> {
     abnormalityTexts,
     downtimes: MES_DOWNTIMES.map((row) => ({ ...row })),
     downtimeMinutes: downtimeMinutes(MES_DOWNTIMES),
+    workOrders: buildWorkOrders(),
   };
 }
 

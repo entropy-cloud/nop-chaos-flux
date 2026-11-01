@@ -107,6 +107,8 @@ export interface ReplCrmTestHooks {
   lastDrillRowsMonth?: string;
   /** C3 download mirror: last `reportDownload` query params (report/format). */
   lastReportDownloadQuery?: Record<string, unknown>;
+  /** C3 filter mirror: last `dashboardKpi` query (periodId/territoryId/teamId). */
+  lastDashboardKpiQuery?: Record<string, unknown>;
 }
 
 /* ── Deterministic fixtures ─────────────────────────────────────────────── */

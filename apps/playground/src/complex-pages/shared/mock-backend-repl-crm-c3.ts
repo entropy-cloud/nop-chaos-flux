@@ -45,6 +45,8 @@ export interface ReplCrmC3Hooks {
   lastDrillRowsMonth?: string;
   /** Download mirror: last `reportDownload` query params (report/format). */
   lastReportDownloadQuery?: Record<string, unknown>;
+  /** Filter mirror: last `dashboardKpi` query (periodId/territoryId/teamId). */
+  lastDashboardKpiQuery?: Record<string, unknown>;
 }
 
 export interface ReplCrmC3BranchInput {
@@ -92,6 +94,16 @@ const C3_KPI_BY_PERIOD: Record<string, { funnelAmount: number; conversion: numbe
 };
 
 const C3_FORECAST_ACCURACY = { forecast: 2400, actual: 2064, accuracy: 86 };
+
+/** Territory / team share of the funnel amount (plan 819 P1 C3-1: the global
+ * filter's 大区/团队 dimensions slice the money-valued faces; the rate KPIs are
+ * scope-independent percentages and stay as-is). '' = 全部 = 1. */
+const C3_TERRITORY_SHARE: Record<string, number> = { '': 1, east: 0.5, south: 0.3, north: 0.2 };
+const C3_TEAM_SHARE: Record<string, number> = { '': 1, 'key-account': 0.6, smb: 0.25, channel: 0.15 };
+
+export function c3ScopeShare(territoryId: string, teamId: string): number {
+  return (C3_TERRITORY_SHARE[territoryId] ?? 1) * (C3_TEAM_SHARE[teamId] ?? 1);
+}
 
 const C3_DRILL_STAGES = ['需求确认', '方案报价', '商务谈判'];
 
@@ -156,10 +168,15 @@ export function createReplCrmC3Surface(input: ReplCrmC3SurfaceInput): ReplCrmC3S
       if (url.includes('/r/ReplCrm__dashboardKpi')) {
         const periodId = read('periodId') ?? '';
         // Error branch (D2 §4.2): unknown periodId → failure envelope.
+        const territoryId = read('territoryId') ?? '';
+        const teamId = read('teamId') ?? '';
+        if (hooks) hooks.lastDashboardKpiQuery = { periodId, territoryId, teamId };
         if (!(C3_PERIODS as readonly string[]).includes(periodId)) {
           return { status: 1, data: { msg: 'invalid period' } as unknown as T };
         }
-        return { status: 0, data: { kpis: C3_KPI_BY_PERIOD[periodId] } as unknown as T };
+        const base = C3_KPI_BY_PERIOD[periodId];
+        const kpis = { ...base, funnelAmount: Math.round(base.funnelAmount * c3ScopeShare(territoryId, teamId)) };
+        return { status: 0, data: { kpis } as unknown as T };
       }
 
       if (url.includes('/r/ReplCrm__dashboardTrend')) {
@@ -175,9 +192,14 @@ export function createReplCrmC3Surface(input: ReplCrmC3SurfaceInput): ReplCrmC3S
               .filter((lead) => lead.stageId === stage.id)
               .reduce((sum, lead) => sum + lead.expectedRevenue, 0),
           }));
+        const share = c3ScopeShare(read('territoryId') ?? '', read('teamId') ?? '');
         return {
           status: 0,
-          data: { months: [...C3_MONTHS], amounts: [...C3_TREND_AMOUNTS], funnelStages } as unknown as T,
+          data: {
+            months: [...C3_MONTHS],
+            amounts: C3_TREND_AMOUNTS.map((amount) => Math.round(amount * share)),
+            funnelStages,
+          } as unknown as T,
         };
       }
 

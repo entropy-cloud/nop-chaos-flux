@@ -275,13 +275,15 @@ function findPartner(session: ReplCrmC2BranchInput['session'], partnerId: string
 
 /** Date `offsetDays` from today, clamped into the current month so every
  * seeded calendar event renders inside the default month view regardless of
- * the run date. */
+ * the run date. UTC components throughout: the scheduling calendar is a
+ * UTC-day model (calendar-date-utils.ts getUTCMonth, initial date = now), so a
+ * local-month clamp leaves the grid empty in the first hours of a month for
+ * UTC+N viewers (plan 819). */
 function currentMonthDate(offsetDays: number): Date {
   const now = new Date();
-  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-  const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-  const target = new Date(now);
-  target.setDate(target.getDate() + offsetDays);
+  const monthStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
+  const monthEnd = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 0));
+  const target = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + offsetDays));
   if (target < monthStart) return monthStart;
   if (target > monthEnd) return monthEnd;
   return target;
@@ -297,12 +299,12 @@ function currentMonthDate(offsetDays: number): Date {
 function crossDayRange(): [Date, Date] {
   const start = currentMonthDate(-1);
   const end = new Date(start);
-  end.setDate(end.getDate() + 1);
+  end.setUTCDate(end.getUTCDate() + 1);
   return [start, end];
 }
 
 function isoDateTime(date: Date, time: string): string {
-  return `${date.getFullYear()}-${pad2(date.getMonth() + 1)}-${pad2(date.getDate())}T${time}:00`;
+  return `${date.getUTCFullYear()}-${pad2(date.getUTCMonth() + 1)}-${pad2(date.getUTCDate())}T${time}:00`;
 }
 
 /**

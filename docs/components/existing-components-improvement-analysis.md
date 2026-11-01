@@ -154,6 +154,8 @@ drawer 缺 `closeOnOutside`（与 dialog 不对称 bug）；两者缺 `closeOnEs
 
 > 2026-11-01 登记（plan 818 V3 复刻实证）：**地图族 `map`(P3) 候选**——pin 模式不消费 geojson（`flux-renderers-map/src/map-renderer.tsx` L238 geojson 仅 region 模式），单图无法「设备点位 + 围栏面」叠加；V3 页以同页第二张 region 地图承载围栏回显。改进方向：pin 模式可选叠加 geojson 面图层（围栏/区域边界，非交互）。demand-gated，只登记不越权（retention 权威在 amis-baseline-matrix；注意 matrix L225 的 `map` 行指遗留 AMIS mapping 别名，与 flux geo `map` 渲染器同名不同物）。
 
+> 2026-11-01 登记（plan 819 P1）：**scheduling 族 `calendar`(P3) 观察项——UTC 日模型**——月视图区间与「今天」按 UTC 组件计算（`calendar-date-utils.ts` getUTCMonth、`calendar.tsx` 初始 `new Date()`），UTC±N 时区的用户在每月 1 日 00:00–08:00（UTC+8）看到上月的月份网格。复刻页侧 mock 已改为 UTC 夹取对齐（plan 819）；组件语义是否切本地日/可配置时区归 scheduling 组件 owner 裁决。
+
 **Flux 优于 amis 的组件（结构性优势，不掩盖）：** `loop`（强于 amis Each）、`recurse`/`fragment`/`reaction`（amis 无对应物）、`data-source`（统一 source 模型）、action graph（优于 amis 散落 actionType）。
 
 ---

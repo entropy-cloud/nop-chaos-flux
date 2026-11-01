@@ -196,6 +196,42 @@ export const MES_SHOPFLOOR_BOARD_PAGE_DATA: Record<string, unknown> = {
         empty: { type: 'text', text: '当前无停机' }
       },
     },
+    {
+      // R2 M1 要素③ 工单四阶段进度（plan 819 P1 F1-1 补面：D3 §2.4 片段 2
+      // progressBand + status labelMap/levelMap 配色分级）。
+      id: 'workorder-table',
+      type: 'table',
+      x: 0,
+      y: 12,
+      w: 12,
+      h: 4,
+      title: '工单四阶段进度',
+      props: {
+        testid: 'mes-shopfloor-board-workorder-table',
+        source: '${kpi?.workOrders ?? []}',
+        itemKey: 'woNo',
+        pagination: { enabled: false },
+        columns: [
+          { name: 'woNo', label: '工单', width: 130 },
+          { name: 'product', label: '产品', width: 130 },
+          { name: 'plannedQty', label: '计划数', width: 90 },
+          { name: 'completedQty', label: '完成数', width: 90 },
+          { name: 'progress', label: '进度（%）', width: 90 },
+          {
+            name: 'progressBand',
+            label: '阶段',
+            width: 100,
+            cell: {
+              type: 'status',
+              value: '${progressBand}',
+              labelMap: { full: '已完成', half: '过半', low: '偏低', zero: '未开工' },
+              levelMap: { full: 'success', half: 'info', low: 'warning', zero: 'default' },
+            },
+          }
+        ],
+        empty: { type: 'text', text: '暂无工单' }
+      },
+    },
   ],
   // scada 组态静态载体（评审 MAJ-3：无组态端点——静态注入）。纯静态数据、无内层
   // 表达式，独立载体表达式求值安全；符号取内置 scada-group/scada-rect/scada-text/

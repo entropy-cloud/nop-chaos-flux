@@ -156,6 +156,8 @@ page(mobile)   # testid: mall-sku-picker-root（D5 深审勘误 MIN-3：补主�
 8. **pivot 无列维的表头层级**：无 columnDimensions 时 `colHeaderPaths` 只有指标一层（`[0].indicatorKey`），表头仅 1 行——spec 定位按「路径任一层含 indicatorKey」匹配、扫描上界取 `rowCount`（W3 `[1]` 口径为有月列维时的形态）。
 9. **KPI 无专用端点**：§4.1 S2 六端点不含 KPI 聚合端点——stat-tile×4 值以表达式聚合页面 data-source（GMV=Σ ROUND(commissionAmount/rate)、佣金=Σ commissionAmount、分销员数=COUNT(distPivot 行)、待结算=COUNT(ARRAYFILTER status=pending)），趋势月序列为 PAGE_DATA 确定性静态值。
 10. **axe 分支 A 基线**：aria-required-attr 7（crud 列宽 separator，table owner 债）+ aria-required-children 1（tree role=tree 容器，tree owner 债）+ color-contrast 11（壳头部 badge 族，同 S1）。
+- P1-S2（P1 审计裁决，2026-11-01，plan 819；`docs/audits/business-replication/p1-dev-deep-audit.md`）：业绩卡「同环比 + sparkline」不做（KPI 无专用端点、四卡由表达式聚合，§2.2 S2 勘误 9）；batch-bar 结算入口补 e2e 交互⑦（勾选计数 + 结算 toast 条数——toast 绑定改 `COUNT($crud.selectedRowKeys)`，`${count}` 仅存于 countTemplate 子作用域）。
+- P1-O1（P1 审计裁决，2026-11-01，plan 819；`docs/audits/business-replication/p1-dev-deep-audit.md`）：R3 要素⑦「类型转换校验」近似为 required（日期/金额字段同为 input-text，valueType 仅随契约下发）——类型化控件为 demand-gated 增强；交互④ 阻断改确定性断言（字段错误 + wizard「步骤校验未通过」）。
 
 ### 2.3 doc-ocr-workbench（O1，桌面，新 type 临时形态）
 
@@ -242,6 +244,7 @@ page(mobile)   # testid: mall-sku-picker-root（D5 深审勘误 MIN-3：补主�
 7. **§4.2 静态资产 PNG → SVG**：直出确定性 SVG（`apps/playground/public/repl-assets/ocr-invoice-{original,annotated}.svg`，各 <3KB），免光栅化工具链，`<img>` 渲染等价；image 渲染器 testid 落在 `<img>` 元素本身。
 8. **步骤 4 回流结果**：commit 成功链 `setValue ocrCommitResult = ${result.data}` → 结果文本回显 docId；载荷 `{caseId, fields: ${ocrFieldDraft}, detailRows: ${ocrRowsDraft.detailRows}}`。
 9. **axe 分支 A 基线**：仅 color-contrast 10（壳头部 badge 族，同 S1/S2）。
+- P1-O2（P1 审计裁决，2026-11-01，plan 819；`docs/audits/business-replication/p1-dev-deep-audit.md`）：R3 要素⑪「敏感字段掩码」与⑨ 中撤回/retry/force-cancel 高级动作不做（04 契约二期/G22 族范围）；评审 dialog 明文展示 before/after 为复刻页演示口径。
 
 ### 2.4 doc-hitl-inbox（O2，桌面，能力扩展）
 
@@ -285,6 +288,7 @@ HITL 卡复用口径（R3 L30）：`ai-tool-call` 为 AI 会话语境卡，inbox
 7. **dialog 内刷新外部 crud**：dialog 片段运行期编译，`component:refresh` 跨片段 componentId 报 `unvalidated-component-target`（console.error）→ 改 `refreshNearest {targetType:'crud'}`（approval-tasks/S2 先例）。
 8. **HITL 卡 focus 口径**：`ai-tool-call` pending 态按组件设计在审批按钮内循环 Tab（`docs/components/flux-renderers-ai/improvement-analysis.md` §7 无障碍评估 + §5.2 [P3] HITL 审批页脚焦点陷阱；`ai-tool-call.tsx` 文件头注释「P3 HITL … focus trap」，Esc 释放）——staleness 焦点断言改为「焦点落入 dialog 且非禁用批准；自卡片之后的控件起 Tab 链跳过禁用批准、可达驳回」；HITL 卡 onApproval approve → `ReplDoc__approve`（source=hitl），reject 仅写回卡片状态。
 9. **axe 分支 A 基线**：aria-required-attr 9（crud 列宽 separator，table owner 债）+ color-contrast 10（壳头部 badge 族）。
+- P1-V1（P1 审计裁决，2026-11-01，plan 819；`docs/audits/business-replication/p1-dev-deep-audit.md`）：时间窗 select 仅透传 `window` 参数、数据面恒 24h 288 点（mock 不截断）——时间窗截断为 demand-gated 增强，非验收面。
 
 ### 2.5 iot-telemetry-device（V1，桌面，直接组合）
 
@@ -312,6 +316,8 @@ HITL 卡复用口径（R3 L30）：`ai-tool-call` 为 AI 会话语境卡，inbox
 5. **echarts 实例观察锚**：`__flux_echarts_<componentId>`（W1 勘误 5）读 `getOption().series` 断三曲线 × 288 点。
 6. **select testid 双落点**：flux select 的 testid 同时落在 field 外框与控件，交互取 `[data-slot="combobox-trigger"]`（C3/I2 先例）。
 7. **axe 分支 A 基线**：aria-required-attr 8（告警 crud 列宽 separator）+ color-contrast 8（壳头部 badge 族）。
+- P1-V2（P1 审计裁决，2026-11-01，plan 819；`docs/audits/business-replication/p1-dev-deep-audit.md`）：R3 要素⑤「markFailed」并入失败态推送（测试钩子 setAssignmentStatus 承担，无独立 UI 动作）；e2e 补 timeline 行数 = history 6、focus ① 改真实 Tab 遍历、交互①③ 负等待改字段错误确定性断言。
+- P1-V3（P1 审计裁决，2026-11-01，plan 819；`docs/audits/business-replication/p1-dev-deep-audit.md`）：§3.3 圆形围栏几何验证补 vitest（`apps/playground/src/complex-pages/__tests__/iot-fence-geojson.test.ts`：环闭合 + 顶点偏差 < r×5%）。
 
 ### 2.6 iot-ota-rollout（V2，桌面，直接组合）
 

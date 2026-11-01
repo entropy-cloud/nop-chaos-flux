@@ -147,6 +147,30 @@ test.describe('C3 CRM 销售驾驶舱页 (#/complex-pages/crm-sales-dashboard)',
     await assertTrackedPageErrors(page);
   });
 
+  test('交互①b 大区 + 团队筛选 → dashboardKpi 请求携带 territoryId/teamId + 漏斗总额按范围切片（720×0.5×0.6=216）', async ({
+    page,
+  }) => {
+    await openC3(page);
+
+    await page.getByTestId('crm-sales-dashboard-filter-period').locator('[data-slot="combobox-trigger"]').click();
+    await page.getByRole('option', { name: '2026-09' }).click();
+    await page.getByTestId('crm-sales-dashboard-filter-territory').locator('[data-slot="combobox-trigger"]').click();
+    await page.getByRole('option', { name: '华东' }).click();
+    await page.getByTestId('crm-sales-dashboard-filter-team').locator('[data-slot="combobox-trigger"]').click();
+    await page.getByRole('option', { name: '大客户组' }).click();
+    await page.getByTestId('crm-sales-dashboard-filter-submit').click();
+
+    // Plan 819 P1 C3-1: the 大区/团队 selects now reach the data layer — the
+    // request carries both dimensions and the money-valued KPI is sliced.
+    await expect(kpiValue(page, 'crm-sales-dashboard-kpi-funnel')).toHaveText('216', { timeout: 15_000 });
+    await expect(kpiValue(page, 'crm-sales-dashboard-kpi-conversion')).toHaveText('35');
+    const query = await page.evaluate(
+      () => (window as unknown as Record<string, Record<string, unknown>>).__replCrmTestHooks?.lastDashboardKpiQuery,
+    );
+    expect(query).toEqual({ periodId: '2026-09', territoryId: 'east', teamId: 'key-account' });
+    await assertTrackedPageErrors(page);
+  });
+
   test('交互② echarts 点击序列点 → 钻取参数链 setValue→refreshSource→openDialog：drillRows 参数命中 + dialog 三行（G8）', async ({
     page,
   }) => {

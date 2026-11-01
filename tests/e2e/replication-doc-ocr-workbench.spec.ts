@@ -203,7 +203,13 @@ test.describe('O1 OCR 校正工作台页 (#/complex-pages/doc-ocr-workbench)', (
 
     // Required description blocks the step (formId validation) — still step 3.
     await clickNext(page);
-    await page.waitForTimeout(500);
+    // Deterministic block evidence (plan 819 P1: no bare negative wait): the
+    // empty cell's required error renders, the wizard reports the failed step
+    // validation, and the commit step never mounts.
+    await expect(page.getByTestId('doc-ocr-workbench-rows-form').locator('[data-slot="field-error"]').first()).toBeVisible({
+      timeout: 10_000,
+    });
+    await expect(wizard(page).getByRole('alert').filter({ hasText: '步骤校验未通过' })).toBeVisible();
     await expect(page.getByTestId('doc-ocr-workbench-rows-form')).toBeVisible();
     await expect(page.getByTestId('doc-ocr-workbench-commit')).toHaveCount(0);
 

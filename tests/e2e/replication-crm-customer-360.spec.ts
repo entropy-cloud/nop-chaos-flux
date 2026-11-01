@@ -373,3 +373,29 @@ test('focus ③ seek 后 activeElement 保持文档内（命中被 seek 的 time
   expect(focusState.onSeekedItem).toBe(true);
   await assertTrackedPageErrors(page);
 });
+
+// Plan 819 (P1) — month-boundary timezone regression. The scheduling calendar
+// is a UTC-day model (calendar-date-utils.ts getUTCMonth; initial date = now),
+// so at 2026-11-01 01:30 in UTC+8 (= 2026-10-31 17:30 UTC) it shows OCTOBER.
+// The mock used to clamp event dates into the LOCAL month (November), leaving
+// the October grid empty. Pinning the browser clock + timezone to that window
+// makes the regression deterministic: zero events before the fix, all four
+// seed events after it.
+test.describe('C2 日历月初时区窗口回归（UTC+8 · 每月 1 日 08:00 前）', () => {
+  test.use({ timezoneId: 'Asia/Shanghai' });
+
+  test('2026-11-01 01:30 CST（UTC 仍为 10 月）→ 日历事件按 UTC 月渲染，四个种子事件可见', async ({ page }) => {
+    await page.clock.install({ time: new Date('2026-11-01T01:30:00+08:00') });
+    await openC2(page);
+
+    await page.locator(tabTrigger('calendar')).click();
+    const calendar = page.locator(CALENDAR);
+    await expect(calendar).toBeVisible({ timeout: 15_000 });
+    const eventBlocks = calendar.locator('[data-slot="calendar-event"]');
+    await expect(eventBlocks.first()).toBeVisible({ timeout: 15_000 });
+    for (const title of ['客户现场回访', '方案评审会', '续约谈判（跨日）', '高管拜访']) {
+      await expect(calendar.locator(`[data-slot="calendar-event"][title="${title}"]`).first()).toBeAttached();
+    }
+    await assertTrackedPageErrors(page);
+  });
+});

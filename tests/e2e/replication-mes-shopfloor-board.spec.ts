@@ -51,7 +51,7 @@ async function openM1(page: Page): Promise<void> {
   await openReplicationPage(page, 'mes-shopfloor-board', {
     title: 'MES 车间大屏页',
   });
-  await expect(page.locator(GRID)).toHaveAttribute('data-panel-count', '8', {
+  await expect(page.locator(GRID)).toHaveAttribute('data-panel-count', '9', {
     timeout: 30_000,
   });
   // echarts 趋势实例挂载（canvas 渲染 = 非 empty 态）+ 观察锚点就绪——下钻
@@ -100,6 +100,31 @@ async function readTrendSeries(page: Page): Promise<number[]> {
 
 test.describe('M1 MES 车间大屏页 (#/complex-pages/mes-shopfloor-board)', () => {
   test.use({ viewport: { width: 1440, height: 900 } });
+
+  test('工单四阶段进度（R2 要素③，plan 819 P1 F1-1）：5 工单 + progressBand 四档 status labelMap/levelMap 配色', async ({
+    page,
+  }) => {
+    await openM1(page);
+
+    const table = page.getByTestId('mes-shopfloor-board-workorder-table');
+    await expect(table.locator('tbody tr')).toHaveCount(5, { timeout: 15_000 });
+    // Fixture math (mock MES_WORK_ORDERS): 400/400=100 full · 210/300=70 half ·
+    // 120/500=24 low · 0/260=0 zero · 96/180=53 half.
+    const expected: Array<[string, string, string, string]> = [
+      ['WO-2026-1101', '100', '已完成', 'success'],
+      ['WO-2026-1102', '70', '过半', 'info'],
+      ['WO-2026-1103', '24', '偏低', 'warning'],
+      ['WO-2026-1104', '0', '未开工', 'default'],
+      ['WO-2026-1105', '53', '过半', 'info'],
+    ];
+    for (const [woNo, progress, label, level] of expected) {
+      const row = table.locator('tbody tr', { hasText: woNo });
+      await expect(row).toContainText(progress);
+      await expect(row).toContainText(label);
+      await expect(row.locator('[data-slot="status-badge"]')).toHaveAttribute('data-level', level);
+    }
+    await assertTrackedPageErrors(page);
+  });
 
   test('前置：八面板渲染 + KPI 四 tile 首帧值（千分位/decimals）+ notice-bar 播报 + 停机面 + dashboardKpi ≥1', async ({
     page,

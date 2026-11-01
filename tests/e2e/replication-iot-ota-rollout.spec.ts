@@ -80,6 +80,8 @@ test.describe('V2 IoT OTA 灰度管理页 (#/complex-pages/iot-ota-rollout)', ()
     await expect(steps.locator('[data-slot="steps-item"][data-status="process"]')).toContainText('升级中');
     await expect(steps.locator('[data-slot="steps-item"][data-status="finish"]')).toHaveCount(5);
     await expect(page.getByTestId('iot-ota-rollout-assign-timeline')).toContainText('已下发');
+    // D4 §3.3 V2: timeline items = DEV-1002 history length (6 states).
+    await expect(page.getByTestId('iot-ota-rollout-assign-timeline').locator('[data-slot="timeline-item"]')).toHaveCount(6);
 
     await expectEndpointCall(page, COUNTERS_KEY, 'ReplIot__firmwarePage', { atLeast: 1 });
     await expectEndpointCall(page, COUNTERS_KEY, 'ReplIot__assignmentMatrix', { atLeast: 1 });
@@ -91,7 +93,11 @@ test.describe('V2 IoT OTA 灰度管理页 (#/complex-pages/iot-ota-rollout)', ()
     await openV2(page);
 
     await wizard(page).getByRole('button', { name: '下一步' }).click();
-    await page.waitForTimeout(500);
+    // formId validation blocks deterministically: the required device field
+    // reports its error (plan 819 P1: no bare negative wait).
+    await expect(page.getByTestId('iot-ota-rollout-select-form').locator('[data-slot="field-error"]').first()).toBeVisible({
+      timeout: 10_000,
+    });
     expect((await readEndpointCalls(page, COUNTERS_KEY))['ReplIot__assignBatched'] ?? 0).toBe(0);
     await expect(page.getByTestId('iot-ota-rollout-select-devices').first()).toBeVisible();
 
@@ -144,7 +150,9 @@ test.describe('V2 IoT OTA 灰度管理页 (#/complex-pages/iot-ota-rollout)', ()
     await expect(dialog.getByTestId('iot-ota-rollout-rolled-back-alert')).toHaveCount(0);
 
     await dialog.getByTestId('iot-ota-rollout-rollback-confirm').click();
-    await page.waitForTimeout(500);
+    await expect(dialog.getByTestId('iot-ota-rollout-rollback-reason').locator('[data-slot="field-error"]')).toBeVisible({
+      timeout: 10_000,
+    });
     expect((await readEndpointCalls(page, COUNTERS_KEY))['ReplIot__rollbackPackage'] ?? 0).toBe(0);
     await expect(dialog).toBeVisible();
 
@@ -199,9 +207,16 @@ test.describe('V2 IoT OTA 灰度管理页 (#/complex-pages/iot-ota-rollout)', ()
 
     // Fill the required fields, then drive the wizard by keyboard only.
     await page.getByTestId('iot-ota-rollout-select-devices').first().locator('label', { hasText: 'DEV-1001' }).click();
+    // Real Tab traversal (plan 819 P1: focus() alone does not prove tab order):
+    // walk from the device group until the wizard's 下一步 button holds focus.
     const next = wizard(page).getByRole('button', { name: '下一步' });
-    await next.focus();
-    await expect(next).toBeFocused();
+    await page.getByTestId('iot-ota-rollout-select-devices').first().locator('label', { hasText: 'DEV-1001' }).focus();
+    let reached = false;
+    for (let i = 0; i < 40 && !reached; i += 1) {
+      await page.keyboard.press('Tab');
+      reached = await next.evaluate((el) => el === document.activeElement);
+    }
+    expect(reached).toBe(true);
     await page.keyboard.press('Enter');
     await expect(page.getByTestId('iot-ota-rollout-batch-size').first()).toBeVisible({ timeout: 10_000 });
     await assertTrackedPageErrors(page);

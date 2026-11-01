@@ -110,9 +110,6 @@ const SKU_FACTS: Record<string, { price: number; stock: number }> = {
   'sku-009': { price: 4899, stock: 11 },
 };
 
-/** Open-panel + one drag per wheel; returns the 求交-resolved SKU facts (the
- * wheel snap physics may advance more than one row — the assertion reads the
- * resolved SKU and cross-checks every face against the fixture map). */
 /** Drag the SKU panel to its top anchor (480): below the top anchor the
  * floating-panel owns ALL vertical gestures (touchmove arbitration) and the
  * picker-view wheels never receive the spin — at the top anchor the panel
@@ -129,16 +126,33 @@ async function dragPanelToTopAnchor(page: Page): Promise<void> {
   await expect(panel).toHaveAttribute('data-anchor', '1', { timeout: 10_000 });
 }
 
+async function readResolvedSku(page: Page): Promise<{ skuId: string; price: number; stock: number }> {
+  const skuText = await page.getByTestId('mall-sku-picker-sku').textContent({ timeout: 10_000 });
+  const skuId = (skuText ?? '').replace('SKU：', '').trim();
+  expect(skuId).toMatch(/^sku-\d{3}$/);
+  return { skuId, ...SKU_FACTS[skuId] };
+}
+
+/**
+ * Select both spec wheels and land on an IN-STOCK SKU. The wheel snap
+ * decides the final row (a fling may advance more than one row), and the
+ * fixture has one sold-out combination — so instead of skipping the payload
+ * assertions when the snap lands there (plan 819 P1 F4-1: that silently
+ * passed), re-spin the size wheel (bounded) and hard-assert the stock.
+ */
 async function selectFullSpec(page: Page): Promise<{ skuId: string; price: number; stock: number }> {
   const panel = page.locator(PANEL);
   await expect(panel).toHaveAttribute('data-anchor', '0', { timeout: 10_000 });
   await dragPanelToTopAnchor(page);
   await spinWheelUntilChanged(page, COLOR_WHEEL);
   await spinWheelUntilChanged(page, SIZE_WHEEL);
-  const skuText = await page.getByTestId('mall-sku-picker-sku').textContent({ timeout: 10_000 });
-  const skuId = (skuText ?? '').replace('SKU：', '').trim();
-  expect(skuId).toMatch(/^sku-\d{3}$/);
-  return { skuId, ...SKU_FACTS[skuId] };
+  let resolved = await readResolvedSku(page);
+  for (let attempt = 0; attempt < 3 && resolved.stock <= 0; attempt += 1) {
+    await spinWheelUntilChanged(page, SIZE_WHEEL);
+    resolved = await readResolvedSku(page);
+  }
+  expect(resolved.stock, `selected SKU ${resolved.skuId} must be in stock`).toBeGreaterThan(0);
+  return resolved;
 }
 
 test.describe('S1 商城商品 SKU 选择页 (#/complex-pages/mall-sku-picker)', () => {
@@ -199,9 +213,8 @@ test.describe('S1 商城商品 SKU 选择页 (#/complex-pages/mall-sku-picker)',
     await expect(page.getByTestId('mall-sku-picker-add-cart')).toBeDisabled();
 
     await dragPanelToTopAnchor(page);
-    const dbgColor = await spinWheelUntilChanged(page, COLOR_WHEEL);
-    const dbgSize = await spinWheelUntilChanged(page, SIZE_WHEEL);
-    console.log('[dbg-spin]', JSON.stringify({ dbgColor, dbgSize }));
+    await spinWheelUntilChanged(page, COLOR_WHEEL);
+    await spinWheelUntilChanged(page, SIZE_WHEEL);
 
     const skuText = await page.getByTestId('mall-sku-picker-sku').textContent({ timeout: 10_000 });
     const skuId = (skuText ?? '').replace('SKU：', '').trim();
@@ -279,12 +292,6 @@ test.describe('S1 商城商品 SKU 选择页 (#/complex-pages/mall-sku-picker)',
   }) => {
     await openS1(page);
     const resolved = await selectFullSpec(page);
-    if (resolved.stock <= 0) {
-      // wheel snap 落到缺货行 → 闸拦截，无加购面（fixture 保证概率为 0 的
-      // 防御分支；正常落点必有货）。
-      await expect(page.getByTestId('mall-sku-picker-add-cart')).toBeDisabled();
-      return;
-    }
 
     await page.getByTestId('mall-sku-picker-add-cart').click();
 
@@ -306,10 +313,6 @@ test.describe('S1 商城商品 SKU 选择页 (#/complex-pages/mall-sku-picker)',
   }) => {
     await openS1(page);
     const resolved = await selectFullSpec(page);
-    if (resolved.stock <= 0) {
-      await expect(page.getByTestId('mall-sku-picker-buy-now')).toBeDisabled();
-      return;
-    }
 
     await page.getByTestId('mall-sku-picker-buy-now').click();
     await expect(page.getByText('抢购成功')).toBeVisible({ timeout: 10_000 });
@@ -412,11 +415,7 @@ test.describe('S1 商城商品 SKU 选择页 (#/complex-pages/mall-sku-picker)',
   test('focus ② buy-now tab 可达（选满规格解除闸后，吸底双按钮键盘序）', async ({ page }) => {
     await openS1(page);
     // 未选满规格时缺货闸 disabled 按钮不出 Tab 序（OA-08 同族）——先选满。
-    const resolved = await selectFullSpec(page);
-    if (resolved.stock <= 0) {
-      await expect(page.getByTestId('mall-sku-picker-buy-now')).toBeDisabled();
-      return;
-    }
+    await selectFullSpec(page);
 
     let reached = false;
     for (let i = 0; i < 250 && !reached; i += 1) {

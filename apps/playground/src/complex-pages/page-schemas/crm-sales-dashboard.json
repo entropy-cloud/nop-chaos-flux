@@ -10,7 +10,9 @@
         "url": "/r/ReplCrm__dashboardKpi",
         "method": "get",
         "params": {
-          "periodId": "${dashboardFilter?.periodId ?? ''}"
+          "periodId": "${dashboardFilter?.periodId ?? ''}",
+          "territoryId": "${dashboardFilter?.territoryId ?? ''}",
+          "teamId": "${dashboardFilter?.teamId ?? ''}"
         }
       },
       "testid": "crm-sales-dashboard-kpi-source"
@@ -24,7 +26,9 @@
         "url": "/r/ReplCrm__dashboardTrend",
         "method": "get",
         "params": {
-          "periodId": "${dashboardFilter?.periodId ?? ''}"
+          "periodId": "${dashboardFilter?.periodId ?? ''}",
+          "territoryId": "${dashboardFilter?.territoryId ?? ''}",
+          "teamId": "${dashboardFilter?.teamId ?? ''}"
         }
       },
       "testid": "crm-sales-dashboard-trend-source"
@@ -104,10 +108,22 @@
                   "testid": "crm-sales-dashboard-filter-period",
                   "clearable": false,
                   "options": [
-                    { "label": "全部期间", "value": "" },
-                    { "label": "2026-08", "value": "2026-08" },
-                    { "label": "2026-09", "value": "2026-09" },
-                    { "label": "2026-10", "value": "2026-10" }
+                    {
+                      "label": "全部期间",
+                      "value": ""
+                    },
+                    {
+                      "label": "2026-08",
+                      "value": "2026-08"
+                    },
+                    {
+                      "label": "2026-09",
+                      "value": "2026-09"
+                    },
+                    {
+                      "label": "2026-10",
+                      "value": "2026-10"
+                    }
                   ]
                 },
                 {
@@ -117,10 +133,22 @@
                   "testid": "crm-sales-dashboard-filter-territory",
                   "clearable": false,
                   "options": [
-                    { "label": "全部大区", "value": "" },
-                    { "label": "华东", "value": "east" },
-                    { "label": "华南", "value": "south" },
-                    { "label": "华北", "value": "north" }
+                    {
+                      "label": "全部大区",
+                      "value": ""
+                    },
+                    {
+                      "label": "华东",
+                      "value": "east"
+                    },
+                    {
+                      "label": "华南",
+                      "value": "south"
+                    },
+                    {
+                      "label": "华北",
+                      "value": "north"
+                    }
                   ]
                 },
                 {
@@ -130,10 +158,22 @@
                   "testid": "crm-sales-dashboard-filter-team",
                   "clearable": false,
                   "options": [
-                    { "label": "全部团队", "value": "" },
-                    { "label": "大客户组", "value": "key-account" },
-                    { "label": "中小客户组", "value": "smb" },
-                    { "label": "渠道组", "value": "channel" }
+                    {
+                      "label": "全部团队",
+                      "value": ""
+                    },
+                    {
+                      "label": "大客户组",
+                      "value": "key-account"
+                    },
+                    {
+                      "label": "中小客户组",
+                      "value": "smb"
+                    },
+                    {
+                      "label": "渠道组",
+                      "value": "channel"
+                    }
                   ]
                 }
               ]

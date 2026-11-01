@@ -83,9 +83,9 @@
     "_notes": "plan 808 first-run measurement 2026-10-30 (D1 §4 branch A registration): counts measured on #/complex-pages/ai-approval-trail. aria-required-attr = 6 table column-resize separator handles (role=separator missing aria-valuenow — the standard-crud/wms-wave-picking family debt, table component owner; K2 scanned zero only because its table tab sits behind mountOnEnter). color-contrast = 8 shell header feature badges (data-slot=badge variant=secondary — same as the crm-customer-360=8 registration count, component owner). The K3 page DOM itself (crud todo list/steps/timeline/ai-tool-call/drawer widgets) contributes zero violations beyond these two registered families. Fixes belong to the component owner, not the page schema."
   },
   "complex-pages/mes-shopfloor-board": {
-    "aria-required-attr": 5,
+    "aria-required-attr": 11,
     "color-contrast": 7,
-    "_notes": "plan 809 first-run measurement 2026-10-30 (D1 §4 branch A registration): counts measured on #/complex-pages/mes-shopfloor-board. aria-required-attr = the downtime panel table's 5 column-resize separator spans (table component owner debt, same rule family as standard-crud/W2/W3/C1; count = the 5 downtime columns); color-contrast = 7 header feature badges (data-slot=badge variant=secondary in the complex-pages shell header — same secondary-badge contrast debt as W3/C1/C2/C3 registrations, component owner; count = this entry's 7 feature tags). Fixes belong to the component owner, not the page schema."
+    "_notes": "plan 809 first-run measurement 2026-10-30 (D1 §4 branch A registration): counts measured on #/complex-pages/mes-shopfloor-board. aria-required-attr = the downtime panel table's 5 column-resize separator spans (table component owner debt, same rule family as standard-crud/W2/W3/C1; count = the 5 downtime columns); color-contrast = 7 header feature badges (data-slot=badge variant=secondary in the complex-pages shell header — same secondary-badge contrast debt as W3/C1/C2/C3 registrations, component owner; count = this entry's 7 feature tags). Fixes belong to the component owner, not the page schema. Re-measured 2026-11-01 (plan 819 P1 F1-1): aria-required-attr 5 -> 11 — the new work-order four-stage table (panel 9) adds its 6 column-resize separator spans (same table component owner debt rule)."
   },
   "complex-pages/mes-work-reporting": {
     "aria-required-attr": 8,
@@ -129,7 +129,7 @@
   },
   "complex-pages/iot-geofence-videowall": {
     "aria-required-attr": 5,
-    "color-contrast": 8,
-    "_notes": "plan 818 first-run measurement 2026-11-01 (D4 §3.4 branch C: measured first — axe analyze took ~650 ms, far below the 30 s exclusion threshold, so the route joins the ratchet rather than the map-demo excludedRoutes path). aria-required-attr = the fence-event table's 5 column-resize separator spans (table component owner debt); color-contrast = the 8 shell header badges (secondary badge family). The two OL map canvases (local blank basemap tile) and the 4 video elements report no violations. Fixes belong to the component owners."
+    "color-contrast": 11,
+    "_notes": "plan 818 first-run measurement 2026-11-01 (D4 §3.4 branch C: measured first — axe analyze took ~650 ms, far below the 30 s exclusion threshold, so the route joins the ratchet rather than the map-demo excludedRoutes path). aria-required-attr = the fence-event table's 5 column-resize separator spans (table component owner debt); color-contrast = the 8 shell header badges (secondary badge family). The two OL map canvases (local blank basemap tile) and the 4 video elements report no violations. Fixes belong to the component owners. Re-measured 2026-11-01 (plan 819): color-contrast 8 -> 11 — the original first run raced the async videoChannels fetch (shell badges only). With the 4 channel 在线 badges mounted the count is 11 (same secondary-badge owner-debt family); the ratchet's max-count semantics keep both faces green."
   }
 }

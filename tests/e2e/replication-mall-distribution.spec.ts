@@ -384,6 +384,23 @@ test.describe('S2 商城分销后台页 (#/complex-pages/mall-distribution)', ()
     await assertTrackedPageErrors(page);
   });
 
+  test('交互⑦（G17）batch-bar 结算入口：勾 2 行 → countTemplate「已选 2 条」→ 发起结算 toast 携带条数', async ({ page }) => {
+    await openS2(page);
+
+    const crud = page.getByTestId('mall-distribution-crud');
+    const bar = page.getByTestId('mall-distribution-batch-bar');
+    await expect(bar).toBeHidden();
+    const checkboxes = crud.locator('tbody [role="checkbox"]');
+    await checkboxes.nth(0).click();
+    await checkboxes.nth(1).click();
+    await expect(bar).toHaveAttribute('data-count', '2');
+    await expect(bar).toContainText('已选 2 条佣金记录');
+
+    await page.getByTestId('mall-distribution-batch-settle').click();
+    await expect(page.getByText('结算批次已提交（2 条进入结算队列）')).toBeVisible({ timeout: 10_000 });
+    await assertTrackedPageErrors(page);
+  });
+
   test('focus ① 审核 dialog 焦点落入、Esc 关闭返回', async ({ page }) => {
     await openS2(page);
 

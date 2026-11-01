@@ -51,6 +51,12 @@ export interface ReplAiTicket {
   confidence: number;
   assignee: string;
   escalationLevel: number;
+  /** AI auto-classification (R2 K2 要素⑥); `category` starts equal and an
+   * agent may override it together with priority via `classify`. */
+  aiCategory: string;
+  category: string;
+  /** Internal note (R2 K2 要素⑧) — agent-only, never sent to the customer. */
+  internalNote: string;
 }
 
 export interface ReplAiTicketAction {
@@ -120,6 +126,8 @@ const K2_SUBJECTS = [
 const K2_ASSIGNEES = ['坐席-林晓', '坐席-陈晨', '坐席-王蓉', '坐席-赵磊', '坐席-周航'];
 
 const K2_PRIORITIES: ReplAiTicket['priority'][] = ['HIGH', 'MID', 'LOW'];
+/** AI classification taxonomy (deterministic per ticket index). */
+export const K2_CATEGORIES = ['账户与登录', '订单与物流', '支付与退款', '产品故障'] as const;
 
 /** Deadline offsets per status (minutes relative to session creation now).
  * OPEN = the G9 designated window (TCK-0001 → +90min); REOPENED breached
@@ -224,6 +232,9 @@ export function createReplAiK2Seed(): {
       confidence,
       assignee,
       escalationLevel: i === 25 ? 1 : 0,
+      aiCategory: K2_CATEGORIES[(i - 1) % K2_CATEGORIES.length],
+      category: K2_CATEGORIES[(i - 1) % K2_CATEGORIES.length],
+      internalNote: '',
     });
 
     const trajectory = K2_TRAJECTORY[status];
@@ -397,6 +408,24 @@ export function handleReplAiK2Branch<T>(
     const id = typeof body.id === 'string' ? body.id : '';
     const mutation = typeof body.mutation === 'string' ? body.mutation : '';
     const ticket = session.tickets.find((row) => row.id === id);
+    // `classify` (R2 K2 要素⑥⑧, plan 819 P1): agent override of the AI
+    // category/priority + internal note — a non-transitional mutation.
+    if (mutation === 'classify' && ticket) {
+      const priority = body.priority;
+      if (typeof body.category === 'string' && body.category) ticket.category = body.category;
+      if (priority === 'HIGH' || priority === 'MID' || priority === 'LOW') ticket.priority = priority;
+      if (typeof body.internalNote === 'string') ticket.internalNote = body.internalNote;
+      return {
+        status: 0,
+        data: {
+          id: ticket.id,
+          mutation,
+          category: ticket.category,
+          priority: ticket.priority,
+          internalNote: ticket.internalNote,
+        } as unknown as T,
+      };
+    }
     const toStatus = ticket && mutation ? routeMutation(mutation, ticket.status) : undefined;
     if (!ticket || !mutation || !toStatus) {
       return {

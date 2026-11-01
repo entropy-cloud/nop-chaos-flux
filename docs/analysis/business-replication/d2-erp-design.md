@@ -108,6 +108,7 @@ onScanError:
 6. **"作业记录行数 +1"在窗口化分页（pageSize 8）下不可观测**：断言口径改首行命中（RECEIVE/PUTAWAY + asnNo）。
 7. **focus 口径（D5 复审后第 7 条，plan 798 收口审计）**：focus① "sku-scan 获焦"不成立——barcode-input 组合在画布内不可 Tab 直达，退守"tab 必达画布内容且驻留"；focus③ "action-sheet 焦点入首条目"不成立——首项不自动获焦，退守"焦点落入 sheet panel 内"。两者登记 a11y 后续观察（barcode-input 可达性/sheet 首项 autofocus）。
 8. **infinite-scroll onLoadMore（plan 798 收口审计 Minor-1）**：§2.1 树中"onLoadMore 翻页"未实现（schema 仅 hasMore 表达式、无翻页动作路径）——作业记录由 mock 全量返回承载，真分页加载登记后续观察。
+- P1-W1（P1 审计裁决，2026-11-01，plan 819；`docs/audits/business-replication/p1-dev-deep-audit.md`）：R1 要素⑫「重复扫码防重」扫描级去重不做——提交层由 asnReceive 幂等键（`duplicate idempotency key` 拒绝分支，e2e 已覆盖）承担防重复入库语义，扫描级去重为 demand-gated 增强。
 
 ### 2.2 wms-wave-picking（W2，P1）
 
@@ -161,6 +162,7 @@ onRowChange: [ { action: component:refresh, componentId: wave-summary-tiles } ]
 5. **query-filter 分区过滤**：query-filter 内嵌表单 scope 不向页面 scope 发布值，dependsOn 联动不可达；live 通道为 form+valuesPath 载体（detail-subtables 先例）。
 6. **释放操作带**：condition-builder 是 form 字段需 form 上下文；hstack 形态收进 form（notion-database 先例）。
 7. **kanban columnFooter（plan 799 收口审计 Minor-1）**：树注释/§3.1 提及 columnFooter，live schema 未实现该属性（kanban 支持但 W2 用列头 columnAggregate 承载合计）——合计展示落 columnAggregate，无行为缺口。
+- P1-W2（P1 审计裁决，2026-11-01，plan 819；`docs/audits/business-replication/p1-dev-deep-audit.md`）：只读分组汇总 table（D2 §2.2 树末项）为次要落位，R1 要素①「波次→拣货单分组展示」主验收面由 kanban 分组承担（拖卡/列合计强断言）；table 分组/聚合不另立 e2e。
 
 ### 2.3 wms-stock-ledger（W3，P1）
 
@@ -350,6 +352,7 @@ onEventClick:
 5. **GET params 走 URL query**：fetcher 分支读参走 createUrlParamReader（直读 input.params 恒空）。
 6. **refreshSource 对 mountOnEnter 未激活 tab 的 source 报 Source not found**：查询按钮只 refresh 已激活源，未激活源在 tab 激活时带当前过滤参数取数（行为等价）。
 7. **tabs 选中态在 aria-selected**；timeline onChange 载荷绑定为 `${value}`；detail-view 头部 inline 可见面是 viewer（display-only 以 disabled:true 收起 trigger）。
+- P1-C2（P1 审计裁决，2026-11-01，plan 819；`docs/audits/business-replication/p1-dev-deep-audit.md`）：D2 §2.5「联系人/地址 cards」中地址卡片与 R1 页面形态「团队」分区不落——R1 C2 交互要素①-⑦ 不含二者；partnerGet.addresses 保留在 mock 契约供后续消费。
 
 ### 2.6 crm-sales-dashboard（C3，P1）
 
@@ -406,6 +409,9 @@ onSubmit: [ { action: refreshSource, targetId: dashboardKpi }, { action: refresh
 3. **6 series line 点击 hit-test 局限**（chart owner 观察项）：polyline 无 per-point ecData（LineView.js L644）→ 像素级真实点击不可达，e2e 以 `chart.trigger('click', 真实 option 参数)` 实例级 seam 驱动同一动作链（W1 勘误 5 先例）；`__flux_echarts_<componentId>` 观察锚点首建。
 4. **reportDownload `{downloadUrl}` → live `{url, filename}`**（W3 勘误 7 同款）；**dashboardKpi `{kpis:[…]}` → 平铺 map**（W3 勘误 9 同款）。
 5. **类别分布 pie panel 未纳入 plan 803 已批准枚举**（计划起草遗漏，评审未标）——裁决：移出 C3 1.0 范围登记 D5/P1 审计裁决（补实现或从树移除）；C3 e2e 断言清单本不含 pie 断言，验收面不受影响。
+- P1-C3-1（P1 审计裁决，2026-11-01，plan 819；`docs/audits/business-replication/p1-dev-deep-audit.md`）：**修复**——全局筛选 territoryId/teamId 此前仅 UI 呈现、零取数作用（静默收窄）；现 dashboardKpi/dashboardTrend data-source 携带三维参数，mock 按大区×团队份额切片金额面（比率类 KPI 与范围无关不切），e2e 交互①b 断言请求参数 + 漏斗总额 720×0.5×0.6=216。
+- P1-C3-2（P1 审计裁决，2026-11-01，plan 819；`docs/audits/business-replication/p1-dev-deep-audit.md`）：R1 要素⑥「指标卡钻取跳转」并入 G8 echarts 钻取通道（stat-tile 不单做钻取）。
+- P1-C3-3（P1 审计裁决，2026-11-01，plan 819；`docs/audits/business-replication/p1-dev-deep-audit.md`）：C3 勘误 5「类别分布 pie 待 D5/P1 裁决」终态裁决——**从组件树移除、不补实现**（pie 非 R1 C3 要素①-⑥ 清单项，为 D2 自加项）。
 
 ### 2.7 itam-asset-inventory（I1，P1）
 

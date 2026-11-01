@@ -130,7 +130,11 @@ test.describe('O2 HITL 审批收件箱页 (#/complex-pages/doc-hitl-inbox)', () 
     const dialog = await openReview(page, 3);
 
     await dialog.getByTestId('doc-hitl-inbox-reject-btn').click();
-    await page.waitForTimeout(500);
+    // Required rule blocks before any request (plan 819 P1: deterministic
+    // field-error evidence instead of a bare negative wait).
+    await expect(dialog.getByTestId('doc-hitl-inbox-opinion').locator('[data-slot="field-error"]')).toBeVisible({
+      timeout: 10_000,
+    });
     expect((await readEndpointCalls(page, COUNTERS_KEY))['ReplDoc__reject'] ?? 0).toBe(0);
     await expect(dialog).toBeVisible();
 

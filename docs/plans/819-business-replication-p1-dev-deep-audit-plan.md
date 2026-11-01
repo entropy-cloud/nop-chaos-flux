@@ -1,7 +1,7 @@
 # 819 M3-P1 开发阶段深度审计（business-page-replication roadmap M3-P1）
 
-> Plan Status: active
-> Last Reviewed: 2026-10-31
+> Plan Status: completed
+> Last Reviewed: 2026-11-02
 > Source: `docs/backlog/business-page-replication-roadmap.md` §2 M3-P1（依赖 W1-V3 all done——2026-11-01 plan 818 收口后满足；roadmap 现值 `todo`）
 > Related: M3 二十一页交付 plans 798-818；D1-D4 设计与各页「实现勘误」节；R5/D5 深审先例（`docs/audits/business-replication/{r5-research,d5-design}-deep-audit.md`）；plans 814-818 Deferred 指派 P1 的三项（C2 calendar 时区窗口红、全量 e2e、replication 族负载抖动面）
 
@@ -55,53 +55,60 @@
 
 ### Phase 1 - C2 时区窗口红修复（Proof → Fix）
 
-Status: planned
+Status: completed
 Targets: `tests/e2e/replication-crm-customer-360.spec.ts`（回归测试）、`apps/playground/src/complex-pages/shared/mock-backend-repl-crm-c2.ts`（UTC 夹取）、`docs/components/existing-components-improvement-analysis.md`（日历观察登记）
 
 - Item Types: `Proof | Fix`
 
-- [ ] Proof：C2 spec 新增时区回归测试（`test.use({ timezoneId: 'Asia/Shanghai' })` + `page.clock.install({ time: '2026-11-01T01:30:00+08:00' })` → 切日历 tab → 事件块 ≥5 + 四标题可见）；修复前实跑必挂（记录失败输出）
-- [ ] Fix：`currentMonthDate`/`crossDayRange`/活动日期生成改 UTC 组件（`getUTCFullYear/getUTCMonth/getUTCDate`），与日历 UTC 日模型一致；回归测试 + C2 全 spec `--retries=0` 绿
-- [ ] 日历「初始 today 取 UTC 日」产品面观察登记 improvement-analysis（scheduling 族，UTC±N 用户月初/月末窗口看到相邻月；只登记）
+- [x] Proof：C2 spec 新增时区回归测试（`test.use({ timezoneId: 'Asia/Shanghai' })` + `page.clock.install({ time: '2026-11-01T01:30:00+08:00' })` → 切日历 tab → 事件块 ≥5 + 四标题可见）；修复前实跑必挂（记录失败输出）
+- [x] Fix：`currentMonthDate`/`crossDayRange`/活动日期生成改 UTC 组件（`getUTCFullYear/getUTCMonth/getUTCDate`），与日历 UTC 日模型一致；回归测试 + C2 全 spec `--retries=0` 绿
+- [x] 日历「初始 today 取 UTC 日」产品面观察登记 improvement-analysis（scheduling 族，UTC±N 用户月初/月末窗口看到相邻月；只登记）
+
+
+执行期证据（2026-11-01）：回归测试修复前实跑失败（`eventBlocks.first()` toBeVisible 失败——日历渲染但零事件，34.6s 输出在案 `_tmp/p1-out`）；UTC 夹取修复（`mock-backend-repl-crm-c2.ts` currentMonthDate/crossDayRange/isoDateTime 全 UTC 组件）后 C2 spec 10/10 `--retries=0`。
 
 Exit Criteria:
 
-- [ ] 回归测试修复前失败、修复后通过（两次实跑输出记入执行期适配段）
-- [ ] C2 spec 全绿（`--retries=0`）
+- [x] 回归测试修复前失败、修复后通过（两次实跑输出记入执行期适配段）
+- [x] C2 spec 全绿（`--retries=0`）
 
 ### Phase 2 - 复跑与归因（Proof）
 
-Status: planned
+Status: completed
 Targets: 复跑输出 `_tmp/p1-*`；审计报告「复跑与归因」节
 
 - Item Types: `Proof | Decision`
 
-- [ ] replication 全族 + axe spec `--retries=0` 复跑（默认 workers）；逐红定位（族内 → 修复；抖动 → `--repeat-each=3` 判定）
-- [ ] 全仓 `pnpm test:e2e` 一次实跑（独立端口/输出）；逐红归因表（复刻族 / PH-9 台账 / 并行会话 / 新红）
-- [ ] 负载抖动面裁决（M1 交互①、S1 :189）：复现则修等待条件或按 flake 台账口径登记；不复现则记观测结论
+- [x] replication 全族 + axe spec `--retries=0` 复跑（默认 workers）；逐红定位（族内 → 修复；抖动 → `--repeat-each=3` 判定）
+- [x] 全仓 `pnpm test:e2e` 一次实跑（独立端口/输出）；逐红归因表（复刻族 / PH-9 台账 / 并行会话 / 新红）
+- [x] 负载抖动面裁决（M1 交互①、S1 :189）：复现则修等待条件或按 flake 台账口径登记；不复现则记观测结论
+
+执行期证据（2026-11-01）：复刻全族 + axe `--retries=0` 复跑 **237/237 全绿**（6.1m，`_tmp/p1-phase2-family.log`）。全仓 `pnpm test:e2e`（workers=2、retries=0、57.3m）实跑 **242 failed / 1896 passed / 46 skipped**（`_tmp/p1-phase2-full.log`），独立子 agent 逐红对账（PH-9 台账逐名 F1-F9/D/E/C + plan 836 台账外清单）：复刻族 1（C1 focus③，见抖动裁决）、PH-9 在册 237、plan 836 在途台账外 1（w3d-editor:70）、新红/未归因 3（complex-pages-interaction-state:180 picker 指针点击、renderer-lab-interaction-state:114 evaluate 被导航销毁、table-virtual-body:43 scrollTop=0）——三项均族外，按 Failure Path 归因 owner（kanban/complex-pages/renderer-lab/VirtualBody 组件面；plan 836 域同类台账外红收敛），登记审计报告不静默。负载抖动裁决：C1 `focus ③` 全量单次红（test.fail 棘轮翻转）+ 隔离 `--repeat-each=3 --retries=0` 30/30 绿 → 按 flake 台账 `ATTRIBUTED(contention)` 登记（`docs/testing/e2e-flake-ledger.md`，门禁绿）；M1 交互①、S1 :189 本轮全量未复现 → 观测结论记审计报告。
 
 Exit Criteria:
 
-- [ ] replication 全族 + axe 复跑全绿（或每红均有修复/登记）
-- [ ] 全仓 e2e 归因表完整（无「未归因」红）
+- [x] replication 全族 + axe 复跑全绿（或每红均有修复/登记）
+- [x] 全仓 e2e 归因表完整（无「未归因」红）
 
 ### Phase 3 - 二十一页保真度与断言真实性审计（Proof/Decision/Fix）
 
-Status: planned
+Status: completed
 Targets: `docs/audits/business-replication/p1-dev-deep-audit.md`（新）；按 Finding 触达的 spec/schema
 
 - Item Types: `Proof | Decision | Fix`
 
-- [ ] 四个独立 fresh 子 agent 分组并行审计（W1-W3+C1-C3 / I1-I2+K1-K3 / M1-M3+S1-S2 / O1-O2+V1-V3）：逐页上游 roadmap 交互要素 ↔ 落地组件/断言、收窄是否有显式裁决出处、e2e 弱断言（负等待、条件分支断言、空断言、仅存在性断言替代载荷断言）
-- [ ] 主审汇编复核：抽查子 agent 每条 Major/Blocker 的 live 证据（打开 spec/schema 行）
-- [ ] 已知弱断言加强：O1 交互④ 阻断停留改确定性断言（wizard 当前步标识/校验错误文本可见）；V2 focus ① 改真实 Tab 遍历落到「下一步」
-- [ ] 审计 Findings 处置：Major 以内本 plan 修复并复跑对应 spec；超范围者显式 successor
-- [ ] 登记一致性核对（本阶段新增登记 vs §Authority，无重复立项/越权裁决）
+- [x] 四个独立 fresh 子 agent 分组并行审计（W1-W3+C1-C3 / I1-I2+K1-K3 / M1-M3+S1-S2 / O1-O2+V1-V3）：逐页上游 roadmap 交互要素 ↔ 落地组件/断言、收窄是否有显式裁决出处、e2e 弱断言（负等待、条件分支断言、空断言、仅存在性断言替代载荷断言）
+- [x] 主审汇编复核：抽查子 agent 每条 Major/Blocker 的 live 证据（打开 spec/schema 行）
+- [x] 已知弱断言加强：O1 交互④ 阻断停留改确定性断言（wizard 当前步标识/校验错误文本可见）；V2 focus ① 改真实 Tab 遍历落到「下一步」
+- [x] 审计 Findings 处置：Major 以内本 plan 修复并复跑对应 spec；超范围者显式 successor
+- [x] 登记一致性核对（本阶段新增登记 vs §Authority，无重复立项/越权裁决）
+
+执行期证据（2026-11-01）：报告 `docs/audits/business-replication/p1-dev-deep-audit.md` 落档（首轮 5 Major + 1 登记 Major 全闭环 + TZ-1 + 5 Minor 断言加强 + 12 处文档裁决）；主审汇编复核抽验（C3 territoryId 断言 :150/:170、K2 classify mutation、M1 progressBand、M2 reworkQty :333/:380、S1 有界重转+硬断言 :143/:154 均在案）；vitest 证据 `iot-fence-geojson.test.ts` + `page-schemas-validation.test.ts` 67/67；被修 spec 全部 `--retries=0` 复跑绿（明细见报告「复跑与归因」节）。
 
 Exit Criteria:
 
-- [ ] 审计报告落档（结论 + Findings 表〔页/类型/级别/证据/处置〕+ 证据命令）
-- [ ] 全部 Blocker/Major 已修复（对应 spec 复跑绿）或显式 successor
+- [x] 审计报告落档（结论 + Findings 表〔页/类型/级别/证据/处置〕+ 证据命令）
+- [x] 全部 Blocker/Major 已修复（对应 spec 复跑绿）或显式 successor
 
 ## Draft Review Record
 
@@ -112,36 +119,37 @@ Exit Criteria:
 
 ## Closure Gates
 
-- [ ] in-scope 工作全部落地（C2 修复 + 复跑归因 + 审计报告 + roadmap 回写）
-- [ ] 判别性回归测试证据在案
-- [ ] 必要 focused verification 已完成
-- [ ] 不存在被静默降级的 in-scope 缺口
-- [ ] 受影响 owner docs 已同步（daily log；improvement-analysis 日历观察；必要 D 文档就地勘误）
-- [ ] 独立子 agent（fresh session）closure audit 通过并记录证据
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
-- [ ] `pnpm check`（零新增未登记命中）
+- [x] in-scope 工作全部落地（C2 修复 + 复跑归因 + 审计报告 + roadmap 回写）
+- [x] 判别性回归测试证据在案
+- [x] 必要 focused verification 已完成
+- [x] 不存在被静默降级的 in-scope 缺口
+- [x] 受影响 owner docs 已同步（daily log；improvement-analysis 日历观察；必要 D 文档就地勘误）
+- [x] 独立子 agent（fresh session）closure audit 通过并记录证据
+- [x] `pnpm typecheck`（46/46）
+- [x] `pnpm build`（46/46）
+- [x] `pnpm lint`（46/46）
+- [x] `pnpm test`（turbo 86/86）
+- [x] `pnpm check`（全链 exit 0，含 test:scripts 200 passed；零新增未登记命中）
 
 ## Deferred But Adjudicated
 
-（执行期如有裁决当场落节）
+（执行期如有裁决当场落节；本 plan 执行中三项 Failure Path 行为〔new-red 归因 owner / flaky 台账登记 / audit-major 本 plan 内修复〕均当场记录于 Phase 证据段与审计报告，无推翻计划内条目的改判）
 
 ## Non-Blocking Follow-ups
 
-- P2 开放审计（roadmap M3-P2，独立 plan）
+- P2 开放审计（roadmap M3-P2，plan 837）
 - 组件 owner 债（axe 基线登记项）归各组件 owner
+- 全量 e2e 新红 3 项（complex-pages:180 / renderer-lab:114 / table-virtual-body:43）与 w3d-editor:70 归 plan 836 域同类台账外收敛
 
 ## Closure
 
-Status Note: 待收口填写
+Status Note: 2026-11-02 收口。P1 深审交付完整：C2 时区窗口红根因修复（判别性回归测试修复前必挂）；二十一页四子 agent 分组审计 6 Major 全闭环 + 5 Minor 断言加强 + 12 处文档裁决；复刻全族 + axe 237/237 `--retries=0`；全仓 e2e 242 failed 逐红归因无未归因项；登记一致性与 §Authority 无冲突。报告 `docs/audits/business-replication/p1-dev-deep-audit.md`。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: 待独立子 agent 填写
-- Evidence: 待填写
+- Auditor / Agent: 独立 fresh sub-agent（agent_334d034d-e315-4526-9295-0a138bd99aa0），2026-11-02
+- Evidence: verdict **approved**（零 Blocker/Major）。逐条实证：C2 UTC 修复与判别性回归（mock L278-307 / spec L377-401 + `_tmp/p1-out/` 修复前失败输出）；237/237 与 242-failed 归因表与报告逐字吻合；C1 flake 台账 ATTRIBUTED(contention) 三证在案；六 Major 修复与弱断言加强逐文件打开核实（C3 :150/:170、K2 :372-390、M1 progressBand、M2 :333/:380、S1 :143-155、REG-1 L7.9、O1/V2 断言）；五项全量门禁 `_tmp/p1-gates.log`（typecheck/build/lint 46/46、turbo test 86/86、check 全链 exit 0）。
 
 Follow-up:
 
-- 待收口填写
+- P2 开放审计（plan 837）；组件 owner 债；plan 836 域台账外红收敛（见 Non-Blocking Follow-ups）——均 non-blocking，无 plan-owned 剩余工作

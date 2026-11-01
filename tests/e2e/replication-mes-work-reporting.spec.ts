@@ -109,12 +109,13 @@ function lineEditor(page: Page, testid: string, rowIndex: number) {
     .locator('input');
 }
 
-type LineField = 'completed' | 'scrapped' | 'setup' | 'run';
+type LineField = 'completed' | 'scrapped' | 'setup' | 'run' | 'rework';
 
 async function fillLine(page: Page, rowIndex: number, field: LineField, value: string): Promise<void> {
   const testid = {
     completed: 'mes-work-reporting-completed-qty',
     scrapped: 'mes-work-reporting-scrapped-qty',
+    rework: 'mes-work-reporting-rework-qty',
     setup: 'mes-work-reporting-setup-mins',
     run: 'mes-work-reporting-run-mins',
   }[field];
@@ -329,7 +330,9 @@ test.describe('M2 MES 工序报工页 (#/complex-pages/mes-work-reporting)', () 
     // 合计行 aggregate 三列 = sum（合格数/报废数/工时）：50 / 5 / 26。
     await expect(summaryCell(page, 0)).toHaveText('50', { timeout: 10_000 });
     await expect(summaryCell(page, 1)).toHaveText('5');
-    await expect(summaryCell(page, 4)).toHaveText('26');
+    // Column 2 is reworkQty (plan 819 P1 F2-1); totalMins sits at index 5.
+    await expect(summaryCell(page, 2)).toHaveText('0');
+    await expect(summaryCell(page, 5)).toHaveText('26');
 
     // summaryBinding 单对象回写主单 totalCompletedQty（plan-785 验收核心）。
     await expect(dialog.getByTestId('mes-work-reporting-total-completed')).toContainText(
@@ -354,6 +357,7 @@ test.describe('M2 MES 工序报工页 (#/complex-pages/mes-work-reporting)', () 
 
     await fillLine(page, 0, 'completed', '30');
     await fillLine(page, 0, 'scrapped', '5');
+    await fillLine(page, 0, 'rework', '2');
     await fillLine(page, 0, 'setup', '8');
     await fillLine(page, 0, 'run', '8');
     await fillLine(page, 1, 'completed', '20');
@@ -373,7 +377,7 @@ test.describe('M2 MES 工序报工页 (#/complex-pages/mes-work-reporting)', () 
     const lines = body.lines as Array<Record<string, unknown>>;
     expect(lines).toHaveLength(2);
     expect(lines[0]).toMatchObject({
-      lineNo: 1, completedQty: 30, scrappedQty: 5, setupMins: 8, runMins: 8,
+      lineNo: 1, completedQty: 30, scrappedQty: 5, reworkQty: 2, setupMins: 8, runMins: 8,
     });
     expect(lines[1]).toMatchObject({ lineNo: 2, completedQty: 20, setupMins: 5, runMins: 5 });
 

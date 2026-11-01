@@ -161,6 +161,7 @@ ai-citations/ai-feedback/ai-token-usage 是 message 级独立 widget（不内嵌
 D6 开放审计 MAJ-A 同步检查（citations/feedback/token-usage 绑定源）：activeAnswer 现为 onResponseComplete 写回的 message 快照，`message: "${activeAnswer}"`、`sources: "${activeAnswer.sources}"`、`visible: "${activeAnswer && activeAnswer.refused}"` 三处绑定随之成立——ai-citations 解析 message.content 的 [N] 上标（schemas.ts L370-374 mode list）、ai-token-usage 读 message.metadata.usage（schemas.ts L407-416）。M3 前置义务：mock 流完成时 sources/refused/usage 必须已在快照上（§4.2 fixture，M3 对照 cloneMessage 快照定稿落 metadata 或快照本体，不静默）。
 
 护栏判定：mock stream 按 §4.2 refusal 预设返回拒绝应答，`refused` 随 onResponseComplete 链写回的 `${message}` 快照进入 activeAnswer 后被 G11 alert 的 visible 表达式读取（D6 开放审计 MAJ-A 勘误：原「refused 由 onResponseComplete 动作链写入」未指明绑定源，`${result}` 语义下该前提落空）；finishReason 若引擎未透出（M3 对照 `engine/types.ts` 校准，透出路径 = payload.message.metadata.finishReason），退化「内容前缀 `[REFUSED]` + formula 检测」等价口径（断言只看 alert 可见性）。
+- P1-K1（P1 审计裁决，2026-11-01，plan 819；`docs/audits/business-replication/p1-dev-deep-audit.md`）：R2 要素②「字数上限、附件」裁决为灰区不实现（R6 开放审计 Minor-5 定性的 MaxKB 形态推导项）；会话重命名/删除已实现，e2e 不另断（§5.1 清单未要求）。
 
 ### 2.2 K2 ai-ticket-console（P1，能力扩展：G9 桌面 SLA 倒计时临时形态 + G11 置信度门 + G12 采用链路）
 
@@ -235,6 +236,7 @@ page
 4. **G12 写回 setValue→setValues**（textarea 在 form 内，live 路径写 ctx.form）。
 5. **onCardMove when 路由需五 mutation 各一 action**（D3 三态合并 when 不可表达单 mutation）；reopen 仅 RESOLVED→REOPENED。
 6. **complex-pages-entries.ts 拆分**（K2 entry 使 model 达 501 行触发 oversized warn——COMPLEX_PAGE_ENTRIES 按 oversized 拆分纪律抽出）。
+- P1-K2（P1 审计裁决，2026-11-01，plan 819；`docs/audits/business-replication/p1-dev-deep-audit.md`）：**修复**——R2 要素⑥「AI 自动分类/优先级（可人工改写）」与要素⑧「内部备注」此前静默缺失；现 mock 工单携 aiCategory/category/internalNote，详情 drawer 增分类表单（AI 分类/定级只读提示 + 分类/优先级可改写 + 内部备注）→ ticketMutation `classify`（非状态迁移），e2e 断言载荷逐字段。要素①「多维筛选」收窄为单维 status 过滤（form+valuesPath 载体）——多维为同机制扩列，不另验收。
 
 ### 2.3 K3 ai-approval-trail（P1，直接组合，涉 G13/G18）
 
@@ -359,6 +361,7 @@ scada-canvas：`config` 为组态 JSON 单一字段（quick-reference.md §Indus
 8. **D3 §2.4 树内「工单四阶段进度 table」未落**（任务执行清单/§5.4 均未含——登记剪裁）。
 9. **手动刷新钮为新增**（D3 无刷新入口；15s 第二帧不等待防 flake 需用户驱动取数）。
 10. **echarts pixel click 不可达**（引用 C3 已登记 chart owner live gap，非新勘误）。
+- P1-M1（P1 审计裁决，2026-11-01，plan 819；`docs/audits/business-replication/p1-dev-deep-audit.md`）：**修复**——M1 勘误 8「工单四阶段进度 table 未落（登记剪裁）」撤销剪裁：mock dashboardKpi 增 `workOrders`（progress + progressBand 四档），PAGE_DATA 第 9 面板 table + status labelMap/levelMap 配色分级（片段 2 原设计），e2e 断言 5 工单四档文本与 data-level。
 
 ### 2.5 M2 mes-work-reporting（P0，直接组合，无缺口——plan 785 直接受益页）
 
@@ -468,6 +471,7 @@ page                        # testid: mes-work-reporting-root（D5 深审勘误 
 6. **工时比列承载形态**（§2.5 片段 1 hourRatio 为 computed 列）：live 列表页工时比为 cell 内 text 表达式（条件 className 标红），dialog 内为行尾 text 表达式单元格；computed 列仅 totalMins/qualifiedRate。
 7. **totalScrappedQty 双绑定收口裁决**（§2.5 片段 1 注预告「M3 收口时拆两处/先立约，不静默」——本条即该裁决）：页面落**单绑定**（summaryBinding → totalCompletedQty）；totalScrappedQty 不做主单回写面——报工载荷 lines 明细逐行携带 scrappedQty（mock Σ 行回写作业卡 scrappedQty），主单无第二回写消费面；数组语义扩展归 composite-schemas 契约 owner（后续页面需要时再立约），本页不扩约。
 8. **dialog 观测面新增**：onRowChange 编辑联动提示（最后编辑字段名）、合计回写显示行（totalCompletedQty）、取消按钮 closeSurface——设计片段未枚举，验收断言所需观测面。
+- P1-M2（P1 审计裁决，2026-11-01，plan 819；`docs/audits/business-replication/p1-dev-deep-audit.md`）：**修复**——报工明细补「返工数 reworkQty」输入列（R2 要素⑧ 三数量之一、D3 片段行字段与 mock 聚合均在，schema 此前缺列）+ 合计行 sum；e2e 交互④ 载荷断言 reworkQty。
 
 ### 2.6 M3 mes-andon-material（P1，直接组合，涉 G14；axe 分支 B mobile）
 
@@ -569,6 +573,7 @@ input-table 注册于全局 registry（R4 §0 L14）；明细数量键入以 num
 7. **swipe-cell 催单/关闭**：140px 左滑 ≥1.15× 右区宽（两紧凑钮 ≈100px）→ 走 overswipe-action 分支**直触首操作**（催单），格不驻留 open；关闭为第二操作 → 80px 短滑驻留 open-right + 显式点击；swipe 后首击被 drag-click 抑制吞（M6a）→ 非交互行标题牺牲点击消耗抑制窗。
 8. **floating-bubble 焦点**：非可焦 div（无 tabindex）→ focus ① 退守「焦点离开 dialog 层」（M1 focus ② 非可焦 trigger 退守同款）；initialY 300 避让 number-keyboard 区（560 与确认键重叠致点击被拦截）。
 9. **axe 分支 B 基线**：color-contrast 8（壳头部 badge 族，2 枚被面板遮挡未计）+ scrollable-region-focusable 1（列表滚动容器无 tabindex——pull-refresh 组件 owner 债务）。
+- P1-M3（P1 审计裁决，2026-11-01，plan 819；`docs/audits/business-replication/p1-dev-deep-audit.md`）：R2 要素⑥「快捷动作面板（叫料/升级/关闭）」中升级/关闭快捷入口归属行级 swipe-cell（左滑催单/关闭），action-sheet 承担发起类动作——功能等价收窄。
 
 ## 3. R4 对照与双向核对记录
 
