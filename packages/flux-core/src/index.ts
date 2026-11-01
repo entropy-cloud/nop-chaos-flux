@@ -136,6 +136,11 @@ export type {
 
 export type { StructuralLoopBindings, StructuralLoopRenderContext } from './types/renderer-hooks.js';
 export type { ReactionHandleConfigureOptions } from './types/renderer-core.js';
+export type {
+  RendererMonitor,
+  RendererMonitorErrorEvent,
+  RendererMonitorEvent,
+} from './types/monitor.js';
 
 export { isAbortError, buildScopeChain } from './runtime-inspection.js';
 

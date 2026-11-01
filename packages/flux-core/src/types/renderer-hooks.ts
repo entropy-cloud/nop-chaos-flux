@@ -1,6 +1,7 @@
 import type { ActionContext, ActionScope } from './actions.js';
 import type { FormulaCompiler, ImportFrame, ModuleCache } from './compilation.js';
 import type { InstanceFrame, NodeInstance } from './node-identity.js';
+import type { RendererMonitor } from './monitor.js';
 import type {
   RenderNodeMeta,
 } from './render-fragment-types.js';
@@ -139,6 +140,7 @@ export interface SchemaRendererProps {
   actionScope?: ActionScope;
   componentRegistry?: ComponentHandleRegistry;
   strictValidation?: boolean;
+  monitor?: RendererMonitor;
   onRuntimeChange?: (runtime: RendererRuntime | null) => void;
   onComponentRegistryChange?: (componentRegistry: ComponentHandleRegistry | null) => void;
   onActionScopeChange?: (actionScope: ActionScope | null) => void;

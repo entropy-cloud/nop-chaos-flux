@@ -587,5 +587,5 @@ export interface PageRuntime {
 
 export interface SurfaceRendererProps {
   surfaces: SurfaceEntry[];
-  renderSurface: (surface: SurfaceEntry) => any;
+  renderSurface: (surface: SurfaceEntry) => unknown;
 }

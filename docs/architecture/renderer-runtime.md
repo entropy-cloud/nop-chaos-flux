@@ -1352,12 +1352,15 @@ interface SchemaRendererProps {
   actionScope?: ActionScope;
   componentRegistry?: ComponentHandleRegistry;
   strictValidation?: boolean;
+  monitor?: RendererMonitor;
   onRuntimeChange?: (runtime: RendererRuntime | null) => void;
   onComponentRegistryChange?: (componentRegistry: ComponentHandleRegistry | null) => void;
   onActionScopeChange?: (actionScope: ActionScope | null) => void;
   onActionError?: (error: unknown, ctx: ActionContext) => void;
 }
 ```
+
+`monitor`（`RendererMonitor`，`@nop-chaos/flux-core` `types/monitor.ts`）是可选遥测回调：fire-and-forget、同步、monitor 自身 throw 被捕获不影响业务。当前仅发射 `error` 变体（渲染边界 + 动作诊断），完整契约见 `docs/architecture/flux-monitor.md`。
 
 Root lifecycle callbacks exist for host tooling integrations such as the debugger panel:
 

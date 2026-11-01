@@ -224,10 +224,14 @@ UI 显示路径：
 
 ## 已知缺口
 
-1. **`__FLUX_FAIL_ON_SCHEMA_DIAGNOSTICS__` 在 SchemaRenderer strict 路径下事实上无效**（见上文编译期段）。如需让 schema error 真正 throw 阻断渲染，需要绕过 SchemaRenderer 自行编译，或修复此 continueOnError 强制覆盖。
-2. **`onActionError` 自失败无回退遥测**：`reportActionError`（`action-execution.ts:145-149`）对 `onActionError` throw 是空 catch，无 console.error、无 monitor。
-3. **`onSettled` 子链 throw 不 notify**：仅 `reportActionError`，终端用户完全静默。
-4. **SchemaRenderer 不把渲染期 throw 上报 `env.monitor.onError`**：boundary 仅 `console.error`，未调 `monitor.onError({ phase: 'render' })`。
-5. **`reportUnhandledFailureClass` 的合成事件名单硬编码**：仅识别 `actionError` / `actionSettled` / `actionSettledError`（`action-execution.ts:188-195`），未来新增合成分支事件需同步更新。
+以下历史缺口已全部收敛（2026-11-02 复核，plan 595 / plan 841）：
 
-6. **缺口 4 的改进路径**：新 Monitor 设计（`../docs/architecture/flux-monitor.md`）通过 `SchemaRenderer monitor` prop 统一接收运行时事件。Error Boundary 可在将来的版本中将 `console.error` 升级为 `monitor({ type: 'error', phase: 'render', ... })`，填补渲染期错误对 monitor 不可见的缺口。
+1. ~~`__FLUX_FAIL_ON_SCHEMA_DIAGNOSTICS__` 事实上无效~~ **已解决（plan 595）**：strict 路径编译收集 error 级诊断后转为失败结果（`schema-compiler.ts` 的 `shouldFailOnSchemaDiagnostics` 分支，判别测试 `render-diagnostics-fail-fast.test.tsx`）。
+2. ~~`onActionError` 自失败无回退遥测~~ **已解决（plan 841）**：console.warn 之外同步 emit monitor `{ type: 'error', phase: 'action', details: { source: 'onActionError-hook' } }`。
+3. ~~`onSettled` 子链 throw 完全静默~~ **已解决**：`action-execution.ts` catch 内 `reportActionError` + `env.notify('error', message)`。
+4. ~~渲染期 throw 不上报 monitor~~ **已解决（plan 841）**：`SchemaRenderer monitor` prop 经 MonitorContext 送达边界，componentDidCatch emit `{ type: 'error', phase: 'render', nodeId }`（契约见 `docs/architecture/flux-monitor.md`）。
+5. ~~合成事件名单硬编码~~ **已解决（plan 841）**：名单提为具名导出常量 `SYNTHETIC_BRANCH_EVENT_TYPES`（`action-dispatcher/action-diagnostics.ts`，单一事实源）。
+
+当前仍真实存在的缺口：
+
+- **Monitor 仅实现 `error` 变体**：动作生命周期、API、渲染生命周期等事件族未接入（`docs/architecture/flux-monitor.md`「已知缺口」）。

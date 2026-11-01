@@ -8,6 +8,7 @@ import type {
   PageRuntime,
   PageStoreApi,
   RendererEnv,
+  RendererMonitor,
   RendererPlugin,
   RendererRegistry,
   RendererRuntime,
@@ -66,6 +67,7 @@ export function createRendererRuntime(input: {
   formulaRegistry?: FormulaRegistry;
   strictMode?: boolean;
   onActionError?: (error: unknown, ctx: ActionContext) => void;
+  monitor?: RendererMonitor;
 }): RendererRuntime {
     // Deliberately not flux-core genId: no timestamp, prefixed 8-char random.
   const runtimeId = `runtime-${Math.random().toString(36).slice(2, 10)}`;
@@ -625,6 +627,7 @@ export function createRendererRuntime(input: {
     getEnv,
     plugins,
     onActionError: input.onActionError,
+    monitor: input.monitor,
     evaluator: { evaluate, compileValue, evaluateCompiled },
     adapter,
     expressionCompiler,

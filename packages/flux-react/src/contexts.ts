@@ -11,6 +11,7 @@ import type {
   StructuralLoopRenderContext,
   SurfaceRuntime,
   RenderNodeMeta,
+  RendererMonitor,
   RendererRuntime,
   ScopeRef,
   ValidationScopeRuntime,
@@ -36,6 +37,7 @@ export const RenderInstancePathContext = createContext<readonly InstanceFrame[] 
 );
 export const ScopeContext = createContext<ScopeRef | null>(null);
 export const ActionScopeContext = createContext<ActionScope | undefined>(undefined);
+export const MonitorContext = createContext<RendererMonitor | undefined>(undefined);
 export const ComponentRegistryContext = createContext<ComponentHandleRegistry | undefined>(
   undefined,
 );

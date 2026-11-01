@@ -13,6 +13,7 @@ import { createDefaultSchemaDiagnosticReporter } from './schema-diagnostics-repo
 import {
   ActionScopeContext,
   ComponentRegistryContext,
+  MonitorContext,
   NO_VALIDATION_OWNER,
   PageContext,
   RuntimeContext,
@@ -22,6 +23,7 @@ import {
   type ValidationContextValue,
 } from './contexts.js';
 import { RenderNodes, EMPTY_SCOPE_DATA } from './helpers.js';
+import { emitMonitorError } from './monitor-emit.js';
 import { DialogHost } from './dialog-host.js';
 import { collectSchemaImports } from './node-renderer-utils.js';
 import { SchemaRootError, SchemaRootErrorBoundary, SchemaRootStatus } from './node-error-boundary.js';
@@ -41,6 +43,13 @@ function getSingleRootNode(
   }
 
   return template.root as import('@nop-chaos/flux-core').TemplateNode;
+}
+
+function requireOwned<T>(value: T | undefined, label: string): T {
+  if (value === undefined) {
+    throw new Error(`[SchemaRenderer] ${label} unavailable in a successful creation`);
+  }
+  return value;
 }
 
 function CompiledSchemaTree(props: {
@@ -197,6 +206,19 @@ function CompiledSchemaTree(props: {
 export function createSchemaRenderer(registryDefinitions: RegisteredRendererDefinition[] = []) {
   const registry = createRendererRegistry(registryDefinitions.map(ensureRendererComponent));
 
+  // plan 841 Phase 1: creation failure is a typed variant, not an
+  // undefined-cast runtime fake — the old side-channel ref left render-time
+  // derefs (`page.scope` etc.) unguarded, so a creation failure crashed the
+  // render before the root error card could ever be reached.
+  type SchemaRendererCreation =
+    | {
+        ok: true;
+        runtime: import('@nop-chaos/flux-core').RendererRuntime;
+        page: import('@nop-chaos/flux-core').PageRuntime;
+        surface: import('@nop-chaos/flux-core').SurfaceRuntime;
+      }
+    | { ok: false; error: unknown };
+
   return function SchemaRenderer(props: SchemaRendererProps) {
     const onRuntimeChange = props.onRuntimeChange;
     const onComponentRegistryChange = props.onComponentRegistryChange;
@@ -205,16 +227,25 @@ export function createSchemaRenderer(registryDefinitions: RegisteredRendererDefi
     envRef.current = props.env;
     const onActionErrorRef = useRef(props.onActionError);
     onActionErrorRef.current = props.onActionError;
-    const creationErrorRef = useRef<unknown>(null);
-    const runtime = useMemo(() => {
-      creationErrorRef.current = null;
+    // Same delegation pattern as onActionError: a stable wrapper so a monitor
+    // prop swap never re-creates the runtime, while dispatch-time reads stay
+    // current.
+    const monitorRef = useRef(props.monitor);
+    monitorRef.current = props.monitor;
+
+    const pageData = props.data ?? EMPTY_SCOPE_DATA;
+    const initialPageDataRef = useRef(pageData);
+    const initialDataAppliedRef = useRef(false);
+    const lastSyncedDataRef = useRef<unknown>(pageData);
+
+    const creation = useMemo<SchemaRendererCreation>(() => {
       try {
         const resolvedRegistry = props.registry ?? registry;
         const expressionCompiler = createExpressionCompiler(
           props.formulaCompiler ?? createFormulaCompiler(),
         );
 
-        return createRendererRuntime({
+        const createdRuntime = createRendererRuntime({
           registry: resolvedRegistry,
           env: envRef.current,
           expressionCompiler,
@@ -223,11 +254,15 @@ export function createSchemaRenderer(registryDefinitions: RegisteredRendererDefi
           moduleCache: props.moduleCache,
           strictMode: isStrictValidationEnabled(props.strictValidation),
           onActionError: (error, ctx) => onActionErrorRef.current?.(error, ctx),
+          monitor: (event) => monitorRef.current?.(event),
         });
-      // Errors routed through import error state — prepare failure caught in catch handler
+        const createdPage = createdRuntime.createPageRuntime(initialPageDataRef.current);
+        const createdSurface = createdRuntime.createSurfaceRuntime();
+        return { ok: true, runtime: createdRuntime, page: createdPage, surface: createdSurface };
+      // Errors routed through import error state — creation failure caught and
+      // surfaced through the typed failure variant (root error card).
       } catch (error) {
-        creationErrorRef.current = error;
-        return undefined as unknown as import('@nop-chaos/flux-core').RendererRuntime;
+        return { ok: false, error };
       }
     }, [
       props.formulaCompiler,
@@ -237,38 +272,29 @@ export function createSchemaRenderer(registryDefinitions: RegisteredRendererDefi
       props.moduleCache,
       props.strictValidation,
     ]);
+    const runtime = creation.ok ? creation.runtime : undefined;
+    const page = creation.ok ? creation.page : undefined;
 
-    const pageData = props.data ?? EMPTY_SCOPE_DATA;
-    const initialPageDataRef = useRef(pageData);
-    const initialDataAppliedRef = useRef(false);
-    const lastSyncedDataRef = useRef<unknown>(pageData);
-    const page = useMemo(() => {
-      if (creationErrorRef.current) {
-        return undefined as unknown as import('@nop-chaos/flux-core').PageRuntime;
-      }
-      try {
-        return runtime.createPageRuntime(initialPageDataRef.current);
-      // Errors routed through import error state — prepare failure caught in catch handler
-      } catch (error) {
-        creationErrorRef.current = error;
-        return undefined as unknown as import('@nop-chaos/flux-core').PageRuntime;
-      }
-    }, [runtime]);
-    const ownedSurfaceRuntime = useMemo(() => {
-      if (creationErrorRef.current) {
-        return undefined as unknown as import('@nop-chaos/flux-core').SurfaceRuntime;
-      }
-      try {
-        return runtime.createSurfaceRuntime();
-      // Errors routed through import error state — prepare failure caught in catch handler
-      } catch (error) {
-        creationErrorRef.current = error;
-        return undefined as unknown as import('@nop-chaos/flux-core').SurfaceRuntime;
-      }
-    }, [runtime]);
+    // plan 841: creation failures emit one monitor event per distinct failure
+    // (phase 'render'), via an effect so render stays pure — the failure render
+    // happens outside MonitorContext.Provider, hence the direct ref read.
+    const reportedCreationErrorRef = useRef<unknown>(null);
 
     useEffect(() => {
-      if (creationErrorRef.current || !page) {
+      if (creation.ok || creation.error === reportedCreationErrorRef.current) {
+        return;
+      }
+      reportedCreationErrorRef.current = creation.error;
+      emitMonitorError(monitorRef.current, {
+        type: 'error',
+        phase: 'render',
+        error: creation.error,
+        details: { source: 'runtime-creation' },
+      });
+    }, [creation]);
+
+    useEffect(() => {
+      if (!page) {
         return;
       }
       const attachExternalPageStoreSync = (page as PageRuntimeWithExternalSync).__attachExternalPageStoreSync;
@@ -280,7 +306,7 @@ export function createSchemaRenderer(registryDefinitions: RegisteredRendererDefi
     }, [page]);
 
     useEffect(() => {
-      if (creationErrorRef.current || !page) {
+      if (!page) {
         return;
       }
       if (!initialDataAppliedRef.current) {
@@ -306,7 +332,7 @@ export function createSchemaRenderer(registryDefinitions: RegisteredRendererDefi
     }, [page, pageData]);
 
     useEffect(() => {
-      if (creationErrorRef.current || !runtime || !page) {
+      if (!runtime || !page) {
         return;
       }
       // FM-028 F3: setEnv is a ref swap (runtime env consumers read lazily at
@@ -325,21 +351,21 @@ export function createSchemaRenderer(registryDefinitions: RegisteredRendererDefi
       },
     });
 
-    const rootScope = props.parentScope ?? page.scope;
-    const rootValidationOwner: ValidationContextValue = props.parentScope
-      ? NO_VALIDATION_OWNER
-      : page.validationOwner;
-    const surfaceRuntime = props.surfaceRuntime ?? ownedSurfaceRuntime;
     const rootActionScope = useMemo(
-      () => props.actionScope ?? runtime.createActionScope({ id: 'root-action-scope' }),
-      [props.actionScope, runtime],
+      () =>
+        creation.ok
+          ? (props.actionScope ?? creation.runtime.createActionScope({ id: 'root-action-scope' }))
+          : undefined,
+      [creation, props.actionScope],
     );
     const ownsRootActionScope = props.actionScope == null;
     const rootComponentRegistry = useMemo(
       () =>
-        props.componentRegistry ??
-        runtime.createComponentHandleRegistry({ id: 'root-component-registry' }),
-      [props.componentRegistry, runtime],
+        creation.ok
+          ? (props.componentRegistry ??
+            creation.runtime.createComponentHandleRegistry({ id: 'root-component-registry' }))
+          : undefined,
+      [creation, props.componentRegistry],
     );
     const ownsRootComponentRegistry = props.componentRegistry == null;
 
@@ -347,7 +373,7 @@ export function createSchemaRenderer(registryDefinitions: RegisteredRendererDefi
       value: rootActionScope,
       isEnabled: ownsRootActionScope,
       dispose: (disposedScope) => {
-        runtime.releaseActionScope(disposedScope);
+        runtime?.releaseActionScope(disposedScope);
       },
     });
 
@@ -361,7 +387,7 @@ export function createSchemaRenderer(registryDefinitions: RegisteredRendererDefi
 
     useEffect(() => {
       return () => {
-        if (!ownsRootActionScope) {
+        if (!ownsRootActionScope || !rootActionScope) {
           return;
         }
 
@@ -372,7 +398,7 @@ export function createSchemaRenderer(registryDefinitions: RegisteredRendererDefi
     }, [ownsRootActionScope, rootActionScope]);
 
     useEffect(() => {
-      onRuntimeChange?.(runtime);
+      onRuntimeChange?.(runtime ?? null);
 
       return () => {
         onRuntimeChange?.(null);
@@ -380,8 +406,8 @@ export function createSchemaRenderer(registryDefinitions: RegisteredRendererDefi
     }, [onRuntimeChange, runtime]);
 
     useEffect(() => {
-      onComponentRegistryChange?.(rootComponentRegistry);
-      page.refresh();
+      onComponentRegistryChange?.(rootComponentRegistry ?? null);
+      page?.refresh();
 
       return () => {
         onComponentRegistryChange?.(null);
@@ -389,13 +415,12 @@ export function createSchemaRenderer(registryDefinitions: RegisteredRendererDefi
     }, [onComponentRegistryChange, rootComponentRegistry, page]);
 
     useEffect(() => {
-      onActionScopeChange?.(rootActionScope);
+      onActionScopeChange?.(rootActionScope ?? null);
 
       return () => {
         onActionScopeChange?.(null);
       };
     }, [onActionScopeChange, rootActionScope]);
-    const renderScope = rootScope;
     const hasSchemaImports = useMemo(
       () => collectSchemaImports(props.schema).length > 0, // raw-schema: retained(#12)
       [props.schema], // raw-schema: retained(#12)
@@ -415,6 +440,12 @@ export function createSchemaRenderer(registryDefinitions: RegisteredRendererDefi
       setPrepareError(null);
 
       if (!hasSchemaImports) {
+        return () => {
+          controller.abort();
+        };
+      }
+
+      if (!runtime) {
         return () => {
           controller.abort();
         };
@@ -467,8 +498,8 @@ export function createSchemaRenderer(registryDefinitions: RegisteredRendererDefi
 
     const strictMode = isStrictValidationEnabled(props.strictValidation);
 
-    if (creationErrorRef.current) {
-      return <SchemaRootError error={creationErrorRef.current} />;
+    if (!creation.ok) {
+      return <SchemaRootError error={creation.error} />;
     }
 
     if (prepareError) {
@@ -479,24 +510,31 @@ export function createSchemaRenderer(registryDefinitions: RegisteredRendererDefi
       return <SchemaRootStatus message="Preparing schema imports." />;
     }
 
+    // Below this line `creation` is the ok variant, so the owned values are
+    // defined by construction; `requireOwned` narrows the memo results whose
+    // declared type still carries the failure-render `undefined`.
     return (
-      <div data-runtime-id={runtime.runtimeId} className="contents">
+      <div data-runtime-id={creation.runtime.runtimeId} className="contents">
+        <MonitorContext.Provider value={props.monitor}>
         <SchemaRootErrorBoundary>
           <CompiledSchemaTree
-            runtime={runtime}
+            runtime={creation.runtime}
             schema={props.schema} // raw-schema: retained(#1)
             schemaUrl={props.schemaUrl}
             env={props.env}
             preparedImports={preparedImports}
             strictMode={strictMode}
-            renderScope={renderScope}
-            page={page}
-            rootValidationOwner={rootValidationOwner}
-            surfaceRuntime={surfaceRuntime}
-            rootActionScope={rootActionScope}
-            rootComponentRegistry={rootComponentRegistry}
+            renderScope={props.parentScope ?? creation.page.scope}
+            page={creation.page}
+            rootValidationOwner={
+              props.parentScope ? NO_VALIDATION_OWNER : creation.page.validationOwner
+            }
+            surfaceRuntime={props.surfaceRuntime ?? creation.surface}
+            rootActionScope={requireOwned(rootActionScope, 'root action scope')}
+            rootComponentRegistry={requireOwned(rootComponentRegistry, 'root component registry')}
           />
         </SchemaRootErrorBoundary>
+        </MonitorContext.Provider>
       </div>
     );
   };

@@ -1,7 +1,10 @@
 import { Component, Fragment } from 'react';
 import type { ReactNode } from 'react';
 import { AlertCircleIcon } from 'lucide-react';
+import type { RendererMonitor } from '@nop-chaos/flux-core';
 import { Alert, AlertAction, AlertDescription, Button, cn } from '@nop-chaos/ui';
+import { MonitorContext } from './contexts.js';
+import { emitMonitorError } from './monitor-emit.js';
 
 interface NodeErrorBoundaryProps {
   children: ReactNode;
@@ -100,8 +103,12 @@ export class SchemaRootErrorBoundary extends Component<
     return { hasError: true, error };
   }
 
+  static contextType = MonitorContext;
+  declare context: RendererMonitor | undefined;
+
   componentDidCatch(error: unknown, info: import('react').ErrorInfo) {
     console.error('[SchemaRenderer] Root render error:', error, info.componentStack);
+    emitMonitorError(this.context, { type: 'error', phase: 'render', error });
   }
 
   handleRetry = () => {
@@ -137,9 +144,13 @@ export class NodeErrorBoundary extends Component<NodeErrorBoundaryProps, NodeErr
     return { hasError: true, error };
   }
 
+  static contextType = MonitorContext;
+  declare context: RendererMonitor | undefined;
+
   componentDidCatch(error: unknown, info: import('react').ErrorInfo) {
     const nodeId = this.props.nodeId ?? 'unknown';
     console.error(`[NodeRenderer] Render error in node "${nodeId}":`, error, info.componentStack);
+    emitMonitorError(this.context, { type: 'error', phase: 'render', error, nodeId });
   }
 
   handleRetry = () => {

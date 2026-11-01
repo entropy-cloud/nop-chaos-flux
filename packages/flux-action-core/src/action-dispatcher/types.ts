@@ -6,6 +6,7 @@ import type {
   CompiledActionProgram,
   ExpressionCompiler,
   RendererEnv,
+  RendererMonitor,
   RendererPlugin,
 } from '@nop-chaos/flux-core';
 import type { ActionEvaluator } from '../action-core.js';
@@ -21,6 +22,7 @@ export interface ActionDispatcherConfig {
   getEnv: () => RendererEnv;
   plugins?: RendererPlugin[];
   onActionError?: (error: unknown, ctx: ActionContext) => void;
+  monitor?: RendererMonitor;
   evaluator: ActionEvaluator;
   adapter: ActionRuntimeAdapter;
   expressionCompiler?: ExpressionCompiler;
@@ -37,6 +39,7 @@ export interface ActionDispatcherContext {
   getEnv: () => RendererEnv;
   plugins?: RendererPlugin[];
   onActionError?: (error: unknown, ctx: ActionContext) => void;
+  monitor?: RendererMonitor;
   evaluator: ActionEvaluator;
   adapter: ActionRuntimeAdapter;
   expressionCompiler?: ExpressionCompiler;
