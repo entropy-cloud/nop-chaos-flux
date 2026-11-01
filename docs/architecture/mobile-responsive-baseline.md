@@ -61,7 +61,8 @@ safe-area-inset-right
 
 ```css
 /* 契约定义，归属 @nop-chaos/ui。
- * 实现状态：todo（M0.1a），当前代码库尚未实现。 */
+ * 实现状态：已落地（2026-06-22，commit 540cb8e40）：packages/ui/src/styles/mobile.css
+ * 定义四类，packages/ui/src/mobile-styles.test.ts 钉住。 */
 .nop-safe-top {
   padding-top: env(safe-area-inset-top);
 }

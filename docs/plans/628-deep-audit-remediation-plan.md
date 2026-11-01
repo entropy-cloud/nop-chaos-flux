@@ -1,9 +1,71 @@
 # 628 Deep-Audit Four-Track Remediation Plan（全仓缺口与技术债修正）
 
-> Plan Status: active
-> Last Reviewed: 2026-10-17
+> Plan Status: superseded
+> Last Reviewed: 2026-11-02
+> Superseded By: `docs/plans/841-plan-628-code-debt-observability-plan.md`（代码债子集）+ `docs/plans/840-governance-doc-drift-1102-plan.md`（治理收编与文档漂移）；residual 见下方 Supersession Note
 > Source: 2026-10-17 四轨深度审查（核心管线架构 / 渲染器体系 / 测试工程化 / 项目定位），全部发现已逐条对照 live repo 核实；`docs/analysis/2026-10-16-deep-audit-report.md`（前次审计，其 findings 已由 plans 622-627 收口，本计划不重复）
-> Related: `docs/plans/622-owner-doc-drift-remediation-plan.md`（completed）、`docs/plans/623-e2e-skip-governance-plan.md`（completed）、`docs/plans/624-package-manifest-baseline-hygiene-plan.md`（completed）、`docs/plans/625-plan-status-machine-maintenance-plan.md`（completed）、`docs/plans/626-scanner-ratchet-stringify-equality-plan.md`（completed）、`docs/plans/627-loop-closing-consistency-plan.md`（completed）、`docs/plans/621-xlang-debug-editor-assembly-plan.md`（active，并发会话领地——本计划排除 xlang 域）、`docs/backlog/cross-roadmap-remediation-roadmap.md`（UR-1~UR-20，源自在册 roadmap 盘点，与本计划发现集不重叠）
+> Related: `docs/plans/622-owner-doc-drift-remediation-plan.md`（completed）、`docs/plans/623-e2e-skip-governance-plan.md`（completed）、`docs/plans/624-package-manifest-baseline-hygiene-plan.md`（completed）、`docs/plans/625-plan-status-machine-maintenance-plan.md`（completed）、`docs/plans/626-scanner-ratchet-stringify-equality-plan.md`（completed）、`docs/plans/627-loop-closing-consistency-plan.md`（completed）、`docs/plans/621-xlang-debug-editor-assembly-plan.md`（completed 2026-10-31——起草时 active，现勘正）、`docs/backlog/cross-roadmap-remediation-roadmap.md`（UR-1~UR-20，源自在册 roadmap 盘点，与本计划发现集不重叠）
+
+## Supersession Note（2026-11-02，plan 840 收编）
+
+本计划 active 16 天零执行零认领（0/84 勾选），且基线节起草时已部分失真（下表〔已解决〕项）。2026-11-02 深审计（`docs/audits/deep-audit-2026-11-02.md` §2 GV1）逐条 triage 后收编：仍成立的代码债由 plan 841 接续，文档/manifest 漂移由 plan 840 修正，其余按类裁定如下。计数口径：A 轨「8 项」指 Current Baseline §A 的 8 条 gap bullet。
+
+### A 轨（核心架构类型债）
+
+| 条目                                       | Disposition                                                                                                                                                          |
+| ------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 失败态类型伪造（schema-renderer）          | → plan 841 Phase 1（现存 5 处，较起草时 3 处有增长）                                                                                                                 |
+| `runtime.ts:590 renderSurface => any`      | → plan 841 Phase 1                                                                                                                                                   |
+| flux-react `as unknown as` 15 处           | 5 处失败态 → plan 841；其余 10 处 → residual：optimization candidate（ratchet 外存量、无行为风险）                                                                   |
+| test-support 入口依赖 devDep flux-compiler | residual：optimization candidate（测试支撑面，无生产影响）                                                                                                           |
+| action-adapter 引 flux-i18n 传递耦合       | residual：optimization candidate（需 i18n 下沉设计，单独节奏）                                                                                                       |
+| 依赖集归一化双层实现                       | residual：optimization candidate（行为正确，仅结构冗余）                                                                                                             |
+| 宽门面拆分 + runtime-factory ≤500 行       | residual：optimization candidate（factory 现 681 行，反增；重构回归面大）                                                                                            |
+| schema 编译跨实例缓存                      | 部分落地：plan 643-fm2 二级 WeakMap + P14 input 级缓存已落地（`render-nodes.tsx:137-159`，判别测试在案）；registry epoch/LRU 上限 → residual：optimization candidate |
+
+### B 轨（验证基线）
+
+| 条目                                | Disposition                                                                                                                                               |
+| ----------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| playground vite.config typecheck 红 | ✅ 已解决：plan 664（commit 249821d7f，2026-10-19）；其后各轮 typecheck 46/46 全绿                                                                        |
+| scada-editor-perf ×3 裁决           | ✅ 已解决：plan 700（completed 2026-10-23）console-gate 归门 + PH-9 台账在册（`e2e-baseline-ledger.md:92,207`）；project-context 过期注记由 plan 840 修正 |
+| watch-only ×3 的 60Hz 假设改造      | residual：optimization candidate（plan 700 复测维持标记；度量改造属 perf 专项）                                                                           |
+| 全量 e2e sweep 重跑落档             | ✅ 部分解决：2026-11-01 隔离全量 2140 tests 已跑并落档（`deep-audit-2026-11-01.md` §7）；18 项台账外红 → plan 836 在办                                    |
+| playground 4 test 红                | ✅ 已解决：plan 621 收口流程完成；2026-11-01 起 turbo test 86/86 全绿                                                                                     |
+
+### C 轨（静态债）
+
+| 条目                                | Disposition                                                                                                                                             |
+| ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| knip 949 条全量 triage              | 部分解决：plan 822 手术收缩（10 条陈旧行 + live 对账）；2026-11-02 复测门禁面零新增 → 剩余 triage：residual（optimization candidate，ratchet 保证不增） |
+| scanner 七类 2,093 条 triage        | residual：optimization candidate（五类较基线反增系基线登记放宽所致，live 2026-11-02 全部 ≤ registered）                                                 |
+| duplicates 597/2.99% triage         | residual：optimization candidate（live 已降至 533/2.3%，2026-11-02 实测）                                                                               |
+| 超大文件治理                        | 部分解决：form-runtime-owner.ts 已注册豁免；其余 >500 行文件逐个 triage → residual（owner plan 784 负责 docs 面；代码面残留为 advisory WARN 线）        |
+| 薄弱测试包 triage                   | partial：spreadsheet-renderers/flux-bundle 已有 `__tests__/`；editor-core/flux-i18n/theme-tokens 三薄壳包 → residual（数据/打包薄壳，无核心逻辑可测）   |
+| flux-compiler 测试归位 `__tests__/` | residual：optimization candidate（src 根散置现 43 个，纯结构整理）                                                                                      |
+
+### D 轨（文档自认缺口）
+
+| 条目                                               | Disposition                                                                                                                                                                                                 |
+| -------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 错① FAIL_ON_SCHEMA_DIAGNOSTICS 无效                | ✅ 已解决：plan 595（commit 2f352d250，早于本计划起草——起草时基线已失真）；flux-guide 文档过期声称由 plan 841 Phase 4 回写                                                                                  |
+| 错② onActionError 钩子自失败无遥测                 | → plan 841 Phase 3（console.warn 已有，monitor 上报缺）                                                                                                                                                     |
+| 错③ onSettled 子链 throw 静默                      | ✅ 已解决：先于本计划（`action-execution.ts:633-635` notify + reportActionError）；文档过期声称由 plan 841 Phase 4 回写                                                                                     |
+| 错④ 渲染期 throw 不上报 monitor                    | → plan 841 Phase 2+3                                                                                                                                                                                        |
+| 错⑤ 合成事件名单硬编码                             | → plan 841 Phase 3                                                                                                                                                                                          |
+| Monitor navigate 事件                              | → 拆解：flux-monitor.md Rule 14 失真（目标设计写成现状）→ plan 841 Phase 4 重写 + 最小通道 Phase 2；完整 union（navigate/api 全家族）→ residual：out-of-scope improvement（feature 节奏，roadmap 复审裁决） |
+| Surface lifecycle 两段 planned                     | residual：out-of-scope improvement（依赖 runtime schema validator，前置不存在）                                                                                                                             |
+| safe-area 四类                                     | ✅ 已解决：2026-06-22 已落地（540cb8e40，`packages/ui/src/styles/mobile.css:11-24` + `mobile-styles.test.ts`）——起草时「尚未实现」声称与代码事实矛盾；owner-doc 漂移由 plan 840 Phase 2 修正                |
+| i18n 运行时翻译 runtime                            | residual：out-of-scope improvement（feature，`frontend-programming-model.md` DESIGN-ACK 在案）                                                                                                              |
+| Picker 多选标签 UI                                 | residual：out-of-scope improvement（feature，`flux-guide/09-amis-migration.md` Deferred 已指名 successor 归属 roadmap）                                                                                     |
+| ui package description 含 Radix 字样               | → plan 840 Phase 2（收编清点时追加的同类漂移修正项）                                                                                                                                                        |
+| form-advanced node_modules / src/node_modules 残留 | → plan 840 Phase 2（收编清点时追加；删前先核内容非跟踪面）                                                                                                                                                  |
+| taskflow/designer View/mobile 扩展 successor 建档  | residual：out-of-scope improvement（roadmap 级 feature，入口已在 `docs/architecture/taskflow-visual-designer.md`、`designer-view-vs-edit.md` 等自认文档）                                                   |
+| 维护者交接包                                       | residual：out-of-scope improvement（docs 交付物，`docs/context/` 现有五件套已可用；交接包为增强非缺口）                                                                                                     |
+
+### E 轨（领地与在途边界）
+
+xlang 域排除前提已消失（plan 621 completed 2026-10-31）；UR-1~UR-20 队列维持独立轨道不变。
 
 ## Purpose
 

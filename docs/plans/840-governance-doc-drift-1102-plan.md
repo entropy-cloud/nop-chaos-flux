@@ -1,6 +1,6 @@
 # 840 治理收编与文档漂移收口（deep-audit 2026-11-02 GV1/GV3-GV5/GV7）
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-11-02
 > Source: `docs/audits/deep-audit-2026-11-02.md` §2（GV1、GV3-GV5、GV7）
 > Related: plan 628（本计划收编对象）、plan 841（承接 628 的代码债子集）、plan 784（PH-20 文档拆分，独立 owner，不触碰）
@@ -51,50 +51,50 @@
 
 ### Phase 1 - 628 收编（GV1）
 
-Status: planned
+Status: completed
 Targets: `docs/plans/628-deep-audit-remediation-plan.md`
 
 - Item Types: `Decision | Proof`
 
-- [ ] Decision：以治理审计矩阵（`docs/audits/deep-audit-2026-11-02.md` §2 GV1）为底稿，在 628 内新增 `## Supersession Note`：逐条 disposition——（a）已解决项附证据（plan 号 + file:line / 测试文件）；（b）4 项代码债标注 → plan 841（计数口径注记：A 轨「8 项」指 baseline §A 的 8 条 gap bullet，非 execution checklist 计数）；（c）residual 逐项给 Classification（`optimization candidate` / `out-of-scope improvement`）+ Why Not Blocking + Successor 归属（841 或无——无 owner 的写明"roadmap 复审时再裁决"，不得留空）
-- [ ] Fix：628 header `Plan Status: active` → `superseded`；Last Reviewed 更新为 2026-11-02；Related 行 621 状态引用修正
-- [ ] Proof：grep 628 无残留 "Plan Status: active"；Supersession Note 覆盖其全部 84 个 checklist 项所在 track（按 track 汇总即可，不逐 checkbox 复写）
+- [x] Decision：以治理审计矩阵（`docs/audits/deep-audit-2026-11-02.md` §2 GV1）为底稿，在 628 内新增 `## Supersession Note`：逐条 disposition——（a）已解决项附证据（plan 号 + file:line / 测试文件）；（b）4 项代码债标注 → plan 841（计数口径注记：A 轨「8 项」指 baseline §A 的 8 条 gap bullet，非 execution checklist 计数）；（c）residual 逐项给 Classification（`optimization candidate` / `out-of-scope improvement`）+ Why Not Blocking + Successor 归属（841 或无——无 owner 的写明"roadmap 复审时再裁决"，不得留空）
+- [x] Fix：628 header `Plan Status: active` → `superseded`；Last Reviewed 更新为 2026-11-02；Related 行 621 状态引用修正
+- [x] Proof：grep 628 无残留 "Plan Status: active"；Supersession Note 覆盖其全部 84 个 checklist 项所在 track（按 track 汇总即可，不逐 checkbox 复写）
 
 Exit Criteria:
 
-- [ ] 628 内 `> Plan Status: superseded` 且 Supersession Note 三类 disposition 齐全、无悬空归属
-- [ ] 本计划（840）与 841 的相互引用成立（628 → 841 路径真实存在）
+- [x] 628 内 `> Plan Status: superseded` 且 Supersession Note 三类 disposition 齐全、无悬空归属
+- [x] 本计划（840）与 841 的相互引用成立（628 → 841 路径真实存在）
 
-### Phase 2 - owner-doc 漂移修正（GV3、GV5）
+### Phase 2 - owner-doc 漂移修正（GV3、GV5、628 D 轨追加项）
 
-Status: planned
+Status: completed
 Targets: `docs/context/project-context.md`、`docs/architecture/mobile-responsive-baseline.md`
 
 - Item Types: `Fix`
 
-- [ ] Fix（GV3）：project-context.md:17 的 scada-editor-perf 待裁决文本就地更新为 plan 700 裁决终态（console-gate 归门、PH-9 台账在册、附 ledger 行号）
-- [ ] Fix（GV5）：mobile-responsive-baseline.md:64 safe-area 状态行改为已落地（附 `packages/ui/src/styles/mobile.css` 与测试文件指针），删除 todo（M0.1a）标注
-- [ ] Fix（628 D 轨收编追加）：`packages/ui/package.json` description 去 Radix 字样（实际依赖 @base-ui/react）
-- [ ] Fix（628 D 轨收编追加）：删除空残留目录 `packages/flux-renderers-form-advanced/src/node_modules/`（git-ignored、零内容；包级 node_modules 为 pnpm 正常结构，不动）
+- [x] Fix（GV3）：project-context.md:17 的 scada-editor-perf 待裁决文本就地更新为 plan 700 裁决终态（console-gate 归门、PH-9 台账在册、附 ledger 行号）
+- [x] Fix（GV5）：mobile-responsive-baseline.md:64 safe-area 状态行改为已落地（附 `packages/ui/src/styles/mobile.css` 与测试文件指针），删除 todo（M0.1a）标注
+- [x] Fix（628 D 轨收编追加）：`packages/ui/package.json` description 去 Radix 字样（实际依赖 @base-ui/react）
+- [x] Fix（628 D 轨收编追加）：删除空残留目录 `packages/flux-renderers-form-advanced/src/node_modules/`（git-ignored、零内容；包级 node_modules 为 pnpm 正常结构，不动）
 
 Exit Criteria:
 
-- [ ] 四处与 live repo 可观测事实一致（按上列指针可复核）；`src/node_modules` 不复存在
+- [x] 四处与 live repo 可观测事实一致（按上列指针可复核）；`src/node_modules` 不复存在
 
 ### Phase 3 - manifest 依赖声明（GV7）
 
-Status: planned
+Status: completed
 Targets: `apps/playground/package.json`
 
 - Item Types: `Fix | Proof`
 
-- [ ] Fix：dependencies 补 `"@nop-chaos/flux-renderers-pivot": "workspace:*"`、`"@nop-chaos/flux-renderers-industrial": "workspace:*"`（industrial 已有 `./runtime` export，pivot 走主入口，均无需补 export）
-- [ ] Proof：`pnpm install` 后 `node scripts/check-knip-baseline.mjs` 绿且 live unlisted 降至基线以下（预期 ≈21）；`pnpm check:workspace-manifest-deps` 绿
+- [x] Fix：dependencies 补 `"@nop-chaos/flux-renderers-pivot": "workspace:*"`、`"@nop-chaos/flux-renderers-industrial": "workspace:*"`（industrial 已有 `./runtime` export，pivot 走主入口，均无需补 export）
+- [x] Proof：`pnpm install` 后 `node scripts/check-knip-baseline.mjs` 绿且 live unlisted 降至基线以下（预期 ≈21）；`pnpm check:workspace-manifest-deps` 绿
 
 Exit Criteria:
 
-- [ ] knip live unlisted 37→≈21（< 基线 35，不触碰基线 JSON）；check 链相关单项绿
-- [ ] playground dev/build 不受影响（`pnpm --filter @nop-chaos/flux-playground typecheck` 局部绿）
+- [x] knip live unlisted 37→≈21（< 基线 35，不触碰基线 JSON）；check 链相关单项绿
+- [x] playground dev/build 不受影响（`pnpm --filter @nop-chaos/flux-playground typecheck` 局部绿）
 
 ## Draft Review Record
 
@@ -105,14 +105,14 @@ Exit Criteria:
 
 ## Closure Gates
 
-- [ ] GV1/GV3/GV5/GV7 全部落地
-- [ ] 不存在被静默降级的 in-scope 缺陷
-- [ ] 独立子 agent（fresh session）closure audit 通过并记录证据
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
-- [ ] `pnpm check`
+- [x] GV1/GV3/GV5/GV7 全部落地
+- [x] 不存在被静默降级的 in-scope 缺陷
+- [x] 独立子 agent（fresh session）closure audit 通过并记录证据（agent_66ba5cb2-ad91-4f43-8099-1d5569dcd4f3，approved 零 Blocker/Major/阻塞 Minor）
+- [x] `pnpm typecheck`
+- [x] `pnpm build`
+- [x] `pnpm lint`
+- [x] `pnpm test`
+- [x] `pnpm check`
 
 ## Deferred But Adjudicated
 
@@ -124,13 +124,13 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: 待收口填写
+Status Note: GV1（628 superseded + 逐条 disposition 矩阵）/GV3/GV5/GV7 + 628 D 轨追加两项（ui description、src/node_modules 残留）全部落地；playground pivot/industrial unlisted 16→0、live 总数 37→21（< 基线 35，基线 JSON 未触碰）、check-knip-baseline 绿、lockfile 仅 +6 行 importer、playground typecheck 绿。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: 待填写
-- Evidence: 待填写
+- Auditor / Agent: 独立 fresh-session 子代理（agent_66ba5cb2-ad91-4f43-8099-1d5569dcd4f3），2026-11-02
+- Evidence: 三 Phase 落地逐项 git diff 实证（628 supersession header/Related/Supersession Note、project-context :17、mobile baseline :63-65、ui description、src/node_modules 删除、manifest + lockfile +6 行 importer）；16 条声称-实况抽核全部成立（plan 595/664/700 证据、schema-renderer 5 处伪造现状、factory 681 行、duplicates 533/2.3%、flux-compiler 43 test 等）；本轮独立复跑 knip gate 绿 + live unlisted 21 + playground typecheck 绿；628 disposition 零悬空归属；审计临时产物已清理
 
 Follow-up:
 
-- 待收口填写
+- knip 基线 counts.unlisted 35 头相对 live 数值性过期（评审 Minor，记 daily log，下次基线 sync 顺带）

@@ -212,6 +212,9 @@ importers:
       '@nop-chaos/flux-renderers-form-advanced':
         specifier: workspace:*
         version: link:../../packages/flux-renderers-form-advanced
+      '@nop-chaos/flux-renderers-industrial':
+        specifier: workspace:*
+        version: link:../../packages/flux-renderers-industrial
       '@nop-chaos/flux-renderers-layout':
         specifier: workspace:*
         version: link:../../packages/flux-renderers-layout
@@ -221,6 +224,9 @@ importers:
       '@nop-chaos/flux-renderers-mobile':
         specifier: workspace:*
         version: link:../../packages/flux-renderers-mobile
+      '@nop-chaos/flux-renderers-pivot':
+        specifier: workspace:*
+        version: link:../../packages/flux-renderers-pivot
       '@nop-chaos/flux-runtime':
         specifier: workspace:*
         version: link:../../packages/flux-runtime
