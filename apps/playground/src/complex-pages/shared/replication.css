@@ -271,6 +271,16 @@
   border-radius: 0.375rem;
 }
 
+/*
+ * C3 crm-sales-dashboard 漏斗 bar 面板（plan 847 U2 F-C3-1）：ChartContainer
+ * 默认 aspect-video 与 chart 固定 height(270) 叠加 → svg 宽被钉在 270×16/9=480px，
+ * 而面板 w=4 仅 ~339px → 6 根 bar 右侧被面板裁切（浅/深两主题同现）。
+ * 页面级解除纵横比钉扎，让 recharts 响应容器按面板实测宽渲染。
+ */
+[data-panel-id='funnel-bar'] [data-slot='chart'] {
+  aspect-ratio: auto;
+}
+
 .repl-conf-high {
   color: #15803d;
 }

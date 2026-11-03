@@ -201,7 +201,6 @@ PAGE_DATA['crm-sales-dashboard'] = {
       y: 0,
       w: 3,
       h: 2,
-      title: '漏斗总额',
       props: {
         testid: 'crm-sales-dashboard-kpi-funnel',
         label: '漏斗总额（万元）',
@@ -217,7 +216,6 @@ PAGE_DATA['crm-sales-dashboard'] = {
       y: 0,
       w: 3,
       h: 2,
-      title: '转化率',
       props: {
         testid: 'crm-sales-dashboard-kpi-conversion',
         label: '商机转化率',
@@ -233,7 +231,6 @@ PAGE_DATA['crm-sales-dashboard'] = {
       y: 0,
       w: 3,
       h: 2,
-      title: '预测达成',
       props: {
         testid: 'crm-sales-dashboard-kpi-forecast',
         label: '预测达成率',
@@ -249,7 +246,6 @@ PAGE_DATA['crm-sales-dashboard'] = {
       y: 0,
       w: 3,
       h: 2,
-      title: '配额完成',
       props: {
         testid: 'crm-sales-dashboard-kpi-quota',
         label: '配额完成率',
