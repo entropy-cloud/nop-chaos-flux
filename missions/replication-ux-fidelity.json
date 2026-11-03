@@ -1,0 +1,10 @@
+{
+  "name": "replication-ux-fidelity",
+  "description": "复刻页 UX 保真 mission：以~/app/nop-app-mall上游商城移动端（12 个 flux.yaml 页面 + next 壳 .mall-* 品牌样式 + TSX 对照 git 历史）为样式与交互基准，对 business-page-replication 交付的二十一页复杂页面逐页渲染面深修。范围（roadmap work items U0-U9）：①U0 上游基准提取与方法定标（上游基准卡 docs/analysis/replication-ux/upstream-mall-mobile-baseline.md、四审计 skill 分工、S1↔goods-detail 逐页对标/W1·M3 移动形态组件级基准裁决、分组 plan 拆分）；②U1 mobile 族三页（W1/M3/S1）对齐深修；③U2-U5 桌面域四批（W2/W3/C1/C2/C3、I1/I2/K1/K2/K3、M1/M2/S2/O1/O2、V1/V2/V3）逐页走查+修复；④U6 系统性归族与设计系统层整改（字母后缀拆批预授权）；⑤U7 同探针复检+覆盖对账（21/21 uncovered=0）；⑥U8/U9 阶段深审+开审。工作流：统一 docs/skills/visual-page-quality-inspection-prompt.md 三步法（自由 critique→维度 grounding→逐条程序化取证）+ A-H 评分卡 + 浅/深双主题 + 交互中间态；每页修复后 focused e2e --retries=0 全绿为硬门（断言不得为视觉修复弱化，调整须逐条裁决）；发现强制归族（systemic→U6 设计系统整改 / local→修复批 / watch-only→登记 residual 带 Why Not Blocking）。授权约束：packages/ui 公共导出面、样式契约、flux-core 编译内核为保护区域，触及须独立 plan + 人工确认；渲染器级缺陷就地修复或登记 improvement-analysis，新 type 只登记不立项；不改上游 nop-app-mall 任何文件；执行 agent 需多模态读图能力（快照目视用于诊断评审，pass/fail 判据必须程序化）；截图证据落 _tmp/ 永不入库。沿用指针：R2 固化探针（tests/e2e/helpers/ visual-contrast/form-actions-alignment/overlay-actions-alignment/interaction-state-probes）直接复用；R2 findings 台账为归族去重对照。commitFormat：每 plan 收口自动提交一次（用户常设指令），提交信息含 full-green 状态时标题须显式提及。",
+  "version": "1.0.0",
+  "status": "active",
+  "startDate": "2026-11-02",
+  "targetDate": "2026-12-15",
+  "owner": "nop-chaos-flux",
+  "roadmapPath": "docs/backlog/replication-ux-fidelity-roadmap.md"
+}
