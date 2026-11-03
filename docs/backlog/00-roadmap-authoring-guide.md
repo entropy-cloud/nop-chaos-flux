@@ -91,12 +91,30 @@ Omit sections that do not apply (for example, an artifact/entity coverage map on
 
 All status changes are driven by the plan lifecycle:
 
-| Event                                 | Update                                 | Precondition                         |
-| ------------------------------------- | -------------------------------------- | ------------------------------------ |
-| Draft review passes                   | Phase `todo` -> `planned`              | Plan passed independent draft review |
-| Closure audit passes                  | Phase `planned` -> `done`              | Must wait for closure audit to pass  |
-| Closure reveals new reuse opportunity | Update the Reuse section and the phase | Plan closed                          |
-| New or adjusted owner doc             | Check impact on Phase Details          | —                                    |
+| Event                                 | Update                                                  | Precondition                         |
+| ------------------------------------- | ------------------------------------------------------- | ------------------------------------ |
+| Draft review passes                   | Phase `todo` -> `planned`                               | Plan passed independent draft review |
+| Closure audit passes                  | Phase `planned` -> `done`                               | Must wait for closure audit to pass  |
+| Closure reveals new reuse opportunity | Update the Reuse section and the phase                  | Plan closed                          |
+| New or adjusted owner doc             | Check impact on Phase Details                           | —                                    |
+| Roadmap completes (last phase `done`) | Run the completion bugs/lessons summary (section below) | Last phase closure audit passed      |
+
+## Completion: Bugs And Lessons Summary
+
+When the last phase of a roadmap reaches `done`, close the roadmap with a completion
+summary pass over the whole delivery instead of just walking away:
+
+1. **Summarize what needs recording.** Walk the delivered phases and decide whether
+   they surfaced fixed non-obvious regressions or durable reusable lessons. Fixed
+   regressions belong in `docs/bugs/` per `docs/bugs/00-bug-fix-note-writing-guide.md`;
+   lessons belong in `docs/lessons/`.
+2. **Record the items that meet the bar, without duplicating existing records.**
+   Search `docs/bugs/` and `docs/lessons/` first and write only genuinely new
+   entries; a recurrence of an already-recorded pattern is promoted via the
+   skill/checklist route instead of a second note.
+3. **State the outcome.** Record the summary conclusion — including "nothing new
+   to record" when that is the honest result — in the dev-log entry for the
+   roadmap closure.
 
 ## Anti-Patterns
 
