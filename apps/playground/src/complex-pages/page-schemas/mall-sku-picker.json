@@ -19,6 +19,7 @@
           "direction": "column",
           "gap": 8,
           "testid": "mall-sku-picker-shell",
+          "className": "repl-mall-shell",
           "body": [
             {
               "type": "data-source",
@@ -339,6 +340,7 @@
             {
               "type": "floating-panel",
               "testid": "mall-sku-picker-panel",
+              "className": "repl-mall-panel-lift",
               "anchors": [200, 480],
               "onChange": [
                 {
@@ -509,6 +511,7 @@
                     "label": "加入购物车",
                     "variant": "outline",
                     "testid": "mall-sku-picker-add-cart",
+                    "className": "repl-mall-btn-cart",
                     "disabled": "${(ARRAYFILTER(goodsDetail?.skuMatrix ?? [], r => r?.specs?.color === selectedColor && r?.specs?.size === selectedSize)[0]?.stock ?? 0) <= 0}",
                     "onClick": {
                       "action": "ajax",
@@ -538,6 +541,7 @@
                     "label": "立即抢购",
                     "variant": "primary",
                     "testid": "mall-sku-picker-buy-now",
+                    "className": "repl-mall-btn-buy",
                     "disabled": "${(ARRAYFILTER(goodsDetail?.skuMatrix ?? [], r => r?.specs?.color === selectedColor && r?.specs?.size === selectedSize)[0]?.stock ?? 0) <= 0}",
                     "onClick": {
                       "action": "ajax",

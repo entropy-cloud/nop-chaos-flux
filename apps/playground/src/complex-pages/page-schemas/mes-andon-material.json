@@ -7,6 +7,7 @@
       "direction": "column",
       "gap": 8,
       "testid": "mes-andon-material-shell",
+      "className": "repl-andon-shell",
       "body": [
         {
           "type": "notice-bar",

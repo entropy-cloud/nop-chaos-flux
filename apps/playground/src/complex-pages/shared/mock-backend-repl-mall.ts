@@ -108,7 +108,11 @@ export interface MallSkuRow {
 }
 
 export function mallSkuImage(seed: number): string {
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="96" height="96"><rect width="96" height="96" fill="#6366f1"/><text x="48" y="54" font-size="13" text-anchor="middle" fill="white" font-family="monospace">G${seed}</text></svg>`;
+  // 商品感占位图（plan 846 U1 F-S1-1）：种子驱动的双色渐变 + 器形剪影，
+  // 替换纯色块 + 大字占位（roadmap §2 S1 占位色块预警取证后的处置）。
+  const hue = (seed * 47) % 360;
+  const hue2 = (hue + 42) % 360;
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="480" height="480"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="hsl(${hue},72%,78%)"/><stop offset="1" stop-color="hsl(${hue2},64%,50%)"/></linearGradient></defs><rect width="480" height="480" fill="url(#g)"/><circle cx="168" cy="196" r="92" fill="rgba(255,255,255,0.34)"/><rect x="232" y="252" width="150" height="116" rx="18" fill="rgba(255,255,255,0.42)"/><rect x="96" y="316" width="180" height="14" rx="7" fill="rgba(255,255,255,0.28)"/><text x="26" y="456" font-size="30" fill="rgba(255,255,255,0.82)" font-family="monospace">G${seed}</text></svg>`;
   return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
 }
 

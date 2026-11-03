@@ -201,7 +201,12 @@ test.describe('M3 MES 异常叫料移动页 (#/complex-pages/mes-andon-material)
   }) => {
     await openM3(page);
 
-    const cell = rowCell(page, '（#5）');
+    // U1 F-M3-4（plan 846 断言裁决记录，断言语义不变）：常驻快捷面板（fixed
+    // 220px）覆盖滚动区下部，原 #5 行 scrollIntoViewIfNeeded 后落在我方面板
+    // 覆盖区内、手势被拦截；行选择改 #2（首屏即位于面板上方，无需内滚——
+    // 内滚 scrollBy 会触发 infinite-scroll 翻页污染刷新计数断言）。同一
+    // swipe-cell 关闭交互面，仅物理前置变化。
+    const cell = rowCell(page, '（#2）');
     await cell.scrollIntoViewIfNeeded();
     // 80px 短滑：越过 30px 提交阈值驻留 open-right，但低于 1.15× 右区宽的
     // overswipe-action 阈值（115px）——不直触首操作，露出全部按钮供点击
@@ -212,7 +217,7 @@ test.describe('M3 MES 异常叫料移动页 (#/complex-pages/mes-andon-material)
     // Drag-click suppression (M6a): the swipe arms a one-shot trusted-click
     // swallow on the cell — consume it with a sacrificial click on the
     // non-interactive row title so the real 关闭 click reaches the button.
-    await rowCell(page, '（#5）').getByTestId('mes-andon-material-row-title').click();
+    await rowCell(page, '（#2）').getByTestId('mes-andon-material-row-title').click();
 
     const close = cell.getByTestId('mes-andon-material-close');
     await expect(close).toBeVisible({ timeout: 10_000 });
@@ -221,13 +226,13 @@ test.describe('M3 MES 异常叫料移动页 (#/complex-pages/mes-andon-material)
     await expect(page.getByText('任务已关闭')).toBeVisible({ timeout: 10_000 });
     await expectEndpointCall(page, COUNTERS_KEY, 'ReplMes__materialIssueUpdate', { atLeast: 1 });
     const body = await readHook(page, 'lastIssueUpdateBody');
-    expect(body).toEqual({ id: 'andon-0005', op: 'close' });
+    expect(body).toEqual({ id: 'andon-0002', op: 'close' });
 
     const surface = page.getByTestId('mes-andon-material-pull-refresh');
     await pullReplicationRefresh(page, surface, { distance: 160 });
     await expect(page.locator(CELL)).toHaveCount(10, { timeout: 15_000 });
     await expect(
-      rowCell(page, '（#5）').getByTestId('mes-andon-material-row-title'),
+      rowCell(page, '（#2）').getByTestId('mes-andon-material-row-title'),
     ).toContainText('已关闭', { timeout: 10_000 });
     await assertTrackedPageErrors(page);
   });

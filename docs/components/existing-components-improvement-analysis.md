@@ -157,6 +157,7 @@ drawer 缺 `closeOnOutside`（与 dialog 不对称 bug）；两者缺 `closeOnEs
 > 2026-11-01 登记（plan 819 P1）：**scheduling 族 `calendar`(P3) 观察项——UTC 日模型**——月视图区间与「今天」按 UTC 组件计算（`calendar-date-utils.ts` getUTCMonth、`calendar.tsx` 初始 `new Date()`），UTC±N 时区的用户在每月 1 日 00:00–08:00（UTC+8）看到上月的月份网格。复刻页侧 mock 已改为 UTC 夹取对齐（plan 819）；组件语义是否切本地日/可配置时区归 scheduling 组件 owner 裁决。
 
 > 2026-11-02 登记（plan 837 P2 开放审计补登——R4 §2 声称 improvement-analysis 新增条目但底账缺行的三项 + MIN-7）：**`input-image` capture 属性**（G14，M3 现场拍照以 action-sheet+file input 近似，input 族扩展，demand-gated）；**字段渲染器 compare 变体**（G22，O2 以 labelRemark+字段对照行近似删除线/差异样式，input 族扩展，demand-gated——上游 maker-checker 04 亦为二期）；**`map` draw/modify 绘制编辑**（G24，V3 收窄裁决不做绘制交互，仅 geojsonSource 回显，map 族扩展，demand-gated）；**轮询刷新 aria-live 播报通道**（MIN-7，M1/V1 轮询数据面更新对读屏静默，data 族可及性扩展候选，demand-gated）。四项均只登记不立项。
+> 2026-11-04 登记（plan 846 U1 走查补登，只登记不立项）：**`floating-panel` 背景 CSS 变量 fallback**——渲染器 inline `background: var(--nop-floating-panel-bg)`（floating-panel.tsx）无 fallback 值，宿主未定义该变量时面板渲染为透明（列表透显，S1/M3 复刻页实证）；当前由 replication.css 页面级定义 `--nop-floating-panel-bg` 兜底，渲染器侧宜补 `var(--nop-floating-panel-bg, #ffffff)` 形式 fallback（mobile 族共性根因）。**playground 令牌裸 HSL 分量约定陷阱**——playground styles.css 的 `--card` 等令牌为裸分量（`0 0% 100%`），`var(--card)` 直作颜色值无效且 var() fallback 不生效（invalid at computed-value time → initial），页面级 CSS 必须写 `hsl(var(--card))`；属宿主约定陷阱非渲染器缺陷，U6 归族时对 replication.css 全量复核同类写法。
 
 **Flux 优于 amis 的组件（结构性优势，不掩盖）：** `loop`（强于 amis Each）、`recurse`/`fragment`/`reaction`（amis 无对应物）、`data-source`（统一 source 模型）、action graph（优于 amis 散落 actionType）。
 

@@ -20,6 +20,7 @@
       "direction": "column",
       "gap": 8,
       "testid": "wms-pda-receiving-root",
+      "className": "repl-wms-shell",
       "body": [
         {
           "type": "notice-bar",

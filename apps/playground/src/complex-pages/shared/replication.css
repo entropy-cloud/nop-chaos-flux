@@ -31,10 +31,75 @@
    * floating-bubble) so they stay inside the phone frame instead of escaping
    * to the desktop viewport. Portaled dialogs are unaffected. */
   transform: translateZ(0);
-  background: var(--background, #ffffff);
-  border: 1px solid var(--border, #e5e7eb);
+  background: hsl(var(--background, 0 0% 100%));
+  border: 1px solid hsl(var(--border, 220 13% 91%));
   border-radius: 24px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+  /* floating-panel's inline background reads this token (plan 846 U1 F-S1-3/
+   * F-M3-1: undefined in the playground → the panel rendered transparent and
+   * the list showed through). Fallback owner is the page-level CSS until the
+   * renderer-side fallback lands (registered improvement-analysis). */
+  --nop-floating-panel-bg: hsl(var(--card, 0 0% 100%));
+  /* S1 mall brand tokens (upstream-mall-mobile-baseline §2.1/§2.3 等价类移植). */
+  --repl-mall-price: #ff5000;
+  --repl-mall-gradient: linear-gradient(135deg, #ff6034, #ee0a24);
+  --repl-mall-cart-gradient: linear-gradient(90deg, #ffb03a, #ff7a2f);
+  --repl-mall-seckill-bg: linear-gradient(135deg, #ff3d3d, #ff7a2f);
+  --repl-mall-gold: #ffe9b8;
+}
+
+[data-mode='dark'] .repl-mobile-canvas-screen {
+  background: var(--repl-canvas-bg, #111214);
+  border-color: var(--repl-canvas-border, #303237);
+  --nop-floating-panel-bg: #1d1e22;
+  --repl-canvas-bg: #111214;
+  --repl-canvas-border: #303237;
+  --repl-mall-price: #ff7a45;
+  --repl-mall-gold: #ffe9b8;
+}
+
+/*
+ * Mobile shell column (plan 846 U1 F-S1-2/F-M3-1): the canvas screen is a
+ * 667px column — the page shell fills it and the pull-refresh scroller takes
+ * the remaining height instead of a fixed 300/320px strip (upstream form:
+ * full-bleed scroll body + bottom action bar, baseline §3).
+ */
+.repl-mall-shell,
+.repl-andon-shell,
+.repl-wms-shell {
+  height: 100%;
+  min-height: 0;
+}
+
+/* The screen→shell wrapper chain (nop-page → wrapper div → nop-form →
+ * wrapper div) is a column of auto-height flex boxes; without definite
+ * heights the shell's 100% collapses to content height and the canvas (not
+ * the shell) becomes the sticky/scroll context (plan 846 U1 F-S1-2). */
+.repl-mobile-canvas-screen > *,
+.repl-mobile-canvas-screen .nop-page,
+.repl-mobile-canvas-screen .nop-page > *,
+.repl-mobile-canvas-screen .nop-form,
+.repl-mobile-canvas-screen .nop-form > * {
+  height: 100%;
+  min-height: 0;
+}
+
+.repl-mall-scroll,
+.repl-andon-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  height: auto;
+}
+
+/*
+ * S1 SKU panel rests on top of the sticky footer instead of covering it
+ * (upstream goods-detail action-bar stays reachable; e2e ④/⑤ click both
+ * faces in one screen). !important beats the renderer's inline bottom: 0.
+ */
+.repl-mall-panel-lift {
+  bottom: 64px !important;
+  border-radius: 16px 16px 0 0;
+  box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.12);
 }
 
 /*
@@ -66,7 +131,7 @@
 .repl-ai-header {
   gap: 10px;
   padding-bottom: 4px;
-  border-bottom: 1px solid var(--border, #e5e7eb);
+  border-bottom: 1px solid hsl(var(--border, 220 13% 91%));
 }
 
 .repl-ai-header-title {
@@ -76,7 +141,7 @@
 
 .repl-ai-header-hint {
   font-size: 0.75rem;
-  color: var(--muted-foreground, #6b7280);
+  color: hsl(var(--muted-foreground, 220 9% 46%));
 }
 
 /*
@@ -84,11 +149,14 @@
  * as the infinite-scroll's scrollable ancestor — infinite-scroll walks up to
  * the first `overflow-y: auto/scroll` ancestor and roots its sentinel observer
  * there (infinite-scroll.tsx findScrollableAncestor); the fixed-size mobile
- * canvas never scrolls itself, so the list area gets a fixed-height scroller.
+ * canvas never scrolls itself, so the list area gets the flex remainder of
+ * the 667px screen (plan 846 U1 F-M3-1: was a fixed 300px strip).
  */
 .repl-andon-scroll {
-  height: 300px;
   overflow-y: auto;
+  /* 常驻快捷面板（fixed 220px）覆盖滚动区下部——列表末行须能滚到面板上方
+   * 才可触达（上游底部抽屉形态的列表可达性惯例；plan 846 U1 交互④ 处置）。 */
+  padding-bottom: 224px;
 }
 
 /*
@@ -100,37 +168,73 @@
 .repl-banner {
   padding: 10px 12px;
   border-radius: 12px;
-  background: linear-gradient(135deg, #fff1f2, #fef2f2);
-  border: 1px solid #fecdd3;
+  /* upstream seckill floor form (baseline §2.2): red-orange gradient with
+   * white faces instead of the flat pink card (plan 846 U1 F-S1-4). */
+  background: var(--repl-mall-seckill-bg, linear-gradient(135deg, #ff3d3d, #ff7a2f));
+  border: none;
+  color: #ffffff;
+}
+
+.repl-banner .repl-price {
+  color: #ffffff;
+}
+
+.repl-banner .repl-price-original {
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.repl-banner .text-rose-600 {
+  color: var(--repl-mall-gold, #ffe9b8);
 }
 
 .repl-price {
   font-size: 1.35rem;
   font-weight: 700;
-  color: #e11d48;
+  color: var(--repl-mall-price, #ff5000);
   line-height: 1.1;
+  font-variant-numeric: tabular-nums;
 }
 
 .repl-price-original {
   font-size: 0.75rem;
-  color: var(--muted-foreground, #6b7280);
+  color: hsl(var(--muted-foreground, 220 9% 46%));
   text-decoration: line-through;
 }
 
 .repl-sticky-footer {
   position: sticky;
   bottom: 0;
+  flex: 0 0 auto;
   padding: 10px 12px calc(10px + env(safe-area-inset-bottom, 0px));
-  background: var(--background, #ffffff);
-  border-top: 1px solid var(--border, #e5e7eb);
+  background: hsl(var(--background, 0 0% 100%));
+  border-top: 1px solid hsl(var(--border, 220 13% 91%));
+  box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.06);
   z-index: 10;
+}
+
+/* upstream goods-detail action-bar 双钮形态（baseline §3.1 G5，plan 846 U1）:
+ * 加购橙金渐变胶囊 / 立即购买品牌渐变胶囊，高 40px。 */
+.repl-mall-btn-cart {
+  background: var(--repl-mall-cart-gradient, linear-gradient(90deg, #ffb03a, #ff7a2f)) !important;
+  border: none !important;
+  color: #ffffff !important;
+  border-radius: 999px;
+  height: 40px;
+}
+
+.repl-mall-btn-buy {
+  background: var(--repl-mall-gradient, linear-gradient(135deg, #ff6034, #ee0a24)) !important;
+  border: none !important;
+  color: #ffffff !important;
+  border-radius: 999px;
+  height: 40px;
 }
 
 .repl-goods-card {
   padding: 8px;
-  border: 1px solid var(--border, #e5e7eb);
+  border: 1px solid hsl(var(--border, 220 13% 91%));
   border-radius: 10px;
-  background: var(--background, #ffffff);
+  background: hsl(var(--card, 0 0% 100%));
 }
 
 .repl-goods-card-img {
@@ -141,8 +245,19 @@
 }
 
 .repl-mall-scroll {
-  height: 320px;
   overflow-y: auto;
+}
+
+/*
+ * 记录/任务行卡面（plan 846 U1 F-M3-2/F-W1-1）：M3 任务卡与 W1 作业记录行
+ * 此前无背景无边框（纯文本行贴在灰底上）——上游列表密度基线（cart-row/
+ * mall-section 形态：白卡 + 10px 圆角 + 8px 行距）。
+ */
+.repl-record-row {
+  background: hsl(var(--card, 0 0% 100%));
+  border: 1px solid hsl(var(--border, 220 13% 91%));
+  border-radius: 10px;
+  padding: 8px 10px;
 }
 
 /* O1 OCR 校正工作台（plan 814）：低置信字段高亮读 CSS 变量（getComputedStyle 可断言）
