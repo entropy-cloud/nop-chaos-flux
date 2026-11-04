@@ -1,6 +1,6 @@
 # Quick Reference
 
-> Last Reviewed: 2026-10-31 (plan 823 — 4/4 API spot-checks against live source; see `docs/audits/deep-audit-2026-10-31.md` §5 E6)
+> Last Reviewed: 2026-11-05 (deep-audit round §F-C sync — full claim set re-verified against live source: `flux-core/src/types/{renderer-core,runtime,scope,schema}.ts`, `flux-react/src/hooks.ts`; see `docs/analysis/2026-11-05-full-repo-deep-audit.md`)
 
 Single-file compressed reference for the types, hooks, and APIs most frequently needed
 when writing renderer components. Reading this file replaces reading 10+ source files
@@ -80,7 +80,7 @@ interface RendererComponentProps<S = BaseSchema, P = RendererResolvedProps<S>> {
   props: Readonly<P>; // RESOLVED schema-driven values
   meta: ResolvedNodeMeta; // RESOLVED meta state
   regions: Readonly<Record<string, RenderRegionHandle>>; // precompiled child regions
-  events: Readonly<Record<string, RendererEventHandler>>; // event handlers from schema
+  events: Readonly<Record<string, RendererEventHandler | undefined>>; // event handlers from schema (key present, handler optional)
   reactions: Readonly<Record<string, ReactionHandle>>; // kind: 'reaction' field handles
   helpers: RendererHelpers; // render, evaluate, dispatch, createScope
 }
@@ -161,10 +161,13 @@ interface RendererHelpers {
   createScope(patch?: object, options?: CreateScopeOptions): ScopeRef;
   disposeScope(scopeId: string): void;
   dispatch(
-    action: ActionSchema | ActionSchema[],
+    action: ActionSchema | ActionSchema[] | CompiledActionProgram,
     ctx?: Partial<ActionContext>,
   ): Promise<ActionResult>;
-  executeSource(source: SourceSchema, options?: { scope?: ScopeRef }): Promise<ActionResult>;
+  executeSource(
+    source: SourceSchema,
+    options?: { scope?: ScopeRef; signal?: AbortSignal },
+  ): Promise<ActionResult>;
 }
 ```
 
@@ -304,7 +307,7 @@ if (env.stream) {
 }
 ```
 
-完整 `RendererRuntime` 方法：
+完整 `RendererRuntime` 方法（2026-11-05 对齐 `flux-core/src/types/renderer-core.ts:242-404`）：
 
 ```ts
 interface RendererRuntime {
@@ -319,13 +322,27 @@ interface RendererRuntime {
   moduleCache: ModuleCache;
 
   compile(schema: SchemaInput): CompiledTemplate;
+  prepareSchema?(
+    schema: SchemaInput,
+    options?: { schemaUrl?: string; signal?: AbortSignal },
+  ): Promise<{ preparedImports: ReadonlyMap<string, PreparedImportSpec> }>;
   evaluate<T>(target: unknown, scope: ScopeRef): T;
   evaluateCompiled<T>(target: CompiledRuntimeValue<T>, scope: ScopeRef): T;
+  allocateMountedCid(): number;
 
   createChildScope(parent: ScopeRef, patch?: object, options?: CreateScopeOptions): ScopeRef;
   disposeScope(scopeId: string): void;
+  createHostProjectionScope(input: {
+    parentScope: ScopeRef;
+    projection: Record<string, unknown>;
+    path: string;
+    scopeLabel: string;
+  }): ScopeRef;
 
-  dispatch(action: ActionSchema | ActionSchema[], ctx: ActionContext): Promise<ActionResult>;
+  dispatch(
+    action: ActionSchema | ActionSchema[] | CompiledActionProgram,
+    ctx: ActionContext,
+  ): Promise<ActionResult>;
   executeSource(input: {
     source: SourceSchema;
     scope: ScopeRef;
@@ -351,17 +368,40 @@ interface RendererRuntime {
     initialValues?;
   }): ValidationScopeRuntime;
   createSurfaceRuntime(input?): SurfaceRuntime;
-  createPageRuntime(data?): PageRuntime;
+  createPageRuntime(data?: Record<string, unknown>): PageRuntime;
+  disposeOwnedPage(page: PageRuntime): void;
   createDataSourceController(input: {
-    action;
+    action; // ActionSchema | ActionSchema[] | CompiledActionProgram
     scope;
     targetPath?;
     interval?;
     stopWhen?;
     silent?;
     initialData?;
+    compiledResultMapping?;
   }): DataSourceController;
   createActionScope(input?): ActionScope;
+  releaseActionScope(actionScope: ActionScope): void;
+  createComponentHandleRegistry(input?): ComponentHandleRegistry;
+
+  // xui:imports pipeline
+  resolvePreparedImports(input: { imports?; schemaUrl: string }): readonly PreparedImportSpec[];
+  ensureImportedNamespaces(input: {
+    imports?;
+    actionScope?;
+    componentRegistry?;
+    scope;
+    schemaUrl: string;
+    nodeInstance?;
+  }): Promise<void>;
+  getImportedExpressionBindings(input: {
+    imports?;
+    actionScope?;
+    schemaUrl: string;
+  }): Readonly<Record<string, unknown>>;
+  releaseImportedNamespaces(input: { imports?; actionScope?; schemaUrl: string }): void;
+
+  createSourceObserver(): SourceObserver;
 
   resolveNodeMeta(node: TemplateNode, scope: ScopeRef, state?): ResolvedNodeMeta;
   resolveNodeProps(node: TemplateNode, scope: ScopeRef, state?): ResolvedNodeProps;
@@ -369,8 +409,19 @@ interface RendererRuntime {
 
   registerDataSource(input: { id; scope; compiledSource }): DataSourceRegistration;
   refreshDataSource(input: { name; scope? }): Promise<DataSourceRefreshOutcome>;
+  // first registered source in this scope's bucket (no parent walk; used by refreshNearest)
+  findFirstInScope(scope: ScopeRef): { name: string; scope: ScopeRef } | undefined;
   registerReaction(input: { id; scope; compiledReaction; dispatch }): { id; dispose() };
+  // renderer-owned reaction for `kind: 'reaction'` fields — returns full
+  // ReactionHandle; never fires on its own scope-subscription (force()/dispatch() driven)
+  registerRendererReaction(input: { id; scope; compiledReactionPlan; dispatch }): ReactionHandle;
 
+  getSourceDebugSnapshot?(): SourceRegistryDebugSnapshot;
+  getReactionDebugSnapshot?(): ReactionRegistryDebugSnapshot;
+  getAsyncOwnerDebugSnapshot?(): AsyncOwnerDebugSnapshot;
+  getFormStoreDiagnosticsBridge?(): FormStoreDiagnosticsBridge;
+
+  setEnv(env: RendererEnv): void;
   dispose(): void;
 }
 ```
@@ -389,8 +440,15 @@ interface FormRuntime extends ValidationScopeRuntime {
   readonly canSubmit: boolean;
   readonly allTouched: boolean;
 
-  validateField(path: string, reason?: ValidationReason): Promise<ValidationResult>;
-  validateForm(reason?: ValidationReason): Promise<FormValidationResult>;
+  validateField(
+    path: string,
+    reason?: ValidationReason,
+    options?: { signal?: AbortSignal },
+  ): Promise<ValidationResult>;
+  validateForm(
+    reason?: ValidationReason,
+    options?: { signal?: AbortSignal },
+  ): Promise<FormValidationResult>;
   getError(path: string): ValidationError[] | undefined;
   isValidating(path: string): boolean;
   isTouched / isDirty / isVisited(path: string): boolean;
@@ -414,6 +472,9 @@ interface FormRuntime extends ValidationScopeRuntime {
   getDependents(path: string): string[];
   findByPrefix(prefix: string): string[];
   getChildren(path: string): string[];
+  subscribeToModelGeneration?(listener: () => void): () => void;
+  setRefreshHandler(handler: (() => Promise<void>) | undefined): void;
+  refresh(): Promise<void>;
   setLifecycleHandlers(handlers?: FormLifecycleHandlers): void;
 }
 ```
@@ -428,6 +489,7 @@ interface ValidationScopeRuntime {
   readonly rootPath: string;
   readonly lifecycleState: ValidationOwnerLifecycleState;
   readonly modelGeneration: number;
+  subscribeToModelGeneration?(listener: () => void): () => void;
   readonly store?: ValidationStoreApi;
   readonly scope?: ScopeRef;
   readonly validation?: CompiledFormValidationModel;
@@ -435,15 +497,23 @@ interface ValidationScopeRuntime {
   validateAt(
     path: string,
     reason?: ValidationReason,
-    options?: { signal? },
+    options?: { signal?: AbortSignal },
   ): Promise<ValidationResult>;
-  validateSubtree(path: string, reason?: ValidationReason): Promise<FormValidationResult>;
-  validateAll(reason?: ValidationReason): Promise<FormValidationResult>;
+  validateSubtree(
+    path: string,
+    reason?: ValidationReason,
+    options?: { signal?: AbortSignal },
+  ): Promise<FormValidationResult>;
+  validateAll(
+    reason?: ValidationReason,
+    options?: { signal?: AbortSignal },
+  ): Promise<FormValidationResult>;
   applyChangesAndRevalidate(input: ApplyScopeChangesInput): Promise<FormValidationResult>;
   applyExternalErrors(input: ApplyExternalErrorsInput): ScopeValidationStateSnapshot;
 
   getFieldState(path: string): { ownerId; path; errors; validating };
   getScopeState(): ScopeValidationStateSnapshot;
+  getScopeRootErrors(): ValidationError[];
   isPathOwned(path: string): boolean;
 
   registerField(registration: RuntimeFieldRegistration): FieldRegistrationHandle;
@@ -451,6 +521,9 @@ interface ValidationScopeRuntime {
   notifyFieldHidden(path: string, hidden: boolean): void;
   refreshCompiledModel(newModel: CompiledFormValidationModel | undefined): void;
   dispose(): void;
+
+  registerChildContract(contract: ChildValidationContractRegistration): void;
+  unregisterChildContract(childOwnerId: string): void;
 }
 ```
 
@@ -483,10 +556,13 @@ interface FormFieldPresentationSnapshot extends FormFieldStateSnapshot {
 }
 
 interface FormStatusSummary {
+  id?: string;
+  name?: string;
   submitting: boolean;
   validating: boolean;
   dirty: boolean;
   touched: boolean;
+  visited: boolean;
   valid: boolean;
   invalid: boolean;
   hasErrors: boolean;
@@ -535,6 +611,13 @@ interface SurfaceRuntime {
   upsert(entry: SurfaceEntry): void;
   publishStatus(surfaceId?: string): void;
   publishClosed(input: { surfaceId; kind; scope; statusPath? }): void;
+  triggerHook?(
+    entry: SurfaceEntry,
+    hookName: 'submit:success' | 'submit:error' | 'close',
+    payload: { result?; formData?; hookName? },
+  ): Promise<ActionResult>;
+  setSurfaceForm?(surfaceId: string, form: FormRuntime | undefined): void;
+  getSurfaceForm?(surfaceId: string): FormRuntime | undefined;
   dispose(): void;
 }
 
@@ -740,7 +823,11 @@ interface ScopeRef {
   parent?: ScopeRef;
   isolate?: boolean;
   store?: ScopeStore;
-  readonly value: Record<string, any>;
+  readonly value: Record<string, unknown>;
+  // Kind of scope as created (`CreateScopeOptions.source`). Consumers branch on
+  // scope lineage — e.g. forms in a dialog/drawer surface seed initial values
+  // from the surface data.
+  source?: 'root' | 'row' | 'dialog' | 'drawer' | 'form' | 'fragment' | 'custom';
   get(path: string): unknown;
   has(path: string): boolean;
   readOwn(): Record<string, any>;
@@ -749,17 +836,19 @@ interface ScopeRef {
   update(path: string, value: unknown): void;
   merge(data: Record<string, unknown>): void;
   replace?(data: Record<string, unknown>): void;
-  dispose(): void;
 }
 ```
 
 ---
 
-## ScopeStore
+## ScopeStore / createScopeRef — defined in `@nop-chaos/flux-runtime`
+
+> Both factories live in `packages/flux-runtime/src/scope.ts` (`createScopeStore` :22,
+> `createScopeRef` :432) and are consumed from `@nop-chaos/flux-runtime` — not flux-core.
 
 ```ts
 createScopeStore(initialData: Record<string, any>): ScopeStore
-createScopeRef(input: { id; path; initialData?; parent?; store?; isolate?; update?; onDispose? }): ScopeRef
+createScopeRef(input: { id; path; initialData?; parent?; store?; isolate?; source?; update?; onDispose? }): ScopeRef
 ```
 
 ---

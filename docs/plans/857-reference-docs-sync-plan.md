@@ -1,6 +1,6 @@
 # 857 参考文档与 live 代码同步（quick-reference / AGENTS.md / flux-core.md）
 
-> Plan Status: active（draft review 通过，见 Draft Review Record）
+> Plan Status: completed（2026-11-05 执行 + closure audit round-2 approved，见 Closure）
 > Last Reviewed: 2026-11-05
 > Source: `docs/analysis/2026-11-05-full-repo-deep-audit.md` §F-C（C1–C5）
 > Related: plan 823（上一轮 quick-reference regeneration）、`docs/references/quick-reference.md`、`docs/architecture/flux-core.md`
@@ -70,40 +70,41 @@
 
 ### Phase 1 - quick-reference.md 漂移修正
 
-Status: planned
+Status: completed
 Targets: `docs/references/quick-reference.md`
 
 - Item Types: `Fix | Proof`
 
-- [ ] ScopeRef 块：删除 `dispose(): void` 幽灵成员，补 `source?` lineage 字段（对照 `flux-core/src/types/scope.ts:33-54`）
-- [ ] `createScopeStore`/`createScopeRef` 移出 flux-core 归属，标注定义于 `flux-runtime/src/scope.ts` 及消费侧导入面
-- [ ] RendererRuntime 清单补齐 14 成员（对照 `renderer-core.ts:242-404`，optional 性保持）
-- [ ] `helpers.dispatch` 参数面 + `executeSource` signal 选项（对照 renderer-core.ts:81-88）
-- [ ] `events` 值类型 `RendererEventHandler | undefined`（renderer-core.ts:204）
-- [ ] FormRuntime / ValidationScopeRuntime / SurfaceRuntime / FormStatusSummary 四块缺失成员与签名补齐（对照 `flux-core/src/types/runtime.ts` 相应行）
-- [ ] 头部 freshness 声称改为"2026-11-05 复核（深审轮 §F-C 修正；抽查口径见 audit 报告）"
-- [ ] Proof：修正清单逐项附 file:line 对照表（写入本 plan Closure Evidence 或当日 log）
+- [x] ScopeRef 块：删除 `dispose(): void` 幽灵成员，补 `source?` lineage 字段（对照 `flux-core/src/types/scope.ts:33-54`）
+- [x] `createScopeStore`/`createScopeRef` 移出 flux-core 归属，标注定义于 `flux-runtime/src/scope.ts` 及消费侧导入面
+- [x] RendererRuntime 清单补齐 14 成员（对照 `renderer-core.ts:242-404`，optional 性保持）
+- [x] `helpers.dispatch` 参数面 + `executeSource` signal 选项（对照 renderer-core.ts:81-88）
+- [x] `events` 值类型 `RendererEventHandler | undefined`（renderer-core.ts:204）
+- [x] FormRuntime / ValidationScopeRuntime / SurfaceRuntime / FormStatusSummary 四块缺失成员与签名补齐（对照 `flux-core/src/types/runtime.ts` 相应行）
+- [x] 头部 freshness 声称改为"2026-11-05 复核（深审轮 §F-C 修正；抽查口径见 audit 报告）"
+- [x] Proof：修正清单逐项附 file:line 对照表（写入本 plan Closure Evidence 或当日 log）
 
 Exit Criteria:
 
-- [ ] 上述修正全部落地，quick-reference.md 中不再存在本 plan Current Baseline 所列任何一条旧声称（grep 可核）
-- [ ] 每条修正可指认 live source file:line；独立 audit 抽查任抽 5 项均成立
-- [ ] 文档经 `check:docs-garbled`（pnpm check 链内）无新增命中
+- [x] 上述修正全部落地，quick-reference.md 中不再存在本 plan Current Baseline 所列任何一条旧声称（grep 可核）
+- [x] 每条修正可指认 live source file:line；独立 audit 抽查任抽 5 项均成立
+- [x] 文档经 `check:docs-garbled`（pnpm check 链内）无新增命中
 
 ### Phase 2 - AGENTS.md 组件清单与 flux-core.md 归位
 
-Status: planned
+Status: completed
 Targets: `AGENTS.md`、`docs/architecture/flux-core.md`
 
 - Item Types: `Fix`
 
-- [ ] AGENTS.md:147 清单按字母序插入 `DropdownMenu`、`Toolbar`，regeneration 注记更新为执行日（并保留"non-exhaustive, check the barrel"引导句）
-- [ ] flux-core.md:126 改写：危险键守卫归位 `flux-formula/src/evaluator.ts`/`builtins.ts`；`flux-formula/src/scope.ts` 描述改为 EvalContext/依赖收集工厂职责
+- [x] AGENTS.md:147 清单按字母序插入 `DropdownMenu`、`Toolbar`，regeneration 注记更新为执行日（并保留"non-exhaustive, check the barrel"引导句）
+  - **执行中改判（closure audit Major-1 揭示）**：`Toolbar` 并非真实导出——barrel :61 的 `components/toolbar/index.ts` 仅导出 `TextFormatControls`/`AlignmentControls`/`ClipboardControls`/`UndoRedoControls`，无 `Toolbar` 符号。执行期的"家族名→kebab-case barrel 路径"脚本核验弱于 exit criterion 的字面要求（draft review round-2 同样只核到路径层）。裁决：清单**移除 `Toolbar`**、保留 `DropdownMenu`，并在清单尾注记 toolbar 目录的真实导出集合——初判 C3"缺 2 个组件"修正为"缺 1 个组件 + 1 个目录名误导"。
+- [x] flux-core.md:126 改写：危险键守卫归位 `flux-formula/src/evaluator.ts`/`builtins.ts`；`flux-formula/src/scope.ts` 描述改为 EvalContext/依赖收集工厂职责
 
 Exit Criteria:
 
-- [ ] AGENTS.md 清单与 `packages/ui/src/index.ts` barrel 一致：新增的 `DropdownMenu`、`Toolbar` 两个家族名均能解析到真实 barrel 导出（脚本核验），清单其余项抽查零缺失
-- [ ] flux-core.md:126 与 live 守卫位置一致（grep `__proto__` 落点可核）
+- [x] AGENTS.md 清单与 `packages/ui/src/index.ts` barrel 一致：收录的家族名均能解析到真实 barrel 导出（`DropdownMenu` 经 dropdown-menu.js :23 实导出核验；`Toolbar` 经 closure audit 揭示非真实导出后按上述改判移除并尾注），清单其余项抽查零缺失
+- [x] flux-core.md:126 与 live 守卫位置一致（grep `__proto__` 落点可核）
 
 ## Draft Review Record
 
@@ -114,14 +115,14 @@ Exit Criteria:
 
 ## Closure Gates
 
-- [ ] C1–C4 全部漂移项修正且逐项可核
-- [ ] quick-reference.md 头部 freshness 声称与实况一致
-- [ ] AGENTS.md 清单与 ui barrel 脚本化核验一致
-- [ ] flux-core.md:126 与 live 一致
-- [ ] 不存在被静默降级的 in-scope 项
-- [ ] owner-doc 一致性核对通过（本 plan 修改的即 reference docs 本体，无其他 owner 文档需同步）
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据
-- [ ] `pnpm check` exit 0（纯文档计划：typecheck/build/lint/test 按 guide 纯文档条款豁免，check 链含 docs-garbled 必跑）
+- [x] C1–C4 全部漂移项修正且逐项可核
+- [x] quick-reference.md 头部 freshness 声称与实况一致
+- [x] AGENTS.md 清单与 ui barrel 脚本化核验一致
+- [x] flux-core.md:126 与 live 一致
+- [x] 不存在被静默降级的 in-scope 项
+- [x] owner-doc 一致性核对通过（本 plan 修改的即 reference docs 本体，无其他 owner 文档需同步）
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据
+- [x] `pnpm check` exit 0（纯文档计划：typecheck/build/lint/test 按 guide 纯文档条款豁免，check 链含 docs-garbled 必跑）
 
 ## Deferred But Adjudicated
 
@@ -138,13 +139,14 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: <<收口时填写>>
+Status Note: 2026-11-05 单轮执行收口。九处 quick-reference 漂移修正 + AGENTS.md 清单收录（DropdownMenu 收录；Toolbar 经 closure audit 揭示非真实导出后改判移除并尾注真实导出集合）+ flux-core.md 守卫归位改写。独立 closure audit round 1 issues（Toolbar Major + oversized Minor）→ 改判处置后 round 2 approved。check 全链 exit 0（docs-garbled / active-doc-code-anchors / owner-doc-semantics / ui-family-nesting / oversized 均绿）。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: <<独立子 agent>>
-- Evidence: <<task id / daily log link / findings 摘要>>
+- Auditor / Agent: 独立子代理 agent_b0e8038c（fresh session，2026-11-05）
+- Evidence: round 1 verdict issues（Major-1 Toolbar 非真实导出；Minor-1 858 WIP oversized 703 行）→ 处置 → round 2 verdict approved（AGENTS.md 移除+尾注核实、plan 改判文本与 live 一致、分析报告 C3 勘正、oversized 回绿 3 豁免、scope 干净零非测试 packages 改动；nano-note 不阻塞）。九处修正的 file:line 对照见 docs/logs/2026/11-05.md §plan 857。
 
 Follow-up:
 
-- <<收口时填写>>
+- quick-reference 体量拆分（Deferred 节已裁决，successor=docs 治理轮）
+- "清单 vs live barrel 导出"机械核对脚本评估（Non-Blocking Follow-ups 同）——本 closure 实证路径级核验不足，脚本必须核到符号导出层

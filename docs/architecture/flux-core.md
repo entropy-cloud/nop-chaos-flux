@@ -123,7 +123,7 @@ The preferred hot path is:
 
 All scope write paths (`merge`, `update`, `replace`) and read paths (`readVisible`, `materializeVisible`) filter dangerous keys (`__proto__`, `constructor`, `prototype`) through `sanitizeSnapshot()`. Initial data passed to `createScopeStore()` is also sanitized. The `update(path, value)` method skips writes whose first path segment is a dangerous key.
 
-Formula scope proxies (`flux-formula/src/scope.ts`) and adaptor scope views (`flux-runtime/src/async-data/request-runtime-adaptor.ts`) intercept reads of `__proto__`, `constructor`, and `prototype`, returning `undefined`.
+Formula evaluation guards (`flux-formula/src/evaluator.ts` member-access denylist, `flux-formula/src/builtins.ts` object-literal key denylist) and adaptor scope views (`flux-runtime/src/async-data/request-runtime-adaptor.ts` proxy get-trap) reject `__proto__`, `constructor`, and `prototype`, returning `undefined`. `flux-formula/src/scope.ts` itself is the EvalContext/dependency-collector factory and performs no key interception.
 
 ### `flux-formula` is the expression base
 
