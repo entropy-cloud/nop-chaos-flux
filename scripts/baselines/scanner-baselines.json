@@ -1,8 +1,10 @@
 {
   "_header": {
     "description": "Numeric baselines for the high-risk advisory scanners listed in BASELINED_SCANNERS (check-scanner-baselines.mjs). A count above the baseline fails check:scanner-baselines (new suspects must be fixed or the baseline consciously re-registered).",
-    "lastUpdated": "2026-11-01",
+    "lastUpdated": "2026-11-05",
     "reRegistrationNotes": [
+      "2026-11-05 plan 856 (deep-audit-1105 gate baseline honesty): shrink to fresh live counts — find-react19-optimization-candidates 694 -> 668 / find-async-without-failure-path 373 -> 351 / discover-audit-suspects 825 -> 797 / find-test-global-leaks 120 -> 114 / find-styling-suspects 255 -> 254. Dominant cause: the 2026-10-30 mall-mobile retirement (dc4d8bf97) removed the apps/mall-mobile/** surface that the 2026-10-28 registrations (+26 react19 / +20 async / +25 discover / +5 test-leaks) explicitly scoped, and no later baseline-touching session shrank it; Gap composition (arithmetic against the 10-28..10-30 note chain): mall-mobile 77 units (react19 27 = restore 26 + R3b seckill 1 / async 20 / discover 25 / test-leaks 5) + 7 units resolved since their registered snapshots (async 2 / discover 3 / test-leaks 1 / styling 1) − 1 new react19 candidate landed outside mall-mobile after the 10-30 registration. Live recount at the 2026-11-05 deep-audit gate run (pnpm check exit 0, all 5 within baseline). Surgical hand-edit per 09ed6e5b6 precedent; no --update-baselines (other 9 scanners unchanged).",
+      "2026-11-05 plan 856 backfill: find-non-retained-renderer-references 160 -> 161 hand-edit of 2026-11-02 (commit 1d3412fac, calendar-today-local.test.tsx surface) missed its reRegistrationNotes entry — protocol requires every hand-edit to be noted; recorded here retroactively, value unchanged.",
       "2026-11-01 plan 818 (business-replication V3 geofence-videowall): find-non-retained-renderer-references 158 -> 160 (+2: apps/playground/src/complex-pages/page-schemas/iot-geofence-videowall.json — the pin map + the fence-echo region map, both `\"type\": \"map\"`). Name-collision false positive: the amis-baseline-matrix row `map` (L225) is the legacy AMIS alias of `mapping`, while these nodes use flux's own geo `map` renderer (@nop-chaos/flux-renderers-map, registered type; same family as the baseline echarts-lab-page `map` hit). Hand-edited single value per prior precedent; no --update-baselines.",
       "2026-10-30 plan 802 (business-replication C2 customer-360): find-non-retained-renderer-references 155 -> 158 (+3: apps/playground/src/complex-pages/page-schemas/crm-customer-360.json — picker selection radio ×2 + table rowSelection radio + calendar type。radio 与基线内 standard-crud.json/form-wizard.json 同族（amis matrix not-retained 名称碰撞假阳性）；calendar 为 matrix 注释明示的 landed 扩展族〔flux scheduling calendar 已落地〕)。Hand-edited single value per prior precedent; no --update-baselines.",
       "2026-10-30 plan 798 (business-replication W1 mobile host override): find-react19-optimization-candidates 693 -> 694 (+1: apps/playground/src/complex-pages/replication/wms-pda-receiving-host.tsx:18 useMemo — the memo keys keep host-scope seed/config identity for the SchemaPage remount inside the mobile canvas; render-time derivation family same as the plan-785 registrations). Hand-edited single value per prior precedent; no --update-baselines.",
@@ -34,13 +36,13 @@
     ]
   },
   "scanners": {
-    "find-styling-suspects": 255,
-    "discover-audit-suspects": 825,
-    "find-test-global-leaks": 120,
+    "find-styling-suspects": 254,
+    "discover-audit-suspects": 797,
+    "find-test-global-leaks": 114,
     "find-todo-exitless": 0,
     "find-as-any-casts": 31,
-    "find-async-without-failure-path": 373,
-    "find-react19-optimization-candidates": 694,
+    "find-async-without-failure-path": 351,
+    "find-react19-optimization-candidates": 668,
     "find-canvas-wrapper-a11y-gaps": 0,
     "find-hardcoded-type-dispatch": 0,
     "find-missing-renderer-markers": 15,

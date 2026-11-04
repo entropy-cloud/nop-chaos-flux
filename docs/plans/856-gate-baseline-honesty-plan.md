@@ -1,6 +1,6 @@
 # 856 登记基线与豁免诚实收缩（gate baseline honesty）
 
-> Plan Status: active（draft review 通过，见 Draft Review Record）
+> Plan Status: completed（2026-11-05 执行 + closure audit approved，见 Closure）
 > Last Reviewed: 2026-11-05
 > Source: `docs/analysis/2026-11-05-full-repo-deep-audit.md` §F-A（A1–A6，A7 头部注记）
 > Related: plan 822（knip/console 收紧先例）、plan 836 Phase 4（e2e 台账基线刷新 owner）
@@ -154,7 +154,7 @@ Exit Criteria:
 - [x] known-good-baselines.md 与 e2e 台账注记落地
 - [x] 不存在被静默降级的 in-scope 项
 - [x] 受影响 owner docs 已同步（known-good-baselines 首行 + 当日 log；无 architecture 语义变更）
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据；执行 session 不得自审勾选本项
 - [x] `pnpm typecheck`
 - [x] `pnpm build`
 - [x] `pnpm lint`
@@ -176,13 +176,14 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: <<收口时填写>>
+Status Note: 2026-11-05 单轮执行收口。4 Phase 全部落地：scanner-baselines 5 项收缩至 fresh live（82 单位 mall-mobile 幽灵容忍清除）+ 2 条簿记注记、duplicates 597→534、oversized 死豁免 ×2 移除、knip header counts 341/566 对齐、known-good-baselines.md 首行真实基线落地、e2e 台账头部指路注记（快照本体未动）。收口验证 typecheck/lint/build 46/46、test 16,837/0、check 全链 exit 0 零新增未登记红。独立 closure audit approved（缺口算术 83 = mall-mobile 77 + 已解决 7 − 新增 1 被审计者独立复算证实）。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: <<独立子 agent>>
-- Evidence: <<task id / daily log link / findings 摘要>>
+- Auditor / Agent: 独立子代理 agent_839b7491（fresh session，2026-11-05）
+- Evidence: verdict approved（零 Blocker/Major，1 Minor 非阻塞：xlang.parser.js wc -l 17 vs gate countLines 18 口径差异——plan 已声明 gate 口径）；审计者独立复跑 pnpm check 全链 exit 0；落地逐项核验（5 值收缩/2 注记/duplicates 534/死豁免移除/knip counts/known-good 首行/e2e 台账仅头部注记/当日 log）；文本一致性（唯一未勾项=audit 项本身，Plan Status active 未越权翻转）；Deferred 分类诚实；scope 干净（packages/apps 零改动）。记录：docs/logs/2026/11-05.md
 
 Follow-up:
 
-- <<只记录 non-blocking follow-up；confirmed live defect 不得出现在这里>>
+- duplicates live 534 clone 本体消减（optimization candidate，挂 improvement-analysis 治理轮）
+- check:duplicates 8% 比例阈值双轨裁决语义评估；scanner-baselines --update-baselines 与手改先例的 DX 统一评估（Non-Blocking Follow-ups 节同）

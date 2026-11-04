@@ -5,8 +5,8 @@
     "lastUpdated": "2026-10-30",
     "counts": {
       "files": 21,
-      "exports": 346,
-      "types": 571,
+      "exports": 341,
+      "types": 566,
       "dependencies": 0,
       "devDependencies": 18,
       "unlisted": 35
@@ -18,7 +18,8 @@
       "plan 624 D5 (2026-10-17): root devDeps i18next/react-i18next removed (zero refs repo-wide) — their baseline entries shrunk in the same pass; three/@types/three KEPT (sole consumer scripts/three-perf/bench-scene-graph.mjs manual benchmark — script disposition is separate follow-up); @stryker-mutator/vitest-runner KEPT (audit:mutants loads it via stryker.runtime.conf.mjs --plugins).",
       "plan 624 D2 Decision amendment (2026-10-17): flux-bundle @nop-chaos/ui peer RESTORED (it is a pinned host-owned-peer contract asserted by src/index.test.tsx toMatchObject — removal flipped the contract test red) and given devDep workspace:* backing; the backing devDep itself registers here (zero src imports by design). Peer-backing registrations now total 6.",
       "R2.4 cycle (2026-10-24): +2 types registered (surgical, not --update-baselines) — R1.4/plan 722 barcode-media-io injection-seam public API (BarcodeMediaIO consumed via defaultBarcodeMediaIO/setBarcodeMediaIO factory values, NativeBarcodeDetectorCtor backing the feature-detect seam; type imports land with INV-2 env-channel consumers, proposal pending human gate). These hits surfaced only now because check:console-baseline (earlier in the chain) failed on concurrent ARC WIP in R2.1-R2.3 windows and masked downstream steps; stryker.formula.conf.mjs registered in files (same disposition as stryker.runtime.conf.mjs — knip does not resolve stryker CLI config args as entries; audit:mutants:formula script added for consistency). counts.types resynced to live list length (drifted 567 vs actual).",
-      "R3.11 (2026-10-24): +1 file (tests/e2e/xlang-debug-mock-server.mjs — playwright spawn reference invisible to knip) + 1 export (flux-renderers-3d UseDataSourcesArgs — exported type never referenced, never baselined since 2026-09-16 introduction). Both are standing dual-source reds documented in arm2-index M0/MA8.3. Surgical hand-edit per 09ed6e5b6 precedent."
+      "R3.11 (2026-10-24): +1 file (tests/e2e/xlang-debug-mock-server.mjs — playwright spawn reference invisible to knip) + 1 export (flux-renderers-3d UseDataSourcesArgs — exported type never referenced, never baselined since 2026-09-16 introduction). Both are standing dual-source reds documented in arm2-index M0/MA8.3. Surgical hand-edit per 09ed6e5b6 precedent.",
+      "2026-11-05 plan 856 (deep-audit-1105 gate baseline honesty): header counts resynced to live list lengths (exports 346 -> 341, types 571 -> 566) — the plan-822 surgical shrink updated the arrays but not the header counts; gate diffs identities so this is bookkeeping only, per the R2.4 in-place resync precedent."
     ],
     "plan798": "tests/e2e/helpers/replication.ts#dragReplicationCard registered 2026-10-30 (plan 798 Phase 1 MIN-7 设施先行切片): real-pointer dnd helper shipped ahead of its consumers — first use is the C1/W2 kanban work items (D1 §3 MIN-4 封装先例). Shrink when those specs land."
   },

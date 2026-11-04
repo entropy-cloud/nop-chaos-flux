@@ -3,6 +3,7 @@
 > Owner doc: `docs/backlog/platform-hardening-roadmap.md` PH-9
 > Plan: `docs/plans/762-ph9-e2e-baseline-ledger-plan.md`
 > Status: baseline snapshot 2026-10-26（逐项归因 + 隔离复跑证据）
+> **快照滞后指引（2026-11-05 plan 856 注记）**：本页快照为 2026-10-26 运行（unexpected 248）。其后已有一次全量运行——2026-11-02（242 failed / 1896 passed，独立子代理逐红对账：在册 237 + plan 836 在途 1 + 新红 3〔complex-pages:180 / renderer-lab:114 / table-virtual-body:43，登记不静默〕，详见 `docs/logs/2026/11-02.md`）以及 11-02/11-03 plan 836 对 18 条台账外红的分诊修复。**快照表刷新的 owner 是 plan 836 Phase 4（台账基线），本注记仅作指路，不改快照本体。**
 > 原始运行产物（gitignored）：`_tmp/ph9-e2e/results.json`（Playwright JSON）、`cluster2.txt`（129 簇全文）、`families.txt`（族归类）、`iso-b1..b8.log`（隔离复跑）
 
 ## 1. 运行元数据

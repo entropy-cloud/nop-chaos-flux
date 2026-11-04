@@ -32,19 +32,9 @@ const ignoredPathParts = new Set([
 // exit code. Review the cited decision before adding or removing an entry.
 const OVERSIZED_EXEMPTIONS = [
   {
-    path: 'packages/flux-xlang-lang/generated/xlang.parser.js',
-    reason:
-      'Lezer generator output committed to the repo (plan 616 / roadmap xlang item 15; D5 §3.3 "generated/ 落包根 src 外并入库"). Machine-generated parser tables — same convention as nop-xlang ANTLR generated artifacts. Regenerate via `pnpm --filter @nop-chaos/flux-xlang-lang gen:grammar`.',
-  },
-  {
     path: 'packages/flux-runtime/src/form-runtime-owner.ts',
     reason:
       'Single `buildFormOwnerRuntime` orchestrator. Documented decision (AUDIT-01 / Plan 2026-06-27-0850-1 Phase 1): the orchestrator closure shares substantial mutable state (sharedState, lifecycle, validation pipeline) already partially extracted to sibling files (`form-runtime-owner-{external-errors,field-states,lifecycle,validation,values}.ts`); further splitting fragments the orchestration coherence without improving maintainability.',
-  },
-  {
-    path: 'packages/flux-compiler/src/schema-compiler/node-compiler.ts',
-    reason:
-      'Single `compileSingleNode` closure. Documented inline decision at node-compiler.ts:57-65 (Plan 444 / 02-N1, reaffirmed AUDIT-01 / Plan 2026-06-27-0850-1 Phase 1): the closure shares substantial mutable state (symbolTable, regions, compiledPropEntries, sourcePropKeys, rawEventPlans); helpers are already extracted. Splitting would require passing significant shared state between modules, reducing clarity.',
   },
   {
     path: 'packages/flux-i18n/src/locales/en-US.ts',
