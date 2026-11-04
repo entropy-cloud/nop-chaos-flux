@@ -119,7 +119,7 @@ test.describe('V3 IoT 围栏地图与视频墙页 (#/complex-pages/iot-geofence-
     await expect(page.getByTestId('iot-geofence-videowall-events')).not.toContainText('DEV-1002');
     await expect(page.getByTestId('iot-geofence-videowall-event-filter')).toContainText('已按 DEV-1001 过滤');
 
-    // Out-of-fence device: DEV-1002 sits ~1.8 km from the 800 m fence centre.
+    // Out-of-fence device: DEV-1002 sits ~6.2 km from the 2000 m fence centre (U5 F-V3-1 geometry re-scale).
     await clickPin(page, 'DEV-1002');
     await expect(page.getByTestId('iot-geofence-videowall-fence-check')).toContainText('DEV-1002 · 张江园区 · 围栏外', {
       timeout: 10_000,

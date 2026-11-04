@@ -44,7 +44,7 @@ U6 归族整改完成后，21/21 页以 R2 固化探针同口径复检：零未�
 
 ### Phase 1 - 探针复检
 
-Status: planned
+Status: completed
 Targets: `_tmp/ux-fidelity/recheck/`
 
 - Item Types: `Proof`
@@ -58,7 +58,7 @@ Exit Criteria:
 
 ### Phase 2 - 对账与报告
 
-Status: planned
+Status: completed
 Targets: `docs/analysis/replication-ux/recheck-report.md`
 
 - Item Types: `Proof | Decision`

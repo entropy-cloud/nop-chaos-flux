@@ -74,7 +74,7 @@ Exit Criteria:
 
 ### Phase 3 - e2e 硬门与收口
 
-Status: done（closure audit 与 roadmap 回写待独立审计/收口会话）
+Status: done（closure audit approved by agent_70865d98；roadmap §3 U3 已回写 done 同 commit）
 Targets: 五 spec
 
 - Item Types: `Proof`

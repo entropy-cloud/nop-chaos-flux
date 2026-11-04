@@ -53,7 +53,7 @@ mobile 族三页（W1 `wms-pda-receiving`、M3 `mes-andon-material`、S1 `mall-s
 ### Phase 1 - 走查取证（三页 + S1 上游并排）
 
 Status: completed
-Targets: `_tmp/ux-fidelity/u1/`（截图证据）+ findings 台账
+Targets: findings 台账〔U8 勘误附注：走查截图为 IAB 会话内评审证据未持久化（当时处置），程序化取证以报告记载 + git diff 核证 + e2e 可复跑承担；后续批次证据已落 `_tmp/ux-fidelity/`〕
 
 - Item Types: `Proof`
 
@@ -95,7 +95,7 @@ Targets: 三 spec
 
 Exit Criteria:
 
-- [ ] 三 spec 全绿 + 门禁零新增 + closure audit approved + 同 commit 回写
+- [x] 三 spec 全绿 + 门禁零新增 + closure audit approved + 同 commit 回写
 
 ## Failure Paths
 

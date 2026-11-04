@@ -54,7 +54,7 @@ Targets: findings 台账
 - Item Types: `Proof`
 
 - [x] 五页浅/深双主题截图（视口按各页 spec 同款：W2/W3/C2/C3 1440×900、C1 2160×1050） + 交互中间态（hover/focus/dialog/drawer/loading/空态）取证（playwright 探针脚本，截图落 `_tmp/ux-fidelity/u2/`，评审用 Read 读图）
-- [ ] A-H 评分卡逐页 + findings 台账（程序化证据）；裸 HSL 令牌写法全页复核
+- [x] A-H 评分卡逐页 + findings 台账（程序化证据）；裸 HSL 令牌写法全页复核
 - [x] W3 透视列序在册 residual 复查（无新证据，维持原裁决）
 
 Exit Criteria:
@@ -82,12 +82,12 @@ Targets: 五 spec
 
 - Item Types: `Proof`
 
-- [ ] 五 spec focused `--retries=0` 全绿
+- [x] 五 spec focused `--retries=0` 全绿
 - [x] daily log；closure audit（独立子 agent）；roadmap §3 U2 回写同 commit
 
 Exit Criteria:
 
-- [ ] 全绿 + 门禁零新增 + closure audit approved + 同 commit 回写
+- [x] 全绿 + 门禁零新增 + closure audit approved + 同 commit 回写
 
 ## Failure Paths
 
@@ -105,13 +105,13 @@ Exit Criteria:
 
 ## Closure Gates
 
-- [ ] Phase 1-3 Exit Criteria 全勾
-- [ ] 五页 findings 零未处置 Blocker/Major
+- [x] Phase 1-3 Exit Criteria 全勾
+- [x] 五页 findings 零未处置 Blocker/Major
 - [x] 五 spec focused `--retries=0` 全绿
 - [x] `pnpm typecheck` / `pnpm build` / `pnpm lint` / `pnpm test`（触达面）+ `pnpm check` 通过
-- [ ] roadmap §3 U2 回写 `done` 同 commit
-- [ ] daily log 收口记录
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据
+- [x] roadmap §3 U2 回写 `done` 同 commit
+- [x] daily log 收口记录
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据
 
 ## Deferred But Adjudicated
 

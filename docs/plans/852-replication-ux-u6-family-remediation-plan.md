@@ -1,6 +1,6 @@
 # 852 复刻页 UX 保真 U6：系统性归族与设计系统层整改
 
-> Plan Status: completed（Phase 1-2 done，Phase 3 验证段完成、closure audit 待）
+> Plan Status: completed
 > Last Reviewed: 2026-11-04
 > Source: docs/backlog/replication-ux-fidelity-roadmap.md（work item U6）+ U1-U5 五份走查报告 §共性根因/§残留 汇总
 > Related: 845-851（U0-U5/U7）
@@ -92,7 +92,7 @@ Exit Criteria:
 
 ### Phase 3 - 回归硬门与收口
 
-Status: in-progress（执行会话：验证段；closure audit 待独立子 agent）
+Status: completed（closure audit approved by agent_9501a338，回写同 commit）
 Targets: 21 页 replication spec 全量
 
 - Item Types: `Proof`
@@ -103,7 +103,7 @@ Targets: 21 页 replication spec 全量
 
 Exit Criteria:
 
-- [ ] 全量绿 ✓ + 门禁零新增 ✓（closure audit 待独立子 agent → 同 commit 回写）
+- [x] 全量绿 + 门禁零新增 + closure audit approved + 同 commit 回写
 
 ## Failure Paths
 
@@ -121,14 +121,14 @@ Exit Criteria:
 
 ## Closure Gates
 
-- [ ] Phase 1-3 Exit Criteria 全勾
+- [x] Phase 1-3 Exit Criteria 全勾
 - [x] 归族表全族处置完成（修/登记，无"只修实例"残留）
 - [x] 21 页 spec 全量 `--retries=0` 绿（209/209）
 - [x] `pnpm typecheck` / `pnpm build` / `pnpm lint` / `pnpm test` / `pnpm check` 全过
 - [x] roadmap §3 U6 回写 `done` 同 commit
 - [x] daily log 收口记录
 - [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据
-- [ ] `pnpm typecheck` / `pnpm build` / `pnpm lint` / `pnpm test` / `pnpm check`
+- [x] `pnpm typecheck` / `pnpm build` / `pnpm lint` / `pnpm test` / `pnpm check`
 
 ## Deferred But Adjudicated
 

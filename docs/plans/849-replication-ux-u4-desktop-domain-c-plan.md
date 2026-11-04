@@ -75,17 +75,17 @@ Exit Criteria:
 
 ### Phase 3 - e2e 硬门与收口
 
-Status: in-progress（e2e/单测硬门已过；closure audit + roadmap done 回写待收口会话同 commit）
+Status: completed（closure audit approved by agent_20a86e8a；回写同 commit 已落）
 Targets: 五 spec
 
 - Item Types: `Proof`
 
 - [x] 五 spec focused `--retries=0` 全绿（50/50：9/12/11/9/9，首跑即绿）
-- [ ] daily log；closure audit（独立子 agent）；roadmap §3 U4 回写同 commit（回写时对 U4 行说明列"含 K2 横滚裁切 residual"做归属勘误附注——K2 页面属 U3/plan 848，审查 Minor-2）〔daily log 已记；audit + 回写待收口〕
+- [x] daily log；closure audit（独立子 agent）；roadmap §3 U4 回写同 commit（回写时对 U4 行说明列"含 K2 横滚裁切 residual"做归属勘误附注——K2 页面属 U3/plan 848，审查 Minor-2）〔daily log 已记；audit + 回写待收口〕
 
 Exit Criteria:
 
-- [ ] 全绿 + closure audit approved + 同 commit 回写
+- [x] 全绿 + closure audit approved + 同 commit 回写
 
 ## Failure Paths
 

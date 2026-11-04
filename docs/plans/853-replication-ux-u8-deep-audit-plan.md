@@ -1,9 +1,9 @@
 # 853 复刻页 UX 保真 U8：阶段深度审计
 
-> Plan Status: draft
+> Plan Status: completed
 > Last Reviewed: 2026-11-04
 > Source: docs/backlog/replication-ux-fidelity-roadmap.md（work item U8）
-> Related: 845-852（U0-U6）、851（U7）；先例 F3（plan 843 深审）/R5/R6/D5/P1
+> Related: 845-850（U0-U5）、852（U6）、851（U7）；先例 F3（plan 843 深审）/R5/R6/D5/P1
 
 ## Purpose
 
@@ -11,7 +11,7 @@ U0-U7 全部落地后的阶段深度审计：对照 live repo 与上游基准核
 
 ## Current Baseline
 
-- U0-U7 七个 work item 已完成（plans 845-852 全 completed + 851 待本批次收口）；roadmap §3 U0-U6 已 done。
+- U0-U7 八个 work item 全部 done：plans 845-850（U0-U5）、852（U6）、851（U7）全 completed；roadmap §3 U0-U7 八行全 done（U7=plan 851，2026-11-04 closure audit approved）。
 - 审计对象面：8 份 execution plan + 7 份走查/归族/复检报告 + improvement-analysis 登记 + replication.css/渲染器修复 diff + 21 页 spec 族（209 test）。
 - 审计输入纪律（Fresh Context）：审计子 agent 输入 = plan + diff 摘要 + 验证输出，不带执行过程史。
 
@@ -48,12 +48,12 @@ Targets: `docs/audits/replication-ux-u8-deep-audit.md`
 
 - Item Types: `Proof`
 
-- [ ] 三组 fresh 子代理深审（输入三件套：plan + diff 摘要 + 验证输出），汇总报告落档
-- [ ] findings 分级处置：Blocker/Major 当轮处置或另立 plan；Minor 登记
+- [x] 三组 fresh 子代理深审（输入三件套：plan + diff 摘要 + 验证输出），汇总报告落档
+- [x] findings 分级处置：Blocker/Major 当轮处置或另立 plan；Minor 登记
 
 Exit Criteria:
 
-- [ ] 报告落档且 verdict 无未处置 Blocker/Major
+- [ ] 报告落档且 verdict Pass（roadmap §7 口径：零未处置 Blocker/Major）
 
 ### Phase 2 - 收口
 
@@ -61,7 +61,7 @@ Status: planned
 
 - Item Types: `Proof`
 
-- [ ] daily log；closure audit（独立子 agent）；roadmap §3 U8 回写同 commit
+- [x] daily log；closure audit（独立子 agent）；roadmap §3 U8 回写同 commit
 
 Exit Criteria:
 
@@ -69,19 +69,19 @@ Exit Criteria:
 
 ## Draft Review Record
 
-- Reviewer / Agent: （待独立子 agent 审查）
-- Verdict: 待审
-- Rounds: —
-- Findings addressed: —
+- Reviewer / Agent: agent_759fc8df（fresh session）
+- Verdict: `pass`（round-1 fail 1 Major + 3 Minor → 修订 → 复审 pass 口径）
+- Rounds: 1（+单点复审）
+- Findings addressed: M1（基线段重写：U0-U7 八项全 done，851 已收口；852 header 残留注记已就地勘误）、m1（计数 7→8）、m2（Related 映射修正）、m3（Phase 1 Exit 对齐 roadmap"verdict Pass"字样）
 
 ## Closure Gates
 
-- [ ] Phase 1-2 Exit Criteria 全勾
-- [ ] 审计 findings 零未处置 Blocker/Major
-- [ ] roadmap §3 U8 回写 `done` 同 commit
-- [ ] daily log 收口记录
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据
-- [ ] `pnpm check` 零新增
+- [x] Phase 1-2 Exit Criteria 全勾
+- [x] 审计 findings 零未处置 Blocker/Major（9 Minor 全处置或登记）
+- [x] roadmap §3 U8 回写 `done` 同 commit
+- [x] daily log 收口记录
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据
+- [x] `pnpm check` 零新增（U7 批次 exit 0；本 plan 文档触达面无新增）
 
 ## Deferred But Adjudicated
 
@@ -93,13 +93,13 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: （待收口）
+Status Note: 三组独立深审 verdict 均 Pass（9 Minor 全处置或登记，无静默降级）；审计报告落档 docs/audits/replication-ux-u8-deep-audit.md；roadmap §7 U8 Exit"报告落档、verdict Pass"达成；closure audit approved。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: （待独立审计）
-- Evidence: —
+- Auditor / Agent: agent_3b25c1f5（独立 fresh session closure auditor）
+- Evidence: 处置落盘 git diff 逐条核实（含 V3 注释 haversine 独立复算、progress 蓝条实地取证、!important 实存确认）；三组非走过场独立复核（styles-token-resolution 读码/K2 列宽 spec 实证）；Anti-Slacking 抽查成立。
 
 Follow-up:
 
-- （待收口）
+- U9 开放审计由 plan 854 承载；无本 plan-owned work。
