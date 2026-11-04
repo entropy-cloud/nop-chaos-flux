@@ -19,6 +19,25 @@
   overflow-y: auto;
 }
 
+/*
+ * S1 mall brand tokens (upstream-mall-mobile-baseline §2.1/§2.3 等价类移植).
+ * ux-u6 族 C：令牌上提 :root 共享作用域 — mobile canvas（S1/M3）与 desktop
+ * 商城域页（S2 .repl-mall-dist）共用一套，消除两处重复定义块；浅/深双套收敛于此。
+ */
+:root {
+  --repl-mall-price: #ff5000;
+  --repl-mall-gradient: linear-gradient(135deg, #ff6034, #ee0a24);
+  --repl-mall-cart-gradient: linear-gradient(90deg, #ffb03a, #ff7a2f);
+  --repl-mall-seckill-bg: linear-gradient(135deg, #ff3d3d, #ff7a2f);
+  --repl-mall-gold: #ffe9b8;
+  /* 白面文字（gradient 上反白，§2.1 --mall-text-inverse 等价令牌）。 */
+  --repl-mall-text-inverse: #ffffff;
+}
+
+:root[data-mode='dark'] {
+  --repl-mall-price: #ff7a45;
+}
+
 .repl-mobile-canvas-screen {
   width: 375px;
   height: 667px;
@@ -35,17 +54,10 @@
   border: 1px solid hsl(var(--border, 220 13% 91%));
   border-radius: 24px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
-  /* floating-panel's inline background reads this token (plan 846 U1 F-S1-3/
-   * F-M3-1: undefined in the playground → the panel rendered transparent and
-   * the list showed through). Fallback owner is the page-level CSS until the
-   * renderer-side fallback lands (registered improvement-analysis). */
+  /* floating-panel's inline background reads this token (plan 846 U1 F-S1-3).
+   * 渲染器侧 fallback（#ffffff）已在 U6 落地；本声明保留为深色面板兜底防御层
+   * （裁决记录见 u6-family-remediation.md A-3）。 */
   --nop-floating-panel-bg: hsl(var(--card, 0 0% 100%));
-  /* S1 mall brand tokens (upstream-mall-mobile-baseline §2.1/§2.3 等价类移植). */
-  --repl-mall-price: #ff5000;
-  --repl-mall-gradient: linear-gradient(135deg, #ff6034, #ee0a24);
-  --repl-mall-cart-gradient: linear-gradient(90deg, #ffb03a, #ff7a2f);
-  --repl-mall-seckill-bg: linear-gradient(135deg, #ff3d3d, #ff7a2f);
-  --repl-mall-gold: #ffe9b8;
 }
 
 [data-mode='dark'] .repl-mobile-canvas-screen {
@@ -54,8 +66,6 @@
   --nop-floating-panel-bg: #1d1e22;
   --repl-canvas-bg: #111214;
   --repl-canvas-border: #303237;
-  --repl-mall-price: #ff7a45;
-  --repl-mall-gold: #ffe9b8;
 }
 
 /*
@@ -172,11 +182,11 @@
    * white faces instead of the flat pink card (plan 846 U1 F-S1-4). */
   background: var(--repl-mall-seckill-bg, linear-gradient(135deg, #ff3d3d, #ff7a2f));
   border: none;
-  color: #ffffff;
+  color: var(--repl-mall-text-inverse, #ffffff);
 }
 
 .repl-banner .repl-price {
-  color: #ffffff;
+  color: var(--repl-mall-text-inverse, #ffffff);
 }
 
 .repl-banner .repl-price-original {
@@ -217,7 +227,7 @@
 .repl-mall-btn-cart {
   background: var(--repl-mall-cart-gradient, linear-gradient(90deg, #ffb03a, #ff7a2f)) !important;
   border: none !important;
-  color: #ffffff !important;
+  color: var(--repl-mall-text-inverse, #ffffff) !important;
   border-radius: 999px;
   height: 40px;
 }
@@ -225,7 +235,7 @@
 .repl-mall-btn-buy {
   background: var(--repl-mall-gradient, linear-gradient(135deg, #ff6034, #ee0a24)) !important;
   border: none !important;
-  color: #ffffff !important;
+  color: var(--repl-mall-text-inverse, #ffffff) !important;
   border-radius: 999px;
   height: 40px;
 }
@@ -308,17 +318,8 @@
  * S2 mall-distribution (plan 849 U4)：desktop 商城域页品牌令牌对齐
  * （upstream-mall-mobile-baseline §2.1/§2.2/§2.3 等价类移植 — desktop 族口径：
  * 品牌色仅用于 S2；类名沿用 repl- 与 --repl-mall- 前缀，不引入上游 .mall-*）。
- * 令牌在本页根（.repl-mall-dist）作用域内镜像 §2.1 表，浅/深双套。
+ * ux-u6 族 C：令牌定义已上提 :root 共享作用域（浅/深双套），此处只保留消费面。
  */
-.repl-mall-dist {
-  --repl-mall-price: #ff5000;
-  --repl-mall-gradient: linear-gradient(135deg, #ff6034, #ee0a24);
-}
-
-[data-mode='dark'] .repl-mall-dist {
-  --repl-mall-price: #ff7a45;
-}
-
 /* 金额面 → 价格色（baseline §2.2：价格 16/700 #ff5000 三段式的 desktop 表格/
  * 弹层等价单色面，tabular-nums 保列对齐）。 */
 .repl-mall-dist .repl-mall-amount {
@@ -337,63 +338,11 @@
 .repl-mall-dist .repl-mall-btn-buy {
   background: var(--repl-mall-gradient, linear-gradient(135deg, #ff6034, #ee0a24)) !important;
   border: none !important;
-  color: #ffffff !important;
+  color: var(--repl-mall-text-inverse, #ffffff) !important;
 }
 
 /* 权限区块卡 → mall-section 档位（baseline §2.2：r14 / padding 12）。 */
 .repl-mall-section {
   border-radius: 14px;
   padding: 12px;
-}
-
-/*
- * V2 iot-ota-rollout (plan 850 U5)：steps 八态状态色修复（页面级 workaround）。
- * 根因（renderer 级，已登记 U6）：flux-renderers-layout 的 steps/wizard 样式对
- * 通道型令牌（--primary 等，值为 HSL 分量三元组）直接 bare var() 引用，声明
- * 无效回退 initial，finish/process/error 与 wait 同貌。此处以 hsl() 包裹的
- * 等价声明覆盖，颜色语义与渲染器样式表一致；U6 归族时收敛渲染器侧后可移除。
- */
-.nop-steps [data-slot='steps-connector'] {
-  background: hsl(var(--border));
-}
-
-.nop-steps [data-slot='steps-item'][data-status='finish'] > [data-slot='steps-connector'] {
-  background: hsl(var(--primary));
-}
-
-.nop-steps [data-slot='steps-indicator-circle'][data-status='wait'],
-.nop-steps [data-slot='steps-item'][data-status='wait'] [data-slot='steps-indicator-circle'] {
-  border-color: hsl(var(--border));
-  background: hsl(var(--background));
-  color: hsl(var(--muted-foreground));
-}
-
-.nop-steps [data-slot='steps-indicator-circle'][data-status='process'],
-.nop-steps [data-slot='steps-indicator-circle'][data-status='finish'],
-.nop-steps [data-slot='steps-item'][data-status='process'] [data-slot='steps-indicator-circle'],
-.nop-steps [data-slot='steps-item'][data-status='finish'] [data-slot='steps-indicator-circle'] {
-  border-color: hsl(var(--primary));
-  background: hsl(var(--primary));
-  color: hsl(var(--primary-foreground));
-}
-
-.nop-steps [data-slot='steps-indicator-circle'][data-status='error'],
-.nop-steps [data-slot='steps-item'][data-status='error'] [data-slot='steps-indicator-circle'] {
-  border-color: hsl(var(--destructive));
-  background: hsl(var(--destructive));
-  color: hsl(var(--destructive-foreground));
-}
-
-.nop-steps [data-slot='steps-title'],
-.nop-steps [data-slot='steps-description'],
-.nop-steps [data-slot='steps-empty'] {
-  color: hsl(var(--muted-foreground));
-}
-
-.nop-steps [data-slot='steps-item'][data-current] [data-slot='steps-title'] {
-  color: hsl(var(--foreground));
-}
-
-.nop-wizard [data-slot='wizard-step-error'] {
-  color: hsl(var(--destructive));
 }

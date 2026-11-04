@@ -1,6 +1,8 @@
 import { cleanup, fireEvent, render, waitFor } from '@testing-library/react';
 import React from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import type {
   ActionSheetSchema,
   FloatingBubbleSchema,
@@ -50,6 +52,13 @@ describe('FloatingPanelRenderer (plan 666 Phase 1)', () => {
     expect(panel.getAttribute('data-height')).toBe('100');
     expect(panel.getAttribute('data-anchor')).toBe('0');
     expect(panel.style.height).toBe('100px');
+  });
+
+  it('inline background 带 #ffffff fallback（ux-u6 族 A-3：宿主未定义令牌时面板不透明）', () => {
+    // happy-dom 会在 CSSStyleDeclaration 层丢弃 var() 背景声明（React 内联赋值
+    // 同样被吞），故对渲染器源码做契约断言；旧实现（无 fallback）下此断言必挂。
+    const source = readFileSync(join(import.meta.dirname, 'floating-panel.tsx'), 'utf8');
+    expect(source).toContain("background: 'var(--nop-floating-panel-bg, #ffffff)'");
   });
 
   it('drag up grows the panel and release snaps to the nearest anchor', async () => {

@@ -164,8 +164,11 @@ function KanbanColumnInner({
   const columnStyle: React.CSSProperties = {};
   if (columnWidth != null) {
     columnStyle.width = columnWidth;
-    columnStyle.minWidth = undefined;
-    columnStyle.maxWidth = undefined;
+    // ux-u6 族 D：kanban.css 对 .nop-kanban-column 钉了 min-width 280 / max-width 360；
+    // 置 undefined 会被 React 省略、CSS 钳制仍然生效，schema 数值宽度被单边钳断。
+    // 显式内联同值声明以完成覆盖（列宽语义归 schema，CSS 钳制只服务无 schema 宽度的默认态）。
+    columnStyle.minWidth = columnWidth;
+    columnStyle.maxWidth = columnWidth;
   }
 
   const columnTitle = (column.title || column.data?.title || '') as string;

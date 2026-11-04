@@ -380,17 +380,29 @@ export function resolveDesignTokens(): DesignTokenThemeInput {
   probe.style.position = 'fixed';
   probe.style.visibility = 'hidden';
   probe.style.left = '-9999px';
-  probe.style.border = '1px solid var(--border)';
-  probe.style.background = 'var(--background)';
-  probe.style.color = 'var(--foreground)';
   document.body.appendChild(probe);
+  // 裸 HSL 分量主题（如 --background: 220 13% 18%）下 `var(--token)` 作为颜色值非法，
+  // computed 回落 transparent/initial；此时以 hsl(var(--token)) 包裹再试，避免恒回退 light fallback。
+  const isResolved = (value: string) =>
+    value.length > 0 && value !== 'rgba(0, 0, 0, 0)' && value !== 'transparent' && value !== 'initial';
+  const resolveToken = (
+    styleProperty: 'background' | 'color' | 'border',
+    computedProperty: 'backgroundColor' | 'color' | 'borderColor',
+    varName: string,
+    valuePrefix = '',
+  ): string => {
+    probe.style.setProperty(styleProperty, `${valuePrefix}var(${varName})`);
+    let value = getComputedStyle(probe)[computedProperty];
+    if (!isResolved(value)) {
+      probe.style.setProperty(styleProperty, `${valuePrefix}hsl(var(${varName}))`);
+      value = getComputedStyle(probe)[computedProperty];
+    }
+    return value;
+  };
   try {
-    const computed = getComputedStyle(probe);
-    const border = computed.borderColor;
-    const background = computed.backgroundColor;
-    const foreground = computed.color;
-    const isResolved = (value: string) =>
-      value.length > 0 && value !== 'rgba(0, 0, 0, 0)' && value !== 'transparent' && value !== 'initial';
+    const background = resolveToken('background', 'backgroundColor', '--background');
+    const foreground = resolveToken('color', 'color', '--foreground');
+    const border = resolveToken('border', 'borderColor', '--border', '1px solid ');
     return {
       background: isResolved(background) ? background : FALLBACK_THEME_TOKENS.background,
       foreground: isResolved(foreground) ? foreground : FALLBACK_THEME_TOKENS.foreground,

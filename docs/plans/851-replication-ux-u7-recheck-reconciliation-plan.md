@@ -1,9 +1,9 @@
 # 851 复刻页 UX 保真 U7：同探针复检轮 + 覆盖对账
 
-> Plan Status: draft
+> Plan Status: active
 > Last Reviewed: 2026-11-04
 > Source: docs/backlog/replication-ux-fidelity-roadmap.md（work item U7）
-> Related: 845（U0）、846（U1）、847（U2）、848（U3）、849（U4）、850（U5）、8xx（U6，编号待 U6 启动时顺延）
+> Related: 845（U0）、846（U1）、847（U2）、848（U3）、849（U4）、850（U5）、852（U6）
 
 ## Purpose
 
@@ -30,7 +30,7 @@ U6 归族整改完成后，21/21 页以 R2 固化探针同口径复检：零未�
 
 ### In Scope
 
-- 复检探针脚本（`_tmp/` 或提升 `scripts/__tests__/`）、复检报告 `docs/analysis/replication-ux/recheck-report.md`、对账表、截图归档。
+- 复检探针脚本（`_tmp/`，具备回归价值者提升 `tests/e2e/helpers/`）、复检报告 `docs/analysis/replication-ux/recheck-report.md`、对账表、截图归档。
 
 ### Out Of Scope
 
@@ -78,10 +78,10 @@ Exit Criteria:
 
 ## Draft Review Record
 
-- Reviewer / Agent: （待独立子 agent 审查）
-- Verdict: 待审
-- Rounds: —
-- Findings addressed: —
+- Reviewer / Agent: agent_726875d7（fresh session）
+- Verdict: `pass-with-minors`（零 Blocker/Major，2 Minor）
+- Rounds: 1
+- Findings addressed: Minor-1（Related 行 8xx→852）、Minor-2（探针晋升路径统一 tests/e2e/helpers/）
 
 ## Closure Gates
 

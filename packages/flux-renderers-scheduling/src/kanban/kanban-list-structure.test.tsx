@@ -118,3 +118,23 @@ describe('KanbanColumnHeader — labeled group, no nested interactive (G4-视角
     }
   });
 });
+
+describe('KanbanColumn — schema 数值列宽覆盖 CSS 钳制（ux-u6 族 D）', () => {
+  it('columnWidth 数值时内联 min/max width 同值声明，不被 kanban.css 280/360 钳断', () => {
+    const { container } = render(
+      <KanbanColumn
+        column={column}
+        board={board}
+        collapsed={false}
+        onToggleCollapse={() => {}}
+        columnWidth={400}
+      />,
+    );
+    const columnEl = container.querySelector('[data-slot="kanban-column"], .nop-kanban-column') as HTMLElement;
+    const style = columnEl.getAttribute('style') ?? '';
+    // 旧实现（min/maxWidth: undefined → React 省略声明）下此断言必挂：CSS 钳制生效
+    expect(style).toContain('min-width: 400px');
+    expect(style).toContain('max-width: 400px');
+    expect(style).toContain('width: 400px');
+  });
+});

@@ -184,7 +184,9 @@ export function FloatingPanelRenderer(props: RendererComponentProps<FloatingPane
         right: 0,
         bottom: 0,
         height,
-        background: 'var(--nop-floating-panel-bg)',
+        // ux-u6 族 A-3：宿主未定义 --nop-floating-panel-bg 时兜底白底，
+        // 避免面板透出下层列表（plan 846 U1 F-S1-3 同根因的渲染器级收口）。
+        background: 'var(--nop-floating-panel-bg, #ffffff)',
         borderTopLeftRadius: 16,
         borderTopRightRadius: 16,
         overflow: 'hidden',

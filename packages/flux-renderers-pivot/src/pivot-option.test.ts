@@ -416,6 +416,101 @@ describe('mapDesignTokensToVTableTheme', () => {
   });
 });
 
+describe('resolveDesignTokens - 裸 HSL 分量令牌兼容（ux-u6 族 A-1）', () => {
+  /** 模拟「令牌值为裸 HSL 分量」的页面：var(--x) 直接作为颜色值非法（computed 透明），
+   *  hsl(var(--x)) 包裹后可解析。旧实现只 probe var(--x)，必挂（恒回退 light fallback）。 */
+  function withBareHslPage(
+    wrapped: { background: string; foreground: string; border: string },
+    run: () => void,
+  ): string[] {
+    const applied: Record<string, string> = {};
+    const fakeProbe = {
+      style: {
+        position: '',
+        visibility: '',
+        left: '',
+        setProperty(property: string, value: string) {
+          applied[property] = value;
+        },
+      },
+      remove() {},
+    } as unknown as HTMLDivElement;
+    const createElement = vi.spyOn(document, 'createElement').mockReturnValue(fakeProbe);
+    const appendChild = vi.spyOn(document.body, 'appendChild').mockReturnValue(fakeProbe);
+    const getComputedStyle = vi
+      .spyOn(window, 'getComputedStyle')
+      .mockImplementation(() => {
+        const invalid = 'rgba(0, 0, 0, 0)';
+        return {
+          backgroundColor: applied.background?.includes('hsl(')
+            ? wrapped.background
+            : invalid,
+          color: applied.color?.includes('hsl(') ? wrapped.foreground : invalid,
+          borderColor: applied.border?.includes('hsl(') ? wrapped.border : invalid,
+        } as CSSStyleDeclaration;
+      });
+    try {
+      run();
+    } finally {
+      createElement.mockRestore();
+      appendChild.mockRestore();
+      getComputedStyle.mockRestore();
+    }
+    return Object.values(applied);
+  }
+
+  it('裸 HSL 分量令牌：hsl() 包裹重试解析出深色值而非 light fallback（旧实现必挂）', () => {
+    let tokens: DesignTokenThemeInput | undefined;
+    withBareHslPage(
+      {
+        background: 'rgb(35, 38, 45)',
+        foreground: 'rgb(230, 233, 240)',
+        border: 'rgb(58, 63, 73)',
+      },
+      () => {
+        tokens = resolveDesignTokens();
+      },
+    );
+    expect(tokens?.background).toBe('rgb(35, 38, 45)');
+    expect(tokens?.foreground).toBe('rgb(230, 233, 240)');
+    expect(tokens?.border).toBe('rgb(58, 63, 73)');
+  });
+
+  it('包裹重试仅在首次 probe invalid 时发生；正常直值令牌不走 hsl() 通道', () => {
+    const applied: Record<string, string> = {};
+    const fakeProbe = {
+      style: {
+        position: '',
+        visibility: '',
+        left: '',
+        setProperty(property: string, value: string) {
+          applied[property] = value;
+        },
+      },
+      remove() {},
+    } as unknown as HTMLDivElement;
+    const createElement = vi.spyOn(document, 'createElement').mockReturnValue(fakeProbe);
+    const appendChild = vi.spyOn(document.body, 'appendChild').mockReturnValue(fakeProbe);
+    const getComputedStyle = vi.spyOn(window, 'getComputedStyle').mockImplementation(
+      () =>
+        ({
+          backgroundColor: 'rgb(255, 255, 255)',
+          color: 'rgb(31, 35, 40)',
+          borderColor: 'rgb(208, 215, 222)',
+        }) as CSSStyleDeclaration,
+    );
+    try {
+      const tokens = resolveDesignTokens();
+      expect(tokens.background).toBe('rgb(255, 255, 255)');
+      expect(Object.values(applied).some((value) => value.startsWith('hsl('))).toBe(false);
+    } finally {
+      createElement.mockRestore();
+      appendChild.mockRestore();
+      getComputedStyle.mockRestore();
+    }
+  });
+});
+
 describe('buildPivotOption - totals leaf 维度防御（ux-r2）', () => {
   function makeTotalsSchema(totals: Record<string, unknown>): PivotTableSchema {
     return makeSchema({

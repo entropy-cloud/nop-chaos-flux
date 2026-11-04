@@ -21,6 +21,12 @@ export const EXEMPTIONS = [
     source: 'r2-audit/r3-p2-adjudication.md #35 [G4-视角1-01] / #36 [G4-视角3-01] / #39 [G4-视角7-01]；族5 候选池；plan 483 A1 文件级展开',
   },
   {
+    path: 'packages/flux-renderers-mobile/src/floating-panel.tsx',
+    rule: 'hardcoded-literal-color',
+    reason: 'plan 852 U6 族 A-3：inline background `var(--nop-floating-panel-bg, #ffffff)` 的 #ffffff 为 CSS var 防御性 fallback 值（宿主未定义令牌时兜底，非样式直值；var() fallback 写法契约本身）',
+    source: 'docs/analysis/replication-ux/u6-family-remediation.md §2 A-3 裁决；improvement-analysis 2026-11-04 plan 846 U1 条目销单（渲染器侧 fallback 落地）',
+  },
+  {
     path: 'packages/flux-renderers-form/src/renderers/signature-renderer.tsx',
     rule: 'hardcoded-literal-color',
     reason: 'plan 507 input-signature 笔色/画布底色的功能性默认值（penColor/backgroundColor 是组件的值域 prop，字面色即契约本身，无 token 替代）',
