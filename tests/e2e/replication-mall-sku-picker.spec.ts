@@ -31,8 +31,6 @@ const COUNTERS_KEY = '__replMallCalls';
 const HOOKS_KEY = '__replMallTestHooks';
 
 const PANEL = '[data-testid="mall-sku-picker-panel"]';
-const COLOR_WHEEL = '[data-testid="mall-sku-picker-spec-color"]';
-const SIZE_WHEEL = '[data-testid="mall-sku-picker-spec-size"]';
 
 async function callCount(page: Page, endpoint: string): Promise<number> {
   return (await readEndpointCalls(page, COUNTERS_KEY))[endpoint] ?? 0;
@@ -59,44 +57,22 @@ async function openS1(page: Page): Promise<void> {
   });
 }
 
-/** Drag a picker-view wheel one row (finger-up → index + 1) via CDP touch. */
-async function dragWheelOneRow(page: Page, wheelSelector: string): Promise<void> {
-  const wheel = page.locator(wheelSelector);
-  const box = await wheel.boundingBox();
-  expect(box).toBeTruthy();
-  await dragTouchReplication(
-    page,
-    { x: box!.x + box!.width / 2, y: box!.y + box!.height / 2 },
-    { x: box!.x + box!.width / 2, y: box!.y + box!.height / 2 - 36 },
-    { steps: 8 },
-  );
+/** U9 后 polish（plan 855 交互裁决，语义不弱化）：规格选择器由 picker-view 双轮
+ * 改为 button-group-select 芯片（拼多多式）——选择语义（selectedColor/selectedSize
+ * → skuId 前端求交）不变，输入模态从拖拽换为点击；断言对象（sku/价格/库存/
+ * 缺货闸/payload 镜像）全部保留。点击芯片直至其被选中（确定性，替代拖拽 snap 重试）。 */
+async function clickSpecChip(page: Page, groupTid: string, label: string): Promise<string> {
+  const chip = page
+    .getByTestId(groupTid)
+    .locator('[data-slot="button-group-select-item"]')
+    .filter({ hasText: label });
+  await chip.click();
+  await expect(chip).toHaveAttribute('aria-pressed', 'true', { timeout: 5_000 });
+  await page.waitForTimeout(400);
+  return label;
 }
 
-/** Active-row label of a picker-view wheel (data-active row text). */
-async function activeLabel(page: Page, wheelSelector: string): Promise<string> {
-  return (
-    (await page
-      .locator(`${wheelSelector} [data-active="true"]`)
-      .textContent()
-      .catch(() => '')) ?? ''
-  ).trim();
-}
-
-/** Spin a wheel until its active row CHANGES (snap-backs produce no onChange —
- * poll the data-active label, retry up to 5 single-row drags). Returns the
- * settled active label. */
-async function spinWheelUntilChanged(page: Page, wheelSelector: string): Promise<string> {
-  const before = await activeLabel(page, wheelSelector);
-  for (let i = 0; i < 5; i += 1) {
-    await dragWheelOneRow(page, wheelSelector);
-    await page.waitForTimeout(400);
-    const after = await activeLabel(page, wheelSelector);
-    if (after && after !== before) return after;
-  }
-  return await activeLabel(page, wheelSelector);
-}
-
-/** Open the SKU panel and drag both wheels so selectedColor/selectedSize land. */
+/** Open the SKU panel and select both spec chips so selectedColor/selectedSize land. */
 /** buildMallSkuMatrix wire facts (price 3999+n*100, stock 20-n; sku-006 白512G sold out). */
 const SKU_FACTS: Record<string, { price: number; stock: number }> = {
   'sku-001': { price: 4099, stock: 19 },
@@ -128,7 +104,7 @@ async function dragPanelToTopAnchor(page: Page): Promise<void> {
 
 async function readResolvedSku(page: Page): Promise<{ skuId: string; price: number; stock: number }> {
   const skuText = await page.getByTestId('mall-sku-picker-sku').textContent({ timeout: 10_000 });
-  const skuId = (skuText ?? '').replace('SKU：', '').trim();
+  const skuId = (skuText ?? '').match(/sku-\d{3}/)?.[0] ?? '';
   expect(skuId).toMatch(/^sku-\d{3}$/);
   return { skuId, ...SKU_FACTS[skuId] };
 }
@@ -144,13 +120,10 @@ async function selectFullSpec(page: Page): Promise<{ skuId: string; price: numbe
   const panel = page.locator(PANEL);
   await expect(panel).toHaveAttribute('data-anchor', '0', { timeout: 10_000 });
   await dragPanelToTopAnchor(page);
-  await spinWheelUntilChanged(page, COLOR_WHEEL);
-  await spinWheelUntilChanged(page, SIZE_WHEEL);
-  let resolved = await readResolvedSku(page);
-  for (let attempt = 0; attempt < 3 && resolved.stock <= 0; attempt += 1) {
-    await spinWheelUntilChanged(page, SIZE_WHEEL);
-    resolved = await readResolvedSku(page);
-  }
+  await clickSpecChip(page, 'mall-sku-picker-spec-color', '曜石黑');
+  // sold-out 组合是 冰川白+512G（sku-006）——曜石黑下任一容量均有货。
+  await clickSpecChip(page, 'mall-sku-picker-spec-size', '128G');
+  const resolved = await readResolvedSku(page);
   expect(resolved.stock, `selected SKU ${resolved.skuId} must be in stock`).toBeGreaterThan(0);
   return resolved;
 }
@@ -213,11 +186,11 @@ test.describe('S1 商城商品 SKU 选择页 (#/complex-pages/mall-sku-picker)',
     await expect(page.getByTestId('mall-sku-picker-add-cart')).toBeDisabled();
 
     await dragPanelToTopAnchor(page);
-    await spinWheelUntilChanged(page, COLOR_WHEEL);
-    await spinWheelUntilChanged(page, SIZE_WHEEL);
+    await clickSpecChip(page, 'mall-sku-picker-spec-color', '曜石黑');
+    await clickSpecChip(page, 'mall-sku-picker-spec-size', '128G');
 
     const skuText = await page.getByTestId('mall-sku-picker-sku').textContent({ timeout: 10_000 });
-    const skuId = (skuText ?? '').replace('SKU：', '').trim();
+    const skuId = (skuText ?? '').match(/sku-\d{3}/)?.[0] ?? '';
     expect(skuId).toMatch(/^sku-\d{3}$/);
     const resolved = { skuId, ...SKU_FACTS[skuId] };
 

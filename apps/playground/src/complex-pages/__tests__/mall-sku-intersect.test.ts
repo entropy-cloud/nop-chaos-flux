@@ -38,8 +38,12 @@ const pureExpressions = collectPureExpressions(schema);
 const stockGateExpr = pureExpressions.find(
   (expr) => expr.includes('r?.specs?.color === selectedColor') && expr.includes('<= 0'),
 )!;
-/** picker onChange 的 skuId 部分匹配写回面（纯表达式）。 */
-const colorSkuExpr = pureExpressions.find((expr) => expr.includes('r?.specs?.color === value'))!;
+/** 加购/直购 payload 的 skuId 内联求交写回面（纯表达式；plan 855 芯片化后
+ * 选择器不再携带 onChange 写回，skuId 由 payload 表达式按 selectedColor/
+ * selectedSize 读时求交）。 */
+const payloadSkuExpr = pureExpressions.find(
+  (expr) => expr.includes('r?.specs?.color === selectedColor') && expr.includes('skuId'),
+)!;
 
 const fixtureSkuMatrix = [
   { skuId: 'sku-001', specs: { color: '曜石黑', size: '128G' }, price: 4099, stock: 19, image: '' },
@@ -78,7 +82,7 @@ function evaluateInScope<T = unknown>(expression: string, scopeData: Record<stri
 describe('G16 SKU 规格求交 formula 编排（plan 812，D4 §3.3 ①）', () => {
   it('schema 内存在两维缺货闸与颜色侧写回纯表达式（family walk 命中）', () => {
     expect(stockGateExpr, '两维缺货闸表达式必须在 schema 内').toBeTruthy();
-    expect(colorSkuExpr, '颜色侧写回表达式必须在 schema 内').toBeTruthy();
+    expect(payloadSkuExpr, '规格求交 skuId 内联表达式必须在 schema 内').toBeTruthy();
   });
 
   it('满配有货组合：曜石黑 128G → 缺货闸放行（有货）', () => {
@@ -108,12 +112,11 @@ describe('G16 SKU 规格求交 formula 编排（plan 812，D4 §3.3 ①）', () 
     expect(badge).toBe('缺货');
   });
 
-  it('颜色侧写回面：value=冰川白 × selectedSize=512G → 命中 sku-006', () => {
-    const skuId = evaluateInScope<string>(colorSkuExpr, {
+  it('芯片选择写回面：selectedColor=冰川白 × selectedSize=512G → payload 求交命中 sku-006（plan 855 芯片化口径）', () => {
+    const skuId = evaluateInScope<string>(payloadSkuExpr, {
       goodsDetail: { skuMatrix: fixtureSkuMatrix },
-      selectedColor: '',
+      selectedColor: '冰川白',
       selectedSize: '512G',
-      value: '冰川白',
     });
     expect(skuId).toBe('sku-006');
   });

@@ -222,22 +222,69 @@
   z-index: 10;
 }
 
-/* upstream goods-detail action-bar 双钮形态（baseline §3.1 G5，plan 846 U1）:
- * 加购橙金渐变胶囊 / 立即购买品牌渐变胶囊，高 40px。 */
-.repl-mall-btn-cart {
-  background: var(--repl-mall-cart-gradient, linear-gradient(90deg, #ffb03a, #ff7a2f)) !important;
-  border: none !important;
-  color: var(--repl-mall-text-inverse, #ffffff) !important;
+/* upstream goods-detail action-bar 双钮形态（baseline §3.1 G5，plan 846 U1；
+ * plan 855：!important 债消除——canvas 作用域前缀提特异性替代）。 */
+.repl-mobile-canvas-screen .repl-mall-btn-cart {
+  background: var(--repl-mall-cart-gradient, linear-gradient(90deg, #ffb03a, #ff7a2f));
+  border-color: transparent;
+  color: var(--repl-mall-text-inverse, #ffffff);
   border-radius: 999px;
   height: 40px;
 }
 
-.repl-mall-btn-buy {
-  background: var(--repl-mall-gradient, linear-gradient(135deg, #ff6034, #ee0a24)) !important;
-  border: none !important;
-  color: var(--repl-mall-text-inverse, #ffffff) !important;
+.repl-mobile-canvas-screen .repl-mall-btn-buy {
+  background: var(--repl-mall-gradient, linear-gradient(135deg, #ff6034, #ee0a24));
+  border-color: transparent;
+  color: var(--repl-mall-text-inverse, #ffffff);
   border-radius: 999px;
   height: 40px;
+}
+
+/* plan 855 商城域 polish：规格芯片（拼多多式圆角芯片，选中品牌描边+浅红底）。 */
+.repl-mall-chips {
+  gap: 8px;
+}
+
+.repl-mall-chips [data-slot='button-group-select-item'] {
+  border: 1px solid hsl(var(--border, 220 13% 91%));
+  border-radius: 8px;
+  background: hsl(var(--card, 0 0% 100%));
+  color: hsl(var(--foreground, 224 71% 4%));
+  font-size: 13px;
+  padding: 6px 14px;
+  height: auto;
+}
+
+.repl-mall-chips [data-slot='button-group-select-item'][aria-pressed='true'],
+.repl-mall-chips [data-slot='button-group-select-item'][data-selected] {
+  border-color: var(--repl-mall-price, #ff5000);
+  color: var(--repl-mall-price, #ff5000);
+  background: rgba(255, 80, 0, 0.06);
+  font-weight: 600;
+}
+
+/* plan 855：秒杀横幅内 progress 金色填充 + 半透明白轨道（原默认蓝叠红橙渐变刺眼）。 */
+.repl-banner [data-slot='progress-track'] {
+  background: rgba(255, 255, 255, 0.28);
+}
+
+.repl-banner [data-slot='progress-indicator'],
+.repl-banner .nop-progress-indicator {
+  /* !important 压制 base-ui progress 指示器的内联样式（内联无法用特异性覆盖）。 */
+  background: var(--repl-mall-gold, #ffe9b8) !important;
+}
+
+/* plan 855：场次 pill 品牌化（选中金色描边白底金字，替代默认蓝）。 */
+.repl-banner [data-slot='button-group-select-item'] {
+  background: rgba(255, 255, 255, 0.92);
+  border-color: transparent;
+  color: #c2410c;
+}
+
+.repl-banner [data-slot='button-group-select-item'][aria-pressed='true'] {
+  background: var(--repl-mall-gold, #ffe9b8);
+  color: #9a3412;
+  font-weight: 700;
 }
 
 .repl-goods-card {
@@ -336,9 +383,9 @@
 
 /* 主操作 → 品牌渐变（desktop 档位：沿用按钮自身圆角/高度，不套移动胶囊）。 */
 .repl-mall-dist .repl-mall-btn-buy {
-  background: var(--repl-mall-gradient, linear-gradient(135deg, #ff6034, #ee0a24)) !important;
-  border: none !important;
-  color: var(--repl-mall-text-inverse, #ffffff) !important;
+  background: var(--repl-mall-gradient, linear-gradient(135deg, #ff6034, #ee0a24));
+  border-color: transparent;
+  color: var(--repl-mall-text-inverse, #ffffff);
 }
 
 /* 权限区块卡 → mall-section 档位（baseline §2.2：r14 / padding 12）。 */

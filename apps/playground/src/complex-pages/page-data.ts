@@ -296,15 +296,15 @@ PAGE_DATA['crm-sales-dashboard'] = {
                         { name: 'stageName', label: '阶段', width: 100 },
                         { name: 'amount', label: '金额（万元）', width: 110 },
                         { name: 'ownerName', label: '负责人', width: 90 },
-                        { name: 'closeDate', label: '预计成交日', width: 110 }
+                        { name: 'closeDate', label: '预计成交日', width: 110 },
                       ],
-                      empty: { type: 'text', text: '该月无成交明细' }
-                    }
-                  ]
-                }
-              }
-            }
-          }
+                      empty: { type: 'text', text: '该月无成交明细' },
+                    },
+                  ],
+                },
+              },
+            },
+          },
         },
       },
     },
@@ -343,9 +343,9 @@ PAGE_DATA['crm-sales-dashboard'] = {
           { name: 'label', label: '阶段', width: 140 },
           { name: 'leadCount', label: '商机数', width: 100 },
           { name: 'amount', label: '金额（万元）', width: 130 },
-          { name: 'conversion', label: '转化率（%）', width: 110 }
+          { name: 'conversion', label: '转化率（%）', width: 110 },
         ],
-        empty: { type: 'text', text: '暂无阶段报表数据' }
+        empty: { type: 'text', text: '暂无阶段报表数据' },
       },
     },
   ],
@@ -372,7 +372,6 @@ PAGE_DATA['mall-distribution'] = {
       y: 0,
       w: 3,
       h: 2,
-      title: '分销 GMV',
       props: {
         testid: 'mall-distribution-kpi-gmv',
         label: '分销 GMV（元）',
@@ -389,7 +388,6 @@ PAGE_DATA['mall-distribution'] = {
       y: 0,
       w: 3,
       h: 2,
-      title: '佣金总额',
       props: {
         testid: 'mall-distribution-kpi-commission',
         label: '佣金总额（元）',
@@ -405,7 +403,6 @@ PAGE_DATA['mall-distribution'] = {
       y: 0,
       w: 3,
       h: 2,
-      title: '分销员数',
       props: {
         testid: 'mall-distribution-kpi-distributors',
         label: '分销员数',
@@ -420,7 +417,6 @@ PAGE_DATA['mall-distribution'] = {
       y: 0,
       w: 3,
       h: 2,
-      title: '待结算笔数',
       props: {
         testid: 'mall-distribution-kpi-pending',
         label: '待结算笔数',

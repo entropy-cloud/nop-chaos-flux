@@ -361,8 +361,8 @@
                     {
                       "type": "text",
                       "testid": "mall-sku-picker-panel-caption",
-                      "text": "选择规格（求交定位 SKU）· 当前锚点：${panelAnchor ?? 0}",
-                      "className": "text-xs text-muted-foreground"
+                      "text": "选择规格",
+                      "className": "text-sm font-medium"
                     },
                     {
                       "type": "flex",
@@ -370,72 +370,46 @@
                       "gap": 8,
                       "body": [
                         {
-                          "type": "picker-view",
+                          "type": "button-group-select",
                           "testid": "mall-sku-picker-spec-color",
-                          "columns": [
-                            [
-                              {
-                                "label": "曜石黑",
-                                "value": "曜石黑"
-                              },
-                              {
-                                "label": "冰川白",
-                                "value": "冰川白"
-                              },
-                              {
-                                "label": "霞光紫",
-                                "value": "霞光紫"
-                              }
-                            ]
-                          ],
-                          "value": "${[selectedColor]}",
-                          "rowHeight": 36,
-                          "visibleRows": 3,
-                          "onChange": [
+                          "name": "selectedColor",
+                          "className": "repl-mall-chips",
+                          "options": [
                             {
-                              "action": "setValues",
-                              "args": {
-                                "values": {
-                                  "selectedColor": "${value}",
-                                  "skuId": "${ARRAYFILTER(goodsDetail?.skuMatrix ?? [], r => r?.specs?.color === value && r?.specs?.size === (selectedSize ?? ''))[0]?.skuId ?? ''}"
-                                }
-                              }
+                              "label": "曜石黑",
+                              "value": "曜石黑"
+                            },
+                            {
+                              "label": "冰川白",
+                              "value": "冰川白"
+                            },
+                            {
+                              "label": "霞光紫",
+                              "value": "霞光紫"
                             }
-                          ]
+                          ],
+                          "value": "${selectedColor}"
                         },
                         {
-                          "type": "picker-view",
+                          "type": "button-group-select",
                           "testid": "mall-sku-picker-spec-size",
-                          "columns": [
-                            [
-                              {
-                                "label": "128G",
-                                "value": "128G"
-                              },
-                              {
-                                "label": "256G",
-                                "value": "256G"
-                              },
-                              {
-                                "label": "512G",
-                                "value": "512G"
-                              }
-                            ]
-                          ],
-                          "value": "${[selectedSize]}",
-                          "rowHeight": 36,
-                          "visibleRows": 3,
-                          "onChange": [
+                          "name": "selectedSize",
+                          "className": "repl-mall-chips",
+                          "options": [
                             {
-                              "action": "setValues",
-                              "args": {
-                                "values": {
-                                  "selectedSize": "${value}",
-                                  "skuId": "${ARRAYFILTER(goodsDetail?.skuMatrix ?? [], r => r?.specs?.color === (selectedColor ?? '') && r?.specs?.size === value)[0]?.skuId ?? ''}"
-                                }
-                              }
+                              "label": "128G",
+                              "value": "128G"
+                            },
+                            {
+                              "label": "256G",
+                              "value": "256G"
+                            },
+                            {
+                              "label": "512G",
+                              "value": "512G"
                             }
-                          ]
+                          ],
+                          "value": "${selectedSize}"
                         }
                       ]
                     },
@@ -448,8 +422,8 @@
                         {
                           "type": "text",
                           "testid": "mall-sku-picker-sku",
-                          "text": "SKU：${ARRAYFILTER(goodsDetail?.skuMatrix ?? [], r => r?.specs?.color === selectedColor && r?.specs?.size === selectedSize)[0]?.skuId ?? '-'}",
-                          "className": "text-xs text-muted-foreground"
+                          "text": "型号 ${ARRAYFILTER(goodsDetail?.skuMatrix ?? [], r => r?.specs?.color === selectedColor && r?.specs?.size === selectedSize)[0]?.skuId ?? '待选择'}",
+                          "className": "text-xs text-muted-foreground tabular-nums"
                         },
                         {
                           "type": "text",
@@ -460,7 +434,7 @@
                         {
                           "type": "text",
                           "testid": "mall-sku-picker-stock",
-                          "text": "库存 ${ARRAYFILTER(goodsDetail?.skuMatrix ?? [], r => r?.specs?.color === selectedColor && r?.specs?.size === selectedSize)[0]?.stock ?? '-'}"
+                          "text": "库存 ${ARRAYFILTER(goodsDetail?.skuMatrix ?? [], r => r?.specs?.color === selectedColor && r?.specs?.size === selectedSize)[0]?.stock ?? '-'} 件"
                         },
                         {
                           "type": "text",
@@ -518,7 +492,15 @@
                       "args": {
                         "url": "/r/ReplMall__addToCart",
                         "method": "post",
-                        "includeScope": "*"
+                        "data": {
+                          "skuId": "${ARRAYFILTER(goodsDetail?.skuMatrix ?? [], r => r?.specs?.color === selectedColor && r?.specs?.size === selectedSize)[0]?.skuId ?? ''}",
+                          "quantity": "${quantity}",
+                          "channel": "${channel ?? 'seckill'}",
+                          "couponAllowed": "${couponAllowed ?? false}",
+                          "activeSession": "${activeSession}",
+                          "selectedColor": "${selectedColor}",
+                          "selectedSize": "${selectedSize}"
+                        }
                       },
                       "messages": {
                         "success": "已加入购物车"
@@ -548,7 +530,15 @@
                       "args": {
                         "url": "/r/ReplMall__placeOrder",
                         "method": "post",
-                        "includeScope": "*"
+                        "data": {
+                          "skuId": "${ARRAYFILTER(goodsDetail?.skuMatrix ?? [], r => r?.specs?.color === selectedColor && r?.specs?.size === selectedSize)[0]?.skuId ?? ''}",
+                          "quantity": "${quantity}",
+                          "channel": "${channel ?? 'seckill'}",
+                          "couponAllowed": "${couponAllowed ?? false}",
+                          "activeSession": "${activeSession}",
+                          "selectedColor": "${selectedColor}",
+                          "selectedSize": "${selectedSize}"
+                        }
                       },
                       "messages": {
                         "success": "抢购成功"

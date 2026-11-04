@@ -108,11 +108,21 @@ export interface MallSkuRow {
 }
 
 export function mallSkuImage(seed: number): string {
-  // 商品感占位图（plan 846 U1 F-S1-1）：种子驱动的双色渐变 + 器形剪影，
-  // 替换纯色块 + 大字占位（roadmap §2 S1 占位色块预警取证后的处置）。
+  // 商品感占位图（plan 855 polish 二代：按 seed 分类型器形 + 光影层次，
+  // 替换一代几何剪影；真实摄影素材接入另立 plan——plan 855 Deferred）。
   const hue = (seed * 47) % 360;
   const hue2 = (hue + 42) % 360;
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="480" height="480"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="hsl(${hue},72%,78%)"/><stop offset="1" stop-color="hsl(${hue2},64%,50%)"/></linearGradient></defs><rect width="480" height="480" fill="url(#g)"/><circle cx="168" cy="196" r="92" fill="rgba(255,255,255,0.34)"/><rect x="232" y="252" width="150" height="116" rx="18" fill="rgba(255,255,255,0.42)"/><rect x="96" y="316" width="180" height="14" rx="7" fill="rgba(255,255,255,0.28)"/><text x="26" y="456" font-size="30" fill="rgba(255,255,255,0.82)" font-family="monospace">G${seed}</text></svg>`;
+  const kind = seed % 3; // 0 手机 / 1 笔记本 / 2 耳机
+  const product =
+    kind === 0
+      ? // 手机：机身圆角矩形 + 屏幕高光 + 后摄模组
+        `<rect x="168" y="96" width="144" height="288" rx="26" fill="rgba(20,24,34,0.82)"/><rect x="178" y="108" width="124" height="264" rx="18" fill="url(#screen)"/><rect x="196" y="120" width="44" height="12" rx="6" fill="rgba(255,255,255,0.22)"/><circle cx="286" cy="128" r="9" fill="rgba(255,255,255,0.28)"/><circle cx="286" cy="152" r="9" fill="rgba(255,255,255,0.2)"/>`
+      : kind === 1
+        ? // 笔记本：屏 + 键盘底座
+          `<rect x="108" y="120" width="264" height="164" rx="12" fill="rgba(20,24,34,0.82)"/><rect x="120" y="132" width="240" height="140" rx="6" fill="url(#screen)"/><path d="M84 292 h312 l18 26 a8 8 0 0 1 -8 10 h-332 a8 8 0 0 1 -8 -10 z" fill="rgba(255,255,255,0.4)"/>`
+        : // 耳机：头环 + 双耳罩
+          `<path d="M160 236 a80 80 0 0 1 160 0" stroke="rgba(20,24,34,0.82)" stroke-width="22" fill="none" stroke-linecap="round"/><rect x="128" y="228" width="58" height="96" rx="24" fill="rgba(20,24,34,0.82)"/><rect x="294" y="228" width="58" height="96" rx="24" fill="rgba(20,24,34,0.82)"/><rect x="140" y="242" width="34" height="68" rx="16" fill="rgba(255,255,255,0.24)"/><rect x="306" y="242" width="34" height="68" rx="16" fill="rgba(255,255,255,0.24)"/>`;
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="480" height="480"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="hsl(${hue},68%,82%)"/><stop offset="1" stop-color="hsl(${hue2},58%,46%)"/></linearGradient><linearGradient id="screen" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="hsl(${(hue + 180) % 360},52%,86%)"/><stop offset="1" stop-color="hsl(${hue2},44%,62%)"/></linearGradient><radialGradient id="floor" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="rgba(0,0,0,0.28)"/><stop offset="1" stop-color="rgba(0,0,0,0)"/></radialGradient></defs><rect width="480" height="480" fill="url(#g)"/><ellipse cx="240" cy="404" rx="150" ry="26" fill="url(#floor)"/>${product}<text x="26" y="52" font-size="26" fill="rgba(255,255,255,0.85)" font-family="monospace">G${seed}</text></svg>`;
   return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
 }
 
