@@ -154,9 +154,9 @@
                         }
                       },
                       "regionData": "${fenceList?.regionData ?? []}",
-                      "center": [121.76, 31.13],
-                      "zoom": 9,
-                      "height": 240,
+                      "center": [121.76, 31.14],
+                      "zoom": 9.8,
+                      "height": 360,
                       "basemap": {
                         "type": "xyz",
                         "url": "/repl-assets/map-tile-blank.png"

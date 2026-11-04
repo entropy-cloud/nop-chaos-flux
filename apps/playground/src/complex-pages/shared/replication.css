@@ -345,3 +345,55 @@
   border-radius: 14px;
   padding: 12px;
 }
+
+/*
+ * V2 iot-ota-rollout (plan 850 U5)：steps 八态状态色修复（页面级 workaround）。
+ * 根因（renderer 级，已登记 U6）：flux-renderers-layout 的 steps/wizard 样式对
+ * 通道型令牌（--primary 等，值为 HSL 分量三元组）直接 bare var() 引用，声明
+ * 无效回退 initial，finish/process/error 与 wait 同貌。此处以 hsl() 包裹的
+ * 等价声明覆盖，颜色语义与渲染器样式表一致；U6 归族时收敛渲染器侧后可移除。
+ */
+.nop-steps [data-slot='steps-connector'] {
+  background: hsl(var(--border));
+}
+
+.nop-steps [data-slot='steps-item'][data-status='finish'] > [data-slot='steps-connector'] {
+  background: hsl(var(--primary));
+}
+
+.nop-steps [data-slot='steps-indicator-circle'][data-status='wait'],
+.nop-steps [data-slot='steps-item'][data-status='wait'] [data-slot='steps-indicator-circle'] {
+  border-color: hsl(var(--border));
+  background: hsl(var(--background));
+  color: hsl(var(--muted-foreground));
+}
+
+.nop-steps [data-slot='steps-indicator-circle'][data-status='process'],
+.nop-steps [data-slot='steps-indicator-circle'][data-status='finish'],
+.nop-steps [data-slot='steps-item'][data-status='process'] [data-slot='steps-indicator-circle'],
+.nop-steps [data-slot='steps-item'][data-status='finish'] [data-slot='steps-indicator-circle'] {
+  border-color: hsl(var(--primary));
+  background: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+}
+
+.nop-steps [data-slot='steps-indicator-circle'][data-status='error'],
+.nop-steps [data-slot='steps-item'][data-status='error'] [data-slot='steps-indicator-circle'] {
+  border-color: hsl(var(--destructive));
+  background: hsl(var(--destructive));
+  color: hsl(var(--destructive-foreground));
+}
+
+.nop-steps [data-slot='steps-title'],
+.nop-steps [data-slot='steps-description'],
+.nop-steps [data-slot='steps-empty'] {
+  color: hsl(var(--muted-foreground));
+}
+
+.nop-steps [data-slot='steps-item'][data-current] [data-slot='steps-title'] {
+  color: hsl(var(--foreground));
+}
+
+.nop-wizard [data-slot='wizard-step-error'] {
+  color: hsl(var(--destructive));
+}

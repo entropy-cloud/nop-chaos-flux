@@ -45,9 +45,9 @@ export interface IotFenceEvent {
 }
 
 export const IOT_FENCES: IotFence[] = [
-  { fenceId: 'FENCE-A', fenceName: '张江园区', centerLat: 31.205, centerLng: 121.6, radiusMeters: 800 },
-  { fenceId: 'FENCE-B', fenceName: '外高桥仓', centerLat: 31.355, centerLng: 121.59, radiusMeters: 1200 },
-  { fenceId: 'FENCE-C', fenceName: '临港基地', centerLat: 30.9, centerLng: 121.93, radiusMeters: 1500 },
+  { fenceId: 'FENCE-A', fenceName: '张江园区', centerLat: 31.205, centerLng: 121.6, radiusMeters: 2000 },
+  { fenceId: 'FENCE-B', fenceName: '外高桥仓', centerLat: 31.355, centerLng: 121.59, radiusMeters: 3000 },
+  { fenceId: 'FENCE-C', fenceName: '临港基地', centerLat: 30.9, centerLng: 121.93, radiusMeters: 4000 },
 ];
 
 export const IOT_DEVICE_PINS: IotDevicePin[] = [

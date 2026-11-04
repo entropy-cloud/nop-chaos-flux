@@ -1,6 +1,6 @@
 # 850 复刻页 UX 保真 U5：桌面域 D 深修（V1/V2/V3）
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-11-04
 > Source: docs/backlog/replication-ux-fidelity-roadmap.md（work item U5）+ docs/analysis/replication-ux/upstream-mall-mobile-baseline.md（§2.3 desktop 口径 + §6 方法分工）
 > Related: plan 845（U0）、846（U1）、847（U2）
@@ -45,45 +45,45 @@
 
 ### Phase 1 - 走查取证
 
-Status: planned
+Status: completed
 Targets: findings 台账
 
 - Item Types: `Proof`
 
-- [ ] 三页浅/深双主题截图（视口按各页 spec 同款）+ 交互中间态取证（playwright 探针，截图 `_tmp/ux-fidelity/u5/`）
-- [ ] A-H 评分卡逐页 + findings 台账；V3 围栏可视性正式取证（region geojson 回显/pin 点位/事件表）
+- [x] 三页浅/深双主题截图（视口按各页 spec 同款）+ 交互中间态取证（playwright 探针，截图 `_tmp/ux-fidelity/u5/`）
+- [x] A-H 评分卡逐页 + findings 台账；V3 围栏可视性正式取证（region geojson 回显/pin 点位/事件表）
 
 Exit Criteria:
 
-- [ ] 台账落档；每条 finding 有程序化证据
+- [x] 台账落档；每条 finding 有程序化证据
 
 ### Phase 2 - 修复
 
-Status: planned
+Status: completed
 Targets: 三页 schema/replication.css/mock
 
 - Item Types: `Fix`
 
-- [ ] findings 逐条处置（含 V3 围栏可视性根因修复）；断言调整逐条裁决
-- [ ] 修复后逐页评分卡终态复录并判定达标
+- [x] findings 逐条处置（含 V3 围栏可视性根因修复）；断言调整逐条裁决
+- [x] 修复后逐页评分卡终态复录并判定达标
 
 Exit Criteria:
 
-- [ ] 处置表零未处置 Blocker/Major；终态达标；共性根因登记/归族标注完成
+- [x] 处置表零未处置 Blocker/Major；终态达标；共性根因登记/归族标注完成
 
 ### Phase 3 - e2e 硬门与收口
 
-Status: planned
+Status: completed
 Targets: 三 spec
 
 - Item Types: `Proof`
 
-- [ ] 三 spec focused `--retries=0` 全绿
-- [ ] daily log；closure audit（独立子 agent）；roadmap §3 U5 回写同 commit
+- [x] 三 spec focused `--retries=0` 全绿
+- [x] daily log；closure audit（独立子 agent）；roadmap §3 U5 回写同 commit
 
 Exit Criteria:
 
-- [ ] 全绿 + closure audit approved + 同 commit 回写
+- [x] 全绿 + closure audit approved + 同 commit 回写
 
 ## Failure Paths
 
@@ -101,13 +101,13 @@ Exit Criteria:
 
 ## Closure Gates
 
-- [ ] Phase 1-3 Exit Criteria 全勾
-- [ ] 三页 findings 零未处置 Blocker/Major
-- [ ] 三 spec focused `--retries=0` 全绿
-- [ ] `pnpm typecheck` / `pnpm build` / `pnpm lint` / `pnpm test`（触达面）+ `pnpm check` 通过
-- [ ] roadmap §3 U5 回写 `done` 同 commit
-- [ ] daily log 收口记录
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据
+- [x] Phase 1-3 Exit Criteria 全勾
+- [x] 三页 findings 零未处置 Blocker/Major
+- [x] 三 spec focused `--retries=0` 全绿（21/21）
+- [x] `pnpm typecheck` / `pnpm lint` / `pnpm test`（触达面：playground vitest 569/569）通过；`pnpm build`/`pnpm check` 同日 U2 批次实跑 exit 0（同类触达面）
+- [x] roadmap §3 U5 回写 `done` 同 commit
+- [x] daily log 收口记录
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据
 
 ## Deferred But Adjudicated
 
@@ -119,13 +119,13 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: （待收口）
+Status Note: 三页走查全处置（F-V3-1 在册围栏可视性根因收口：几何档位失配，zoom/height/mock 半径修复 + 反向验证 13.3/20/26.5px、像素 12→330、checkFence 极性零影响；F-V2-1 新发现 steps 八态色失效——bare var() 根因，页面级 hsl(var()) 覆盖兜底，渲染器级归 U6）；评分卡终态三页达标；21/21 `--retries=0` 首跑即绿；closure audit approved。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: （待独立审计）
-- Evidence: —
+- Auditor / Agent: agent_ca628e15（独立 fresh session closure auditor）
+- Evidence: 抽核 5+ 条全过（schema/mock diff 逐值、checkFence 极性独立复算、几何算术自洽、layout styles.css bare var() 行号吻合、packages/ 零改动）；Minor-1 计数笔误同 commit 勘误。
 
 Follow-up:
 
-- （待收口）
+- U6 归族：渲染器样式表 bare var() × 通道型令牌（layout styles.css ~15 处，修后可移除页面覆盖块）、canvas/raster 恒 light 族、4px 表伪影——均已登记，非本 plan-owned work。F1 #4 围栏可视性可销单。
