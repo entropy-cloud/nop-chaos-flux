@@ -88,10 +88,13 @@ async function countLines(relativePath) {
   try {
     const content = await readFile(absolutePath, 'utf8');
     return content === '' ? 0 : content.split(/\r?\n/).length;
-  } catch {
-    return -1;
+  } catch (error) {
+    // A tracked path deleted in the working tree is not a gate concern.
+    return error?.code === 'ENOENT' ? -2 : -1;
   }
 }
+
+const UNREADABLE_FILES = [];
 
 async function main() {
   const trackedFiles = await getTrackedFiles();
@@ -100,7 +103,11 @@ async function main() {
 
   for (const filePath of trackedFiles) {
     const lineCount = await countLines(filePath);
-    if (lineCount < 0) continue;
+    if (lineCount === -2) continue;
+    if (lineCount < 0) {
+      UNREADABLE_FILES.push(filePath);
+      continue;
+    }
     if (lineCount > ERROR_LINES) {
       errorFiles.push({ filePath, lineCount });
     } else if (lineCount > WARN_LINES) {
@@ -115,18 +122,35 @@ async function main() {
   let hasError = false;
   const exemptedFiles = [];
 
-  if (errorFiles.length > 0) {
+  const overLimitFiles = errorFiles.filter((item) => !exemptPaths.has(item.filePath));
+  const unexemptedOverLimit = overLimitFiles.length > 0;
+  if (unexemptedOverLimit) {
     console.error(
-      `[check-oversized-code-files] ERROR: ${errorFiles.length} files exceed ${ERROR_LINES} lines (MUST split):`,
+      `[check-oversized-code-files] ERROR: ${overLimitFiles.length} files exceed ${ERROR_LINES} lines (MUST split):`,
     );
-    for (const item of errorFiles) {
-      const tag = exemptPaths.has(item.filePath) ? ' [exempt]' : '';
-      console.error(`  - ${item.filePath}: ${item.lineCount}${tag}`);
-      if (exemptPaths.has(item.filePath)) {
-        exemptedFiles.push(item);
-      } else {
-        hasError = true;
-      }
+    for (const item of overLimitFiles) {
+      console.error(`  - ${item.filePath}: ${item.lineCount}`);
+      hasError = true;
+    }
+  }
+
+  if (errorFiles.length > overLimitFiles.length) {
+    console.warn(
+      `[check-oversized-code-files] INFO: ${errorFiles.length - overLimitFiles.length} files exceed ${ERROR_LINES} lines — all exempt`,
+    );
+  }
+
+  if (UNREADABLE_FILES.length > 0) {
+    hasError = true;
+    console.error(`[check-oversized-code-files] ERROR: ${UNREADABLE_FILES.length} tracked file(s) unreadable (countLines failed):`);
+    for (const filePath of UNREADABLE_FILES) {
+      console.error(`  - ${filePath}`);
+    }
+  }
+
+  for (const item of errorFiles) {
+    if (exemptPaths.has(item.filePath)) {
+      exemptedFiles.push(item);
     }
   }
 

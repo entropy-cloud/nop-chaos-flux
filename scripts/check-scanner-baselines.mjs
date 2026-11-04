@@ -42,6 +42,10 @@ function evaluateScannerCounts(currentCounts, baselineCounts) {
   for (const scanner of Object.keys(baselineCounts ?? {})) {
     const current = currentCounts[scanner];
     const baseline = baselineCounts[scanner];
+    if (typeof baseline !== 'number' || !Number.isFinite(baseline)) {
+      newReds.push({ scanner, reason: `baseline corrupt (registered value: ${JSON.stringify(baseline)}); re-register a numeric count` });
+      continue;
+    }
     if (typeof current !== 'number') {
       newReds.push({ scanner, reason: `scan failed or count unparseable (got: ${current})` });
       continue;
@@ -86,6 +90,12 @@ async function main() {
     for (const scanner of BASELINED_SCANNERS) {
       counts[scanner] = (await scanScanner(scanner)).count;
     }
+    const unparseable = Object.entries(counts).filter(([, count]) => typeof count !== 'number');
+    if (unparseable.length > 0) {
+      console.error('[check:scanner-baselines] refusing to write baselines: scanner output had no parseable count for:');
+      for (const [scanner] of unparseable) console.error(`  ${scanner}`);
+      process.exit(1);
+    }
     const target = baselineIndex >= 0 ? args[baselineIndex + 1] : baselineFile;
     let existingHeader = {};
     try {
@@ -118,12 +128,21 @@ async function main() {
     process.exit(1);
   }
 
+  // The default registry must cover every gated scanner; a scanner added to
+  // BASELINED_SCANNERS without a baseline entry would otherwise be ungated.
+  const requireAll = baselineIndex < 0 || args.includes('--require-all');
+  const missingEntries = requireAll ? BASELINED_SCANNERS.filter((scanner) => !(scanner in baseline)) : [];
+
   const currentCounts = {};
   for (const scanner of Object.keys(baseline)) {
+    if (typeof baseline[scanner] !== 'number') continue;
     currentCounts[scanner] = (await scanScanner(scanner)).count;
   }
 
   const { newReds, resolved } = evaluateScannerCounts(currentCounts, baseline);
+  for (const scanner of missingEntries) {
+    newReds.push({ scanner, reason: 'baseline missing: listed in BASELINED_SCANNERS but not registered' });
+  }
 
   if (newReds.length > 0) {
     console.error('[check:scanner-baselines] NEW suspect growth beyond registered baseline:');

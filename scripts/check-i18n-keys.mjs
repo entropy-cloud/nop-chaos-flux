@@ -22,7 +22,8 @@ const __dirname = fileURLToPath(new URL('.', import.meta.url));
 const rootDir = join(__dirname, '..');
 
 const LOCALE_DIR = join(rootDir, 'packages/flux-i18n/src/locales');
-const SCAN_DIRS = ['packages', 'apps'];
+// CHECK_I18N_SCAN_DIRS overrides the scan roots (comma-separated; used by the gate's own tests).
+const SCAN_DIRS = process.env.CHECK_I18N_SCAN_DIRS?.split(',') ?? ['packages', 'apps'];
 const EXTENSIONS = ['.ts', '.tsx'];
 const EXCLUDE_PATTERNS = [
   '/node_modules/',
@@ -347,6 +348,9 @@ async function collectDynamicKeyMapEntries() {
     );
 
     if (!match) {
+      console.warn(
+        `⚠️  Dynamic key map ${map.exportName} not found in ${map.fileSuffix}; its keys are not counted as used.`,
+      );
       continue;
     }
 
@@ -429,23 +433,27 @@ async function main() {
   console.log('\nScanning source files for i18n key usage...');
 
   const usedKeys = new Map();
+  const missingScanDirs = [];
 
   for (const scanDir of SCAN_DIRS) {
     const dirPath = join(rootDir, scanDir);
-    try {
-      const dirStat = await stat(dirPath);
-      if (dirStat.isDirectory()) {
-        const dirKeys = await scanForUsedKeys(dirPath, scanDir);
-        dirKeys.forEach((locations, key) => {
-          if (!usedKeys.has(key)) {
-            usedKeys.set(key, []);
-          }
-          usedKeys.get(key).push(...locations);
-        });
-      }
-    } catch {
-      // Directory doesn't exist
+    const dirStat = await stat(dirPath).catch(() => undefined);
+    if (!dirStat?.isDirectory()) {
+      missingScanDirs.push(scanDir);
+      continue;
     }
+    const dirKeys = await scanForUsedKeys(dirPath, scanDir);
+    dirKeys.forEach((locations, key) => {
+      if (!usedKeys.has(key)) {
+        usedKeys.set(key, []);
+      }
+      usedKeys.get(key).push(...locations);
+    });
+  }
+
+  if (missingScanDirs.length > 0) {
+    console.error(`\n❌ Configured scan directories not found: ${missingScanDirs.join(', ')} — the usage scan would silently shrink.`);
+    process.exit(1);
   }
 
   const dynamicMapKeys = await collectDynamicKeyMapEntries();

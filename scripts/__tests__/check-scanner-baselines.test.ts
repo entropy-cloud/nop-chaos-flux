@@ -80,6 +80,24 @@ function pickLegacyTrio() {
 }
 
 describe('check-scanner-baselines', () => {
+  it('fails on a corrupt (null) baseline instead of letting a zero-count scanner pass silently', async () => {
+    const result = await runGate({ 'find-todo-exitless': null as unknown as number });
+    expect(result.code).toBe(1);
+    expect(result.stderr).toContain('baseline corrupt');
+  });
+
+  it('with --require-all, fails when a gated scanner has no registered baseline', async () => {
+    await mkdir(fixturesDir, { recursive: true });
+    await writeFile(tempBaselinePath, JSON.stringify({ scanners: pickLegacyTrio() }, null, 2), 'utf8');
+    try {
+      const result = await exec(['--baseline', tempBaselinePath, '--require-all']);
+      expect(result.code).toBe(1);
+      expect(result.stderr).toContain('baseline missing');
+    } finally {
+      await rm(tempBaselinePath, { force: true });
+    }
+  });
+
   it('passes when live counts equal the registered baselines (green path)', async () => {
     const result = await runGate(pickLegacyTrio());
     expect(result.code).toBe(0);
