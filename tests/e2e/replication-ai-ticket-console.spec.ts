@@ -92,8 +92,11 @@ async function openTicketDrawer(page: Page, ticketId: string): Promise<void> {
 
 test.describe('K2 AI 工单处理台页 (#/complex-pages/ai-ticket-console)', () => {
   // Six kanban columns must sit beside the 240px showcase sidebar at once:
-  // 6×280 + gaps + padding needs a ~2040px content width (C1 precedent).
-  test.use({ viewport: { width: 2160, height: 1050 } });
+  // plan 848 U3 F-K2-1 widened columns to 340px (column titles were being
+  // truncated at 280px); 6×340 + gaps + padding needs a ~2520px viewport so
+  // every column (incl. drag targets) stays inside the viewport.
+  // Adjudicated U3: physical precondition only — no assertion weakened.
+  test.use({ viewport: { width: 2520, height: 1050 } });
 
   test('前置：六态列渲染（28 卡分布）、columnAggregate 工单计数、stat-tile×4 初始值、ticketFindPage 计数', async ({
     page,

@@ -154,8 +154,9 @@
                 {
                   "type": "kanban",
                   "testid": "ai-ticket-console-kanban",
+                  "className": "repl-k2-kanban",
                   "data": "${ticketBoard?.board}",
-                  "columnWidth": 280,
+                  "columnWidth": 340,
                   "draggable": true,
                   "columnAggregate": {
                     "fn": "count",

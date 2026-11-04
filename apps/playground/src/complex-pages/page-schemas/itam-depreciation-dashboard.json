@@ -273,9 +273,10 @@
               "title": "近 12 月折旧趋势",
               "source": "${depreciationTrend?.trend ?? []}",
               "xAxis": { "dataKey": "month", "label": "月份" },
+              "yAxis": [{ "label": "本期折旧（元）" }, { "label": "累计折旧（元）" }],
               "series": [
-                { "name": "本期折旧（元）", "dataRegionKey": "periodDepreciation" },
-                { "name": "累计折旧（元）", "dataRegionKey": "accumulated" }
+                { "name": "本期折旧（元）", "dataRegionKey": "periodDepreciation", "yAxisId": 0 },
+                { "name": "累计折旧（元）", "dataRegionKey": "accumulated", "yAxisId": 1 }
               ],
               "legend": true,
               "height": 260

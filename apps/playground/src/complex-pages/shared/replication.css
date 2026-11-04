@@ -292,3 +292,14 @@
 .repl-conf-low {
   color: #b91c1c;
 }
+
+/*
+ * K2 ai-ticket-console 看板列宽（plan 848 U3 F-K2-1）：flux kanban 列 CSS
+ * 钉 min-width:280px，flex 行内列被 shrink 钳回 280，长状态标题
+ * （处理中（PROCESSING）等，~163px 文本）被 header truncate 裁切。
+ * 页面级把列 min-width 抬到 340（renderer max 360 内），标题完整呈现；
+ * 看板横向滚动能力不受影响。
+ */
+.repl-k2-kanban [data-slot='kanban-column'] {
+  min-width: 340px;
+}

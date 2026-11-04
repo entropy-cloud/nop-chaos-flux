@@ -63,6 +63,7 @@
                     "labelWidth": 70,
                     "columnCount": 2,
                     "gap": "sm",
+                    "actions": [],
                     "body": [
                       {
                         "type": "input-text",

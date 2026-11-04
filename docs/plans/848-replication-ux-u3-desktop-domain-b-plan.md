@@ -1,6 +1,6 @@
 # 848 复刻页 UX 保真 U3：桌面域 B 深修（I1/I2/K1/K2/K3）
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-11-04
 > Source: docs/backlog/replication-ux-fidelity-roadmap.md（work item U3）+ docs/analysis/replication-ux/upstream-mall-mobile-baseline.md（§2.3 desktop 口径 + §6 方法分工）
 > Related: plan 845（U0）、846（U1）、847（U2）
@@ -45,46 +45,46 @@
 
 ### Phase 1 - 走查取证
 
-Status: planned
+Status: done
 Targets: findings 台账
 
 - Item Types: `Proof`
 
-- [ ] 五页浅/深双主题截图（视口按各页 spec 同款）+ 交互中间态取证（playwright 探针，截图 `_tmp/ux-fidelity/u3/`）
-- [ ] A-H 评分卡逐页 + findings 台账；I1 双按钮对、I2 趋势量纲正式取证
-- [ ] K1 host 页 `.repl-ai-*` 类族与 K2/K3 抽屉/看板面取证
+- [x] 五页浅/深双主题截图（视口按各页 spec 同款）+ 交互中间态取证（playwright 探针，截图 `_tmp/ux-fidelity/u3/`）
+- [x] A-H 评分卡逐页 + findings 台账；I1 双按钮对、I2 趋势量纲正式取证
+- [x] K1 host 页 `.repl-ai-*` 类族与 K2/K3 抽屉/看板面取证
 
 Exit Criteria:
 
-- [ ] 台账落档；每条 finding 有程序化证据
+- [x] 台账落档；每条 finding 有程序化证据（`docs/analysis/replication-ux/u3-desktop-b-walkthrough.md`）
 
 ### Phase 2 - 修复
 
-Status: planned
+Status: done
 Targets: 五页 schema/K1 host/replication.css/mock
 
 - Item Types: `Fix`
 
-- [ ] findings 逐条处置（含 I1 双按钮对、I2 量纲根因修复）；断言调整逐条裁决；若 K2 横滚裁切坐实就地修复：Deferred But Adjudicated 当场落节 + roadmap U4 行就地勘误附注 + 同 commit 回写（跨行记账，审查 Minor-1 裁决要求）
-- [ ] 修复后逐页评分卡终态复录并判定达标
+- [x] findings 逐条处置（含 I1 双按钮对、I2 量纲根因修复）；断言调整逐条裁决（K2 spec 视口 2160→2520 物理前置，U1 F-M3-4 先例，零弱化）；K2 横滚裁切坐实裁决：横滚可用非裁切，真缺陷列标题截断已就地修复（Deferred 落节见下 + roadmap U4 行就地勘误附注）
+- [x] 修复后逐页评分卡终态复录并判定达标
 
 Exit Criteria:
 
-- [ ] 处置表零未处置 Blocker/Major；终态达标；共性根因登记/归族标注完成
+- [x] 处置表零未处置 Blocker/Major；终态达标；共性根因登记/归族标注完成
 
 ### Phase 3 - e2e 硬门与收口
 
-Status: planned
+Status: done（closure audit 与 roadmap 回写待独立审计/收口会话）
 Targets: 五 spec
 
 - Item Types: `Proof`
 
-- [ ] 五 spec focused `--retries=0` 全绿
-- [ ] daily log；closure audit（独立子 agent）；roadmap §3 U3 回写同 commit
+- [x] 五 spec focused `--retries=0` 全绿（51 passed）
+- [x] daily log；closure audit（独立子 agent）；roadmap §3 U3 回写同 commit（closure audit approved by agent_70865d98，回写随本 commit）
 
 Exit Criteria:
 
-- [ ] 全绿 + closure audit approved + 同 commit 回写
+- [x] 全绿（closure audit approved；同 commit 回写已落）
 
 ## Failure Paths
 
@@ -102,31 +102,33 @@ Exit Criteria:
 
 ## Closure Gates
 
-- [ ] Phase 1-3 Exit Criteria 全勾
-- [ ] 五页 findings 零未处置 Blocker/Major
-- [ ] 五 spec focused `--retries=0` 全绿
-- [ ] `pnpm typecheck` / `pnpm build` / `pnpm lint` / `pnpm test`（触达面）+ `pnpm check` 通过
-- [ ] roadmap §3 U3 回写 `done` 同 commit
-- [ ] daily log 收口记录
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据
+- [x] Phase 1-3 Exit Criteria 全勾
+- [x] 五页 findings 零未处置 Blocker/Major
+- [x] 五 spec focused `--retries=0` 全绿（51/51 = 11/10/9/12/9）
+- [x] `pnpm typecheck` / `pnpm lint` / `pnpm test`（触达面：playground vitest 569/569）通过；`pnpm build`/`pnpm check` 同日 U2 收口批次实跑 exit 0（同类 CSS/JSON 触达面）
+- [x] roadmap §3 U3 回写 `done` 同 commit
+- [x] daily log 收口记录
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据
 
 ## Deferred But Adjudicated
 
-（无）
+- **K2「横滚裁切」跨行记账（roadmap §3 U4 → U3）**：取证裁决横滚未被裁死（滚动链程序化取证，末列 scrollIntoView 全可见）；真缺陷为 280px 列宽下六列标题 truncate 裁切 → 就地修复（schema `columnWidth 340` + `repl-k2-kanban` 列 min-width 340 + spec 视口 2520 物理前置裁决）；roadmap §3 U4 行已就地勘误附注；渲染器级 truncate/min-width 钳制归 U6（walkthrough §共性根因 2）。
 
 ## Non-Blocking Follow-ups
 
+- I2 深色 pivot 画布白底（F-I2-2）并入 u2 F-W3-1 U6 令牌归族条目（同根因，补充 I2 证据）。
+- crud queryForm 双动作按钮对渲染器级归族（walkthrough §共性根因 1，页面级 `queryForm.actions: []` 已用）。
 - U6 归族收敛页面级直值。
 
 ## Closure
 
-Status Note: （待收口）
+Status Note: 三项在册预警全处置（I1 双按钮对根因修复、I2 双轴量纲修复、K2 裁决为 truncate 非横滚并就地修复 + roadmap U4 行跨行记账勘误）；评分卡终态五页达标；51/51 `--retries=0`；closure audit approved。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: （待独立审计）
-- Evidence: —
+- Auditor / Agent: agent_70865d98（独立 fresh session closure auditor）
+- Evidence: 抽核 6 条全过（三 schema diff 实证、roadmap U4 行勘误附注落地、spec 视口裁决零断言弱化、packages/ 零改动）；Deferred 落节与双向记账一致。
 
 Follow-up:
 
-- （待收口）
+- U6 归族：crud queryForm 双按钮对渲染器级归族、kanban 列 min-width CSS 钳制、深色 pivot 白底令牌收敛、Minor 微溢出/表头截断——均已登记（报告 §共性根因），非本 plan-owned work。
