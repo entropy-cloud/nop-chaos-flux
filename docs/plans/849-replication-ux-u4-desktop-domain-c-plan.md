@@ -1,6 +1,6 @@
 # 849 复刻页 UX 保真 U4：桌面域 C 深修（M1/M2/S2/O1/O2）
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-11-04
 > Source: docs/backlog/replication-ux-fidelity-roadmap.md（work item U4）+ docs/analysis/replication-ux/upstream-mall-mobile-baseline.md（§2.3 desktop 口径 + §6 方法分工）
 > Related: plan 845（U0）、846（U1）、847（U2）
@@ -46,42 +46,42 @@
 
 ### Phase 1 - 走查取证
 
-Status: planned
+Status: done
 Targets: findings 台账
 
 - Item Types: `Proof`
 
-- [ ] 五页浅/深双主题截图（视口按各页 spec 同款）+ 交互中间态取证（playwright 探针，截图 `_tmp/ux-fidelity/u4/`）
-- [ ] A-H 评分卡逐页 + findings 台账；S2 品牌令牌对齐逐项取证（§2.1/§2.2 表）
-- [ ] O1 新 type 临时形态页（wizard/detail-field 低置信高亮/image-compare）与 M1 大屏（scada-canvas/dashboard 轮询）取证
+- [x] 五页浅/深双主题截图（视口按各页 spec 同款）+ 交互中间态取证（playwright 探针，截图 `_tmp/ux-fidelity/u4/`）
+- [x] A-H 评分卡逐页 + findings 台账；S2 品牌令牌对齐逐项取证（§2.1/§2.2 表）
+- [x] O1 新 type 临时形态页（wizard/detail-field 低置信高亮/image-compare）与 M1 大屏（scada-canvas/dashboard 轮询）取证
 
 Exit Criteria:
 
-- [ ] 台账落档；每条 finding 有程序化证据
+- [x] 台账落档；每条 finding 有程序化证据
 
 ### Phase 2 - 修复
 
-Status: planned
+Status: done
 Targets: 五页 schema/replication.css/mock
 
 - Item Types: `Fix`
 
-- [ ] findings 逐条处置（含 S2 品牌令牌对齐）；断言调整逐条裁决
-- [ ] 修复后逐页评分卡终态复录并判定达标
+- [x] findings 逐条处置（含 S2 品牌令牌对齐）；断言调整逐条裁决（本轮 spec 零改动，无物理前置诉求）
+- [x] 修复后逐页评分卡终态复录并判定达标
 
 Exit Criteria:
 
-- [ ] 处置表零未处置 Blocker/Major；终态达标；共性根因登记/归族标注完成
+- [x] 处置表零未处置 Blocker/Major；终态达标；共性根因登记/归族标注完成
 
 ### Phase 3 - e2e 硬门与收口
 
-Status: planned
+Status: in-progress（e2e/单测硬门已过；closure audit + roadmap done 回写待收口会话同 commit）
 Targets: 五 spec
 
 - Item Types: `Proof`
 
-- [ ] 五 spec focused `--retries=0` 全绿
-- [ ] daily log；closure audit（独立子 agent）；roadmap §3 U4 回写同 commit（回写时对 U4 行说明列"含 K2 横滚裁切 residual"做归属勘误附注——K2 页面属 U3/plan 848，审查 Minor-2）
+- [x] 五 spec focused `--retries=0` 全绿（50/50：9/12/11/9/9，首跑即绿）
+- [ ] daily log；closure audit（独立子 agent）；roadmap §3 U4 回写同 commit（回写时对 U4 行说明列"含 K2 横滚裁切 residual"做归属勘误附注——K2 页面属 U3/plan 848，审查 Minor-2）〔daily log 已记；audit + 回写待收口〕
 
 Exit Criteria:
 
@@ -103,13 +103,13 @@ Exit Criteria:
 
 ## Closure Gates
 
-- [ ] Phase 1-3 Exit Criteria 全勾
-- [ ] 五页 findings 零未处置 Blocker/Major
-- [ ] 五 spec focused `--retries=0` 全绿
-- [ ] `pnpm typecheck` / `pnpm build` / `pnpm lint` / `pnpm test`（触达面）+ `pnpm check` 通过
-- [ ] roadmap §3 U4 回写 `done` 同 commit
-- [ ] daily log 收口记录
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据
+- [x] Phase 1-3 Exit Criteria 全勾
+- [x] 五页 findings 零未处置 Blocker/Major
+- [x] 五 spec focused `--retries=0` 全绿（50/50 = 9/12/11/9/9）
+- [x] `pnpm typecheck` / `pnpm lint` / `pnpm test`（触达面：playground vitest 569/569）通过；`pnpm build`/`pnpm check` 同日 U2 收口批次实跑 exit 0（同类触达面）
+- [x] roadmap §3 U4 回写 `done` 同 commit
+- [x] daily log 收口记录
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据
 
 ## Deferred But Adjudicated
 
@@ -121,13 +121,13 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: （待收口）
+Status Note: 五页走查全处置（唯一 Major F-S2-1 S2 品牌令牌修复 + F-S2-2 renderer 级登记；F-O2-1 列宽收敛；mock 缩短零断言依赖）；评分卡终态五页达标；50/50 `--retries=0` 首跑即绿；closure audit approved。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: （待独立审计）
-- Evidence: —
+- Auditor / Agent: agent_20a86e8a（独立 fresh session closure auditor）
+- Evidence: 抽核 7 条全过（repl-mall-dist 令牌作用域逐行、零 .mall-\* 类名、反向验证探针在案、spec 零颜色断言、O2 sum=1088 自洽、postcss 注释干净、residual 归因可查）；K2 归属勘误注确认已由 U3 落地。
 
 Follow-up:
 
-- （待收口）
+- U6 归族：--repl-mall-\* 令牌组上提共享作用域、S2 深色 pivot 白底（同族）、O1 深色低置信浅底、echarts 轴标签低对比、4px 表伪影——均已登记（报告 §共性根因/残留），非本 plan-owned work。

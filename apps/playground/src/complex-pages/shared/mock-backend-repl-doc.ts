@@ -184,7 +184,7 @@ export function buildInboxRows(): InboxRow[] {
       submittedAt: `2026-10-${String(20 + (n % 10)).padStart(2, '0')} ${String(8 + (n % 9)).padStart(2, '0')}:${String((n * 7) % 60).padStart(2, '0')}`,
       // Strictly ascending — the 04 contract sorts the inbox by deadline.
       remainingSeconds: 300 + n * 420,
-      changeSummary: `${bizObject}变更：${n % 3 === 0 ? '银行账号 + 信用额度' : n % 3 === 1 ? '金额调整' : '联系人电话'}`,
+      changeSummary: `${bizObject}变更：${n % 3 === 0 ? '银行账户' : n % 3 === 1 ? '金额调整' : '联系人电话'}`,
       riskFlag: n % 4 === 0,
     };
   });

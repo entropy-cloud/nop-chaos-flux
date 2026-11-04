@@ -303,3 +303,45 @@
 .repl-k2-kanban [data-slot='kanban-column'] {
   min-width: 340px;
 }
+
+/*
+ * S2 mall-distribution (plan 849 U4)：desktop 商城域页品牌令牌对齐
+ * （upstream-mall-mobile-baseline §2.1/§2.2/§2.3 等价类移植 — desktop 族口径：
+ * 品牌色仅用于 S2；类名沿用 repl- 与 --repl-mall- 前缀，不引入上游 .mall-*）。
+ * 令牌在本页根（.repl-mall-dist）作用域内镜像 §2.1 表，浅/深双套。
+ */
+.repl-mall-dist {
+  --repl-mall-price: #ff5000;
+  --repl-mall-gradient: linear-gradient(135deg, #ff6034, #ee0a24);
+}
+
+[data-mode='dark'] .repl-mall-dist {
+  --repl-mall-price: #ff7a45;
+}
+
+/* 金额面 → 价格色（baseline §2.2：价格 16/700 #ff5000 三段式的 desktop 表格/
+ * 弹层等价单色面，tabular-nums 保列对齐）。 */
+.repl-mall-dist .repl-mall-amount {
+  color: var(--repl-mall-price, #ff5000);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+/* KPI 金额卡（分销 GMV / 佣金总额）数值 → 价格色。 */
+.repl-mall-dist [data-testid='mall-distribution-kpi-gmv'] [data-slot='stat-tile-value'],
+.repl-mall-dist [data-testid='mall-distribution-kpi-commission'] [data-slot='stat-tile-value'] {
+  color: var(--repl-mall-price, #ff5000);
+}
+
+/* 主操作 → 品牌渐变（desktop 档位：沿用按钮自身圆角/高度，不套移动胶囊）。 */
+.repl-mall-dist .repl-mall-btn-buy {
+  background: var(--repl-mall-gradient, linear-gradient(135deg, #ff6034, #ee0a24)) !important;
+  border: none !important;
+  color: #ffffff !important;
+}
+
+/* 权限区块卡 → mall-section 档位（baseline §2.2：r14 / padding 12）。 */
+.repl-mall-section {
+  border-radius: 14px;
+  padding: 12px;
+}

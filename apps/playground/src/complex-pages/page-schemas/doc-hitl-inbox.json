@@ -522,7 +522,7 @@
             {
               "name": "approvalNo",
               "label": "审批单号",
-              "width": 120
+              "width": 110
             },
             {
               "name": "bizObject",
@@ -551,7 +551,7 @@
             {
               "name": "submittedAt",
               "label": "提交时间",
-              "width": 140
+              "width": 120
             },
             {
               "name": "remainingSeconds",
@@ -565,7 +565,7 @@
             {
               "name": "changeSummary",
               "label": "变更摘要",
-              "width": 200
+              "width": 180
             },
             {
               "name": "riskFlag",

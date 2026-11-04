@@ -33,6 +33,7 @@
       "type": "flex",
       "direction": "column",
       "gap": 8,
+      "className": "repl-mall-dist",
       "testid": "mall-distribution-root",
       "body": [
         {
@@ -169,7 +170,16 @@
               "width": 100,
               "cell": { "type": "text", "text": "${rate * 100}%" }
             },
-            { "name": "commissionAmount", "label": "佣金（元）", "width": 100 },
+            {
+              "name": "commissionAmount",
+              "label": "佣金（元）",
+              "width": 100,
+              "cell": {
+                "type": "text",
+                "text": "${commissionAmount ?? 0}",
+                "className": "repl-mall-amount"
+              }
+            },
             {
               "name": "status",
               "label": "状态",
@@ -251,9 +261,22 @@
                           },
                           "body": [
                             {
-                              "type": "text",
-                              "text": "分销商：${distributorName ?? '-'}　提现佣金：￥${commissionAmount ?? 0}",
-                              "className": "text-sm text-muted-foreground"
+                              "type": "flex",
+                              "direction": "row",
+                              "gap": 8,
+                              "className": "flex-wrap items-center",
+                              "body": [
+                                {
+                                  "type": "text",
+                                  "text": "分销商：${distributorName ?? '-'}",
+                                  "className": "text-sm text-muted-foreground"
+                                },
+                                {
+                                  "type": "text",
+                                  "text": "提现佣金：￥${commissionAmount ?? 0}",
+                                  "className": "repl-mall-amount text-sm"
+                                }
+                              ]
                             },
                             {
                               "type": "textarea",
@@ -292,6 +315,7 @@
                               "type": "button",
                               "label": "通过打款",
                               "variant": "primary",
+                              "className": "repl-mall-btn-buy",
                               "testid": "mall-distribution-audit-approve",
                               "onClick": [
                                 {
@@ -403,7 +427,16 @@
                     "columns": [
                       { "name": "orderNo", "label": "订单号", "width": 150 },
                       { "name": "distributorName", "label": "分销商", "width": 130 },
-                      { "name": "commissionAmount", "label": "佣金（元）", "width": 110 },
+                      {
+                        "name": "commissionAmount",
+                        "label": "佣金（元）",
+                        "width": 110,
+                        "cell": {
+                          "type": "text",
+                          "text": "${commissionAmount ?? 0}",
+                          "className": "repl-mall-amount"
+                        }
+                      },
                       {
                         "name": "status",
                         "label": "状态",
@@ -435,7 +468,7 @@
           "type": "container",
           "testid": "mall-distribution-merchant-zone",
           "visible": "${tenantRole === 'merchant'}",
-          "className": "rounded-lg border p-4",
+          "className": "repl-mall-section border",
           "body": [
             {
               "type": "flex",
@@ -498,7 +531,7 @@
           "type": "container",
           "testid": "mall-distribution-platform-zone",
           "visible": "${tenantRole === 'platform'}",
-          "className": "rounded-lg border p-4",
+          "className": "repl-mall-section border",
           "body": [
             {
               "type": "alert",
@@ -594,6 +627,7 @@
                   "type": "button",
                   "label": "保存规则",
                   "variant": "primary",
+                  "className": "repl-mall-btn-buy",
                   "testid": "mall-distribution-rules-submit",
                   "onClick": { "action": "submitForm" }
                 }
