@@ -1,6 +1,6 @@
 # 851 复刻页 UX 保真 U7：同探针复检轮 + 覆盖对账
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-11-04
 > Source: docs/backlog/replication-ux-fidelity-roadmap.md（work item U7）
 > Related: 845（U0）、846（U1）、847（U2）、848（U3）、849（U4）、850（U5）、852（U6）
@@ -49,12 +49,12 @@ Targets: `_tmp/ux-fidelity/recheck/`
 
 - Item Types: `Proof`
 
-- [ ] 21 页双主题截图 + 探针取证（对比度/动作对齐/弹层对齐/交互态四件套适用面逐页过）
-- [ ] 21 页 focused e2e 全量复跑 `--retries=0`
+- [x] 21 页双主题截图 + 探针取证（对比度/动作对齐/弹层对齐/交互态四件套适用面逐页过）（2026-11-04，`_tmp/u7-recheck.mjs`，截图 `_tmp/ux-fidelity/recheck/` 42 张 + 取证 JSON）
+- [x] 21 页 focused e2e 全量复跑 `--retries=0`（209/209 passed，5.8m）
 
 Exit Criteria:
 
-- [ ] 截图归档 + 取证数据落盘；e2e 全量绿
+- [x] 截图归档（42 张 + 取证 JSON + 浅色侧补档）+ 取证数据落盘；e2e 全量绿（209/209）
 
 ### Phase 2 - 对账与报告
 
@@ -63,12 +63,12 @@ Targets: `docs/analysis/replication-ux/recheck-report.md`
 
 - Item Types: `Proof | Decision`
 
-- [ ] 21/21 对账表（页 × 走查批 × 处置态 × 复检结论），uncovered=0
-- [ ] 零未处置 Major 复核；新发现分级处置裁决（回退修复批/登记 residual）
+- [x] 21/21 对账表（页 × 走查批 × 处置态 × 复检结论），uncovered=0（见报告 §2）
+- [x] 零未处置 Major 复核；新发现分级处置裁决（零新 Blocker/Major，1 条 watch 备注登记，见报告 §4）
 
 Exit Criteria:
 
-- [ ] 报告落档；对账 21/21 uncovered=0；零未处置 Major
+- [x] 报告落档（`docs/analysis/replication-ux/recheck-report.md`）；对账 21/21 uncovered=0；零未处置 Major
 
 ## Failure Paths
 
@@ -85,13 +85,13 @@ Exit Criteria:
 
 ## Closure Gates
 
-- [ ] Phase 1-2 Exit Criteria 全勾
-- [ ] 21/21 对账 uncovered=0；零未处置 Major
-- [ ] 21 页 focused e2e 全量 `--retries=0` 绿
-- [ ] `pnpm check` 零新增
-- [ ] roadmap §3 U7 回写 `done` 同 commit
-- [ ] daily log 收口记录
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据
+- [x] Phase 1-2 Exit Criteria 全勾
+- [x] 21/21 对账 uncovered=0；零未处置 Major
+- [x] 21 页 focused e2e 全量 `--retries=0` 绿（209/209，断言零调整）
+- [x] `pnpm check` 零新增（exit 0）
+- [x] roadmap §3 U7 回写 `done` 同 commit
+- [x] daily log 收口记录
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据
 
 ## Deferred But Adjudicated
 
@@ -103,13 +103,13 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: （待收口）
+Status Note: 21/21 同探针复检 pass（零新 Blocker/Major/fail）；对账 uncovered=0；pivot 深色白底与 F1 #4 围栏可视性双双销单；族 G 七项维持 watch-only；closure audit approved。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: （待独立审计）
-- Evidence: —
+- Auditor / Agent: agent_5a1ded8e（独立 fresh session closure auditor）
+- Evidence: 抽核 8 条全过（对账表逐页一致/uncovered=0 可信/销单证据/族 G 复核/截图归档 43 文件/零改动核验）；Minor-1（浅色侧取证 JSON 补档）与 Minor-2（qrcode 白块豁免说明）同 commit 落实。
 
 Follow-up:
 
-- （待收口）
+- U8 深审由 plan 853 承载；无本 plan-owned work。
