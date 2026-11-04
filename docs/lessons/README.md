@@ -106,3 +106,5 @@ The following entries were extracted from the MR1–MR3 closure plans during the
 - **Detected**: MA6 doc consistency audit (`arm-MA6-doc-contract.md`, findings MA6-P1-001 through MA6-P1-008). Cross-referenced each doc claim against live codebase via grep, import tracing, and runtime behavior verification.
 - **Fix (MR3 R3.9–R3.16)**: Corrected all 8 doc files to match live code signatures, types, and behavior.
 - **Prevention guard**: Architecture docs must be verified against live code as part of any code change that touches the documented API surface. Add a doc-review step to the PR checklist: "if you changed a public API or renderer behavior, update the corresponding `docs/architecture/` doc in the same PR." The `implementation-contract-review-prompt.md` skill can be used to catch drift during plan review.
+
+- [13 flex 容器包装链上的 height:100% 静默塌陷（mobile 画布布局教训）](13-flex-wrapper-chain-height-100-collapse.md)——height:100% 链须逐层落高度；sticky 悄悄换锚；IAB 长 clip 截图底部合成伪影

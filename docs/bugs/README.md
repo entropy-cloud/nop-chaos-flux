@@ -183,3 +183,4 @@ Use `docs/bugs/` for numbered bug histories that should still be understandable 
 - `docs/bugs/162-stacked-dialog-non-topmost-outside-press-closes-parent-fix.md`
 - `docs/bugs/169-empty-depends-on-reaction-fail-open-loop.md`
 - `docs/bugs/170-combobox-option-scoping-trap-consumer-side-fix.md`
+- `docs/bugs/172-raw-hsl-component-token-var-usage-invalid.md`——裸 HSL 分量令牌直用 var() 渲染失效（复刻页透明/恒 light 三处实证；var() fallback 不防"定义了但无效"；renderers 三通道修复+判别单测）

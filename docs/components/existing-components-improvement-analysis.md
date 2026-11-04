@@ -354,3 +354,4 @@ graph TD
 - **v2 变更可信度：** 不采纳清单（§5）严格按用户指令；保留项的 shadcn 命名方向基于 `@nop-chaos/ui` 现有导出（Button variant、Select 等）。
 - **局限：** ~~命名规范基线（X3/Q1）尚未成文~~ **已由 X3 落地**（2026-06-21）：shadcn 命名映射与 amis 不采纳清单已收口进 `docs/references/naming-conventions.md`，本报告 §0.2/§5 的初步建议以该基线为准；如 X5 实施中发现映射需修订，回写该基线并记 `Last Updated`。
   > 2026-11-04 登记（plan 853 U8 深审补登，只登记不立项）：**S1 秒杀横幅 progress 默认蓝 primary**（叠红橙渐变底观感突兀，cosmetic 双主题一致，u8 组① m-1-2，watch-only residual）；**`.repl-mall-btn-*` 三连 `!important` 页面覆盖**（widget 形态 vs 页面覆盖边界含糊，组件化时消除，u8 组① m-1-3/组② m-2-3，清理债）。
+  > 2026-11-04 登记（plan 854 U9 开放审计补登，watch-only residual，只登记不立项）：**stat-tile 标题双写**（M1/C3 KPI tile 头与体内 label 同义重复——u2 F-C3-2 同族残留面，组件级呈现契约裁决归 stat-tile owner）；**V3 电子围栏实心圆形态**（两实心大蓝圆读作圆点非区域语义，建议半透明描边环；D4 §6.2 非交互裁决不变）。

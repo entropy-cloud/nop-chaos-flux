@@ -1,7 +1,7 @@
 # 复刻页 UX 保真路线图（Replication UX Fidelity: 上游商城移动端对齐 + 二十一页渲染面深修）
 
 > Created: 2026-11-02（用户指令：目前生成的复杂页面 UI/UX 设计远远达不到要求；查看 ~/app/nop-app-mall 的 mobile 前端样式，对每个复杂页面逐个排查，彻底修复显示并确保交互正确）
-> Status: **active**（2026-11-02 经独立共识审查通过：round-1 fail〔1 Blocker+4 Major+5 Minor〕→ 修订 → round-2 fail〔3 处残留〕→ 修订 → round-3/round-4 行级复核 pass——共识达成，零 Blocker/Major；审查轨迹：agent_6bd768fd rounds 1-2、agent_6a96a31a rounds 3-4）
+> Status: **done**（2026-11-04 收口：U0-U9 全 done；U9 开放审计 round-1 Pass〔agent_0be03ec1，4 Minor 全处置〕+ round-2 复核确认〔agent_06ba0cfc〕+ closure audit approved〔agent_ba0ecee2〕。拟制期共识审查轨迹：agent_6bd768fd rounds 1-2、agent_6a96a31a rounds 3-4）
 > Mission: `missions/replication-ux-fidelity.json`（draft，随首 plan 启动转 active）
 > 拟制与共识流程：`docs/skills/roadmap-and-mission-authoring-with-consensus-review.md`；结构遵循 `docs/backlog/00-roadmap-authoring-guide.md`
 > Sources:
@@ -44,12 +44,12 @@
 | U6 系统性归族与设计系统层整改                     | `done`（plan 852，2026-11-04 closure audit approved：族 A/D 就地修+判别单测、族 B/E 登记、族 C/F replication.css 归族、209/209 全量绿） | U1-U5 | 跨页共性 findings 强制归族：复刻页共享 CSS（`replication.css` repl-\* 类）、壳 padding/页面框架、stat-tile/dialog/table 呈现共性——族级修复一次落地；组件族共性根因就地修复渲染器或登记 improvement-analysis                                                                                                                         |
 | U7 同探针复检轮 + 覆盖对账                        | `done`（plan 851，2026-11-04 closure audit approved）                                                                                   | U6    | R2 复检机制：21/21 页以同一探针复检，零未处置 Major + 截图证据归档 + 逐页台账对账（不遗漏承诺）                                                                                                                                                                                                                                     |
 | U8 阶段深度审计                                   | `done`（plan 853，2026-11-04 三组深审 verdict Pass + closure audit approved）                                                           | U7    | 对照 live repo 与上游基准核对修复保真度、断言真实性、评分卡证据                                                                                                                                                                                                                                                                     |
-| U9 阶段开放审计                                   | `todo`                                                                                                                                  | U8    | 独立 fresh 子 agent 开放评审；通过后本 roadmap 收口                                                                                                                                                                                                                                                                                 |
+| U9 阶段开放审计                                   | `done`（plan 854，2026-11-04 开放审计 round-1 Pass + round-2 复核确认 + closure audit approved）                                        | U8    | 独立 fresh 子 agent 开放评审；通过后本 roadmap 收口                                                                                                                                                                                                                                                                                 |
 
 ## 4. 验收标准（每页 pass/fail 判据，程序化）
 
 1. **渲染走查**：`visual-page-quality-inspection-prompt.md` 三步法（自由 critique → 维度 grounding → 逐条程序化取证）+ A-H 评分卡全维度记录；浅/深双主题 + 交互中间态（hover/focus/error/loading/空态）取证；**禁止单轮看图打分**。
-2. **上游对标（U1 强制，U2-U5 令牌级）**：S1 与上游 goods-detail 逐页并排截图比对，主要区块形态/间距体系/品牌令牌对齐（允许内容差异，不允许形态/层级/密度代差）；W1/M3 为工业移动页、上游 mall 12 页无对应页——对齐口径为**移动形态/组件级基准**（导航/吸底栏/触控目标 ≥44px/品牌令牌/列表密度），U0 基准卡固化该裁决；desktop 族对齐 `.mall-*`/`replication.css` 令牌基线。
+2. **上游对标（U1 强制，U2-U5 令牌级）**：S1 与上游 goods-detail 逐页并排截图比对，主要区块形态/间距体系/品牌令牌对齐（允许内容差异，不允许形态/层级/密度代差）；W1/M3 为工业移动页、上游 mall 12 页无对应页——对齐口径为**移动形态/组件级基准**（导航/吸底栏/触控目标 ≥44px/品牌令牌/列表密度），〔勘误 2026-11-04 U9 m-9-2：判据对齐为 WCAG 24px 底线 + 上游 40px 既有形态豁免（u1 F-W1-2 口径），44px 为原始提案值未落地〕U0 基准卡固化该裁决；desktop 族对齐 `.mall-*`/`replication.css` 令牌基线。
 3. **显示修复**：走查 findings 无未处置 Blocker/Major；Minor 当场修或登记 residual（带 Why Not Blocking）。
 4. **交互正确**：修复后该页 focused e2e `--retries=0` 全绿（交互断言不得为视觉修复而弱化；确需调整断言须逐条裁决记录）；交互态审计（`interaction-state-audit-prompt.md`）覆盖 loading/error/empty/成功反馈四态。
 5. **复检闭环**：U7 同探针复检零新增 fail；覆盖对账 21/21 uncovered=0。
