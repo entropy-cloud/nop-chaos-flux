@@ -49,13 +49,39 @@ describe('branch supplement round 3 (plan 465 coverage policy)', () => {
   });
 
   it('default scheduleFrame path works with global rAF (happy-dom)', () => {
+    const renderer = {
+      domElement: { addEventListener: vi.fn(), style: {}, removeEventListener: vi.fn() },
+      setSize: vi.fn(),
+      render: vi.fn(),
+      dispose: vi.fn(),
+    };
+    const rendererFactory = vi.fn(() => renderer as unknown as THREE.WebGLRenderer);
     const manager = new SceneManager(baseConfig(), {
-      rendererFactory: () =>
-        ({ domElement: { addEventListener: vi.fn(), style: {} }, setSize: vi.fn(), render: vi.fn(), dispose: vi.fn() }) as unknown as THREE.WebGLRenderer,
+      rendererFactory,
       controlsFactory: () => ({ update: vi.fn(), dispose: vi.fn() }) as never,
     });
+    const rafSpy = vi.spyOn(globalThis, 'requestAnimationFrame');
+    const cafSpy = vi.spyOn(globalThis, 'cancelAnimationFrame');
     manager.init();
+    // frame is scheduled through the global rAF, never rendered synchronously
+    expect(rafSpy).toHaveBeenCalledTimes(1);
+    expect(renderer.render).not.toHaveBeenCalled();
+    const handle = rafSpy.mock.results[0]?.value;
     manager.dispose();
+    // dispose cancels exactly the scheduled frame handle
+    expect(cafSpy).toHaveBeenCalledWith(handle);
+    rafSpy.mockRestore();
+    cafSpy.mockRestore();
+    // full dispose path ran exactly once (frame cancel → resources → controls → renderer)
+    expect(renderer.dispose).toHaveBeenCalledTimes(1);
+    // double dispose keeps the renderer disposed exactly once (handles are released on the first pass)
+    manager.dispose();
+    expect(renderer.dispose).toHaveBeenCalledTimes(1);
+    // init after dispose does not resurrect the renderer (disposed guard in init)
+    manager.init();
+    expect(rendererFactory).toHaveBeenCalledTimes(1);
+    expect(renderer.dispose).toHaveBeenCalledTimes(1);
+    expect(renderer.render).not.toHaveBeenCalled();
   });
 
   it('loadModels settles when dispose happens mid-load (late result resolved)', async () => {

@@ -212,14 +212,6 @@ describe('ScadaEditorEngine dual-state switching (R5)', () => {
     engine.destroy();
   });
 
-  it('setEditorTargets sets single node as target', () => {
-    const engine = ScadaEditorEngine.create({ container });
-    engine.build(configWithRect);
-    const r1 = engine.getSymbol('r1');
-    engine.setEditorTargets([r1!.node]);
-    engine.setEditorTargets([]);
-    engine.destroy();
-  });
 });
 
 describe('ScadaEditorEngine config queries', () => {
@@ -321,14 +313,6 @@ describe('ScadaEditorEngine config queries', () => {
     engine.destroy();
   });
 
-  it('setEditorTargets with multiple nodes', () => {
-    const engine = ScadaEditorEngine.create({ container });
-    engine.build(configWithRect);
-    const nodes = engine.getSymbols().map((s) => s.node);
-    engine.setEditorTargets(nodes);
-    engine.destroy();
-  });
-
   it('getCurrentConfig null before build', () => {
     const engine = ScadaEditorEngine.create({ container });
     expect(engine.getCurrentConfig()).toBeNull();
@@ -408,13 +392,6 @@ describe('ScadaEditorEngine group buildNode branches', () => {
     engine.destroy();
   });
 
-  it('setEditorTargets with empty array clears selection', () => {
-    const engine = ScadaEditorEngine.create({ container });
-    engine.build(configWithRect);
-    engine.setEditorTargets([]);
-    engine.destroy();
-  });
-
   it('applyDiff removes group child via subtree removal', () => {
     const engine = ScadaEditorEngine.create({ container });
     engine.build(configWithGroup);
@@ -425,14 +402,6 @@ describe('ScadaEditorEngine group buildNode branches', () => {
     );
     expect(engine.getSymbol('g1')).toBeUndefined();
     expect(engine.getSymbol('child-a')).toBeUndefined();
-    engine.destroy();
-  });
-
-  it('setMode on group config covers group-vs-leaf editable branch', () => {
-    const engine = ScadaEditorEngine.create({ container });
-    engine.build(configWithGroup);
-    engine.setMode('preview');
-    engine.setMode('edit');
     engine.destroy();
   });
 

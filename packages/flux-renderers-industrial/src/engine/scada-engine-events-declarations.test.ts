@@ -3,6 +3,7 @@ import { resetLeaferMock } from '../test-support/leafer-ui-mock.js';
 import { registerBuiltinScadaSymbols } from '../symbols/register-builtin.js';
 import { registerScadaSymbol, unregisterScadaSymbol } from '../symbols/symbol-registry.js';
 import { ScadaCanvasEngine } from './scada-engine.js';
+import { EventBridge } from './event-bridge.js';
 import { scadaTestHandleKey } from './test-handle.js';
 import type { ScadaConfig } from '../serialization/config-types.js';
 
@@ -90,12 +91,26 @@ describe('ScadaCanvasEngine 事件桥接线 (I6.4)', () => {
   });
 
   it('should not emit when no onSymbolEvent handler is provided', () => {
+    // 无 handler 可 spy：以桥线装配面为可观测量——handler 缺省时 installEventBridge 早退，
+    // EventBridge 从未 attach（区别于"装配了但 handler 静默"）；对照组见上方带 handler 的套件。
+    const attachSpy = vi.spyOn(EventBridge.prototype, 'attach');
     const engine = ScadaCanvasEngine.create({ container: makeContainer() });
     engine.reset(validConfig() as ScadaConfig);
     const leaf = engine.getSymbol('rect-1')?.node;
     (engine.tree as unknown as { selector: { getByPoint: (p: unknown) => unknown } }).selector.getByPoint = () =>
       ({ target: leaf, path: [leaf] });
     engine.tree.emit('tap', { x: 10, y: 20 });
+    expect(attachSpy).not.toHaveBeenCalled();
+    attachSpy.mockRestore();
+    engine.destroy();
+  });
+
+  it('attaches the event bridge exactly once when a handler is provided (spy control group)', () => {
+    const attachSpy = vi.spyOn(EventBridge.prototype, 'attach');
+    const engine = ScadaCanvasEngine.create({ container: makeContainer(), onSymbolEvent: vi.fn() });
+    engine.reset(validConfig() as ScadaConfig);
+    expect(attachSpy).toHaveBeenCalledTimes(1);
+    attachSpy.mockRestore();
     engine.destroy();
   });
 
