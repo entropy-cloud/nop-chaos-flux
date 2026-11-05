@@ -1,6 +1,7 @@
 {
   "type": "page",
   "testid": "mall-sku-picker-root",
+  "bodyClassName": "p-0",
   "body": [
     {
       "type": "form",
@@ -55,10 +56,23 @@
                   "className": "items-baseline",
                   "body": [
                     {
-                      "type": "text",
+                      "type": "flex",
                       "testid": "mall-sku-picker-price",
-                      "text": "¥${goodsDetail?.goods?.seckillPrice ?? '-'}",
-                      "className": "repl-price"
+                      "className": "repl-price items-baseline",
+                      "gap": 0,
+                      "body": [
+                        { "type": "text", "text": "¥", "className": "text-[11px] font-bold" },
+                        {
+                          "type": "text",
+                          "text": "${goodsDetail?.goods?.seckillPrice != null ? INT(goodsDetail.goods.seckillPrice) : '-'}",
+                          "className": "text-[24px] font-bold leading-none"
+                        },
+                        {
+                          "type": "text",
+                          "text": "${goodsDetail?.goods?.seckillPrice != null ? (MOD(ROUND(goodsDetail.goods.seckillPrice * 100), 100) < 10 ? '.0' : '.') + MOD(ROUND(goodsDetail.goods.seckillPrice * 100), 100) : ''}",
+                          "className": "text-[11px] font-bold"
+                        }
+                      ]
                     },
                     {
                       "type": "text",
@@ -131,6 +145,60 @@
                     }
                   ],
                   "value": "active"
+                }
+              ]
+            },
+            {
+              "type": "flex",
+              "direction": "column",
+              "gap": 6,
+              "className": "repl-mall-titlecard",
+              "body": [
+                {
+                  "type": "text",
+                  "testid": "mall-sku-picker-goods-title",
+                  "text": "${goodsDetail?.goods?.name ?? '旗舰智能手机 全网通 双卡双待'}",
+                  "className": "text-[15px] font-semibold leading-snug"
+                },
+                {
+                  "type": "text",
+                  "text": "轻薄曲屏 · 影像旗舰 · 长续航快充【12期免息 | 顺丰速运】",
+                  "className": "text-xs text-rose-600 font-medium"
+                },
+                {
+                  "type": "flex",
+                  "direction": "row",
+                  "gap": 6,
+                  "className": "flex-wrap items-center",
+                  "body": [
+                    { "type": "text", "text": "限时直降", "className": "repl-mall-promo-pill" },
+                    { "type": "text", "text": "满4000减300", "className": "repl-mall-promo-pill" },
+                    { "type": "text", "text": "赠运费险", "className": "repl-mall-promo-pill" },
+                    {
+                      "type": "text",
+                      "text": "已售 2.3万+ 件 · 顺丰发货",
+                      "className": "text-xs text-muted-foreground"
+                    }
+                  ]
+                },
+                {
+                  "type": "flex",
+                  "direction": "row",
+                  "gap": 8,
+                  "className": "repl-mall-coupon items-center",
+                  "body": [
+                    { "type": "text", "text": "领券", "className": "repl-mall-coupon-tag" },
+                    {
+                      "type": "text",
+                      "text": "满4999减200 · 满2999减100 可叠加",
+                      "className": "flex-1 text-xs text-rose-600"
+                    },
+                    {
+                      "type": "text",
+                      "text": "领券 ›",
+                      "className": "text-xs font-semibold text-rose-600"
+                    }
+                  ]
                 }
               ]
             },
@@ -365,9 +433,14 @@
                       "className": "text-sm font-medium"
                     },
                     {
+                      "type": "text",
+                      "text": "已选：${selectedColor && selectedSize ? selectedColor + ' ' + selectedSize : '请选择 颜色/容量'} ×${quantity ?? 1}",
+                      "className": "text-xs text-muted-foreground"
+                    },
+                    {
                       "type": "flex",
-                      "direction": "row",
-                      "gap": 8,
+                      "direction": "column",
+                      "gap": 10,
                       "body": [
                         {
                           "type": "button-group-select",
@@ -475,10 +548,62 @@
             {
               "type": "grid",
               "testid": "mall-sku-picker-footer",
-              "columns": "1fr 1fr",
+              "columns": "auto 11fr 9fr",
               "gap": 8,
               "className": "repl-sticky-footer",
               "items": [
+                {
+                  "body": {
+                    "type": "flex",
+                    "direction": "row",
+                    "gap": 12,
+                    "className": "items-center",
+                    "body": [
+                      {
+                        "type": "flex",
+                        "direction": "column",
+                        "gap": 2,
+                        "className": "items-center",
+                        "body": [
+                          { "type": "icon", "icon": "store", "size": 18, "color": "#6b7280" },
+                          {
+                            "type": "text",
+                            "text": "店铺",
+                            "className": "text-[10px] text-muted-foreground"
+                          }
+                        ]
+                      },
+                      {
+                        "type": "flex",
+                        "direction": "column",
+                        "gap": 2,
+                        "className": "items-center",
+                        "body": [
+                          { "type": "icon", "icon": "headphones", "size": 18, "color": "#6b7280" },
+                          {
+                            "type": "text",
+                            "text": "客服",
+                            "className": "text-[10px] text-muted-foreground"
+                          }
+                        ]
+                      },
+                      {
+                        "type": "flex",
+                        "direction": "column",
+                        "gap": 2,
+                        "className": "items-center",
+                        "body": [
+                          { "type": "icon", "icon": "heart", "size": 18, "color": "#6b7280" },
+                          {
+                            "type": "text",
+                            "text": "收藏",
+                            "className": "text-[10px] text-muted-foreground"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                },
                 {
                   "body": {
                     "type": "button",

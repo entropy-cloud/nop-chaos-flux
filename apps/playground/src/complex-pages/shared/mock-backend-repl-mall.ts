@@ -10,7 +10,7 @@
  *   stock, purchaseLimit} + skuMatrix (3 colors × 3 sizes, one row sold out)
  *   + promo{seckillEndAt}. `seckillEndAt` is a closure epoch-ms baseline that
  *   the `advanceFlashSaleClock` hook shifts forward (D6 MIN-3: specs must
-   * refreshSource goodsDetail afterwards so `${promo.seckillEndAt}`
+ *   refreshSource goodsDetail afterwards so `${promo.seckillEndAt}`
  *   re-evaluates and countdown re-arms).
  * - get `flashSaleSession` — 3 sessions (ended|active|upcoming) with
  *   progressPercent; counting this endpoint is the 切态 assertion face.
@@ -78,7 +78,12 @@ export interface ReplMallTestHooks {
   /** S2 mirror: last `commissionPage` query params (filter evidence). */
   lastCommissionPageParams?: Record<string, unknown>;
   /** S2 mirror: last successful `commissionExport` payload. */
-  lastCommissionExportData?: { url: string; downloadUrl: string; filename: string; rowCount: number };
+  lastCommissionExportData?: {
+    url: string;
+    downloadUrl: string;
+    filename: string;
+    rowCount: number;
+  };
   /** S2 mirror: last `commissionRules` POST body. */
   lastCommissionRulesBody?: Record<string, unknown>;
   /** S2 mirror: last `payoutAudit` POST body. */
@@ -108,21 +113,65 @@ export interface MallSkuRow {
 }
 
 export function mallSkuImage(seed: number): string {
-  // 商品感占位图（plan 855 polish 二代：按 seed 分类型器形 + 光影层次，
-  // 替换一代几何剪影；真实摄影素材接入另立 plan——plan 855 Deferred）。
-  const hue = (seed * 47) % 360;
-  const hue2 = (hue + 42) % 360;
-  const kind = seed % 3; // 0 手机 / 1 笔记本 / 2 耳机
-  const product =
-    kind === 0
-      ? // 手机：机身圆角矩形 + 屏幕高光 + 后摄模组
-        `<rect x="168" y="96" width="144" height="288" rx="26" fill="rgba(20,24,34,0.82)"/><rect x="178" y="108" width="124" height="264" rx="18" fill="url(#screen)"/><rect x="196" y="120" width="44" height="12" rx="6" fill="rgba(255,255,255,0.22)"/><circle cx="286" cy="128" r="9" fill="rgba(255,255,255,0.28)"/><circle cx="286" cy="152" r="9" fill="rgba(255,255,255,0.2)"/>`
-      : kind === 1
-        ? // 笔记本：屏 + 键盘底座
-          `<rect x="108" y="120" width="264" height="164" rx="12" fill="rgba(20,24,34,0.82)"/><rect x="120" y="132" width="240" height="140" rx="6" fill="url(#screen)"/><path d="M84 292 h312 l18 26 a8 8 0 0 1 -8 10 h-332 a8 8 0 0 1 -8 -10 z" fill="rgba(255,255,255,0.4)"/>`
-        : // 耳机：头环 + 双耳罩
-          `<path d="M160 236 a80 80 0 0 1 160 0" stroke="rgba(20,24,34,0.82)" stroke-width="22" fill="none" stroke-linecap="round"/><rect x="128" y="228" width="58" height="96" rx="24" fill="rgba(20,24,34,0.82)"/><rect x="294" y="228" width="58" height="96" rx="24" fill="rgba(20,24,34,0.82)"/><rect x="140" y="242" width="34" height="68" rx="16" fill="rgba(255,255,255,0.24)"/><rect x="306" y="242" width="34" height="68" rx="16" fill="rgba(255,255,255,0.24)"/>`;
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="480" height="480"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="hsl(${hue},68%,82%)"/><stop offset="1" stop-color="hsl(${hue2},58%,46%)"/></linearGradient><linearGradient id="screen" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="hsl(${(hue + 180) % 360},52%,86%)"/><stop offset="1" stop-color="hsl(${hue2},44%,62%)"/></linearGradient><radialGradient id="floor" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="rgba(0,0,0,0.28)"/><stop offset="1" stop-color="rgba(0,0,0,0)"/></radialGradient></defs><rect width="480" height="480" fill="url(#g)"/><ellipse cx="240" cy="404" rx="150" ry="26" fill="url(#floor)"/>${product}<text x="26" y="52" font-size="26" fill="rgba(255,255,255,0.85)" font-family="monospace">G${seed}</text></svg>`;
+  // 商品感占位图三代（plan 856 G1）：移植对照页（_tmp/pdd-reference）的
+  // 棚拍质感绘制——浅灰影棚底 + 光斑氛围 + 金属中框深色机身 + 斜向反光 +
+  // 后摄模组（三摄镜片/闪光灯）+ 地面投影；kind 1/2 保留器形变体。
+  const kind = seed % 3;
+  const studio =
+    '<defs>' +
+    '<linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">' +
+    '<stop offset="0" stop-color="#f2f4f7"/><stop offset="0.48" stop-color="#e6eaf0"/><stop offset="1" stop-color="#dde2ea"/></linearGradient>' +
+    '<linearGradient id="body" x1="0" y1="0" x2="0.3" y2="1">' +
+    '<stop offset="0" stop-color="#3c4048"/><stop offset="0.34" stop-color="#17191d"/><stop offset="0.6" stop-color="#0c0d10"/><stop offset="0.88" stop-color="#26292f"/><stop offset="1" stop-color="#101216"/></linearGradient>' +
+    '<linearGradient id="frame" x1="0" y1="1" x2="1" y2="0">' +
+    '<stop offset="0" stop-color="#9aa2ad"/><stop offset="0.3" stop-color="#e8edf3"/><stop offset="0.6" stop-color="#6b737e"/><stop offset="1" stop-color="#d6dce4"/></linearGradient>' +
+    '<radialGradient id="floor" cx="0.5" cy="0.5" r="0.5">' +
+    '<stop offset="0" stop-color="rgba(30,40,60,0.32)"/><stop offset="1" stop-color="rgba(30,40,60,0)"/></radialGradient>' +
+    '<filter id="soft" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="6"/></filter>' +
+    '</defs>' +
+    '<rect width="480" height="480" fill="url(#bg)"/>' +
+    '<circle cx="60" cy="120" r="150" fill="rgba(255,150,80,0.14)" filter="url(#soft)"/>' +
+    '<circle cx="430" cy="380" r="170" fill="rgba(90,140,255,0.12)" filter="url(#soft)"/>';
+  const phone =
+    '<ellipse cx="240" cy="404" rx="130" ry="24" fill="url(#floor)" filter="url(#soft)"/>' +
+    '<g transform="rotate(-8 240 240)">' +
+    '<rect x="152" y="62" width="176" height="356" rx="32" fill="url(#frame)"/>' +
+    '<rect x="156" y="66" width="168" height="348" rx="29" fill="url(#body)"/>' +
+    '<rect x="150" y="88" width="60" height="6" rx="3" fill="rgba(255,255,255,0.35)" transform="rotate(24 180 91)"/>' +
+    '<rect x="176" y="82" width="76" height="80" rx="24" fill="#1d2127" stroke="rgba(255,255,255,0.14)"/>' +
+    '<circle cx="200" cy="106" r="15" fill="#16243c" stroke="#1a1e25" stroke-width="3"/>' +
+    '<circle cx="197" cy="103" r="5" fill="rgba(140,170,210,0.5)"/>' +
+    '<circle cx="228" cy="106" r="15" fill="#16243c" stroke="#1a1e25" stroke-width="3"/>' +
+    '<circle cx="225" cy="103" r="5" fill="rgba(140,170,210,0.5)"/>' +
+    '<circle cx="200" cy="136" r="15" fill="#16243c" stroke="#1a1e25" stroke-width="3"/>' +
+    '<circle cx="197" cy="133" r="5" fill="rgba(140,170,210,0.5)"/>' +
+    '<circle cx="232" cy="140" r="7" fill="#e8cf8a"/>' +
+    '<rect x="206" y="230" width="150" height="10" rx="5" fill="rgba(255,255,255,0.10)" transform="rotate(-24 281 235)"/>' +
+    '<rect x="196" y="300" width="170" height="7" rx="3.5" fill="rgba(255,255,255,0.06)" transform="rotate(-24 281 303)"/>' +
+    '</g>';
+  const laptop =
+    '<ellipse cx="240" cy="398" rx="150" ry="24" fill="url(#floor)" filter="url(#soft)"/>' +
+    '<g transform="rotate(-4 240 240)">' +
+    '<rect x="110" y="118" width="260" height="162" rx="12" fill="url(#body)"/>' +
+    '<rect x="122" y="130" width="236" height="138" rx="6" fill="url(#frame)" opacity="0.4"/>' +
+    '<path d="M86 292 h308 l20 28 a8 8 0 0 1 -8 10 h-332 a8 8 0 0 1 -8 -10 z" fill="rgba(255,255,255,0.42)"/>' +
+    '<rect x="150" y="150" width="120" height="8" rx="4" fill="rgba(255,255,255,0.14)" transform="rotate(-18 210 154)"/>' +
+    '</g>';
+  const buds =
+    '<ellipse cx="240" cy="396" rx="130" ry="24" fill="url(#floor)" filter="url(#soft)"/>' +
+    '<path d="M158 234 a82 82 0 0 1 164 0" stroke="url(#body)" stroke-width="24" fill="none" stroke-linecap="round"/>' +
+    '<rect x="126" y="226" width="60" height="98" rx="26" fill="url(#body)"/>' +
+    '<rect x="294" y="226" width="60" height="98" rx="26" fill="url(#body)"/>' +
+    '<rect x="138" y="240" width="36" height="70" rx="17" fill="rgba(255,255,255,0.24)"/>' +
+    '<rect x="306" y="240" width="36" height="70" rx="17" fill="rgba(255,255,255,0.24)"/>';
+  const product = kind === 0 ? phone : kind === 1 ? laptop : buds;
+  const svg =
+    '<svg xmlns="http://www.w3.org/2000/svg" width="480" height="480">' +
+    studio +
+    product +
+    '<text x="26" y="52" font-size="26" fill="rgba(30,40,60,0.4)" font-family="monospace">G' +
+    seed +
+    '</text></svg>';
   return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
 }
 
@@ -180,7 +229,9 @@ const MALL_CLOCK_OFFSET_KEY = '__replMallClockAdvance';
  * simulated-clock advance (the advance PULLS the deadline closer). */
 export function effectiveSeckillEndAt(session: ReplMallSession): number {
   if (typeof window === 'undefined') return session.seckillEndAt;
-  return session.seckillEndAt - (asNumber(window.sessionStorage.getItem(MALL_CLOCK_OFFSET_KEY)) ?? 0);
+  return (
+    session.seckillEndAt - (asNumber(window.sessionStorage.getItem(MALL_CLOCK_OFFSET_KEY)) ?? 0)
+  );
 }
 
 export function buildGoodsDetail(session: ReplMallSession): MallGoodsDetail {
@@ -288,7 +339,10 @@ export function buildCommissionRows(): MallCommissionRow[] {
   });
 }
 
-function filterCommissionRows(rows: MallCommissionRow[], filters: Record<string, unknown>): MallCommissionRow[] {
+function filterCommissionRows(
+  rows: MallCommissionRow[],
+  filters: Record<string, unknown>,
+): MallCommissionRow[] {
   let out = rows;
   const level = asNumber(filters.level);
   if (level) out = out.filter((r) => r.level === level);
@@ -300,7 +354,10 @@ function filterCommissionRows(rows: MallCommissionRow[], filters: Record<string,
 }
 
 function buildDistPivotItems() {
-  const byKey = new Map<string, { level: number; distributorName: string; commissionAmount: number; orderCount: number }>();
+  const byKey = new Map<
+    string,
+    { level: number; distributorName: string; commissionAmount: number; orderCount: number }
+  >();
   for (const row of buildCommissionRows()) {
     const key = `${row.level}|${row.distributorName}`;
     const entry = byKey.get(key) ?? {
@@ -313,7 +370,9 @@ function buildDistPivotItems() {
     entry.orderCount += 1;
     byKey.set(key, entry);
   }
-  return [...byKey.values()].sort((a, b) => a.level - b.level || b.commissionAmount - a.commissionAmount);
+  return [...byKey.values()].sort(
+    (a, b) => a.level - b.level || b.commissionAmount - a.commissionAmount,
+  );
 }
 
 function buildDistTree() {
@@ -367,7 +426,9 @@ export function createReplMallFetcherBranch(): ReplicaFetcherBranch {
     hooksKey: '__replMallTestHooks',
   });
 
-  return function handleReplMallBranch<T>(input: ReplicaBranchInput): { status: number; data: T } | null {
+  return function handleReplMallBranch<T>(
+    input: ReplicaBranchInput,
+  ): { status: number; data: T } | null {
     if (!input.url.includes('/r/ReplMall__')) return null;
     countEndpointCall(input.url);
     const method = input.method.toLowerCase();
@@ -459,7 +520,10 @@ export function createReplMallFetcherBranch(): ReplicaFetcherBranch {
         status: read('status'),
         distributor: read('distributor'),
       });
-      const result = paginateRows(filtered, page, pageSize, { sizeKey: 'pageSize', clampPages: true });
+      const result = paginateRows(filtered, page, pageSize, {
+        sizeKey: 'pageSize',
+        clampPages: true,
+      });
       return { status: 0, data: JSON.parse(JSON.stringify(result)) as unknown as T };
     }
 
@@ -477,9 +541,20 @@ export function createReplMallFetcherBranch(): ReplicaFetcherBranch {
         return { status: 1, data: { msg: 'REPL_MALL_EXPORT_EMPTY' } as unknown as T };
       }
       const header = 'orderNo,distributorName,level,rate,commissionAmount,status';
-      const csv = [header, ...filtered.map((r) => `${r.orderNo},${r.distributorName},${r.level},${r.rate},${r.commissionAmount},${r.status}`)].join('\n');
+      const csv = [
+        header,
+        ...filtered.map(
+          (r) =>
+            `${r.orderNo},${r.distributorName},${r.level},${r.rate},${r.commissionAmount},${r.status}`,
+        ),
+      ].join('\n');
       const url = `data:text/csv;charset=utf-8,${encodeURIComponent(csv)}`;
-      const payload = { url, downloadUrl: url, filename: '佣金明细.csv', rowCount: filtered.length };
+      const payload = {
+        url,
+        downloadUrl: url,
+        filename: '佣金明细.csv',
+        rowCount: filtered.length,
+      };
       if (hooks) hooks.lastCommissionExportData = JSON.parse(JSON.stringify(payload));
       return { status: 0, data: payload as unknown as T };
     }
@@ -499,10 +574,19 @@ export function createReplMallFetcherBranch(): ReplicaFetcherBranch {
       if (method === 'post') {
         if (hooks) hooks.lastCommissionRulesBody = JSON.parse(JSON.stringify(bodyView(input)));
         const rules = (input.body?.rules ?? input.body?.items) as MallCommissionRule[] | undefined;
-        if (Array.isArray(rules) && rules.some((rule) => Math.round((rule?.L1Rate ?? 0) + (rule?.L2Rate ?? 0) + (rule?.L3Rate ?? 0)) !== 100)) {
+        if (
+          Array.isArray(rules) &&
+          rules.some(
+            (rule) =>
+              Math.round((rule?.L1Rate ?? 0) + (rule?.L2Rate ?? 0) + (rule?.L3Rate ?? 0)) !== 100,
+          )
+        ) {
           return { status: 1, data: { msg: 'REPL_MALL_RULE_INVALID' } as unknown as T };
         }
-        return { status: 0, data: { saved: Array.isArray(rules) ? rules.length : 0 } as unknown as T };
+        return {
+          status: 0,
+          data: { saved: Array.isArray(rules) ? rules.length : 0 } as unknown as T,
+        };
       }
     }
 
@@ -518,7 +602,10 @@ export function createReplMallFetcherBranch(): ReplicaFetcherBranch {
       const payoutId = typeof input.body?.payoutId === 'string' ? input.body.payoutId : '';
       return {
         status: 0,
-        data: { payoutId, status: auditResult === 'rejected' ? 'rejected' : 'settled' } as unknown as T,
+        data: {
+          payoutId,
+          status: auditResult === 'rejected' ? 'rejected' : 'settled',
+        } as unknown as T,
       };
     }
 
@@ -530,7 +617,12 @@ export function createReplMallFetcherBranch(): ReplicaFetcherBranch {
  * preserved-literal envelope should the action layer ever wrap it. */
 function bodyView(input: ReplicaBranchInput): Record<string, unknown> {
   const raw = input.body as Record<string, unknown> | undefined;
-  if (raw && raw.__nopPreserveLiteral === true && typeof raw.value === 'object' && raw.value !== null) {
+  if (
+    raw &&
+    raw.__nopPreserveLiteral === true &&
+    typeof raw.value === 'object' &&
+    raw.value !== null
+  ) {
     return raw.value as Record<string, unknown>;
   }
   return raw ?? {};

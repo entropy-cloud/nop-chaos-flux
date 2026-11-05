@@ -102,7 +102,9 @@ async function dragPanelToTopAnchor(page: Page): Promise<void> {
   await expect(panel).toHaveAttribute('data-anchor', '1', { timeout: 10_000 });
 }
 
-async function readResolvedSku(page: Page): Promise<{ skuId: string; price: number; stock: number }> {
+async function readResolvedSku(
+  page: Page,
+): Promise<{ skuId: string; price: number; stock: number }> {
   const skuText = await page.getByTestId('mall-sku-picker-sku').textContent({ timeout: 10_000 });
   const skuId = (skuText ?? '').match(/sku-\d{3}/)?.[0] ?? '';
   expect(skuId).toMatch(/^sku-\d{3}$/);
@@ -116,7 +118,9 @@ async function readResolvedSku(page: Page): Promise<{ skuId: string; price: numb
  * assertions when the snap lands there (plan 819 P1 F4-1: that silently
  * passed), re-spin the size wheel (bounded) and hard-assert the stock.
  */
-async function selectFullSpec(page: Page): Promise<{ skuId: string; price: number; stock: number }> {
+async function selectFullSpec(
+  page: Page,
+): Promise<{ skuId: string; price: number; stock: number }> {
   const panel = page.locator(PANEL);
   await expect(panel).toHaveAttribute('data-anchor', '0', { timeout: 10_000 });
   await dragPanelToTopAnchor(page);
@@ -139,7 +143,9 @@ test.describe('S1 商城商品 SKU 选择页 (#/complex-pages/mall-sku-picker)',
     const screen = page.getByTestId('mall-sku-picker-screen');
     const box = await screen.boundingBox();
     expect(box?.width).toBe(375);
-    expect(box?.height).toBe(667);
+    // plan 856 画布裁决：375×667 → 375×780（对照页 812 级比例；语义不变——
+    // 固定手机框仍完整呈现，仅高度档位升级以容纳商品标题卡与首载哨兵）。
+    expect(box?.height).toBe(780);
 
     // 画廊：CarouselItemSchema 形状的 images → 4 个 img（硬断言，防静默空帧）。
     await expect(page.locator('[data-slot="carousel-item"] img')).toHaveCount(4, {
@@ -199,10 +205,9 @@ test.describe('S1 商城商品 SKU 选择页 (#/complex-pages/mall-sku-picker)',
       String(resolved.price),
       { timeout: 10_000 },
     );
-    await expect(page.getByTestId('mall-sku-picker-stock')).toContainText(
-      String(resolved.stock),
-      { timeout: 10_000 },
-    );
+    await expect(page.getByTestId('mall-sku-picker-stock')).toContainText(String(resolved.stock), {
+      timeout: 10_000,
+    });
     if (resolved.stock > 0) {
       await expect(page.getByTestId('mall-sku-picker-stock-badge')).toContainText('有货');
       await expect(page.getByTestId('mall-sku-picker-add-cart')).toBeEnabled({ timeout: 10_000 });
@@ -236,8 +241,9 @@ test.describe('S1 商城商品 SKU 选择页 (#/complex-pages/mall-sku-picker)',
     // 推进模拟时钟（sessionStorage 累积偏移跨 reload 存续；基线被拉近而
     // 越线——D6 MIN-3 传播路径：改闭包值不自动重解析 scope 绑定，须重取）。
     await page.evaluate(() => {
-      const hooks = (window as unknown as Record<string, { advanceFlashSaleClock?: (d: number) => void }>)
-        .__replMallTestHooks;
+      const hooks = (
+        window as unknown as Record<string, { advanceFlashSaleClock?: (d: number) => void }>
+      ).__replMallTestHooks;
       hooks?.advanceFlashSaleClock?.(7_200_000);
     });
     // 同文档 goto 不触发重取——真实 reload 重放 addInitScript 并重建模块图，

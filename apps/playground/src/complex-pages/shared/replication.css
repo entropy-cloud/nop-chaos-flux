@@ -176,7 +176,7 @@
  * no BEM (Renderer Styling Contract).
  */
 .repl-banner {
-  padding: 10px 12px;
+  padding: 8px 12px 10px;
   border-radius: 12px;
   /* upstream seckill floor form (baseline §2.2): red-orange gradient with
    * white faces instead of the flat pink card (plan 846 U1 F-S1-4). */
@@ -392,4 +392,95 @@
 .repl-mall-section {
   border-radius: 14px;
   padding: 12px;
+}
+
+/* plan 856 G2/G4/G5：商品标题卡 + 促销胶囊 + 领券票据条（对照页形态）。 */
+.repl-mall-titlecard {
+  margin: 6px 10px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  gap: 4px;
+  background: hsl(var(--card, 0 0% 100%));
+}
+
+/* plan 856 G9：首屏密度——标题卡压缩后滚动区须保住画廊(280)+哨兵的首载预算。 */
+.repl-mall-titlecard .text-\[15px\] {
+  font-size: 14px;
+}
+
+.repl-banner .text-\[24px\] {
+  font-size: 22px;
+}
+
+.repl-mall-promo-pill {
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: rgba(224, 46, 36, 0.08);
+  color: #e02e24;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.repl-mall-coupon {
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: linear-gradient(90deg, #fff1f0, #ffe3de);
+  border: 1px dashed #ff9d92;
+}
+
+.repl-mall-coupon-tag {
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: #e02e24;
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+/* plan 856 G6：颜色芯片色点（曜石黑/冰川白/霞光紫）。testid 落在外层
+ * field label 上，chips 包装在其内——后代选择器而非同元素复合。 */
+[data-testid='mall-sku-picker-spec-color']
+  .repl-mall-chips
+  [data-slot='button-group-select-item']::before {
+  content: '';
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  margin-right: 5px;
+  background: var(--chip-dot, #1a1d24);
+  border: 1px solid rgba(0, 0, 0, 0.12);
+}
+
+[data-testid='mall-sku-picker-spec-color']
+  .repl-mall-chips
+  [data-slot='button-group-select-item']:nth-child(2)::before {
+  background: #e9e9ec;
+}
+
+[data-testid='mall-sku-picker-spec-color']
+  .repl-mall-chips
+  [data-slot='button-group-select-item']:nth-child(3)::before {
+  background: #b78fe0;
+}
+
+/* plan 856：画廊高度 280（3:4 近似）——首屏哨兵必须留在滚动视口内以触发
+ * infinite-scroll 首载（immediateCheck:false 的观察哨初始回调口径）。 */
+.repl-mall-scroll [data-testid='mall-sku-picker-gallery'] img,
+.repl-mall-scroll .nop-carousel img {
+  height: 280px;
+  object-fit: cover;
+}
+
+/* plan 856：S1 商城页画布升 375×780（对照页 812 级比例；e2e 断言同步裁决
+ * 667→780，语义不变——固定手机框仍在桌面壳内完整呈现）。 */
+.repl-mobile-canvas[data-canvas='tall'] .repl-mobile-canvas-screen {
+  height: 780px;
+}
+
+/* plan 856 G10：页面 body 全幅（bodyClassName p-0，对照页形态）后，浮层面板
+ * 内容自带横向内边距，与标题卡/吸底栏的 12px 内容边对齐。 */
+.repl-mall-panel-lift [data-slot='floating-panel-content'] {
+  padding: 0 12px 12px;
 }

@@ -31,7 +31,7 @@ export function MallSkuPickerHost({ env }: { env: RendererEnv }) {
   );
 
   return (
-    <div className="repl-mobile-canvas" data-testid="mall-sku-picker-canvas">
+    <div className="repl-mobile-canvas" data-canvas="tall" data-testid="mall-sku-picker-canvas">
       <div className="repl-mobile-canvas-screen" data-testid="mall-sku-picker-screen">
         <ShowcaseSchemaHost
           schemaUrl="showcase://mall-sku-picker/page"
