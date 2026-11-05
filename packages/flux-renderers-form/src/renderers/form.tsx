@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useSyncExternalStore } from 'react';
 import type { KeyboardEvent as ReactKeyboardEvent } from 'react';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
+import { reportRuntimeHostIssue } from '@nop-chaos/flux-core';
 import type { ScopeRef } from '@nop-chaos/flux-core';
 import {
   FormContext,
@@ -400,11 +401,24 @@ export function FormRenderer(props: RendererComponentProps<FormSchema>) {
     const handle = currentComponentRegistry?.resolve({ componentId: submitTarget });
     if (handle?.capabilities?.hasMethod?.('querySubmit')) {
       const values = ownedForm.store.getState().values;
-      await Promise.resolve(
-        handle.capabilities.invoke('querySubmit', { values }, {} as never),
-      );
+      // Both callers fire and forget; a rejecting target must surface through
+      // the runtime host channel instead of an unhandled rejection.
+      try {
+        await Promise.resolve(
+          handle.capabilities.invoke('querySubmit', { values }, {} as never),
+        );
+      } catch (error) {
+        reportRuntimeHostIssue({
+          env: runtime.env,
+          level: 'error',
+          message: 'Form submit target delivery failed',
+          error,
+          phase: 'action',
+          path: props.path,
+        });
+      }
     }
-  }, [submitTarget, currentComponentRegistry, ownedForm]);
+  }, [submitTarget, currentComponentRegistry, ownedForm, runtime, props.path]);
 
   useEffect(() => {
     let prevSubmitting = ownedForm.store.getState().submitting;

@@ -159,7 +159,7 @@ function scanCatchWithoutStructuredFailurePath({ rule, relativePath, content }) 
     const normalized = body.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '').trim();
     const hasStructuredFailurePath =
       /\bthrow\b/.test(normalized) ||
-      /\b(?:monitor|telemetry|diagnostic|diagnostics|reportError|onError|errorHandler)\b/.test(
+      /\b(?:monitor|telemetry|diagnostic|diagnostics|reportError|reportRuntimeHostIssue|onError|errorHandler)\b/.test(
         normalized,
       ) ||
       /\bset[A-Z]\w*(?:Error|Failure|Status)\b/.test(normalized) ||

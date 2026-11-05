@@ -65,7 +65,7 @@ import {
 } from './form-runtime-array-ops.js';
 import { createStoreBackedScopeAdapter } from './store-backed-scope-adapter.js';
 import { toRecord } from './scope.js';
-import { publishOwnerStatus } from './status-owner.js';
+import { markPublicationOwner, publishOwnerStatus, releasePublicationOwner } from './status-owner.js';
 
 function formStatusSummaryEqual(
   left: import('@nop-chaos/flux-core').FormStatusSummary | undefined,
@@ -241,6 +241,7 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
 
     let lastStatusSummary: import('@nop-chaos/flux-core').FormStatusSummary | undefined;
     let lastPublishedValues: Record<string, unknown> | undefined;
+    const publicationOwner = {};
 
     const publish = () => {
       if (statusPath) {
@@ -254,6 +255,7 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
         if (!formStatusSummaryEqual(lastStatusSummary, summary)) {
           lastStatusSummary = summary;
           publishOwnerStatus(parentScope, statusPath, summary);
+          markPublicationOwner(parentScope, statusPath, publicationOwner);
         }
       }
 
@@ -262,6 +264,7 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
         if (!Object.is(lastPublishedValues, values)) {
           lastPublishedValues = values;
           parentScope.update(valuesPath, values);
+          markPublicationOwner(parentScope, valuesPath, publicationOwner);
         }
       }
     };
@@ -282,13 +285,23 @@ export function createManagedFormRuntime(inputValue: CreateManagedFormRuntimeInp
     });
 
     const unsubscribe = store.subscribe(publish);
+    // Plan 860 (B1): withdraw only what this runtime still owns. A successor
+    // runtime (same path, created before this one's deferred dispose) or a
+    // third-party writer may have replaced the published value; clearing it
+    // unconditionally would blank their data for every sibling reader.
     clearExternalPublication = () => {
       unsubscribe();
       publicationActive = false;
-      if (statusPath) {
+      if (
+        statusPath &&
+        releasePublicationOwner(parentScope, statusPath, publicationOwner, lastStatusSummary)
+      ) {
         publishOwnerStatus(parentScope, statusPath, undefined);
       }
-      if (valuesPath) {
+      if (
+        valuesPath &&
+        releasePublicationOwner(parentScope, valuesPath, publicationOwner, lastPublishedValues)
+      ) {
         parentScope.update(valuesPath, undefined);
       }
       clearExternalPublication = undefined;

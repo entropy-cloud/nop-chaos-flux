@@ -13,6 +13,40 @@ export function publishOwnerStatus<TSummary>(
   scope.update(statusPath, summary);
 }
 
+// Plan 860 (B1): last publisher per (scope, path). Value identity alone cannot
+// decide who owns a published path — FormRenderer hands every recreated
+// runtime the same initialValues object, so a predecessor and its successor
+// publish the very same reference.
+const lastPublisherByScope = new WeakMap<ScopeRef, Map<string, object>>();
+
+export function markPublicationOwner(scope: ScopeRef, path: string, owner: object): void {
+  let owners = lastPublisherByScope.get(scope);
+  if (!owners) {
+    owners = new Map();
+    lastPublisherByScope.set(scope, owners);
+  }
+  owners.set(path, owner);
+}
+
+/**
+ * Release `owner`'s claim on `path` and report whether the caller may withdraw
+ * the published value: only when `owner` was the last publisher and the path
+ * still holds exactly what it published (a third-party write wins otherwise).
+ */
+export function releasePublicationOwner(
+  scope: ScopeRef,
+  path: string,
+  owner: object,
+  published: unknown,
+): boolean {
+  const owners = lastPublisherByScope.get(scope);
+  if (owners?.get(path) !== owner) {
+    return false;
+  }
+  owners.delete(path);
+  return Object.is(scope.get(path), published);
+}
+
 export function createReadonlyScopeBinding<TSummary>(
   scope: ScopeRef,
   bindingKey: string,

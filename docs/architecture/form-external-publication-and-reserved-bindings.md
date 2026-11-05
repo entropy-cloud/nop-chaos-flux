@@ -153,6 +153,19 @@ valuesPath: ui.profileDraft
 - publication 由 form runtime 生命周期负责首发、更新和 dispose cleanup，而不是由 renderer effect 单独挂接
 - 当前 live baseline 同样支持 `valuesPath` dynamic rerouting；路径切换会重建 form owner，清理旧 values publication，再把当前 form owner 的新快照发布到新路径
 
+### 6. Publication Withdrawal Ownership
+
+`statusPath` 与 `valuesPath` 的 dispose cleanup 是**所有权感知**的：runtime 只撤回自己仍然持有的发布。
+
+- runtime 每次发布都在 `(parent scope, path)` 上登记自己为最后发布者（`flux-runtime/src/status-owner.ts` 的 `markPublicationOwner`）
+- dispose 时仅当 ① 本 runtime 仍是该路径的最后发布者，且 ② 路径当前值与本 runtime 最后发布的值 identity 相同，才写回 `undefined`（`releasePublicationOwner`）；否则跳过
+- 后继 runtime 接管同一路径（例如动态 `name`/`id` 变化使 FormRenderer 重建 owner，而旧 runtime 的延迟 dispose 晚于后继首发）：旧 runtime 不撤回，兄弟读取持续看到后继的发布
+- 第三方写入（页面 schema `setValue` 等）覆盖了该路径：form 卸载不覆盖第三方值
+- 在延迟首发之前就 dispose 的 runtime 从未发布过，不触碰该路径
+- 只判值 identity 不足以决定所有权：FormRenderer 把同一个 `initialValues` 对象交给每次重建的 runtime，store 按引用持有，前后两个 runtime 会发布同一个引用——所以以登记的最后发布者为准，identity 只用于识别第三方写入
+
+拒绝的替代方案：按内容深比较判断所有权——后继发布与旧发布内容相等时会被误判为"本 runtime 的"而撤回。
+
 ## Common Principle Across Owners
 
 本仓库所有 owner 的发布设计都遵循同一原则：
