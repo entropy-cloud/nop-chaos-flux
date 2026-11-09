@@ -1,6 +1,6 @@
 # 855 商城域视觉 polish 批（用户指令：修复所有问题——对标拼多多级观感）
 
-> Plan Status: active（用户 2026-11-04 明确指令"修复所有问题"直接立项；roadmap §8 字母后缀拆批预授权沿用，U9 开放审计 + 用户复查指认的 cosmetics 清单为 findings 来源）
+> Plan Status: completed（closure audit round-2 approved，见 Closure Audit Evidence；2026-11-10 header 翻转收口）
 > Last Reviewed: 2026-11-04
 > Source: U9 开放审计（docs/audits/replication-ux-u9-open-audit.md m-9-3/m-9-4）+ U8 深审（m-1-2 progress 蓝条/m-1-3 !important 债）+ 用户实机复查指认（规格选择器纯文本/面板开发术语/CTA 观感/素材占位感/首屏密度）
 > Related: 846（U1）、849（U4）、852（U6）、854（U9）
@@ -45,7 +45,7 @@
 
 ### Phase 1 - S1 polish + M1/S2 title 双写
 
-Status: in progress
+Status: completed
 Targets: 上述 In Scope 文件
 
 - Item Types: `Fix`
