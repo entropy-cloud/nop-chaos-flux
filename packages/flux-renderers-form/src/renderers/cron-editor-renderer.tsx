@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react';
 import { type RendererComponentProps } from '@nop-chaos/flux-core';
 import { useStandardFieldHandle } from '../use-standard-field-handle.js';
-import { Button, Input, cn } from '@nop-chaos/ui';
+import { Button, Input, Label, NativeSelect, NativeSelectOption, cn } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
 import { builtinPresets, deriveFrequency, fireSequence, validateCronScheduleValue, type CronScheduleValue, type CronFrequency, type ValueDiagnosticCode } from '../cron/index.js';
 import { useFormFieldFromProps } from '../field-utils.js';
@@ -217,6 +217,10 @@ export function CronEditorRenderer(props: RendererComponentProps<CronEditorSchem
               current.querySelector<HTMLElement>(`[data-testid="cron-editor-tier-${next}"]`)?.focus();
             }}
           >
+            {/* Segmented radio (plan 859 adjudicated exception): role="radio" +
+                roving tabindex + the container's arrow-key handler. ui ToggleGroup
+                would change the semantics to pressed toggles and RadioGroupItem
+                renders a circle radio — neither keeps this segmented radio contract. */}
             {(['daily', 'weekly', 'monthly', 'yearly', 'custom'] as CronFrequency[]).map((tierKey) => (
               <button
                 key={tierKey}
@@ -276,8 +280,11 @@ export function CronEditorRenderer(props: RendererComponentProps<CronEditorSchem
 
       {activeMode === 'visual' ? (
         <div className="flex flex-wrap items-center gap-2" data-slot="preset-row">
-          <label className="text-muted-foreground text-xs" htmlFor="cron-editor-preset-select">{t('flux.cron.presetLabel')}</label>
-          <select
+          <Label className="text-xs font-normal text-muted-foreground" htmlFor="cron-editor-preset-select">
+            {t('flux.cron.presetLabel')}
+          </Label>
+          <NativeSelect
+            size="xs"
             id="cron-editor-preset-select"
             defaultValue=""
             disabled={!interactive}
@@ -294,15 +301,14 @@ export function CronEditorRenderer(props: RendererComponentProps<CronEditorSchem
             }}
             aria-label={t('flux.cron.presetLabel')}
             data-testid="cron-editor-preset-select"
-            className="rounded-md border bg-transparent px-2 py-1 text-xs"
           >
-            <option value="">—</option>
+            <NativeSelectOption value="">—</NativeSelectOption>
             {presetOptions.map((preset, index) => (
-              <option key={`${preset.label}-${JSON.stringify(preset.value)}`} value={index}>
+              <NativeSelectOption key={`${preset.label}-${JSON.stringify(preset.value)}`} value={index}>
                 {preset.label}
-              </option>
+              </NativeSelectOption>
             ))}
-          </select>
+          </NativeSelect>
         </div>
       ) : null}
 

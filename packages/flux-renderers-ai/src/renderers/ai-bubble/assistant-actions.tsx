@@ -1,5 +1,6 @@
 import { Check, Copy, RotateCcw } from 'lucide-react';
 import { t } from '@nop-chaos/flux-i18n';
+import { Button } from '@nop-chaos/ui';
 import { clipboardAdapter, useCopiedFlag } from '../clipboard.js';
 import { extractMessageText } from '../message-text.js';
 import type { ChatMessage, MessageEngine } from '../../engine/types.js';
@@ -40,18 +41,20 @@ export function AssistantActions(props: {
 
   return (
     <div data-slot="ai-assistant-actions">
-      <button
-        type="button"
+      <Button
+        variant="ghost"
+        size="icon-xs"
         data-slot="ai-action-copy"
         aria-label={copied ? t('flux.ai.copied') : t('flux.ai.copyMessage')}
         onClick={() => void handleCopy()}
       >
         {copied ? <Check aria-hidden="true" /> : <Copy aria-hidden="true" />}
         <span aria-live="polite" className="sr-only">{copied ? t('flux.ai.copied') : ''}</span>
-      </button>
+      </Button>
       {props.engine ? (
-        <button
-          type="button"
+        <Button
+          variant="ghost"
+          size="icon-xs"
           data-slot="ai-action-retry"
           aria-label={t('flux.ai.retryMessage')}
           disabled={!canRetry}
@@ -60,7 +63,7 @@ export function AssistantActions(props: {
           }}
         >
           <RotateCcw aria-hidden="true" />
-        </button>
+        </Button>
       ) : null}
     </div>
   );

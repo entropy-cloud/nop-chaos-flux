@@ -38,7 +38,18 @@ export function QrCodeRenderer(props: RendererComponentProps<QrCodeSchema>) {
   const onLoadError = props.events.onLoadError;
 
   const canvasRef = React.useRef<HTMLCanvasElement | null>(null);
-  const [failed, setFailed] = React.useState(false);
+  // Failure is tied to the exact inputs that failed and is cleared at render
+  // time when inputs change, so the canvas mounts before the draw effect runs
+  // (resetting inside the effect left the remounted canvas blank).
+  const renderKey = `${valueStr}\u0000${size}\u0000${level}\u0000${foreground}\u0000${background}`;
+  const [failedKey, setFailedKey] = React.useState<string | null>(null);
+  const [lastRenderKey, setLastRenderKey] = React.useState(renderKey);
+  if (lastRenderKey !== renderKey) {
+    // any input change (including back to a previously failed value) retries
+    setLastRenderKey(renderKey);
+    setFailedKey(null);
+  }
+  const failed = failedKey === renderKey;
 
   // Render the QR matrix onto the canvas whenever inputs change.
   // AUDIT-13 exemption: QRCode.toCanvas has no AbortSignal support, so this
@@ -47,7 +58,6 @@ export function QrCodeRenderer(props: RendererComponentProps<QrCodeSchema>) {
   // overwrites the stale frame), so there is no user-visible data-integrity
   // impact; only the error-state side effect is guarded.
   React.useEffect(() => {
-    setFailed(false);
     if (!canvasRef.current || valueStr.length === 0) {
       return;
     }
@@ -59,7 +69,7 @@ export function QrCodeRenderer(props: RendererComponentProps<QrCodeSchema>) {
       color: { dark: foreground, light: background },
     }).catch((error: unknown) => {
       if (controller.signal.aborted) return;
-      setFailed(true);
+      setFailedKey(renderKey);
       void onLoadError?.();
       if (import.meta.env?.DEV === true) {
         console.warn('[qrcode] render failed:', error);
@@ -68,7 +78,7 @@ export function QrCodeRenderer(props: RendererComponentProps<QrCodeSchema>) {
     return () => {
       controller.abort();
     };
-  }, [valueStr, size, level, foreground, background, onLoadError]);
+  }, [valueStr, size, level, foreground, background, onLoadError, renderKey]);
 
   if (valueStr.length === 0 || failed) {
     return (

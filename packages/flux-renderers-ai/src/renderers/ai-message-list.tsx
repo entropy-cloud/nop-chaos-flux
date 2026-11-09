@@ -1,7 +1,7 @@
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { ArrowDown } from 'lucide-react';
 import type { RendererComponentProps, RendererRenderOutput } from '@nop-chaos/flux-core';
-import { cn } from '@nop-chaos/ui';
+import { Button, cn } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
 import { useAiChatContext } from '../adapters/ai-chat-context.js';
 import { useAutoScroll } from '../adapters/use-auto-scroll.js';
@@ -217,14 +217,15 @@ export function AiMessageListView(props: AiMessageListViewProps): React.ReactEle
       )}
     </div>
       {!pinned ? (
-        <button
-          type="button"
+        <Button
+          variant="outline"
+          size="icon"
           data-slot="ai-scroll-to-bottom"
           aria-label={t('flux.ai.scrollToBottom')}
           onClick={scrollToBottom}
         >
           <ArrowDown aria-hidden="true" />
-        </button>
+        </Button>
       ) : null}
     </div>
   );

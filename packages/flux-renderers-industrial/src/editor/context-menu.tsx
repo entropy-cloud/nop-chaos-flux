@@ -162,6 +162,11 @@ export function ScadaEditorContextMenu(props: {
       onContextMenu={(event) => event.preventDefault()}
     >
       {items.map((item) => (
+        // Bare menuitem button (plan 859 adjudicated exception): this menu is
+        // opened by the canvas engine at pointer coordinates with its own
+        // roving-focus key handler; the ui ContextMenu/DropdownMenu require a
+        // DOM trigger element and own their open state, which the engine-driven
+        // overlay cannot provide.
         <button
           key={item.key}
           type="button"

@@ -77,18 +77,22 @@ export function EditorLayersPanel(props: EditorLayersPanelProps) {
                   data-testid="toolbox-layer-row"
                   style={{ paddingLeft: `${depth * 16}px` }}
                 >
-                  <button
-                    type="button"
+                  <Button
+                    variant="ghost"
+                    size="xs"
                     className={cn(
-                      'flex-1 text-left truncate rounded px-1 py-0.5 cursor-pointer hover:bg-accent',
+                      'h-auto min-w-0 flex-1 justify-start rounded px-1 py-0.5 font-normal hover:bg-accent',
                       selected && 'bg-accent font-medium',
                     )}
                     onClick={() => runtime.setSelection([node.id])}
                     data-testid="toolbox-layer-row-select"
                   >
-                    {label}
-                    <span className="opacity-50 font-mono ml-1">{node.id}</span>
-                  </button>
+                    {/* Button is inline-flex: ellipsis needs a block-level text box */}
+                    <span className="min-w-0 truncate">
+                      {label}
+                      <span className="opacity-50 font-mono ml-1">{node.id}</span>
+                    </span>
+                  </Button>
                   <Button
                     variant="ghost"
                     size="sm"

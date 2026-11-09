@@ -155,16 +155,17 @@ export function EditorPalettePanel(props: EditorPalettePanelProps) {
           const isCollapsed = collapsed.has(category);
           return (
             <section key={category} data-palette-group={category}>
-              <button
-                type="button"
-                className="nop-scada-editor-palette-group-toggle flex w-full items-center gap-1"
+              <Button
+                variant="ghost"
+                size="xs"
+                className="nop-scada-editor-palette-group-toggle h-auto w-full justify-start gap-1 px-0 font-normal"
                 aria-expanded={!isCollapsed}
                 data-testid={`scada-editor-palette-group-${category}`}
                 onClick={() => toggleGroup(category)}
               >
                 {isCollapsed ? <ChevronRight className="size-3" /> : <ChevronDown className="size-3" />}
                 <span className="nop-scada-editor-group-label">{resolveCategoryLabel(category)}</span>
-              </button>
+              </Button>
               {isCollapsed
                 ? null
                 : groupSymbols.map((def) => {

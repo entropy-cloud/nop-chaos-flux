@@ -1,4 +1,4 @@
-import { Spinner } from '@nop-chaos/ui';
+import { Button, Spinner } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
 import type { OrgNode } from '../../schemas-org.js';
 import type { OrgDataState } from './use-org-data.js';
@@ -21,6 +21,8 @@ function Column(input: {
       {error ? (
         <div className="p-2 text-center text-xs text-destructive" data-slot="region-error">
           {error}
+          {/* Inline text-level affordance inside the error sentence
+              (renderer-markers-and-selectors.md; plan 859 exception). */}
           <button
             type="button"
             data-slot="region-retry"
@@ -49,6 +51,8 @@ function Column(input: {
             data-disabled={node.disabled === true || !interactive ? true : undefined}
             className="flex items-center gap-0.5 rounded-sm px-1 py-0.5 hover:bg-accent data-selected:bg-accent"
           >
+            {/* Text-level row affordance (flex-1, truncating, left-aligned);
+                plan 859 exception, see org-select-panel OrgNodeRow. */}
             <button
               type="button"
               data-slot="region-node-name"
@@ -60,29 +64,31 @@ function Column(input: {
               {node.name}
             </button>
             {node.leaf !== true ? (
-              <button
-                type="button"
+              <Button
+                variant="ghost"
+                size="icon-xs"
                 data-slot="region-node-expand"
-                className="rounded-sm px-1 text-muted-foreground hover:bg-accent hover:text-foreground"
+                className="text-muted-foreground hover:bg-accent"
                 aria-label={node.name}
                 disabled={!interactive}
                 onClick={() => onExpandNode(node)}
               >
                 ›
-              </button>
+              </Button>
             ) : null}
           </div>
         ))
       )}
       {hasMore && !loading && !error && nodes.length > 0 ? (
-        <button
-          type="button"
+        <Button
+          variant="ghost"
+          size="xs"
           data-slot="region-load-more"
-          className="px-1 py-1 text-center text-xs text-muted-foreground hover:text-foreground"
+          className="w-full font-normal text-muted-foreground"
           onClick={onLoadMore}
         >
           {t('flux.form.orgLoadMore')}
-        </button>
+        </Button>
       ) : null}
     </div>
   );

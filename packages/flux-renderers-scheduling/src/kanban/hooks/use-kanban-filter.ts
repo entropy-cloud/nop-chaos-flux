@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { useDebouncedValue } from '@nop-chaos/flux-react';
 
 export interface UseKanbanFilterOptions {
@@ -9,17 +9,15 @@ export interface UseKanbanFilterOptions {
 
 export function useKanbanFilter({ filterText: externalFilterText, filterCard, debounceMs = 300 }: UseKanbanFilterOptions) {
   const [localText, setLocalText] = useState(externalFilterText ?? '');
-
-  useEffect(() => {
+  // A changed external filter replaces the local draft (render-time adjust,
+  // React "storing information from previous renders").
+  const [syncedExternalText, setSyncedExternalText] = useState(externalFilterText);
+  if (syncedExternalText !== externalFilterText) {
+    setSyncedExternalText(externalFilterText);
     setLocalText(externalFilterText ?? '');
-  }, [externalFilterText]);
+  }
 
-  const debouncedValue = useDebouncedValue(localText, debounceMs);
-  const [activeText, setActiveText] = useState('');
-
-  useEffect(() => {
-    setActiveText(debouncedValue);
-  }, [debouncedValue]);
+  const activeText = useDebouncedValue(localText, debounceMs);
 
   const matchesCard = useCallback((card: Record<string, any>): boolean => {
     const text = activeText;

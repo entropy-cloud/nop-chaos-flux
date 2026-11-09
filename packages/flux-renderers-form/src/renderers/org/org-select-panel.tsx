@@ -1,5 +1,19 @@
-import { useState } from 'react';
-import { Button, Checkbox, Input, Popover, PopoverContent, PopoverTrigger, Spinner, cn } from '@nop-chaos/ui';
+import { Fragment, useState } from 'react';
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbSeparator,
+  Button,
+  Checkbox,
+  Input,
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+  Spinner,
+  cn,
+} from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
 import type { OrgNode } from '../../schemas-org.js';
 import { isNodeTypeSelectable } from './org-data-protocol.js';
@@ -36,9 +50,10 @@ function OrgNodeRow(input: {
           aria-label={node.name}
         />
       ) : null}
-      {/* text-level inline affordance: bare button + data-slot per
-          renderer-markers-and-selectors.md (a nested ui Button inside the
-          selectable row button would violate the button content model). */}
+      {/* Text-level row affordance (renderer-markers-and-selectors.md "Inline
+          text-level affordances", plan 859 adjudicated exception): a flex-1,
+          truncating, left-aligned label inside the row; ui Button's control
+          box (fixed height, centered, nowrap) is chrome for standalone actions. */}
       <button
         type="button"
         data-slot="org-select-node-name"
@@ -52,15 +67,16 @@ function OrgNodeRow(input: {
       </button>
       {loading ? <Spinner className="size-3.5" data-slot="org-select-node-loading" /> : null}
       {navigable ? (
-        <button
-          type="button"
+        <Button
+          variant="ghost"
+          size="icon-xs"
           data-slot="org-select-expand"
-          className="rounded-sm px-1 text-muted-foreground hover:bg-accent hover:text-foreground"
+          className="text-muted-foreground hover:bg-accent"
           aria-label={node.name}
           onClick={onNavigate}
         >
           ›
-        </button>
+        </Button>
       ) : null}
     </div>
   );
@@ -216,29 +232,37 @@ export function OrgSelectPanel(input: {
           />
         ) : null}
         {searchMode ? null : (
-          <div className="mb-1 flex items-center gap-0.5 text-xs text-muted-foreground" data-slot="org-select-breadcrumb">
-            <button
-              type="button"
-              className="rounded-sm px-1 hover:bg-accent hover:text-foreground"
-              data-current={path.length === 0 ? true : undefined}
-              onClick={() => setPath([])}
-            >
-              {t('flux.form.orgBreadcrumbRoot')}
-            </button>
-            {path.map((node, index) => (
-              <span key={node.id} className="flex items-center gap-0.5">
-                <span>/</span>
-                <button
-                  type="button"
-                  className="rounded-sm px-1 hover:bg-accent hover:text-foreground"
-                  data-current={index === path.length - 1 ? true : undefined}
-                  onClick={() => setPath((previous) => previous.slice(0, index + 1))}
+          <Breadcrumb className="mb-1" data-slot="org-select-breadcrumb">
+            <BreadcrumbList className="gap-0.5 text-xs">
+              <BreadcrumbItem>
+                <BreadcrumbLink
+                  render={<button type="button" />}
+                  className="rounded-sm px-1 hover:bg-accent"
+                  data-current={path.length === 0 ? true : undefined}
+                  aria-current={path.length === 0 ? 'location' : undefined}
+                  onClick={() => setPath([])}
                 >
-                  {node.name}
-                </button>
-              </span>
-            ))}
-          </div>
+                  {t('flux.form.orgBreadcrumbRoot')}
+                </BreadcrumbLink>
+              </BreadcrumbItem>
+              {path.map((node, index) => (
+                <Fragment key={node.id}>
+                  <BreadcrumbSeparator>/</BreadcrumbSeparator>
+                  <BreadcrumbItem>
+                    <BreadcrumbLink
+                      render={<button type="button" />}
+                      className="rounded-sm px-1 hover:bg-accent"
+                      data-current={index === path.length - 1 ? true : undefined}
+                      aria-current={index === path.length - 1 ? 'location' : undefined}
+                      onClick={() => setPath((previous) => previous.slice(0, index + 1))}
+                    >
+                      {node.name}
+                    </BreadcrumbLink>
+                  </BreadcrumbItem>
+                </Fragment>
+              ))}
+            </BreadcrumbList>
+          </Breadcrumb>
         )}
         <div className="max-h-64 overflow-y-auto" data-slot="org-select-list">
           {searchMode ? (
@@ -263,14 +287,15 @@ export function OrgSelectPanel(input: {
                   />
                 ))}
                 {data.search.status === 'ready' && data.search.hasMore ? (
-                  <button
-                    type="button"
+                  <Button
+                    variant="ghost"
+                    size="sm"
                     data-slot="org-select-load-more"
-                    className="w-full rounded-sm px-2 py-1.5 text-center text-sm text-muted-foreground hover:bg-accent"
+                    className="w-full font-normal text-muted-foreground hover:bg-accent"
                     onClick={() => data.search.loadMore()}
                   >
                     {t('flux.form.orgLoadMore')}
-                  </button>
+                  </Button>
                 ) : null}
               </>
             ) : data.search.status === 'loading' ? (
@@ -285,6 +310,8 @@ export function OrgSelectPanel(input: {
           ) : levelState?.status === 'error' ? (
             <div className="px-2 py-3 text-center text-sm text-destructive" data-slot="org-select-error">
               {levelState.error ?? t('flux.form.orgChildrenFailed')}
+              {/* Inline text-level affordance inside the error sentence
+                  (renderer-markers-and-selectors.md; plan 859 exception). */}
               <button
                 type="button"
                 data-slot="org-select-retry"
@@ -318,16 +345,17 @@ export function OrgSelectPanel(input: {
                 </div>
               ) : null}
               {levelState?.status === 'ready' && levelState.hasMore ? (
-                <button
-                  type="button"
+                <Button
+                  variant="ghost"
+                  size="sm"
                   data-slot="org-select-load-more"
-                  className="w-full rounded-sm px-2 py-1.5 text-center text-sm text-muted-foreground hover:bg-accent"
+                  className="w-full font-normal text-muted-foreground hover:bg-accent"
                   onClick={() =>
                     data.children.loadMore(path.length === 0 ? null : path[path.length - 1], path.length)
                   }
                 >
                   {t('flux.form.orgLoadMore')}
-                </button>
+                </Button>
               ) : null}
               {(!levelState || levelState.status === 'ready' || levelState.status === 'idle') && levelNodes.length === 0 ? (
                 <div className="px-2 py-3 text-center text-sm text-muted-foreground" data-slot="org-select-empty">

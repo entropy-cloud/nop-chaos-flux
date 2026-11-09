@@ -15,6 +15,7 @@ import { t } from '@nop-chaos/flux-i18n';
 import { ArrowUpDownIcon, ArrowUpIcon, ArrowDownIcon, ListFilterIcon } from 'lucide-react';
 import type { TableColumnSchema, TableSchema } from '../schemas.js';
 import { getFixedColumnKey } from './fixed-columns.js';
+import { TableHeaderFilterOptions } from './table-header-filter-options.js';
 import type { FixedColumnLayout } from './fixed-columns.js';
 import type { FilterState, MultiSortState, SortEntry, SortState } from './types.js';
 import {
@@ -272,23 +273,14 @@ function renderLeafHeaderCell(
                     )}
                   </div>
                 ) : null}
-                {isFilterable
-                  ? filterOptions!.map((option) => (
-                      <label
-                        key={option.value}
-                        className="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 text-sm hover:bg-accent"
-                        data-slot="table-filter-option"
-                      >
-                        <Checkbox
-                          checked={activeFilters.has(option.value)}
-                          onCheckedChange={(checked) =>
-                            column.name && onFilter(column.name, option.value, checked === true)
-                        }
-                        />
-                        {option.label}
-                      </label>
-                    ))
-                  : null}
+                {isFilterable ? (
+                  <TableHeaderFilterOptions
+                    columnName={column.name}
+                    options={filterOptions!}
+                    activeFilters={activeFilters}
+                    onFilter={onFilter}
+                  />
+                ) : null}
                 {column.name && hasActiveFilterState ? (
                   <>
                     <div className="my-1 h-px bg-border" />

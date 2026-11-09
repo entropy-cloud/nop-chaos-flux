@@ -233,6 +233,62 @@ describe('QrCodeRenderer', () => {
   });
 });
 
+describe('qrcode redraw after a failed render (plan 859 Phase 3)', () => {
+  it('draws the corrected value onto the remounted canvas, not just mounts it', async () => {
+    qrMock.failGeneration = true;
+    qrMock.resolveSilently = true;
+    const first = createMockRendererProps<QrCodeSchema>({
+      schema: { type: 'qrcode' },
+      props: { value: 'fail-me' },
+    });
+    const { container, rerender } = render(<QrCodeRenderer {...first} />);
+    await waitFor(() => {
+      expect(container.querySelector('[data-slot="qrcode"][data-state="error"]')).toBeTruthy();
+    });
+
+    qrMock.failGeneration = false;
+    const second = createMockRendererProps<QrCodeSchema>({
+      schema: { type: 'qrcode' },
+      props: { value: 'fixed-value' },
+    });
+    rerender(<QrCodeRenderer {...second} />);
+    await waitFor(() => {
+      expect(canvasOf(container)).not.toBeNull();
+    });
+    // the fallback figure replaced the canvas while failed; the corrected value
+    // must still be rendered onto the canvas that mounts for it
+    await waitFor(() => {
+      expect(qrMock.renderedValues).toContain('fixed-value');
+    });
+  });
+});
+
+describe('qrcode retry after switching away from a failed value (A→B→A)', () => {
+  it('re-attempts the draw and re-reports when returning to a previously failed value', async () => {
+    qrMock.resolveSilently = true;
+    const onLoadError = vi.fn(async () => ({ ok: true }));
+    const props = (value: string) =>
+      createMockRendererProps<QrCodeSchema>({
+        schema: { type: 'qrcode' },
+        props: { value },
+        events: { onLoadError: onLoadError as never },
+      });
+    qrMock.failGeneration = true;
+    const { container, rerender } = render(<QrCodeRenderer {...props('value-a')} />);
+    await waitFor(() => expect(onLoadError).toHaveBeenCalledTimes(1));
+
+    qrMock.failGeneration = false;
+    rerender(<QrCodeRenderer {...props('value-b')} />);
+    await waitFor(() => expect(qrMock.renderedValues).toContain('value-b'));
+
+    qrMock.failGeneration = true;
+    rerender(<QrCodeRenderer {...props('value-a')} />);
+    await waitFor(() => expect(onLoadError).toHaveBeenCalledTimes(2));
+    expect(qrMock.renderedValues.filter((v) => v === 'value-a')).toHaveLength(2);
+    expect(container.querySelector('[data-slot="qrcode"][data-state="error"]')).toBeTruthy();
+  });
+});
+
 describe('[G1-R2-视角5-01] qrcode error state destructive semantics', () => {
   it('styles the error fallback destructive and keeps the empty fallback muted', async () => {
     const emptyProps = createMockRendererProps<QrCodeSchema>({

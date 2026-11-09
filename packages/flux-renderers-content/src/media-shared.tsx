@@ -19,14 +19,17 @@ export function useMediaErrorState(
   src: string | undefined,
   onLoadError: (() => void) | undefined,
 ): { errored: boolean; handleError: () => void } {
-  const [errored, setErrored] = React.useState(false);
-
-  React.useEffect(() => {
-    setErrored(false);
-  }, [src]);
+  // Render-time reset when src changes (instead of an effect-driven reset
+  // pass): any src change — including back to a previously failed one —
+  // starts from a clean, retryable state.
+  const [state, setState] = React.useState({ src, errored: false });
+  if (state.src !== src) {
+    setState({ src, errored: false });
+  }
+  const errored = state.src === src && state.errored;
 
   const handleError = () => {
-    setErrored(true);
+    setState({ src, errored: true });
     void onLoadError?.();
   };
 

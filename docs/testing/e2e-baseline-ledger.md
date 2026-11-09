@@ -228,6 +228,10 @@ Error: locator.click: Error: strict mode violation: getByRole('button', { name: 
 - `renderer-lab-interaction-state.spec.ts > input-password: strength meter tracks weak→strong programmatically` — strength meter 15s 未出现。
 - `scheduling-visual-tokens.spec.ts > drag-over target column paints a primary ring that flips with mode` — `[data-drop-target="true"]` 计数 0。
 
+### F9 增补（2026-11-06，plan 859 focused e2e 对照发现，未计入上方 20 项）
+
+- `ai-bubble-content.spec.ts > corner shape sets data-shape`；`ai-bubble-content.spec.ts > avatar slot and timestamp footer render` —— `openCoverage` 等待 `heading /AI Coverage/` 25s 未出现。HEAD（命名 stash 对照）与 plan 859 改动两轮 `--retries=0` 均复现；两者为该 spec 的前两个用例，同文件后续用例在页面预热后可通过——疑似 component-lab 冷启动编译时延，根因未定（缺单 worker 冷/热对照 trace）。**E/未定**，与本表其余 F9 同口径。
+
 ## 5. C 类（flake）登记
 
 | 项                                                                                                                 | 首轮失败签名（retries=1 下 results[0]，全量运行）                                                                         | 承接                                                        |

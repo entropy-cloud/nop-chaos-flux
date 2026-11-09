@@ -20,11 +20,15 @@ export function NumberKeyboardRenderer(props: RendererComponentProps<NumberKeybo
   const decimal = slotProps.decimal !== false;
   const randomOrder = slotProps.randomOrder === true;
   const confirmDisabled = slotProps.confirmDisabled === true;
-  const [open, setOpen] = React.useState(slotProps.open === true);
-  // re-sync when the host re-opens with a different value
-  React.useEffect(() => {
-    setOpen(slotProps.open === true);
-  }, [slotProps.open]);
+  const requestedOpen = slotProps.open === true;
+  const [open, setOpen] = React.useState(requestedOpen);
+  // re-sync when the host flips `open` (render-time adjust instead of an
+  // effect mirror; local close via confirm/mask still owns `open` in between)
+  const [syncedRequestedOpen, setSyncedRequestedOpen] = React.useState(requestedOpen);
+  if (syncedRequestedOpen !== requestedOpen) {
+    setSyncedRequestedOpen(requestedOpen);
+    setOpen(requestedOpen);
+  }
 
   const zIndex = useGlobalZIndex();
   useLockScroll(open);
@@ -34,6 +38,9 @@ export function NumberKeyboardRenderer(props: RendererComponentProps<NumberKeybo
   const [digitKeys, setDigitKeys] = React.useState<string[]>(() =>
     ['1', '2', '3', '4', '5', '6', '7', '8', '9'],
   );
+  // Legitimate effect (plan 859 adjudication): the shuffle draws Math.random()
+  // once per open edge; randomness cannot move into render/useMemo, where
+  // StrictMode/compiler re-execution would reshuffle a visible keypad.
   React.useEffect(() => {
     const base = ['1', '2', '3', '4', '5', '6', '7', '8', '9'];
     if (!randomOrder || !open) {

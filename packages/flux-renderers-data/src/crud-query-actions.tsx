@@ -1,4 +1,5 @@
 import { t } from '@nop-chaos/flux-i18n';
+import { Button } from '@nop-chaos/ui';
 
 /**
  * P1-MA5.4-001 (plan 743): synthesize query submit/reset actions —
@@ -16,22 +17,12 @@ export function CrudQueryActions(props: {
 
   return (
     <div className="flex items-center gap-2 mt-2" data-slot="crud-query-actions">
-      <button
-        type="button"
-        data-slot="crud-query-search"
-        className="inline-flex items-center justify-center rounded-md px-3 py-1.5 text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90"
-        onClick={props.onSearch}
-      >
+      <Button size="sm" data-slot="crud-query-search" onClick={props.onSearch}>
         {t('flux.common.search')}
-      </button>
-      <button
-        type="button"
-        data-slot="crud-query-reset"
-        className="inline-flex items-center justify-center rounded-md px-3 py-1.5 text-sm font-medium border hover:bg-muted"
-        onClick={props.onReset}
-      >
+      </Button>
+      <Button variant="outline" size="sm" data-slot="crud-query-reset" onClick={props.onReset}>
         {t('flux.common.reset')}
-      </button>
+      </Button>
     </div>
   );
 }

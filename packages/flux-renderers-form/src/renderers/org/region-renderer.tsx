@@ -2,7 +2,7 @@ import { useMemo, useRef, useState } from 'react';
 import type { ActionSchema, RendererComponentProps, SchemaValue } from '@nop-chaos/flux-core';
 import { useStandardFieldHandle } from '../../use-standard-field-handle.js';
 import { queryFocusTarget } from '../focus-target.js';
-import { useIsMobile, cn } from '@nop-chaos/ui';
+import { Button, useIsMobile, cn } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
 import { choiceSingleAdapter } from '../input-choice-renderers.js';
 import { useFormFieldFromProps } from '../../field-utils.js';
@@ -94,14 +94,14 @@ export function InputCityRenderer(props: RendererComponentProps<InputCitySchema>
       className={cn('nop-input-city-field', props.meta.className)}
       data-invalid={presentation.showError ? true : undefined}
     >
-      <button
-        type="button"
+      <Button
+        variant="outline"
         data-slot="region-trigger"
         data-testid={props.meta.testid}
         data-empty={valueKey ? undefined : true}
         aria-label={String(props.props.label ?? name) || placeholder}
         disabled={!presentation.interactive}
-        className="flex w-full items-center justify-between rounded-md border bg-transparent px-3 py-2 text-left text-sm disabled:cursor-not-allowed disabled:opacity-60"
+        className="h-auto w-full justify-between rounded-md px-3 py-2 text-left font-normal disabled:cursor-not-allowed disabled:opacity-60"
         onClick={() => presentation.interactive && setPanelOpen(!panelOpen)}
       >
         <span className="truncate" data-slot="region-value" data-value={valueKey || undefined}>
@@ -128,7 +128,7 @@ export function InputCityRenderer(props: RendererComponentProps<InputCitySchema>
             ✕
           </span>
         ) : null}
-      </button>
+      </Button>
       {isMobile ? (
         <RegionWheel
           open={panelOpen}

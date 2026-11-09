@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { MonitorX } from 'lucide-react';
-import { cn, Spinner } from '@nop-chaos/ui';
+import { Button, cn, Spinner } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
 import {
   createNormalizedActionEvent,
@@ -208,10 +208,10 @@ export function ThreeCanvasRenderer(props: RendererComponentProps<ThreeCanvasSch
             <span>{t('flux.three.error')}</span>
           )}
           {errorCode === 'webgl-unavailable' ? null : (
-            <button
-              type="button"
+            <Button
+              variant="outline"
+              size="xs"
               data-slot="three-canvas-retry"
-              className="rounded-md border px-3 py-1 text-xs hover:bg-muted"
               onClick={() => {
                 setSceneState('loading');
                 setProgress(null);
@@ -220,7 +220,7 @@ export function ThreeCanvasRenderer(props: RendererComponentProps<ThreeCanvasSch
               }}
             >
               {t('flux.three.retry')}
-            </button>
+            </Button>
           )}
         </div>
       ) : null}

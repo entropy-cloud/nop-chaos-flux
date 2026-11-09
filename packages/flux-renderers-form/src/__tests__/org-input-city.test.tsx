@@ -82,6 +82,42 @@ function nodesIn(panel: HTMLElement, id: string): HTMLElement {
   return el as HTMLElement;
 }
 
+describe('input-city region-load-more (plan 859 Phase 1)', () => {
+  it('shows the load-more affordance when a page signals hasMore and loads the next page', async () => {
+    const fetcher = vi.fn(async (api: { url: string }) => {
+      const url = new URL(String(api.url), 'http://mock.local');
+      if (!url.pathname.endsWith('/children')) return { status: 404, data: null };
+      const nodeId = url.searchParams.get('orgNodeId') ?? '';
+      const page = Number(url.searchParams.get('orgPage') ?? '1');
+      if (nodeId === '' && page === 1) {
+        return { status: 0, data: { nodes: [{ id: '110000', name: 'Beijing', type: 'province' }], hasMore: true } };
+      }
+      if (nodeId === '' && page >= 2) {
+        return { status: 0, data: { nodes: [{ id: `31${page}`, name: `Shanghai p${page}`, type: 'province' }], hasMore: false } };
+      }
+      return { status: 0, data: { nodes: REGION_TREE[nodeId] ?? [] } };
+    }) as unknown as RendererEnv['fetcher'];
+
+    renderRegionForm(
+      [
+        { type: 'input-city', name: 'regionPaged', label: 'Region', sourceChildren: CHILDREN_SOURCE, pageSize: 1 },
+        { type: 'form-state-probe', name: 'regionPaged' },
+      ],
+      fetcher,
+    );
+    openPanel();
+    const panel = document.querySelector('[data-slot="region-panel"]') as HTMLElement;
+    await waitFor(() => expect(nodesIn(panel, '110000')).toBeTruthy(), { timeout: 3000 });
+
+    const loadMore = panel.querySelector('[data-slot="region-load-more"]') as HTMLElement;
+    expect(loadMore).toBeTruthy();
+    fireEvent.click(loadMore);
+    await waitFor(() => expect(panel.textContent).toContain('Shanghai p2'), { timeout: 3000 });
+    // termination rule (§5): hasMore=false removes the affordance
+    await waitFor(() => expect(panel.querySelector('[data-slot="region-load-more"]')).toBeNull(), { timeout: 3000 });
+  });
+});
+
 describe('input-city definition contract face (plan 506 closure r2)', () => {
   it('narrowed accepted keys exclude the four OrgSelect-only fields', () => {
     const accepted = (inputCityRendererDefinition.fields ?? []).map((rule) => rule.key as string);
