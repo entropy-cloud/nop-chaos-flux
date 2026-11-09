@@ -119,4 +119,28 @@ describe('navigate action', () => {
     expect(result.ok).toBe(true);
     expect(navigate).toHaveBeenCalledWith('/dynamic-page', undefined);
   });
+
+  // plan 861 S2: a data-bound url must pass the same navigation guard as
+  // link/button hrefs; a script scheme (including parser-normalized variants)
+  // must never reach env.navigate.
+  it.each([['javascript:alert(1)'], [' javascript:alert(1)'], ['java\nscript:alert(1)']])(
+    'refuses a data-bound unsafe url %j without calling env.navigate',
+    async (unsafe) => {
+      const navigate = vi.fn();
+      const runtime = createRendererRuntime({
+        registry: createRendererRegistry([textRenderer]),
+        env: createEnvWithNavigate(navigate),
+        expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
+      });
+      const page = runtime.createPageRuntime({ link: unsafe });
+
+      const result = await runtime.dispatch(
+        { action: 'navigate', args: { url: '${link}' } },
+        { runtime, scope: page.scope, page },
+      );
+
+      expect(result.ok).toBe(false);
+      expect(navigate).not.toHaveBeenCalled();
+    },
+  );
 });

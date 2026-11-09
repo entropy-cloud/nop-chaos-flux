@@ -1,4 +1,5 @@
 import { isJsonObject } from './identity.js';
+import { DANGEROUS_PATH_SEGMENTS } from '../utils/path.js';
 import { classifyListWithContext, identityCompositeKey, readIdentityWithContext } from './identity.js';
 import { planListMerge } from './list-order.js';
 import type { JsonMergeOptions, MergeContext, MergeDiagnostic, MergeResult } from './types.js';
@@ -19,10 +20,17 @@ function isMarkerKey(key: string, ctx: MergeContext): boolean {
   return key === ctx.overrideKey || key === ctx.virtualKey || key === ctx.uniqueAttrKey;
 }
 
+// security R6 (plan 861): base and delta are external JSON — JSON.parse yields
+// `__proto__` as an own key, and `out[key] = …` would then swap the result's
+// prototype. Dangerous keys are never copied.
+function isSkippedKey(key: string, ctx: MergeContext): boolean {
+  return isMarkerKey(key, ctx) || DANGEROUS_PATH_SEGMENTS.has(key);
+}
+
 function stripMarkers(value: Record<string, unknown>, ctx: MergeContext): Record<string, unknown> {
   const out: Record<string, unknown> = {};
   for (const key of Object.keys(value)) {
-    if (isMarkerKey(key, ctx)) continue;
+    if (isSkippedKey(key, ctx)) continue;
     out[key] = value[key];
   }
   return out;
@@ -94,7 +102,7 @@ function mergeObject(
 ): Record<string, unknown> {
   const out: Record<string, unknown> = {};
   for (const key of Object.keys(base)) {
-    if (isMarkerKey(key, ctx)) continue;
+    if (isSkippedKey(key, ctx)) continue;
     out[key] = base[key];
   }
 
@@ -103,6 +111,7 @@ function mergeObject(
 
     const forced = ctx.forcePrefix !== undefined && rawKey.startsWith(ctx.forcePrefix);
     const key = forced ? rawKey.slice(ctx.forcePrefix.length) : rawKey;
+    if (DANGEROUS_PATH_SEGMENTS.has(key)) continue;
     if (forced) {
       out[key] = stripIfRecord(delta[rawKey], ctx);
       continue;

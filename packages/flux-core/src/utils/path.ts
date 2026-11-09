@@ -1,6 +1,7 @@
 import { isPlainObject } from './object.js';
 
-const DANGEROUS_PATH_SEGMENTS = new Set(['__proto__', 'constructor', 'prototype']);
+/** Keys that must never be copied from external data into an object (security R6). */
+export const DANGEROUS_PATH_SEGMENTS: ReadonlySet<string> = new Set(['__proto__', 'constructor', 'prototype']);
 
 const MAX_PARSE_PATH_CACHE_SIZE = 1000;
 const parsePathCache = new Map<string, readonly string[]>();

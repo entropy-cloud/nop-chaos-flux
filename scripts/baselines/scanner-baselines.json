@@ -1,8 +1,9 @@
 {
   "_header": {
     "description": "Numeric baselines for the high-risk advisory scanners listed in BASELINED_SCANNERS (check-scanner-baselines.mjs). A count above the baseline fails check:scanner-baselines (new suspects must be fixed or the baseline consciously re-registered).",
-    "lastUpdated": "2026-11-06",
+    "lastUpdated": "2026-11-10",
     "reRegistrationNotes": [
+      "2026-11-10 plan 861 (navigation URL & external key safety): find-async-without-failure-path 346 -> 347 / discover-audit-suspects 793 -> 794 (+1 each, same source — the two bare catches in the plan-861 fix surface are the intentional failure paths themselves). (1) packages/flux-core/src/utils/url.ts:54 isSafeNavigationUrl catch { return false }: fail-closed semantics ARE the contract (R3 — any input new URL cannot resolve is judged unsafe, plan Phase 2 item + url.test.ts unparseable-input assertion); (2) packages/nop-debugger/src/panel-search.ts:18 parseRegexLiteral catch { return null }: refused/invalid regex literals fall back to literal text matching per R7 gate semantics (plan 861 adjudication ④; null return IS the structured refusal signal). Same intentional-shape family as the plan-769/772/528 registrations. Surgical hand-edit per 09ed6e5b6 precedent; no --update-baselines.",
       "2026-11-06 plan 860 (form publication ownership): find-async-without-failure-path 351 -> 346 / discover-audit-suspects 798 -> 793. Scanner false-positive fix in scripts/audit/rules.mjs: the catch-without-structured-failure-path heuristic now recognizes reportRuntimeHostIssue (the repo's canonical structured host-reporting channel; regression test scripts/__tests__/async-failure-rules.test.ts). Effect: plan 860's new catch in packages/flux-renderers-form/src/renderers/form.tsx (deliverToSubmitTarget) is not flagged, and 5 pre-existing false positives clear — flux-runtime action-adapter.ts:108, async-data/api-data-source-controller-runtime.ts:70, api-data-source-controller-state.ts:142, api-data-source-controller.ts:36, report-designer-renderers report-designer-toolbar.tsx:58 (each catch body verified to call reportRuntimeHostIssue). Net -5 per scanner. Surgical hand-edit per 09ed6e5b6 precedent; no --update-baselines.",
       "2026-11-05 plan 858 (core test debt): find-test-global-leaks 114 -> 115 / discover-audit-suspects 797 -> 798 (+1 aggregate). The +1 is the module-level `let container` in the NEW colocated file packages/flux-renderers-industrial/src/editor/renderer/editor-engine-editor-targets.test.ts — plan 858 split four editor-target/mode suites out of editor-engine.test.ts (which already carries the same shape inside the 114 base) to stay under the 700-line oversized gate; the split necessarily duplicates the fixture holder. Same test-infra family as the plan-727/R2.5 registrations. Zero product-code suspects. Surgical hand-edit per 09ed6e5b6 precedent.",
       "2026-11-05 plan 856 (deep-audit-1105 gate baseline honesty): shrink to fresh live counts — find-react19-optimization-candidates 694 -> 668 / find-async-without-failure-path 373 -> 351 / discover-audit-suspects 825 -> 797 / find-test-global-leaks 120 -> 114 / find-styling-suspects 255 -> 254. Dominant cause: the 2026-10-30 mall-mobile retirement (dc4d8bf97) removed the apps/mall-mobile/** surface that the 2026-10-28 registrations (+26 react19 / +20 async / +25 discover / +5 test-leaks) explicitly scoped, and no later baseline-touching session shrank it; Gap composition (arithmetic against the 10-28..10-30 note chain): mall-mobile 77 units (react19 27 = restore 26 + R3b seckill 1 / async 20 / discover 25 / test-leaks 5) + 7 units resolved since their registered snapshots (async 2 / discover 3 / test-leaks 1 / styling 1) − 1 new react19 candidate landed outside mall-mobile after the 10-30 registration. Live recount at the 2026-11-05 deep-audit gate run (pnpm check exit 0, all 5 within baseline). Surgical hand-edit per 09ed6e5b6 precedent; no --update-baselines (other 9 scanners unchanged).",
@@ -39,11 +40,11 @@
   },
   "scanners": {
     "find-styling-suspects": 254,
-    "discover-audit-suspects": 793,
+    "discover-audit-suspects": 794,
     "find-test-global-leaks": 115,
     "find-todo-exitless": 0,
     "find-as-any-casts": 31,
-    "find-async-without-failure-path": 346,
+    "find-async-without-failure-path": 347,
     "find-react19-optimization-candidates": 668,
     "find-canvas-wrapper-a11y-gaps": 0,
     "find-hardcoded-type-dispatch": 0,

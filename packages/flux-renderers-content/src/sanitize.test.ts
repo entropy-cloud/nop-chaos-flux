@@ -161,6 +161,17 @@ describe('rehypeStripUnsafeHtml', () => {
     expect(goodLink.properties).toEqual({ href: 'https://example.com', title: 't' });
   });
 
+  // plan 861: parser-normalized javascript: variants must be stripped too
+  // (the tree pass shares isSafeNavigationUrl with link/button).
+  it.each([[' javascript:alert(1)'], ['java\nscript:alert(1)'], ['\u0001javascript:alert(1)']])(
+    'strips parser-normalized javascript: href %j from the parsed tree',
+    (href) => {
+      const tree = { type: 'root', children: [element('a', { href }, [{ type: 'text', value: 'x' }])] };
+      rehypeStripUnsafeHtml()(tree as never);
+      expect((tree.children[0] as ReturnType<typeof element>).properties).toEqual({});
+    },
+  );
+
   it('strips unsanitized raw HTML that reaches react-markdown through rehype-raw', () => {
     const { container } = render(
       createElement(

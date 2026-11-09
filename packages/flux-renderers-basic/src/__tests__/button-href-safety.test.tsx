@@ -35,6 +35,16 @@ describe('button href URL protocol safety (CR P2-3 shared, flux-core isSafeNavig
     expect(anchor!.getAttribute('href')).toBeNull();
   });
 
+  // plan 861: the browser URL parser strips leading C0/space and removes
+  // tab/LF/CR anywhere — these variants resolve to javascript: on click.
+  it.each([[' javascript:alert(1)'], ['\tjavascript:alert(1)'], ['java\nscript:alert(1)'], ['\u0001javascript:alert(1)']])(
+    'strips parser-normalized javascript: href %j',
+    (href) => {
+      const anchor = renderButtonWithHref(href);
+      expect(anchor!.getAttribute('href')).toBeNull();
+    },
+  );
+
   it('strips vbscript: href', () => {
     const anchor = renderButtonWithHref('vbscript:msgbox(1)');
     expect(anchor!.getAttribute('href')).toBeNull();

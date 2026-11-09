@@ -13,6 +13,7 @@ import type {
   ScopeRef,
 } from '@nop-chaos/flux-core';
 import {
+  isSafeNavigationUrl,
   isSchema,
   isSchemaArray,
   matchesFluxValueShape,
@@ -489,6 +490,14 @@ export function createActionRuntimeAdapter(input: ActionAdapterInput): ActionRun
           if (args.back) {
             env.navigate(-1);
           } else if (typeof args.url === 'string') {
+            // plan 861: same scheme gate as link/button hrefs — a data-bound
+            // url must never hand a script scheme to the host navigator.
+            if (!isSafeNavigationUrl(args.url)) {
+              return {
+                ok: false,
+                error: new Error('navigate action refused an unsafe url scheme'),
+              };
+            }
             env.navigate(args.url, args.replace ? { replace: true } : undefined);
           } else {
             return {

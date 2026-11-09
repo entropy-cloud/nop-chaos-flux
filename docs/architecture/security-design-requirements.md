@@ -76,11 +76,11 @@ This is a normative design requirements document.
 ## R6. Dangerous-key guard for external data
 
 - Any code that copies or merges keys from externally supplied data (server/model JSON, streamed deltas, schema-authored paths) into objects must skip `__proto__`, `constructor`, and `prototype`. `JSON.parse` produces `__proto__` as an own key, so a plain `Object.keys` loop writing `target[key]` reaches `Object.prototype`.
-- Shared path utilities (`flux-core` `getIn`/`setIn`, `flux-runtime` scope sanitization) already enforce this; local helpers must apply the same guard rather than reimplementing an unguarded walk. Live sites: the AI streaming delta merge (`flux-renderers-ai/src/engine/utils.ts`) and the condition-builder right-value paths (`flux-renderers-form-advanced/src/condition-builder/utils.ts`).
+- Shared path utilities (`flux-core` `getIn`/`setIn`, `flux-runtime` scope sanitization) already enforce this; local helpers must apply the same guard rather than reimplementing an unguarded walk. Live sites: the AI streaming delta merge (`flux-renderers-ai/src/engine/utils.ts`), the condition-builder right-value paths (`flux-renderers-form-advanced/src/condition-builder/utils.ts`), and the JSON merge (`flux-core/src/json-merge/merge-json.ts` — base and delta keys, including forced-prefix keys after stripping; reuses `DANGEROUS_PATH_SEGMENTS` from `utils/path.ts`).
 
 ## R7. Schema- and user-supplied regular expressions
 
-- Every sink that compiles a schema- or user-supplied pattern (validation `pattern`, barcode `pattern`, spreadsheet regex search) must consult `isBacktrackingSafePattern` from `@nop-chaos/flux-core` before `new RegExp(...)`, including fallback paths that bypass compile-time precompilation.
+- Every sink that compiles a schema- or user-supplied pattern (validation `pattern`, barcode `pattern`, spreadsheet regex search, nop-debugger panel `/regex/` filter) must consult `isBacktrackingSafePattern` from `@nop-chaos/flux-core` before `new RegExp(...)`, including fallback paths that bypass compile-time precompilation.
 - The gate rejects super-linear backtracking: quantified ambiguous groups (alternation or variable-width quantifiers inside a group under an unbounded or wide quantifier, at any depth) and polynomial forms (directly adjacent unbounded atoms, three or more unbounded `.` wildcards). Linear patterns such as quantified character classes separated by literals stay accepted — a blanket ban on quantified classes was rejected because it turns ordinary patterns (for example the email example in `flux-guide/06-form-validation.md`) into permanent configuration errors.
 - A rejected pattern surfaces through the sink's existing configuration-error channel (validation configuration error, `flux.barcode.invalidPattern`, empty search result); it is never executed.
 
@@ -93,6 +93,13 @@ This is a normative design requirements document.
 
 - The hidden print frame (`flux-print-core` `mountPrintFrame`) is sandboxed `allow-same-origin allow-modals`: same-origin lets the host read the document and call `contentWindow.print()`, `allow-modals` keeps `print()` from being silently ignored, and scripts never run. The preview frame (`flux-print-renderers` `PrintPreview`) is sandboxed `allow-same-origin` only.
 - PDF export renders pages into the top document for `html2canvas`; its safety rests on `render-html.ts` escaping every data-bound sink, and new sinks must keep that invariant.
+
+## R10. Navigation URL scheme allowlist
+
+- Every sink that navigates to or renders a link from schema/data-bound URLs — the content `link` renderer, the basic `button` `href`, the R8 tree pass (`rehypeStripUnsafeHtml`), and the `navigate` action (`flux-runtime/src/action-adapter.ts`, before `env.navigate`) — must pass the URL through `isSafeNavigationUrl` from `@nop-chaos/flux-core`.
+- The scheme is decided by the WHATWG URL parser (`new URL(input, fixedBase).protocol`), exactly as the browser resolves it. A regex over the raw string is rejected as a design: the parser strips leading/trailing C0 controls and spaces and removes tab/LF/CR anywhere, so `" javascript:…"` or `"java\nscript:…"` would pass a raw-string check and still execute.
+- Allowlist: `http:`, `https:`, `mailto:`, `tel:`, `data:` (download-link mechanism; opaque origin). `blob:` only for anchors carrying `download`. Scheme-less relative input (`/x`, `#a`, `?q`, `./y`, `plain`) and protocol-relative `//host/x` resolve against a fixed https base and are safe. Input the parser cannot resolve is rejected (R3 fail-closed).
+- A rejected URL is never handed to the sink: link/button render without `href`, the tree pass drops the property, and `navigate` returns `ok: false` with an error instead of calling `env.navigate`.
 
 ## Prohibited Patterns
 

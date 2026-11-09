@@ -212,3 +212,29 @@ describe('mergeJson — root handling', () => {
     expect(mergeJson({ a: 1 }, undefined).value).toEqual({ a: 1 });
   });
 });
+// plan 861 S3 (security R6): keys copied from external deltas must skip
+// __proto__ / constructor / prototype. JSON.parse yields __proto__ as an own key.
+describe('mergeJson dangerous keys', () => {
+  it('does not let a delta __proto__ key replace the merged object prototype', () => {
+    const delta = JSON.parse('{"__proto__": {"polluted": 1}, "ok": 2}') as Record<string, unknown>;
+    const merged = mergeJson({ a: 1 }, delta).value as Record<string, unknown>;
+    expect(Object.getPrototypeOf(merged)).toBe(Object.prototype);
+    expect((merged as { polluted?: unknown }).polluted).toBeUndefined();
+    expect(merged).toEqual({ a: 1, ok: 2 });
+  });
+
+  it('skips constructor and prototype keys from the delta', () => {
+    const delta = JSON.parse('{"constructor": {"x": 1}, "prototype": {"y": 2}, "b": 3}') as Record<string, unknown>;
+    const merged = mergeJson({}, delta).value as Record<string, unknown>;
+    expect(Object.prototype.hasOwnProperty.call(merged, 'constructor')).toBe(false);
+    expect(Object.prototype.hasOwnProperty.call(merged, 'prototype')).toBe(false);
+    expect(merged.b).toBe(3);
+  });
+
+  it('skips dangerous keys when the delta subtree is copied without a base (marker strip path)', () => {
+    const delta = JSON.parse('{"child": {"__proto__": {"polluted": 1}, "v": 1}}') as Record<string, unknown>;
+    const merged = mergeJson({}, delta).value as { child: Record<string, unknown> };
+    expect(Object.getPrototypeOf(merged.child)).toBe(Object.prototype);
+    expect(merged.child).toEqual({ v: 1 });
+  });
+});

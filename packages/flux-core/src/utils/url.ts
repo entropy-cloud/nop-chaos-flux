@@ -32,23 +32,33 @@ export interface SafeNavigationUrlOptions {
 
 /**
  * Whether a string is a safe navigation URL (href contract, link/button
- * renderers).
+ * renderers, navigate action).
  *
- * - Scheme-less strings (relative paths `#anchor` `/x` `./y` `plain`) are safe.
- * - Only allowlisted schemes are safe; any other explicit scheme is rejected.
+ * - The scheme is decided by the WHATWG URL parser, exactly as the browser
+ *   will resolve it: the parser strips leading/trailing C0 controls and spaces
+ *   and removes tab/LF/CR anywhere, so a regex on the raw string is bypassable
+ *   (`" javascript:…"`, `"java\nscript:…"`; plan 861).
+ * - Scheme-less strings (relative paths `#anchor` `/x` `./y` `plain`, and
+ *   protocol-relative `//host/x`) resolve against a fixed https base and are safe.
+ * - Only allowlisted schemes are safe; any other scheme is rejected.
  * - `blob:` is safe only when `options.download` is set.
+ * - Input the parser cannot resolve is rejected (fail-closed).
  */
 export function isSafeNavigationUrl(
   url: string,
   options?: SafeNavigationUrlOptions,
 ): boolean {
-  const match = /^([a-z][a-z0-9+.-]*):/i.exec(url);
-  if (!match) {
-    return true;
+  let scheme: string;
+  try {
+    scheme = new URL(url, RELATIVE_URL_BASE).protocol;
+  } catch {
+    return false;
   }
-  const scheme = match[1].toLowerCase() + ':';
   if (scheme === 'blob:' && options?.download === true) {
     return true;
   }
   return SAFE_NAVIGATION_SCHEMES.has(scheme);
 }
+
+// Never fetched: only gives scheme-less input a scheme to resolve against.
+const RELATIVE_URL_BASE = 'https://relative.invalid/';
