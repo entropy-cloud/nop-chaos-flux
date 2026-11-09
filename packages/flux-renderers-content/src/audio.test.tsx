@@ -131,6 +131,23 @@ describe('AudioRenderer', () => {
     expect(container.querySelector('[data-slot="audio"][data-state="error"]')).toBeNull();
   });
 
+  it('retries a previously failed src after switching away and back (A→B→A)', () => {
+    // plan 859 closure audit: the failure must not stick to a src across a
+    // src change — returning to A starts from a clean, retryable state.
+    const props = (src: string) =>
+      createMockRendererProps<AudioSchema>({ schema: { type: 'audio' }, props: { src } });
+    const { container, rerender } = render(<AudioRenderer {...props('/a.mp3')} />);
+    fireEvent.error(audioOf(container));
+    expect(container.querySelector('[data-slot="audio"][data-state="error"]')).toBeTruthy();
+
+    rerender(<AudioRenderer {...props('/b.mp3')} />);
+    expect(audioOf(container).getAttribute('src')).toBe('/b.mp3');
+
+    rerender(<AudioRenderer {...props('/a.mp3')} />);
+    expect(container.querySelector('[data-slot="audio"][data-state="error"]')).toBeNull();
+    expect(audioOf(container).getAttribute('src')).toBe('/a.mp3');
+  });
+
   it('renders the poster image alongside the media element', () => {
     const props = createMockRendererProps<AudioSchema>({
       schema: { type: 'audio' },
