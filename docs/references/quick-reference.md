@@ -1,6 +1,6 @@
 # Quick Reference
 
-> Last Reviewed: 2026-11-05 (deep-audit round §F-C sync — full claim set re-verified against live source: `flux-core/src/types/{renderer-core,runtime,scope,schema}.ts`, `flux-react/src/hooks.ts`; see `docs/analysis/2026-11-05-full-repo-deep-audit.md`)
+> Last Reviewed: 2026-11-05 (deep-audit round §F-C sync — full claim set re-verified against live source: `packages/flux-core/src/types/{renderer-core,runtime,scope,schema}.ts`, `packages/flux-react/src/hooks.ts`; see `docs/analysis/2026-11-05-full-repo-deep-audit.md`)
 
 Single-file compressed reference for the types, hooks, and APIs most frequently needed
 when writing renderer components. Reading this file replaces reading 10+ source files
@@ -1027,7 +1027,7 @@ import { registerFormRenderers } from '@nop-chaos/flux-renderers-form';
 | `RatingSchema`    | `flux-renderers-form/src/schemas`                  | `count`（≥1，默认 5）/`allowHalf`/`allowClear`      |
 | `InputColorSchema`| `flux-renderers-form/src/schemas`                  | `valueFormat`（'hex'\|'rgba'）/`presetColors`       |
 
-All three are `BoundFieldSchemaBase` scalar fields (name/label/readOnly/required/validate/hiddenFieldPolicy shared), registered in `renderers/form-atoms-renderer-definitions.ts`, and exposed as `component:clear/reset/focus` handles.
+All three are `BoundFieldSchemaBase` scalar fields (name/label/readOnly/required/validate/hiddenFieldPolicy shared), registered in `packages/flux-renderers-form/src/renderers/form-atoms-renderer-definitions.ts`, and exposed as `component:clear/reset/focus` handles.
 
 ### Schema Types（org select family, plan 505）
 

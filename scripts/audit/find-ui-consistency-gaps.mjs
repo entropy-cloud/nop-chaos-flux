@@ -242,6 +242,32 @@ const RULES = [
     ],
   },
   {
+    // plan 864 G9 (plan 859 D3 adjudication: the mechanical gate lands in the
+    // successor plan): raw `<button|select|textarea|label>` JSX outside
+    // packages/ui — the AGENTS.md MANDATORY "UI Component Usage" red line,
+    // where plan 859's manual inventory empirically missed 12+ instances.
+    // getCodeTextForLine strips comments while keeping string contents, so a
+    // `<button>` inside a string still counts (rare in product code; hit =>
+    // register). `<input>` is deliberately out of scope: `type="file"` sr-only
+    // triggers and `type="hidden"` value mirrors are shadcn-standard shapes
+    // with no ui counterpart — a rule over them yields only legal exemptions.
+    // Every pre-existing file is registered with a per-file instance `count`;
+    // a file growing beyond its count is a new hit (same-file remove+add with
+    // a constant instance count stays a code-review responsibility).
+    id: 'raw-control-element',
+    severity: 'medium',
+    description: 'Renderer source renders a raw button/select/textarea/label element instead of a @nop-chaos/ui component (plan 859 D3 / plan 864 G9)',
+    include: (filePath) => {
+      return (
+        /^packages\/[^/]+\/src\//.test(filePath) &&
+        /\.tsx$/.test(filePath) &&
+        !isTestFile(filePath) &&
+        !filePath.startsWith('packages/ui/src/')
+      );
+    },
+    patterns: [/<(?:button|select|textarea|label)\b/g],
+  },
+  {
     // plan 490 Phase 4: the four overlay components share the --overlay-size-*
     // ladder selected through their `size` prop; a consumer width class on
     // DialogContent/SheetContent/DrawerContent/AlertDialogContent hijacks the
@@ -325,13 +351,17 @@ function matchRuleLine(rule, codeText, lines, lineIndex, filePath) {
   return surviving.length > 0 ? [surviving[0]] : [];
 }
 
-function exemptionFor(ruleId, filePath) {
-  return EXEMPTIONS.find((entry) => {
+function exemptionEntriesFor(ruleId, filePath) {
+  return EXEMPTIONS.filter((entry) => {
     if (entry.rule && entry.rule !== ruleId) {
       return false;
     }
     return filePath.startsWith(entry.path);
   });
+}
+
+function exemptionFor(ruleId, filePath) {
+  return exemptionEntriesFor(ruleId, filePath)[0];
 }
 
 async function main() {
@@ -377,8 +407,27 @@ async function main() {
 
   const exemptHits = [];
   const newHits = [];
+  const countBudgetConsumed = new Map();
   for (const hit of hits) {
-    if (exemptionFor(hit.ruleId, hit.filePath)) {
+    const entry = exemptionFor(hit.ruleId, hit.filePath);
+    if (!entry) {
+      newHits.push(hit);
+      continue;
+    }
+    if (typeof entry.count !== 'number') {
+      // No-count entries keep the plan 483 semantics: every instance in the
+      // file is covered by the single exemption.
+      exemptHits.push(hit);
+      continue;
+    }
+    // plan 864 G9: count-scoped entry — the first `count` instances in the
+    // (rule, file) pair stay [exempt]; growth beyond the registered count is
+    // a new hit. Determine rank per (ruleId, filePath) so later hits in the
+    // same pair see the already-consumed budget.
+    const key = `${hit.ruleId}|${hit.filePath}`;
+    const consumed = countBudgetConsumed.get(key) ?? 0;
+    countBudgetConsumed.set(key, consumed + 1);
+    if (consumed < entry.count) {
       exemptHits.push(hit);
     } else {
       newHits.push(hit);

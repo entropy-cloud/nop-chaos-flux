@@ -1,6 +1,6 @@
 # 836 e2e 台账外新红收敛（deep-audit 2026-11-01 §7 E1/E2）
 
-> Plan Status: active
+> Plan Status: active（停滞：立项 2026-11-01 后仅少量推进即停滞；收口归属见 docs/logs/2026/11-10.md，plan 864 G4 勘注）
 > Last Reviewed: 2026-11-01
 > Source: `docs/audits/deep-audit-2026-11-01.md` §7；`docs/testing/e2e-baseline-ledger.md`（PH-9 台账，2026-10-26）
 > Related: plan 762（PH-9 台账）、plan 734（strict 诊断语料治理，Deferred 待人审——本计划不触碰）

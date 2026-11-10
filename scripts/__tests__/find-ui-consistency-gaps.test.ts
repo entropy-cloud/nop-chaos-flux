@@ -296,6 +296,81 @@ describe('find-ui-consistency-gaps', () => {
     });
   });
 
+  describe('raw-control-element (plan 864 G9)', () => {
+    it('flags raw button/label/textarea/select JSX in an unregistered renderer tsx', async () => {
+      await stageFixture(
+        'packages/flux-renderers-basic/src/raw-control-hit.fixture.tsx',
+        'raw-control-hit.fixture.tsx',
+      );
+      await expect(runGate()).rejects.toMatchObject({
+        stdout: expect.stringContaining('raw-control-element'),
+        stdout: expect.stringContaining('raw-control-hit.fixture.tsx'),
+      });
+      const rejection = await runGate().then(
+        () => null,
+        (error: { stdout: string }) => error,
+      );
+      expect(rejection?.stdout).toContain('<button');
+      expect(rejection?.stdout).toContain('<label');
+      expect(rejection?.stdout).toContain('<textarea');
+      expect(rejection?.stdout).toContain('<select');
+    });
+
+    it('reports instances beyond a registered count exemption as new hits (surplus red path)', async () => {
+      // control-buttons.tsx is registered with count = live instances; staging
+      // three raw buttons exceeds the count → the surplus must be new hits.
+      await stageFixture(
+        'packages/flux-xlang-debug/src/panel/control-buttons.tsx',
+        'raw-control-exempt-over.fixture.tsx',
+      );
+      const rejection = await runGate().then(
+        () => null,
+        (error: { stdout: string }) => error,
+      );
+      expect(rejection).not.toBeNull();
+      expect(rejection?.stdout).toContain('raw-control-element');
+      expect(rejection?.stdout).toContain('packages/flux-xlang-debug/src/panel/control-buttons.tsx');
+    });
+
+    it('passes instances within the registered count as [exempt] and never counts commented text', async () => {
+      // Same registered file, one real button (== count) plus line/block
+      // commented `<button>` text that getCodeTextForLine must strip.
+      await stageFixture(
+        'packages/flux-xlang-debug/src/panel/control-buttons.tsx',
+        'raw-control-exempt-within.fixture.tsx',
+      );
+      const { stdout } = await runGate();
+      expect(stdout).toContain('[exempt]');
+      expect(stdout).toContain('packages/flux-xlang-debug/src/panel/control-buttons.tsx');
+      expect(stdout).toContain('No new unregistered UI consistency gap');
+    });
+
+    it('does not let an exemption entry for one rule swallow another rule in the same file', async () => {
+      // ai-tool-call.tsx carries a no-count hardcoded-literal-color entry; the
+      // color literal stays exempt while the raw <button> is a new hit.
+      await stageFixture(
+        'packages/flux-renderers-ai/src/renderers/ai-tool-call.tsx',
+        'raw-control-count-rule-scoped.fixture.tsx',
+      );
+      const rejection = await runGate().then(
+        () => null,
+        (error: { stdout: string }) => error,
+      );
+      expect(rejection).not.toBeNull();
+      expect(rejection?.stdout).toContain('raw-control-element');
+      expect(rejection?.stdout).toContain('ai-tool-call.tsx');
+    });
+
+    it('keeps packages/ui out of scope', async () => {
+      await stageFixture(
+        'packages/ui/src/components/ui/raw-control-ui-internal.fixture.tsx',
+        'raw-control-hit.fixture.tsx',
+      );
+      const { stdout } = await runGate();
+      expect(stdout).not.toContain('raw-control-ui-internal.fixture.tsx');
+    });
+  });
+
   it('reports a clean scan when no fixture violates any rule', async () => {
     await stageFixture('packages/flux-renderers-basic/src/all-clean.fixture.ts', 'all-clean.fixture.ts');
     const { stdout } = await runGate();

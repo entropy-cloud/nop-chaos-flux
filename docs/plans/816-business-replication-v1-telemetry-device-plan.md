@@ -1,6 +1,6 @@
 # 816 M3-V1 IoT 设备遥测详情页复刻（business-page-replication roadmap M3-V1）
 
-> Plan Status: draft
+> Plan Status: completed（2026-11-10 勘注：正文 Closure Gates 11/11 已含独立 closure audit approved、checkbox 20/20、roadmap 记 plan 816（completed）——header 系漏翻，非规范演进回写，见 plan 864 G1）
 > Last Reviewed: 2026-10-31
 > Source: `docs/backlog/business-page-replication-roadmap.md` §2 M3-V1（依赖 M2 done；roadmap 现值 `todo`，本 plan 激活时置 `planned`，收口置 `done`）
 > Related: D1 总体设计；D4 §2.5（V1 页设计）/§4.3（iot 模块 V1 端点）/§5 V1（断言，含 D6 MIN-6 防 flake 口径）；R3 §1 V1；plan 809（M1 interval 轮询 + 确定性相位先例）、plan 800（W3 form valuesPath 过滤 + focus 首站先例）、plan 815（crud onRowClick dialog + refreshNearest 先例）

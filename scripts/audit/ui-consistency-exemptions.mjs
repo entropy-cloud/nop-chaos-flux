@@ -10,7 +10,11 @@
  * by the gate at startup). Red line: zero NEW unregistered instances.
  */
 
+import { RAW_CONTROL_EXEMPTIONS } from './ui-consistency-raw-control-exemptions.mjs';
+
 export const EXEMPTIONS = [
+  // --- raw-control-element entries live in `./ui-consistency-raw-control-exemptions.mjs` (plan 864 G9 file-size split) ---
+  ...RAW_CONTROL_EXEMPTIONS,
   // --- scheduling：plan 483 A1 收紧为文件级（原全规则前缀条目展开，继承 reason/source）---
   // 原前缀条目 reason: R2 族9 调度域字面色/字面 Tailwind 色类族（gantt/kanban/calendar/barcode hex、red-400、bg-white、color-mix white）+ 族5 错误状态消息双轨——全部 P2 登记候选，修复归候选池
   // 原前缀条目 source: r2-audit/r3-p2-adjudication.md #35 [G4-视角1-01] / #36 [G4-视角3-01] / #39 [G4-视角7-01]；族5 候选池

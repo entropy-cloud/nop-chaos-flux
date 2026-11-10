@@ -1,144 +1,171 @@
 {
   "_header": {
-    "description": "console.log/debug baseline for non-test src under packages/ and apps/. New hits fail check:console-baseline; shrink via --update-baselines after removing hits.",
-    "lastUpdated": "2026-10-30",
+    "description": "console.log/debug baseline for non-test src under packages/ and apps/. New hits fail check:console-baseline; shrink via --update-baselines after removing hits. Every entry carries an adjudicated reason; regeneration preserves reasons (merge by file+text) and refuses to write entries without one.",
+    "lastUpdated": "2026-11-10",
     "count": 27
   },
   "entries": [
     {
       "file": "packages/word-editor-renderers/src/editor-canvas.tsx",
       "line": 160,
-      "text": "console.debug('[word-editor] word count failed', err);"
+      "text": "console.debug('[word-editor] word count failed', err);",
+      "reason": "开发诊断降级通道：word count 统计请求失败的 catch 分支，错误不进入 UI 状态（词数静默保持旧值），console.debug 是该失败路径的诊断出口；非用户可见消息。"
     },
     {
       "file": "apps/playground/src/pages/barcode-demo.tsx",
       "line": 25,
-      "text": "notify: (level, msg) => console.log(`[${level}] ${msg}`),"
+      "text": "notify: (level, msg) => console.log(`[${level}] ${msg}`),",
+      "reason": "playground 演示页 RendererEnv demo notify 通道：演示页无后端，浏览器控制台即演示通知的观察面（无生产用户）。"
     },
     {
       "file": "apps/playground/src/pages/calendar-perf-scale-demo.tsx",
       "line": 21,
-      "text": "notify: (level, msg) => console.log(`[${level}] ${msg}`),"
+      "text": "notify: (level, msg) => console.log(`[${level}] ${msg}`),",
+      "reason": "playground 性能压测演示页 demo notify 通道：压测脚本观察面在控制台，无生产用户。"
     },
     {
       "file": "apps/playground/src/pages/data-verify-page.tsx",
       "line": 28,
-      "text": "console.log('[VERIFY] fetcher called:', req.url);"
+      "text": "console.log('[VERIFY] fetcher called:', req.url);",
+      "reason": "playground 数据核验页 mock fetcher 请求日志：核验页本身目的就是观察渲染器发起的请求序列，控制台是核验观察面。"
     },
     {
       "file": "apps/playground/src/pages/diff-demo.tsx",
       "line": 23,
-      "text": "notify: (level, msg) => console.log(`[${level}] ${msg}`),"
+      "text": "notify: (level, msg) => console.log(`[${level}] ${msg}`),",
+      "reason": "playground 演示页 RendererEnv demo notify 通道：演示页无后端，控制台即演示通知的观察面。"
     },
     {
       "file": "apps/playground/src/pages/diff-perf-scale-demo.tsx",
       "line": 21,
-      "text": "notify: (level, msg) => console.log(`[${level}] ${msg}`),"
+      "text": "notify: (level, msg) => console.log(`[${level}] ${msg}`),",
+      "reason": "playground 性能压测演示页 demo notify 通道：压测脚本观察面在控制台，无生产用户。"
     },
     {
       "file": "apps/playground/src/pages/event-prevention-demo.tsx",
       "line": 98,
-      "text": "console.log(`[event-prevention-demo notify:${level}] ${message}`);"
+      "text": "console.log(`[event-prevention-demo notify:${level}] ${message}`);",
+      "reason": "playground 演示页 demo notify 通道（事件防抖/拦截演示）：通知可见性本身是演示目标，控制台即观察面。"
     },
     {
       "file": "apps/playground/src/pages/gantt-demo.tsx",
       "line": 19,
-      "text": "console.log('[GANTT] fetcher:', req.url);"
+      "text": "console.log('[GANTT] fetcher:', req.url);",
+      "reason": "playground 演示页 mock fetcher 请求日志：演示 gantt 数据加载路径的观察面，无生产用户。"
     },
     {
       "file": "apps/playground/src/pages/gantt-demo.tsx",
       "line": 22,
-      "text": "notify: (level, msg) => console.log(`[${level}] ${msg}`),"
+      "text": "notify: (level, msg) => console.log(`[${level}] ${msg}`),",
+      "reason": "playground 演示页 RendererEnv demo notify 通道：控制台即演示通知观察面。"
     },
     {
       "file": "apps/playground/src/pages/gantt-perf-scale-demo.tsx",
       "line": 21,
-      "text": "notify: (level, msg) => console.log(`[${level}] ${msg}`),"
+      "text": "notify: (level, msg) => console.log(`[${level}] ${msg}`),",
+      "reason": "playground 性能压测演示页 demo notify 通道：压测脚本观察面在控制台，无生产用户。"
     },
     {
       "file": "apps/playground/src/pages/gantt-states-demo.tsx",
       "line": 21,
-      "text": "console.log('[GANTT-STATES] fetcher:', req.url);"
+      "text": "console.log('[GANTT-STATES] fetcher:', req.url);",
+      "reason": "playground 演示页 mock fetcher 请求日志：gantt 状态演示页数据路径观察面，无生产用户。"
     },
     {
       "file": "apps/playground/src/pages/gantt-states-demo.tsx",
       "line": 24,
-      "text": "notify: (level, msg) => console.log(`[${level}] ${msg}`),"
+      "text": "notify: (level, msg) => console.log(`[${level}] ${msg}`),",
+      "reason": "playground 演示页 RendererEnv demo notify 通道：控制台即演示通知观察面。"
     },
     {
       "file": "apps/playground/src/pages/graph-demo.tsx",
       "line": 25,
-      "text": "notify: (level, msg) => console.log(`[${level}] ${msg}`),"
+      "text": "notify: (level, msg) => console.log(`[${level}] ${msg}`),",
+      "reason": "playground 演示页 RendererEnv demo notify 通道：控制台即演示通知观察面。"
     },
     {
       "file": "apps/playground/src/pages/kanban-demo.tsx",
       "line": 19,
-      "text": "console.log('[KANBAN] fetcher:', req.url);"
+      "text": "console.log('[KANBAN] fetcher:', req.url);",
+      "reason": "playground 演示页 mock fetcher 请求日志：kanban 数据加载路径观察面，无生产用户。"
     },
     {
       "file": "apps/playground/src/pages/kanban-demo.tsx",
       "line": 22,
-      "text": "notify: (level, msg) => console.log(`[${level}] ${msg}`),"
+      "text": "notify: (level, msg) => console.log(`[${level}] ${msg}`),",
+      "reason": "playground 演示页 RendererEnv demo notify 通道：控制台即演示通知观察面。"
     },
     {
       "file": "apps/playground/src/pages/kanban-perf-scale-demo.tsx",
       "line": 19,
-      "text": "console.log('[KANBAN] fetcher:', req.url);"
+      "text": "console.log('[KANBAN] fetcher:', req.url);",
+      "reason": "playground 性能压测演示页 mock fetcher 请求日志：压测数据路径观察面，无生产用户。"
     },
     {
       "file": "apps/playground/src/pages/kanban-perf-scale-demo.tsx",
       "line": 22,
-      "text": "notify: (level, msg) => console.log(`[${level}] ${msg}`),"
+      "text": "notify: (level, msg) => console.log(`[${level}] ${msg}`),",
+      "reason": "playground 性能压测演示页 demo notify 通道：压测通知观察面在控制台。"
     },
     {
       "file": "apps/playground/src/pages/pivot-table-demo.tsx",
       "line": 25,
-      "text": "notify: (level, msg) => console.log(`[${level}] ${msg}`),"
+      "text": "notify: (level, msg) => console.log(`[${level}] ${msg}`),",
+      "reason": "playground 演示页 RendererEnv demo notify 通道：控制台即演示通知观察面。"
     },
     {
       "file": "apps/playground/src/pages/scada-demo.tsx",
       "line": 373,
-      "text": "console.log('[scada-demo] ajax', api.method ?? 'GET', api.url);"
+      "text": "console.log('[scada-demo] ajax', api.method ?? 'GET', api.url);",
+      "reason": "playground 演示页 mock fetcher 请求日志：scada 演示 ajax 路径观察面，无生产用户。"
     },
     {
       "file": "apps/playground/src/pages/scada-demo.tsx",
       "line": 380,
-      "text": "console.log('[scada-demo] notify', level, message);"
+      "text": "console.log('[scada-demo] notify', level, message);",
+      "reason": "playground 演示页 demo notify 通道：控制台即演示通知观察面。"
     },
     {
       "file": "apps/playground/src/pages/scada-editor-demo.tsx",
       "line": 245,
-      "text": "notify: (_level, message) => console.log('[scada-editor-demo]', message),"
+      "text": "notify: (_level, message) => console.log('[scada-editor-demo]', message),",
+      "reason": "playground 演示页 demo notify 通道：控制台即演示通知观察面。"
     },
     {
       "file": "apps/playground/src/pages/scada-gallery-shared.ts",
       "line": 76,
-      "text": "console.log('[scada-gallery] ajax', api.method ?? 'GET', api.url);"
+      "text": "console.log('[scada-gallery] ajax', api.method ?? 'GET', api.url);",
+      "reason": "playground 画廊共享 mock fetcher 请求日志：多个 scada 画廊页共用的 env 生成点，数据路径观察面，无生产用户。"
     },
     {
       "file": "apps/playground/src/pages/scada-gallery-shared.ts",
       "line": 79,
-      "text": "notify: (level, message) => console.log('[scada-gallery] notify', level, message),"
+      "text": "notify: (level, message) => console.log('[scada-gallery] notify', level, message),",
+      "reason": "playground 画廊共享 demo notify 通道：多个 scada 画廊页共用，控制台即观察面。"
     },
     {
       "file": "apps/playground/src/pages/three-canvas-demo.tsx",
       "line": 71,
-      "text": "console.log('[three-canvas-demo] ajax', api.method ?? 'GET', api.url);"
+      "text": "console.log('[three-canvas-demo] ajax', api.method ?? 'GET', api.url);",
+      "reason": "playground 演示页 mock fetcher 请求日志：three canvas 数据路径观察面，无生产用户。"
     },
     {
       "file": "apps/playground/src/pages/three-canvas-demo.tsx",
       "line": 76,
-      "text": "console.log('[three-canvas-demo] notify', level, message);"
+      "text": "console.log('[three-canvas-demo] notify', level, message);",
+      "reason": "playground 演示页 demo notify 通道：onNotify 回调之外的并行控制台输出，保持演示可观察性。"
     },
     {
       "file": "apps/playground/src/pages/three-gallery-shared.tsx",
       "line": 23,
-      "text": "console.log('[three-gallery] ajax', api.method ?? 'GET', api.url);"
+      "text": "console.log('[three-gallery] ajax', api.method ?? 'GET', api.url);",
+      "reason": "playground 画廊共享 mock fetcher 请求日志：多个 three 画廊页共用 env 生成点，数据路径观察面。"
     },
     {
       "file": "apps/playground/src/pages/three-gallery-shared.tsx",
       "line": 26,
-      "text": "notify: (level, message) => console.log('[three-gallery] notify', level, message),"
+      "text": "notify: (level, message) => console.log('[three-gallery] notify', level, message),",
+      "reason": "playground 画廊共享 demo notify 通道：多个 three 画廊页共用，控制台即观察面。"
     }
   ]
 }

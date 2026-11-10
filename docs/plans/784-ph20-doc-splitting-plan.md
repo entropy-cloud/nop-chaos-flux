@@ -1,6 +1,6 @@
 # 784 PH-20 文档拆分·必拆集（>50KB 活跃文档，分批队列）
 
-> Plan Status: draft
+> Plan Status: draft（停滞：立项 2026-10-27 后未动工；收口归属见 docs/logs/2026/11-10.md，plan 864 G4 勘注。Deferred G2 裁决（plan 864）：文档体量门禁设计须限定在 PH-20/21 定义的活跃文档目录，并提供合法增长的重登记协议——不得采用"基线文档增长即红"的全局口径）
 > Last Reviewed: 2026-10-27
 > Source: `docs/backlog/platform-hardening-roadmap.md` PH-20（F 组；"31 个 >50KB 按规则拆分"）
 > Related: `docs/plans/00-plan-authoring-and-execution-guide.md` Rule 23（拆分按职责而非长度本身）；`check:active-doc-code-anchors`（拆分后必须保持绿）；`docs/testing/known-good-baselines.md` 等基线文档的指针完整性

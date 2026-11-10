@@ -161,7 +161,7 @@
 
 档位：`建议有测`
 
-**启发式脚本**：在 Phase 1 前，运行以下脚本搜集所有受影响的 `record.xxx` 模式并汇总到 `docs/plans/2026-07-29-row-scope-migration-candidates.md`：
+**启发式脚本**：在 Phase 1 前，运行以下脚本搜集所有受影响的 `record.xxx` 模式并汇总到 `docs/analysis/2026-07-29-row-scope-migration-candidates.md`：
 
 ```bash
 # 表达式中的 record.xxx（${} 内）
@@ -195,7 +195,7 @@ Targets: 全仓库
 - Item Types: `Decision | Proof`
 
 - [x] 已完成 impact analysis（见上表，基于 `rg` + 人工复核）。
-- [ ] 运行启发式脚本生成 `docs/plans/2026-07-29-row-scope-migration-candidates.md`，作为迁移候选清单。
+- [ ] 运行启发式脚本生成 `docs/analysis/2026-07-29-row-scope-migration-candidates.md`，作为迁移候选清单。
 - [ ] 运行 `pnpm test` 记录当前 baseline 的测试通过数量。
 
 Exit Criteria:

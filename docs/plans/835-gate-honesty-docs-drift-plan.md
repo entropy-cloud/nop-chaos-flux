@@ -1,6 +1,6 @@
 # 835 门禁工具诚实性与文档漂移收口（deep-audit 2026-11-01 G2-G6、D1-D3）
 
-> Plan Status: active
+> Plan Status: active（停滞：立项 2026-11-01 后未动工；收口归属见 docs/logs/2026/11-10.md，plan 864 G4 勘注）
 > Last Reviewed: 2026-11-01
 > Source: `docs/audits/deep-audit-2026-11-01.md` §6（G2-G6、D1-D3）
 > Related: plan 820（门禁红收敛前序）、`docs/logs/`（check 链登记口径）

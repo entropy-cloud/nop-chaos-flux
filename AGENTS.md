@@ -140,7 +140,7 @@ When creating, revising, executing, or auditing a file under `docs/plans/`, you 
 
 ### MANDATORY: UI Component Usage
 
-**NEVER use raw HTML elements when `@nop-chaos/ui` provides a component.**
+**NEVER use raw HTML elements when `@nop-chaos/ui` provides a component.** This is mechanically enforced: `pnpm check:audit-ui-consistency-gaps` rule `raw-control-element` fails on any raw `<button|select|textarea|label>` JSX in `packages/*/src` non-test tsx; pre-existing adjudicated instances are registered as per-file `count` exemptions in `scripts/audit/ui-consistency-exemptions.mjs` (reason + source required) — growing a file beyond its registered count fails the gate, so new instances require either migrating to a ui component or registering an exemption through a plan.
 
 Check `packages/ui/src/index.ts` for available components before writing JSX. If a needed component is missing, add it following shadcn/ui conventions (see `docs/architecture/styling-system.md`).
 

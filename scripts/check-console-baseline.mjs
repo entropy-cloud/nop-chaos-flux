@@ -56,19 +56,47 @@ async function main() {
   const updateIndex = args.indexOf('--update-baselines');
 
   if (updateIndex >= 0) {
+    // plan 864 G3: regeneration merges into the target baseline keyed by
+    // file+text (line numbers refresh from the live scan), preserving the
+    // existing `reason` on every surviving entry. A live hit with no
+    // registered entry has no adjudicated reason — refuse to write instead of
+    // silently producing a bare entry (reasons must be authored per entry).
     const hits = await collectHits();
     const target = baselineIndex >= 0 ? args[baselineIndex + 1] : baselineFile;
+    let existing = [];
+    try {
+      existing = JSON.parse(await readFile(target, 'utf8')).entries ?? [];
+    } catch {
+      existing = [];
+    }
+    const reasonByKey = new Map(
+      existing.map((entry) => [`${entry.file}\u0000${entry.text}`, entry.reason]),
+    );
+    const missingReason = hits.filter((hit) => !reasonByKey.has(`${hit.file}\u0000${hit.text}`));
+    if (missingReason.length > 0) {
+      console.error(
+        `[check:console-baseline] ${missingReason.length} live hit(s) have no registered baseline entry and therefore no reason; register them with a reason first (edit the baseline), then re-run --update-baselines:`,
+      );
+      for (const hit of missingReason) {
+        console.error(`  ${hit.file}:${hit.line}  ${hit.text}`);
+      }
+      process.exit(1);
+    }
+    const entries = hits.map((hit) => ({
+      ...hit,
+      reason: reasonByKey.get(`${hit.file}\u0000${hit.text}`),
+    }));
     const snapshot = {
       _header: {
         description:
-          'console.log/debug baseline for non-test src under packages/ and apps/. New hits fail check:console-baseline; shrink via --update-baselines after removing hits.',
+          'console.log/debug baseline for non-test src under packages/ and apps/. New hits fail check:console-baseline; shrink via --update-baselines after removing hits. Every entry carries an adjudicated reason; regeneration preserves reasons (merge by file+text) and refuses to write entries without one.',
         lastUpdated: new Date().toISOString().slice(0, 10),
-        count: hits.length,
+        count: entries.length,
       },
-      entries: hits,
+      entries,
     };
     await writeFile(target, `${JSON.stringify(snapshot, null, 2)}\n`, 'utf8');
-    console.log(`[check:console-baseline] baseline updated (${hits.length} entries)`);
+    console.log(`[check:console-baseline] baseline updated (${entries.length} entries, reasons preserved)`);
     return;
   }
 
