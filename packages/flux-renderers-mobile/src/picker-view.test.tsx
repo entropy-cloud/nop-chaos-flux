@@ -1,4 +1,4 @@
-import { act, cleanup, fireEvent, render, waitFor } from '@testing-library/react';
+import { act, cleanup, render, waitFor } from '@testing-library/react';
 import React from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { PickerViewSchema, WheelPickerOption } from './schemas.js';
@@ -16,14 +16,6 @@ const COLUMN: WheelPickerOption[] = Array.from({ length: 10 }, (_, i) => ({
   label: `选项 ${i}`,
   value: i,
 }));
-
-function touch(x: number, y: number, time?: number) {
-  return {
-    touches: x == null ? [] : [{ clientX: x, clientY: y } as Touch],
-    changedTouches: x == null ? [] : [{ clientX: x, clientY: y } as Touch],
-    ...(time === undefined ? {} : { timeStamp: time }),
-  } as unknown as React.TouchEvent;
-}
 
 // Native TouchEvent dispatch with pinned non-zero timestamps (React resets a
 // 0 timeStamp to performance.now(), which would invert dt) — required for
@@ -115,13 +107,16 @@ function activeRow(view: ReturnType<typeof render>, column = 0) {
   ) as HTMLElement | null;
 }
 
-/** Drag via fireEvent (velocity-insensitive: static snap path). */
+// Plan 863 T8: pinned same-timestamp dispatch → zero velocity → the static
+// snap path is deterministic; wall-clock fireEvent timestamps made the
+// landing inertia-sensitive under full-suite load.
 function dragFrom(root: HTMLElement, fromY: number, deltaY: number) {
-  fireEvent.touchStart(root, touch(100, fromY));
+  const pinned = 1_000;
+  fireTouch(root, 'touchstart', 100, fromY, pinned);
   if (deltaY !== 0) {
-    fireEvent.touchMove(root, touch(100, fromY + deltaY));
+    fireTouch(root, 'touchmove', 100, fromY + deltaY, pinned);
   }
-  fireEvent.touchEnd(root, touch(100, fromY + deltaY));
+  fireTouchEnd(root, 100, fromY + deltaY, pinned);
 }
 
 describe('PickerViewRenderer (plan 665 Phase 1)', () => {
@@ -168,14 +163,15 @@ describe('PickerViewRenderer (plan 665 Phase 1)', () => {
     const { view, onChange, rerenderWith } = renderPickerView({ value: [0] });
     const root = rootOf(view);
     void root;
-    fireEvent.touchStart(root, touch(100, 200));
-    fireEvent.touchMove(root, touch(100, 156)); // 1 row up mid-drag
+    const pinned = 1_000; // plan 863 T8: zero-velocity static snap
+    fireTouch(root, 'touchstart', 100, 200, pinned);
+    fireTouch(root, 'touchmove', 100, 156, pinned); // 1 row up mid-drag
     // external controlled write mid-drag must not yank the wheel
     rerenderWith([8]);
     await act(async () => {
       await Promise.resolve();
     });
-    fireEvent.touchEnd(root, touch(100, 156));
+    fireTouchEnd(root, 100, 156, pinned);
     await waitFor(() => expect(onChange).toHaveBeenCalledTimes(1));
     expect(activeRow(view)?.getAttribute('data-index')).toBe('1');
     // the landing wins over the mid-drag external write (value stays at the
@@ -249,9 +245,10 @@ describe('PickerViewRenderer (plan 665 Phase 1)', () => {
     ];
     const { view, onChange } = renderPickerView({ columns: [COLUMN, second] });
     const secondColumnStrip = stripOf(view, 1);
-    fireEvent.touchStart(secondColumnStrip, touch(150, 200));
-    fireEvent.touchMove(secondColumnStrip, touch(150, 156));
-    fireEvent.touchEnd(secondColumnStrip, touch(150, 156));
+    const pinned = 1_000; // plan 863 T8: zero-velocity static snap
+    fireTouch(secondColumnStrip, 'touchstart', 150, 200, pinned);
+    fireTouch(secondColumnStrip, 'touchmove', 150, 156, pinned);
+    fireTouchEnd(secondColumnStrip, 150, 156, pinned);
     await waitFor(() => expect(onChange).toHaveBeenCalledTimes(1));
     const payload = onChange.mock.calls[0][0] as { column: number; value: unknown };
     expect(payload.column).toBe(1);

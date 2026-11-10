@@ -8,6 +8,7 @@ export {
   MOCK_NODE_PATH,
   MOCK_SCOPE_ID,
   createMockRendererProps,
+  strictRendererHelpers,
   stubRendererHelpers,
   type MockRendererPropsOptions,
 } from './test-support/mock-props.js';

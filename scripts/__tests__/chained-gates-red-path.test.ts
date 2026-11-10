@@ -1,6 +1,7 @@
-import { afterAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { execFile } from 'node:child_process';
-import { readFile, rm, writeFile } from 'node:fs/promises';
+import { readFile, rm, stat, writeFile } from 'node:fs/promises';
+import { rmSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { promisify } from 'node:util';
@@ -12,6 +13,21 @@ import { promisify } from 'node:util';
 // (find-event-dispatch-without-ctx) because these gates hardcode their scan
 // targets; staging uses a unique __p767 marker and absolute cleanup.
 // fileParallelism:false (vitest.scripts.config.ts) keeps the staging safe.
+//
+// Plan 863 T4: the tracked files rewritten below are protected by a pre-flight
+// dirty check (the test aborts instead of clobbering uncommitted work, e.g.
+// from a parallel session), and restoration is additionally registered on
+// process exit / SIGINT / SIGTERM so an interrupted run does not leave the
+// workspace dirty.
+//
+// MANUAL RECOVERY after an interruption that bypassed all hooks (kill -9):
+//   git checkout -- packages/flux-renderers-basic/src/index.tsx \
+//     packages/flux-renderers-industrial/src/serialization/config-types.ts \
+//     packages/flux-core/src/commit-state.ts docs/testing/coverage-thresholds.md
+//   rm -f packages/flux-core/src/__p767_react19_red_path.mjs \
+//     packages/flux-core/src/__p767_i18n_red_path.ts \
+//     packages/flux-core/src/__p767_red_path.js
+// Then confirm `git status` is clean before committing anything.
 
 const execFileAsync = promisify(execFile);
 const here = dirname(fileURLToPath(import.meta.url));
@@ -23,8 +39,23 @@ function run(script: string) {
   });
 }
 
+// Tracked files this suite rewrites (staged[] restorations). Uncommitted
+// changes in any of these abort the suite before the first write.
+const TRACKED_TARGETS = [
+  'packages/flux-renderers-basic/src/index.tsx',
+  'packages/flux-renderers-industrial/src/serialization/config-types.ts',
+  'packages/flux-core/src/commit-state.ts',
+  'docs/testing/coverage-thresholds.md',
+];
+
+// Untracked probe files this suite creates.
+const STAGED_NEW_FILES = [
+  'packages/flux-core/src/__p767_react19_red_path.mjs',
+  'packages/flux-core/src/__p767_i18n_red_path.ts',
+  'packages/flux-core/src/__p767_red_path.js',
+];
+
 const staged: Array<{ path: string; original: string | null }> = [];
-const stagedGit: string[] = [];
 
 async function stageFile(path: string, content: string) {
   const abs = join(rootDir, path);
@@ -45,11 +76,72 @@ async function stageAppend(path: string, append: string) {
   staged.push({ path: abs, original });
 }
 
-afterAll(async () => {
-  for (const doc of stagedGit) {
-    await rm(join(rootDir, doc), { force: true });
-    await execFileAsync('git', ['reset', '-q', 'HEAD', '--', doc], { cwd: rootDir }).catch(() => {});
+function restoreAllSync() {
+  for (const { path, original } of staged.reverse()) {
+    try {
+      if (original === null) {
+        rmSync(path, { force: true });
+      } else {
+        writeFileSync(path, original);
+      }
+    } catch {
+      // best-effort: the manual recovery commands in the header cover the rest
+    }
   }
+}
+
+let hooksRegistered = false;
+
+function registerInterruptionHooks() {
+  if (hooksRegistered) return;
+  hooksRegistered = true;
+  process.once('exit', () => {
+    restoreAllSync();
+  });
+  for (const signal of ['SIGINT', 'SIGTERM'] as const) {
+    process.once(signal, () => {
+      restoreAllSync();
+      process.exit(1);
+    });
+  }
+}
+
+async function ensureCleanTargets() {
+  for (const path of TRACKED_TARGETS) {
+    const { stdout } = await execFileAsync('git', ['status', '--porcelain', '--', path], {
+      cwd: rootDir,
+    });
+    if (stdout.trim()) {
+      throw new Error(
+        `Refusing to run: ${path} has uncommitted changes and this suite rewrites it. ` +
+          'Commit or stash first (protects parallel sessions and your work).',
+      );
+    }
+  }
+  for (const path of STAGED_NEW_FILES) {
+    const abs = join(rootDir, path);
+    const exists = await stat(abs).then(
+      () => true,
+      (error: NodeJS.ErrnoException) => {
+        if (error.code === 'ENOENT') return false;
+        throw error;
+      },
+    );
+    if (exists) {
+      throw new Error(
+        `Refusing to run: leftover probe file ${path} from a previous interrupted run. ` +
+          'Remove it (see the manual recovery commands in the file header) before rerunning.',
+      );
+    }
+  }
+}
+
+beforeAll(async () => {
+  await ensureCleanTargets();
+  registerInterruptionHooks();
+});
+
+afterAll(async () => {
   for (const { path, original } of staged.reverse()) {
     if (original === null) {
       await rm(path, { force: true });

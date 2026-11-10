@@ -1,4 +1,5 @@
 import {
+  act,
   cleanup,
   fireEvent,
   render,
@@ -21,6 +22,28 @@ function touch(x: number, y: number, time?: number) {
     touches: [{ clientX: x, clientY: y } as Touch],
     ...(time === undefined ? {} : { timeStamp: time }),
   } as unknown as React.TouchEvent;
+}
+
+// Plan 863 T8: fireEvent cannot inject `timeStamp` (set by the UA at event
+// construction), so the below-threshold test dispatches native TouchEvents
+// with a PINNED timestamp — zero tracker velocity → the flick/open path is
+// deterministic and the swipe stays closed under full-suite load.
+function firePinnedTouch(
+  target: HTMLElement,
+  type: 'touchstart' | 'touchmove' | 'touchend',
+  x: number,
+  y: number,
+) {
+  const event = new TouchEvent(type, {
+    bubbles: true,
+    cancelable: true,
+    touches: type === 'touchend' ? [] : [{ clientX: x, clientY: y } as unknown as Touch],
+    changedTouches: type === 'touchend' ? [{ clientX: x, clientY: y } as unknown as Touch] : [],
+  } as TouchEventInit);
+  Object.defineProperty(event, 'timeStamp', { value: 1_000, configurable: true });
+  act(() => {
+    target.dispatchEvent(event);
+  });
 }
 
 
@@ -123,9 +146,9 @@ describe('SwipeCellRenderer', () => {
   it('does not open when swipe distance is below threshold', () => {
     const { view } = renderSwipeCell({ threshold: 50 });
     const root = view.container.querySelector('[data-slot="swipe-cell"]') as HTMLElement;
-    fireEvent.touchStart(root, touch(50, 50));
-    fireEvent.touchMove(root, touch(70, 50));
-    fireEvent.touchEnd(root);
+    firePinnedTouch(root, 'touchstart', 50, 50);
+    firePinnedTouch(root, 'touchmove', 70, 50);
+    firePinnedTouch(root, 'touchend', 70, 50);
     expect(view.container.querySelector('[data-state]')?.getAttribute('data-state')).toBe(
       'closed',
     );

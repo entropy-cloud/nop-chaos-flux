@@ -10,6 +10,30 @@ import { WheelDatePickerRenderer } from './wheel-date-picker.js';
 import { WheelCascaderRenderer } from './wheel-cascader.js';
 import { createMockRendererProps } from './test-support.js';
 import { TestRuntimeProvider, createTestRuntime } from '@nop-chaos/flux-react/test-support';
+import { DEFAULT_ROW_HEIGHT, offsetForIndex } from './wheel-column-logic.js';
+
+// Plan 863 T8: gesture events are dispatched with a PINNED synthetic
+// timeStamp (zero velocity → the static snap path is deterministic) and the
+// post-drag wait is the strip transform reaching the target offset — not the
+// mid-gesture `data-active` marker, which updates before settle commits the
+// draft. Under full-suite load the unpinned wall-clock timestamps produced
+// spurious inertia landings (plan 859 T8).
+function dispatchPinnedTouch(
+  strip: HTMLElement,
+  type: 'touchstart' | 'touchmove' | 'touchend',
+  clientY: number,
+) {
+  const event = new TouchEvent(type, {
+    bubbles: true,
+    cancelable: true,
+    touches: type === 'touchend' ? [] : [{ clientX: 100, clientY } as unknown as Touch],
+    changedTouches: [{ clientX: 100, clientY } as unknown as Touch],
+  } as TouchEventInit);
+  Object.defineProperty(event, 'timeStamp', { value: 1_000, configurable: true });
+  act(() => {
+    strip.dispatchEvent(event);
+  });
+}
 
 afterEach(() => {
   cleanup();
@@ -45,21 +69,25 @@ const REGIONS: WheelCascaderOption[] = [
   },
 ];
 
-function dragStrip(container: HTMLElement, column: number, deltaY: number) {
+async function dragStrip(container: HTMLElement, column: number, deltaY: number) {
   const strip = container.querySelector(
     `[data-column="${column}"] [data-slot="picker-view-strip"]`,
   ) as HTMLElement;
-  const center = { x: 100, y: 200 };
-  fireEvent.touchStart(strip, {
-    touches: [{ clientX: center.x, clientY: center.y }],
-  } as never);
-  fireEvent.touchMove(strip, {
-    touches: [{ clientX: center.x, clientY: center.y + deltaY }],
-  } as never);
-  fireEvent.touchEnd(strip, {
-    touches: [],
-    changedTouches: [{ clientX: center.x, clientY: center.y + deltaY }],
-  } as never);
+  const centerY = 200;
+  const columnEl = strip.closest('[data-column]') as HTMLElement;
+  const startIndex = Number(
+    columnEl.querySelector('[data-active="true"]')?.getAttribute('data-index') ?? '0',
+  );
+  dispatchPinnedTouch(strip, 'touchstart', centerY);
+  dispatchPinnedTouch(strip, 'touchmove', centerY + deltaY);
+  dispatchPinnedTouch(strip, 'touchend', centerY + deltaY);
+  // Deterministic settle condition: the strip transform lands on the target
+  // offset (with a pinned timeStamp the settle path is synchronous, but the
+  // wait keeps the assertion independent of timing).
+  const targetIndex = startIndex + Math.round(-deltaY / DEFAULT_ROW_HEIGHT);
+  await waitFor(() =>
+    expect(strip.style.transform).toBe(`translateY(${offsetForIndex(targetIndex, DEFAULT_ROW_HEIGHT)}px)`),
+  );
 }
 
 describe('WheelPickerRenderer (plan 665 Phase 2)', () => {
@@ -123,7 +151,7 @@ describe('WheelPickerRenderer (plan 665 Phase 2)', () => {
     );
 
     // land column 0 on 绿 (one row up)
-    dragStrip(view.container, 0, -44);
+    await dragStrip(view.container, 0, -44);
     await waitFor(() =>
       expect(
         view.container.querySelector('[data-column="0"] [data-active="true"]')?.getAttribute('data-index'),
@@ -247,7 +275,7 @@ describe('WheelCascaderRenderer (plan 665 Phase 4)', () => {
     expect(view.container.querySelectorAll('[data-slot="picker-view-column"]')).toHaveLength(2);
 
     // settle the parent column onto 浙 (one row up) → child column resets
-    dragStrip(view.container, 0, -44);
+    await dragStrip(view.container, 0, -44);
     await waitFor(() =>
       expect(
         view.container.querySelector('[data-column="1"] [data-active="true"]')?.getAttribute('data-index'),

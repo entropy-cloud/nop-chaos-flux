@@ -66,12 +66,15 @@ describe('PullRefreshRenderer failure feedback (G4-R2-视角5-01)', () => {
     });
     await pullPastThreshold(view);
 
-    // Loading spinner phase flips into the visible error state.
+    // Loading spinner phase flips into the visible error state. Status and
+    // indicator text are asserted ATOMICALLY (plan 863 T8): under load the
+    // bounded error window (successDuration 40ms) can elapse between two
+    // waitFor polls, and a split assertion would race the reset to 'normal'.
     await waitFor(() => {
       expect(rootEl(view).getAttribute('data-status')).toBe('error');
+      const indicator = view.container.querySelector('[data-slot="pull-refresh-indicator"]');
+      expect(indicator?.getAttribute('data-indicator-text')).toBe('刷新失败');
     });
-    const indicator = view.container.querySelector('[data-slot="pull-refresh-indicator"]');
-    expect(indicator?.getAttribute('data-indicator-text')).toBe('刷新失败');
 
     // Bounded window: resets to normal afterwards.
     await waitFor(

@@ -1,7 +1,7 @@
 # 863 测试替身与断言有效性（无测分支 / 死兜底 / 静默 stub 默认值 / 脏工作区风险 / 负载敏感测试）
 
-> Plan Status: active（draft review round 2 pass-with-minors，见 Draft Review Record）
-> Last Reviewed: 2026-11-06
+> Plan Status: completed（closure audit round 1：1 Major（ledger anchor 红）→ 修复 → 按审计其余证据直接收口；见 Closure Audit Evidence）
+> Last Reviewed: 2026-11-10
 > Source: `docs/analysis/2026-11-06-full-repo-deep-audit.md` §4（T1–T7）+ plan 859 全量验证实测（T8）
 > Related: plan 858（同类：伪断言清除）、plan 860 Deferred（FormStub 棘轮失效，归 R3.x/MV，本 plan 不接）
 
@@ -56,36 +56,36 @@
 
 ### Phase 1 - 死兜底、默认值与脏工作区（T2、T3、T4、T5）
 
-Status: planned
+Status: completed
 Targets: word-editor 两个 test-support、`flux-react/src/test-support/mock-props.ts`、`flux-renderers-ai/src/test-support.ts`、chained-gates 测试、exploratory spec
 
 - Item Types: `Fix | Decision`
 
-- [ ] T2 删除 6 处死兜底；两个 store 替身 parity 断言
-- [ ] T3 默认 helpers 改为说明性抛错 stub；受影响测试显式传 helpers（预计少量）
-- [ ] T4 删除死分支 + 改写前脏检查 + 退出钩子还原 + 文件头恢复说明
-- [ ] T5 Decision：删除或改写，并同步 ledger
+- [x] T2 删除 6 处死兜底；两个 store 替身 parity 断言
+- [x] T3 默认 helpers 改为说明性抛错 stub；受影响测试显式传 helpers（预计少量——实测 0 个既有测试需要改）
+- [x] T4 删除死分支 + 改写前脏检查 + 退出钩子还原 + 文件头恢复说明
+- [x] T5 Decision：删除或改写，并同步 ledger（裁决：整文件删除，见执行中裁决）
 
 Exit Criteria:
 
-- [ ] T2 parity 变异演示（真实 store 临时改名 → 红）在案；T3 删 helpers 演示（说明性错误）在案
-- [ ] word-editor-renderers / flux-react / flux-renderers-ai / content / mobile / map / graph 包测试全绿；`pnpm test:scripts` 全绿
+- [x] T2 parity 变异演示（真实 store 临时改名 → 红）在案；T3 删 helpers 演示（说明性错误）在案
+- [x] word-editor-renderers / flux-react / flux-renderers-ai / content / mobile / map / graph 包测试全绿；`pnpm test:scripts` 全绿（逐包计数见 `docs/logs/2026/11-10.md`）
 
 ### Phase 2 - 真实实现覆盖、parity 与稳定性（T1、T6、T7、T8）
 
-Status: planned
+Status: completed
 Targets: flux-code-editor、flux-renderers-layout、flow-designer-renderers、flux-renderers-mobile
 
 - Item Types: `Proof | Fix`
 
-- [ ] T1 四个分支各一条真实 EditorView 测试
-- [ ] T6 layout fields parity 测试 + 变异演示（改一个 key → 红）
-- [ ] T7 canvas-bridge scope parity 断言 + 变异演示
-- [ ] T8 固定合成事件 `timeStamp`（速度归零 → settle 路径确定）并以 strip transform 到达目标偏移作为等待条件；`pnpm --filter @nop-chaos/flux-renderers-mobile test` 在并发负载下连续 3 次全绿（负载以并行跑另一包测试制造）
+- [x] T1 四个分支各一条真实 EditorView 测试
+- [x] T6 layout fields parity 测试 + 变异演示（改一个 key → 红）
+- [x] T7 canvas-bridge scope parity 断言 + 变异演示
+- [x] T8 固定合成事件 `timeStamp`（速度归零 → settle 路径确定）并以 strip transform 到达目标偏移作为等待条件；`pnpm --filter @nop-chaos/flux-renderers-mobile test` 在并发负载下连续 3 次全绿（负载以并行跑另一包测试制造）
 
 Exit Criteria:
 
-- [ ] 新测试绿；变异演示记录在案；四包测试全绿
+- [x] 新测试绿；变异演示记录在案；四包测试全绿（flux-code-editor 121 / layout 173 / flow-designer-renderers 319 / mobile 385×3 次负载全绿）
 
 ## Draft Review Record
 
@@ -96,20 +96,42 @@ Exit Criteria:
 
 ## Closure Gates
 
-- [ ] T1–T8 全部落地（或裁决在案）
-- [ ] 判别演示记录在案，零产品源改动
-- [ ] 不存在被静默降级的 in-scope 问题
-- [ ] owner doc 同步判定已执行（测试基建约定若改变，同步 `docs/architecture/renderer-markers-and-selectors.md` 测试放置节或注明无需）
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
-- [ ] `pnpm check` exit 0
+- [x] T1–T8 全部落地（或裁决在案）
+- [x] 判别演示记录在案，零产品源改动（git status 核对：改动面全部为测试/测试基建/docs）
+- [x] 不存在被静默降级的 in-scope 问题
+- [x] owner doc 同步判定已执行（**判定：无需同步**——`renderer-markers-and-selectors.md` 管辖渲染器 marker/styling 契约，本次改动是 test-support harness 内部语义（strict helpers / parity / pinned timeStamp），约定落在各 harness 文件头注释与本 plan，未触及该文档管辖面）
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据
+- [x] `pnpm typecheck`（2026-11-10）
+- [x] `pnpm build`（2026-11-10）
+- [x] `pnpm lint`（2026-11-10）
+- [x] `pnpm test`（2026-11-10）
+- [x] `pnpm check` exit 0（2026-11-10）
 
 ## Deferred But Adjudicated
 
-（无——执行中若有改判当场落节）
+### T5 裁决：exploratory/interaction-tests.spec.ts 整文件删除
+
+- Classification: `out-of-scope improvement`（相对 plan 623 的"保留跳过"原裁决，本 plan 权限内的改判删除）
+- Why Not Blocking Closure: 整文件 `describe.skip`、4 处 `.catch(() => {})` 吞断言、无任何消费方；已有 plan 623 C3 跳过裁决与 ledger 登记在案。删除比改写真断言更诚实——这些 exploratory 断言从入仓起就未被 CI 或人工消费，改写等于凭空发明规格。
+- Successor Required: `no`（ledger :266 条目已追加"已随 plan 863 删除"留档）
+
+### T8 执行中扩大面：负载修复超出 plan 所列 2 文件
+
+- Classification: `Fix`（同缺陷族 in-scope 延伸——T8 Goal 是"负载下稳定"，退出标准是 mobile 包 3 次负载全绿）
+- Why Not Blocking Closure: plan 只列 wheel-picker-family + wheel-time-picker-form-write 两文件；负载实测中同机制缺陷在 wheel-time-picker.test.tsx、picker-view.test.tsx（dragFrom/中段抑制/多列）、swipe-cell.test.tsx（below-threshold）、pull-refresh-error.test.tsx（40ms 窗口竞态）轮流触发，不修则 Exit Criteria（3 次全绿）不可能达成。全部为测试侧 pinned-timeStamp/原子 waitFor 修复，零产品源改动。
+- Successor Required: `no`
+
+### T6 执行中发现：真实定义与 test 副本已实质漂移（parity 落地即红）
+
+- Classification: `Fix`（已收敛）
+- Why Not Blocking Closure: 真实 wizard 定义含 `actionFinishLabel/actionNextLabel/actionPrevLabel`，test 副本却保留真实侧已删除的 `valueOwnership/valueStatePath`——parity 测试落地即 2 红，副本已按真实定义同步。另发现：真实 `layout-renderer-definitions.ts` dropdown-button 的 fields 重复声明 `label`（value-or-region + prop 两个条目，疑似产品侧遗留），**不在本 plan 权限内修改产品源**，parity 断言按唯一 key 集合比较并在测试注释中留痕——该重复键是否为 live defect 交由后续 audit/plan 裁定。
+- Successor Required: `yes`（dropdown-button 重复 `label` fields key 的产品侧裁定，归属后续 deep-audit/产品修复 plan）
+
+### T6 parity 范围裁定：resizable 不入 parity
+
+- Classification: `out-of-scope improvement`
+- Why Not Blocking Closure: `layoutRendererDefinitions` 实际含 6 个定义（含 resizable），test-support 从未重抄 resizable 的 fields——无副本即无漂移面，plan 所列"重抄的 8 个"范围成立；parity 测试显式以 `PARITY_TYPES` 白名单限定并在注释留痕。
+- Successor Required: `no`
 
 ## Non-Blocking Follow-ups
 
@@ -117,13 +139,13 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: <<收口时填写>>
+Status Note: T1–T8 全落地（零产品源改动）；判别演示 5 组在案且已还原；closure audit round 1 仅 1 Major（T5 删除文件后 ledger 留档行反引号路径成未解析 anchor，lint 新红）→ 去反引号留档修复，其余全部核验通过，按审计意见直接收口。五命令 exit 0（863-closure-verify.log + 863-lint-rerun.log）。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: <<独立子 agent>>
-- Evidence: <<task id / daily log link / findings 摘要>>
+- Auditor / Agent: 独立子代理（fresh session）
+- Evidence: 零产品源 diff 核验（packages/\*/src 排除 test/test-support 后为空）；T2/T3/T1/T6/T7 断言真实性核验（vi.importActual 真实工厂 / strict helpers 抛错 / 真实 EditorView / 运行时解析 scope.ts 成员清单）；T4 钩子与脏检查核验；focused 实跑 flux-react 618 / layout 173 / flow-designer 319 / test:scripts 210 全绿；Deferred 三条裁决诚实。M1 修复后 lint 复跑 exit 0。详见 docs/logs/2026/11-10.md。
 
 Follow-up:
 
-- <<收口时填写>>
+- dropdown-button fields 重复声明 label（T6 发现的疑似产品 live defect，successor 立项待办）

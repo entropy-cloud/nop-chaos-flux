@@ -1,3 +1,7 @@
+// Plan 863 T3: default helpers are `strictRendererHelpers` (access throws an
+// explanatory error). `stubRendererHelpers` is IDENTITY-SEMANTIC and opt-in
+// only: evaluate/evaluateCompiled return the raw template expression
+// unchanged — use it only when a test genuinely wants pass-through values.
 import type {
   RendererComponentProps,
   RendererEventHandler,
@@ -24,6 +28,36 @@ export const MOCK_NODE_ID = 'mock-node';
 export const MOCK_NODE_PATH = 'mock.path';
 export const MOCK_SCOPE_ID = 'mock-scope';
 
+function throwMissingHelpers(member: string): never {
+  throw new Error(
+    `createMockRendererProps: helpers.${member} was accessed but no helpers were provided. ` +
+      'Pass explicit implementations via the `helpers` option, or opt in to the identity stub ' +
+      'with `helpers: stubRendererHelpers` (identity semantics: evaluate/evaluateCompiled ' +
+      'return the raw template expression unchanged).',
+  );
+}
+
+/**
+ * Default helpers for createMockRendererProps: every member throws an
+ * explanatory error on access so tests that rely on helpers fail loudly
+ * instead of silently doing nothing (plan 863 T3).
+ */
+export const strictRendererHelpers = {
+  render: () => throwMissingHelpers('render'),
+  evaluate: () => throwMissingHelpers('evaluate'),
+  evaluateCompiled: () => throwMissingHelpers('evaluateCompiled'),
+  createScope: () => throwMissingHelpers('createScope'),
+  disposeScope: () => throwMissingHelpers('disposeScope'),
+  dispatch: () => throwMissingHelpers('dispatch'),
+  executeSource: () => throwMissingHelpers('executeSource'),
+} as unknown as RendererHelpers;
+
+/**
+ * IDENTITY semantics (explicit opt-in only): evaluate/evaluateCompiled return
+ * the raw template expression unchanged, render renders nothing, dispatch
+ * always succeeds. Tests that need expression evaluation must provide real
+ * implementations instead of relying on this stub.
+ */
 export const stubRendererHelpers = {
   render: () => null,
   evaluate: <T,>(v: unknown): T => v as T,
@@ -71,7 +105,7 @@ export function createMockRendererProps<S extends BaseSchema = BaseSchema>(
     } as RendererComponentProps<S>['meta'],
     regions,
     events: (options.events ?? {}) as RendererComponentProps<S>['events'],
-    helpers: (options.helpers ?? {}) as RendererHelpers,
+    helpers: (options.helpers ?? strictRendererHelpers) as RendererHelpers,
     reactions: options.reactions ?? {},
   };
 }

@@ -55,6 +55,17 @@ if (typeof globalThis.ResizeObserver === 'undefined') {
   });
 }
 
+const hoistedMockScope = vi.hoisted(() => ({
+  // Shape-constrained subset of flux-core ScopeRef — canvas-bridge-scope-parity
+  // test asserts its members stay within the real ScopeRef contract (plan 863 T7).
+  createMockChildScope: (parent: unknown, data: Record<string, unknown>) => ({
+    store: { setSnapshot: (): void => undefined },
+    value: data,
+  }),
+}));
+
+export const createMockChildScope = hoistedMockScope.createMockChildScope;
+
 vi.mock('@nop-chaos/flux-react', () => ({
     asReactNode: (value: unknown) => value as object,
   ClassAliasesContext: {
@@ -64,10 +75,7 @@ vi.mock('@nop-chaos/flux-react', () => ({
     return input ? <div data-testid="rendered-body">{String(input?.type ?? 'unknown')}</div> : null;
   },
   useRendererRuntime: () => ({
-    createChildScope: (parent: any, data: any) => ({
-      store: { setSnapshot: vi.fn() },
-      data,
-    }),
+    createChildScope: hoistedMockScope.createMockChildScope,
   }),
   useRenderScope: () => ({}),
 }));

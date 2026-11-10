@@ -11,6 +11,7 @@ import {
   createTestRuntime,
   createTestScope,
   runContractHonestyGuardSuite,
+  strictRendererHelpers,
   stubRendererHelpers,
   TestRuntimeProvider,
 } from '../test-support.js';
@@ -44,8 +45,36 @@ describe('createMockRendererProps honest seed (plan 594 G1)', () => {
     expect(overridden.meta.visible).toBe(false);
   });
 
-  it('stubRendererHelpers evaluates transparently', () => {
+  it('stubRendererHelpers evaluates transparently (explicit opt-in identity stub)', () => {
     expect(stubRendererHelpers.evaluate('x')).toBe('x');
+  });
+});
+
+// Plan 863 T3: the default helpers are loud — access throws an explanatory
+// error telling the test to pass explicit helpers or opt in to the identity
+// stub. Old behavior (empty default / implicit identity evaluate) let
+// expression branches pass silently.
+describe('createMockRendererProps default helpers fail loudly (plan 863 T3)', () => {
+  it('default helpers.throw on evaluate access with an explanatory message', () => {
+    const props = createMockRendererProps();
+
+    expect(() => props.helpers.evaluate('x')).toThrowError(/helpers\.evaluate.*explicit/i);
+  });
+
+  it('every strictRendererHelpers member throws with the member name', () => {
+    for (const [member, value] of Object.entries(strictRendererHelpers)) {
+      expect(() => (value as (...args: unknown[]) => unknown)(member)).toThrowError(
+        new RegExp(`helpers\\.${member}`),
+      );
+    }
+  });
+
+  it('explicit helpers are honored verbatim', () => {
+    const props = createMockRendererProps({
+      helpers: { evaluate: (v: unknown) => `resolved:${String(v)}` } as never,
+    });
+
+    expect(props.helpers.evaluate<string>('x')).toBe('resolved:x');
   });
 });
 

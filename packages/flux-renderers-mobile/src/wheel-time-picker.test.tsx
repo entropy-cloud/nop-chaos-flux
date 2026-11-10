@@ -1,10 +1,32 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, fireEvent, render, waitFor } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, waitFor } from '@testing-library/react';
 import type { WheelPickerOption } from './schemas.js';
 import { wheelTimeColumns, encodeTime } from './wheel-date-columns.js';
 import { WheelTimePickerRenderer } from './wheel-time-picker.js';
 import { createMockRendererProps } from './test-support.js';
 import { TestRuntimeProvider, createTestRuntime } from '@nop-chaos/flux-react/test-support';
+import { DEFAULT_ROW_HEIGHT, offsetForIndex } from './wheel-column-logic.js';
+
+// Plan 863 T8: gesture events carry a PINNED synthetic timeStamp (zero
+// velocity → deterministic static snap) and the post-drag wait is the strip
+// transform reaching the target offset — unpinned wall-clock timestamps made
+// the landing inertia-sensitive under full-suite load.
+function dispatchPinnedTouch(
+  strip: HTMLElement,
+  type: 'touchstart' | 'touchmove' | 'touchend',
+  clientY: number,
+) {
+  const event = new TouchEvent(type, {
+    bubbles: true,
+    cancelable: true,
+    touches: type === 'touchend' ? [] : [{ clientX: 100, clientY } as unknown as Touch],
+    changedTouches: [{ clientX: 100, clientY } as unknown as Touch],
+  } as TouchEventInit);
+  Object.defineProperty(event, 'timeStamp', { value: 1_000, configurable: true });
+  act(() => {
+    strip.dispatchEvent(event);
+  });
+}
 
 // P1-MA4.3-002 regression guard: the wheel-time-picker component-level
 // contract — minuteStep actually drives the minute column grid, and the
@@ -12,21 +34,22 @@ import { TestRuntimeProvider, createTestRuntime } from '@nop-chaos/flux-react/te
 // was name-list-level hits in markers/definitions gates (audit Round B
 // B-01).
 
-function dragStrip(container: HTMLElement, column: number, deltaY: number) {
+async function dragStrip(container: HTMLElement, column: number, deltaY: number) {
   const strip = container.querySelector(
     `[data-column="${column}"] [data-slot="picker-view-strip"]`,
   ) as HTMLElement;
-  const center = { x: 100, y: 200 };
-  fireEvent.touchStart(strip, {
-    touches: [{ clientX: center.x, clientY: center.y }],
-  } as never);
-  fireEvent.touchMove(strip, {
-    touches: [{ clientX: center.x, clientY: center.y + deltaY }],
-  } as never);
-  fireEvent.touchEnd(strip, {
-    touches: [],
-    changedTouches: [{ clientX: center.x, clientY: center.y + deltaY }],
-  } as never);
+  const centerY = 200;
+  const columnEl = strip.closest('[data-column]') as HTMLElement;
+  const startIndex = Number(
+    columnEl.querySelector('[data-active="true"]')?.getAttribute('data-index') ?? '0',
+  );
+  dispatchPinnedTouch(strip, 'touchstart', centerY);
+  dispatchPinnedTouch(strip, 'touchmove', centerY + deltaY);
+  dispatchPinnedTouch(strip, 'touchend', centerY + deltaY);
+  const targetIndex = startIndex + Math.round(-deltaY / DEFAULT_ROW_HEIGHT);
+  await waitFor(() =>
+    expect(strip.style.transform).toBe(`translateY(${offsetForIndex(targetIndex, DEFAULT_ROW_HEIGHT)}px)`),
+  );
 }
 
 beforeEach(() => {
@@ -90,7 +113,7 @@ describe('wheel-time-picker component contract (P1-MA4.3-002)', () => {
     );
 
     // one row up on the minute column: 30 -> 35 (step 5 grid)
-    dragStrip(view.container, 1, -44);
+    await dragStrip(view.container, 1, -44);
     await waitFor(() =>
       expect(
         view.container.querySelector('[data-column="1"] [data-active="true"]')?.getAttribute('data-index'),

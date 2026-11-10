@@ -148,24 +148,6 @@ vi.mock('@nop-chaos/word-editor-core', async (importOriginal) => {
   return {
     ...actual,
     CanvasEditorBridge,
-    RowFlex: actual.RowFlex ?? {
-      LEFT: 'left',
-      CENTER: 'center',
-      RIGHT: 'right',
-      JUSTIFY: 'justify',
-    },
-    TitleLevel: actual.TitleLevel ?? {
-      FIRST: 'first',
-      SECOND: 'second',
-      THIRD: 'third',
-      FOURTH: 'fourth',
-      FIFTH: 'fifth',
-      SIXTH: 'sixth',
-    },
-    ListType: actual.ListType ?? {
-      UL: 'ul',
-      OL: 'ol',
-    },
     createEditorStore: () => editorStore,
     createDatasetStore: () => datasetStore,
     saveDocument: hoistedMockedCore.saveDocumentMock,

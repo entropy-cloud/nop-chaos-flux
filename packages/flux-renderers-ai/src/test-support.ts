@@ -1,7 +1,7 @@
 import type { BaseSchema, RendererComponentProps } from '@nop-chaos/flux-core';
 import {
   createMockRendererProps as createSharedMockRendererProps,
-  stubRendererHelpers,
+  strictRendererHelpers,
 } from '@nop-chaos/flux-react/test-support';
 
 /**
@@ -26,7 +26,7 @@ export function createMockRendererProps<S extends BaseSchema = BaseSchema>(
     props: partial.props ?? ({ type: partial.schema.type } as RendererComponentProps<S>['props']),
     meta: { className: '', testid: undefined, cid: undefined, ...partial.meta },
     events: partial.events,
-    helpers: partial.helpers ?? stubRendererHelpers,
+    helpers: partial.helpers ?? strictRendererHelpers,
     reactions: partial.reactions,
   });
   return { ...props, ...(partial.regions ? { regions: partial.regions } : {}) };

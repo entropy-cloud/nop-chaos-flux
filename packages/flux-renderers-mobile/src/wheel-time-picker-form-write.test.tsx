@@ -1,12 +1,35 @@
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { cleanup, fireEvent, render, waitFor } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, waitFor } from '@testing-library/react';
 import { createDefaultEnv, createSchemaRenderer, useCurrentFormState } from '@nop-chaos/flux-react';
 import { createFormulaCompiler } from '@nop-chaos/flux-formula';
 import { resetFluxI18n, initFluxI18n } from '@nop-chaos/flux-i18n';
 import { basicRendererDefinitions } from '@nop-chaos/flux-renderers-basic';
 import { formRendererDefinitions } from '@nop-chaos/flux-renderers-form';
 import { mobileRendererDefinitions } from './mobile-renderer-definitions.js';
+import { DEFAULT_ROW_HEIGHT, offsetForIndex } from './wheel-column-logic.js';
+
+// Plan 863 T8: the minute-column drag is dispatched with a PINNED synthetic
+// timeStamp (zero velocity → deterministic static snap) and the wait is the
+// strip transform reaching the target offset — under full-suite load the
+// unpinned wall-clock timestamps produced spurious inertia landings and the
+// confirm read a stale draft (plan 859 T8).
+function dispatchPinnedTouch(
+  strip: HTMLElement,
+  type: 'touchstart' | 'touchmove' | 'touchend',
+  clientY: number,
+) {
+  const event = new TouchEvent(type, {
+    bubbles: true,
+    cancelable: true,
+    touches: type === 'touchend' ? [] : [{ clientX: 100, clientY } as unknown as Touch],
+    changedTouches: [{ clientX: 100, clientY } as unknown as Touch],
+  } as TouchEventInit);
+  Object.defineProperty(event, 'timeStamp', { value: 1_000, configurable: true });
+  act(() => {
+    strip.dispatchEvent(event);
+  });
+}
 
 // P1-MA4.3-003 regression guard: the wheel family WRITE path with a real
 // form owner — confirm -> form.setValue -> validateField. The existing
@@ -103,16 +126,13 @@ describe('wheel-time-picker real form-owner write path (P1-MA4.3-003)', () => {
     const strip = document.querySelector(
       '[data-column="1"] [data-slot="picker-view-strip"]',
     ) as HTMLElement;
-    fireEvent.touchStart(strip, {
-      touches: [{ clientX: 100, clientY: 200 }],
-    } as never);
-    fireEvent.touchMove(strip, {
-      touches: [{ clientX: 100, clientY: -108 }],
-    } as never);
-    fireEvent.touchEnd(strip, {
-      touches: [],
-      changedTouches: [{ clientX: 100, clientY: -108 }],
-    } as never);
+    const dragToY = 200 - 7 * DEFAULT_ROW_HEIGHT;
+    dispatchPinnedTouch(strip, 'touchstart', 200);
+    dispatchPinnedTouch(strip, 'touchmove', dragToY);
+    dispatchPinnedTouch(strip, 'touchend', dragToY);
+    await waitFor(() =>
+      expect(strip.style.transform).toBe(`translateY(${offsetForIndex(7, DEFAULT_ROW_HEIGHT)}px)`),
+    );
     await waitFor(() =>
       expect(
         document.querySelector('[data-column="1"] [data-active="true"]')?.getAttribute('data-index'),

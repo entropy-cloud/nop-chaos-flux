@@ -2,6 +2,12 @@ import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, render, waitFor } from '@testing-library/react';
 
+// SCOPE NOTE (plan 863 T1): this file runs against the @codemirror mock
+// harness and ONLY covers the "latest onChange callback reference" wiring.
+// Mount/unmount lifecycle, compartment reconfiguration, and the readOnly
+// switch are covered against a real EditorView in
+// use-code-mirror-real-view.test.tsx and use-code-mirror-controlled.test.tsx.
+
 const editorInstances: Array<{
   dispatch(input: { changes?: { insert: string } }): void;
   destroy(): void;
