@@ -175,22 +175,22 @@ interface RendererHelpers {
 
 ## RendererResolvedProps
 
+`RemoveIndexSignature<S>` is the helper defined in `packages/flux-core/src/types/renderer-core.ts` (strips string/number/symbol index signatures before the `Partial`+`Omit`).
+
 ```ts
 type RendererResolvedProps<S extends BaseSchema = BaseSchema> = {
   [key: string]: unknown;
-} & Partial<
-  Omit<
-    S,
-    | 'when'
-    | 'visible'
-    | 'hidden'
-    | 'disabled'
-    | 'className'
-    | 'frameClassName'
-    | 'testid'
-    | 'readOnly'
-    | 'required'
-  >
+} & Omit<
+  Partial<RemoveIndexSignature<S>>,
+  | 'when'
+  | 'visible'
+  | 'hidden'
+  | 'disabled'
+  | 'className'
+  | 'frameClassName'
+  | 'testid'
+  | 'readOnly'
+  | 'required'
 > & {
     type?: S['type'];
     id?: string;

@@ -20,7 +20,7 @@ export interface CalendarWeekViewProps {
   eventTemplate?: RenderRegionHandle;
   onEventClick?: (payload: { event: CalendarEvent; resource?: CalendarResource; date: string }) => void;
   onDragStart?: (event: CalendarEvent, pointerEvent: React.PointerEvent) => void;
-  /** [G4-R3-视角11-02] 长 按/键盘创建入口——与月视图同能力，三视图一致。 */
+  /** [G4-R3-视角11-02] 长按/键盘创建入口——与月视图同能力，三视图一致。 */
   onCellDragStart?: (date: string, resourceId: string, pointerEvent: React.PointerEvent) => void;
   onCellKeyboardCreate?: (date: string, resourceId: string) => void;
   /** plan 546 seed-5: in-press drag-create range — covered cells render data-drag-preview. */

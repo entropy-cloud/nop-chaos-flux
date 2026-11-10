@@ -1,6 +1,6 @@
 import { execFile } from 'child_process';
 import { promisify } from 'util';
-import { readFile, unlink, mkdir, rm } from 'fs/promises';
+import { readFile, unlink, writeFile, mkdir, rm } from 'fs/promises';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -55,6 +55,10 @@ async function main() {
   if (inputIndex >= 0) {
     total = JSON.parse(await readFile(args[inputIndex + 1], 'utf8')).statistics.total;
   } else {
+    // A stale report from an earlier run must never be gated on: clear the
+    // report directory BEFORE invoking jscpd so a failed scan cannot silently
+    // fall back to previous-run statistics.
+    await rm(reportDir, { recursive: true, force: true });
     await mkdir(reportDir, { recursive: true });
 
     const jscpdArgs = [
@@ -67,25 +71,38 @@ async function main() {
       '--silent',
     ];
 
+    // jscpd exits non-zero whenever duplication exceeds `--threshold 0`, i.e.
+    // on every normal run, while still writing its report. A non-zero exit is
+    // therefore not a failure signal by itself; because the directory was
+    // cleared above, a report present afterwards is necessarily fresh, and a
+    // missing/unparseable one means the scan itself failed.
+    let jscpdError = null;
     try {
       await execFileAsync('npx', jscpdArgs, {
         cwd: rootDir,
         maxBuffer: 50 * 1024 * 1024,
         shell: true,
       });
-    } catch {}
+    } catch (error) {
+      jscpdError = error;
+    }
 
     try {
       const raw = await readFile(reportFile, 'utf8');
       total = JSON.parse(raw).statistics.total;
     } catch {
-      console.error('[check:duplicates] Failed to read jscpd JSON report');
-      process.exit(1);
+      console.error(
+        `[check:duplicates] jscpd failed${jscpdError ? ` (exit ${jscpdError.code ?? 'unknown'})` : ''}: no fresh JSON report was produced; refusing to gate on stale or missing data.`,
+      );
+      const detail = String(jscpdError?.stderr ?? '').trim();
+      if (detail) console.error(detail.split(/\r?\n/).slice(-10).join('\n'));
+      process.exitCode = 1;
     } finally {
       try {
         await rm(reportDir, { recursive: true, force: true });
       } catch {}
     }
+    if (process.exitCode === 1) process.exit(1);
   }
 
   const pct = parseFloat(total?.percentage ?? '0');
@@ -113,7 +130,7 @@ async function main() {
 
   if (!verdict.ok) {
     console.error(`[check:duplicates] ERROR: ${verdict.failure}`);
-    if (!inputIndex) console.log('Run `pnpm check:duplicates:detail` for the full report.');
+    if (inputIndex < 0) console.error('Run `pnpm check:duplicates:detail` for the full report.');
     process.exit(1);
   }
 
