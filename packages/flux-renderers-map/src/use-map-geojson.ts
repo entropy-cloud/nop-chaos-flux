@@ -37,6 +37,7 @@ export function useMapGeojson(input: {
   const cacheOrderRef = useRef<string[]>([]);
   const inFlightRef = useRef<Set<string>>(new Set());
   const mountedRef = useRef(true);
+  const latestKeyRef = useRef<string | undefined>(undefined);
   const [reloadToken, setReloadToken] = useState(0);
 
   const cacheKey = useMemo(() => {
@@ -73,12 +74,13 @@ export function useMapGeojson(input: {
     }
 
     inFlightRef.current.add(cacheKey);
+    latestKeyRef.current = cacheKey;
     setState((prev) => ({ ...prev, loading: true, error: undefined }));
 
     void helpers
       .dispatch(geojsonSource, { scope })
       .then((result) => {
-        if (!mountedRef.current) {
+        if (!mountedRef.current || latestKeyRef.current !== cacheKey) {
           return;
         }
         if (result.ok) {
@@ -111,7 +113,7 @@ export function useMapGeojson(input: {
         }
       })
       .catch((err: unknown) => {
-        if (!mountedRef.current) {
+        if (!mountedRef.current || latestKeyRef.current !== cacheKey) {
           return;
         }
         setState({

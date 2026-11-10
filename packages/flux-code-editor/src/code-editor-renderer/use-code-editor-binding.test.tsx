@@ -2,6 +2,7 @@ import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { render } from '@testing-library/react';
 import { FormContext, ScopeContext, ValidationContext } from '@nop-chaos/flux-react';
+import { TestRuntimeProvider, createTestRuntime } from '@nop-chaos/flux-react/test-support';
 import { useCodeEditorBinding } from './use-code-editor-binding.js';
 
 function createScope() {
@@ -59,11 +60,13 @@ describe('useCodeEditorBinding', () => {
     let binding: ReturnType<typeof useCodeEditorBinding> | undefined;
 
     render(
-      <ScopeContext.Provider value={scope}>
+      <TestRuntimeProvider runtime={createTestRuntime()}>
+        <ScopeContext.Provider value={scope}>
         <ValidationContext.Provider value={validationOwner}>
-          <Probe onReady={(value) => (binding = value)} />
+            <Probe onReady={(value) => (binding = value)} />
         </ValidationContext.Provider>
-      </ScopeContext.Provider>,
+        </ScopeContext.Provider>
+      </TestRuntimeProvider>,
     );
 
     expect(binding).toBeTruthy();
@@ -105,13 +108,15 @@ describe('useCodeEditorBinding', () => {
     } as any;
 
     render(
-      <ScopeContext.Provider value={scope}>
-        <FormContext.Provider value={form}>
-          <ValidationContext.Provider value={createValidationOwner()}>
-            <Probe onReady={() => undefined} />
-          </ValidationContext.Provider>
-        </FormContext.Provider>
-      </ScopeContext.Provider>,
+      <TestRuntimeProvider runtime={createTestRuntime()}>
+        <ScopeContext.Provider value={scope}>
+          <FormContext.Provider value={form}>
+            <ValidationContext.Provider value={createValidationOwner()}>
+              <Probe onReady={() => undefined} />
+            </ValidationContext.Provider>
+          </FormContext.Provider>
+        </ScopeContext.Provider>
+      </TestRuntimeProvider>,
     );
 
     expect(formSubscribeToPath).toHaveBeenCalledWith('script', expect.any(Function));

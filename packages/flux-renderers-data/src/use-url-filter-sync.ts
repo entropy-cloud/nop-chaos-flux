@@ -102,47 +102,54 @@ export function useUrlFilterSync(args: {
     }
     claimedInstances.add(instanceId);
 
-    const incoming = location.getQuery();
-    const restored: Record<string, unknown> = {};
-    const patch: Record<string, unknown> = {};
-    for (const [key, raw] of Object.entries(incoming)) {
-      if (isUrlKeyReserved(key)) continue;
-      const value = decodeFilterValue(raw, defaultQuery[key]);
-      restored[key] = value;
-      patch[`${queryStatePath}.${key}`] = value;
-    }
-    if (Object.keys(patch).length > 0) {
-      for (const [path, value] of Object.entries(patch)) {
-        scope.update(path, value);
+    const pendingTimers: Array<ReturnType<typeof setTimeout>> = [];
+
+    if (!restoredRef.current) {
+      const incoming = location.getQuery();
+      const restored: Record<string, unknown> = {};
+      const patch: Record<string, unknown> = {};
+      for (const [key, raw] of Object.entries(incoming)) {
+        if (isUrlKeyReserved(key)) continue;
+        const value = decodeFilterValue(raw, defaultQuery[key]);
+        restored[key] = value;
+        patch[`${queryStatePath}.${key}`] = value;
       }
-      // Echo the restored values into the query-form inputs. The form handle
-      // registers in a child effect, so retry briefly if it is not up yet.
-      if (applyToForm) {
-        let attempts = 0;
-        const push = (): void => {
-          const applied = applyToForm(restored);
-          if (!applied && attempts < 5) {
-            attempts += 1;
-            setTimeout(push, 50);
-            return;
-          }
-          // WA-data-008: exhaustion previously failed silently — scope was
-          // restored but the form inputs never echoed the deep link, with no
-          // observable trace. The registration-race root cause (form bridge
-          // ready signal) stays a registered watch item.
-          if (!applied) {
-            warnOnce(
-              'gd-url-sync-form-handle-exhausted',
-              "[url-sync] query-form handle did not register within 5 retries (250ms) — deep-link filters reached query state but form inputs were not echoed. Check that the embedded query form rendered for this crud instance.",
-            );
-          }
-        };
-        void push();
+      if (Object.keys(patch).length > 0) {
+        for (const [path, value] of Object.entries(patch)) {
+          scope.update(path, value);
+        }
+        // Echo the restored values into the query-form inputs. The form handle
+        // registers in a child effect, so retry briefly if it is not up yet.
+        if (applyToForm) {
+          let attempts = 0;
+          const push = (): void => {
+            const applied = applyToForm(restored);
+            if (!applied && attempts < 5) {
+              attempts += 1;
+              pendingTimers.push(setTimeout(push, 50));
+              return;
+            }
+            // WA-data-008: exhaustion previously failed silently — scope was
+            // restored but the form inputs never echoed the deep link, with no
+            // observable trace. The registration-race root cause (form bridge
+            // ready signal) stays a registered watch item.
+            if (!applied) {
+              warnOnce(
+                'gd-url-sync-form-handle-exhausted',
+                "[url-sync] query-form handle did not register within 5 retries (250ms) — deep-link filters reached query state but form inputs were not echoed. Check that the embedded query form rendered for this crud instance.",
+              );
+            }
+          };
+          void push();
+        }
       }
+      restoredRef.current = true;
     }
-    restoredRef.current = true;
     return () => {
       claimedInstances.delete(instanceId);
+      for (const timer of pendingTimers) {
+        clearTimeout(timer);
+      }
     };
     // One-shot mount restore guarded by refs; the query itself flows through
     // the write effect below.

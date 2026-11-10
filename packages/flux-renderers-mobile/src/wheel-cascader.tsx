@@ -1,7 +1,8 @@
 import React from 'react';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
 import { cn } from '@nop-chaos/ui';
-import { FieldFrame, useCurrentForm } from '@nop-chaos/flux-react';
+import { FieldFrame, useCurrentForm, useRendererRuntime } from '@nop-chaos/flux-react';
+import { validateFieldOnChange } from './validation-rejection.js';
 import type { WheelCascaderOption, WheelCascaderSchema } from './schemas.js';
 import { WheelPickerPopup } from './wheel-picker-popup.js';
 import type { WheelPickerOption } from './schemas.js';
@@ -78,6 +79,7 @@ export function WheelCascaderRenderer(
   const options = slotProps.options ?? [];
   const disabled = slotProps.disabled === true;
   const form = useCurrentForm();
+  const runtime = useRendererRuntime();
 
   const [open, setOpen] = React.useState(false);
   const [draft, setDraft] = React.useState<CascadeState>(() => chainForValue(options, slotProps.value ?? []));
@@ -111,9 +113,7 @@ export function WheelCascaderRenderer(
     };
     if (slotProps.name && form) {
       form.setValue(slotProps.name, payload.value);
-      if (typeof form.validateField === 'function') {
-        void form.validateField(slotProps.name, 'change');
-      }
+      validateFieldOnChange(form, runtime?.env, slotProps.name);
     }
     void props.events.onConfirm?.(payload, {
       event: payload,

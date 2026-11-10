@@ -9,6 +9,7 @@ import { WheelPickerRenderer } from './wheel-picker.js';
 import { WheelDatePickerRenderer } from './wheel-date-picker.js';
 import { WheelCascaderRenderer } from './wheel-cascader.js';
 import { createMockRendererProps } from './test-support.js';
+import { TestRuntimeProvider, createTestRuntime } from '@nop-chaos/flux-react/test-support';
 
 afterEach(() => {
   cleanup();
@@ -69,7 +70,11 @@ describe('WheelPickerRenderer (plan 665 Phase 2)', () => {
       meta: { testid: 'wp' },
       events: {},
     });
-    const view = render(<WheelPickerRenderer {...props} />);
+    const view = render(
+    <TestRuntimeProvider runtime={createTestRuntime()}>
+      <WheelPickerRenderer {...props} />
+    </TestRuntimeProvider>,
+  );
     expect(view.getByTestId('wp-trigger').textContent).toBe('请选择');
     fireEvent.click(view.getByTestId('wp-trigger'));
     await waitFor(() =>
@@ -90,7 +95,11 @@ describe('WheelPickerRenderer (plan 665 Phase 2)', () => {
       meta: { testid: 'wp' },
       events: {},
     });
-    const view = render(<WheelPickerRenderer {...props} />);
+    const view = render(
+    <TestRuntimeProvider runtime={createTestRuntime()}>
+      <WheelPickerRenderer {...props} />
+    </TestRuntimeProvider>,
+  );
     expect(view.getByTestId('wp-trigger').textContent).toBe('绿 M');
   });
 
@@ -103,7 +112,11 @@ describe('WheelPickerRenderer (plan 665 Phase 2)', () => {
       meta: { testid: 'wp' },
       events: { onConfirm: onConfirm as never, onCancel: onCancel as never },
     });
-    const view = render(<WheelPickerRenderer {...props} />);
+    const view = render(
+    <TestRuntimeProvider runtime={createTestRuntime()}>
+      <WheelPickerRenderer {...props} />
+    </TestRuntimeProvider>,
+  );
     fireEvent.click(view.getByTestId('wp-trigger'));
     await waitFor(() =>
       expect(view.container.querySelector('[data-slot="wheel-picker-popup"]')).not.toBeNull(),
@@ -146,7 +159,11 @@ describe('WheelPickerRenderer (plan 665 Phase 2)', () => {
       meta: { testid: 'wp' },
       events: { onConfirm: onConfirm as never },
     });
-    const view = render(<WheelPickerRenderer {...props} />);
+    const view = render(
+    <TestRuntimeProvider runtime={createTestRuntime()}>
+      <WheelPickerRenderer {...props} />
+    </TestRuntimeProvider>,
+  );
     // useCurrentForm is undefined outside a real form: the confirm path must
     // skip the write guarded by capability checks and still dispatch.
     fireEvent.click(view.container.querySelector('[data-slot="wheel-picker-trigger"]') as HTMLElement);
@@ -168,7 +185,11 @@ describe('WheelDatePickerRenderer (plan 665 Phase 3)', () => {
       meta: { testid: 'wd' },
       events: { onConfirm: onConfirm as never },
     });
-    const view = render(<WheelDatePickerRenderer {...props} />);
+    const view = render(
+    <TestRuntimeProvider runtime={createTestRuntime()}>
+      <WheelDatePickerRenderer {...props} />
+    </TestRuntimeProvider>,
+  );
     expect(view.getByTestId('wd-trigger').textContent).toBe('2026-03-15');
     fireEvent.click(view.getByTestId('wd-trigger'));
     await waitFor(() =>
@@ -188,7 +209,11 @@ describe('WheelDatePickerRenderer (plan 665 Phase 3)', () => {
       meta: { testid: 'wd' },
       events: { onConfirm: onConfirm as never },
     });
-    const view = render(<WheelDatePickerRenderer {...props} />);
+    const view = render(
+    <TestRuntimeProvider runtime={createTestRuntime()}>
+      <WheelDatePickerRenderer {...props} />
+    </TestRuntimeProvider>,
+  );
     fireEvent.click(view.getByTestId('wd-trigger'));
     await waitFor(() =>
       expect(view.container.querySelector('[data-slot="wheel-picker-popup"]')).not.toBeNull(),
@@ -209,7 +234,11 @@ describe('WheelCascaderRenderer (plan 665 Phase 4)', () => {
       meta: { testid: 'wc' },
       events: { onConfirm: onConfirm as never },
     });
-    const view = render(<WheelCascaderRenderer {...props} />);
+    const view = render(
+    <TestRuntimeProvider runtime={createTestRuntime()}>
+      <WheelCascaderRenderer {...props} />
+    </TestRuntimeProvider>,
+  );
     fireEvent.click(view.getByTestId('wc-trigger'));
     await waitFor(() =>
       expect(view.container.querySelector('[data-slot="wheel-picker-popup"]')).not.toBeNull(),

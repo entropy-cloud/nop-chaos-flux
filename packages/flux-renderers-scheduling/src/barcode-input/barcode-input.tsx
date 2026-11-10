@@ -75,6 +75,7 @@ export function BarcodeInputRenderer(props: RendererComponentProps<BarcodeInputS
 
   const mountedRef = useRef(true);
   useEffect(() => {
+    mountedRef.current = true;
     return () => { mountedRef.current = false; };
   }, []);
 

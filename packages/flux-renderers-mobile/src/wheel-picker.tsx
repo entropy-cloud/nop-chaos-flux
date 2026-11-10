@@ -1,7 +1,8 @@
 import React from 'react';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
 import { cn } from '@nop-chaos/ui';
-import { FieldFrame, useCurrentForm } from '@nop-chaos/flux-react';
+import { FieldFrame, useCurrentForm, useRendererRuntime } from '@nop-chaos/flux-react';
+import { validateFieldOnChange } from './validation-rejection.js';
 import type { WheelPickerSchema } from './schemas.js';
 import { WheelPickerPopup } from './wheel-picker-popup.js';
 
@@ -17,6 +18,7 @@ export function WheelPickerRenderer(props: RendererComponentProps<WheelPickerSch
   const columns = slotProps.columns ?? [];
   const disabled = slotProps.disabled === true;
   const form = useCurrentForm();
+  const runtime = useRendererRuntime();
 
   const [open, setOpen] = React.useState(false);
   const [draft, setDraft] = React.useState<(string | number)[]>([]);
@@ -53,9 +55,7 @@ export function WheelPickerRenderer(props: RendererComponentProps<WheelPickerSch
       form.setValue(slotProps.name, payload.value);
       // ValidationScopeRuntime (non-form owner) lacks validateField — guard
       // by capability, not by type (plan 665 review m4).
-      if (typeof form.validateField === 'function') {
-        void form.validateField(slotProps.name, 'change');
-      }
+      validateFieldOnChange(form, runtime?.env, slotProps.name);
     }
     void props.events.onConfirm?.(payload, {
       event: payload,

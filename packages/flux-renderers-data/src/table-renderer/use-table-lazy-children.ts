@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { ActionSchema, RendererHelpers } from '@nop-chaos/flux-core';
 import { t } from '@nop-chaos/flux-i18n';
 
@@ -36,6 +36,13 @@ export function useTableLazyChildren(input: {
   const [lazyChildrenMap, setLazyChildrenMap] = useState<Map<string, LazyChildrenState>>(new Map());
   const inFlightRef = useRef<Set<string>>(new Set());
   const mountedRef = useRef(true);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
 
   const setNodeState = useCallback((rowKey: string, state: LazyChildrenState) => {
     setLazyChildrenMap((prev) => {

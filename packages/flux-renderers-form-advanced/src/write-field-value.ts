@@ -1,4 +1,5 @@
 import type { FormRuntime } from '@nop-chaos/flux-core';
+import { attachValidationRejectionHandler } from './validation-rejection.js';
 import { shouldValidateOn } from '@nop-chaos/flux-renderers-form';
 
 type WriteFieldValueTrigger = 'change' | 'blur';
@@ -19,10 +20,14 @@ export function writeFieldValue(
   gatePath: string,
   validatePath: string,
   trigger: WriteFieldValueTrigger,
+  report?: (error: unknown) => void,
 ): boolean {
   if (!owner || !shouldValidateOn(gatePath, owner, trigger)) {
     return false;
   }
-  void owner.validateField(validatePath, trigger);
+  attachValidationRejectionHandler(
+    owner.validateField(validatePath, trigger),
+    report ?? ((error: unknown) => console.warn('[flux-form-advanced] validateField failed', error)),
+  );
   return true;
 }

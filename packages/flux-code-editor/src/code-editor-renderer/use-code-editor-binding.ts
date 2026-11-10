@@ -3,19 +3,49 @@ import {
   useCurrentFormState,
   useCurrentValidationScope,
   useRenderScope,
+  useRendererRuntime,
   useScopeSelector,
 } from '@nop-chaos/flux-react';
-import { getIn } from '@nop-chaos/flux-core';
+import { getIn, reportRuntimeHostIssue } from '@nop-chaos/flux-core';
 import { useEffect, useRef } from 'react';
 import type { CodeEditorRendererProps } from './shared.js';
+
+function isPromiseLike(value: unknown): value is Promise<unknown> {
+  return typeof value === 'object' && value !== null && 'then' in value;
+}
+
+function attachValidationRejectionHandler(
+  result: unknown,
+  report: (error: unknown) => void,
+): void {
+  if (isPromiseLike(result)) {
+    void result.catch(report);
+  }
+}
 
 export function useCodeEditorBinding(props: CodeEditorRendererProps, name: string) {
   const scope = useRenderScope();
   const currentForm = useCurrentForm();
   const currentValidationScope = useCurrentValidationScope();
+  const runtime = useRendererRuntime();
   const hasName = name.length > 0;
   const readOnly = props.props.readOnly || props.props.disabled || false;
   const valueRef = useRef<string>(String(props.props.value ?? ''));
+
+  const reportValidationFailure = (error: unknown) => {
+    if (!runtime) {
+      console.warn('[code-editor] validateField/validateAt failed', error);
+      return;
+    }
+    reportRuntimeHostIssue({
+      env: runtime.env,
+      level: 'warning',
+      message: 'Field validation failed',
+      error,
+      phase: 'action',
+      path: name,
+    });
+  };
 
   const formValue = useCurrentFormState(
     (state) => (hasName ? getIn(state.values, name) : undefined),
@@ -70,11 +100,11 @@ export function useCodeEditorBinding(props: CodeEditorRendererProps, name: strin
 
     if (currentForm && hasName) {
       currentForm.setValue(name, newValue);
-      void currentForm.validateField(name, 'change');
+      attachValidationRejectionHandler(currentForm.validateField(name, 'change'), reportValidationFailure);
     } else if (hasName) {
       currentValidationScope?.touchField?.(name);
       scope.update(name, newValue);
-      void currentValidationScope?.validateAt(name, 'change');
+      attachValidationRejectionHandler(currentValidationScope?.validateAt(name, 'change'), reportValidationFailure);
     }
     props.events.onChange?.({ value: newValue });
   };
@@ -91,10 +121,10 @@ export function useCodeEditorBinding(props: CodeEditorRendererProps, name: strin
   const handleBlur = () => {
     if (currentForm && hasName) {
       currentForm.touchField(name);
-      void currentForm.validateField(name, 'blur');
+      attachValidationRejectionHandler(currentForm.validateField(name, 'blur'), reportValidationFailure);
     } else if (hasName) {
       currentValidationScope?.touchField?.(name);
-      void currentValidationScope?.validateAt(name, 'blur');
+      attachValidationRejectionHandler(currentValidationScope?.validateAt(name, 'blur'), reportValidationFailure);
     }
     props.events.onBlur?.();
   };

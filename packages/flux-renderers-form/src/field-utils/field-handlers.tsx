@@ -286,8 +286,9 @@ export function useFieldHandlers(args: {
             ? adapter.out(nextValue, adapterContext ?? { name, readOnly: false })
             : toFormValue(nextValue);
 
+          const gen = ++generationRef.current;
+
           if (isPromiseLike(convertedValue)) {
-            const gen = ++generationRef.current;
             return convertedValue.then((resolvedValue) => {
               if (gen !== generationRef.current) return;
 

@@ -12,29 +12,59 @@ export interface DictOptionsState {
 
 // Cross-instance dedup: N fields declaring the same `dict` used to issue N
 // identical loadDict calls (plan 2026-09-29-3 R2-P10). Loads are shared per
-// (loadDict identity, dict name): concurrent mounts coalesce into one promise;
-// resolved option lists are cached so later mounts skip the network entirely.
+// (loadDict identity, dict name): concurrent mounts coalesce into one request
+// owned by its own AbortController, with per-consumer subscription counting —
+// a single consumer unmounting only decrements the count; the shared request
+// is aborted (and its entry removed) only when the last subscriber leaves.
+// Resolved option lists are cached so later mounts skip the network entirely.
 // Failures are NOT cached — a transient failure must not pin an empty
-// dropdown; the next mount retries. Hosts that abort (signal) tear only their
-// own subscription out; the shared promise result stays correct per-instance
-// via the generation counter below.
-const inFlightDictLoads = new Map<object, Map<string, Promise<DictBean>>>();
+// dropdown; the next mount retries. Correctness per consumer is guarded by
+// the generation counter below (plan 862 L1/L10).
+interface SharedDictLoad {
+  promise: Promise<DictBean>;
+  controller: AbortController;
+  refs: number;
+  settled: boolean;
+}
+
+const inFlightDictLoads = new WeakMap<object, Map<string, SharedDictLoad>>();
 const resolvedDictCache = new WeakMap<object, Map<string, ChoiceOption[]>>();
 const RESOLVED_DICT_CACHE_LIMIT = 64;
 
-function loadDictShared(loadDict: (name: string, signal?: AbortSignal) => Promise<DictBean>, dictName: string, signal: AbortSignal): Promise<DictBean> {
+export const __inFlightDictLoadsForTests = inFlightDictLoads;
+
+function releaseSharedDictLoad(byDict: Map<string, SharedDictLoad>, dictName: string, entry: SharedDictLoad): void {
+  entry.refs -= 1;
+  if (entry.refs > 0 || entry.settled) return;
+  // Last subscriber left before settle: tear the shared request down and
+  // remove the entry immediately so a late joiner never reuses an aborted load.
+  byDict.delete(dictName);
+  entry.controller.abort();
+}
+
+function loadDictShared(loadDict: (name: string, signal?: AbortSignal) => Promise<DictBean>, dictName: string): { promise: Promise<DictBean>; release: () => void } {
   let byDict = inFlightDictLoads.get(loadDict);
   if (!byDict) {
     byDict = new Map();
     inFlightDictLoads.set(loadDict, byDict);
   }
   const existing = byDict.get(dictName);
-  if (existing) return existing;
-  const promise = loadDict(dictName, signal).finally(() => {
-    byDict!.delete(dictName);
-  });
-  byDict.set(dictName, promise);
-  return promise;
+  if (existing) {
+    existing.refs += 1;
+    return { promise: existing.promise, release: () => releaseSharedDictLoad(byDict!, dictName, existing) };
+  }
+  const controller = new AbortController();
+  const entry: SharedDictLoad = {
+    refs: 1,
+    settled: false,
+    controller,
+    promise: loadDict(dictName, controller.signal).finally(() => {
+      entry.settled = true;
+      byDict!.delete(dictName);
+    }),
+  };
+  byDict.set(dictName, entry);
+  return { promise: entry.promise, release: () => releaseSharedDictLoad(byDict!, dictName, entry) };
 }
 
 function getCachedDictOptions(loadDict: object, dictName: string): ChoiceOption[] | undefined {
@@ -81,8 +111,8 @@ export function useDictOptions(dictName: string | undefined): DictOptionsState {
 
     const gen = ++genRef.current;
 
-    const controller = new AbortController();
-    void loadDictShared(loadDict, dictName, controller.signal)
+    const shared = loadDictShared(loadDict, dictName);
+    void shared.promise
       .then((bean) => {
         const options = (bean.options ?? []).map((opt) => ({
           label: opt.label,
@@ -100,7 +130,7 @@ export function useDictOptions(dictName: string | undefined): DictOptionsState {
       });
 
     return () => {
-      controller.abort();
+      shared.release();
     };
   }, [dictName, loadDict]);
 

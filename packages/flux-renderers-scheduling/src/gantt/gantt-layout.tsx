@@ -42,25 +42,40 @@ export function GanttLayout({ grid, timeline, header, className }: GanttLayoutPr
       setGridWidth(newWidth);
     };
 
-    const onPointerUp = () => {
-      resizingRef.current = false;
+    const detach = () => {
       document.removeEventListener('pointermove', onPointerMove);
       document.removeEventListener('pointerup', onPointerUp);
+      document.removeEventListener('pointercancel', onPointerCancel);
+    };
+
+    const restoreBody = () => {
       document.body.style.cursor = '';
       document.body.style.userSelect = '';
+    };
+
+    const onPointerCancel = () => {
+      resizingRef.current = false;
+      detach();
+      restoreBody();
+      resizeCleanupRef.current = null;
+    };
+
+    const onPointerUp = () => {
+      resizingRef.current = false;
+      detach();
+      restoreBody();
       resizeCleanupRef.current = null;
     };
 
     resizeCleanupRef.current = () => {
-      document.removeEventListener('pointermove', onPointerMove);
-      document.removeEventListener('pointerup', onPointerUp);
-      document.body.style.cursor = '';
-      document.body.style.userSelect = '';
+      detach();
+      restoreBody();
       resizingRef.current = false;
     };
 
     document.addEventListener('pointermove', onPointerMove);
     document.addEventListener('pointerup', onPointerUp);
+    document.addEventListener('pointercancel', onPointerCancel);
     document.body.style.cursor = 'col-resize';
     document.body.style.userSelect = 'none';
   };

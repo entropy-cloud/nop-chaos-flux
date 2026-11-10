@@ -1,7 +1,8 @@
 import React from 'react';
 import type { RendererComponentProps } from '@nop-chaos/flux-core';
 import { cn } from '@nop-chaos/ui';
-import { FieldFrame, useCurrentForm } from '@nop-chaos/flux-react';
+import { FieldFrame, useCurrentForm, useRendererRuntime } from '@nop-chaos/flux-react';
+import { validateFieldOnChange } from './validation-rejection.js';
 import type { WheelTimePickerSchema } from './schemas.js';
 import { WheelPickerPopup } from './wheel-picker-popup.js';
 import { encodeTime, timeSelectionFor, wheelTimeColumns } from './wheel-date-columns.js';
@@ -18,6 +19,7 @@ export function WheelTimePickerRenderer(
   const disabled = slotProps.disabled === true;
   const columns = wheelTimeColumns(minuteStep);
   const form = useCurrentForm();
+  const runtime = useRendererRuntime();
 
   const [open, setOpen] = React.useState(false);
   const [draft, setDraft] = React.useState<[number, number]>(() =>
@@ -40,9 +42,7 @@ export function WheelTimePickerRenderer(
     const encoded = encodeTime(draft);
     if (slotProps.name && form) {
       form.setValue(slotProps.name, encoded);
-      if (typeof form.validateField === 'function') {
-        void form.validateField(slotProps.name, 'change');
-      }
+      validateFieldOnChange(form, runtime?.env, slotProps.name);
     }
     const payload = { type: 'confirm', value: encoded };
     void props.events.onConfirm?.(payload, {

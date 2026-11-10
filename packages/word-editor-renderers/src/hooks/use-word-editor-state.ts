@@ -106,6 +106,7 @@ export function useWordEditorState(props: RendererComponentProps<WordEditorPageS
   }, []);
 
   useEffect(() => {
+    mountedRef.current = true;
     return () => {
       mountedRef.current = false;
     };

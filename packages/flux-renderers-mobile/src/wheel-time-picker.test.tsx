@@ -4,6 +4,7 @@ import type { WheelPickerOption } from './schemas.js';
 import { wheelTimeColumns, encodeTime } from './wheel-date-columns.js';
 import { WheelTimePickerRenderer } from './wheel-time-picker.js';
 import { createMockRendererProps } from './test-support.js';
+import { TestRuntimeProvider, createTestRuntime } from '@nop-chaos/flux-react/test-support';
 
 // P1-MA4.3-002 regression guard: the wheel-time-picker component-level
 // contract — minuteStep actually drives the minute column grid, and the
@@ -57,7 +58,11 @@ describe('wheel-time-picker component contract (P1-MA4.3-002)', () => {
       meta: { testid: 'wtp' },
       events: { onConfirm: onConfirm as never },
     });
-    const view = render(<WheelTimePickerRenderer {...props} />);
+    const view = render(
+    <TestRuntimeProvider runtime={createTestRuntime()}>
+      <WheelTimePickerRenderer {...props} />
+    </TestRuntimeProvider>,
+  );
     fireEvent.click(view.getByTestId('wtp-trigger'));
     await waitFor(() =>
       expect(view.container.querySelector('[data-slot="wheel-picker-popup"]')).not.toBeNull(),
@@ -74,7 +79,11 @@ describe('wheel-time-picker component contract (P1-MA4.3-002)', () => {
       meta: { testid: 'wtp' },
       events: { onConfirm: onConfirm as never },
     });
-    const view = render(<WheelTimePickerRenderer {...props} />);
+    const view = render(
+    <TestRuntimeProvider runtime={createTestRuntime()}>
+      <WheelTimePickerRenderer {...props} />
+    </TestRuntimeProvider>,
+  );
     fireEvent.click(view.getByTestId('wtp-trigger'));
     await waitFor(() =>
       expect(view.container.querySelector('[data-slot="wheel-picker-popup"]')).not.toBeNull(),

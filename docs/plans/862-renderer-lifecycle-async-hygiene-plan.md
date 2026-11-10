@@ -1,7 +1,7 @@
 # 862 渲染器生命周期与异步卫生（共享请求中止 / 浮动校验 promise / 挂载标记 / 竞态与指针取消）
 
-> Plan Status: active（draft review round 2 pass-with-minors，见 Draft Review Record）
-> Last Reviewed: 2026-11-06
+> Plan Status: completed（draft review round 2 pass-with-minors；closure audit approved，见 Closure Audit Evidence）
+> Last Reviewed: 2026-11-10
 > Source: `docs/analysis/2026-11-06-full-repo-deep-audit.md` §3（L1–L10）
 > Related: `docs/architecture/renderer-runtime.md`、AGENTS.md「React 19 Best Practices」、本仓规范上报通道 `reportRuntimeHostIssue`（flux-core）
 
@@ -65,40 +65,40 @@
 
 ### Phase 1 - 判别性测试先行（红）
 
-Status: planned
+Status: completed（2026-11-10，红证据 `_tmp/audit-1106/862-red.log`）
 Targets: 各包 colocated 测试（按包既有放置约定）
 
 - Item Types: `Proof`
 
-- [ ] L1：两个同 dictName 消费者，卸载其一 → 另一个拿到选项（宿主 `loadDict` 响应 signal）；StrictMode 单消费者拿到选项
-- [ ] L2：校验器抛错 → 无 unhandled rejection 且上报通道被调（每个包至少一处代表位点）
-- [ ] L3：StrictMode 下 word-editor 保存失败 → `env.notify` 被调；barcode `scanOnFocus` → 扫码层打开
-- [ ] L4：A 慢 B 快 → 最终 geojson 为 B
-- [ ] L5/L6：pointercancel 后 document 监听移除 / body 样式复原；卸载后 pointerup 不触发回写
-- [ ] L7–L9：各写一条可观测断言（卸载后 timer 不再调用 applyToForm；依赖变化不重复恢复；卸载后 lazy children 不写状态；迟到 adapter.out 不覆盖同步写入）
-- [ ] 实跑确认旧实现下红，记入当日 log（L10 为内存持有面，以 WeakMap 类型约束 + 单测断言条目不随 env 累积代替）
+- [x] L1：两个同 dictName 消费者，卸载其一 → 另一个拿到选项（宿主 `loadDict` 响应 signal）；StrictMode 单消费者拿到选项
+- [x] L2：校验器抛错 → 无 unhandled rejection 且上报通道被调（每个包至少一处代表位点：code-editor binding / mobile wheel-picker / form-advanced writeFieldValue）
+- [x] L3：StrictMode 下 word-editor mountedRef 机制断言（保存失败 notify 的上游守卫）；barcode `scanOnFocus` → 扫码层打开
+- [x] L4：A 慢 B 快 → 最终 geojson 为 B
+- [x] L5/L6：pointercancel 后 document 监听移除 / body 样式复原；卸载后 pointerup 不触发回写
+- [x] L7–L9：各写一条可观测断言（卸载后 timer 不再调用 applyToForm；依赖变化不重复恢复；卸载后 lazy children 不写状态；迟到 adapter.out 不覆盖同步写入）
+- [x] 实跑确认旧实现下红，红输出存 `_tmp/audit-1106/862-red.log`（L10 为内存持有面，以 WeakMap 类型约束 + 单测断言条目不随 env 累积代替）
 
 Exit Criteria:
 
-- [ ] 每条 L 缺陷至少一个旧实现必挂的判别测试，红证据在案
+- [x] 每条 L 缺陷至少一个旧实现必挂的判别测试，红证据在案
 
 ### Phase 2 - 修复
 
-Status: planned
+Status: completed（2026-11-10）
 Targets: Current Baseline 列出的 16 个源文件
 
 - Item Types: `Fix`
 
-- [ ] L1 + L10：共享请求 AbortController + 引用计数 + 中止即移除；外层改 WeakMap；修正注释
-- [ ] L2：11 个调用行（7 个文件）接入拒绝处理
-- [ ] L3：两处 mountedRef 复位
-- [ ] L4：latest-key 守卫
-- [ ] L5/L6：pointercancel + 卸载清理
-- [ ] L7/L8/L9：逐条修复
+- [x] L1 + L10：共享请求 AbortController + 引用计数 + 中止即移除；外层改 WeakMap；修正注释
+- [x] L2：11 个调用行（7 个文件）接入拒绝处理
+- [x] L3：两处 mountedRef 复位
+- [x] L4：latest-key 守卫
+- [x] L5/L6：pointercancel + 卸载清理
+- [x] L7/L8/L9：逐条修复
 
 Exit Criteria:
 
-- [ ] Phase 1 判别测试全部转绿；受影响 8 个包测试全绿；既有断言零弱化
+- [x] Phase 1 判别测试全部转绿；受影响 8 个包测试全绿；既有断言零弱化
 
 ## Draft Review Record
 
@@ -109,18 +109,44 @@ Exit Criteria:
 
 ## Closure Gates
 
-- [ ] L1–L10 全部修复且判别测试先红后绿
-- [ ] 不存在被静默降级的 in-scope live defect
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据
-- [ ] `pnpm typecheck`
-- [ ] `pnpm build`
-- [ ] `pnpm lint`
-- [ ] `pnpm test`
-- [ ] `pnpm check` exit 0
+- [x] L1–L10 全部修复且判别测试先红后绿
+- [x] 不存在被静默降级的 in-scope live defect
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据
+- [x] `pnpm typecheck`（2026-11-10 exit 0）
+- [x] `pnpm build`（2026-11-10 exit 0）
+- [x] `pnpm lint`（2026-11-10 exit 0）
+- [x] `pnpm test`（2026-11-10 exit 0）
+- [x] `pnpm check` exit 0
 
 ## Deferred But Adjudicated
 
-（无——执行中若有改判当场落节）
+- L2 辅助函数形态改判：Baseline 原文"复用 attachValidationRejectionHandler"不可行——`field-handlers.tsx` 的原实现未从 `flux-renderers-form` 导出（模块私有），且签名为 `(result, prefix)` 与主路径 console.warn 通道耦合（closure audit 勘误：mobile/code-editor 的 package.json 实际声明依赖 flux-renderers-form，不可行的真实原因是私有导出 + 签名/上报通道差异，非依赖图缺失）。按 plan 允许的"等价 .catch → reportRuntimeHostIssue"路径落本地 helper（mobile 单入口 `validateFieldOnChange`；form-advanced 双函数；code-editor 内联于 hook 文件），带 env 时走 `reportRuntimeHostIssue`（严格优于主路径纯 console.warn），无 env 退化为 console.warn。
+- L9 判别测试可观测通道改判：React 19 已移除"卸载后 setState"警告，无法经 console 观测；改用白盒判别——mock `react.useState` 计数 state 写入，卸载后迟到 dispatch 解析不得新增写调用（旧实现红：写调用增加）。
+- L3 word-editor 判别粒度改判：完整"保存失败 → env.notify"链路需拉起 word-editor 页宿主，超出单元判别性价比；改为机制级判别——StrictMode 双跑后 hook 返回的 `mountedRef.current === true`（旧实现 false，正是通知被吞的上游守卫），保存失败路径由 barcode scanOnFocus 用例覆盖同族缺陷。
+- 测试夹具适配（非断言弱化）：`use-code-editor-binding` 加入 `useRendererRuntime` 后，既有 `use-code-editor-binding.test.tsx`（2 用例）与 mobile `wheel-picker-family.test.tsx` / `wheel-time-picker.test.tsx` 的直接渲染需包 `TestRuntimeProvider`；被测断言零改动。
+
+## 执行中裁决（Phase 1/2 Execution Record，2026-11-10）
+
+- 红证据：`_tmp/audit-1106/862-red.log`（13 个判别测试文件，全部在旧实现下实跑确认红；L10 以 WeakMap 类型断言 + 条目移除断言代替内存持有观测）。
+- 判别测试清单：
+  - L1/L10：`packages/flux-renderers-form/src/__tests__/use-dict-options-shared-abort.test.tsx`
+  - L8：`packages/flux-renderers-form/src/__tests__/field-handlers-adapter-out-generation.test.tsx`
+  - L2（code-editor）：`packages/flux-code-editor/src/code-editor-renderer/use-code-editor-binding-validation-rejection.test.tsx`
+  - L2（mobile）：`packages/flux-renderers-mobile/src/wheel-picker-validation-rejection.test.tsx`
+  - L2（form-advanced）：`packages/flux-renderers-form-advanced/src/write-field-value-validation-rejection.test.ts`
+  - L3（word-editor）：`packages/word-editor-renderers/src/hooks/use-word-editor-state-mounted.test.tsx`
+  - L3（barcode）：`packages/flux-renderers-scheduling/src/barcode-input-strictmode-remount.test.tsx`
+  - L4：`packages/flux-renderers-map/src/use-map-geojson-latest-key.test.tsx`
+  - L5：`packages/flux-renderers-scheduling/src/kanban/hooks/use-kanban-column-resize-cleanup.test.tsx`
+  - L6：`packages/flux-renderers-scheduling/src/gantt/gantt-layout-pointercancel.test.tsx`
+  - L7：`packages/flux-renderers-data/src/use-url-filter-sync-cleanup.test.tsx`
+  - L9：`packages/flux-renderers-data/src/use-table-lazy-children-unmount.test.tsx`
+- 关键决策：
+  - L1 共享请求由条目自有 AbortController 持有，消费者 release 仅减引用；最后一个订阅者离开且未 settle 时立即 abort + 删除条目（晚加入者永不复用已中止加载）。StrictMode 下双跑会发起两次 loadDict（语义可接受：判别标准为"单消费者最终拿到选项且无错误态"）。
+  - L4 守卫为 `latestKeyRef`（dispatch 时记录、结果写回前比对），cache 写入仍按 key 保留（旧 key 结果不写 state，但仍入缓存无害）。
+  - L7 restore 守卫置于 claim 之后，保证一次性恢复 + 多实例 claim 语义同时成立；retry timer 全部登记并在 cleanup 清空。
+  - tag-list `syncErrorVisibility` useCallback 依赖补 `runtime`；wheel-picker 系列对 `slotProps.name` 在回调外先收窄为局部常量。
+  - 收口验证：8 包 vitest 全绿（form 1127+1 skipped / form-advanced 1105+1 skipped / code-editor 118 / mobile 385 / word-editor-renderers 162 / scheduling 1103 / map 67 / data 1178），8 包 `pnpm --filter <pkg> typecheck` 全部通过；`pnpm typecheck/build/lint/test/check` 留待收口统一执行。
 
 ## Non-Blocking Follow-ups
 
@@ -128,13 +154,13 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: <<收口时填写>>
+Status Note: L1–L10 全落地，13 个判别测试先红后绿（红证据 862-red.log）；收口阶段消除 lint/test-global-leaks/duplicates 三类新增命中（6 测试文件 renderHook 化、vi.hoisted 计数、mobile helper 单入口化），五命令 exit 0。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: <<独立子 agent>>
-- Evidence: <<task id / daily log link / findings 摘要>>
+- Auditor / Agent: 独立子代理（fresh session）
+- Evidence: git diff 逐位点核验 L1–L10（引用计数/WeakMap/mountedRef/latest-key/pointercancel/timer/generation 全部属实）；红证据 13 条目在案且断言针对声称行为；mobile 单入口收口重点抽查（能力探测语义保留、判别测试仍有效）；Deferred 分类诚实（L2 私有导出依据成立，2 条 Minor 文字勘误已按建议回写本 plan）；独立实跑 mobile 385 / form 1127+1skip / data 1178 全绿。全量验证 `_tmp/audit-1106/862-864-verify-final3.log`。详见 docs/logs/2026/11-10.md。
 
 Follow-up:
 
-- <<收口时填写>>
+- §3 待确认三项（数据源控制器复活 / dialog-host onConfirm / scada forceRender）维持 Non-Blocking Follow-up。

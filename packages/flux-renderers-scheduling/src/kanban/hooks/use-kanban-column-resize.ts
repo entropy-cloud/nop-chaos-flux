@@ -1,4 +1,4 @@
-import { useCallback, useState, useRef } from 'react';
+import { useCallback, useEffect, useState, useRef } from 'react';
 
 const RESIZE_STEP = 20;
 
@@ -27,6 +27,14 @@ export function useKanbanColumnResize({
 
   const currentWidths = externalWidths ?? internalWidths;
   const resizeStartRef = useRef<{ columnId: string; startX: number; startWidth: number } | null>(null);
+  const dragCleanupRef = useRef<(() => void) | null>(null);
+
+  useEffect(() => {
+    const cleanup = dragCleanupRef;
+    return () => {
+      cleanup.current?.();
+    };
+  }, []);
 
   const getWidth = useCallback((columnId: string) => {
     const w = currentWidths[columnId];
@@ -50,6 +58,13 @@ export function useKanbanColumnResize({
     resizeStartRef.current = { columnId, startX: e.clientX, startWidth: currentWidth };
     setResizing(columnId);
 
+    const detach = () => {
+      document.removeEventListener('pointermove', handlePointerMove);
+      document.removeEventListener('pointerup', handlePointerUp);
+      document.removeEventListener('pointercancel', handlePointerCancel);
+      dragCleanupRef.current = null;
+    };
+
     const handlePointerMove = (ev: PointerEvent) => {
       if (!resizeStartRef.current) return;
       const { startX, startWidth } = resizeStartRef.current;
@@ -58,9 +73,14 @@ export function useKanbanColumnResize({
       setWidth(columnId, newWidth);
     };
 
+    const handlePointerCancel = () => {
+      resizeStartRef.current = null;
+      setResizing(null);
+      detach();
+    };
+
     const handlePointerUp = () => {
-      document.removeEventListener('pointermove', handlePointerMove);
-      document.removeEventListener('pointerup', handlePointerUp);
+      detach();
       setResizing(null);
       if (resizeStartRef.current) {
         const { columnId: cId } = resizeStartRef.current;
@@ -72,6 +92,11 @@ export function useKanbanColumnResize({
 
     document.addEventListener('pointermove', handlePointerMove);
     document.addEventListener('pointerup', handlePointerUp);
+    document.addEventListener('pointercancel', handlePointerCancel);
+    dragCleanupRef.current = () => {
+      resizeStartRef.current = null;
+      detach();
+    };
   }, [currentWidths, minWidth, maxWidth, defaultWidth, getWidth, setWidth]);
 
   const handleResizeKeyDown = useCallback((e: React.KeyboardEvent, columnId: string) => {

@@ -3,6 +3,7 @@ import type { RendererComponentProps, RegisteredRendererDefinition } from '@nop-
 import {
   useCurrentFormFieldState,
   useCurrentValidationScope,
+  useRendererRuntime,
 } from '@nop-chaos/flux-react';
 import { t } from '@nop-chaos/flux-i18n';
 import { cn } from '@nop-chaos/ui';
@@ -14,6 +15,7 @@ import {
 } from '@nop-chaos/flux-renderers-form';
 import type { TagListSchema } from '@nop-chaos/flux-renderers-form';
 import { writeFieldValue } from './write-field-value.js';
+import { attachValidationRejectionHandler, reportValidationFailure } from './validation-rejection.js';
 import { WrappedFieldAction } from './wrapped-field-action.js';
 
 export function TagListRenderer(props: RendererComponentProps<TagListSchema>) {
@@ -29,6 +31,7 @@ export function TagListRenderer(props: RendererComponentProps<TagListSchema>) {
   const labelText = resolveFieldLabelText(props, name);
   const tags = Array.isArray(props.props.tags) ? (props.props.tags as string[]) : [];
   const currentValidationScope = useCurrentValidationScope();
+  const runtime = useRendererRuntime();
   const _fieldState = useCurrentFormFieldState(name, { path: name, ownerPath: name });
 
   const syncErrorVisibility = React.useCallback(() => {
@@ -41,9 +44,12 @@ export function TagListRenderer(props: RendererComponentProps<TagListSchema>) {
     }
 
     if (currentValidationScope?.touchField && shouldValidateOnOwner(name, currentValidationScope, 'change')) {
-      void currentValidationScope.validateAt(name, 'change');
+      attachValidationRejectionHandler(
+        currentValidationScope.validateAt(name, 'change'),
+        (error) => reportValidationFailure(runtime?.env, name, error),
+      );
     }
-  }, [currentForm, currentValidationScope, name]);
+  }, [currentForm, currentValidationScope, name, runtime]);
 
   React.useEffect(() => {
     const owner = currentForm ?? currentValidationScope;
@@ -124,7 +130,10 @@ export function TagListRenderer(props: RendererComponentProps<TagListSchema>) {
                   currentValidationScope &&
                   shouldValidateOnOwner(name, currentValidationScope, 'change')
                 ) {
-                  void currentValidationScope.validateAt(name, 'change');
+                  attachValidationRejectionHandler(
+                    currentValidationScope.validateAt(name, 'change'),
+                    (error) => reportValidationFailure(runtime?.env, name, error),
+                  );
                 }
               }
             }}
