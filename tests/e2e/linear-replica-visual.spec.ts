@@ -212,7 +212,9 @@ test.describe('Linear replica — initial-screen structure', () => {
     await expect(page.getByTestId('linear-inbox-title')).toContainText('收件箱');
     await expect(page.getByTestId('linear-inbox-unread-pill')).toContainText('3 条未读');
     await expect(page.getByTestId('linear-inbox-bulk-read')).toContainText('全部标为已读');
-    await expect(page.getByTestId('linear-inbox-bulk-archive')).toContainText('归档所选');
+    // plan 646 (0d49373c8) 将该按钮从「归档所选」改为「全部归档」归档语义
+    //（ids:[] 全量 + confirmText 确认门），测试期望随页面语义更新。
+    await expect(page.getByTestId('linear-inbox-bulk-archive')).toContainText('全部归档');
     await expect(page.getByTestId('linear-inbox-nav-unread')).toContainText('3');
 
     // 分组流：今天/本周/更早 三组（loop 为结构节点无 DOM，testid 落在组块上）

@@ -7,6 +7,6 @@ runContractHonestyGuardSuite({
   definitions: formRendererDefinitions,
   srcDir: `${import.meta.dirname}/..`,
   capabilityProbe: false,
-  // P1-MA9.2-001 (plan 748): capabilityHandles 74->76 (signature undo/export declarations added).
-discoveryBaseline: { renderers: 31, eventKeys: 6, capabilityHandles: 76 },
+  // P1-MA9.2-001 (plan 748): capabilityHandles 74->76 (signature undo/export declarations added); 76->77 plan 836 (checkbox-group clear 契约补登记——runtime CHECKBOX_GROUP_METHODS 既有 clear).
+discoveryBaseline: { renderers: 31, eventKeys: 6, capabilityHandles: 77 },
 });

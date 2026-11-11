@@ -3,7 +3,7 @@
 > Owner doc: `docs/backlog/platform-hardening-roadmap.md` PH-9
 > Plan: `docs/plans/762-ph9-e2e-baseline-ledger-plan.md`
 > Status: baseline snapshot 2026-10-26（逐项归因 + 隔离复跑证据）
-> **快照滞后指引（2026-11-05 plan 856 注记）**：本页快照为 2026-10-26 运行（unexpected 248）。其后已有一次全量运行——2026-11-02（242 failed / 1896 passed，独立子代理逐红对账：在册 237 + plan 836 在途 1 + 新红 3〔complex-pages:180 / renderer-lab:114 / table-virtual-body:43，登记不静默〕，详见 `docs/logs/2026/11-02.md`）以及 11-02/11-03 plan 836 对 18 条台账外红的分诊修复。**快照表刷新的 owner 是 plan 836 Phase 4（台账基线），本注记仅作指路，不改快照本体。**
+> **快照滞后指引（2026-11-05 plan 856 注记，2026-11-12 更新）**：本页快照本体仍为 2026-10-26 运行（unexpected 248）；**当前权威基线已滚动至文末「2026-11-11 基线」节（plan 836 Phase 4，逐名对账 + 转出/新转入清单）**。中间过程：2026-11-02 全量（242 failed / 1896 passed，独立子代理逐红对账：在册 237 + plan 836 在途 1 + 新红 3〔complex-pages:180 / renderer-lab:114 / table-virtual-body:43，登记不静默〕，详见 `docs/logs/2026/11-02.md`）以及 11-02/11-03 plan 836 对 18 条台账外红的分诊修复。
 > 原始运行产物（gitignored）：`_tmp/ph9-e2e/results.json`（Playwright JSON）、`cluster2.txt`（129 簇全文）、`families.txt`（族归类）、`iso-b1..b8.log`（隔离复跑）
 
 ## 1. 运行元数据
@@ -277,3 +277,7 @@ Error: locator.click: Error: strict mode violation: getByRole('button', { name: 
 | `tests/e2e/mobile-components.spec.ts`                                                    | test.skip ×1（条件门控） | conditional skip（运行时环境条件）                                                                                                                                                                                          | 条件门控（sanctioned；条件即文档）                                                                                                 |
 
 静态合计：12 文件 / 24 call site（15 describe.skip + 8 test.skip + 1 test.fixme）；runtime 对照 46（2026-10-26 运行）。单元测试层游离 skip 另见：`packages/flux-renderers-form/src/__tests__/fm3-contract-probes.test.tsx`（IME characterization it.skip，文内自述 filed-defect record，与上行 fixme 同族）、`packages/flux-react/src/__tests__/values-path-integration.test.tsx`（test.fixme，自述 remove-when-fix）。
+
+## 2026-11-11 基线（plan 836 Phase 4 权威基线，逐名对账）
+
+> 本节体量超限已拆分至 `docs/testing/e2e-baseline-ledger-2026-11-11.md`（运行元数据、逐名对账结论、新转入 3 项、836 处置摘要与转出清单）。快照滞后指引见文件头。

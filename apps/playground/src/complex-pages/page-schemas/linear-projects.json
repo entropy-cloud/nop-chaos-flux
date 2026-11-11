@@ -285,7 +285,8 @@
                               "text": "${$slot.item.progressText}",
                               "className": "ln-progress-text"
                             }
-                          ]
+                          ],
+                          "direction": "row"
                         },
                         {
                           "type": "container",
@@ -335,7 +336,8 @@
                                             }
                                           ]
                                         }
-                                      ]
+                                      ],
+                                      "direction": "row"
                                     },
                                     {
                                       "type": "text",

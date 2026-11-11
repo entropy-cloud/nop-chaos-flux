@@ -1,5 +1,6 @@
 import type { RegisteredRendererDefinition } from '@nop-chaos/flux-core';
 import { LazyScadaCanvasRenderer } from './scada-canvas-lazy.js';
+import { SHARED_SCADA_CONTRACTS } from './scada-shared-contracts.js';
 
 /**
  * 事件载荷共享 shape（design-renderer.md §8.2 `ScadaSymbolEventPayload`）：
@@ -57,34 +58,7 @@ export const industrialRendererDefinitions: RegisteredRendererDefinition[] = [
     component: LazyScadaCanvasRenderer,
     // 9 component handles（design-renderer.md §8.5 表；use-scada-handles.ts SCADA_HANDLE_METHODS）。
     componentCapabilityContracts: [
-      {
-        handle: 'fit',
-        displayName: 'Fit',
-        description: 'Fit the viewport to the scene bounds.',
-      },
-      {
-        handle: 'center',
-        displayName: 'Center',
-        description: 'Center the scene at the current scale.',
-      },
-      {
-        handle: 'getSymbols',
-        displayName: 'Get Symbols',
-        description: 'Read-only scene tree snapshot (id + type per symbol).',
-        result: {
-          kind: 'array',
-          item: {
-            kind: 'object',
-            fields: { id: { kind: 'string' }, type: { kind: 'string' } },
-          },
-        },
-      },
-      {
-        handle: 'getSymbol',
-        displayName: 'Get Symbol',
-        description: 'Read a single symbol resolved props by id.',
-        args: { kind: 'object', fields: { id: { kind: 'string' } } },
-      },
+      ...SHARED_SCADA_CONTRACTS,
       {
         handle: 'setPointValue',
         displayName: 'Set Point Value',
@@ -99,17 +73,6 @@ export const industrialRendererDefinitions: RegisteredRendererDefinition[] = [
         displayName: 'Get Point Table',
         description: 'Point table snapshot (all declared points with current values).',
         result: { kind: 'record', value: { kind: 'unknown' } },
-      },
-      {
-        handle: 'exportConfig',
-        displayName: 'Export Config',
-        description: 'Serialize the current scene config.',
-      },
-      {
-        handle: 'importConfig',
-        displayName: 'Import Config',
-        description: 'Parse + validate + apply a new config (full rebuild).',
-        args: { kind: 'object', fields: { config: { kind: 'unknown' } } },
       },
       {
         handle: 'destroy',

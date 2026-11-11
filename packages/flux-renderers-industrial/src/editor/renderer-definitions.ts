@@ -1,6 +1,7 @@
 import type { RegisteredRendererDefinition } from '@nop-chaos/flux-core';
 import { ScadaEditorCanvasRenderer } from './scada-editor-canvas.js';
 import { scadaEditorHostContract } from './scada-editor-manifest.js';
+import { SHARED_SCADA_CONTRACTS } from '../scada-shared-contracts.js';
 
 /**
  * `scada-editor-canvas` renderer 定义（E5.1 完整 fields，design-renderer.md §4.3 D-1 裁定）。
@@ -29,6 +30,84 @@ export const industrialEditorRendererDefinitions: RegisteredRendererDefinition[]
     rendererClass: 'domain-host-renderer',
     component: ScadaEditorCanvasRenderer,
     hostContract: scadaEditorHostContract,
+    // plan 836: compile-time target typing for `component:*` selectors needs
+    // these contracts (unvalidated-component-target fires without them in
+    // strict mode, tripping the e2e console gate on scada-editor-demo /
+    // playground-entry-pages). Mirrors the invoke switch in
+    // use-editor-handles.ts (runtime 9 ∪ editor 11 minus destroy, which the
+    // switch does not handle). Keep in sync with that switch.
+    componentCapabilityContracts: [
+      ...SHARED_SCADA_CONTRACTS,
+      {
+        handle: 'setPointValue',
+        displayName: 'Set Point Value',
+        description: 'Not supported in editor mode (reachable, always errors).',
+        args: {
+          kind: 'object',
+          fields: { pointId: { kind: 'string' }, value: { kind: 'unknown' } },
+        },
+      },
+      {
+        handle: 'getPointTable',
+        displayName: 'Get Point Table',
+        description: 'Point table snapshot (empty in editor mode).',
+        result: { kind: 'record', value: { kind: 'unknown' } },
+      },
+      {
+        handle: 'addSymbol',
+        displayName: 'Add Symbol',
+        description: 'Add a symbol node to the working config.',
+        args: { kind: 'object', fields: { node: { kind: 'unknown' } } },
+      },
+      {
+        handle: 'removeSymbol',
+        displayName: 'Remove Symbol',
+        description: 'Remove a symbol node from the working config.',
+        args: { kind: 'object', fields: { nodeId: { kind: 'string' } } },
+      },
+      {
+        handle: 'updateSymbol',
+        displayName: 'Update Symbol',
+        description: 'Patch a symbol node in the working config.',
+        args: { kind: 'object', fields: { nodeId: { kind: 'string' }, patch: { kind: 'unknown' } } },
+      },
+      {
+        handle: 'save',
+        displayName: 'Save',
+        description: 'Commit the working config; returns the serialized config.',
+      },
+      {
+        handle: 'load',
+        displayName: 'Load',
+        description: 'Replace the working config.',
+        args: { kind: 'object', fields: { config: { kind: 'unknown' } } },
+      },
+      { handle: 'undo', displayName: 'Undo', description: 'Undo the last working-config mutation.' },
+      { handle: 'redo', displayName: 'Redo', description: 'Redo the last undone mutation.' },
+      {
+        handle: 'group',
+        displayName: 'Group',
+        description: 'Group the selected symbols into a scada-group node.',
+        args: { kind: 'object', fields: { nodeIds: { kind: 'array', item: { kind: 'string' } } } },
+      },
+      {
+        handle: 'ungroup',
+        displayName: 'Ungroup',
+        description: 'Dissolve a scada-group node.',
+        args: { kind: 'object', fields: { groupId: { kind: 'string' } } },
+      },
+      {
+        handle: 'previewInject',
+        displayName: 'Preview Inject',
+        description: 'Inject preview point values (preview mode).',
+        args: { kind: 'object', fields: { values: { kind: 'record', value: { kind: 'unknown' } } } },
+      },
+      {
+        handle: 'previewClear',
+        displayName: 'Preview Clear',
+        description: 'Clear injected preview values.',
+      },
+    ],
     fields: [
       {
         key: 'statusPath',

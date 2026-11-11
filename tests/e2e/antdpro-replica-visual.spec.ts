@@ -37,7 +37,9 @@ test.describe('AntdPro replica — initial-screen structure', () => {
     await expect(page.getByTestId('antdpro-breadcrumb')).toContainText('订单管理');
     await expect(page.getByTestId('antdpro-page-title')).toContainText('订单列表');
     await expect(page.getByTestId('antdpro-list-new')).toBeVisible();
-    await expect(page.getByTestId('antdpro-list-export')).toBeVisible();
+    // plan 551 (3b5445ea2) removed the dead batch-export button (no onClick —
+    // dead-control precedent 550); only 新建 + 刷新 remain in the extra group.
+    await expect(page.getByTestId('antdpro-list-export')).toHaveCount(0);
 
     // 查询区：3 字段 + 展开/收起入口
     await expect(page.getByTestId('antdpro-query-keyword')).toBeVisible();
@@ -112,9 +114,13 @@ test.describe('AntdPro replica — initial-screen structure', () => {
 
     await expect(page.getByTestId('antdpro-form-grouped-title')).toContainText('入库登记');
 
-    const inlineForm = page.getByTestId('antdpro-grouped-inline-form');
-    await expect(inlineForm).toContainText('入库基信');
-    await expect(inlineForm).toContainText('人员信息');
+    // plan 551 (3b5445ea2) merged the three sibling card forms into a single
+    // `antdpro-grouped-form` (required-field validation channel + preserved
+    // 10 fields); the former `antdpro-grouped-inline-form` testid is gone and
+    // the fieldset titles live inside the merged form now.
+    const mergedForm = page.getByTestId('antdpro-grouped-form');
+    await expect(mergedForm).toContainText('入库基信');
+    await expect(mergedForm).toContainText('人员信息');
 
     await expect(page.getByTestId('antdpro-grouped-card-desc-title')).toContainText('任务描述');
     await expect(page.getByTestId('antdpro-grouped-card-owner-title')).toContainText('责任信息');

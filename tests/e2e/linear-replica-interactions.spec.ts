@@ -588,8 +588,15 @@ test.describe('Linear inbox — 收件箱动作', () => {
     await expect(page.getByTestId('linear-inbox-item-dot')).toHaveCount(0);
     await expect(page.getByTestId('linear-inbox-item')).toHaveCount(9);
 
-    // 归档全部：行清空，分组保留「0 条」空态
+    // 归档全部：行清空，分组保留「0 条」空态。
+    // plan 646 (0d49373c8, 2026-10-18) 给 bulk-archive 增加了 confirmText 门
+    // （「确认归档全部未归档通知？」）——点击后须经确认弹窗提交，本用例未跟进导致
+    // toast 断言落空（台账 F9 该项的单点根因）。
     await page.getByTestId('linear-inbox-bulk-archive').click({ position: { x: 20, y: 8 } });
+    const archiveAlert = page.getByRole('alertdialog');
+    await expect(archiveAlert, 'confirmText gate opens').toBeVisible({ timeout: 10_000 });
+    await archiveAlert.getByRole('button', { name: '确认' }).click();
+    await expect(archiveAlert).toBeHidden({ timeout: 3_000 });
     await expect(page.getByText('已归档全部通知')).toBeVisible({ timeout: 10_000 });
     await expect(page.getByTestId('linear-inbox-item')).toHaveCount(0, { timeout: 10_000 });
     expect((await readEndpointCalls(page)).Linear__inboxUpdate).toBe(2);

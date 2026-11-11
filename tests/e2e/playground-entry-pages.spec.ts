@@ -560,6 +560,65 @@ const ROUTE_ASSERTIONS: Record<string, RouteAssertion> = {
       page.getByRole('heading', { name: 'three-canvas 数据驱动 3D 场景演示页', level: 1 }),
     ).toBeVisible({ timeout: 15_000 });
   },
+  // plan 836：以下 11 条路由为 2026-10-15..10-28 期间各自计划落地的新页面
+  //（plan 785 / 664 / 668 / 621、首页 IA 重组 e22e9fa3f、559 3D/SCADA 画廊、
+  // plan 534 three-industrial），注册进 DOMAIN_RENDERER_ROUTES 但未同步本断言映射，
+  // :569 清单 parity 一直红。逐条补页面骨架断言（DV 先例：plan 2026-08-25-0215-1）。
+  'input-table-erp': async (page) => {
+    await expect(
+      page.getByRole('heading', { name: 'input-table ERP 行内编辑增强 — 合计行 / 从表联动 / 金额大写', level: 1 }),
+    ).toBeVisible({ timeout: 15_000 });
+  },
+  'm11-number-keyboard': async (page) => {
+    await expect(
+      page.getByRole('heading', { name: 'M11 安全输入 — number-keyboard', level: 1 }),
+    ).toBeVisible({ timeout: 15_000 });
+  },
+  'm10-list-navigation': async (page) => {
+    await expect(
+      page.getByRole('heading', { name: 'M10 列表导航 — index-bar / scroll-mask', level: 1 }),
+    ).toBeVisible({ timeout: 15_000 });
+  },
+  'm9-image-signature': async (page) => {
+    await expect(
+      page.getByRole('heading', { name: 'M9 图像与手写 — image-viewer / input-signature 增强', level: 1 }),
+    ).toBeVisible({ timeout: 15_000 });
+  },
+  'm8-bottom-panels': async (page) => {
+    await expect(
+      page.getByRole('heading', { name: 'M8 底部面板组 — floating-panel / bubble / action-sheet / Sheet 手势关闭', level: 1 }),
+    ).toBeVisible({ timeout: 15_000 });
+  },
+  'm7-wheel-pickers': async (page) => {
+    await expect(
+      page.getByRole('heading', { name: 'M7 滚轮家族 — picker-view / wheel-picker / date / time / cascader', level: 1 }),
+    ).toBeVisible({ timeout: 15_000 });
+  },
+  'm6-gesture-lab': async (page) => {
+    await expect(
+      page.getByRole('heading', { name: 'M6 手势基建 — velocity / rubberband / useLockScroll', level: 1 }),
+    ).toBeVisible({ timeout: 15_000 });
+  },
+  'three-gallery': async (page) => {
+    await expect(
+      page.getByRole('heading', { name: 'three-gallery 示例画廊（图元材质 / 灯光 / 原生 JSON / GLB / 关键帧 / 数字孪生）', level: 1 }),
+    ).toBeVisible({ timeout: 20_000 });
+  },
+  'three-industrial-demo': async (page) => {
+    await expect(
+      page.getByRole('heading', { name: 'three-industrial 数据源演示页（plan 534 D2）', level: 1 }),
+    ).toBeVisible({ timeout: 20_000 });
+  },
+  'scada-gallery': async (page) => {
+    await expect(
+      page.getByRole('heading', { name: 'scada-gallery 场景画廊（水处理 / 配电 / 产线）', level: 1 }),
+    ).toBeVisible({ timeout: 20_000 });
+  },
+  'xlang-debug': async (page) => {
+    await expect(
+      page.getByRole('heading', { name: 'XLang 在线调试（演示）' }),
+    ).toBeVisible({ timeout: 20_000 });
+  },
 };
 
 async function openDomainRoute(page: Page, routeId: string) {

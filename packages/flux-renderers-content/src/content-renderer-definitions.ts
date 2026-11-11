@@ -22,29 +22,6 @@ import { SeparatorRenderer } from './separator.js';
 import { SpinnerRenderer } from './spinner.js';
 import { StatusRenderer } from './status.js';
 import { VideoRenderer } from './video.js';
-import type {
-  AlertSchema,
-  AmountInWordsSchema,
-  AudioSchema,
-  CardSchema,
-  CardsSchema,
-  CarouselSchema,
-  DiffViewSchema,
-  EmptySchema,
-  HtmlSchema,
-  ImageSchema,
-  JsonViewSchema,
-  LinkSchema,
-  MappingSchema,
-  MarkdownSchema,
-  ProgressSchema,
-  QrCodeSchema,
-  ResultSchema,
-  SeparatorSchema,
-  SpinnerSchema,
-  StatusSchema,
-  VideoSchema,
-} from './schemas.js';
 
 const defineContentRenderer = defineRendererFamily({
   sourcePackage: '@nop-chaos/flux-renderers-content',
@@ -615,6 +592,18 @@ export const contentRendererDefinitions: RegisteredRendererDefinition[] = [
     displayName: 'Carousel',
     category: 'content',
     component: CarouselRenderer,
+    // plan 836: compile-time target typing for component:next/prev/setValue —
+    // mirrors the invoke switch / hasMethod list in carousel.tsx.
+    componentCapabilityContracts: [
+      { handle: 'next', displayName: 'Next', description: 'Scroll to the next slide; result carries the new index.' },
+      { handle: 'prev', displayName: 'Prev', description: 'Scroll to the previous slide; result carries the new index.' },
+      {
+        handle: 'setValue',
+        displayName: 'Set Value',
+        description: 'Scroll to the slide at the given numeric index (clamped).',
+        args: { kind: 'object', fields: { value: { kind: 'number' } } },
+      },
+    ],
     fields: [
       {
         key: 'items',
@@ -666,26 +655,3 @@ export const contentRendererDefinitions: RegisteredRendererDefinition[] = [
   }),
   diffViewRendererDefinition,
 ];
-
-export type ContentRendererSchema =
-  | SeparatorSchema
-  | SpinnerSchema
-  | ProgressSchema
-  | EmptySchema
-  | CardSchema
-  | LinkSchema
-  | ImageSchema
-  | JsonViewSchema
-  | MarkdownSchema
-  | HtmlSchema
-  | CardsSchema
-  | AlertSchema
-  | AmountInWordsSchema
-  | MappingSchema
-  | StatusSchema
-  | AudioSchema
-  | VideoSchema
-  | CarouselSchema
-  | QrCodeSchema
-  | ResultSchema
-  | DiffViewSchema;

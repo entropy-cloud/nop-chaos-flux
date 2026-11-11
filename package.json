@@ -148,6 +148,8 @@
     "overrides": {
       "minimist": ">=1.2.8",
       "prosemirror-view": ">=1.42.3",
+      "prosemirror-model": ">=1.25.12",
+      "prosemirror-transform": ">=1.12.4",
       "lodash": ">=4.18.1",
       "dts-bundle-generator>typescript": "npm:@typescript/typescript6@6.0.2"
     }

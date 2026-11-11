@@ -60,7 +60,7 @@ export { DiffViewRenderer } from './diff-view/diff-view-renderer.js';
 export { rehypeStripUnsafeHtml, sanitizeHtml, type SanitizeOptions } from './sanitize.js';
 
 export { contentRendererDefinitions } from './content-renderer-definitions.js';
-export type { ContentRendererSchema } from './content-renderer-definitions.js';
+export type { ContentRendererSchema } from './content-renderer-schema.js';
 
 export function registerContentRenderers(registry: RendererRegistry) {
   return registerRendererDefinitions(registry, contentRendererDefinitions);

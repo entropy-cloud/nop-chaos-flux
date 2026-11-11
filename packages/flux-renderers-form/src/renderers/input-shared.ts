@@ -26,6 +26,19 @@ export const SCALAR_INPUT_CAPABILITY_CONTRACTS = [
   },
 ] as const;
 
+export const FOCUS_CLEAR_CAPABILITY_CONTRACTS = [
+  {
+    handle: 'clear',
+    displayName: 'Clear',
+    description: 'Clear the group selection back to the empty selection.',
+  },
+  {
+    handle: 'focus',
+    displayName: 'Focus',
+    description: 'Focus the control.',
+  },
+] as const;
+
 export const FOCUS_ONLY_CAPABILITY_CONTRACTS = [
   {
     handle: 'focus',

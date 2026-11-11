@@ -28,11 +28,22 @@ async function openPage(page: import('@playwright/test').Page, pageId: string, l
   await page.waitForTimeout(800);
 }
 
+// plan 836 Phase 3（cal-replica-visual 01 时间炸弹修复）：booking 月历锚定 mock 的
+// 固定日期 2026-09-03（cal-booking.json `date`），`data-today` 高亮只有当"今天"落在
+// 该锚定日的六周网格窗口内才存在——按真实墙钟运行时，仅在 2026-08 下旬～2026-10 上旬
+// 期间可绿（台账 F9 "today 标记缺失" 即 10 月后失锚的时间炸弹）。固定浏览器钟到
+// 2026-09-03 02:00 CST 使 today=09-03 恒在网格内，断言语义（今日强调）不变且确定。
+// setFixedTime 须置于页面加载之后：启动前冻结 Date 会让应用引导挂起（E1 教训在案）。
+test.use({ timezoneId: 'Asia/Shanghai' });
+
+const BOOKING_ANCHOR_CLOCK = new Date('2026-09-03T02:00:00+08:00');
+
 test.describe('Cal replica — initial-screen structure', () => {
   test('01 booking — entry header + duration tabs + month calendar + grouped slot grid from mock', async ({
     page,
   }) => {
     await openPage(page, 'cal-booking', 'Cal 预约 · 选时段');
+    await page.clock.setFixedTime(BOOKING_ANCHOR_CLOCK);
 
     // 入口区：头像 + 用户名徽章 + 活动标题 + meta 行 + 描述（数据来自 Cal__event）
     await expect(page.getByTestId('cal-booking-avatar')).toContainText('沈');
@@ -56,6 +67,9 @@ test.describe('Cal replica — initial-screen structure', () => {
     // calendar-grid-cell 六周网格）+ 今日强调 + 时区选择器 + 12h/24h 开关
     const calendar = page.getByTestId('cal-booking-calendar');
     await expect(calendar).toBeVisible();
+    // 固定钟后触发一次网格重渲染（grid 在 mount 时已用真实墙钟渲染，
+    // data-today/isToday 于 render 期取样；选一格触发重渲染使冻结钟生效）。
+    await calendar.locator('[data-slot="calendar-grid-cell"]').first().click();
     const cells = calendar.locator('[data-slot="calendar-grid-cell"]');
     await expect(cells.first()).toBeVisible();
     expect(await cells.count()).toBe(42);

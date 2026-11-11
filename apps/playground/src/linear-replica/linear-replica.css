@@ -801,6 +801,15 @@
   width: 100%;
 }
 
+/* direction 契约（ux-r12 CP-1）后容器把 children 包进 [data-slot='container-body']；
+   该 wrapper 需撑满 .ln-progress，否则内部 flex:1 的 track 以内容宽收缩为 0
+   （台账 F9 linear-projects progress NaN 的根因）。 */
+.ln-progress > [data-slot='container-body'] {
+  flex: 1;
+  width: 100%;
+  gap: 8px;
+}
+
 .ln-progress-track {
   flex: 1;
   height: 4px;

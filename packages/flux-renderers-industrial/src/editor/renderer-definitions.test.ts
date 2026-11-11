@@ -107,3 +107,62 @@ describe('industrialEditorRendererDefinitions (E5.1 完整 fields)', () => {
     expect(back).toEqual(sample);
   });
 });
+
+// plan 836：component:* 选择器的编译期目标校验需要定义发布 componentCapabilityContracts，
+// 否则 strict 模式下 unvalidated-component-target 以 console.error 形态命中 e2e console 门禁
+// （scada-editor-demo 5 个 action + playground-entry-pages smoke）。与 use-editor-handles.ts
+// invoke switch 同源防漂移：switch 支持的每个方法都必须有契约条目。
+describe('scada-editor-canvas componentCapabilityContracts (plan 836)', () => {
+  it('publishes a contract for every handle the invoke switch supports (no drift vs ALL_HANDLE_METHODS minus destroy)', async () => {
+    const { ALL_HANDLE_METHODS } = await import('./editor-handle-names.js');
+    const contracts = industrialEditorRendererDefinitions[0].componentCapabilityContracts ?? [];
+    const declared = new Set(contracts.map((contract) => contract.handle));
+    // destroy tears the engine down imperatively and is NOT reachable through
+    // the invoke switch (use-editor-handles.ts default arm) — excluded.
+    for (const method of ALL_HANDLE_METHODS) {
+      if (method === 'destroy') continue;
+      expect(declared.has(method), `missing capability contract for ${method}`).toBe(true);
+    }
+  });
+
+  it('compiling component:* selectors against scada-editor-canvas emits no unvalidated-component-target', async () => {
+    const { validateSchema } = await import('@nop-chaos/flux-compiler');
+    const { createExpressionCompiler } = await import('@nop-chaos/flux-formula');
+    const { createFormulaCompiler } = await import('@nop-chaos/flux-formula');
+    const { createRendererRegistry } = await import('@nop-chaos/flux-core');
+    const registry = createRendererRegistry([
+      ...industrialEditorRendererDefinitions,
+      {
+        type: 'page',
+        component: () => null,
+        fields: [{ key: 'body', kind: 'region', regionKey: 'body' }],
+      },
+      {
+        type: 'button',
+        component: () => null,
+        fields: [{ key: 'onClick', kind: 'event' }],
+      },
+    ]);
+    const schema = {
+      type: 'page',
+      body: [
+        { type: 'scada-editor-canvas', id: 'editor-canvas' },
+        { type: 'button', onClick: { action: 'component:save', componentId: 'editor-canvas' } },
+        { type: 'button', onClick: { action: 'component:load', componentId: 'editor-canvas', args: { config: {} } } },
+        { type: 'button', onClick: { action: 'component:exportConfig', componentId: 'editor-canvas' } },
+        { type: 'button', onClick: { action: 'component:previewInject', componentId: 'editor-canvas', args: { values: {} } } },
+        { type: 'button', onClick: { action: 'component:previewClear', componentId: 'editor-canvas' } },
+      ],
+    };
+    const diagnostics = validateSchema({
+      schema: schema as never,
+      registry,
+      expressionCompiler: createExpressionCompiler(createFormulaCompiler()),
+    });
+    expect(diagnostics).not.toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ code: 'unvalidated-component-target' }),
+      ]),
+    );
+  });
+});

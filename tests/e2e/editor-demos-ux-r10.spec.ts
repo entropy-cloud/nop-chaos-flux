@@ -132,7 +132,10 @@ test('sc2-palette-thumb: every palette item carries a shape preview node', async
   await openScadaEditorDemo(page);
 
   const palette = page.locator('[data-slot="scada-editor-palette"]');
-  const items = palette.locator('button');
+  // plan 531 (da067c238) added group-collapse buttons into the palette aside;
+  // count symbol items only, otherwise the 7 group headers inflate itemCount
+  // and the "one thumb per item" pairing fails (44 buttons vs 37 thumbs).
+  const items = palette.locator('[data-palette-item]');
   const itemCount = await items.count();
   expect(itemCount, 'palette items').toBeGreaterThanOrEqual(20);
   const thumbs = palette.locator('[data-slot="scada-palette-thumb"]');

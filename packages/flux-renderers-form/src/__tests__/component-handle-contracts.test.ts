@@ -29,9 +29,9 @@ describe('input renderer component capability contracts (X1)', () => {
     expect(handlesFor('select')).toEqual(['clear', 'focus', 'open']);
   });
 
-  it('switch / radio-group / checkbox-group publish focus only', () => {
+  it('switch / radio-group publish focus only; checkbox-group publishes focus + clear (plan 836: runtime CHECKBOX_GROUP_METHODS already wires clear)', () => {
     expect(handlesFor('switch')).toEqual(['focus']);
     expect(handlesFor('radio-group')).toEqual(['focus']);
-    expect(handlesFor('checkbox-group')).toEqual(['focus']);
+    expect(handlesFor('checkbox-group')).toEqual(['clear', 'focus']);
   });
 });

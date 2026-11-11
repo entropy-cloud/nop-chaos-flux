@@ -48,6 +48,7 @@ import { ButtonGroupSelectRenderer } from './button-group-select-renderer.js';
 import { InputNumberRenderer } from './input-number-renderer.js';
 import { TextareaRenderer } from './textarea-renderer.js';
 import {
+  FOCUS_CLEAR_CAPABILITY_CONTRACTS,
   FOCUS_ONLY_CAPABILITY_CONTRACTS,
   SCALAR_INPUT_CAPABILITY_CONTRACTS,
   SELECT_CAPABILITY_CONTRACTS,
@@ -522,7 +523,7 @@ export const inputRendererDefinitions: RegisteredRendererDefinition[] = [
     ],
     validation: createFieldValidation(),
     schemaValidator: validateInputFieldSchema,
-    componentCapabilityContracts: FOCUS_ONLY_CAPABILITY_CONTRACTS,
+    componentCapabilityContracts: FOCUS_CLEAR_CAPABILITY_CONTRACTS,
     wrap: true,
     frameWrap: 'group', // plan 460 B3: same rationale as radio-group
     component: CheckboxGroupRenderer,
