@@ -63,7 +63,22 @@
             { "name": "subject", "label": "申请主题", "width": 240 },
             { "name": "submitter", "label": "申请人", "width": 100 },
             { "name": "currentNode", "label": "当前节点", "width": 120 },
-            { "name": "approveStatusLabel", "label": "审批状态", "width": 100 },
+            {
+              "name": "approveStatusLabel",
+              "label": "审批状态",
+              "width": 100,
+              "cell": {
+                "type": "container",
+                "className": "flex items-center",
+                "body": [
+                  {
+                    "type": "text",
+                    "text": "${approveStatusLabel}",
+                    "className": "${approveStatus === \"SUBMITTED\" ? \"text-xs text-amber-700 bg-amber-50 rounded px-1.5 py-0.5\" : approveStatus === \"APPROVED\" ? \"text-xs text-emerald-700 bg-emerald-50 rounded px-1.5 py-0.5\" : approveStatus === \"REJECTED\" ? \"text-xs text-rose-700 bg-rose-50 rounded px-1.5 py-0.5\" : \"text-xs text-slate-600 bg-slate-100 rounded px-1.5 py-0.5\"}"
+                  }
+                ]
+              }
+            },
             { "name": "hitlToolCallId", "label": "HITL 调用", "width": 160 }
           ],
           "onRowClick": {

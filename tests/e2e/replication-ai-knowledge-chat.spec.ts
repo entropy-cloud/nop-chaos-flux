@@ -104,9 +104,10 @@ test('前置：host 骨架（会话列表 2 行默认选中 + sender + welcome/p
   await expect(promptItems).toHaveCount(3);
 
   // afterMessages 控件在位（activeAnswer 未写回：citations 空列表——空 <ol>
-  // 零高度按存在性断言，写回后转可见——+ token 占位）.
+  // 零高度按存在性断言，写回后转可见——+ token 占位）。feedback 动作条在
+  // 空态（尚无 assistant 消息）隐藏，首答写回后可见。
   await expect(page.locator(CITATIONS)).toHaveCount(1);
-  await expect(page.locator('[data-testid="ai-knowledge-chat-feedback"]')).toBeVisible();
+  await expect(page.locator('[data-testid="ai-knowledge-chat-feedback"]')).not.toBeVisible();
   await expect(page.locator(`${TOKEN_USAGE}[data-empty]`)).toBeVisible();
   await expect(page.locator(GUARDRAIL_ALERT)).toHaveCount(0);
 

@@ -1,0 +1,67 @@
+{
+  "_comments": [
+    "per-(route × signature) ratchet for control-adjacency-baseline.spec.ts.",
+    "overlap = interactive elements whose rects overlap both axes >6px;",
+    "touch = <2px gap between interactive elements whose nearest common ancestor is flex/grid with gap <4px.",
+    "注册新签名须在 _reasons 给出「有意形态」证据（浮层 chrome / 半屏面板 / 内嵌 stepper 等），见 2026-11-13 间距专项报告。"
+  ],
+  "_reasons": {
+    "overlap:slot=carousel-indicator:slot=button-group-select-item": "mall-sku-picker SKU 半屏面板（nop-floating-panel，不透明白底）按设计浮于轮播区之上"
+  },
+  "flux-basic": {},
+  "component-handles": {
+    "overlap:slot=input:slot=stepper-decrease": 1
+  },
+  "ai-widgets": {},
+  "w4a-multimedia": {},
+  "gantt": {
+    "overlap:slot=gantt-bar:polyline": 1
+  },
+  "complex-pages/standard-crud": {},
+  "complex-pages/wms-wave-picking": {
+    "touch:slot=tabs-trigger:slot=tabs-trigger": 2
+  },
+  "complex-pages/wms-stock-ledger": {},
+  "complex-pages/crm-opportunity-kanban": {},
+  "complex-pages/crm-customer-360": {
+    "touch:slot=tabs-trigger:slot=tabs-trigger": 3,
+    "touch:slot=timeline-item:slot=timeline-item": 4
+  },
+  "complex-pages/crm-sales-dashboard": {},
+  "complex-pages/itam-asset-inventory": {
+    "touch:slot=tabs-trigger:slot=tabs-trigger": 1
+  },
+  "complex-pages/itam-depreciation-dashboard": {},
+  "complex-pages/ai-knowledge-chat": {},
+  "complex-pages/ai-ticket-console": {
+    "touch:slot=tabs-trigger:slot=tabs-trigger": 1
+  },
+  "complex-pages/ai-approval-trail": {},
+  "complex-pages/mes-shopfloor-board": {},
+  "complex-pages/mes-work-reporting": {},
+  "complex-pages/mall-distribution": {
+    "touch:slot=input:slot=button": 1
+  },
+  "complex-pages/doc-ocr-workbench": {},
+  "complex-pages/doc-hitl-inbox": {},
+  "complex-pages/iot-telemetry-device": {},
+  "complex-pages/iot-ota-rollout": {
+    "touch:slot=pagination-link:slot=pagination-link": 2
+  },
+  "complex-pages/iot-geofence-videowall": {},
+  "dashboard-demo": {
+    "touch:slot=pagination-link:slot=pagination-link": 2
+  },
+  "complex-pages/wms-pda-receiving": {
+    "touch:slot=input-group-control:slot=barcode-scan-button": 2,
+    "overlap:slot=input:slot=stepper-increase": 1,
+    "overlap:slot=input:slot=stepper-decrease": 1,
+    "touch:slot=stepper-increase:slot=stepper-decrease": 1
+  },
+  "complex-pages/mes-andon-material": {
+    "touch:testid=mes-andon-material-escalate:testid=mes-andon-material-close": 4
+  },
+  "complex-pages/mall-sku-picker": {
+    "touch:slot=button-group-select-item:slot=button-group-select-item": 2
+  }
+}

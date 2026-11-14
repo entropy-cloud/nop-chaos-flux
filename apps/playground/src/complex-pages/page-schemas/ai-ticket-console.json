@@ -70,19 +70,22 @@
               "type": "stat-tile",
               "testid": "ai-ticket-console-kpi-open",
               "label": "待派单",
-              "value": "${ticketBoard?.stats?.openCount ?? 0}"
+              "value": "${ticketBoard?.stats?.openCount ?? 0}",
+              "sparkline": "${ticketBoard?.stats?.openSpark ?? []}"
             },
             {
               "type": "stat-tile",
               "testid": "ai-ticket-console-kpi-sla",
               "label": "超 SLA",
-              "value": "${ticketBoard?.stats?.slaBreachedCount ?? 0}"
+              "value": "${ticketBoard?.stats?.slaBreachedCount ?? 0}",
+              "sparkline": "${ticketBoard?.stats?.slaSpark ?? []}"
             },
             {
               "type": "stat-tile",
               "testid": "ai-ticket-console-kpi-resolved",
               "label": "今日解决",
-              "value": "${ticketBoard?.stats?.resolvedTodayCount ?? 0}"
+              "value": "${ticketBoard?.stats?.resolvedTodayCount ?? 0}",
+              "sparkline": "${ticketBoard?.stats?.resolvedSpark ?? []}"
             },
             {
               "type": "stat-tile",
@@ -181,7 +184,7 @@
                         "type": "text",
                         "testid": "ai-ticket-console-card-sla",
                         "text": "${$slot.card.data.slaRemainingMinutes < 0 ? 'SLA 超时' : 'SLA 剩余'} ${$slot.card.data.slaRemainingMinutes} 分",
-                        "className": "text-xs"
+                        "className": "${$slot.card.data.slaRemainingMinutes < 30 ? 'text-xs text-rose-700 bg-rose-50 rounded px-1.5 py-0.5' : $slot.card.data.slaRemainingMinutes < 90 ? 'text-xs text-amber-700 bg-amber-50 rounded px-1.5 py-0.5' : 'text-xs text-emerald-700 bg-emerald-50 rounded px-1.5 py-0.5'}"
                       }
                     ]
                   },
@@ -421,7 +424,7 @@
                         {
                           "type": "text",
                           "testid": "ai-ticket-console-sla-text",
-                          "text": "G9 SLA 静态口径：剩余约 ${slaRemainingMinutes} 分钟 · 截止 ${$Date.format(deadlineDateTime, 'datetime')}",
+                          "text": "剩余约 ${slaRemainingMinutes} 分钟 · 截止 ${$Date.format(deadlineDateTime, 'datetime')}",
                           "className": "text-sm"
                         },
                         {

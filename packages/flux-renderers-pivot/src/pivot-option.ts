@@ -117,6 +117,7 @@ function normalizeDimension(value: PivotDimension): IRowDimension | IColumnDimen
       title: value.title ?? dimensionKey,
       headerType: 'text',
       ...(value.headerStyle ? { headerStyle: value.headerStyle } : {}),
+      ...(value.width !== undefined ? { width: value.width } : {}),
     };
   }
   devWarn(`dimension 条目非法（非字符串/非对象），已跳过`);
@@ -306,7 +307,7 @@ function normalizeCorner(schema: PivotOptionInput): { titleOnDimension: ShowColu
 /** buildPivotOption 所需的 schema 面（与 RendererResolvedProps 兼容，type 可选）。 */
 export type PivotOptionInput = Pick<
   PivotTableSchema,
-  'indicators' | 'rowDimensions' | 'columnDimensions' | 'dataConfig' | 'cornerTitleOnDimension'
+  'indicators' | 'rowDimensions' | 'columnDimensions' | 'dataConfig' | 'cornerTitleOnDimension' | 'widthMode'
 >;
 
 export function buildPivotOption(
@@ -366,6 +367,9 @@ export function buildPivotOption(
     rows,
     columns,
     indicators: normalizedIndicators.map(({ indicator }) => indicator),
+    ...(schema.widthMode
+      ? { widthMode: schema.widthMode === 'auto' ? ('autoWidth' as const) : schema.widthMode }
+      : {}),
     ...(corner ? { corner } : {}),
     ...(Object.keys(dataConfig).length > 0 ? { dataConfig } : {}),
   };

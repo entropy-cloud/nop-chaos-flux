@@ -47,6 +47,7 @@
           "type": "query-filter",
           "id": "mall-distribution-filter",
           "testid": "mall-distribution-filter",
+          "mode": "inline",
           "columnCount": 3,
           "submitLabel": "查询",
           "resetLabel": "重置",

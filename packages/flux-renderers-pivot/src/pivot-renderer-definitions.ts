@@ -164,14 +164,18 @@ export const pivotRendererDefinitions: RegisteredRendererDefinition[] = [
                 { kind: 'string' },
                 {
                   kind: 'object',
-                  fields: { dimensionKey: { kind: 'string' }, title: { kind: 'string' } },
-                  optional: ['title'],
+                  fields: {
+                    dimensionKey: { kind: 'string' },
+                    title: { kind: 'string' },
+                    width: { kind: 'union', anyOf: [{ kind: 'number' }, { kind: 'string' }] },
+                  },
+                  optional: ['title', 'width'],
                 },
               ],
             },
           },
           displayName: 'Row Dimensions',
-          description: '行维度：字符串或 { dimensionKey, title?, headerStyle? } 对象。',
+          description: '行维度：字符串或 { dimensionKey, title?, headerStyle?, width? } 对象。',
           editorType: 'array',
         },
       },
@@ -187,14 +191,18 @@ export const pivotRendererDefinitions: RegisteredRendererDefinition[] = [
                 { kind: 'string' },
                 {
                   kind: 'object',
-                  fields: { dimensionKey: { kind: 'string' }, title: { kind: 'string' } },
-                  optional: ['title'],
+                  fields: {
+                    dimensionKey: { kind: 'string' },
+                    title: { kind: 'string' },
+                    width: { kind: 'union', anyOf: [{ kind: 'number' }, { kind: 'string' }] },
+                  },
+                  optional: ['title', 'width'],
                 },
               ],
             },
           },
           displayName: 'Column Dimensions',
-          description: '列维度：字符串或 { dimensionKey, title?, headerStyle? } 对象。',
+          description: '列维度：字符串或 { dimensionKey, title?, headerStyle?, width? } 对象。',
           editorType: 'array',
         },
       },
@@ -248,6 +256,24 @@ export const pivotRendererDefinitions: RegisteredRendererDefinition[] = [
         },
       },
       {
+        key: 'widthMode',
+        kind: 'prop',
+        contract: {
+          shape: {
+            kind: 'union',
+            anyOf: [
+              { kind: 'literal', value: 'adaptive' },
+              { kind: 'literal', value: 'autoWidth' },
+              { kind: 'literal', value: 'auto' },
+              { kind: 'literal', value: 'standard' },
+            ],
+          },
+          displayName: 'Width Mode',
+          description: '列宽模式：autoWidth 按内容自适应（schema 值 `auto` 会归一化为 autoWidth）。缺省 adaptive。',
+          defaultValue: 'adaptive',
+        },
+      },
+      {
         key: 'cornerTitleOnDimension',
         kind: 'prop',
         contract: {
@@ -263,6 +289,24 @@ export const pivotRendererDefinitions: RegisteredRendererDefinition[] = [
           displayName: 'Corner Title On Dimension',
           description: '角标 titleOnDimension 映射。',
           editorType: 'select',
+        },
+      },
+      {
+        key: 'widthMode',
+        kind: 'prop',
+        contract: {
+          shape: {
+            kind: 'union',
+            anyOf: [
+              { kind: 'literal', value: 'adaptive' },
+              { kind: 'literal', value: 'auto' },
+              { kind: 'literal', value: 'standard' },
+            ],
+          },
+          displayName: 'Width Mode',
+          description: 'VTable 列宽模式：auto 按内容自适应（配合横向滚动避免数字截断）。缺省 adaptive。',
+          editorType: 'select',
+          defaultValue: 'adaptive',
         },
       },
       {

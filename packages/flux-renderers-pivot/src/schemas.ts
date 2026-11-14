@@ -6,6 +6,8 @@ export interface PivotDimensionSchema extends SchemaObject {
   dimensionKey: string;
   title?: string;
   headerStyle?: Record<string, SchemaValue>;
+  /** 维度列固定宽度（px），避免挤压导致维度名截断不可读；VTable 自带横向滚动。 */
+  width?: number | string;
 }
 
 import type { PivotAggregationType, PivotCellType, PivotCornerTitleOnDimension } from './pivot-vocabulary.js';
@@ -77,6 +79,8 @@ export interface PivotTableSchema extends BaseSchema {
   indicators?: PivotIndicatorSchema[];
   dataConfig?: PivotDataConfigSchema;
   cornerTitleOnDimension?: PivotCornerTitleOnDimension;
+  /** 列宽模式（VTable widthMode）：autoWidth 按内容自适应（配合横向滚动避免数字截断）。缺省 adaptive。 */
+  widthMode?: 'adaptive' | 'autoWidth' | 'auto' | 'standard';
   height?: number | string;
   loading?: boolean;
   empty?: SchemaInput | string;

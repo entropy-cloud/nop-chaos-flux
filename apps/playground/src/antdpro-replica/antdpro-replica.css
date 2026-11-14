@@ -326,3 +326,57 @@
   color: #ffffff;
   background: var(--adp-primary);
 }
+
+/* ── Approval-record timeline (antdpro-detail-advanced audit enrichment) ── */
+
+.adp-timeline-item {
+  position: relative;
+  display: flex;
+  gap: 12px;
+  padding: 0 0 18px 4px;
+}
+
+.adp-timeline-item:last-child {
+  padding-bottom: 2px;
+}
+
+.adp-timeline-item::before {
+  content: '';
+  position: absolute;
+  left: 9px;
+  top: 18px;
+  bottom: 0;
+  width: 1px;
+  background: var(--adp-split);
+}
+
+.adp-timeline-item:last-child::before {
+  display: none;
+}
+
+.adp-timeline-dot {
+  flex: none;
+  width: 10px;
+  height: 10px;
+  margin-top: 4px;
+  border-radius: 9999px;
+  background: var(--adp-bg-container);
+  border: 2px solid var(--adp-primary);
+}
+
+.adp-timeline-action {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--adp-text);
+}
+
+.adp-timeline-operator {
+  font-size: 12px;
+  color: var(--adp-text-secondary);
+}
+
+.adp-timeline-time {
+  font-size: 12px;
+  color: var(--adp-text-quaternary);
+  font-variant-numeric: tabular-nums;
+}

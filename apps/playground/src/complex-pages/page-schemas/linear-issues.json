@@ -1891,7 +1891,7 @@
                   "width": 110,
                   "cell": {
                     "type": "container",
-                    "className": "flex items-center gap-2",
+                    "className": "flex flex-row items-center gap-2",
                     "body": [
                       {
                         "type": "container",
@@ -1911,7 +1911,7 @@
                   "label": "问题",
                   "cell": {
                     "type": "container",
-                    "className": "flex items-center gap-3 min-w-0",
+                    "className": "flex flex-row items-center gap-3 min-w-0",
                     "body": [
                       {
                         "type": "text",
@@ -1934,7 +1934,7 @@
                   "width": 150,
                   "cell": {
                     "type": "container",
-                    "className": "flex items-center gap-1 flex-wrap",
+                    "className": "flex flex-row items-center gap-1 flex-wrap",
                     "body": [
                       {
                         "type": "loop",
@@ -2116,7 +2116,7 @@
                                     "body": [
                                       {
                                         "type": "container",
-                                        "className": "flex items-center justify-between",
+                                        "className": "flex flex-row items-center justify-between",
                                         "body": [
                                           {
                                             "type": "text",
@@ -2132,7 +2132,7 @@
                                       },
                                       {
                                         "type": "container",
-                                        "className": "flex items-center justify-between",
+                                        "className": "flex flex-row items-center justify-between",
                                         "body": [
                                           {
                                             "type": "text",
@@ -2166,7 +2166,7 @@
                                       },
                                       {
                                         "type": "container",
-                                        "className": "flex items-center justify-between",
+                                        "className": "flex flex-row items-center justify-between",
                                         "body": [
                                           {
                                             "type": "text",
@@ -2182,7 +2182,7 @@
                                       },
                                       {
                                         "type": "container",
-                                        "className": "flex items-center justify-between",
+                                        "className": "flex flex-row items-center justify-between",
                                         "body": [
                                           {
                                             "type": "text",

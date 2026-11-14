@@ -24,7 +24,7 @@ export interface KanbanColumnHeaderProps {
   wipWarning?: boolean;
   wipText?: string;
   registerColumnHeader?: (el: HTMLElement, columnId: string) => () => void;
-  aggregate?: { label: string; display: string };
+  aggregate?: { label: string; display: string; isCount?: boolean };
 }
 
 export function KanbanColumnHeader({
@@ -132,16 +132,18 @@ export function KanbanColumnHeader({
           {aggregate.label}: {aggregate.display}
         </span>
       )}
-      <span className={cn(
-        'text-xs rounded-full px-1.5 py-0.5 min-w-5 text-center',
-        wipWarning ? 'bg-destructive/15 text-destructive font-bold' : 'text-muted-foreground bg-muted',
-      )}>
-        {wipText ?? cardCount}
-        {/* 20-07: the two badge states share the same visible text and differ
-            only in color — the sr-only suffix is the non-color channel that
-            makes the exceeded state perceivable without vision. */}
-        {wipWarning ? <span className="sr-only">{t('scheduling.kanban.wipExceeded')}</span> : null}
-      </span>
+      {!(aggregate?.isCount && !wipWarning) && (
+        <span className={cn(
+          'text-xs rounded-full px-1.5 py-0.5 min-w-5 text-center',
+          wipWarning ? 'bg-destructive/15 text-destructive font-bold' : 'text-muted-foreground bg-muted',
+        )}>
+          {wipText ?? cardCount}
+          {/* 20-07: the two badge states share the same visible text and differ
+              only in color — the sr-only suffix is the non-color channel that
+              makes the exceeded state perceivable without vision. */}
+          {wipWarning ? <span className="sr-only">{t('scheduling.kanban.wipExceeded')}</span> : null}
+        </span>
+      )}
       <Button
         variant="ghost"
         size="sm"

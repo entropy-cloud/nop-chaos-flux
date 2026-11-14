@@ -375,10 +375,46 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* KPI 金额卡（分销 GMV / 佣金总额）数值 → 价格色。 */
+/* KPI 卡数值统一价格色（分销 GMV / 佣金总额 / 分销员数 / 待结算笔数）——
+ * 此前仅两张金额卡着色，同排出现“两橙两黑”的不一致观感。 */
 .repl-mall-dist [data-testid='mall-distribution-kpi-gmv'] [data-slot='stat-tile-value'],
-.repl-mall-dist [data-testid='mall-distribution-kpi-commission'] [data-slot='stat-tile-value'] {
+.repl-mall-dist [data-testid='mall-distribution-kpi-commission'] [data-slot='stat-tile-value'],
+.repl-mall-dist [data-testid='mall-distribution-kpi-distributors'] [data-slot='stat-tile-value'],
+.repl-mall-dist [data-testid='mall-distribution-kpi-pending'] [data-slot='stat-tile-value'] {
   color: var(--repl-mall-price, #ff5000);
+}
+
+/*
+ * 复刻页筛选条横向化（C3 CRM 驾驶舱 / IoT 遥测 / S2 商城分销）：
+ * nop-form 的 form-body 默认 flex-column，筛选字段各占整行、
+ * 动作按钮被推到字段区下一整行——压成 flex-wrap 横排，
+ * 查询/重置按钮回到字段同一行。
+ */
+[data-testid='crm-sales-dashboard-filter'] > [data-slot='form-body'],
+[data-testid='iot-telemetry-device-filter'] > [data-slot='form-body'] {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem;
+}
+
+[data-testid='mall-distribution-filter'] .nop-form {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+[data-testid='mall-distribution-filter'] [data-slot='form-body'],
+[data-testid='mall-distribution-filter'] [data-slot='form-actions'] {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem;
+}
+
+[data-testid='mall-distribution-filter'] [data-slot='form-actions'] {
+  justify-content: flex-start;
+  margin-top: 0;
 }
 
 /* 主操作 → 品牌渐变（desktop 档位：沿用按钮自身圆角/高度，不套移动胶囊）。 */

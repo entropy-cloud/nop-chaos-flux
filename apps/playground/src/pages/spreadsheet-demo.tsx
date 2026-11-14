@@ -145,7 +145,15 @@ export function SpreadsheetDemo() {
       className="flex h-full min-h-0 flex-col gap-3 p-4"
     >
       <div className="flex items-center gap-3">
-        <span className="text-sm font-semibold text-[var(--nop-text-strong)]">
+        <span
+          data-testid="spreadsheet-demo-selection"
+          className={cn(
+            'text-sm font-semibold',
+            cellRef
+              ? 'text-[var(--nop-text-strong)]'
+              : 'font-normal text-muted-foreground',
+          )}
+        >
           {cellRef || 'No selection'}
         </span>
         <Button size="sm" variant="outline" onClick={() => void setFormulaOnSelected()}>

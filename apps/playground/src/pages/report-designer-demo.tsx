@@ -132,26 +132,35 @@ export function ReportDesignerDemo() {
             type: 'container',
             className: 'stack-sm text-sm',
             body: [
-              { type: 'text', text: 'Workbook selected' },
-              { type: 'text', text: 'Use toolbar actions to edit metadata.' },
+              { type: 'text', text: t('flux.reportDesigner.workbookSelected') },
+              {
+                type: 'text',
+                className: 'text-muted-foreground',
+                text: t('flux.reportDesigner.workbookHint'),
+              },
             ],
           },
           sheet: {
             type: 'container',
             className: 'stack-sm text-sm',
             body: [
-              { type: 'text', text: 'Sheet selected' },
-              { type: 'text', text: 'Switch sheets or drop fields onto cells.' },
+              { type: 'text', text: t('flux.reportDesigner.sheetSelected') },
+              {
+                type: 'text',
+                className: 'text-muted-foreground',
+                text: t('flux.reportDesigner.sheetHint'),
+              },
             ],
           },
           row: {
             type: 'container',
             className: 'stack-sm text-sm',
             body: [
-              { type: 'text', text: 'Row selected' },
+              { type: 'text', text: t('flux.reportDesigner.rowSelected') },
               {
                 type: 'text',
-                text: 'Row metadata will be written through report-designer actions.',
+                className: 'text-muted-foreground',
+                text: t('flux.reportDesigner.rowHint'),
               },
             ],
           },
@@ -159,10 +168,11 @@ export function ReportDesignerDemo() {
             type: 'container',
             className: 'stack-sm text-sm',
             body: [
-              { type: 'text', text: 'Column selected' },
+              { type: 'text', text: t('flux.reportDesigner.columnSelected') },
               {
                 type: 'text',
-                text: 'Column metadata will be written through report-designer actions.',
+                className: 'text-muted-foreground',
+                text: t('flux.reportDesigner.columnHint'),
               },
             ],
           },
@@ -170,8 +180,12 @@ export function ReportDesignerDemo() {
             type: 'container',
             className: 'stack-sm text-sm',
             body: [
-              { type: 'text', text: 'Range selected' },
-              { type: 'text', text: 'Drop a field onto a range to fill cell bindings.' },
+              { type: 'text', text: t('flux.reportDesigner.rangeSelected') },
+              {
+                type: 'text',
+                className: 'text-muted-foreground',
+                text: t('flux.reportDesigner.rangeHint'),
+              },
             ],
           },
           cell: {
@@ -179,7 +193,11 @@ export function ReportDesignerDemo() {
             className: 'stack-sm text-sm',
             body: [
               { type: 'report-cell-style-panel' },
-              { type: 'text', text: 'Drop a field from the panel onto a cell to bind it.' },
+              {
+                type: 'text',
+                className: 'text-muted-foreground',
+                text: t('flux.reportDesigner.cellHint'),
+              },
             ],
           },
         },
@@ -644,7 +662,7 @@ export function ReportDesignerDemo() {
                 schema={
                   {
                     type: 'report-inspector-shell',
-                    title: 'Inspector',
+                    title: t('flux.reportDesigner.inspectorTitle'),
                   } as any
                 }
                 registry={inspectorRegistry}

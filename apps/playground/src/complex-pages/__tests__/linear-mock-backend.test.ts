@@ -61,7 +61,8 @@ describe('Linear mock backend — issue dataset', () => {
   it('rows cover labels, assignees, due dates, and estimates', () => {
     const issues = createLinearIssues();
     expect(issues.some((i) => i.labels.length > 0)).toBe(true);
-    expect(issues.some((i) => i.labels.length === 0)).toBe(true);
+    // ux-r13: 列表视图不再产出空标签行（标签列整列留白像缺数据残段）
+    expect(issues.every((i) => i.labels.length > 0)).toBe(true);
     expect(issues.every((i) => i.assignee.name.length > 0 && i.assignee.initials.length > 0)).toBe(true);
     expect(issues.some((i) => i.dueDate !== '')).toBe(true);
     expect(issues.some((i) => i.dueDate === '')).toBe(true);

@@ -281,8 +281,27 @@
 }
 
 .bs-inspector-body {
-  padding: 14px;
+  padding: 10px 14px;
   overflow-y: auto;
+}
+
+/* Compact node-param fields so 模型/系统提示/温度/输出变量名 all fit
+   inside the panel without the 温度 value being cut by the foot actions. */
+.bs-inspector-body .nop-field {
+  gap: 4px;
+}
+
+.bs-inspector-body .nop-field > span {
+  font-size: 12px;
+}
+
+.bs-inspector-body textarea {
+  height: 56px;
+  min-height: 0;
+}
+
+.bs-inspector-body input {
+  height: 26px;
 }
 
 .bs-inspector-foot {

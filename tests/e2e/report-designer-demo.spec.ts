@@ -64,9 +64,9 @@ test('verifies field items and inspector elements are visible', async ({ page })
   expect(parseFloat(fieldItemStyles.borderRadius)).toBeGreaterThanOrEqual(6);
 
   const inspector = page.locator('[data-slot="workbench-right-panel"]');
-  await expect(inspector).toContainText('Inspector');
-  await expect(inspector).toContainText('sheet');
-  await expect(inspector).toContainText(/Sheet selected|正在加载检查器面板|loading/i);
+  await expect(inspector).toContainText(/检查器|Inspector/);
+  await expect(inspector).toContainText(/工作表|sheet/i);
+  await expect(inspector).toContainText(/已选中工作表|Sheet selected|正在加载检查器面板|loading/i);
 });
 
 test('spreadsheet grid exposes row and column headers', async ({ page }) => {
@@ -154,12 +154,12 @@ test('clicking a spreadsheet cell keeps the inspector surface active', async ({ 
   const cells = page.locator('.ss-cell');
   await expect(cells.first()).toBeVisible();
   const inspector = page.locator('[data-slot="workbench-right-panel"]');
-  await expect(inspector).toContainText(/sheet|正在加载检查器面板|loading/i);
+  await expect(inspector).toContainText(/工作表|sheet|正在加载检查器面板|loading/i);
 
   await cells.nth(5).click();
 
-  await expect(inspector).toContainText('Inspector');
-  await expect(inspector).toContainText(/sheet|cell|正在加载检查器面板|loading/i);
+  await expect(inspector).toContainText(/检查器|Inspector/);
+  await expect(inspector).toContainText(/工作表|单元格|sheet|cell|正在加载检查器面板|loading/i);
 });
 
 test('toolbar exposes localized spreadsheet controls on the live surface', async ({ page }) => {

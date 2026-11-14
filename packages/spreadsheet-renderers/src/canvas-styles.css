@@ -858,7 +858,7 @@
   right: 0;
   bottom: 0;
   height: 2px;
-  background: var(--nop-accent);
+  background: var(--ss-accent, var(--nop-accent));
   opacity: 0;
   transition: opacity 0.15s ease;
   border-radius: 1px 1px 0 0;

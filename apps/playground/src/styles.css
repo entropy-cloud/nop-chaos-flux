@@ -269,6 +269,17 @@ body {
   border-bottom: 1px solid rgb(226, 232, 240);
 }
 
+/* 相邻「+ −」分组（插入行/列）在小间距下读作一组 — 报表设计器工具栏
+   加大分组间距与分隔线对比（audit r8）。 */
+[data-slot='report-demo-header'] [data-slot='spreadsheet-toolbar-separator'] {
+  margin: 0 10px;
+  border-right-color: rgb(148, 163, 184);
+}
+
+[data-slot='report-demo-header'] [data-slot='spreadsheet-toolbar-group'] {
+  gap: 3px;
+}
+
 [data-slot='report-demo-body'] {
   display: flex;
   flex: 1;

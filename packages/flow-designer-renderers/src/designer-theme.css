@@ -173,9 +173,43 @@
   background: var(--fd-canvas-bg);
 }
 
+/* minimap 面板底色由 CSS 兜底：MiniMap 的 bgColor var() 属性在部分主题下不生效，
+   节点色块会呈现为画布右下角的“灰色像素块”（无面板语境的裸方块群）。 */
+.fd-xyflow-minimap.react-flow__minimap {
+  background: var(--fd-minimap-bg, rgba(219, 234, 254, 0.5));
+  border-radius: 1rem;
+  border: 1px solid rgba(148, 163, 184, 0.45);
+  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.1);
+}
+
+/* 面板语境标签：让 minimap 读作一个有标题的小地图面板，而非画布角落的游离色块 */
+.fd-xyflow-minimap.react-flow__minimap::before {
+  content: 'Minimap';
+  position: absolute;
+  top: 6px;
+  left: 12px;
+  z-index: 1;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: rgba(71, 85, 105, 0.8);
+  pointer-events: none;
+}
+
+.fd-xyflow-minimap.react-flow__minimap svg {
+  background: var(--fd-minimap-bg, rgba(219, 234, 254, 0.5));
+}
+
 .fd-edge-label {
   background: var(--fd-edge-label-bg);
   backdrop-filter: blur(20px);
+}
+
+/* 边标签可读性：内层文本令牌覆盖 text-gray-600（audit r8：是/否/成功/完成 对比度过低） */
+.fd-edge-label .nop-text {
+  color: hsl(var(--foreground, 224 71% 4%));
+  font-size: 13px;
+  font-weight: 650;
 }
 
 .fd-edge-actions {
@@ -257,9 +291,11 @@
   display: flex;
   max-width: 160px;
   align-items: center;
-  border: 1px solid var(--fd-node-accent-dt-condition, #15bc83);
-  background: var(--fd-edge-label-bg, rgba(255, 255, 255, 0.78));
-  color: var(--fd-node-accent-dt-condition, #15bc83);
+  border: 1px solid color-mix(in srgb, var(--fd-node-accent-dt-condition, #15bc83) 80%, black);
+  background: var(--fd-edge-label-bg, rgba(255, 255, 255, 0.9));
+  /* 对比度收口：标签底为半透明画布色，纯 accent 绿在浅底上对比不足（是/否/成功可读性） */
+  color: color-mix(in srgb, var(--fd-node-accent-dt-condition, #15bc83) 72%, black);
+  font-weight: 600;
   border-radius: 9999px;
   padding: 2px 10px;
   font-size: 11px;

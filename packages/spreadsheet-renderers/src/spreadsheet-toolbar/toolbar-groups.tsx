@@ -236,6 +236,9 @@ export function SpreadsheetToolbarGroups(props: SpreadsheetToolbarProps) {
           onClick={props.onDeleteRow}
           disabled={!props.hasSelection || mutationDisabled}
         />
+      </div>
+      <Separator />
+      <div data-slot="spreadsheet-toolbar-group">
         <ToolbarButton
           label="flux.spreadsheet.insertColumn"
           icon={<Plus />}

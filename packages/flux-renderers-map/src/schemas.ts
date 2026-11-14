@@ -67,6 +67,8 @@ export interface MapSchema extends BaseSchema {
   /** 点位聚合开关（OL 内置 Cluster 源）。缺省 true。 */
   cluster?: boolean;
   visualMap?: MapVisualMapSchema;
+  /** region 填充透明度（0-1）。1=不透明（choropleth 缺省）；低值 + 描边适合围栏/覆盖圈语义。缺省 1。 */
+  fillOpacity?: number;
   /** 初始中心 `[lng, lat]`。 */
   center?: number[];
   /** 初始缩放级别。 */

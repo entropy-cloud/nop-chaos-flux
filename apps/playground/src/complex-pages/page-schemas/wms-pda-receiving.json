@@ -42,7 +42,9 @@
             {
               "type": "button",
               "label": "离线演练",
-              "variant": "outline",
+              "variant": "ghost",
+              "size": "sm",
+              "className": "text-xs text-muted-foreground",
               "testid": "wms-pda-receiving-offline-toggle",
               "onClick": {
                 "action": "setValues",
@@ -56,7 +58,9 @@
             {
               "type": "button",
               "label": "恢复在线",
-              "variant": "outline",
+              "variant": "ghost",
+              "size": "sm",
+              "className": "text-xs text-muted-foreground",
               "testid": "wms-pda-receiving-online-toggle",
               "onClick": {
                 "action": "setValues",
@@ -411,6 +415,9 @@
                           "type": "input-number",
                           "name": "qty",
                           "label": "数量",
+                          "placeholder": "扫码后录入收货数量",
+                          "min": 0,
+                          "step": 1,
                           "testid": "wms-pda-receiving-qty-input"
                         },
                         {

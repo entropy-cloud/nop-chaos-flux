@@ -167,6 +167,7 @@
           "componentId": "iot-telemetry-device-trend-chart",
           "height": 260,
           "option": {
+            "color": ["#6366f1", "#22c55e", "#f59e0b", "#06b6d4", "#ec4899"],
             "tooltip": {
               "trigger": "axis"
             },
@@ -185,18 +186,21 @@
                 "name": "温度",
                 "type": "line",
                 "showSymbol": false,
+                "symbol": "none",
                 "data": "${telemetry?.series?.temperature ?? []}"
               },
               {
                 "name": "湿度",
                 "type": "line",
                 "showSymbol": false,
+                "symbol": "none",
                 "data": "${telemetry?.series?.humidity ?? []}"
               },
               {
                 "name": "电压",
                 "type": "line",
                 "showSymbol": false,
+                "symbol": "none",
                 "data": "${telemetry?.series?.voltage ?? []}"
               }
             ]
@@ -399,7 +403,11 @@
             {
               "name": "ackAt",
               "label": "确认时间",
-              "width": 140
+              "width": 140,
+              "cell": {
+                "type": "text",
+                "text": "${ackAt ?? '-'}"
+              }
             },
             {
               "name": "escalationTier",

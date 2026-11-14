@@ -166,7 +166,7 @@
                   "body": [
                     {
                       "type": "icon",
-                      "icon": "bar-chart-3",
+                      "icon": "chart-column",
                       "size": 15,
                       "color": "#ea7a2a"
                     },
@@ -272,7 +272,7 @@
                     },
                     {
                       "type": "icon",
-                      "icon": "bar-chart-3",
+                      "icon": "more",
                       "size": 15,
                       "color": "#636363"
                     }
@@ -342,7 +342,7 @@
                     },
                     {
                       "type": "icon",
-                      "icon": "bar-chart-3",
+                      "icon": "more",
                       "size": 15,
                       "color": "#636363"
                     }
@@ -420,7 +420,7 @@
                     },
                     {
                       "type": "icon",
-                      "icon": "bar-chart-3",
+                      "icon": "more",
                       "size": 15,
                       "color": "#636363"
                     }
@@ -432,6 +432,9 @@
                   "chartType": "bar",
                   "source": "${pressure?.items}",
                   "height": 120,
+                  "yAxis": {
+                    "integerTicks": true
+                  },
                   "series": [
                     {
                       "name": "压力",
@@ -592,7 +595,7 @@
                     },
                     {
                       "type": "icon",
-                      "icon": "bar-chart-3",
+                      "icon": "more",
                       "size": 15,
                       "color": "#636363"
                     }
@@ -602,7 +605,7 @@
                   "type": "flex",
                   "direction": "row",
                   "gap": 4,
-                  "className": "justify-between mt-1",
+                  "className": "justify-between items-center mt-1",
                   "body": [
                     {
                       "type": "container",
@@ -630,7 +633,7 @@
                   "type": "flex",
                   "direction": "row",
                   "gap": 4,
-                  "className": "justify-between",
+                  "className": "justify-between items-center",
                   "body": [
                     {
                       "type": "container",
@@ -658,7 +661,7 @@
                   "type": "flex",
                   "direction": "row",
                   "gap": 4,
-                  "className": "justify-between",
+                  "className": "justify-between items-center",
                   "body": [
                     {
                       "type": "container",

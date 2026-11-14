@@ -73,6 +73,13 @@ export function PihWorkspaceHost({ env }: { env: RendererEnv }) {
     if (activeEngine.getMessages().length === 0) {
       activeEngine.setMessages(SEED_MESSAGES);
     }
+    // Seed conversation lands mid-scroll (message list restores scrollTop or
+    // defaults to 0) — pin the initial view to the latest turn.
+    const timer = window.setTimeout(() => {
+      const list = document.querySelector('.nop-ai-message-list');
+      if (list) list.scrollTop = list.scrollHeight;
+    }, 400);
+    return () => window.clearTimeout(timer);
   }, [activeEngine]);
 
   const data = useMemo(

@@ -9,9 +9,15 @@
  */
 
 import { useMemo, useState } from 'react';
+import { MousePointerClick } from 'lucide-react';
 import {
   Badge,
   Button,
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
   Input,
   Label,
   NativeSelect,
@@ -272,10 +278,18 @@ export function InspectorPanel(props: InspectorPanelProps) {
   if (!node || !model.hasTarget) {
     return (
       <div
-        className="flex h-full items-center justify-center p-6 text-center text-sm text-[var(--nop-body-copy,#6b7280)]"
+        className="flex h-full items-center justify-center p-6"
         data-testid="page-designer-inspector-empty"
       >
-        {t('flux.pageDesigner.inspectorEmpty')}
+        <Empty className="border">
+          <EmptyHeader>
+            <EmptyMedia variant="icon">
+              <MousePointerClick aria-hidden="true" />
+            </EmptyMedia>
+            <EmptyTitle>{t('flux.pageDesigner.inspectorEmpty')}</EmptyTitle>
+            <EmptyDescription>{t('flux.pageDesigner.inspectorEmptyHint')}</EmptyDescription>
+          </EmptyHeader>
+        </Empty>
       </div>
     );
   }

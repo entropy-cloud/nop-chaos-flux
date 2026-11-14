@@ -1,6 +1,17 @@
 import { useFluxTranslation } from '@nop-chaos/flux-i18n';
 import { Button, cn } from '@nop-chaos/ui';
 import React from 'react';
+import {
+  Barcode,
+  CalendarDays,
+  Hash,
+  Image,
+  Minus,
+  QrCode,
+  Square,
+  Table,
+  Type,
+} from 'lucide-react';
 import { PRINT_ELEMENT_TYPES, type PrintElementType } from '@nop-chaos/flux-print-core';
 import type { PrintEditorController } from './editor/use-print-editor.js';
 
@@ -24,6 +35,18 @@ export const ELEMENT_LABEL_KEYS: Record<PrintElementType, string> = {
   printDate: 'flux.print.element.printDate',
 };
 
+const ELEMENT_ICONS: Record<PrintElementType, React.ComponentType<{ className?: string; 'aria-hidden'?: boolean | 'true' }>> = {
+  text: Type,
+  image: Image,
+  table: Table,
+  barcode: Barcode,
+  qrcode: QrCode,
+  line: Minus,
+  rect: Square,
+  pageNumber: Hash,
+  printDate: CalendarDays,
+};
+
 export function PrintPalette({ controller, className }: PrintPaletteProps) {
   const { t } = useFluxTranslation();
 
@@ -36,7 +59,9 @@ export function PrintPalette({ controller, className }: PrintPaletteProps) {
     <div className={cn('nop-print-palette', className)} data-testid="print-palette">
       <div className="text-sm font-medium text-foreground px-2 py-1">{t('flux.print.palette.title')}</div>
       <div className="grid grid-cols-2 gap-1 p-1">
-        {PRINT_ELEMENT_TYPES.map((type) => (
+        {PRINT_ELEMENT_TYPES.map((type) => {
+          const Icon = ELEMENT_ICONS[type];
+          return (
           <Button
             key={type}
             type="button"
@@ -47,9 +72,11 @@ export function PrintPalette({ controller, className }: PrintPaletteProps) {
             onClick={() => controller.addElement(type)}
             data-palette-type={type}
           >
+            <Icon className="h-4 w-4" aria-hidden="true" />
             <span>{t(ELEMENT_LABEL_KEYS[type])}</span>
           </Button>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

@@ -94,7 +94,9 @@ export const LINEAR_PRIORITY_COLORS: Record<LinearPriority, string> = {
   none: '#62666d',
 };
 
-const LINEAR_LABEL_TAG_COLORS = ['#8a8f98', '#5e6ad2', '#10b981', '#f59e0b', '#e53935', '#a8b1ff'];
+/* ux-r13：看板卡片标签 pill 的底色取 color+'30'（19% 透明度），深色卡片上
+   中性灰/深原色调呈灰底灰字——调色板统一上移到浅色档保证可读 */
+const LINEAR_LABEL_TAG_COLORS = ['#c4cad3', '#a8b1ff', '#4ade80', '#fbbf24', '#f87171', '#d0d6ff'];
 
 export const LINEAR_TITLES = [
   '工作区切换器在多团队视图下出现重复条目',
@@ -179,10 +181,12 @@ export function createLinearIssues(): LinearIssue[] {
       title: LINEAR_TITLES[i],
       status: LINEAR_STATUSES[i],
       priority: LINEAR_PRIORITIES[i],
-      labels:
-        i % 4 === 0
-          ? []
-          : [LINEAR_LABELS[i % LINEAR_LABELS.length], ...(i % 3 === 0 ? [LINEAR_LABELS[(i + 2) % LINEAR_LABELS.length]] : [])],
+      /* ux-r13：列表视图不再产出空标签行——每行至少一个标签 chip（此前
+         i%4===0 的行在标签列整列留白，看起来像缺数据的残段） */
+      labels: [
+        LINEAR_LABELS[i % LINEAR_LABELS.length],
+        ...(i % 3 === 0 ? [LINEAR_LABELS[(i + 2) % LINEAR_LABELS.length]] : []),
+      ],
       assignee: LINEAR_ASSIGNEES[i % LINEAR_ASSIGNEES.length],
       estimate: LINEAR_ESTIMATES[i % LINEAR_ESTIMATES.length],
       dueDate: i % 3 === 0 ? '' : `2026-09-${pad(1 + (i % 28), 2)}`,
@@ -279,10 +283,12 @@ export function buildLinearBoardData(rows: LinearIssue[]): LinearBoardPayload {
         },
         meta: {
           color: LINEAR_PRIORITY_COLORS[issue.priority],
-          tags: issue.labels.map((label, li) => ({
-            id: `${issue.id}-label-${li}`,
+          /* ux-r13：tag id 直接用标签文本——看板筛选条按 id 去重
+             (collectAllTags)，此前每卡唯一 id 导致 ~34 个重复胶囊 */
+          tags: issue.labels.map((label) => ({
+            id: label,
             text: label,
-            color: LINEAR_LABEL_TAG_COLORS[(issue.labels.indexOf(label) + li) % LINEAR_LABEL_TAG_COLORS.length],
+            color: LINEAR_LABEL_TAG_COLORS[LINEAR_LABELS.indexOf(label) % LINEAR_LABEL_TAG_COLORS.length],
           })),
           members: [{ id: `${issue.id}-assignee`, name: issue.assignee.name }],
         },

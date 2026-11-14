@@ -140,14 +140,35 @@ const C2_ACTIVITY_TITLE_BY_TYPE: Record<ReplCrmActivityType, string> = {
   DEMO: '方案演示',
   NOTE: '跟进纪要',
 };
+/**
+ * Seeded activity slots per partner, ASC by date: 4 backlog weeks
+ * (35/28/21/14 days ago) + the recent 4 (9/6/3/1). Exactly ONE CALL per
+ * partner — the C2 filter test collapses the timeline to that single row.
+ * Titles are per-slot and self-descriptive (no `·P0001` customer-code suffix:
+ * the timeline is always rendered inside the selected customer's 360 view, so
+ * repeating the code per row is redundant noise).
+ */
+const C2_ACTIVITY_SLOTS: Array<{
+  type: ReplCrmActivityType;
+  daysAgo: number;
+  time: string;
+  title: string;
+}> = [
+  { type: 'VISIT', daysAgo: 35, time: '10:00', title: '年度框架合作首轮拜访' },
+  { type: 'DEMO', daysAgo: 28, time: '14:30', title: '数据对接方案演示评审' },
+  { type: 'NOTE', daysAgo: 21, time: '09:15', title: '阶段推进跟进纪要' },
+  { type: 'VISIT', daysAgo: 14, time: '16:40', title: '新产线现场勘察拜访' },
+  { type: 'DEMO', daysAgo: 9, time: '10:00', title: '集成方案二轮演示' },
+  { type: 'CALL', daysAgo: 6, time: '14:30', title: '季度采购计划确认电话会' },
+  { type: 'NOTE', daysAgo: 3, time: '09:15', title: '商务条款跟进纪要' },
+  { type: 'NOTE', daysAgo: 1, time: '16:40', title: '合作意向确认纪要' },
+];
 const C2_ACTIVITY_LEVEL_BY_TYPE: Record<ReplCrmActivityType, string> = {
   VISIT: 'success',
   CALL: 'info',
   DEMO: 'warning',
   NOTE: 'default',
 };
-const C2_ACTIVITY_DAYS_AGO = [9, 6, 3, 1];
-const C2_ACTIVITY_TIME = ['10:00', '14:30', '09:15', '16:40'];
 const C2_CALENDAR_TITLES = ['客户现场回访', '方案评审会', '续约谈判（跨日）', '高管拜访'];
 
 function pad4(value: number): string {
@@ -248,18 +269,18 @@ function createActivityRows(partners: ReplCrmPartner[]): ReplCrmActivity[] {
   const now = new Date();
   for (const partner of partners) {
     const partnerIndex = Number(partner.id.slice('partner-'.length));
-    for (let k = 0; k < C2_ACTIVITY_TYPES.length; k += 1) {
-      const type = C2_ACTIVITY_TYPES[k];
+    for (let k = 0; k < C2_ACTIVITY_SLOTS.length; k += 1) {
+      const slot = C2_ACTIVITY_SLOTS[k];
       const when = new Date(now);
-      when.setDate(when.getDate() - C2_ACTIVITY_DAYS_AGO[k]);
-      const activityDate = `${when.getFullYear()}-${pad2(when.getMonth() + 1)}-${pad2(when.getDate())} ${C2_ACTIVITY_TIME[k]}`;
+      when.setDate(when.getDate() - slot.daysAgo);
+      const activityDate = `${when.getFullYear()}-${pad2(when.getMonth() + 1)}-${pad2(when.getDate())} ${slot.time}`;
       rows.push({
         id: `act-${pad4(partnerIndex)}-${k + 1}`,
         partnerId: partner.id,
         activityDate,
-        type,
-        title: `${C2_ACTIVITY_TITLE_BY_TYPE[type]}·${partner.code}`,
-        content: `${partner.name}：${C2_ACTIVITY_TITLE_BY_TYPE[type]}记录（${partner.ownerName} 负责）`,
+        type: slot.type,
+        title: slot.title,
+        content: `${partner.name}：${slot.title}（${partner.ownerName} 负责）`,
       });
     }
   }

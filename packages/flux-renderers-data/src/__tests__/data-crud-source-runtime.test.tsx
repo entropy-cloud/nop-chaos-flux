@@ -52,7 +52,7 @@ describe('CRUD renderer source-owned baseline', () => {
     const input = screen.getByLabelText('Keyword') as HTMLInputElement;
 
     fireEvent.change(input, { target: { value: 'Ali' } });
-    fireEvent.click(screen.getByText(t('flux.common.search'), { selector: '[data-slot="crud-query-search"]' }));
+    fireEvent.click(screen.getByText(t('flux.common.search'), { selector: '[data-slot="form-actions"] button' }));
 
     await waitFor(() => {
       expect(screen.getByText('Rows: 1/42; Query: Ali')).toBeTruthy();

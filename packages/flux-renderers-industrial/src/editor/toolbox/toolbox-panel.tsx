@@ -1,4 +1,39 @@
 import { useState } from 'react';
+import type { LucideIcon } from 'lucide-react';
+import {
+  AlignCenterHorizontal,
+  AlignCenterVertical,
+  AlignEndHorizontal,
+  AlignEndVertical,
+  AlignHorizontalDistributeCenter,
+  AlignStartHorizontal,
+  AlignStartVertical,
+  AlignVerticalDistributeCenter,
+  ArrowDown,
+  ArrowDownToLine,
+  ArrowUp,
+  ArrowUpToLine,
+  Crosshair,
+  Copy,
+  FileDown,
+  FileUp,
+  Group as GroupIcon,
+  History,
+  Layers,
+  Link2,
+  LayoutTemplate,
+  Maximize,
+  Monitor,
+  Scissors,
+  Square,
+  Trash2,
+  Undo2,
+  Ungroup as UngroupIcon,
+  ZoomIn,
+  ZoomOut,
+  ClipboardPaste,
+  Redo2,
+} from 'lucide-react';
 import {
   Button,
   ButtonGroup,
@@ -8,6 +43,7 @@ import {
   DialogTitle,
   DialogDescription,
   DialogFooter,
+  Separator,
   Textarea,
 } from '@nop-chaos/ui';
 import { useFluxTranslation } from '@nop-chaos/flux-i18n';
@@ -182,25 +218,32 @@ export function EditorToolboxPanel(props: EditorToolboxPanelProps) {
     const resolved = t(key);
     return resolved === key ? fallback : resolved;
   };
+  // ux-r10 复审（工具箱可视化分层）：图标按钮（lucide 图标 + title/aria-label 保留原 label 语义），
+  // 组间 Separator 分隔——消除 20+ 同权重文字按钮的"文字墙"。testid 不变，行为零改动。
   const btn = (
+    icon: LucideIcon,
     label: string,
     onClick: () => void,
     disabled: boolean,
     title: string,
     testid: string,
-  ) => (
-    <Button
-      variant="ghost"
-      size="sm"
-      disabled={disabled}
-      onClick={onClick}
-      title={title}
-      data-testid={testid}
-      className="nop-scada-editor-toolbox-btn"
-    >
-      {label}
-    </Button>
-  );
+  ) => {
+    const IconComp = icon;
+    return (
+      <Button
+        variant="ghost"
+        size="icon-sm"
+        disabled={disabled}
+        onClick={onClick}
+        title={title}
+        aria-label={label}
+        data-testid={testid}
+        className="nop-scada-editor-toolbox-btn"
+      >
+        <IconComp aria-hidden="true" focusable="false" />
+      </Button>
+    );
+  };
 
   return (
     <div
@@ -214,6 +257,7 @@ export function EditorToolboxPanel(props: EditorToolboxPanelProps) {
         <ButtonGroup>
           {' '}
           {btn(
+            Trash2,
             labelOr('industrial.scada.editor.toolbox.label.delete', 'Del'),
             handleDelete,
             !hasSelection,
@@ -221,6 +265,7 @@ export function EditorToolboxPanel(props: EditorToolboxPanelProps) {
             'toolbox-btn-delete',
           )}
           {btn(
+            GroupIcon,
             labelOr('industrial.scada.editor.toolbox.label.group', 'Group'),
             handleGroup,
             selection.length < 2,
@@ -228,6 +273,7 @@ export function EditorToolboxPanel(props: EditorToolboxPanelProps) {
             'toolbox-btn-group',
           )}
           {btn(
+            UngroupIcon,
             labelOr('industrial.scada.editor.toolbox.label.ungroup', 'Ungroup'),
             handleUngroup,
             !hasSelection,
@@ -235,11 +281,13 @@ export function EditorToolboxPanel(props: EditorToolboxPanelProps) {
             'toolbox-btn-ungroup',
           )}
         </ButtonGroup>
-      </div>{' '}
+      </div>
+      <Separator orientation="vertical" className="nop-scada-editor-toolbox-separator" />
       <div data-slot="scada-editor-toolbox-group" className="nop-scada-editor-toolbox-group">
         <ButtonGroup>
           {' '}
           {btn(
+            Maximize,
             labelOr('industrial.scada.editor.toolbox.label.fit', 'Fit'),
             () => handleView(() => runtime.fitView(), 'Fit'),
             false,
@@ -247,6 +295,7 @@ export function EditorToolboxPanel(props: EditorToolboxPanelProps) {
             'toolbox-btn-fit',
           )}
           {btn(
+            Crosshair,
             labelOr('industrial.scada.editor.toolbox.label.center', 'Center'),
             () => handleView(() => runtime.centerView(), 'Center'),
             false,
@@ -254,6 +303,7 @@ export function EditorToolboxPanel(props: EditorToolboxPanelProps) {
             'toolbox-btn-center',
           )}
           {btn(
+            Square,
             '1:1',
             () => handleView(() => runtime.resetView(), '1:1'),
             false,
@@ -261,6 +311,7 @@ export function EditorToolboxPanel(props: EditorToolboxPanelProps) {
             'toolbox-btn-reset',
           )}
           {btn(
+            ZoomIn,
             '+',
             () => handleView(() => runtime.zoomView(1.2), '+'),
             false,
@@ -268,6 +319,7 @@ export function EditorToolboxPanel(props: EditorToolboxPanelProps) {
             'toolbox-btn-zoom-in',
           )}
           {btn(
+            ZoomOut,
             '−',
             () => handleView(() => runtime.zoomView(1 / 1.2), '−'),
             false,
@@ -275,11 +327,13 @@ export function EditorToolboxPanel(props: EditorToolboxPanelProps) {
             'toolbox-btn-zoom-out',
           )}
         </ButtonGroup>
-      </div>{' '}
+      </div>
+      <Separator orientation="vertical" className="nop-scada-editor-toolbox-separator" />
       <div data-slot="scada-editor-toolbox-group" className="nop-scada-editor-toolbox-group">
         <ButtonGroup>
           {' '}
           {btn(
+            AlignStartHorizontal,
             labelOr('industrial.scada.editor.toolbox.label.alignLeft', 'Left'),
             () => handleAlign('left'),
             !canAlign,
@@ -287,6 +341,7 @@ export function EditorToolboxPanel(props: EditorToolboxPanelProps) {
             'toolbox-btn-align-left',
           )}
           {btn(
+            AlignEndHorizontal,
             labelOr('industrial.scada.editor.toolbox.label.alignRight', 'Right'),
             () => handleAlign('right'),
             !canAlign,
@@ -294,6 +349,7 @@ export function EditorToolboxPanel(props: EditorToolboxPanelProps) {
             'toolbox-btn-align-right',
           )}
           {btn(
+            AlignCenterHorizontal,
             labelOr('industrial.scada.editor.toolbox.label.alignHCenter', 'H-Center'),
             () => handleAlign('hcenter'),
             !canAlign,
@@ -301,6 +357,7 @@ export function EditorToolboxPanel(props: EditorToolboxPanelProps) {
             'toolbox-btn-align-hcenter',
           )}
           {btn(
+            AlignStartVertical,
             labelOr('industrial.scada.editor.toolbox.label.alignTop', 'Top'),
             () => handleAlign('top'),
             !canAlign,
@@ -308,6 +365,7 @@ export function EditorToolboxPanel(props: EditorToolboxPanelProps) {
             'toolbox-btn-align-top',
           )}
           {btn(
+            AlignEndVertical,
             labelOr('industrial.scada.editor.toolbox.label.alignBottom', 'Bottom'),
             () => handleAlign('bottom'),
             !canAlign,
@@ -315,6 +373,7 @@ export function EditorToolboxPanel(props: EditorToolboxPanelProps) {
             'toolbox-btn-align-bottom',
           )}
           {btn(
+            AlignCenterVertical,
             labelOr('industrial.scada.editor.toolbox.label.alignVCenter', 'V-Center'),
             () => handleAlign('vcenter'),
             !canAlign,
@@ -322,6 +381,7 @@ export function EditorToolboxPanel(props: EditorToolboxPanelProps) {
             'toolbox-btn-align-vcenter',
           )}
           {btn(
+            AlignHorizontalDistributeCenter,
             labelOr('industrial.scada.editor.toolbox.label.distributeH', 'Dist H'),
             () => handleDistribute('horizontal'),
             !canDistribute,
@@ -329,6 +389,7 @@ export function EditorToolboxPanel(props: EditorToolboxPanelProps) {
             'toolbox-btn-distribute-h',
           )}
           {btn(
+            AlignVerticalDistributeCenter,
             labelOr('industrial.scada.editor.toolbox.label.distributeV', 'Dist V'),
             () => handleDistribute('vertical'),
             !canDistribute,
@@ -336,11 +397,13 @@ export function EditorToolboxPanel(props: EditorToolboxPanelProps) {
             'toolbox-btn-distribute-v',
           )}
         </ButtonGroup>
-      </div>{' '}
+      </div>
+      <Separator orientation="vertical" className="nop-scada-editor-toolbox-separator" />
       <div data-slot="scada-editor-toolbox-group" className="nop-scada-editor-toolbox-group">
         <ButtonGroup>
           {' '}
           {btn(
+            ArrowUpToLine,
             labelOr('industrial.scada.editor.toolbox.label.toTop', 'To Top'),
             () => handleZOrder('toTop'),
             !hasSelection,
@@ -348,6 +411,7 @@ export function EditorToolboxPanel(props: EditorToolboxPanelProps) {
             'toolbox-btn-to-top',
           )}
           {btn(
+            ArrowUp,
             labelOr('industrial.scada.editor.toolbox.label.moveUp', 'Up'),
             () => handleZOrder('moveUp'),
             !hasSelection,
@@ -355,6 +419,7 @@ export function EditorToolboxPanel(props: EditorToolboxPanelProps) {
             'toolbox-btn-move-up',
           )}
           {btn(
+            ArrowDown,
             labelOr('industrial.scada.editor.toolbox.label.moveDown', 'Down'),
             () => handleZOrder('moveDown'),
             !hasSelection,
@@ -362,6 +427,7 @@ export function EditorToolboxPanel(props: EditorToolboxPanelProps) {
             'toolbox-btn-move-down',
           )}
           {btn(
+            ArrowDownToLine,
             labelOr('industrial.scada.editor.toolbox.label.toBottom', 'To Bottom'),
             () => handleZOrder('toBottom'),
             !hasSelection,
@@ -369,11 +435,13 @@ export function EditorToolboxPanel(props: EditorToolboxPanelProps) {
             'toolbox-btn-to-bottom',
           )}
         </ButtonGroup>
-      </div>{' '}
+      </div>
+      <Separator orientation="vertical" className="nop-scada-editor-toolbox-separator" />
       <div data-slot="scada-editor-toolbox-group" className="nop-scada-editor-toolbox-group">
         <ButtonGroup>
           {' '}
           {btn(
+            Copy,
             labelOr('industrial.scada.editor.toolbox.label.copy', 'Copy'),
             handleCopy,
             !hasSelection,
@@ -381,6 +449,7 @@ export function EditorToolboxPanel(props: EditorToolboxPanelProps) {
             'toolbox-btn-copy',
           )}
           {btn(
+            Scissors,
             labelOr('industrial.scada.editor.toolbox.label.cut', 'Cut'),
             handleCut,
             !hasSelection,
@@ -388,6 +457,7 @@ export function EditorToolboxPanel(props: EditorToolboxPanelProps) {
             'toolbox-btn-cut',
           )}
           {btn(
+            ClipboardPaste,
             labelOr('industrial.scada.editor.toolbox.label.paste', 'Paste'),
             handlePaste,
             !canPaste,
@@ -395,11 +465,13 @@ export function EditorToolboxPanel(props: EditorToolboxPanelProps) {
             'toolbox-btn-paste',
           )}
         </ButtonGroup>
-      </div>{' '}
+      </div>
+      <Separator orientation="vertical" className="nop-scada-editor-toolbox-separator" />
       <div data-slot="scada-editor-toolbox-group" className="nop-scada-editor-toolbox-group">
         <ButtonGroup>
           {' '}
           {btn(
+            Undo2,
             labelOr('industrial.scada.editor.toolbox.label.undo', 'Undo'),
             handleUndo,
             !runtime.session.undoStack.canUndo,
@@ -407,6 +479,7 @@ export function EditorToolboxPanel(props: EditorToolboxPanelProps) {
             'toolbox-btn-undo',
           )}
           {btn(
+            Redo2,
             labelOr('industrial.scada.editor.toolbox.label.redo', 'Redo'),
             handleRedo,
             !runtime.session.undoStack.canRedo,
@@ -414,11 +487,13 @@ export function EditorToolboxPanel(props: EditorToolboxPanelProps) {
             'toolbox-btn-redo',
           )}
         </ButtonGroup>
-      </div>{' '}
+      </div>
+      <Separator orientation="vertical" className="nop-scada-editor-toolbox-separator" />
       <div data-slot="scada-editor-toolbox-group" className="nop-scada-editor-toolbox-group">
         <ButtonGroup>
           {' '}
           {btn(
+            FileDown,
             labelOr('industrial.scada.editor.toolbox.label.export', 'Export'),
             handleExport,
             false,
@@ -426,6 +501,7 @@ export function EditorToolboxPanel(props: EditorToolboxPanelProps) {
             'toolbox-btn-export',
           )}
           {btn(
+            FileUp,
             labelOr('industrial.scada.editor.toolbox.label.import', 'Import'),
             () => {
               setImportText('');
@@ -436,11 +512,13 @@ export function EditorToolboxPanel(props: EditorToolboxPanelProps) {
             'toolbox-btn-import',
           )}
         </ButtonGroup>
-      </div>{' '}
+      </div>
+      <Separator orientation="vertical" className="nop-scada-editor-toolbox-separator" />
       <div data-slot="scada-editor-toolbox-group" className="nop-scada-editor-toolbox-group">
         <ButtonGroup>
           {' '}
           {btn(
+            Link2,
             labelOr('industrial.scada.editor.toolbox.label.connections', 'Conn'),
             () => setConnectionsOpen(true),
             false,
@@ -448,6 +526,7 @@ export function EditorToolboxPanel(props: EditorToolboxPanelProps) {
             'toolbox-btn-connections',
           )}
           {btn(
+            History,
             labelOr('industrial.scada.editor.toolbox.label.history', 'Hist'),
             () => setHistoryOpen(true),
             false,
@@ -455,6 +534,7 @@ export function EditorToolboxPanel(props: EditorToolboxPanelProps) {
             'toolbox-btn-history',
           )}
           {btn(
+            Layers,
             labelOr('industrial.scada.editor.toolbox.label.layers', 'Layers'),
             () => setLayersOpen(true),
             false,
@@ -462,6 +542,7 @@ export function EditorToolboxPanel(props: EditorToolboxPanelProps) {
             'toolbox-btn-layers',
           )}
           {btn(
+            LayoutTemplate,
             labelOr('industrial.scada.editor.toolbox.label.template', 'Tpl'),
             () => setTemplateOpen(true),
             false,
@@ -469,6 +550,7 @@ export function EditorToolboxPanel(props: EditorToolboxPanelProps) {
             'toolbox-btn-template',
           )}
           {btn(
+            Monitor,
             labelOr('industrial.scada.editor.toolbox.label.station', 'Screens'),
             () => setStationOpen(true),
             false,

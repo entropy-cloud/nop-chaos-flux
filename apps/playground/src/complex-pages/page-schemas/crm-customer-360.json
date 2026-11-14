@@ -33,33 +33,49 @@
             {
               "type": "detail-view",
               "testid": "crm-customer-360-partner-detail",
-              "label": "客户基本信息（partnerGet）",
+              "label": "客户基本信息",
               "disabled": true,
               "data": "${partnerGet?.partner}",
               "viewer": [
                 {
-                  "type": "text",
-                  "testid": "crm-customer-360-partner-name",
-                  "text": "${partnerGet?.partner?.name ?? '-'}",
-                  "className": "text-base font-semibold"
-                },
-                {
-                  "type": "text",
-                  "testid": "crm-customer-360-partner-meta",
-                  "text": "编码：${partnerGet?.partner?.code ?? '-'} · 级别：${partnerGet?.partner?.level ?? '-'} · 负责人：${partnerGet?.partner?.ownerName ?? '-'}",
-                  "className": "text-sm"
-                },
-                {
-                  "type": "text",
-                  "testid": "crm-customer-360-partner-industry",
-                  "text": "行业：${partnerGet?.partner?.industry ?? '-'} · ${partnerGet?.partner?.remark ?? '-'}",
-                  "className": "text-sm text-muted-foreground"
-                },
-                {
-                  "type": "text",
-                  "testid": "crm-customer-360-partner-address",
-                  "text": "地址：${partnerGet?.partner?.address ?? '-'}",
-                  "className": "text-sm text-muted-foreground"
+                  "type": "flex",
+                  "direction": "column",
+                  "gap": 2,
+                  "testid": "crm-customer-360-partner-summary",
+                  "body": [
+                    {
+                      "type": "text",
+                      "testid": "crm-customer-360-partner-name",
+                      "text": "${partnerGet?.partner?.name ?? '-'}",
+                      "className": "text-xl font-semibold"
+                    },
+                    {
+                      "type": "text",
+                      "testid": "crm-customer-360-partner-meta",
+                      "text": "编码：${partnerGet?.partner?.code ?? '-'} · 级别：${partnerGet?.partner?.level ?? '-'} · 负责人：${partnerGet?.partner?.ownerName ?? '-'}",
+                      "className": "text-sm"
+                    },
+                    {
+                      "type": "flex",
+                      "direction": "row",
+                      "gap": 8,
+                      "className": "flex-wrap",
+                      "body": [
+                        {
+                          "type": "text",
+                          "testid": "crm-customer-360-partner-industry",
+                          "text": "行业：${partnerGet?.partner?.industry ?? '-'} · ${partnerGet?.partner?.remark ?? '-'}",
+                          "className": "rounded-md bg-muted px-2 py-0.5 text-xs text-muted-foreground"
+                        },
+                        {
+                          "type": "text",
+                          "testid": "crm-customer-360-partner-address",
+                          "text": "地址：${partnerGet?.partner?.address ?? '-'}",
+                          "className": "rounded-md bg-muted px-2 py-0.5 text-xs text-muted-foreground"
+                        }
+                      ]
+                    }
+                  ]
                 }
               ],
               "content": [
@@ -84,7 +100,7 @@
                 {
                   "type": "picker",
                   "name": "partnerId",
-                  "label": "客户切换（party-search 范式）",
+                  "label": "客户切换",
                   "testid": "crm-customer-360-partner-picker",
                   "valueField": "id",
                   "labelField": "name",

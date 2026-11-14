@@ -262,8 +262,9 @@
               "source": "${categoryDistribution?.items ?? []}",
               "xAxis": { "dataKey": "category" },
               "series": [{ "name": "原值（元）", "dataRegionKey": "value" }],
+              "colors": ["#6366f1", "#22c55e", "#f59e0b", "#06b6d4", "#ec4899"],
               "legend": true,
-              "height": 260
+              "height": 300
             },
             {
               "type": "chart",
@@ -279,7 +280,7 @@
                 { "name": "累计折旧（元）", "dataRegionKey": "accumulated", "yAxisId": 1 }
               ],
               "legend": true,
-              "height": 260
+              "height": 340
             }
           ]
         },
@@ -289,6 +290,7 @@
           "testid": "itam-depreciation-dashboard-pivot",
           "label": "年度折旧透视（类别×季度）",
           "source": "${depreciationPivot?.records ?? []}",
+          "widthMode": "auto",
           "rowDimensions": ["category"],
           "columnDimensions": ["quarter"],
           "indicators": [

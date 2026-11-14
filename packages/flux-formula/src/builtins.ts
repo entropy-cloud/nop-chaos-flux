@@ -198,6 +198,17 @@ export function installBuiltins(registry: FormulaRegistry): void {
   );
   registry.registerFunction('RAND', () => Math.random());
   registry.registerFunction('PI', () => Math.PI);
+  registry.registerFunction('FORMATNUMBER', (input: unknown, precision?: unknown) => {
+    const value = Number(input);
+    const places = precision == null ? 0 : Number(precision);
+    if (!Number.isFinite(value) || !Number.isFinite(places)) {
+      return '';
+    }
+    return value.toLocaleString('en-US', {
+      minimumFractionDigits: places,
+      maximumFractionDigits: places,
+    });
+  });
 
   // I3: expose the i18n sink as a formula builtin so schema authors can resolve
   // message keys (e.g. flux.common.noData) and parametrized messages inside

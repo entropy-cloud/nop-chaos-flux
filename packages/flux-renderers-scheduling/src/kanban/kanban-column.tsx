@@ -182,6 +182,7 @@ function KanbanColumnInner({
     return {
       label: columnAggregate.label ?? columnAggregate.fn,
       display: String(result.value),
+      isCount: columnAggregate.fn === 'count',
     };
   })();
 

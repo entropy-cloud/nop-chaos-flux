@@ -136,8 +136,12 @@ export function buildIotAlarms(): IotAlarm[] {
       status,
       triggerValue: 30 + n * 1.5,
       thresholdValue: 30,
-      ackAt: status === 'ACKED' ? `2026-10-31 0${n % 9}:15` : null,
-      escalationTier: idx % 3,
+      // Anything past ACTIVE was acknowledged on its way to ACKED/CLOSED —
+      // leaving CLOSED rows null read as lost data in the 确认时间 column.
+      ackAt: status === 'ACTIVE' ? null : `2026-10-31 ${String(8 + (n % 4)).padStart(2, '0')}:${String((n * 7) % 60).padStart(2, '0')}`,
+      // idx % 3 was locked to the device cycle (each device saw a constant
+      // tier); floor(idx/3)%3 mixes 0/1/2 within every device's ladder.
+      escalationTier: Math.floor(idx / 3) % 3,
     };
   });
 }

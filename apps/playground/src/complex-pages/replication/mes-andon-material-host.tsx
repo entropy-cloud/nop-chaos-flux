@@ -9,6 +9,12 @@ import mesAndonMaterialSchema from '../page-schemas/mes-andon-material.json';
  * 手机框（replication.css `.repl-mobile-canvas*`）承载。画布同时是 axe 分支 B
  * 的扫描对象与 F1「移动端页 viewport 适配验证」的验收对象。
  *
+ * Panel caption note: the schema previously rendered a dev-facing caption
+ * "异常/叫料快捷面板（拖拽切换锚点）· 当前锚点：N". The panel description was
+ * removed as playground debug copy; the dynamic "当前锚点：N" tail is kept
+ * because e2e (replication-mes-andon-material.spec.ts 交互⑦) asserts it via
+ * testid `mes-andon-material-panel-caption`.
+ *
  * Host seeds the page-scope variables the schema expressions read before the
  * first write (W1 先例) — the infinite-scroll accumulator faces
  * (andonItems/andonPage/andonHasMore/andonLoading) start empty so the first

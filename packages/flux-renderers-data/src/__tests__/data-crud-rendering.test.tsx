@@ -173,7 +173,10 @@ describe('CRUD renderer', () => {
     expect(screen.getByText('Query filters')).toBeTruthy();
     expect(document.querySelector('[data-slot="form-actions"]')).toBeTruthy();
     expect(screen.getByText('Search', { selector: '[data-slot="form-actions"] button' })).toBeTruthy();
-    expect(document.querySelector('[data-slot="crud-query-search"]')).toBeTruthy();
+    // Query actions render once — via the queryForm region's own actions row.
+    // The synthesized crud-query-actions row must stay suppressed to avoid a
+    // duplicated 搜索/重置 set.
+    expect(document.querySelector('[data-slot="crud-query-actions"]')).toBeNull();
   });
 
   it('renders footer toolbar and toolbar layout blocks', async () => {

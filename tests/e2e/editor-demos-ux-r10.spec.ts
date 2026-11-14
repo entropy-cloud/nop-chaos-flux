@@ -104,6 +104,8 @@ test('sc3-productized: dev wall folded away, live binding demo intact and previe
 
   // live 绑定演示在位：导出 working copy 应携带 demo-live-text 的 tank_level 绑定
   // （画布符号绘制在 canvas 内无 DOM 文本，导出往返是绑定配置的可读证明面）
+  // ux-r10 复审：调试输出区收进「开发者」开关——断言前先打开。
+  await page.getByTestId('editor-btn-devtools').click();
   await page.getByTestId('editor-btn-export').click();
   const exportOut = page.getByTestId('editor-output-export');
   await expect(exportOut).toContainText('tank_level', { timeout: 10_000 });

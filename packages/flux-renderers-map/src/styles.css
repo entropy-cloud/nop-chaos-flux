@@ -34,6 +34,18 @@
 
 .nop-map .ol-zoom .ol-zoom-in,
 .nop-map .ol-zoom .ol-zoom-out {
+  width: 1.875rem;
+  height: 1.875rem;
+  margin: 0.25rem;
+  font-size: 1.125rem;
+  font-weight: 600;
+  line-height: 1;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.15);
+  cursor: pointer;
   background: hsl(var(--background));
   color: hsl(var(--foreground));
   border: 1px solid hsl(var(--border));

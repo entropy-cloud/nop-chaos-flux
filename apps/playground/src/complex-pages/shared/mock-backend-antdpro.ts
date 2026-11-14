@@ -88,6 +88,8 @@ const CUSTOMERS = [
 const OWNERS = ['陈立群', '苏婉清', '顾北辰', '林知夏'];
 const PAY_TYPES = ['在线支付', '对公转账', '货到付款'];
 const CHANNELS: AntdProChannel[] = ['web', 'miniapp', 'store', 'app'];
+// 加权渠道分布：驱动饼图呈现非均匀占比（均匀 9/9/9/9 会被读作假数据）。
+const K2_CHANNEL_WEIGHTS = [0, 0, 1, 0, 2, 0, 3, 1, 0, 2];
 const STATUSES: AntdProOrderStatus[] = ['done', 'processing', 'pending', 'shipped', 'done', 'cancelled', 'done', 'shipped', 'done', 'processing'];
 
 function pad(value: number, width: number): string {
@@ -108,7 +110,7 @@ export function createAntdProOrders(): AntdProOrder[] {
       id: `A${1001 + i}`,
       orderNo: `SO202608${pad(100 + i, 4)}`,
       customer: CUSTOMERS[i % CUSTOMERS.length],
-      channel: CHANNELS[i % CHANNELS.length],
+      channel: CHANNELS[K2_CHANNEL_WEIGHTS[i % K2_CHANNEL_WEIGHTS.length]],
       payType: PAY_TYPES[i % PAY_TYPES.length],
       amount: 128 + ((i * 137) % 2800),
       status: STATUSES[i % STATUSES.length],

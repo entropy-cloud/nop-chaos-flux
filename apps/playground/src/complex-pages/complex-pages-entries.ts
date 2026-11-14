@@ -338,6 +338,9 @@ export const COMPLEX_PAGE_ENTRIES: ComplexPageEntry[] = [
   },
   {
     id: 'stripe-payments',
+    // 接线备注（原渲染在页面搜索框旁的 st-note，已从 UI 移除）：
+    // chip 增删/组合收窄已接线（I1 P7b）：初始双 chip 为已固定维度样本（值经筛选 dialog 应用），
+    // 移除即解除；搜索已参数化（I3）。
     title: '金融数据面板 · 支付流水',
     category: 'app-replica',
     description:
@@ -525,7 +528,7 @@ export const COMPLEX_PAGE_ENTRIES: ComplexPageEntry[] = [
     title: 'IoT 围栏地图与视频墙页',
     category: 'business-replication',
     description:
-      '复刻 IoT 围栏地图与视频墙页（roadmap 21 页 V3，D4 §2.7 桌面整页，新 type 临时形态，绘制/轨迹/流媒体不做交互验收——D4 §6.2 显式收窄）：左 pin 地图设备点位（cluster 关闭，点击点位 → checkFence 判定 + 事件列表按设备过滤）+ 围栏回显 region 地图（geojsonSource action → 圆形围栏 FeatureCollection）+ 围栏事件表（interval 5s 轮询增量）+ timeline 事件流；右 video×4 本地 mp4 样例墙（card 通道名 + 在线状态）+ 通道树 drawer。数据经 /r/ReplIot__ 端点流动，视频资产为 ffmpeg testsrc 程序化生成。',
+      '复刻 IoT 围栏地图与视频墙页（roadmap 21 页 V3，D4 §2.7 桌面整页，新 type 临时形态，绘制/轨迹/流媒体不做交互验收——D4 §6.2 显式收窄）：左 pin 地图设备点位（cluster 关闭，点击点位 → checkFence 判定 + 事件列表按设备过滤）+ 围栏回显 region 地图（geojsonSource action → 圆形围栏 FeatureCollection）+ 围栏事件表（interval 5s 轮询增量）+ timeline 事件流；右 video×4 本地 mp4 样例墙（card 通道名 + 在线状态）+ 通道树 drawer。数据经 /r/ReplIot__ 端点流动，视频资产为程序化生成的监控画面样例（通道名 + 时间戳 + REC 角标）。',
     features: ['map pin 点位联动', 'checkFence 判定', '围栏 region 回显', '事件轮询增量', 'timeline 事件流', 'video 视频墙', '通道树 drawer', 'ReplIot__ 端点'],
   },
 ];

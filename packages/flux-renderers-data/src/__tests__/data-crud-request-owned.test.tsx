@@ -130,7 +130,7 @@ describe('CRUD renderer request-owned baseline', () => {
     });
 
     fireEvent.change(screen.getByLabelText('Keyword'), { target: { value: 'Ali' } });
-    fireEvent.click(screen.getByText(t('flux.common.search'), { selector: '[data-slot="crud-query-search"]' }));
+    fireEvent.click(screen.getByText(t('flux.common.search'), { selector: '[data-slot="form-actions"] button' }));
 
     await waitFor(() => {
       expect(screen.getByText('Alice')).toBeTruthy();
@@ -201,7 +201,7 @@ describe('CRUD renderer request-owned baseline', () => {
     });
 
     fireEvent.change(screen.getByLabelText('Keyword'), { target: { value: 'Ali' } });
-    fireEvent.click(screen.getByText(t('flux.common.search'), { selector: '[data-slot="crud-query-search"]' }));
+    fireEvent.click(screen.getByText(t('flux.common.search'), { selector: '[data-slot="form-actions"] button' }));
 
     await waitFor(() => {
       expect(fetcherSpy).toHaveBeenCalledTimes(2);

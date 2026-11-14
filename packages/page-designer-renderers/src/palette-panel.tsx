@@ -102,7 +102,7 @@ export function PalettePanel(props: PalettePanelProps) {
         data-testid="page-designer-palette-filter"
         onChange={(event) => setFilter(event.target.value)}
       />
-      <div className="min-h-0 flex-1 space-y-4 overflow-y-auto pr-1">
+      <div className="min-h-0 flex-1 space-y-4 overflow-y-auto pb-16 pr-1">
         {groups.length === 0 ? (
           <p className="text-sm text-[var(--nop-body-copy,#6b7280)]">{t('flux.pageDesigner.paletteEmpty')}</p>
         ) : (

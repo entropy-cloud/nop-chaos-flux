@@ -23,9 +23,10 @@ import {
 //   them; one event spans two days (跨日).
 //
 // Seed math (mock-backend-repl-crm deterministic C2 fixtures):
-//   partner-0001: 3 related leads (plead-0001-1/2/3), 4 activities
-//                 (VISIT/CALL/DEMO/NOTE — 9/6/3/1 days ago, ASC), 4 calendar
-//                 events (one spans two days).
+//   partner-0001: 3 related leads (plead-0001-1/2/3), 8 activities
+//                 (per-slot seeded titles; exactly one CALL — filter test
+//                 collapses to that row), 4 calendar events (one spans two
+//                 days).
 //   partner-0002: 2 related leads → the ① partner switch changes BOTH the row
 //                 count (3 → 2) and the first-row value.
 //   activityCreate appends to the ASC log → renders at the TOP of the
@@ -108,14 +109,20 @@ test('前置：头部 detail-view（首个复刻面消费）+ picker + 四 tab �
     await expect(page.locator(tabTrigger(tabValue))).toHaveText(title);
   }
 
-  // timeline 初始 4 条（partner-0001 种子），reverse: true → 首条为最新
-  // （NOTE 跟进纪要，1 天前）。level 驱动着色：四种 level 各一条。
-  await expect(page.locator(`${TIMELINE} ${TIMELINE_ITEM}`)).toHaveCount(4);
-  await expect(page.locator(`${TIMELINE} ${TIMELINE_ITEM}`).first()).toContainText('跟进纪要·P0001');
-  for (const level of ['success', 'info', 'warning', 'default']) {
+  // timeline 初始 8 条（partner-0001 种子），reverse: true → 首条为最新
+  // （NOTE 合作意向确认纪要，1 天前）。level 驱动着色：VISIT×2 / CALL×1 /
+  // DEMO×2 / NOTE×3。
+  await expect(page.locator(`${TIMELINE} ${TIMELINE_ITEM}`)).toHaveCount(8);
+  await expect(page.locator(`${TIMELINE} ${TIMELINE_ITEM}`).first()).toContainText('合作意向确认纪要');
+  for (const [level, count] of [
+    ['success', 2],
+    ['info', 1],
+    ['warning', 2],
+    ['default', 3],
+  ] as const) {
     await expect(
       page.locator(`${TIMELINE} [data-slot="timeline-dot"][data-level="${level}"]`),
-    ).toHaveCount(1);
+    ).toHaveCount(count);
   }
   await expectEndpointCall(page, COUNTERS_KEY, 'ReplCrm__activityTimeline', { atLeast: 1 });
   await assertTrackedPageErrors(page);
@@ -313,7 +320,7 @@ test('filterForm 提交（活动类型过滤，来源 R1 §2 C2 要素③）→ 
 
   // partner-0001 恰有 1 条 CALL 跟进 → timeline 收缩为 1 条且命中类型。
   await expect(page.locator(`${TIMELINE} ${TIMELINE_ITEM}`)).toHaveCount(1, { timeout: 15_000 });
-  await expect(page.locator(`${TIMELINE} ${TIMELINE_ITEM}`).first()).toContainText('电话跟进·P0001');
+  await expect(page.locator(`${TIMELINE} ${TIMELINE_ITEM}`).first()).toContainText('季度采购计划确认电话会');
   await assertTrackedPageErrors(page);
 });
 

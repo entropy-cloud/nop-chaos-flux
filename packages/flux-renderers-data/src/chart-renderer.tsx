@@ -7,8 +7,6 @@ import {
   Bar,
   LineChart,
   Line,
-  PieChart,
-  Pie,
   Cell,
   ScatterChart,
   Scatter,
@@ -42,40 +40,13 @@ import {
   warnSilentBlank,
 } from './chart-diagnostics.js';
 import { buildHeatmapGrid, HeatmapGrid, sanitizeHeatmapRows } from './chart-heatmap.js';
-import { sanitizeYAxis, type SanitizedYAxisEntry } from './chart-y-axis.js';
-
-/**
- * ux-r12 cp3：pie 图例逐切片渲染（name + 调色板色点）。共享 ChartLegendContent
- * 按 ChartConfig（系列级，key=dataRegionKey）查标签，pie 场景会把每个切片都
- * 标成系列名（如 4 个切片全显「订单数」）——切片名在数据行里，须单独渲染。
- */
-function PieSliceLegend({
-  items,
-  palette,
-  className,
-}: {
-  items: Array<{ name: string | number; value: number }>;
-  palette: string[];
-  className?: string | undefined;
-}) {
-  return (
-    <div className={cn('flex flex-wrap items-center justify-center gap-x-4 gap-y-1', className)}>
-      {items.map((item, i) => (
-        <div
-          // eslint-disable-next-line react/no-array-index-key -- 图例纯展示不重排，name+value 可重复（H22 家族），index 是唯一稳定区分位
-          key={`pie-legend-${i}-${item.name}:${item.value}`}
-          className="flex items-center gap-1.5 text-xs text-muted-foreground"
-        >
-          <div
-            className="h-2 w-2 shrink-0 rounded-[2px]"
-            style={{ backgroundColor: palette[i % palette.length] }}
-          />
-          <span>{item.name}</span>
-        </div>
-      ))}
-    </div>
-  );
-}
+import {
+  buildIntegerYAxisScale,
+  integerYAxisScaleProps,
+  sanitizeYAxis,
+  type SanitizedYAxisEntry,
+} from './chart-y-axis.js';
+import { buildPieData, PieChartView } from './chart-pie.js';
 import {
   isChartType,
   sanitizeBand,
@@ -203,31 +174,7 @@ export function ChartRenderer(props: RendererComponentProps<ChartSchema>) {
     return undefined;
   };
 
-  const pieData = (() => {
-    if (source.length > 0 && xKey) {
-      return source.map((item, i) => {
-        // H22: guard the source-array numeric coercion so a non-numeric cell does
-        // not pollute the chart with NaN.
-        const rawValue = series[0]?.dataRegionKey
-          ? getIn(item, series[0].dataRegionKey)
-          : (item.value ?? 0);
-        const coerced = Number(rawValue);
-        return {
-          name: String(getIn(item, xKey) ?? ''),
-          value: Number.isFinite(coerced) ? coerced : 0,
-          fill: palette[i % palette.length],
-        };
-      });
-    }
-    if (series[0]?.data) {
-      return series[0].data.map((d, i) => ({
-        name: typeof d === 'object' && d !== null ? String(d.name ?? '') : '',
-        value: typeof d === 'object' && d !== null ? d.value : d,
-        fill: palette[i % palette.length],
-      }));
-    }
-    return [];
-  })();
+  const pieData = buildPieData(source, series, xKey, palette);
 
   const cartesianData = (() => {
     if (source.length > 0) {
@@ -253,6 +200,14 @@ export function ChartRenderer(props: RendererComponentProps<ChartSchema>) {
         position: entry.position === 'right' ? 'right' : index === 0 ? 'left' : 'right',
       }))
     : [yAxisInfo.entries[0]];
+
+  const integerYAxisScale = buildIntegerYAxisScale(
+    cartesianData as Array<Record<string, unknown>>,
+    series,
+    yAxisEntries,
+    dualAxisEnabled,
+  );
+  const yAxisScaleProps = (index: number) => integerYAxisScaleProps(integerYAxisScale, index);
 
   // 自绘 heatmap 网格（recharts 无原生 heatmap 系列）。
   const heatmapRows = sanitizeHeatmapRows(
@@ -425,23 +380,12 @@ export function ChartRenderer(props: RendererComponentProps<ChartSchema>) {
 
     if (resolvedChartType === 'pie') {
       return (
-        <PieChart>
-          <ChartTooltip content={<ChartTooltipContent />} />
-          {showLegend && <PieSliceLegend items={pieData} palette={palette} className={legendClassName} />}
-          <Pie data={pieData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius="80%">
-            {pieData.map((item, i) => (
-              // H22: key on name+value so same-named Pie cells no longer collide
-              // (previously keyed on `item.name` alone); the index joins the key
-              // because H22's scheme still collides when both name AND value are
-              // duplicated across rows. Cells are display-only and never reorder.
-              <Cell
-                // eslint-disable-next-line react/no-array-index-key -- 纯展示不重排，index 是重复 name+value 行的唯一稳定区分位（H22 家族）
-                key={`pie-cell-${i}-${item.name}:${item.value}`}
-                fill={palette[i % palette.length]}
-              />
-            ))}
-          </Pie>
-        </PieChart>
+        <PieChartView
+          pieData={pieData}
+          palette={palette}
+          showLegend={showLegend}
+          legendClassName={legendClassName}
+        />
       );
     }
 
@@ -450,7 +394,7 @@ export function ChartRenderer(props: RendererComponentProps<ChartSchema>) {
         <ScatterChart>
           {showGrid && <CartesianGrid strokeDasharray="3 3" />}
           {xKey && <XAxis dataKey={xKey} name={xAxis?.label} />}
-          <YAxis name={yAxisEntries[0].label} />
+          <YAxis name={yAxisEntries[0].label} {...yAxisScaleProps(0)} />
           <ChartTooltip content={<ChartTooltipContent />} />
           {showLegend && <ChartLegend content={<ChartLegendContent className={legendClassName} />} />}
           {series.length > 0 ? (
@@ -497,6 +441,7 @@ export function ChartRenderer(props: RendererComponentProps<ChartSchema>) {
               yAxisId={index}
               orientation={entry.position}
               name={entry.label}
+              {...yAxisScaleProps(index)}
             />
           ))}
           {brushEnabled && xKey ? (
@@ -543,6 +488,7 @@ export function ChartRenderer(props: RendererComponentProps<ChartSchema>) {
               yAxisId={index}
               orientation={entry.position}
               name={entry.label}
+              {...yAxisScaleProps(index)}
             />
           ))}
           {brushEnabled && xKey ? (
@@ -581,6 +527,7 @@ export function ChartRenderer(props: RendererComponentProps<ChartSchema>) {
             yAxisId={index}
             orientation={entry.position}
             name={entry.label}
+            {...yAxisScaleProps(index)}
           />
         ))}
         {brushEnabled && xKey ? (
@@ -598,6 +545,7 @@ export function ChartRenderer(props: RendererComponentProps<ChartSchema>) {
               yAxisId={dualAxisEnabled ? (s.yAxisId ?? 0) : 0}
               fill={palette[i % palette.length]}
               stackId={stacked ? 'a' : undefined}
+              isAnimationActive={false}
             >
               {cartesianData.map((item, pointIndex) => {
                 const color = resolvePointColor(s, item, pointIndex);
@@ -612,7 +560,7 @@ export function ChartRenderer(props: RendererComponentProps<ChartSchema>) {
             </Bar>
           ))
         ) : (
-          <Bar dataKey="value" yAxisId={0} fill={palette[0]} />
+          <Bar dataKey="value" yAxisId={0} fill={palette[0]} isAnimationActive={false} />
         )}
       </BarChart>
     );

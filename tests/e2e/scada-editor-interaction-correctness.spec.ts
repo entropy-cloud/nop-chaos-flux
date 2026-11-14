@@ -290,6 +290,8 @@ test.describe('scada-editor demo M2/M3 narrative (plan 521 W7)', () => {
     await gotoEditorDemo(page);
 
     // W3：导出配置到页面 → collapse 输出区可见 JSON。
+    // ux-r10 复审：输出区收进「开发者」开关，先打开再断言。
+    await page.click('[data-testid="editor-btn-devtools"]');
     await page.click('[data-testid="editor-btn-export"]');
     const exportOutput = page.locator('[data-testid="editor-output-export"]');
     await expect(exportOutput).toContainText('demo-junction', { timeout: 15_000 });

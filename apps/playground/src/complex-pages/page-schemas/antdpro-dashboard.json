@@ -52,7 +52,7 @@
           "testid": "antdpro-kpi-today-sales",
           "className": "adp-card flex-1 p-5 min-w-48",
           "body": [
-            { "type": "text", "text": "今日销售额（元）", "className": "adp-desc-label" },
+            { "type": "text", "text": "今日销售额", "className": "adp-desc-label" },
             {
               "type": "flex",
               "direction": "row",
@@ -61,7 +61,7 @@
               "body": [
                 {
                   "type": "text",
-                  "text": "${dashboard?.kpi?.todaySales ?? 0}",
+                  "text": "${FORMATNUMBER(dashboard?.kpi?.todaySales ?? 0)}",
                   "className": "adp-kpi-value",
                   "testid": "antdpro-kpi-today-sales-value"
                 },
@@ -79,7 +79,7 @@
           "testid": "antdpro-kpi-month-sales",
           "className": "adp-card flex-1 p-5 min-w-48",
           "body": [
-            { "type": "text", "text": "本月销售额（元）", "className": "adp-desc-label" },
+            { "type": "text", "text": "本月销售额", "className": "adp-desc-label" },
             {
               "type": "flex",
               "direction": "row",
@@ -88,7 +88,7 @@
               "body": [
                 {
                   "type": "text",
-                  "text": "${dashboard?.kpi?.monthSales ?? 0}",
+                  "text": "${FORMATNUMBER(dashboard?.kpi?.monthSales ?? 0)}",
                   "className": "adp-kpi-value",
                   "testid": "antdpro-kpi-month-sales-value"
                 },
@@ -117,7 +117,7 @@
               "body": [
                 {
                   "type": "text",
-                  "text": "${dashboard?.kpi?.totalOrders ?? 0}",
+                  "text": "${FORMATNUMBER(dashboard?.kpi?.totalOrders ?? 0)}",
                   "className": "adp-kpi-value",
                   "testid": "antdpro-kpi-total-orders-value"
                 },
@@ -180,9 +180,10 @@
               "source": "${dashboard?.trend}",
               "height": 280,
               "xAxis": { "dataKey": "date" },
+              "yAxis": [{ "label": "销售额" }, { "label": "订单数", "position": "right" }],
               "series": [
                 { "name": "销售额", "dataRegionKey": "sales" },
-                { "name": "订单数", "dataRegionKey": "orders" }
+                { "name": "订单数", "dataRegionKey": "orders", "yAxisId": 1 }
               ],
               "grid": true,
               "legend": true
@@ -201,6 +202,7 @@
               "chartType": "pie",
               "source": "${dashboard?.channels}",
               "height": 280,
+              "colors": ["#6366f1", "#22c55e", "#f59e0b", "#06b6d4", "#ec4899"],
               "xAxis": { "dataKey": "name" },
               "series": [{ "name": "订单数", "dataRegionKey": "value" }],
               "legend": true

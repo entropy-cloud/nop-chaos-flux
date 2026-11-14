@@ -106,13 +106,6 @@ function renderPanel(selection: string[], runtime?: ReturnType<typeof makeRuntim
   return { container, runtime: rt };
 }
 
-function buttonByText(container: HTMLElement, text: string): HTMLButtonElement {
-  const buttons = Array.from(container.querySelectorAll('button'));
-  const found = buttons.find((b) => b.textContent?.trim() === text);
-  if (!found) throw new Error(`button "${text}" not found`);
-  return found;
-}
-
 // plan 2026-08-09-0648-2 Phase 3：word 按钮 label 经 i18n 解析后随 locale 变化，
 // 行为用例经稳定 data-testid 定位（locale 无关）。V12b G5-视角1-04：align/distribute/z-order
 // 按钮弃用生僻字形、改走 `label.*` 短键，同样统一以 data-testid 定位。
@@ -133,9 +126,9 @@ describe('EditorToolboxPanel (design-toolbox.md §10 + §11)', () => {
     const { container, runtime } = renderPanel([]);
     fireEvent.click(buttonByTestId(container, 'toolbox-btn-fit'));
     fireEvent.click(buttonByTestId(container, 'toolbox-btn-center'));
-    fireEvent.click(buttonByText(container, '1:1'));
-    fireEvent.click(buttonByText(container, '+'));
-    fireEvent.click(buttonByText(container, '−'));
+    fireEvent.click(buttonByTestId(container, 'toolbox-btn-reset'));
+    fireEvent.click(buttonByTestId(container, 'toolbox-btn-zoom-in'));
+    fireEvent.click(buttonByTestId(container, 'toolbox-btn-zoom-out'));
     // 每按钮恰好调用 1 次（计数可观测）
     expect(runtime.allCalls.fitView).toHaveLength(1);
     expect(runtime.allCalls.centerView).toHaveLength(1);
@@ -402,33 +395,33 @@ describe('EditorToolboxPanel (design-toolbox.md §10 + §11)', () => {
   it('word buttons render resolved localized labels (zh-CN, not raw key)', () => {
     const { container } = renderPanel([]);
     // word 按钮全部经 t() 解析命中 zh locale（抽样断言；1:1/+/- 为纯符号保持不变）。
-    expect(buttonByTestId(container, 'toolbox-btn-delete').textContent?.trim()).toBe('删除');
-    expect(buttonByTestId(container, 'toolbox-btn-group').textContent?.trim()).toBe('组合');
-    expect(buttonByTestId(container, 'toolbox-btn-ungroup').textContent?.trim()).toBe('解组');
-    expect(buttonByTestId(container, 'toolbox-btn-copy').textContent?.trim()).toBe('复制');
-    expect(buttonByTestId(container, 'toolbox-btn-cut').textContent?.trim()).toBe('剪切');
-    expect(buttonByTestId(container, 'toolbox-btn-paste').textContent?.trim()).toBe('粘贴');
-    expect(buttonByTestId(container, 'toolbox-btn-undo').textContent?.trim()).toBe('撤销');
-    expect(buttonByTestId(container, 'toolbox-btn-redo').textContent?.trim()).toBe('重做');
-    expect(buttonByTestId(container, 'toolbox-btn-export').textContent?.trim()).toBe('导出');
-    expect(buttonByTestId(container, 'toolbox-btn-import').textContent?.trim()).toBe('导入');
-    expect(buttonByTestId(container, 'toolbox-btn-fit').textContent?.trim()).toBe('适配');
-    expect(buttonByTestId(container, 'toolbox-btn-center').textContent?.trim()).toBe('居中');
+    expect(buttonByTestId(container, 'toolbox-btn-delete')?.getAttribute('aria-label')).toBe('删除');
+    expect(buttonByTestId(container, 'toolbox-btn-group')?.getAttribute('aria-label')).toBe('组合');
+    expect(buttonByTestId(container, 'toolbox-btn-ungroup')?.getAttribute('aria-label')).toBe('解组');
+    expect(buttonByTestId(container, 'toolbox-btn-copy')?.getAttribute('aria-label')).toBe('复制');
+    expect(buttonByTestId(container, 'toolbox-btn-cut')?.getAttribute('aria-label')).toBe('剪切');
+    expect(buttonByTestId(container, 'toolbox-btn-paste')?.getAttribute('aria-label')).toBe('粘贴');
+    expect(buttonByTestId(container, 'toolbox-btn-undo')?.getAttribute('aria-label')).toBe('撤销');
+    expect(buttonByTestId(container, 'toolbox-btn-redo')?.getAttribute('aria-label')).toBe('重做');
+    expect(buttonByTestId(container, 'toolbox-btn-export')?.getAttribute('aria-label')).toBe('导出');
+    expect(buttonByTestId(container, 'toolbox-btn-import')?.getAttribute('aria-label')).toBe('导入');
+    expect(buttonByTestId(container, 'toolbox-btn-fit')?.getAttribute('aria-label')).toBe('适配');
+    expect(buttonByTestId(container, 'toolbox-btn-center')?.getAttribute('aria-label')).toBe('居中');
     // V12b G5-视角1-04：align/distribute/z-order 按钮可见 label 走 `label.*` 短键（zh）。
-    expect(buttonByTestId(container, 'toolbox-btn-align-left').textContent?.trim()).toBe('左对齐');
-    expect(buttonByTestId(container, 'toolbox-btn-align-right').textContent?.trim()).toBe('右对齐');
-    expect(buttonByTestId(container, 'toolbox-btn-align-hcenter').textContent?.trim()).toBe('水平居中');
-    expect(buttonByTestId(container, 'toolbox-btn-distribute-h').textContent?.trim()).toBe('横分布');
-    expect(buttonByTestId(container, 'toolbox-btn-distribute-v').textContent?.trim()).toBe('纵分布');
-    expect(buttonByTestId(container, 'toolbox-btn-to-top').textContent?.trim()).toBe('置顶');
-    expect(buttonByTestId(container, 'toolbox-btn-move-up').textContent?.trim()).toBe('上移');
-    expect(buttonByTestId(container, 'toolbox-btn-to-bottom').textContent?.trim()).toBe('置底');
+    expect(buttonByTestId(container, 'toolbox-btn-align-left')?.getAttribute('aria-label')).toBe('左对齐');
+    expect(buttonByTestId(container, 'toolbox-btn-align-right')?.getAttribute('aria-label')).toBe('右对齐');
+    expect(buttonByTestId(container, 'toolbox-btn-align-hcenter')?.getAttribute('aria-label')).toBe('水平居中');
+    expect(buttonByTestId(container, 'toolbox-btn-distribute-h')?.getAttribute('aria-label')).toBe('横分布');
+    expect(buttonByTestId(container, 'toolbox-btn-distribute-v')?.getAttribute('aria-label')).toBe('纵分布');
+    expect(buttonByTestId(container, 'toolbox-btn-to-top')?.getAttribute('aria-label')).toBe('置顶');
+    expect(buttonByTestId(container, 'toolbox-btn-move-up')?.getAttribute('aria-label')).toBe('上移');
+    expect(buttonByTestId(container, 'toolbox-btn-to-bottom')?.getAttribute('aria-label')).toBe('置底');
     // 1:1 (D4) / + / - 为纯 ASCII 符号，label 不走 i18n。
-    expect(buttonByTestId(container, 'toolbox-btn-reset').textContent?.trim()).toBe('1:1');
-    expect(buttonByTestId(container, 'toolbox-btn-zoom-in').textContent?.trim()).toBe('+');
-    expect(buttonByTestId(container, 'toolbox-btn-zoom-out').textContent?.trim()).toBe('−');
+    expect(buttonByTestId(container, 'toolbox-btn-reset')?.getAttribute('aria-label')).toBe('1:1');
+    expect(buttonByTestId(container, 'toolbox-btn-zoom-in')?.getAttribute('aria-label')).toBe('+');
+    expect(buttonByTestId(container, 'toolbox-btn-zoom-out')?.getAttribute('aria-label')).toBe('−');
     // raw key 不应泄漏到可见文本。
-    expect(buttonByTestId(container, 'toolbox-btn-fit').textContent).not.toContain('industrial.scada.editor.toolbox.label.fit');
+    expect(buttonByTestId(container, 'toolbox-btn-fit').getAttribute('aria-label')).not.toContain('industrial.scada.editor.toolbox.label.fit');
   });
 
   it('word buttons fall back to original English short label on locale miss (explicit miss-detection, D5)', () => {
@@ -438,26 +431,26 @@ describe('EditorToolboxPanel (design-toolbox.md §10 + §11)', () => {
     resetFluxI18n();
     initFluxI18n({ lng: 'zh-CN', fallbackLng: 'zh-CN', resources: { 'zh-CN': { flux: {} } } });
     const { container } = renderPanel([]);
-    expect(buttonByTestId(container, 'toolbox-btn-delete').textContent?.trim()).toBe('Del');
-    expect(buttonByTestId(container, 'toolbox-btn-group').textContent?.trim()).toBe('Group');
-    expect(buttonByTestId(container, 'toolbox-btn-ungroup').textContent?.trim()).toBe('Ungroup');
-    expect(buttonByTestId(container, 'toolbox-btn-copy').textContent?.trim()).toBe('Copy');
-    expect(buttonByTestId(container, 'toolbox-btn-cut').textContent?.trim()).toBe('Cut');
-    expect(buttonByTestId(container, 'toolbox-btn-paste').textContent?.trim()).toBe('Paste');
-    expect(buttonByTestId(container, 'toolbox-btn-undo').textContent?.trim()).toBe('Undo');
-    expect(buttonByTestId(container, 'toolbox-btn-redo').textContent?.trim()).toBe('Redo');
-    expect(buttonByTestId(container, 'toolbox-btn-export').textContent?.trim()).toBe('Export');
-    expect(buttonByTestId(container, 'toolbox-btn-import').textContent?.trim()).toBe('Import');
-    expect(buttonByTestId(container, 'toolbox-btn-fit').textContent?.trim()).toBe('Fit');
-    expect(buttonByTestId(container, 'toolbox-btn-center').textContent?.trim()).toBe('Center');
+    expect(buttonByTestId(container, 'toolbox-btn-delete')?.getAttribute('aria-label')).toBe('Del');
+    expect(buttonByTestId(container, 'toolbox-btn-group')?.getAttribute('aria-label')).toBe('Group');
+    expect(buttonByTestId(container, 'toolbox-btn-ungroup')?.getAttribute('aria-label')).toBe('Ungroup');
+    expect(buttonByTestId(container, 'toolbox-btn-copy')?.getAttribute('aria-label')).toBe('Copy');
+    expect(buttonByTestId(container, 'toolbox-btn-cut')?.getAttribute('aria-label')).toBe('Cut');
+    expect(buttonByTestId(container, 'toolbox-btn-paste')?.getAttribute('aria-label')).toBe('Paste');
+    expect(buttonByTestId(container, 'toolbox-btn-undo')?.getAttribute('aria-label')).toBe('Undo');
+    expect(buttonByTestId(container, 'toolbox-btn-redo')?.getAttribute('aria-label')).toBe('Redo');
+    expect(buttonByTestId(container, 'toolbox-btn-export')?.getAttribute('aria-label')).toBe('Export');
+    expect(buttonByTestId(container, 'toolbox-btn-import')?.getAttribute('aria-label')).toBe('Import');
+    expect(buttonByTestId(container, 'toolbox-btn-fit')?.getAttribute('aria-label')).toBe('Fit');
+    expect(buttonByTestId(container, 'toolbox-btn-center')?.getAttribute('aria-label')).toBe('Center');
     // V12b G5-视角1-04：align/distribute/z-order 按钮回退英文短词。
-    expect(buttonByTestId(container, 'toolbox-btn-align-left').textContent?.trim()).toBe('Left');
-    expect(buttonByTestId(container, 'toolbox-btn-distribute-h').textContent?.trim()).toBe('Dist H');
-    expect(buttonByTestId(container, 'toolbox-btn-to-top').textContent?.trim()).toBe('To Top');
-    expect(buttonByTestId(container, 'toolbox-btn-move-down').textContent?.trim()).toBe('Down');
+    expect(buttonByTestId(container, 'toolbox-btn-align-left')?.getAttribute('aria-label')).toBe('Left');
+    expect(buttonByTestId(container, 'toolbox-btn-distribute-h')?.getAttribute('aria-label')).toBe('Dist H');
+    expect(buttonByTestId(container, 'toolbox-btn-to-top')?.getAttribute('aria-label')).toBe('To Top');
+    expect(buttonByTestId(container, 'toolbox-btn-move-down')?.getAttribute('aria-label')).toBe('Down');
     // raw key 不应泄漏（证明显式未命中检测生效，非 `||` 短路）。
-    expect(buttonByTestId(container, 'toolbox-btn-fit').textContent).not.toContain('industrial.scada.editor.toolbox.label.fit');
-    expect(buttonByTestId(container, 'toolbox-btn-align-left').textContent).not.toContain('industrial.scada.editor.toolbox.label.alignLeft');
+    expect(buttonByTestId(container, 'toolbox-btn-fit').getAttribute('aria-label')).not.toContain('industrial.scada.editor.toolbox.label.fit');
+    expect(buttonByTestId(container, 'toolbox-btn-align-left').getAttribute('aria-label')).not.toContain('industrial.scada.editor.toolbox.label.alignLeft');
   });
 });
 
@@ -520,8 +513,8 @@ describe('toolbox dialog entries (plan 521 U1/U2/U3)', () => {
     const conn = buttonByTestId(container, 'toolbox-btn-connections');
     const hist = buttonByTestId(container, 'toolbox-btn-history');
     const layers = buttonByTestId(container, 'toolbox-btn-layers');
-    expect(conn.textContent).toBe('连接');
-    expect(hist.textContent).toBe('历史');
-    expect(layers.textContent).toBe('图层');
+    expect(conn.getAttribute('aria-label')).toBe('连接');
+    expect(hist.getAttribute('aria-label')).toBe('历史');
+    expect(layers.getAttribute('aria-label')).toBe('图层');
   });
 });

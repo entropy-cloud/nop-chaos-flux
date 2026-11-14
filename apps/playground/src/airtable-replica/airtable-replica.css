@@ -144,6 +144,7 @@
   gap: 5px;
   height: 28px;
   padding: 0 9px;
+  border: 1px solid var(--at-border);
   border-radius: var(--at-radius);
   font-size: 13px;
   color: var(--at-text-secondary);
@@ -609,10 +610,22 @@
   align-items: center;
   gap: 12px;
   border-top: 1px solid var(--at-border);
-  padding: 5px 8px;
+  padding: 8px 10px;
+  min-height: 36px;
   font-size: 12px;
   color: var(--at-text-secondary);
   background: var(--at-bg);
+}
+
+/* Audit: aggregate row sat below the fold at first paint — pin it to the
+   bottom edge of the page scroll frame so it stays in-viewport. */
+[data-testid='airtable-summary'] {
+  position: sticky;
+  bottom: 0;
+  z-index: 10;
+  border: 1px solid var(--at-border);
+  border-radius: var(--at-radius);
+  box-shadow: 0 -2px 8px rgba(15, 23, 42, 0.06);
 }
 
 .at-summary-item {

@@ -112,11 +112,13 @@ export interface MallSkuRow {
   image: string;
 }
 
-export function mallSkuImage(seed: number): string {
+export function mallSkuImage(seed: number, kindOverride?: number): string {
   // 商品感占位图三代（plan 856 G1）：移植对照页（_tmp/pdd-reference）的
   // 棚拍质感绘制——浅灰影棚底 + 光斑氛围 + 金属中框深色机身 + 斜向反光 +
   // 后摄模组（三摄镜片/闪光灯）+ 地面投影；kind 1/2 保留器形变体。
-  const kind = seed % 3;
+  // kindOverride lets the goods detail gallery pin the phone art (kind 0) so
+  // the gallery always matches the "旗舰智能手机" goods copy.
+  const kind = kindOverride ?? seed % 3;
   const studio =
     '<defs>' +
     '<linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">' +
@@ -239,7 +241,7 @@ export function buildGoodsDetail(session: ReplMallSession): MallGoodsDetail {
     goods: {
       goodsId: 'goods-0001',
       title: 'Nop Phone 12 Pro（秒杀场）',
-      images: [1, 2, 3, 4].map((n) => ({ image: mallSkuImage(40 + n) })),
+      images: [1, 2, 3, 4].map((n) => ({ image: mallSkuImage(40 + n, 0) })),
       price: 4999,
       seckillPrice: 3799,
       stock: session.goodsStock,

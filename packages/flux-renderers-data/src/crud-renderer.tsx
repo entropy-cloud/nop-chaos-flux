@@ -10,8 +10,7 @@ import {
   useSchemaProps,
 } from '@nop-chaos/flux-react';
 import { t } from '@nop-chaos/flux-i18n';
-import { Button, Separator, cn, useIsMobile } from '@nop-chaos/ui';
-import { ChevronDownIcon } from 'lucide-react';
+import { Separator, cn, useIsMobile } from '@nop-chaos/ui';
 import type { CrudSchema, CrudStatusSummary } from './crud-schema.js';
 import type { TableSchema } from './schemas.js';
 import { normalizeCrudSchema } from './crud-schema.js';
@@ -41,7 +40,7 @@ import { resolvePaginationMode, isAtLastPage } from './crud-query-region.js';
 import { useInfiniteScroll } from './use-infinite-scroll.js';
 import { asReactNode, delegateTableRendererProps, resolveCrudSlotContent } from './crud-renderer-delegate.js';
 import { useCrudFilterToggle } from './use-crud-filter-toggle.js';
-import { CrudQueryActions } from './crud-query-actions.js';
+import { CrudQueryCard } from './crud-query-card.js';
 import { useCrudQueryFormScope } from './use-crud-query-form-scope.js';
 import { useCrudUrlSync } from './use-crud-url-sync.js';
 import { CrudListPagination } from './crud-list-pagination.js';
@@ -434,6 +433,17 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
     crudScope,
   );
   const hasQueryForm = Boolean(props.regions.queryFormRegion?.templateNode);
+  // The queryForm region carries its own submit/reset buttons (explicit
+  // `queryForm.actions` or the auto-generated 搜索/重置 from
+  // createCrudQueryFormRegion). Suppress the synthesized CrudQueryActions row
+  // in that case — otherwise the query card renders two identical button sets.
+  const queryFormTemplateNode = props.regions.queryFormRegion?.templateNode;
+  type QueryFormRegionSchemaShape = { schema?: { actions?: unknown } } | undefined;
+  const queryFormRegionSchema = Array.isArray(queryFormTemplateNode)
+    ? (queryFormTemplateNode[0] as QueryFormRegionSchemaShape)?.schema
+    : (queryFormTemplateNode as QueryFormRegionSchemaShape)?.schema;
+  const queryFormOwnsActions =
+    Array.isArray(queryFormRegionSchema?.actions) && queryFormRegionSchema.actions.length > 0;
 
   const handleClearSelection = () => {
     scope?.update(selectionStatePath, []);
@@ -544,64 +554,22 @@ export function CrudRenderer(props: RendererComponentProps<CrudSchema>) {
       data-load-state={loadState}
     >
       {hasQueryForm ? (
-        <div
-          className={cn(
-            'nop-crud-query rounded-lg border bg-muted/30',
-            filterToggle.collapsed && filterToggle.enabled ? 'px-3 py-2' : 'p-4',
+        <CrudQueryCard
+          filterToggle={filterToggle}
+          filterToggleConfig={filterToggleConfig}
+          queryFormNode={asReactNode(
+            props.regions.queryFormRegion?.render({ pathSuffix: 'queryForm', scope: queryFormScope }),
           )}
-          data-slot="crud-query"
-        >
-          {filterToggle.enabled ? (
-            <div
-              className={cn('flex items-center', filterToggle.collapsed ? 'justify-between' : 'justify-end')}
-              data-slot="crud-query-collapse"
-              data-collapsed={filterToggle.collapsed || undefined}
-            >
-              {filterToggle.collapsed ? (
-                <span className="text-sm text-muted-foreground">
-                  {filterToggleConfig?.collapsedLabel ??
-                    (filterToggle.activeFilterCount > 0
-                      ? t('flux.crud.activeFilters', { count: filterToggle.activeFilterCount })
-                      : t('flux.crud.collapseQuery'))}
-                </span>
-              ) : null}
-              <Button
-                variant="ghost"
-                size="icon-sm"
-                onClick={() => filterToggle.setCollapsed(!filterToggle.collapsed)}
-                aria-expanded={!filterToggle.collapsed}
-                aria-label={
-                  filterToggle.collapsed
-                    ? t('flux.crud.expandQuery')
-                    : (filterToggleConfig?.expandedLabel ?? t('flux.crud.collapseQuery'))
-                }
-              >
-                <ChevronDownIcon
-                  className={cn('size-4 transition-transform', !filterToggle.collapsed && 'rotate-180')}
-                />
-              </Button>
-            </div>
-          ) : null}
-          <div
-            className={filterToggle.enabled ? 'mt-3' : ''}
-            hidden={filterToggle.enabled && filterToggle.collapsed ? true : undefined}
-          >
-            {asReactNode(
-              props.regions.queryFormRegion?.render({ pathSuffix: 'queryForm', scope: queryFormScope }),
-            )}
-            <CrudQueryActions
-              hasQueryForm
-              onSearch={() => {
-                if (loadResult) {
-                  void handleQuerySubmitForHandle();
-                }
-              }}
-              onReset={() => {
-                void handleQueryReset();
-              }}
-            />
-          </div>
-        </div>
+          queryFormOwnsActions={queryFormOwnsActions}
+          onSearch={() => {
+            if (loadResult) {
+              void handleQuerySubmitForHandle();
+            }
+          }}
+          onReset={() => {
+            void handleQueryReset();
+          }}
+        />
       ) : null}
 
       {hasToolbar || hasListActions || headerBlocks.length > 0 || pollingToggleProps ? (

@@ -27,7 +27,11 @@ export interface HitFeatureLike {
 
 export interface MapLayerManager {
   setBasemap(config: MapBasemapSchema | undefined): void;
-  setRegionLayer(build: RegionLayerBuild | null, scale: MapColorScale, options?: { fitView?: boolean }): void;
+  setRegionLayer(
+    build: RegionLayerBuild | null,
+    scale: MapColorScale,
+    options?: { fitView?: boolean; fillOpacity?: number },
+  ): void;
   setPinLayer(build: PinLayerBuild | null, cluster: boolean, scale: MapColorScale): void;
   setHighlight(feature: HitFeatureLike | null): void;
   setTheme(theme: MapThemeColors): void;
@@ -114,15 +118,15 @@ export function createMapLayerManager(input: {
     }
   }
 
-  function buildRegionStyle(scale: MapColorScale) {
+  function buildRegionStyle(scale: MapColorScale, fillOpacity: number) {
     return (feature: HitFeatureLike) => {
       const value = feature.get('value') as number | undefined;
       const isHighlighted = feature === highlighted;
       return new api.Style({
         fill: new api.Fill({
           color: isHighlighted
-            ? withAlpha(theme.accent, 0.55)
-            : scale.color(value),
+            ? withAlpha(theme.accent, Math.min(0.55, fillOpacity))
+            : withAlpha(scale.color(value), fillOpacity),
         }),
         stroke: new api.Stroke({
           color: isHighlighted ? theme.accent : theme.border,
@@ -135,8 +139,12 @@ export function createMapLayerManager(input: {
   function setRegionLayer(
     build: RegionLayerBuild | null,
     scale: MapColorScale,
-    options?: { fitView?: boolean },
+    options?: { fitView?: boolean; fillOpacity?: number },
   ) {
+    const fillOpacity =
+      typeof options?.fillOpacity === 'number' && Number.isFinite(options.fillOpacity)
+        ? Math.min(1, Math.max(0, options.fillOpacity))
+        : 1;
     if (!build) {
       removeDataLayer();
       return;
@@ -154,7 +162,7 @@ export function createMapLayerManager(input: {
     regionSource.clear();
     regionSource.addFeatures(features);
     layer.setSource(regionSource);
-    layer.setStyle(buildRegionStyle(scale));
+    layer.setStyle(buildRegionStyle(scale, fillOpacity));
     layer.set('map-mode', 'region');
 
     if (options?.fitView) {

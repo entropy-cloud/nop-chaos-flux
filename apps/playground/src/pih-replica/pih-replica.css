@@ -1674,3 +1674,28 @@
 .pih-tool-select [data-slot='combobox-clear'] {
   display: none;
 }
+
+/* ── 18. Audit fixes: message-stream scroll chrome + composer grouping ──── */
+
+/* Hover action bars (copy / retry) rendered as a permanent grey strip inside
+   every bubble — reveal only while the bubble is hovered. */
+.pih-ai-chat [data-slot='ai-assistant-actions'],
+.pih-ai-chat [data-slot='ai-user-actions'] {
+  display: none;
+}
+
+.pih-ai-chat [data-slot='ai-bubble']:hover [data-slot='ai-assistant-actions'],
+.pih-ai-chat [data-slot='ai-bubble']:hover [data-slot='ai-user-actions'] {
+  display: flex;
+}
+
+/* Composer control groups: attach | model select | tool strip — give the
+   groups breathing room and a separator between the tool strip and the rest. */
+.pih-ai-chat .pih-composer-controls {
+  gap: 12px;
+}
+
+.pih-ai-chat .pih-composer-controls .pih-tool-strip {
+  padding-left: 12px;
+  border-left: 1px solid var(--pih-border-default);
+}

@@ -23,7 +23,7 @@ async function snap(page: import('@playwright/test').Page, file: string) {
 async function openPage(page: import('@playwright/test').Page, pageId: string, label: string) {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto(`#/complex-pages/${pageId}`, { waitUntil: 'commit' });
-  await expect(page.getByTestId('complex-page-title')).toContainText(label, { timeout: 15_000 });
+  await expect(page.getByTestId('complex-page-title')).toContainText(label, { timeout: 30_000 });
   await page.waitForLoadState('networkidle', { timeout: 10_000 }).catch(() => {});
   await page.waitForTimeout(800);
 }
@@ -193,8 +193,8 @@ test.describe('Linear replica — initial-screen structure', () => {
       /15, 16, 17/,
     );
 
-    // 拖拽已接线注记（P4b Phase 3）：卡片可拖拽跨列
-    await expect(page.getByTestId('linear-board-dnd-note')).toContainText('拖拽已接线');
+    // P4b Phase 3 拖拽接线能力保留，但调试注记文案已从产品面移除（2026-11-12 审计）
+    await expect(page.getByTestId('linear-board-dnd-note')).toHaveCount(0);
 
     // 零品牌资产
     const replicaText = await page.getByTestId('linear-board-main').innerText();

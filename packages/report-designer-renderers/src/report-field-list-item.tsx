@@ -52,7 +52,7 @@ export function ReportFieldListItem({
         <Button
           type="button"
           size="xs"
-          variant="ghost"
+          variant="outline"
           disabled={insertDisabled}
           title={insertTitle}
           aria-label={t('flux.reportDesigner.insertFieldToSelection', {

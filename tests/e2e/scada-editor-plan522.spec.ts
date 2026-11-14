@@ -62,6 +62,8 @@ test.describe('scada-editor plan 522 (L5.3 binding panel)', () => {
     await page.fill('[data-testid="binding-row-0-point"]', 'tank_level');
 
     // Save → serializedConfig 内可见 bindings 声明（面板只写声明结构，运行时装配零改动）。
+    // ux-r10 复审：输出区收进「开发者」开关，先打开再断言。
+    await page.click('[data-testid="editor-btn-devtools"]');
     await page.click('[data-testid="editor-btn-save"]');
     await expect(page.locator('[data-testid="editor-output-save"]')).toContainText('tank_level', {
       timeout: 15_000,

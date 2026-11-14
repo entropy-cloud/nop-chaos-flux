@@ -135,7 +135,7 @@
                     },
                     {
                       "type": "text",
-                      "text": "电子围栏回显（圆形围栏，非交互）",
+                      "text": "电子围栏",
                       "className": "text-sm font-medium"
                     },
                     {
@@ -154,6 +154,7 @@
                         }
                       },
                       "regionData": "${fenceList?.regionData ?? []}",
+                      "fillOpacity": 0.15,
                       "center": [121.76, 31.14],
                       "zoom": 9.8,
                       "height": 360,

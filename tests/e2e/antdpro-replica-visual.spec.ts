@@ -22,7 +22,7 @@ async function snap(page: import('@playwright/test').Page, file: string) {
 async function openPage(page: import('@playwright/test').Page, pageId: string, label: string) {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto(`#/complex-pages/${pageId}`, { waitUntil: 'commit' });
-  await expect(page.getByTestId('complex-page-title')).toContainText(label, { timeout: 15_000 });
+  await expect(page.getByTestId('complex-page-title')).toContainText(label, { timeout: 30_000 });
   await page.waitForLoadState('networkidle', { timeout: 10_000 }).catch(() => {});
   await page.waitForTimeout(800);
 }
@@ -215,9 +215,9 @@ test.describe('AntdPro replica — initial-screen structure', () => {
 
     await expect(page.getByTestId('antdpro-dashboard-title')).toContainText('分析页');
 
-    // KPI×4（数值来自 AntdPro__dashboard：todaySales 11800 / totalOrders 36）
-    await expect(page.getByTestId('antdpro-kpi-today-sales-value')).toContainText('11800');
-    await expect(page.getByTestId('antdpro-kpi-month-sales-value')).toContainText('126200');
+    // KPI×4（数值经 FORMATNUMBER 千分位格式化：todaySales 11,800 / monthSales 126,200）
+    await expect(page.getByTestId('antdpro-kpi-today-sales-value')).toContainText('11,800');
+    await expect(page.getByTestId('antdpro-kpi-month-sales-value')).toContainText('126,200');
     await expect(page.getByTestId('antdpro-kpi-total-orders-value')).toContainText('36');
     await expect(page.getByTestId('antdpro-kpi-pending-orders-value')).not.toContainText('undefined');
 

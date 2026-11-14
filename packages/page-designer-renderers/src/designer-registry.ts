@@ -46,6 +46,26 @@ const DESIGNER_SCAFFOLDS: Readonly<Record<string, SchemaInput>> = {
   button: { type: 'button', label: 'Button' },
 };
 
+/**
+ * palette 展示名兜底：definition 未声明 `displayName` 的 type 用人类可读名，
+ * 避免 palette 条目暴露 `input-text` 这类技术 id。
+ */
+const PALETTE_DISPLAY_NAME_FALLBACKS: Readonly<Record<string, string>> = {
+  'input-text': 'Input',
+  'input-number': 'Number',
+  select: 'Select',
+  checkbox: 'Checkbox',
+  'checkbox-group': 'Checkboxes',
+  'radio-group': 'Radio',
+  textarea: 'Textarea',
+  switch: 'Switch',
+  slider: 'Slider',
+  rating: 'Rating',
+  'input-color': 'Color',
+  'verification-code': 'Verification Code',
+  button: 'Button',
+};
+
 /** MVP stage 白名单类型（六域/domain-host 之外的可落画布面）。 */
 export const MVP_PALETTE_TYPES: readonly string[] = [
   'page',
@@ -85,7 +105,7 @@ function hasStructuralRegion(definition: RendererDefinition): boolean {
 function toScaffoldedItem(type: string, definition: NonNullable<ReturnType<RendererRegistry['get']>>): PaletteItem {
   return {
     type,
-    displayName: definition.displayName ?? type,
+    displayName: definition.displayName ?? PALETTE_DISPLAY_NAME_FALLBACKS[type] ?? type,
     ...(definition.icon !== undefined ? { icon: definition.icon } : {}),
     group: definition.category ?? 'form',
     isContainer: hasStructuralRegion(definition),

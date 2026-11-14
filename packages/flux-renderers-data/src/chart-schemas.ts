@@ -48,6 +48,8 @@ export interface ChartYAxisSchema extends SchemaObject {
   label?: string;
   /** 轴位置。缺省按数组下标推导：index 0 → left，其余 → right。 */
   position?: 'left' | 'right';
+  /** 强制整数刻度（计数类小值图表避免 1.5/2.5 半格）。 */
+  integerTicks?: boolean;
 }
 
 export interface ChartSchema extends BaseSchema {
@@ -58,8 +60,8 @@ export interface ChartSchema extends BaseSchema {
   series?: SchemaValue;
   source?: SchemaValue;
   xAxis?: { dataKey?: string; label?: string };
-  /** 单轴形态：`{ label?: string }`（向后兼容）；多轴形态：`ChartYAxisSchema[]`。 */
-  yAxis?: { label?: string } | ChartYAxisSchema[];
+  /** 单轴形态：`{ label?: string; integerTicks?: boolean }`（向后兼容）；多轴形态：`ChartYAxisSchema[]`。 */
+  yAxis?: { label?: string; integerTicks?: boolean } | ChartYAxisSchema[];
   height?: number | string;
   loading?: boolean;
   empty?: BaseSchema | BaseSchema[] | string;

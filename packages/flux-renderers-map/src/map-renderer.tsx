@@ -384,11 +384,14 @@ export function MapRenderer(props: RendererComponentProps<MapSchema>) {
       if (fitView) {
         fitDoneRef.current = true;
       }
-      manager.setRegionLayer(build, colorScale, { fitView });
+      manager.setRegionLayer(build, colorScale, {
+        fitView,
+        fillOpacity: typeof resolved.fillOpacity === 'number' ? resolved.fillOpacity : undefined,
+      });
     } else {
       manager.setPinLayer(pinBuild, cluster, colorScale);
     }
-  }, [olApi, mapVisible, mapType, regionBuild, pinBuild, cluster, colorScale, resolved.basemap, hasExplicitView]);
+  }, [olApi, mapVisible, mapType, regionBuild, pinBuild, cluster, colorScale, resolved.basemap, resolved.fillOpacity, hasExplicitView]);
 
   const emptyContent = resolveRendererSlotContent(props, 'empty', {
     fallback: t('flux.common.noData'),

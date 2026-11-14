@@ -5,12 +5,12 @@
   "body": [
     {
       "type": "container",
-      "className": "p-6",
+      "className": "p-6 h-full min-h-0 flex flex-col",
       "body": [
         {
           "type": "container",
           "testid": "sundial-detail-panel",
-          "className": "sd-card w-[400px] p-4 flex flex-col gap-3 mx-auto",
+          "className": "sd-card sd-detail-card w-[400px] p-4 flex flex-col gap-3 mx-auto",
           "body": [
             {
               "type": "flex",
@@ -371,19 +371,19 @@
                       "type": "flex",
                       "direction": "row",
                       "gap": 8,
-                      "className": "items-center",
+                      "className": "items-center sd-badge sd-badge-warning",
                       "visible": "${flagged}",
                       "body": [
                         {
                           "type": "icon",
                           "icon": "flag",
-                          "size": 14,
-                          "color": "#db7706"
+                          "size": 11,
+                          "color": "var(--sd-warning, #db7706)"
                         },
                         {
                           "type": "text",
                           "text": "已标记",
-                          "className": "text-xs text-[#db7706]"
+                          "className": "text-[10px] font-medium"
                         }
                       ]
                     },
@@ -443,14 +443,22 @@
                       "className": "text-xs text-[#333333]"
                     },
                     {
-                      "type": "text",
-                      "text": "",
-                      "className": "${ list === 'work' ? 'block w-2.5 h-2.5 rounded-full sd-list-dot-blue' : list === 'family' ? 'block w-2.5 h-2.5 rounded-full sd-list-dot-orange' : 'block w-2.5 h-2.5 rounded-full sd-list-dot-neutral' }"
-                    },
-                    {
-                      "type": "text",
-                      "text": "${ list === 'work' ? '工作' : list === 'family' ? '家庭' : '收件箱' }",
-                      "className": "text-xs text-[#0d0d0d]"
+                      "type": "flex",
+                      "direction": "row",
+                      "gap": 4,
+                      "className": "items-center sd-badge sd-badge-info",
+                      "body": [
+                        {
+                          "type": "text",
+                          "text": "",
+                          "className": "${ list === 'work' ? 'block w-2 h-2 rounded-full sd-list-dot-blue' : list === 'family' ? 'block w-2 h-2 rounded-full sd-list-dot-orange' : 'block w-2 h-2 rounded-full sd-list-dot-neutral' }"
+                        },
+                        {
+                          "type": "text",
+                          "text": "${ list === 'work' ? '工作' : list === 'family' ? '家庭' : '收件箱' }",
+                          "className": "text-[10px] font-medium"
+                        }
+                      ]
                     }
                   ],
                   "onClick": {
@@ -881,7 +889,7 @@
               "type": "flex",
               "direction": "row",
               "gap": 8,
-              "className": "mt-1",
+              "className": "sd-detail-actions mt-1",
               "body": [
                 {
                   "type": "button",

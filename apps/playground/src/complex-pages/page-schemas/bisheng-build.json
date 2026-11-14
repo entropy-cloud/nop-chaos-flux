@@ -848,14 +848,16 @@
                     },
                     "shortcuts": [],
                     "features": {
-                      "multiSelect": false
+                      "multiSelect": false,
+                      "minimap": false
                     },
                     "rules": [],
                     "canvas": {
                       "fitView": true,
                       "grid": true,
-                      "minimap": true,
-                      "controls": true
+                      "minimap": false,
+                      "controls": true,
+                      "minZoom": 0.75
                     },
                     "shell": {
                       "palette": {
@@ -1035,7 +1037,7 @@
                       {
                         "type": "flex",
                         "direction": "column",
-                        "gap": 14,
+                        "gap": 8,
                         "className": "bs-inspector-body",
                         "body": [
                           {

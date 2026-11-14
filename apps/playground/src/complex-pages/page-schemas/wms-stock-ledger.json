@@ -129,8 +129,9 @@
             },
             {
               "type": "button",
-              "label": "导出（非法格式演练）",
+              "label": "异常格式演练（开发）",
               "variant": "ghost",
+              "className": "text-xs text-muted-foreground",
               "testid": "wms-stock-ledger-export-invalid",
               "onClick": {
                 "action": "download",
@@ -163,27 +164,31 @@
               "testid": "wms-stock-ledger-kpi-in",
               "label": "本期收入合计",
               "value": "${stockKpi?.kpis?.totalInQty ?? 0}",
-              "formatter": { "thousands": true, "decimals": 0 }
+              "formatter": { "thousands": true, "decimals": 0 },
+              "className": "min-w-44 flex-1 rounded-xl border border-border bg-card px-4 py-3"
             },
             {
               "type": "stat-tile",
               "testid": "wms-stock-ledger-kpi-out",
               "label": "本期发出合计",
               "value": "${stockKpi?.kpis?.totalOutQty ?? 0}",
-              "formatter": { "thousands": true, "decimals": 0 }
+              "formatter": { "thousands": true, "decimals": 0 },
+              "className": "min-w-44 flex-1 rounded-xl border border-border bg-card px-4 py-3"
             },
             {
               "type": "stat-tile",
               "testid": "wms-stock-ledger-kpi-balance",
               "label": "期末结存合计",
               "value": "${stockKpi?.kpis?.totalBalanceQty ?? 0}",
-              "formatter": { "thousands": true, "decimals": 0 }
+              "formatter": { "thousands": true, "decimals": 0 },
+              "className": "min-w-44 flex-1 rounded-xl border border-border bg-card px-4 py-3"
             },
             {
               "type": "stat-tile",
               "testid": "wms-stock-ledger-kpi-batches",
               "label": "批次总数",
-              "value": "${stockKpi?.kpis?.batchCount ?? 0}"
+              "value": "${stockKpi?.kpis?.batchCount ?? 0}",
+              "className": "min-w-44 flex-1 rounded-xl border border-border bg-card px-4 py-3"
             }
           ]
         },
@@ -237,8 +242,13 @@
           "testid": "wms-stock-ledger-pivot",
           "label": "库存收发存透视（仓库×库位×物料×批次）",
           "source": "${ledgerRows?.items ?? []}",
-          "rowDimensions": ["warehouse", "locationCode", "materialName", "batchNo"],
-          "columnDimensions": ["month"],
+          "rowDimensions": [
+            { "dimensionKey": "warehouse", "title": "仓库", "width": 90 },
+            { "dimensionKey": "locationCode", "title": "库位", "width": 120 },
+            { "dimensionKey": "materialName", "title": "物料", "width": 180 },
+            { "dimensionKey": "batchNo", "title": "批次", "width": 140 }
+          ],
+          "columnDimensions": [{ "dimensionKey": "month", "title": "月份", "width": 110 }],
           "indicators": [
             { "field": "qtyIn", "title": "收入", "aggregationType": "SUM" },
             { "field": "qtyOut", "title": "发出", "aggregationType": "SUM" },
@@ -254,7 +264,7 @@
               }
             }
           },
-          "height": 360,
+          "height": 420,
           "onCellClick": {
             "action": "setValue",
             "args": {

@@ -139,6 +139,7 @@
             {
               "type": "ai-feedback",
               "testid": "ai-knowledge-chat-feedback",
+              "visible": "${activeAnswer?.id != null}",
               "message": "${activeAnswer}",
               "actions": ["copy", "refresh", "like", "dislike", "sources"],
               "onAction": {

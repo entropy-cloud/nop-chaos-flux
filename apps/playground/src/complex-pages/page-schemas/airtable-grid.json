@@ -2218,7 +2218,7 @@
                         "type": "container",
                         "direction": "row",
                         "align": "center",
-                        "gap": 4,
+                        "gap": 10,
                         "body": [
                           {
                             "type": "text",

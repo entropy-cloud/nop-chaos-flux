@@ -231,8 +231,9 @@
             },
             {
               "type": "button",
-              "label": "下载（非法演练）",
+              "label": "异常格式演练（开发）",
               "variant": "ghost",
+              "className": "text-xs text-muted-foreground",
               "testid": "crm-sales-dashboard-export-invalid",
               "onClick": {
                 "action": "download",

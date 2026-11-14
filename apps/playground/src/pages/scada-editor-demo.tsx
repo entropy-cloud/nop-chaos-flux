@@ -86,12 +86,16 @@ const DEMO_SCHEMA = {
             className: 'flex-wrap items-center gap-2',
             body: [
               {
-                // W2：Save 结果可见化——component:save 返回 serializedConfig，经 then → setValue 写入
-                // 页内变量 saveOutput（${result.data} 取上一动作返回值），由下方 collapse 输出区展示。
-                // 注意：事件 args 中的 `${event.*}` 模板在 raw 事件通道不参与求值（求值 scope 不含 event），
-                // 故 serializedConfig 经 result.data 通道展示，onSave 事件本身以 toast 演示。
+                // ux-r10 复审（按钮层级）：唯一主按钮=保存（default variant），其余 outline/ghost 次级——
+                // 统一中文文案。W2：Save 结果可见化——component:save 返回 serializedConfig，经 then →
+                // setValue 写入页内变量 saveOutput（${result.data} 取上一动作返回值），由「开发者」
+                // 折叠输出区展示。注意：事件 args 中的 `${event.*}` 模板在 raw 事件通道不参与求值
+                //（求值 scope 不含 event），故 serializedConfig 经 result.data 通道展示，
+                // onSave 事件本身以 toast 演示。
                 type: 'button',
-                label: 'Save',
+                label: '保存',
+                variant: 'default',
+                icon: 'Save',
                 testid: 'editor-btn-save',
                 onClick: {
                   action: 'component:save',
@@ -103,7 +107,8 @@ const DEMO_SCHEMA = {
               },
               {
                 type: 'button',
-                label: 'Load',
+                label: '装载示例',
+                variant: 'outline',
                 testid: 'editor-btn-load',
                 onClick: {
                   action: 'component:load',
@@ -113,9 +118,10 @@ const DEMO_SCHEMA = {
               },
               {
                 // W3：导出可见化——消费 component:exportConfig 句柄，把返回 JSON 经 then → setValue
-                // 写入页内变量 exportOutput，由下方 collapse 输出区展示。
+                // 写入页内变量 exportOutput，由「开发者」折叠输出区展示。
                 type: 'button',
-                label: '导出配置到页面',
+                label: '导出配置',
+                variant: 'outline',
                 testid: 'editor-btn-export',
                 onClick: {
                   action: 'component:exportConfig',
@@ -127,13 +133,15 @@ const DEMO_SCHEMA = {
               },
               {
                 type: 'button',
-                label: 'Edit',
+                label: '编辑',
+                variant: 'outline',
                 testid: 'editor-mode-edit',
                 onClick: { action: 'setValue', args: { path: 'modeVar', value: 'edit' } },
               },
               {
                 type: 'button',
-                label: 'Preview',
+                label: '预览',
+                variant: 'outline',
                 testid: 'editor-mode-preview',
                 onClick: { action: 'setValue', args: { path: 'modeVar', value: 'preview' } },
               },
@@ -142,6 +150,7 @@ const DEMO_SCHEMA = {
                 //（demo 模拟源 previewMock 已自动随机游走注入；此按钮演示宿主主动注入）。
                 type: 'button',
                 label: '注入预览数据',
+                variant: 'ghost',
                 testid: 'editor-btn-inject',
                 onClick: {
                   action: 'component:previewInject',
@@ -152,8 +161,20 @@ const DEMO_SCHEMA = {
               {
                 type: 'button',
                 label: '清除注入',
+                variant: 'ghost',
                 testid: 'editor-btn-clear-inject',
                 onClick: { action: 'component:previewClear', componentId: 'editor-canvas' },
+              },
+              {
+                // ux-r10 复审（调试区收纳）：导出/保存/会话输出区收进「开发者」开关——
+                // 默认隐藏（collapse visible 绑定 devtoolsOpen），点击切换显隐，行为不变。
+                type: 'button',
+                label: '开发者',
+                variant: 'ghost',
+                size: 'sm',
+                icon: 'Terminal',
+                testid: 'editor-btn-devtools',
+                onClick: { action: 'setValue', args: { path: 'devtoolsOpen', value: '${!(devtoolsOpen === true)}' } },
               },
             ],
           },
@@ -187,8 +208,11 @@ const DEMO_SCHEMA = {
           },
           {
             // W3/W2 输出区：可折叠（collapse，layout renderers）；默认全部展开使输出立即可见。
+            // ux-r10 复审：调试输出收进「开发者」开关（默认隐藏，visible 绑定 devtoolsOpen）——
+            // 主界面不再露出调试卡片；写入通道（saveOutput/exportOutput/sessionDirty）不变。
             type: 'collapse',
             className: 'mt-1',
+            visible: '${devtoolsOpen === true}',
             defaultValue: ['export', 'save', 'session'],
             items: [
               {

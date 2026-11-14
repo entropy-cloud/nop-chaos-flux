@@ -139,6 +139,12 @@
   padding: 1px 2px;
 }
 
+/* 图标工具栏组间分隔（ux-r10 复审：Separator 视觉分层）。 */
+.nop-scada-editor-toolbox-separator {
+  height: 18px;
+  margin: 0 2px;
+}
+
 /* 状态栏（含 undo/redo 边界提示，M1 占位）。 */
 .nop-scada-editor-status-bar {
   display: flex;

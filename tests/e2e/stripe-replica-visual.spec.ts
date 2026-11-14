@@ -58,13 +58,12 @@ test.describe('Stripe replica — payments list initial screen', () => {
     await expect(page.getByTestId('stripe-search')).toContainText('搜索');
     await expect(page.getByTestId('stripe-export-trigger')).toBeVisible();
 
-    // 筛选 chip 条：2 chip + 单个移除按钮形态 + Filter 按钮形态 + 零生效注记
+    // 筛选 chip 条：2 chip + 单个移除按钮形态 + Filter 按钮形态
     await expect(page.getByTestId('stripe-chip-status')).toContainText('已成功');
     await expect(page.getByTestId('stripe-chip-amount')).toContainText('金额');
     await expect(page.getByTestId('stripe-chip-status-remove')).toBeVisible();
     await expect(page.getByTestId('stripe-chip-amount-remove')).toBeVisible();
     await expect(page.getByTestId('stripe-filter-button')).toContainText('筛选');
-    await expect(page.getByTestId('stripe-chip-note')).toContainText('P7b');
 
     // 高密度表格：列头（金额右对齐/日期/状态/客户/支付方式/风险）+ 排序 chevron 形态
     for (const head of ['金额', '日期', '状态', '客户', '支付方式', '风险']) {
@@ -211,7 +210,7 @@ test.describe('Stripe replica — chart card area + overlay walkthrough', () => 
     await expect(page.getByTestId('stripe-kpi-row')).toBeVisible();
     await expect(page.getByTestId('stripe-kpi-netvolume-value')).toHaveText('CN¥486,210.75');
     await expect(page.getByTestId('stripe-kpi-netvolume-delta')).toContainText('+12.4%');
-    await expect(page.getByTestId('stripe-kpi-charges-value')).toHaveText('1286');
+    await expect(page.getByTestId('stripe-kpi-charges-value')).toHaveText('1,286');
     await expect(page.getByTestId('stripe-kpi-charges-delta')).toContainText('+8.2%');
     await expect(page.getByTestId('stripe-kpi-avg-value')).toHaveText('CN¥378.15');
     await expect(page.getByTestId('stripe-kpi-refunds-value')).toHaveText('CN¥12,930.00');

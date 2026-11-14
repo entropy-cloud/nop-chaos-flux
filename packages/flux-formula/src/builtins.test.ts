@@ -225,6 +225,31 @@ describe('builtins — ROUND(value, precision)', () => {
   });
 });
 
+describe('builtins — FORMATNUMBER(value, precision?)', () => {
+  function evalFormatNumber(expression: string): unknown {
+    const compiler = createFormulaCompiler();
+    const expr = compiler.compileExpression(expression);
+    return expr.exec(emptyScope, evalEnv);
+  }
+
+  it('groups integer digits with thousands separators', () => {
+    expect(evalFormatNumber('FORMATNUMBER(11800)')).toBe('11,800');
+    expect(evalFormatNumber('FORMATNUMBER(126200)')).toBe('126,200');
+    expect(evalFormatNumber('FORMATNUMBER(1234567)')).toBe('1,234,567');
+  });
+
+  it('supports fixed decimal places', () => {
+    expect(evalFormatNumber('FORMATNUMBER(11800.5, 2)')).toBe('11,800.50');
+    expect(evalFormatNumber('FORMATNUMBER(0.5, 1)')).toBe('0.5');
+  });
+
+  it('handles negatives, strings and non-numeric input', () => {
+    expect(evalFormatNumber('FORMATNUMBER(-9876543)')).toBe('-9,876,543');
+    expect(evalFormatNumber('FORMATNUMBER("11800")')).toBe('11,800');
+    expect(evalFormatNumber('FORMATNUMBER("abc")')).toBe('');
+  });
+});
+
 // I3: `t(key, params?)` is exposed as a formula builtin so schema authors can
 // write `${t('flux.common.noData')}` or `${t('greeting', {name})}`. It resolves
 // through the shared i18n sink (getMessageFormatter), so it reflects the active

@@ -218,8 +218,8 @@
             {
               "type": "text",
               "testid": "mes-andon-material-panel-caption",
-              "text": "异常/叫料快捷面板（拖拽切换锚点）· 当前锚点：${panelAnchor ?? 0}",
-              "className": "text-xs text-muted-foreground"
+              "text": "当前锚点：${panelAnchor ?? 0}",
+              "className": "text-xs text-muted-foreground pr-32 pb-1"
             },
             {
               "type": "button",

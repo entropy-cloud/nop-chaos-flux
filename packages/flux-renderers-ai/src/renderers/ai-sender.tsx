@@ -197,7 +197,7 @@ export function AiSenderView(props: AiSenderViewProps): React.ReactElement | nul
 
   if (ExtensionComponent) {
     return (
-      <div className={cn('nop-ai-sender', props.className)} data-slot="ai-sender" data-extension="" data-cid={props.cid || undefined} data-testid={props.testid || undefined}>
+      <div className={cn('nop-ai-sender flex flex-col gap-2', props.className)} data-slot="ai-sender" data-extension="" data-cid={props.cid || undefined} data-testid={props.testid || undefined}>
         <div data-slot="ai-sender-input" className="relative">
           <ExtensionComponent
             value={draft}
@@ -230,7 +230,7 @@ export function AiSenderView(props: AiSenderViewProps): React.ReactElement | nul
   }
 
   return (
-    <div className={cn('nop-ai-sender', props.className)} data-slot="ai-sender" data-cid={props.cid || undefined} data-testid={props.testid || undefined}>
+    <div className={cn('nop-ai-sender flex flex-col gap-2', props.className)} data-slot="ai-sender" data-cid={props.cid || undefined} data-testid={props.testid || undefined}>
       <div data-slot="ai-sender-input" className="relative">
         <Textarea
           ref={inputRef}

@@ -151,7 +151,7 @@ export function PrintDesigner({ template, onTemplateChange, className }: PrintDe
         <Input
           aria-label="zoom"
           readOnly
-          className="h-6 w-14 text-center text-xs"
+          className="h-6 w-16 px-1 text-center text-xs"
           value={`${Math.round(zoom * 100)}%`}
         />
         <Button

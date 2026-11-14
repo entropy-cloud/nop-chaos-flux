@@ -71,6 +71,37 @@
   border: 1px solid var(--sd-border-subtle);
 }
 
+/* sundial-detail：待办详情卡在页面卡内限高并内部滚动，底部动作行
+   （移到列表/移到垃圾箱）sticky 固定 — 动作始终可见，不随内容裁切。 */
+.sd-detail-card {
+  flex: 0 0 auto;
+  max-height: clamp(320px, calc(100vh - 330px), 720px);
+  overflow-y: auto;
+}
+
+.sd-detail-actions {
+  position: sticky;
+  bottom: -17px;
+  z-index: 1;
+  margin: 8px -16px 0;
+  padding: 10px 16px 12px;
+  background: var(--sd-surface);
+  border-top: 1px solid var(--sd-border-subtle);
+  border-radius: 0 0 8px 8px;
+}
+
+/* 滚动内容与 sticky 页脚的过渡：被裁行向上淡出而非硬切。 */
+.sd-detail-actions::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: -22px;
+  height: 22px;
+  background: linear-gradient(to bottom, transparent, var(--sd-surface));
+  pointer-events: none;
+}
+
 .sd-card-hover:hover {
   background: var(--sd-row-hover);
 }
@@ -713,4 +744,33 @@
 
 .sd-press:active {
   opacity: 0.8;
+}
+
+/* ── Audit fixes: detail inspector value chips + bottom action breathing room ── */
+
+/* 清除 (clear-date) reads as bare text next to chip values — give it the
+   same neutral chip treatment as the row value badges. */
+button[data-slot='button'][data-testid='sundial-detail-clear-date'] {
+  background: var(--sd-panel);
+  color: var(--sd-text-low);
+  border-radius: 2px;
+  height: 22px;
+  padding: 0 6px;
+  font-size: 10px;
+}
+
+button[data-slot='button'][data-testid='sundial-detail-clear-date']:hover:not(:disabled) {
+  background: var(--sd-row-hover);
+  color: var(--sd-text-normal);
+}
+
+button[data-slot='button'][data-testid='sundial-settings-save'] {
+  min-width: 96px;
+  justify-content: center;
+}
+
+/* Bottom 移到列表 / 移到垃圾箱 actions render flush against the panel edge —
+   give the panel scroll body a bottom inset. */
+[data-testid='sundial-detail-panel'] {
+  padding-bottom: 16px;
 }

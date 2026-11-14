@@ -129,6 +129,7 @@
             {
               "type": "container",
               "testid": "linear-detail-topbar",
+              "direction": "row",
               "className": "h-12 shrink-0 border-b flex items-center gap-3 px-6",
               "body": [
                 {
@@ -174,7 +175,7 @@
                     {
                       "type": "button",
                       "label": "归档",
-                      "className": "ln-btn ln-btn-ghost h-7 px-3 text-xs",
+                      "className": "ln-btn ln-btn-quiet h-7 px-3 text-xs",
                       "testid": "linear-detail-archive",
                       "onClick": [
                         {
@@ -460,6 +461,7 @@
                     {
                       "type": "container",
                       "testid": "linear-detail-prop-status",
+                      "direction": "row",
                       "className": "flex items-center justify-between gap-2",
                       "body": [
                         {
@@ -539,6 +541,7 @@
                     {
                       "type": "container",
                       "testid": "linear-detail-prop-priority",
+                      "direction": "row",
                       "className": "flex items-center justify-between",
                       "body": [
                         {
@@ -556,6 +559,7 @@
                     {
                       "type": "container",
                       "testid": "linear-detail-prop-assignee",
+                      "direction": "row",
                       "className": "flex items-center justify-between",
                       "body": [
                         {
@@ -591,6 +595,7 @@
                     {
                       "type": "container",
                       "testid": "linear-detail-prop-labels",
+                      "direction": "row",
                       "className": "flex items-center justify-between gap-2",
                       "body": [
                         {
@@ -623,6 +628,7 @@
                     {
                       "type": "container",
                       "testid": "linear-detail-prop-cycle",
+                      "direction": "row",
                       "className": "flex items-center justify-between",
                       "body": [
                         {
@@ -640,6 +646,7 @@
                     {
                       "type": "container",
                       "testid": "linear-detail-prop-project",
+                      "direction": "row",
                       "className": "flex items-center justify-between",
                       "body": [
                         {
@@ -657,6 +664,7 @@
                     {
                       "type": "container",
                       "testid": "linear-detail-prop-estimate",
+                      "direction": "row",
                       "className": "flex items-center justify-between",
                       "body": [
                         {
@@ -674,6 +682,7 @@
                     {
                       "type": "container",
                       "testid": "linear-detail-prop-due",
+                      "direction": "row",
                       "className": "flex items-center justify-between",
                       "body": [
                         {

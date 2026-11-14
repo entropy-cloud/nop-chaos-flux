@@ -707,12 +707,6 @@
                       "text": "搜索客户、金额或描述…"
                     }
                   ]
-                },
-                {
-                  "type": "text",
-                  "text": "chip 增删/组合收窄已接线（I1 P7b）：初始双 chip 为已固定维度样本（值经筛选 dialog 应用），移除即解除；搜索已参数化（I3）",
-                  "className": "st-note",
-                  "testid": "stripe-chip-note"
                 }
               ]
             },
@@ -758,7 +752,7 @@
                     { "type": "text", "text": "交易笔数", "className": "st-kpi-label" },
                     {
                       "type": "text",
-                      "text": "${overviewData?.kpi?.chargeCount}",
+                      "text": "${FORMATNUMBER(overviewData?.kpi?.chargeCount ?? 0)}",
                       "className": "st-kpi-value",
                       "testid": "stripe-kpi-charges-value"
                     },
@@ -832,6 +826,10 @@
                       "align": "center",
                       "gap": 6,
                       "testid": "stripe-widget-trigger",
+                      "body": [
+                        { "type": "icon", "icon": "plus", "size": 13 },
+                        { "type": "text", "text": "添加" }
+                      ],
                       "onClick": {
                         "action": "openDialog",
                         "args": {

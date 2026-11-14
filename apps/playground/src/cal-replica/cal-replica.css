@@ -479,3 +479,26 @@
 .cal-cal-link-row:hover {
   background: var(--cal-bg-subtle);
 }
+
+/* ── 15. Booker month-grid density + seeded selected day (audit fixes) ──── */
+
+/* Compact the six-week selection grid: 64px cells rendered too loose for the
+   Booker layout; 44px keeps the day number and available-slot dot readable. */
+.cal-root [data-slot='calendar-grid-cell'] {
+  height: 44px;
+}
+
+/* Weekday header cells read as scattered when stretched to the same 7-col
+   track as day cells — keep them tight. */
+.cal-root [data-slot='calendar-grid-weekdays'] [role='columnheader'] {
+  padding-top: 2px;
+  padding-bottom: 2px;
+}
+
+/* The booked event date (2026-09-03, mirrored by the right-column slot list)
+   must show the selected-day treatment before any internal click selection
+   exists; the :not([data-selected]) guard defers to real click selection. */
+.cal-root [data-slot='calendar-grid-cell'][data-date='2026-09-03']:not([data-selected]) {
+  border-color: var(--cal-action, #2563eb);
+  background: color-mix(in srgb, var(--cal-action, #2563eb) 10%, var(--cal-bg));
+}

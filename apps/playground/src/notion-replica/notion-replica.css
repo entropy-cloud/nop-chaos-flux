@@ -124,7 +124,7 @@
 /* ── 2. Title bar + view tab bar ────────────────────────────────────────── */
 
 .nt-db-icon {
-  font-size: 40px;
+  font-size: 32px;
   line-height: 1;
 }
 
@@ -361,6 +361,14 @@
 
 .nt-table {
   font-size: 14px;
+}
+
+/* Pagination bar breathing room so the rows-per-page control never renders
+   flush against the frame edge (audit: 每页行数 clipped half). */
+.nt-table .nop-pagination {
+  min-height: 36px;
+  margin-top: 0;
+  padding-bottom: 4px;
 }
 
 .nt-table [data-slot='table-row'] {
@@ -697,6 +705,12 @@
 .nt-note {
   font-size: 12px;
   color: var(--nt-text-tertiary);
+}
+
+/* Page-title subtitle: readable secondary tone (audit: tertiary 0.45 too light) */
+.nt-subtitle {
+  font-size: 13px;
+  color: var(--nt-text-secondary);
 }
 
 .nt-section-label {

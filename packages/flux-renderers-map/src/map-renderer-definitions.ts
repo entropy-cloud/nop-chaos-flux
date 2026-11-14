@@ -176,6 +176,18 @@ export const mapRendererDefinitions: RegisteredRendererDefinition[] = [
         },
       },
       {
+        key: 'fillOpacity',
+        kind: 'prop',
+        contract: {
+          shape: { kind: 'number' },
+          displayName: 'Fill Opacity',
+          description:
+            'Region fill opacity (0-1). 1 = opaque (choropleth default); low values with stroke read as fence/overlay areas.',
+          editorType: 'number',
+          defaultValue: 1,
+        },
+      },
+      {
         key: 'center',
         kind: 'prop',
         contract: {

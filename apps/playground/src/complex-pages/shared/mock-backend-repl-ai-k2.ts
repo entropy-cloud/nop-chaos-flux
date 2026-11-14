@@ -141,6 +141,13 @@ const K2_DEADLINE_MINUTES: Record<ReplAiTicketStatus, number> = {
   REOPENED: -45,
 };
 
+/** OPEN 工单按序错开 SLA 余量（TCK-0001 保持 G9 合同 +90min），让卡片上的
+ * SLA 徽章呈现 红(<30)/黄(<90)/绿(>=90) 三级分级，而非全部绿色。 */
+function k2DeadlineMinutes(status: ReplAiTicketStatus, i: number): number {
+  if (status !== 'OPEN') return K2_DEADLINE_MINUTES[status];
+  return i === 1 ? 90 : [18, 45, 70, 12, 38, 82][((i - 2) % 6 + 6) % 6];
+}
+
 function statusFor(i: number): ReplAiTicketStatus {
   if (i <= 6) return 'OPEN';
   if (i <= 11) return 'ASSIGNED';
@@ -228,7 +235,7 @@ export function createReplAiK2Seed(): {
       status,
       priority: K2_PRIORITIES[(i - 1) % K2_PRIORITIES.length],
       slaPolicyId: i % 2 === 0 ? 'SLA-VIP' : 'SLA-STD',
-      deadlineDateTime: now + K2_DEADLINE_MINUTES[status] * 60_000,
+      deadlineDateTime: now + k2DeadlineMinutes(status, i) * 60_000,
       confidence,
       assignee,
       escalationLevel: i === 25 ? 1 : 0,
@@ -321,6 +328,9 @@ function ticketStats(tickets: ReplAiTicket[]): Record<string, unknown> {
     resolvedTodayCount: tickets.filter((ticket) => ticket.status === 'RESOLVED').length,
     avgFirstResponseMinutes: 26,
     responseSpark: [18, 22, 25, 21, 27, 24, 26],
+    openSpark: [12, 9, 11, 8, 10, 7, 6],
+    slaSpark: [4, 3, 5, 3, 2, 3, 2],
+    resolvedSpark: [5, 7, 6, 9, 8, 11, 10],
   };
 }
 

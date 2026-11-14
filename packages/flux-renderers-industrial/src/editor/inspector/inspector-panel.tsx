@@ -1,7 +1,7 @@
 import { useFluxTranslation } from '@nop-chaos/flux-i18n';
 import { collectAllIds, findNodeById } from '../../shared/symbol-tree-ops.js';
-import { Badge, Button } from '@nop-chaos/ui';
-import { ChevronRight } from 'lucide-react';
+import { Badge, Button, Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@nop-chaos/ui';
+import { ChevronRight, MousePointerClick } from 'lucide-react';
 import type { EditorEngineRuntime } from '../renderer/hooks/use-editor-engine.js';
 import type { ScadaSymbolNode } from '../../serialization/config-types.js';
 import { getScadaSymbolDefinition } from '../../symbols/symbol-registry.js';
@@ -157,7 +157,22 @@ export function EditorInspectorPanel(props: EditorInspectorPanelProps) {
         <span className="nop-scada-editor-group-label">{t('industrial.scada.editor.inspector.title')}</span>
         <InspectorCollapseButton onCollapse={props.onCollapse} collapseLabel={props.collapseLabel} />
       </div>
-      <div className="text-xs opacity-60">{t('industrial.scada.editor.inspector.noSelection')}</div>
+      <Empty
+        className="flex-1 min-h-40 border-y justify-center gap-3 py-6"
+        data-testid="inspector-empty"
+      >
+        <EmptyHeader>
+          <EmptyMedia variant="icon">
+            <MousePointerClick />
+          </EmptyMedia>
+          <EmptyTitle className="text-xs">
+            {t('industrial.scada.editor.inspector.noSelection')}
+          </EmptyTitle>
+          <EmptyDescription className="text-xs">
+            {t('industrial.scada.editor.inspector.noSelectionHint')}
+          </EmptyDescription>
+        </EmptyHeader>
+      </Empty>
     </aside>
   );
 }

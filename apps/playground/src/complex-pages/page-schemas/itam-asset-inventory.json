@@ -137,7 +137,7 @@
                           "IN_SERVICE": "success",
                           "IN_STOCK": "info",
                           "MAINTENANCE": "warning",
-                          "RETIRED": "neutral"
+                          "RETIRED": "inactive"
                         }
                       }
                     }

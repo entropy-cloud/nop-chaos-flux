@@ -8,6 +8,11 @@ import { MES_SHOPFLOOR_BOARD_PAGE_DATA } from './page-data-mes';
 
 export const PAGE_DATA: Record<string, Record<string, unknown>> = {};
 
+// Curated chart palette shared by the dashboard replica pages (C3/S2 trend +
+// bar panels — default single-hue charts read as unfinished next to the
+// antdpro/itam dashboard reference pages).
+const DASHBOARD_CHART_PALETTE = ['#6366f1', '#22c55e', '#f59e0b', '#06b6d4', '#ec4899'];
+
 // ── Linear 问题列表：筛选根声明默认值（ux-r11 n2 作者契约加固，非缺陷修复——
 // data-source dependsOn 引用的 scope 根应有声明默认值，避免依赖用户输入才物化）。
 PAGE_DATA['linear-issues'] = {
@@ -182,7 +187,15 @@ PAGE_DATA['content-landing'] = {
 
 // ── bisheng build replica: debug panel collapsed by default (resizable
 // panel defaultCollapsed) so the designer canvas gets the vertical budget ──
-PAGE_DATA['bisheng-build'] = {};
+// Node-param fixture seed (audit): the selected llm-1 inspector fields bind to
+// these scope values — static `value` in the schema alone leaves the select /
+// textarea blank.
+PAGE_DATA['bisheng-build'] = {
+  bsNodeModel: 'azure_gpt_4',
+  bsNodePrompt: '你是电商平台客服助手，依据检索到的知识库内容回答用户问题，无法确认时引导转人工。',
+  bsNodeTemp: 0.2,
+  bsNodeOutput: 'answer',
+};
 
 // ── C3 CRM 销售驾驶舱：dashboard 网格布局（plan 803）──
 // panels 走 PAGE_DATA 表达式绑定通道（schema 侧 `panels: '${crmSalesDashboardPanels}'`）：
@@ -206,6 +219,7 @@ PAGE_DATA['crm-sales-dashboard'] = {
         label: '漏斗总额（万元）',
         value: '${dashboardKpi?.kpis?.funnelAmount ?? 0}',
         prefix: '￥',
+        sparkline: [420, 465, 440, 505, 488, 530, 512, 590],
         formatter: { thousands: true, decimals: 0 },
       },
     },
@@ -221,6 +235,7 @@ PAGE_DATA['crm-sales-dashboard'] = {
         label: '商机转化率',
         value: '${dashboardKpi?.kpis?.conversion ?? 0}',
         suffix: '%',
+        sparkline: [26, 29, 27, 31, 30, 33, 32, 32],
         formatter: { thousands: false, decimals: 0 },
       },
     },
@@ -236,6 +251,7 @@ PAGE_DATA['crm-sales-dashboard'] = {
         label: '预测达成率',
         value: '${dashboardKpi?.kpis?.forecastRate ?? 0}',
         suffix: '%',
+        sparkline: [81, 84, 82, 86, 85, 88, 87, 86],
         formatter: { thousands: false, decimals: 0 },
       },
     },
@@ -251,6 +267,7 @@ PAGE_DATA['crm-sales-dashboard'] = {
         label: '配额完成率',
         value: '${dashboardKpi?.kpis?.quotaRate ?? 0}',
         suffix: '%',
+        sparkline: [88, 90, 89, 93, 92, 95, 94, 92],
         formatter: { thousands: false, decimals: 0 },
       },
     },
@@ -261,15 +278,16 @@ PAGE_DATA['crm-sales-dashboard'] = {
       y: 2,
       w: 8,
       h: 6,
-      title: '月度趋势（echarts onClick 钻取）',
+      title: '月度趋势',
       props: {
         testid: 'crm-sales-dashboard-trend',
         componentId: 'crm-sales-dashboard-trend',
         height: 270,
         option: {
+          color: DASHBOARD_CHART_PALETTE,
           xAxis: { type: 'category', data: '${dashboardTrend?.months ?? []}' },
           yAxis: { type: 'value' },
-          series: [{ type: 'line', data: '${dashboardTrend?.amounts ?? []}' }],
+          series: [{ type: 'line', data: '${dashboardTrend?.amounts ?? []}', symbol: 'none' }],
         },
         events: {
           onClick: {
@@ -322,6 +340,7 @@ PAGE_DATA['crm-sales-dashboard'] = {
         source: '${dashboardTrend?.funnelStages ?? []}',
         xAxis: { dataKey: 'name', label: '阶段' },
         series: [{ name: '阶段金额（万元）', dataRegionKey: 'value' }],
+        colors: DASHBOARD_CHART_PALETTE,
         height: 270,
         legend: false,
       },
@@ -362,8 +381,21 @@ PAGE_DATA['mes-shopfloor-board'] = MES_SHOPFLOOR_BOARD_PAGE_DATA;
 // tenantRole 驱动权限层区块 visible 裁剪（G17 近似面）。
 PAGE_DATA['mall-distribution'] = {
   tenantRole: 'merchant',
-  mallTrendMonths: ['2026-08', '2026-09', '2026-10'],
-  mallTrendAmounts: [2860, 3425, 3118],
+  // 10-month window so the trend line spans the panel width instead of reading
+  // as 3 lonely points.
+  mallTrendMonths: [
+    '2026-01',
+    '2026-02',
+    '2026-03',
+    '2026-04',
+    '2026-05',
+    '2026-06',
+    '2026-07',
+    '2026-08',
+    '2026-09',
+    '2026-10',
+  ],
+  mallTrendAmounts: [2180, 2450, 2610, 2540, 2890, 2760, 3120, 2860, 3425, 3118],
   mallDistributionPanels: [
     {
       id: 'kpi-gmv',
@@ -437,9 +469,10 @@ PAGE_DATA['mall-distribution'] = {
         componentId: 'mall-distribution-trend',
         height: 240,
         option: {
+          color: DASHBOARD_CHART_PALETTE,
           xAxis: { type: 'category', data: '${mallTrendMonths ?? []}' },
           yAxis: { type: 'value' },
-          series: [{ type: 'line', data: '${mallTrendAmounts ?? []}' }],
+          series: [{ type: 'line', data: '${mallTrendAmounts ?? []}', symbol: 'none' }],
         },
       },
     },

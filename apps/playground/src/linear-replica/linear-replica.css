@@ -90,11 +90,19 @@
   --table-header-bg: var(--ln-bg-panel, #0f1011);
   --table-hover-bg: rgba(255, 255, 255, 0.04);
   --table-striped-bg: rgba(255, 255, 255, 0.02);
+  /* ux-r13：浅色分隔 token（近白）在深色表头上呈刺眼竖线——重指向
+     ln-border-2，表头保持连续色带 + 微弱列分隔 */
+  --table-header-separator-color: var(--ln-border-2);
+  /* ux-r13：showcase 固定高度卡片内溢出内容被硬裁——底部 16px 渐隐提示
+     可继续滚动 */
+  --ln-bottom-fade: 16px;
   /* ux-r12 cp1 补充：面板内内容高于面板高度时（showcase 卡片内嵌场景），
      溢出内容会露出宿主白底造成滚动 white-on-white——面板自滚动保持深底恒在。 */
   overflow-y: auto;
   /* ux-r12b：滚动条深色化（横向滚动槽白条在深底上刺眼） */
   scrollbar-color: rgba(255, 255, 255, 0.18) transparent;
+  /* ux-r13：底部渐隐遮罩——固定高度容器内被裁切的行看起来是有意的滚动暗示 */
+  mask-image: linear-gradient(to bottom, #000 calc(100% - var(--ln-bottom-fade)), transparent);
 }
 
 .ln-root *::-webkit-scrollbar {
@@ -342,6 +350,9 @@
 
 .ln-prio {
   display: inline-flex;
+  /* ux-r13：nop-container bare 基线（@layer base）会注入 flex-direction:column
+     并使条形在 12px 容器内 flex-shrink 压扁成 1px 残段——显式回排 + 禁收缩 */
+  flex-direction: row;
   align-items: flex-end;
   gap: 2px;
   height: 12px;
@@ -351,7 +362,8 @@
 .ln-prio-bar {
   width: 3px;
   border-radius: 1px;
-  background: var(--ln-border-3);
+  background: rgba(255, 255, 255, 0.16);
+  flex-shrink: 0;
 }
 
 .ln-prio-bar:nth-child(1) {
@@ -728,10 +740,15 @@
   --color-border: var(--ln-border-2);
   --color-foreground: var(--ln-text-2);
   --color-muted-foreground: var(--ln-text-3);
+  /* ux-r13：看板列最小宽度之和超出视口——外层容器横向滚动 + kanban 最小
+     内容宽度，让被右缘裁切的列带明确的滚动暗示 */
+  overflow-x: auto;
+  min-width: 0;
 }
 
 .ln-board .nop-kanban {
   background: var(--ln-bg);
+  min-width: 900px;
 }
 
 .ln-board .nop-kanban-column {
@@ -786,10 +803,11 @@
   font-family: var(--ln-font-mono);
 }
 
+/* ux-r13：成员首字母圈在深色面板上灰字灰底不可读——提高底/字对比 */
 .ln-board .nop-kanban-card-member {
   background: var(--ln-bg-secondary);
   border-color: var(--ln-border-3);
-  color: var(--ln-text-2);
+  color: var(--ln-text-1);
 }
 
 /* ── 13. Progress (project / cycle progress) ────────────────────────────── */
