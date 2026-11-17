@@ -82,7 +82,7 @@
 
 ## M1 稳定性与快照地基（flux 仓库内，纯前端）
 
-> 落地状态（2026-11-18 勘误附注，plan `docs/plans/2026-11-18-m1-stability-snapshot-foundation-plan.md`）：**前端侧收敛**——任务 1–6 全部落地（StabilityTracker、插件三钩子、store 写观察者 + ForestSnapshot 环形、DOM 影子、日志总线 diff/4ms/display-full、`__NOP_DEBUGGER_API__` V2）；验收微基准与 e2e 绿。deferred：Suspense 边界精确计数归 M2（预览接线时补），dependencyPaths 完整依赖收集归 M4——计数字段已预留。
+> 落地状态（2026-11-18 勘误附注，plan `docs/plans/2026-11-18-m1-stability-snapshot-foundation-plan.md`）：**前端侧收敛**——任务 1–6 全部落地（StabilityTracker、插件三钩子、store 写观察者 + ForestSnapshot 环形、DOM 影子、日志总线 diff/4ms/display-full、`__NOP_DEBUGGER_API__` V2）；验收微基准与 e2e 绿。deferred：Suspense 边界精确计数原归 M2——已于 M2 收口（flux-react suspense-stability provider，2026-11-18 勘误）；dependencyPaths 完整依赖收集归 M4——计数字段已预留。
 
 **目标**：把 Cypress 两大原语（whenStable、惰性快照）+ diff 日志总线落进 flux 运行时与 nop-debugger。（总体设计 §3、§4）
 
@@ -102,6 +102,8 @@
 - 性能基准：无监听者时渲染路径开销 ≤ 基线噪声（微基准脚本入 `scripts/__tests__/`，入 CI）。
 
 ## M2 时间旅行 UI + 截图地基（面板增强）
+
+> 落地状态（2026-11-18 勘误附注，plan `docs/plans/2026-11-18-m2-time-travel-capture-plan.md`）：**前端侧收敛**——预览协议（enterPreview/leavePreview/pin/真实输入退出）、S2 foreignObject 截图管线（sha-256 哈希 + 增量复用 + 遮罩 v1 + CaptureError 降级路径）、timeline scrub + 快照 diff、Suspense 计数（M1 Deferred 收口）、autoScreenshot <15ms 微基准绿。deferred：深度预览（显式回写 store）归 M4/M5（协议位与 disabled 按钮已留）；S3 光栅回退与分段滚动拼接为 v2 增强。
 
 **目标**：时间轴 hover/pin 还原"当时的 store 状态 + DOM 影子"；截图子系统 S2 通道上线并挂到步骤树。（总体 §5 · 采集 §1–§4、§6）
 

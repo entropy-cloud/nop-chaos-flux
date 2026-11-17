@@ -1,6 +1,6 @@
 import type { StoreWriteObserver, StoreWriteObserverEvent } from '@nop-chaos/flux-core';
 
-interface ForestSnapshot {
+export interface ForestSnapshot {
   epoch: number;
   capturedAt: number;
   revisions: Record<string, number>;
@@ -99,4 +99,36 @@ export function createForestSnapshotCollector(input: {
       latest = null;
     },
   };
+}
+
+export interface ForestSnapshotPathChange {
+  scopeId: string;
+  path: string;
+  kind: 'added' | 'removed' | 'changed';
+}
+
+/** Shallow path-level diff between two adjacent forest snapshots. */
+export function diffForestSnapshots(prev: ForestSnapshot | null, next: ForestSnapshot): ForestSnapshotPathChange[] {
+  const changes: ForestSnapshotPathChange[] = [];
+  const prevScopes = prev?.scopes ?? {};
+  for (const scopeId of next.changedScopeIds.length > 0 ? next.changedScopeIds : Object.keys(next.scopes)) {
+    const before = prevScopes[scopeId];
+    const after = next.scopes[scopeId];
+    if (!after) continue;
+    if (!before) {
+      for (const key of Object.keys(after)) {
+        changes.push({ scopeId, path: key, kind: 'added' });
+      }
+      continue;
+    }
+    const keys = new Set([...Object.keys(before), ...Object.keys(after)]);
+    for (const key of keys) {
+      const had = key in before;
+      const has = key in after;
+      if (!had && has) changes.push({ scopeId, path: key, kind: 'added' });
+      else if (had && !has) changes.push({ scopeId, path: key, kind: 'removed' });
+      else if (!Object.is(before[key], after[key])) changes.push({ scopeId, path: key, kind: 'changed' });
+    }
+  }
+  return changes;
 }

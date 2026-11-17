@@ -8,6 +8,16 @@ import { DisclosureTrigger } from './disclosure-trigger.js';
 import { formatClock } from './format.js';
 import type { ErrorGroup } from './event-groups.js';
 import { JsonViewer } from './json-viewer.js';
+import { diffForestSnapshots, type ForestSnapshot, type ForestSnapshotPathChange } from '../snapshot-repository.js';
+
+export interface TimelinePreviewApi {
+  getSnapshotEpochs(): number[];
+  getSnapshotAt(epoch: number): unknown | null;
+  enterPreview(epoch: number): boolean;
+  leavePreview(): void;
+  setPreviewPinned(pin: boolean): void;
+  isPreviewActive(): boolean;
+}
 
 const VIRTUALIZE_AFTER = 60;
 const VIRTUAL_ROW_HEIGHT = 96;
@@ -64,6 +74,7 @@ export function TimelineTab(props: {
   activeTimelineEvents: NopDebugEvent[];
   expandedId: number | null;
   setExpandedId(value: number | null): void;
+  previewApi?: TimelinePreviewApi;
 }) {
   const {
     filters,
@@ -82,7 +93,32 @@ export function TimelineTab(props: {
     activeTimelineEvents,
     expandedId,
     setExpandedId,
+    previewApi,
   } = props;
+  const [previewEpoch, setPreviewEpoch] = useState<number | null>(null);
+  const [previewPinned, setPreviewPinned] = useState(false);
+  const [previewChanges, setPreviewChanges] = useState<ForestSnapshotPathChange[]>([]);
+
+  const enterPreviewAt = (epoch: number) => {
+    if (!previewApi) return;
+    if (!previewApi.enterPreview(epoch)) return;
+    setPreviewEpoch(epoch);
+    const epochs = previewApi.getSnapshotEpochs();
+    const index = epochs.indexOf(epoch);
+    const prev = index > 0 ? (previewApi.getSnapshotAt(epochs[index - 1]!) as ForestSnapshot | null) : null;
+    const current = previewApi.getSnapshotAt(epoch) as ForestSnapshot | null;
+    setPreviewChanges(current ? diffForestSnapshots(prev ?? null, current) : []);
+  };
+  const exitPreview = () => {
+    previewApi?.leavePreview();
+    setPreviewEpoch(null);
+    setPreviewChanges([]);
+  };
+  const togglePreviewPin = () => {
+    const next = !previewPinned;
+    setPreviewPinned(next);
+    previewApi?.setPreviewPinned(next);
+  };
   const virtualListRef = useRef<HTMLDivElement | null>(null);
   const [scrollTop, setScrollTop] = useState(0);
   const [viewportHeight, setViewportHeight] = useState(360);
@@ -192,6 +228,47 @@ export function TimelineTab(props: {
 
   return (
     <>
+      {previewApi && (
+        <section className="ndbg-preview-scrub" data-testid="ndbg-timeline-scrub">
+          <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.12em] text-white/40 font-bold">
+            <span>{t('flux.debugger.timeTravel')}</span>
+            <span data-testid="ndbg-preview-state">
+              {previewEpoch !== null ? `epoch ${previewEpoch}` : 'live'}
+            </span>
+          </div>
+          <div className="flex items-center gap-2 mt-1.5">
+            <input
+              type="range"
+              data-testid="ndbg-preview-range"
+              min={0}
+              max={Math.max(0, previewApi.getSnapshotEpochs().length - 1)}
+              value={previewEpoch !== null ? previewApi.getSnapshotEpochs().indexOf(previewEpoch) : 0}
+              onChange={(event) => {
+                const epochs = previewApi.getSnapshotEpochs();
+                const epoch = epochs[Number(event.target.value)];
+                if (epoch !== undefined) enterPreviewAt(epoch);
+              }}
+            />
+            <Button variant="ghost" size="sm" data-testid="ndbg-preview-pin" onClick={togglePreviewPin}>
+              {previewPinned ? t('flux.debugger.pinned') : t('flux.debugger.pin')}
+            </Button>
+            {previewEpoch !== null && (
+              <Button variant="ghost" size="sm" data-testid="ndbg-preview-exit" onClick={exitPreview}>
+                {t('flux.debugger.exitPreview')}
+              </Button>
+            )}
+          </div>
+          {previewChanges.length > 0 && (
+            <ul className="mt-1.5 text-[11px] font-mono text-white/60 max-h-28 overflow-auto" data-testid="ndbg-snapshot-diff">
+              {previewChanges.slice(0, 50).map((change) => (
+                <li key={`${change.scopeId}:${change.path}:${change.kind}`}>
+                  {change.kind} {change.scopeId}.{change.path}
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+      )}
       <Input
         type="search"
         className="ndbg-search"

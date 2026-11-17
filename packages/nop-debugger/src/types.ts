@@ -170,6 +170,7 @@ export interface NopDebugEventQuery {
   requestInstanceId?: string;
   interactionId?: string;
   parentEventId?: number;
+  screenshotId?: string;
   text?: string;
   sinceTimestamp?: number;
   untilTimestamp?: number;
@@ -205,6 +206,7 @@ export interface NopDebugEvent {
   requestInstanceId?: string;
   interactionId?: string;
   parentEventId?: number;
+  screenshotId?: string;
   durationMs?: number;
   network?: NopDebugEventNetworkSummary;
   exportedData?: unknown;
@@ -434,6 +436,14 @@ export interface NopDebuggerAutomationApi {
   /** M1 V2 (back-compatible): forest snapshot by epoch; undefined when no collector is wired. */
   getSnapshotAt?(epoch: number): unknown | null;
   getSnapshotEpochs?(): number[];
+  /** M2 V2: time-travel preview; undefined when no preview controller is wired. */
+  enterPreview?(epoch: number): boolean;
+  leavePreview?(): void;
+  setPreviewPinned?(pin: boolean): void;
+  isPreviewActive?(): boolean;
+  /** M2 V2: S2 screenshot channel; rejects with CaptureError on invalid targets. */
+  screenshot?(options?: ScreenshotAutomationOptions): Promise<unknown>;
+  setAutoScreenshotMode?(mode: 'on-step' | 'on-change' | 'off'): void;
   getOverview(): NopDebuggerOverview;
   queryEvents(query?: NopDebugEventQuery): NopDebugEvent[];
   getLatestEvent(query?: NopDebugEventQuery): NopDebugEvent | undefined;
@@ -481,6 +491,15 @@ export interface NopDebuggerAutomationApi {
   unminimize(): void;
   setActiveTab(tab: NopDebuggerTab): void;
   setPanelPosition(position: { x: number; y: number }): void;
+}
+
+export interface ScreenshotAutomationOptions {
+  cid?: string;
+  selector?: string;
+  format?: 'png' | 'webp';
+  scale?: number;
+  maskSensitive?: boolean;
+  tag?: string;
 }
 
 export type NopFormStoreDiagnosticsOwnerQuery = FormStoreDiagnosticsOwnerQuery;

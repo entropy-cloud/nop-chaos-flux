@@ -103,6 +103,16 @@ function getTabLabels(): Record<NopDebuggerTab, string> {
 }
 
 export function NopDebuggerPanel(props: { controller: NopDebuggerController }) {
+  const previewApi = props.controller.automation.getSnapshotEpochs
+    ? {
+        getSnapshotEpochs: props.controller.automation.getSnapshotEpochs,
+        getSnapshotAt: props.controller.automation.getSnapshotAt!,
+        enterPreview: props.controller.automation.enterPreview!,
+        leavePreview: props.controller.automation.leavePreview!,
+        setPreviewPinned: props.controller.automation.setPreviewPinned!,
+        isPreviewActive: props.controller.automation.isPreviewActive!,
+      }
+    : undefined;
   const filterLabels = getFilterLabels();
   const tabLabels = getTabLabels();
   const extensionTabs = usePanelTabs(props.controller);
@@ -428,6 +438,7 @@ export function NopDebuggerPanel(props: { controller: NopDebuggerController }) {
             activeTimelineEvents={activeTimelineEvents}
             expandedId={expandedId}
             setExpandedId={setExpandedId}
+            previewApi={previewApi}
           />
         </TabsContent>
 

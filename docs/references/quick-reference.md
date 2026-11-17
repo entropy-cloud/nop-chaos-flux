@@ -1206,3 +1206,9 @@ Field classification（design-renderer.md §5，I15.2 D-1 同步）: `config`（
 | `getLiveScopeIds()` / `getActionRootScope()` | live scope 注册表（createChildScope 登记 / dispose 注销）与根 ScopeRef（ForestSnapshot 枚举用）                                                                                                                |
 
 工厂输入新可选参数：`debugExpressionSamplingRate`、`debugScopeDebounceMs`。nop-debugger 消费：`ForestSnapshotCollector`（环形 200 + 结构共享）、`captureDomShadow`/`attachDomShadow`（M1 dom-shadow.ts）、store 日志总线（`updateEvent` diff + 4ms 尾帧合并、`getDisplayEvents`/`getFullEvent`、`buildLogTree`）、`__NOP_DEBUGGER_API__` V2（`getStability`/`getSnapshotAt`/`getSnapshotEpochs`，向后兼容可选方法）。契约权威：`docs/references/quick-reference.md` 本节 + `docs/research/2026-11-17-flux-devtools-design.md` §3/§4。
+
+### DevTools 时间旅行 + 截图（M2，plan 2026-11-18-m2）
+
+`__NOP_DEBUGGER_API__` V2 新增（全部可选，向后兼容）：`enterPreview(epoch): boolean`（活 DOM 覆盖层挂目标 DOM 影子 + "预览中"横幅，状态层只读不回写 store；捕获阶段 keydown/pointerdown 自动退出，pin 除外）、`leavePreview()`、`setPreviewPinned(pin)`（pin 跨事件保持）、`isPreviewActive()`、`screenshot(options?: {cid, selector, format: 'png'|'webp', scale, tag})`（S2 foreignObject 管线 → `ScreenshotResultWire`，sha-256 内容哈希，跨域/零尺寸经 `CaptureError{code}` 拒绝或 degraded）、`setAutoScreenshotMode('on-step'|'on-change'|'off')`（默认 off；on-step 挂 `action:end` 事件 `screenshotId`，DOM 签名未变复用上帧零二次光栅化）。
+
+内核 API：`createPreviewController`（preview-controller.ts）、`captureScreenshotFromClone` / `createIncrementalCapturer` / `computeDomSignature` / `applyRedactionMask` / `CaptureError`（capture/screenshot.ts）、`diffForestSnapshots`（snapshot-repository.ts）。面板：timeline-tab scrub（`ndbg-timeline-scrub`/`ndbg-preview-range`/`ndbg-snapshot-diff`）。Suspense 计数：flux-react `registerSuspenseStabilityTracker(provider)`（host-global provider，playground 接线 runtime tracker；Suspense fallback 挂起期间持 `acquire('suspense')`）。

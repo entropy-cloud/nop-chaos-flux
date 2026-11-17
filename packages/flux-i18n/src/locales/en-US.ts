@@ -215,6 +215,13 @@ export const enUS: Resource = {
     },
     graph: {
       searchPlaceholder: 'Search nodes…',
+
+
+      pin: 'Pin',
+
+      pinned: 'Pinned',
+
+      exitPreview: 'Exit',
       clearSearch: 'Clear search',
       zoomIn: 'Zoom in',
       zoomOut: 'Zoom out',
@@ -718,6 +725,10 @@ export const enUS: Resource = {
     },
     debugger: {
       title: 'Framework Debugger',
+      timeTravel: 'Time Travel',
+      pin: 'Pin',
+      pinned: 'Pinned',
+      exitPreview: 'Exit',
       console: 'Runtime Console',
       moreItems: '... and {{count}} more items',
       noNetworkEvents: 'No network events recorded yet.',

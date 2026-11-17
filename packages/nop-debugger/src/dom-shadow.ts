@@ -1,4 +1,4 @@
-interface DomShadow {
+export interface DomShadow {
   root: Node;
   cssBundleId?: string;
   capturedAt: number;

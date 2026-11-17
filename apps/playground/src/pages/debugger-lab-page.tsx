@@ -6,6 +6,7 @@ import { createSchemaRenderer, createDefaultRegistry } from '@nop-chaos/flux-rea
 import { registerBasicRenderers } from '@nop-chaos/flux-renderers-basic';
 import { registerFormRenderers } from '@nop-chaos/flux-renderers-form';
 import { Button, Input } from '@nop-chaos/ui';
+import { registerSuspenseStabilityTracker } from '@nop-chaos/flux-react';
 import {
   createDemoConnector,
   createDemoFormSchema,
@@ -41,10 +42,12 @@ function ActionButton({
   label,
   onClick,
   variant,
+  disabled,
 }: {
   label: string;
   onClick: () => void;
   variant?: 'primary' | 'danger';
+  disabled?: boolean;
 }) {
   const base =
     'px-3 py-1.5 rounded-lg text-[13px] font-semibold cursor-pointer transition-all duration-150 border';
@@ -56,7 +59,7 @@ function ActionButton({
         : `${base} bg-white/5 border-white/10 text-white/80 hover:bg-white/10`;
 
   return (
-    <Button variant="ghost" size="sm" className={styles} onClick={onClick}>
+    <Button variant="ghost" size="sm" className={disabled ? `${styles} opacity-50 cursor-not-allowed` : styles} onClick={onClick} disabled={disabled}>
       {label}
     </Button>
   );
@@ -385,6 +388,37 @@ export function DebuggerLabPage({ debuggerController, onBack }: DebuggerLabPageP
                   onClick={() => handleShowOutput('Stability (API)', () => api?.getStability?.() ?? 'no tracker wired')}
                 />
                 <ActionButton
+                  label="Screenshot"
+                  onClick={async () => handleShowOutput('Screenshot (API)', async () => {
+                    try {
+                      const result = (await api?.screenshot?.({ tag: 'lab-demo' })) as { hash?: string; reused?: boolean } | undefined;
+                      return result ? { hash: result.hash, reused: result.reused } : 'capture unavailable';
+                    } catch (error) {
+                      return `capture error: ${(error as { code?: string }).code ?? String(error)}`;
+                    }
+                  })}
+                />
+                <ActionButton
+                  label="Enter Preview"
+                  onClick={() => {
+                    const epochs = api?.getSnapshotEpochs?.() ?? [];
+                    const epoch = epochs[epochs.length - 1];
+                    handleShowOutput('EnterPreview (API)', () => (epoch !== undefined && api?.enterPreview?.(epoch) ? { epoch } : 'no epochs yet'));
+                  }}
+                />
+                <ActionButton
+                  label="Leave Preview"
+                  onClick={() => handleShowOutput('LeavePreview (API)', () => {
+                    api?.leavePreview?.();
+                    return { active: api?.isPreviewActive?.() ?? false };
+                  })}
+                />
+                <ActionButton
+                  label="Deep Preview"
+                  disabled
+                  onClick={() => handleShowOutput('DeepPreview (API)', () => 'deep preview (store write-back) lands with M4/M5')}
+                />
+                <ActionButton
                   label="Snapshot Epochs"
                   onClick={() => handleShowOutput('SnapshotEpochs (API)', () => api?.getSnapshotEpochs?.() ?? 'no collector wired')}
                 />
@@ -449,6 +483,7 @@ export function DebuggerLabPage({ debuggerController, onBack }: DebuggerLabPageP
                   formulaCompiler={demoFormulaCompiler}
                   onRuntimeChange={(runtime) => {
                     runtimeRef.current = runtime;
+                    registerSuspenseStabilityTracker(() => runtimeRef.current?.getStabilityTracker());
                     debuggerController.setRuntime(runtime);
                   }}
                   onComponentRegistryChange={(componentRegistry) =>

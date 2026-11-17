@@ -38,3 +38,5 @@ export {
   normalizeBlobResponse,
 } from './async-data/blob-download.js';
 export { buildFormStatusSummary } from './form-runtime-status.js';
+export { createStabilityTracker, type StabilityTrackerOptions } from './stability-tracker.js';
+export { registerStoreWriteObserver } from './scope.js';

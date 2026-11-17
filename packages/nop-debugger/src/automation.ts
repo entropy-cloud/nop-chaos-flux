@@ -87,6 +87,12 @@ export function createAutomationApi(input: {
   getStability?(): { stable: boolean; degraded?: boolean; counters: Record<string, number> };
   getSnapshotAt?(epoch: number): unknown | null;
   getSnapshotEpochs?(): number[];
+  enterPreview?(epoch: number): boolean;
+  leavePreview?(): void;
+  setPreviewPinned?(pin: boolean): void;
+  isPreviewActive?(): boolean;
+  screenshot?(options?: unknown): Promise<unknown>;
+  setAutoScreenshotMode?(mode: 'on-step' | 'on-change' | 'off'): void;
 }): NopDebuggerAutomationApi {
   return {
     controllerId: input.controllerId,
@@ -128,6 +134,12 @@ export function createAutomationApi(input: {
     getStability: input.getStability,
     getSnapshotAt: input.getSnapshotAt,
     getSnapshotEpochs: input.getSnapshotEpochs,
+    enterPreview: input.enterPreview,
+    leavePreview: input.leavePreview,
+    setPreviewPinned: input.setPreviewPinned,
+    isPreviewActive: input.isPreviewActive,
+    screenshot: input.screenshot,
+    setAutoScreenshotMode: input.setAutoScreenshotMode,
     inspectByCid: input.inspectByCid,
     inspectByElement: input.inspectByElement,
     evaluateNodeExpression: input.evaluateNodeExpression,

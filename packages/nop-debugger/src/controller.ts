@@ -56,6 +56,8 @@ import {
 } from './explanations.js';
 import { normalizeRedactionOptions, redactData } from './redaction.js';
 import { createForestSnapshotCollector } from './snapshot-repository.js';
+import { createPreviewController, type PreviewController } from './preview-controller.js';
+import { createIncrementalCapturer, CaptureError } from './capture/screenshot.js';
 import { createDebuggerStore } from './store.js';
 import type {
   NopComponentInspectResult,
@@ -153,6 +155,20 @@ export function createNopDebugger(options: NopDebuggerOptions = {}): NopDebugger
     errorBufferKeepEarliest: options.errorBuffer?.keepEarliest ?? 3,
     errorBufferKeepLatest: options.errorBuffer?.keepLatest ?? 5,
   });
+  store.subscribe(() => {
+    if (autoScreenshotMode !== 'on-step' || typeof document === 'undefined') return;
+    const latest = store.getSnapshot().events[0];
+    if (!latest || latest.kind !== 'action:end' || latest.screenshotId) return;
+    void (async () => {
+      try {
+        const rect = document.body.getBoundingClientRect();
+        const { result } = await incrementalCapturer.capture({ root: document.body, width: rect.width, height: rect.height });
+        store.updateEvent(latest.id, { screenshotId: result.id });
+      } catch {
+        // auto screenshots are best-effort; failures stay silent
+      }
+    })();
+  });
 
   if (persistedMinimized) {
     store.minimize();
@@ -173,6 +189,10 @@ export function createNopDebugger(options: NopDebuggerOptions = {}): NopDebugger
   let runtime: RendererRuntime | undefined;
   let snapshotCollector: ReturnType<typeof createForestSnapshotCollector> | undefined;
   let snapshotObserverDisposer: (() => void) | undefined;
+  let previewController: PreviewController | undefined;
+  let latestDomShadow: ReturnType<typeof import('./dom-shadow.js').captureDomShadow> | undefined;
+  const incrementalCapturer = createIncrementalCapturer();
+  let autoScreenshotMode: 'on-step' | 'on-change' | 'off' = 'off';
 
   const getRuntime = () => runtime;
   let currentInspectByCid = buildInspectByCid(componentRegistry, getRuntime);
@@ -307,6 +327,33 @@ export function createNopDebugger(options: NopDebuggerOptions = {}): NopDebugger
     },
     getSnapshotAt: (epoch: number) => snapshotCollector?.getSnapshotAt(epoch) ?? null,
     getSnapshotEpochs: () => snapshotCollector?.getEpochs() ?? [],
+    enterPreview: (epoch: number) => previewController?.enterPreview(epoch) ?? false,
+    leavePreview: () => previewController?.leavePreview(),
+    setPreviewPinned: (pin: boolean) => previewController?.setPinned(pin),
+    isPreviewActive: () => previewController?.isActive() ?? false,
+    screenshot: async (options?: { cid?: string; selector?: string; format?: 'png' | 'webp'; scale?: number; tag?: string }) => {
+      if (typeof document === 'undefined') {
+        throw new CaptureError('capture-unavailable', 'document unavailable');
+      }
+      const target =
+        (options?.cid && document.querySelector(`[data-cid="${options.cid}"]`)) ||
+        (options?.selector && document.querySelector(options.selector)) ||
+        document.body;
+      const rect = target.getBoundingClientRect();
+      const result = await incrementalCapturer.capture({
+        root: target,
+        width: rect.width,
+        height: rect.height,
+        format: options?.format,
+        scale: options?.scale,
+        redactionRules: [{ matches: (element: Element) => element.getAttribute('type') === 'password' }],
+        refs: { tag: options?.tag, cid: options?.cid },
+      });
+      return { ...result.result, reused: result.reused };
+    },
+    setAutoScreenshotMode: (mode: 'on-step' | 'on-change' | 'off') => {
+      autoScreenshotMode = mode;
+    },
     // [WA-debugger-002] mutation 面单源：引用 controller 同名成员，避免
     // 「store 调用 + persist 调用」方法体在 automation/controller 双面逐字双写；
     // controller 于下方构建，此处闭包仅在构造完成后被调用。
@@ -533,6 +580,10 @@ export function createNopDebugger(options: NopDebuggerOptions = {}): NopDebugger
           pruneScopeIds: () => runtime?.getLiveScopeIds?.() ?? [],
         });
         snapshotObserverDisposer = runtime.registerStoreWriteObserver({ onWrite: snapshotCollector.observe });
+        previewController ??= createPreviewController({
+          getSnapshotAt: (epoch) => snapshotCollector?.getSnapshotAt(epoch) ?? null,
+          getLatestShadow: () => latestDomShadow ?? null,
+        });
       }
       currentInspectByCid = buildInspectByCid(componentRegistry, getRuntime);
       currentInspectByElement = buildInspectByElement(componentRegistry, getRuntime);

@@ -123,7 +123,6 @@ export interface CaptureRefs {
   cid?: string;
   interactionId?: string;
   tag?: string;
-  sessionId?: string;
 }
 
 export interface CaptureUploadParams {

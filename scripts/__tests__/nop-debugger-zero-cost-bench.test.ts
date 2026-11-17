@@ -71,3 +71,35 @@ describe('M1 zero-listener cost microbenchmark', () => {
     expect(instrumented).toBeLessThan(Math.max(baseline * 5, 30));
   });
 });
+
+describe('M2 auto-screenshot step budget (<15ms red line)', () => {
+  it('signature compute + reuse path per step stays under 15ms', async () => {
+    const { computeDomSignature, createIncrementalCapturer } = await import('../../packages/nop-debugger/src/capture/screenshot.js');
+    const { Window } = await import('happy-dom');
+    const dom = new Window({ url: 'https://localhost/' });
+    const app = dom.document.createElement('div');
+    for (let i = 0; i < 200; i++) {
+      const node = dom.document.createElement('div');
+      node.setAttribute('data-cid', `c-${i}`);
+      node.className = 'row row-striped';
+      node.textContent = `row ${i}`;
+      app.appendChild(node);
+    }
+    const capturer = createIncrementalCapturer();
+    const bytes = new Uint8Array([1]);
+    const noopRasterizer = async () => bytes;
+    const { performance } = await import('node:perf_hooks');
+    // warm up + first capture
+    await capturer.capture({ root: app, width: 100, height: 100, rasterizer: noopRasterizer });
+    const samples: number[] = [];
+    for (let i = 0; i < 20; i++) {
+      const startedAt = performance.now();
+      const { reused } = await capturer.capture({ root: app, width: 100, height: 100, rasterizer: noopRasterizer });
+      samples.push(performance.now() - startedAt);
+      if (!reused) throw new Error('expected reuse on unchanged DOM');
+    }
+    const median = samples.sort((a, b) => a - b)[10]!;
+    expect(median).toBeLessThan(15);
+    void computeDomSignature;
+  });
+});

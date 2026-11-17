@@ -170,3 +170,4 @@ export type {
   KeyboardBindingSpec,
   UseKeyboardBindingsOptions,
 } from './use-keyboard-bindings.js';
+export { registerSuspenseStabilityTracker, SuspenseStabilityFallback } from './suspense-stability.js';

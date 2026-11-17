@@ -1,6 +1,7 @@
 import { lazy, Suspense, type ReactNode, type ReactElement } from 'react';
 import type { BaseSchema, RendererComponentProps, RendererResolvedProps } from '@nop-chaos/flux-core';
 import { Spinner } from '@nop-chaos/ui';
+import { SuspenseStabilityFallback } from './suspense-stability.js';
 
 export interface LazyRendererOptions {
   fallback?: ReactNode;
@@ -40,7 +41,7 @@ export function createLazyRendererComponent<
     props: RendererComponentProps<S, P>,
   ) {
     return (
-      <Suspense fallback={fallback}>
+      <Suspense fallback={<SuspenseStabilityFallback>{fallback}</SuspenseStabilityFallback>}>
         <LazyComp {...props} />
       </Suspense>
     );

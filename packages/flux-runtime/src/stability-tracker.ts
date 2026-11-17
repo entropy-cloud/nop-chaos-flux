@@ -2,7 +2,7 @@ import type { StabilityCounters, StabilitySnapshot, StabilityTracker } from '@no
 
 const ZERO_COUNTERS: StabilityCounters = { fetch: 0, stream: 0, transition: 0, suspense: 0, scopeDebounce: 0 };
 
-interface StabilityTrackerOptions {
+export interface StabilityTrackerOptions {
   scopeDebounceMs?: number;
 }
 

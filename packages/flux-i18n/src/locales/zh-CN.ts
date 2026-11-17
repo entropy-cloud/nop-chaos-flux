@@ -213,6 +213,13 @@ export const zhCN: Resource = {
     },
     graph: {
       searchPlaceholder: '搜索节点…',
+
+
+      pin: '固定',
+
+      pinned: '已固定',
+
+      exitPreview: '退出',
       clearSearch: '清除搜索',
       zoomIn: '放大',
       zoomOut: '缩小',
@@ -713,6 +720,10 @@ export const zhCN: Resource = {
     },
     debugger: {
       title: '框架调试器',
+      timeTravel: '时间旅行',
+      pin: '固定',
+      pinned: '已固定',
+      exitPreview: '退出',
       console: '运行时控制台',
       moreItems: '... 还有 {{count}} 项',
       noNetworkEvents: '暂无网络事件记录。',
