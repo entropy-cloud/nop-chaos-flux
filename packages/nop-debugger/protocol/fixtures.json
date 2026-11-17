@@ -1,0 +1,392 @@
+{
+  "description": "Shared protocol conformance fixtures v1. Each entry: target schema ($ref), valid samples, invalid samples (with expected failure reason). The Java gateway side consumes the same fixtures for its conformance tests (M6).",
+  "samples": [
+    {
+      "name": "rpc-request-attach",
+      "schema": "https://nop-chaos.dev/schemas/devtools/rpc-envelope.schema.json#/definitions/rpcRequest",
+      "valid": [
+        {
+          "id": "req-1",
+          "method": "session.attach",
+          "params": { "sessionId": "s-1", "appVersion": "1.0.0" }
+        },
+        { "id": "req-2", "method": "log.emit" }
+      ],
+      "invalid": [
+        { "sample": { "id": "req-3" }, "reason": "missing method" },
+        {
+          "sample": { "id": "req-4", "method": "log.emit", "extra": true },
+          "reason": "additionalProperties"
+        },
+        { "sample": { "method": "log.emit" }, "reason": "missing id" }
+      ]
+    },
+    {
+      "name": "rpc-response-exclusive",
+      "schema": "https://nop-chaos.dev/schemas/devtools/rpc-envelope.schema.json#/definitions/rpcResponse",
+      "valid": [
+        { "id": "req-1", "result": { "ok": true } },
+        { "id": "req-2", "error": { "code": "session-unknown", "message": "no such session" } }
+      ],
+      "invalid": [
+        { "sample": { "id": "req-3" }, "reason": "neither result nor error" },
+        {
+          "sample": {
+            "id": "req-4",
+            "result": { "ok": true },
+            "error": { "code": "x", "message": "y" }
+          },
+          "reason": "result and error are mutually exclusive (oneOf)"
+        },
+        { "sample": { "id": "req-5", "error": { "code": "x" } }, "reason": "error.message missing" }
+      ]
+    },
+    {
+      "name": "rpc-event",
+      "schema": "https://nop-chaos.dev/schemas/devtools/rpc-envelope.schema.json#/definitions/rpcEvent",
+      "valid": [{ "event": "intercept.frame", "payload": { "eventId": "e1" } }],
+      "invalid": [{ "sample": { "event": "intercept.frame" }, "reason": "missing payload" }]
+    },
+    {
+      "name": "method-registry-complete",
+      "schema": "https://nop-chaos.dev/schemas/devtools/methods.schema.json",
+      "valid": [
+        {
+          "protocol": "devtools",
+          "version": 1,
+          "methods": [
+            "session.attach",
+            "session.detach",
+            "session.heartbeat",
+            "log.emit",
+            "intercept.register",
+            "intercept.resolve",
+            "capture.upload",
+            "baseline.get",
+            "baseline.put"
+          ]
+        }
+      ],
+      "invalid": [
+        {
+          "sample": { "protocol": "devtools", "version": 1, "methods": ["session.attach"] },
+          "reason": "required methods missing"
+        },
+        {
+          "sample": {
+            "protocol": "devtools",
+            "version": 1,
+            "methods": [
+              "session.attach",
+              "session.detach",
+              "session.heartbeat",
+              "log.emit",
+              "intercept.register",
+              "intercept.resolve",
+              "capture.upload",
+              "baseline.get",
+              "baseline.put",
+              "unknown.method"
+            ]
+          },
+          "reason": "unknown method not allowed"
+        },
+        {
+          "sample": {
+            "protocol": "devtools",
+            "version": 2,
+            "methods": [
+              "session.attach",
+              "session.detach",
+              "session.heartbeat",
+              "log.emit",
+              "intercept.register",
+              "intercept.resolve",
+              "capture.upload",
+              "baseline.get",
+              "baseline.put"
+            ]
+          },
+          "reason": "version must be 1"
+        }
+      ]
+    },
+    {
+      "name": "dev-log-entry",
+      "schema": "https://nop-chaos.dev/schemas/devtools/methods.schema.json#/definitions/devLogEntry",
+      "valid": [
+        {
+          "id": "log-1",
+          "kind": "action",
+          "label": "click submit",
+          "status": "pending",
+          "startedAt": 1700000000000,
+          "refs": { "cid": "c-1", "epoch": 3 }
+        }
+      ],
+      "invalid": [
+        {
+          "sample": {
+            "id": "log-2",
+            "kind": "bogus",
+            "label": "x",
+            "status": "pending",
+            "startedAt": 1
+          },
+          "reason": "kind enum"
+        },
+        {
+          "sample": {
+            "id": "log-3",
+            "kind": "action",
+            "label": "x",
+            "status": "weird",
+            "startedAt": 1
+          },
+          "reason": "status enum"
+        }
+      ]
+    },
+    {
+      "name": "intercept-frame",
+      "schema": "https://nop-chaos.dev/schemas/devtools/intercept-frame.schema.json#/definitions/interceptFrameEvent",
+      "valid": [
+        {
+          "event": "intercept.frame",
+          "payload": {
+            "eventId": "e-1",
+            "phase": "before:handler",
+            "service": "user/query",
+            "requestId": "r-1",
+            "timeoutMs": 3000,
+            "args": { "id": 42 }
+          }
+        },
+        {
+          "event": "intercept.frame",
+          "payload": {
+            "eventId": "e-2",
+            "phase": "after:handler",
+            "service": "user/query",
+            "requestId": "r-1",
+            "timeoutMs": 3000,
+            "result": { "name": "a" },
+            "durationMs": 12
+          }
+        }
+      ],
+      "invalid": [
+        {
+          "sample": {
+            "event": "intercept.frame",
+            "payload": {
+              "eventId": "e-3",
+              "phase": "mid:handler",
+              "service": "s",
+              "requestId": "r",
+              "timeoutMs": 1000
+            }
+          },
+          "reason": "phase enum"
+        },
+        {
+          "sample": {
+            "event": "intercept.frame",
+            "payload": {
+              "eventId": "e-4",
+              "phase": "before:handler",
+              "service": "s",
+              "requestId": "r"
+            }
+          },
+          "reason": "timeoutMs missing"
+        }
+      ]
+    },
+    {
+      "name": "intercept-resolve",
+      "schema": "https://nop-chaos.dev/schemas/devtools/intercept-frame.schema.json#/definitions/interceptResolveRequest",
+      "valid": [
+        {
+          "id": "e-1",
+          "method": "intercept.resolve",
+          "params": { "eventId": "e-1", "action": "continue" }
+        },
+        {
+          "id": "e-2",
+          "method": "intercept.resolve",
+          "params": {
+            "eventId": "e-2",
+            "action": "modify",
+            "patch": [{ "op": "replace", "path": "/name", "value": "b" }]
+          }
+        },
+        {
+          "id": "e-3",
+          "method": "intercept.resolve",
+          "params": { "eventId": "e-3", "action": "shortCircuit", "response": { "name": "stub" } }
+        }
+      ],
+      "invalid": [
+        {
+          "sample": {
+            "id": "e-4",
+            "method": "intercept.resolve",
+            "params": { "eventId": "e-4", "action": "rewrite" }
+          },
+          "reason": "action enum"
+        }
+      ]
+    },
+    {
+      "name": "screenshot-result",
+      "schema": "https://nop-chaos.dev/schemas/devtools/screenshot-result.schema.json",
+      "valid": [
+        {
+          "id": "shot-1",
+          "backend": "foreign-object",
+          "width": 800,
+          "height": 600,
+          "encoding": "base64",
+          "bytes": "AAAA",
+          "mime": "image/webp",
+          "hash": "xxh-abc",
+          "createdAt": 1700000000000,
+          "refs": { "cid": "c-9", "tag": "why:disabled" },
+          "degraded": { "reasons": ["cross-origin image replaced"] }
+        }
+      ],
+      "invalid": [
+        {
+          "sample": {
+            "id": "shot-2",
+            "backend": "html2canvas",
+            "width": 10,
+            "height": 10,
+            "encoding": "base64",
+            "bytes": "AA",
+            "mime": "image/png",
+            "hash": "h",
+            "createdAt": 1
+          },
+          "reason": "backend enum"
+        },
+        {
+          "sample": {
+            "id": "shot-3",
+            "backend": "cdp",
+            "width": 10,
+            "height": 10,
+            "encoding": "hex",
+            "bytes": "00",
+            "mime": "image/png",
+            "hash": "h",
+            "createdAt": 1
+          },
+          "reason": "encoding must be base64"
+        }
+      ]
+    },
+    {
+      "name": "dev-session",
+      "schema": "https://nop-chaos.dev/schemas/devtools/dev-session.schema.json",
+      "valid": [
+        {
+          "version": 1,
+          "meta": {
+            "appVersion": "1.0.0",
+            "schemaFingerprint": "fp-1",
+            "startedAt": 1700000000000,
+            "userAgent": "ua",
+            "locale": "zh-CN"
+          },
+          "clock": {
+            "origin": 1700000000000,
+            "events": [{ "at": 0, "kind": "setTimeout", "timerId": "t1", "delayMs": 100 }]
+          },
+          "inputs": [{ "seq": 0, "at": 0, "type": "click", "cid": "c-1", "payload": { "x": 1 } }],
+          "envFrames": [
+            {
+              "requestId": "r-1",
+              "channel": "fetcher",
+              "request": { "url": "/api" },
+              "response": { "ok": 1 },
+              "status": 200
+            }
+          ],
+          "checkpoints": [
+            {
+              "step": 1,
+              "epoch": 5,
+              "revisions": { "root": 12 },
+              "pathHashes": { "root.form": "h1" }
+            }
+          ],
+          "logs": [
+            {
+              "id": "log-1",
+              "kind": "action",
+              "label": "click",
+              "status": "passed",
+              "startedAt": 1
+            }
+          ]
+        }
+      ],
+      "invalid": [
+        {
+          "sample": {
+            "version": 2,
+            "meta": {},
+            "clock": { "origin": 0, "events": [] },
+            "inputs": [],
+            "envFrames": [],
+            "checkpoints": [],
+            "logs": []
+          },
+          "reason": "version must be 1"
+        },
+        {
+          "sample": {
+            "version": 1,
+            "meta": { "startedAt": 1 },
+            "clock": { "origin": 0, "events": [] },
+            "inputs": [],
+            "envFrames": [],
+            "checkpoints": [{ "step": 1, "revisions": { "root": 1 } }],
+            "logs": []
+          },
+          "reason": "checkpoint missing pathHashes"
+        }
+      ]
+    },
+    {
+      "name": "visual-baseline",
+      "schema": "https://nop-chaos.dev/schemas/devtools/visual-baseline.schema.json",
+      "valid": [
+        {
+          "key": "fp-1:1280x800:step-3",
+          "imageRef": "oss://bucket/baselines/fp-1-step3.webp",
+          "createdAt": 1700000000000,
+          "schemaFingerprint": "fp-1",
+          "viewport": { "width": 1280, "height": 800 },
+          "ignoreRegions": [{ "cid": "c-clock", "reason": "timestamp node (xui:visual-ignore)" }]
+        }
+      ],
+      "invalid": [
+        {
+          "sample": {
+            "key": "k",
+            "imageRef": "oss://x",
+            "createdAt": 1,
+            "ignoreRegions": [
+              { "cid": "c", "rect": { "x": 0, "y": 0, "width": 5, "height": -1 }, "reason": "bad" }
+            ]
+          },
+          "reason": "rect height must be positive"
+        },
+        { "sample": { "key": "k", "createdAt": 1 }, "reason": "imageRef missing" }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,145 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://nop-chaos.dev/schemas/devtools/dev-session.schema.json",
+  "title": "Flux DevTools DevSession (frozen v1)",
+  "description": "Recorded user session for deterministic replay and diagnostic bundles. Design: 总体设计 §8.1. All payloads pass redaction before recording (security default).",
+  "type": "object",
+  "required": ["version", "meta", "clock", "inputs", "envFrames", "checkpoints", "logs"],
+  "additionalProperties": false,
+  "properties": {
+    "version": { "const": 1 },
+    "meta": {
+      "type": "object",
+      "required": ["startedAt"],
+      "additionalProperties": false,
+      "properties": {
+        "appVersion": { "type": "string" },
+        "schemaFingerprint": { "type": "string" },
+        "startedAt": { "type": "number" },
+        "endedAt": { "type": "number" },
+        "userAgent": { "type": "string" },
+        "locale": { "type": "string" }
+      }
+    },
+    "clock": {
+      "type": "object",
+      "required": ["origin", "events"],
+      "additionalProperties": false,
+      "properties": {
+        "origin": { "type": "number" },
+        "events": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["at", "kind"],
+            "additionalProperties": false,
+            "properties": {
+              "at": { "type": "number", "description": "fake-clock offset ms" },
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "setTimeout",
+                  "setInterval",
+                  "clearTimeout",
+                  "clearInterval",
+                  "date-now",
+                  "tick"
+                ]
+              },
+              "timerId": { "type": "string" },
+              "delayMs": { "type": "number" }
+            }
+          }
+        }
+      }
+    },
+    "inputs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["seq", "at", "type"],
+        "additionalProperties": false,
+        "properties": {
+          "seq": { "type": "number" },
+          "at": { "type": "number" },
+          "type": {
+            "type": "string",
+            "minLength": 1,
+            "description": "normalized FluxActionEvent type"
+          },
+          "cid": { "type": "string" },
+          "nodeId": { "type": "string" },
+          "payload": {}
+        }
+      }
+    },
+    "envFrames": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["requestId", "channel"],
+        "additionalProperties": false,
+        "properties": {
+          "requestId": { "type": "string", "minLength": 1 },
+          "channel": { "type": "string", "enum": ["fetcher", "stream", "socket"] },
+          "at": { "type": "number" },
+          "request": { "description": "redacted request snapshot" },
+          "response": { "description": "redacted recorded response (stream: frame sequence)" },
+          "frames": {
+            "type": "array",
+            "description": "stream/socket frame sequence",
+            "items": {
+              "type": "object",
+              "required": ["at"],
+              "additionalProperties": false,
+              "properties": {
+                "at": { "type": "number" },
+                "data": {},
+                "close": { "type": "boolean" }
+              }
+            }
+          },
+          "status": { "type": "number" },
+          "error": {
+            "type": "object",
+            "required": ["code", "message"],
+            "additionalProperties": false,
+            "properties": {
+              "code": { "type": "string" },
+              "message": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    "checkpoints": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["step", "revisions", "pathHashes"],
+        "additionalProperties": false,
+        "properties": {
+          "step": { "type": "number" },
+          "epoch": { "type": "number" },
+          "revisions": {
+            "type": "object",
+            "description": "scopeId -> revision vector",
+            "additionalProperties": { "type": "number" }
+          },
+          "pathHashes": {
+            "type": "object",
+            "description": "critical scope path -> content hash",
+            "additionalProperties": { "type": "string" }
+          }
+        }
+      }
+    },
+    "logs": {
+      "type": "array",
+      "description": "display-projection DevLog entries for replay comparison",
+      "items": {
+        "$ref": "https://nop-chaos.dev/schemas/devtools/methods.schema.json#/definitions/devLogEntry"
+      }
+    }
+  }
+}

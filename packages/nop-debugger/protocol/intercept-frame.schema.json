@@ -1,0 +1,80 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://nop-chaos.dev/schemas/devtools/intercept-frame.schema.json",
+  "title": "Flux DevTools intercept frame (frozen v1)",
+  "description": "Server-side call interception phase frames and frontend resolution semantics (continue | modify | shortCircuit + timeout-continue-degraded). Design: 总体设计 §10.2, roadmap M0 task 3.",
+  "type": "object",
+  "definitions": {
+    "interceptFrameEvent": {
+      "type": "object",
+      "required": ["event", "payload"],
+      "additionalProperties": false,
+      "properties": {
+        "event": { "const": "intercept.frame" },
+        "payload": {
+          "type": "object",
+          "required": ["eventId", "phase", "service", "requestId", "timeoutMs"],
+          "additionalProperties": false,
+          "properties": {
+            "eventId": { "type": "string", "minLength": 1 },
+            "phase": { "type": "string", "enum": ["before:handler", "after:handler"] },
+            "service": { "type": "string", "minLength": 1 },
+            "requestId": { "type": "string", "minLength": 1 },
+            "interactionId": { "type": "string" },
+            "args": {
+              "description": "Present on phase=before:handler — invocation arguments awaiting resolve"
+            },
+            "result": {
+              "description": "Present on phase=after:handler — handler result awaiting resolve"
+            },
+            "durationMs": { "type": "number", "description": "Present on phase=after:handler" },
+            "timeoutMs": { "type": "number", "exclusiveMinimum": 0 }
+          }
+        }
+      }
+    },
+    "interceptResolveRequest": {
+      "type": "object",
+      "required": ["id", "method", "params"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "method": { "const": "intercept.resolve" },
+        "params": {
+          "type": "object",
+          "required": ["eventId", "action"],
+          "additionalProperties": false,
+          "properties": {
+            "eventId": { "type": "string", "minLength": 1 },
+            "action": { "type": "string", "enum": ["continue", "modify", "shortCircuit"] },
+            "patch": {
+              "type": "array",
+              "description": "JSON Patch (RFC 6902); required when action=modify",
+              "minItems": 1,
+              "items": { "type": "object", "required": ["op", "path"] }
+            },
+            "response": { "description": "required when action=shortCircuit" }
+          }
+        }
+      }
+    },
+    "interceptDegradedEvent": {
+      "type": "object",
+      "required": ["event", "payload"],
+      "additionalProperties": false,
+      "properties": {
+        "event": { "const": "intercept.degraded" },
+        "payload": {
+          "type": "object",
+          "required": ["eventId", "reason"],
+          "additionalProperties": false,
+          "properties": {
+            "eventId": { "type": "string", "minLength": 1 },
+            "reason": { "type": "string", "enum": ["timeout", "gateway-error"] },
+            "detail": { "type": "string" }
+          }
+        }
+      }
+    }
+  }
+}

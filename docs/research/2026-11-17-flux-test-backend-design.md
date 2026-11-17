@@ -1,0 +1,305 @@
+# Flux 测试后端设计：以 nop-debugger 为核心彻底替代 Playwright e2e
+
+- 日期：2026-11-17 · 状态：设计稿（v4：真实浏览器 + 页内内核驱动，Cypress 模式；启动端仅"拉浏览器+开tab+加载+注入"，无代理/扩展/driver 层）
+- 上游：[总体设计](./2026-11-17-flux-devtools-design.md) · [截图专章](./2026-11-17-flux-devtools-capture-design.md) · [Roadmap](./2026-11-17-flux-debugger-roadmap.md)
+- 目标：flux 仓库（`tests/e2e/`，现有 **244 个 spec**）的 e2e 全部迁移到自研测试后端（测试网关 + 内核驱动 API），最终从仓库依赖中**彻底移除 Playwright**。
+- **终态断言模型（v2 定调）**：迁移完成后**不保留 DOM 判断**。测试断言全面基于业务语义层——节点 cid 的 meta/props 求值结果、scope store 状态、事件与 Log 树、reaction 命中、快照 diff、视觉基线。DOM 选择器兼容层只是**迁移脚手架**（T0–T3 存在），T4 连同 Playwright 一起删除。
+- 现状量化（迁移规模依据）：`page.getByTestId` ×2078、`page.locator` ×1996、`page.evaluate` ×540、`page.goto` ×377、`page.waitFor` ×333、`page.keyboard` ×285、`page.mouse` ×222、`page.screenshot` ×18、`page.request` ×6；仅 4 个 spec 已用 `__NOP_DEBUGGER_API__`。结论：兼容层决定迁移**速度**，语义断言层决定迁移**终态质量**。
+
+---
+
+## 1. 目标与非目标
+
+### 1.1 目标
+
+1. e2e 语义升级：测试通过内核白盒 API（cid、waitFor、快照、store 断言、录制回放）表达，而不是黑盒 DOM 猜测——这是相对 Playwright 的**代际提升**，也是"基于 Cypress 思想"的自然终点（Cypress 的 command queue + retry-ability + snapshot，全部以内核白盒方式实现）。
+2. 自研测试后端三件套：**测试网关**（Node，替代 Playwright Test Server）、**浏览器启动器**（裸 CDP，替代 Playwright browser 层）、**页内驱动**（nop-debugger 内核，替代 page.\* API）。
+3. 全量迁移 244 个 spec 后删除 `@playwright/test` 依赖、`playwright.config.ts`、Playwright 专属 helper **以及 DOM 兼容层**；CI 命令面保持 `pnpm test:e2e` 不变（内部换引擎）。
+4. 副产品：测试即调试会话——每个失败的 spec 自动产出可重放的 `DevSession` 诊断包（M5/M7 能力直接复用）。
+
+### 1.2 非目标
+
+- 不做多浏览器矩阵承诺（Chromium 系优先；Firefox/WebKit 支持列为远期，见 §9 风险）。
+- 不迁移 `tests/` 之外的 Playwright 使用（如有）与本设计无关。
+- 不追求 Playwright API 完全 1:1 兼容——兼容层覆盖常用子集（§5 迁移映射表），覆盖不了的部分改写为内核惯用法。
+
+### 1.5 业务语义断言模型（终态核心，无 DOM 判断）
+
+终态 spec 中**不出现任何 CSS 选择器/testid/innerHTML 断言**。断言对象从"页面长什么样"升级为"业务状态是什么、渲染结论是什么"：
+
+```ts
+// —— 断言原语（全部经内核白盒，零 DOM）——
+ft.expect
+  .cid('form-submit-btn') // 语义定位：cid / nodeId / 组件语义标记
+  .meta({ disabled: false, visible: true }) // meta 求值结论
+  .prop('label', '提交订单') // prop 求值结论（表达式求值后的值）
+  .rendered() // 节点渲染结论（含 error boundary 归因）
+  .not.rendered({ because: 'region-inactive' }) // 且断言归因原因
+  .scope('orderForm.total') // 业务状态断言（scope 路径，非实现细节）
+  .toEqual(9900)
+  .reaction('orderForm.discount') // reaction 命中断言
+  .triggeredBy('coupon.apply')
+  .event('ajax:order/submit') // 事件/Log 断言
+  .ended({ status: 'passed' })
+  .withBackendSpan({ service: 'order.create', ok: true }) // 全栈结论（M6 后）
+  .snapshotPath('orderForm.items') // 快照/数据流断言
+  .writtenAtStep(3)
+  .visual('order-form-default') // 视觉结论（截图对比，唯一的"看"手段）
+  .matchBaseline();
+```
+
+分层规则（写 spec 时的断言选择顺序）：
+
+1. **业务状态**（scope/store 路径）——首选；
+2. **渲染结论**（cid 的 meta/prop/rendered + Why 归因）——验证"界面语义"；
+3. **事件/数据流**（Log 树、reaction、快照 diff）——验证"行为"；
+4. **视觉基线**——唯一的像素级手段，用于纯展示性验收；
+5. `ft.evaluate`（裸 DOM/JS）——**禁止**，仅遗留迁移期存在。
+
+这依赖三个主线能力落地：Why 归因与 `inspectByCid`（M4）、快照 diff（M2）、事件/Log 树（M1）。因此**语义断言 API（`ft.expect`）排在 E3 之后成熟，E4 才能删兼容层**。
+
+**例外白名单**（仍允许 DOM/CDP 级手段，注册制）：视觉基线的截图本身（§5.3）、axe 可达性、真实输入（CDP Input）、跨 tab 编排。白名单在 `pnpm check` 门禁中按文件登记。
+
+### 1.6 执行运行时：真实浏览器 + 页内内核驱动（Cypress 模式，唯一主运行时）
+
+测试在**真实浏览器、真实页面**上运行——e2e 测的就是真实渲染。启动端的职责被压缩到极限（**比 Cypress 还少两件**：无网络代理、无浏览器扩展）：
+
+启动端（Node，`flux-test-server`）只做四件事：
+
+1. **拉起浏览器**：裸 CDP 启动 Chromium（`--remote-debugging-port`，复用系统安装的 Chrome，CI 装 chromium）；
+2. **开 tab、加载页面**：`Target.createTarget` → playground/preview URL，每 spec 一个干净 tab（等价 Playwright per-test context）;
+3. **注入测试代码**：spec 经 Vite 打包，CDP 注入页面执行（Cypress spec iframe 的简化版）;
+4. **CDP 级杂项**：视口模拟（`Emulation`）、保真截图（`Page.captureScreenshot`）、真输入（`Input.*`，个别用例）——全部可选项，非通道依赖。
+
+其余一切——定位、交互、等待、断言、截图、录制——都由**页内内核（nop-debugger 测试装配）**在同事件循环内完成，Node 与页面之间只有一个轻量 WebSocket（M0 协议本地子集）传结果与指令。这就是 Cypress "测试代码跑在浏览器里"的核心架构，但没有它的代理/扩展/同源 iframe 三大包袱。
+
+jsdom 不用于 e2e（真实浏览器为准）；仅作为纯语义层单测（不涉及渲染的 store/reaction 逻辑）的可选快速通道，与 e2e 体系无关。
+
+---
+
+## 2. 总体架构
+
+```
+┌ pnpm test:e2e ──→ flux-test（Node CLI，新包） ─────────────────────────────┐
+│  · SpecLoader：读取 tests/e2e/*.spec.ts（迁移期兼容旧写法）                  │
+│  · Launcher：裸 CDP 拉起浏览器 + 开 tab + 加载真实页面（仅此四件事，§1.6）    │
+│  · Gateway：本地 WSS（M0 协议本地子集）：传结果/指令，非控制通道              │
+│  · Runner：spec 编排、worker 池、报告（JUnit/自研）、失败自动 DevSession      │
+└──────────────┬────────────────────────────────────────────────────────────┘
+               │ 裸 CDP（启动/注入/杂项）+ WSS（结果/指令）
+┌──────────────┴────────────────────────────────────────────────────────────┐
+│ Chromium 页面（真实页面：playground dev/preview server 渲染的 flux 应用）    │
+│  · flux 应用 + DevTools 内核（测试模式全开，无需面板 UI）                    │
+│  · DriverAPI（页内，同事件循环）：ft.expect 语义断言 / byCid / waitFor /     │
+│    dispatch / snapshot / capture / replay                                   │
+│  · CompatLayer（迁移脚手架，T0–T3 存在，E4 删除）：                          │
+│    page.locator/getByTestId/keyboard/mouse 的页内等价实现                    │
+└────────────────────────────────────────────────────────────────────────────┘
+```
+
+关键决策（v4）：**测试代码执行位置 = 浏览器内**（Cypress driver 模式），Node 只做"启动 + 编排"：
+
+- 与被测应用同事件循环（Cypress 核心优势）：`waitFor`/断言零网络往返，内核对象直接可用；
+- 交互在页内派发：`ft.dispatch` 语义事件 + Locator 兼容层的合成 DOM 事件，`whenStable` 门控，天然消灭大部分 actionability 等待；
+- Node 侧职责收敛为四件（§1.6），无代理、无扩展、无 Playwright driver 层——**比 Cypress 更简，比 Playwright 轻一个数量级**；
+- `page.evaluate` ×540 的迁移大部分**直接删除**（白盒 API 替代）。
+
+---
+
+## 3. 模块设计
+
+### 3.1 `@nop-chaos/flux-test-server`（Node 包，新）
+
+```
+packages/flux-test-server/src/
+  cli.ts            # pnpm test:e2e 入口：filter/worker/timeout/report 参数
+  launcher.ts       # 裸 CDP：拉起浏览器（复用系统 Chrome 或 CI chromium）→ 开 tab →
+                    # 加载真实页面（playground/preview URL）。仅启动级控制（§1.6）
+  gateway.ts        # 本地 WSS：M0 协议本地子集（session.attach/log.emit/capture.*/assert.*）
+                    # 只传结果与显式指令，非浏览器控制通道
+  spec-loader.ts    # spec 文件 → Vite 打包 → 经 CDP Page.addScriptToEvaluateOnNewDocument
+                    # 注入页面（Cypress"spec iframe"思路的简化版：同页直接执行）
+  spec-loader.ts    # spec 文件 → Vite 打包 → 经 CDP Page.addScriptToEvaluateOnNewDocument
+                    # 注入页面（Cypress 同款"spec iframe"思路的简化版：同页直接执行）
+  runner.ts         # 编排：每 spec 一个干净 tab（等价 Playwright per-test context），
+                    # 超时/重试/并发 worker、结果聚合
+  reporter.ts       # 终端 + JUnit XML + JSON（对齐现有 CI 消费格式）
+  session-store.ts  # 失败 spec → DevSession 诊断包落 tests/e2e/artifacts/（gitignore 政策不变）
+```
+
+- 启动器实现选型：**不用 puppeteer/playwright 依赖**，直接 `ws` + CDP JSON 协议（`Target.createTarget`、`Runtime.evaluate`、`Page.captureScreenshot`、`Emulation.*`）。Cypress 的 launcher 证明这一层很薄。
+- 视口/设备模拟：CDP `Emulation.setDeviceMetricsOverride`（替代 Playwright `viewport` 配置项）。
+- console/网络监听：CDP `Runtime.consoleAPICalled`、`Network.*`（供断言与诊断）。
+
+### 3.2 页内驱动 `@nop-chaos/flux-test-driver`（新包，复用 nop-debugger 内核）
+
+```ts
+// 测试模式内核装配（替代 NopDebuggerPanel，无 UI）
+createTestKernel(app: SchemaRenderer挂载点, opts: { serveUrl?: string /* 连测试网关 */ })
+
+// spec 全局对象（迁移期与 page.* 同名共存，见 §5）
+ft = {
+  // —— 导航/生命周期（Node 协同）——
+  goto(url): void; reload(): void;
+
+  // —— 定位（兼容层，仅迁移期；终态删除）——
+  locator(sel: string | { testid: string; cid?: string }): Locator;
+  getByTestId(id: string): Locator;
+
+  // —— 业务语义断言（终态 API，依赖 M1–M4 能力）——
+  expect: SemanticExpect;   // 见 §1.5：cid meta/prop/rendered、scope、reaction、event、snapshotPath、visual
+
+  // —— 内核白盒（超越 Playwright 的部分）——
+  byCid(cid: string): CidHandle;                    // 语义定位
+  dispatch(cid: string, event: FluxActionEvent): void;
+  waitFor(pred: WaitForPredicate, opts?): Promise<WaitResult>;   // M3 断言 API
+  scope<T>(selector: (data) => T): T;               // 同步读 store
+  snapshotAt(epoch): SerializedForestSnapshot;
+  evaluate<T>(fn: string): Promise<T>;              // 兜底（等价 page.evaluate，仅存量迁移用）
+  screenshot(opts?: ScreenshotOptions): Promise<ScreenshotResult>;  // M2 capture
+  session: { record(): Handle; stop(): DevSession; replay(s: DevSession): ReplayHandle };
+}
+
+interface Locator {          // Playwright Locator 语义子集
+  click(opts?): Promise<void>; dblclick?; fill(text): Promise<void>; type(text, opts?);
+  press(key): Promise<void>; hover(): Promise<void>;
+  text(): Promise<string>; innerHTML(): Promise<string>;
+  attr(name): Promise<string | null>; isVisible(): Promise<boolean>; isEnabled(): Promise<boolean>;
+  count(): Promise<number>; nth(i): Locator; first(): Locator;
+  waitFor(state: 'visible'|'hidden'|'attached', opts?): Promise<void>;
+  screenshot(opts?): Promise<ScreenshotResult>;
+}
+```
+
+- Locator 实现：解析为元素后走内核检查（`inspectByElement` → cid 关联），操作前过 `whenStable` + actionability 检查（可见/可点/无动画——Cypress `actionability.ts` 思路），操作后自动 `waitFor` 默认稳定。**重试语义内建**（查询可重试、动作执行一次）。
+- 键盘/鼠标：页内 `dispatchEvent` 合成事件（Cypress 同款）为主；`hover` 用 pointerover 序列；`page.mouse` ×222 迁移期映射到合成序列，涉及拖拽的 spec 优先改写为 `dispatch` 语义事件（更好）。
+
+### 3.3 测试管控界面（Test Console UI，对标 Cypress App/Runner）
+
+开发者的日常入口，对标 Cypress 的 **Launchpad（选择/配置）+ Runner（运行/观察）** 双形态，基于 `@nop-chaos/ui` 组件与 NopDebuggerPanel 既有组件拼装，随 `flux-test-server` 一同提供（`pnpm test:e2e --open` 进入，普通浏览器 tab 打开即可，无 Electron）。
+
+```
+┌ Test Console（http://localhost:<port>/__flux_test__）──────────────────────┐
+│ ① Launchpad 页                                                             │
+│   · Spec 树（tests/e2e/ 目录 + 搜索/标签过滤：交互/visual/白名单）           │
+│   · 运行配置：浏览器（已检测）、视口预设、并发 worker 数、retry 策略           │
+│   · 环境：dev server 选择（playground dev / preview）、env stub 配置          │
+│ ② Runner 页（选中 spec → Run / Watch）                                      │
+│   · 左：Command Log 树（= 内核 Log 树，嵌套 action/api/eval/assertion/capture│
+│     节点；状态色 pending/passed/failed；点击节点 → 详情抽屉：full props、     │
+│     快照、截图、Why 归因链接）                                               │
+│   · 中：真实页面预览（被测页 iframe 嵌入或受控 tab 投影）+ 时间旅行 scrub 条   │
+│     （复用 M2 预览协议：hover/pin 步骤 → store 状态 + DOM 影子还原）          │
+│   · 右：断言详情（ft.expect 结论、尝试次数、失败时 diverge diff）             │
+│ ③ 会话/诊断页                                                               │
+│   · 历史 run 列表（本地 runner 落库）、失败 spec → DevSession 诊断包          │
+│     一键回放（M5 回放器）、截图/视频画廊、视觉基线 diff 对比视图               │
+│ ④ CI 模式：--open 不传时无 UI，runner 直接出报告（同一内核，两种宿主）         │
+└──────────────────────────────────────────────────────────────────────────────┘
+```
+
+设计要点：
+
+- **Runner 页的页面预览**：被测应用在受控 tab 中真实运行，Console 通过网关拉取 Log/快照/截图流展示；时间旅行 scrub 直接复用 DevTools 面板的预览协议（同一内核两套宿主：调试 Dock 面板 / 测试 Console）。
+- **Watch 模式**：spec 或被测源码变更 → 自动重跑选中 spec，Command Log 增量刷新（diff 日志总线直接支撑）。
+- **失败即诊断**：任何 failed 节点一键"导出 DevSession / 打开时间旅行 / 查看基线 diff"——把 Cypress "失败后开 trace viewer"的体验做成原生的。
+- 实现复用清单：Log 树渲染与状态色（NopDebuggerPanel 时间线组件）、预览协议与 scrub（M2）、快照 diff 视图（M2）、视觉 diff 对比（M3 采集 §8）、会话回放器（M5）。**Console 无独立状态源**，一切读内核/网关。
+- 路由边界：Console 是开发工具页，`pnpm check` 的 UI 一致性门禁照常适用（用 ui 组件、无裸元素）；不进入生产构建。
+
+### 3.4 与 DevTools 主线的关系
+
+- `flux-test-driver` = nop-debugger 内核的**无 UI 装配 + Locator 兼容层**，不是新内核；M1–M3 交付的 StabilityTracker/waitFor/capture 是它的地基。
+- 测试网关（3.1 gateway.ts）与 M6 生产网关共用 M0 协议，实现仅本地子集——**一次协议，两个宿主**（本地测试 / nop-entropy 平台）。
+
+---
+
+## 4. 稳定性语义（替代 Playwright 自动等待）
+
+| Playwright 行为                       | flux-test 等价                                              | 说明                                                |
+| ------------------------------------- | ----------------------------------------------------------- | --------------------------------------------------- |
+| locator 自动等待可见                  | `Locator.click/fill` 内建 `whenStable` + actionability 重试 | Cypress retries.ts 语义                             |
+| `expect(locator).toHaveText` 自动重试 | `ft.waitFor({type:'cid',...})` / `expect.poll` 等价物       | 断言重试 + 尝试次数日志                             |
+| `page.waitForLoadState`               | `ft.waitFor({type:'stability'})`                            | 计数器含 fetch/suspense，比 load 事件更准           |
+| `page.route` 网络拦截                 | env stub（总体 §3.4）                                       | flux 层拦截；浏览器级用 CDP `Fetch` 域（Node 协同） |
+| 失败自动截图/trace                    | 失败 spec 自动 `DevSession` + 关键帧截图                    | 诊断包可直接重放复现                                |
+
+---
+
+## 5. 迁移设计（244 spec → 0 Playwright）
+
+### 5.1 API 映射表（迁移 handbook 的核心）
+
+| Playwright                   | flux-test                                                                        | 迁移方式                                                    |
+| ---------------------------- | -------------------------------------------------------------------------------- | ----------------------------------------------------------- |
+| `page.goto` (×377)           | `ft.goto`                                                                        | 机械替换                                                    |
+| `page.getByTestId` (×2078)   | `ft.getByTestId`（兼容层）                                                       | 机械替换；逐步改 `ft.byCid`                                 |
+| `page.locator` (×1996)       | `ft.locator`（兼容层）                                                           | 选择器子集：CSS、`:has-text`、`:has`、`>>` 深度组合器需翻译 |
+| `page.evaluate` (×540)       | 优先白盒 API 替换；无法替换的走 `ft.evaluate`                                    | **迁移后逐步清零**，注册"evaluate 债务"清单                 |
+| `page.keyboard/mouse` (×507) | Locator 方法 + 合成序列                                                          | 拖拽类优先改 `dispatch`                                     |
+| `page.waitFor` (×333)        | `ft.waitFor`                                                                     | 多数可换 stability 谓词                                     |
+| `page.screenshot` (×18)      | `ft.screenshot`（M2 capture）                                                    | visual spec 走 §5.3                                         |
+| `page.request` (×6)          | Node 侧 fetch（gateway 暴露）                                                    | 少量，Node 直发                                             |
+| `test.describe/step`         | 保留同名结构（runner 解析）                                                      | 报告结构对齐                                                |
+| `expect` 断言                | 引入 `@nop-chaos/flux-test-assert`（基于现有 strict helpers 风格）+ 内建重试断言 |                                                             |
+
+### 5.2 分阶段迁移
+
+- **T0 试点**（选 2 个 spec：1 个纯交互 + 1 个 visual）：验证 runner/兼容层/截图/CI 报告全链路。产出兼容层缺口清单回灌设计。
+- **T1 双引擎期**：`pnpm test:e2e` 同时跑 Playwright（存量）与 flux-test（已迁移），CI 比对两份报告；**禁止删旧 spec 先于新 spec 全绿**（每个 spec 迁移 = 新 spec 全绿 + 旧 spec 删除，同一 commit）。
+- **T2 批量迁移**：按 API 使用复杂度分层（只用 goto/testid 的先迁，mouse/route/request 的后迁）；每批 ≤20 spec，保持 full-green 记录节奏。**迁移分两步走，同一 spec 内允许共存**：
+  - 第一步（引擎替换）：用兼容层机械替换 `page.*` → `ft.*`，保行为不变；
+  - 第二步（语义重写，依赖 M2–M4）：把 DOM 断言改写为 `ft.expect` 语义断言（§1.5 分层规则）。第二步完成才标记该 spec "迁移完成"。
+- **T3 收尾**：删除 `@playwright/test` 依赖、`playwright.config.ts`、`tests/e2e/` 内 Playwright 专属 helper；`pnpm check` 新增两项**防回归门禁**：① 禁止 `@playwright` import 出现在 workspace；② **DOM 断言门禁**：`tests/e2e/` 内 `ft.locator/getByTestId/evaluate/innerHTML` 等调用按文件登记白名单（仅 §1.5 例外 + 未完成语义重写的存量登记），只减不增。
+- **T4 语义清零**：兼容层代码与 DOM 白名单一并删除——`flux-test-driver` 不再发布 Locator/`ft.evaluate` API；spec 全量基于 `ft.expect` 语义层 + §1.5 例外白名单。此后语义重写随功能开发持续进行（byCid/expect 为唯一写法）。
+
+### 5.3 visual spec 专项（18 个 screenshot 调用 + 基线政策）
+
+- `page.screenshot({path})` → `ft.screenshot`（S2 通道）+ `capture.compare`（M3 视觉基线）；基线走网关本地模式（`tests/e2e/__snapshots__` 政策不变，产物仍 gitignore）。
+- CDP 保真通道（`Page.captureScreenshot`）作为全页/跨域场景的后端（launcher 已有 CDP 连接，零额外依赖）。
+- 逐像素差异风险：Playwright 与自研截图像素级结果不同 → **迁移时重新生成基线**，并在 CI 双引擎期比对"判定结论"而非像素。
+
+### 5.4 覆盖缺口与对策（诚实清单）
+
+真实浏览器模式下语义断言之外的边界（均经 launcher 的 CDP 杂项通道承接，不引入 Playwright）：
+
+| 场景                                  | 处理                                                                                 |
+| ------------------------------------- | ------------------------------------------------------------------------------------ |
+| 真实 OS 级输入（trust 事件）          | CDP `Input.dispatchMouseEvent/KeyEvent`（个别用例，launcher 直发）；页内合成事件为主 |
+| 截图保真/全页                         | CDP `Page.captureScreenshot`；页内 S2 foreignObject 通道为默认（采集专章 §2）        |
+| 跨 tab / 弹出窗口                     | CDP `Target.createTarget` 多 tab 编排（Node 侧 API：`ft.tabs`）                      |
+| 浏览器级网络断言（`page.request` ×6） | Node 侧 fetch 直发（本就无需特殊控制）                                               |
+| 下载文件、clipboard 权限              | CDP `Browser.setDownloadBehavior` / 权限域                                           |
+| a11y-axe-baseline                     | axe 在页内执行（本就如此），经页内内核收集结果                                       |
+
+所有 CDP 杂项均为**启动端可选项**：不用它们，页内内核照常完成全部定位/交互/等待/断言。
+
+---
+
+## 6. 测试策略
+
+- **Must automate**：runner 编排（超时/重试/worker 隔离/tab 清洁）、Locator 兼容层语义（对照表逐项）、actionability 检查、失败 DevSession 产出、双引擎报告对齐、`pnpm check` 防回归门禁。
+- **Should have**：`byCid` 断言用例集、重试断言的尝试次数日志、visual 判定一致性。
+- 迁移全程遵守仓库 full-green 记录政策（每批迁移完整绿 → dev log + commit 注明）。
+
+## 7. 风险登记
+
+| 风险                                                       | 等级   | 缓解                                                                                       |
+| ---------------------------------------------------------- | ------ | ------------------------------------------------------------------------------------------ |
+| 兼容层语义偏差导致"假绿"（测试松了）                       | **高** | 双引擎期结论比对（不是像素比对）；迁移 checklist 要求断言强度不降级；strict helpers 复用   |
+| 244 spec 迁移工作量失控                                    | 中     | 分层批量 + 机械替换占比高（testid/locator/goto ≈ 70% 调用量）；每批限 20                   |
+| 自研裸 CDP launcher 边角缺陷（僵尸 tab/崩溃恢复/版本差异） | 中     | launcher 单测先行（mock CDP）；双引擎期 Playwright 作为 oracle 对照；CI 锁定 chromium 版本 |
+| Firefox/WebKit 支持缺失                                    | 中     | 明示降级：CI 仍留 Chromium 单浏览器（与现状等价则无损）；跨浏览器列为远期                  |
+| 自研 runner 边角缺陷（超时/隔离/报告）                     | 中     | runner 单测先行                                                                            |
+| 失去社区生态（trace viewer、parallel fixtures）            | 低     | DevSession 诊断包 > trace viewer（可重放）；worker 池自实现                                |
+
+## 8. 里程碑（并入主 Roadmap 为 E 轨道）
+
+| 阶段 | 内容                                                                                                                                                 | 依赖                            |
+| ---- | ---------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------- |
+| E1   | flux-test-server 骨架（裸 CDP launcher / 本地网关 / runner / reporter）+ 页内驱动装配 + `ft.expect` 语义断言骨架 + 兼容层 Locator 子集（迁移脚手架） | M0、M1                          |
+| E2   | **Test Console v1**（§3.3：Launchpad spec 选择 + Runner Command Log 树/预览/scrub）+ T0 试点 2 spec（1 交互 + 1 visual）+ 缺口清单回灌               | E1、M2（capture/预览）          |
+| E3   | 双引擎 CI（Playwright 为 oracle 对照）+ 批量迁移（分 4–6 批，每批"引擎替换→语义重写"两步）；Console 增强（Watch 模式、断言详情抽屉）                 | E2、M3–M4（waitFor/visual/Why） |
+| E4   | T3 收尾：删 Playwright 依赖 + DOM 断言门禁 + 迁移 handbook 定稿；**Console v2**（会话/诊断页：历史 run、DevSession 回放、视觉 diff 画廊）            | E3 全绿、M5                     |
+| E5   | T4 语义清零：删兼容层与 DOM 白名单；语义重写随开发持续                                                                                               | E4 + M4 全量落地                |
+
+> 与主 Roadmap 的关系：E1–E2 依赖 DevTools 主线 M1–M2 交付物；E3 可与 M4/M5 并行；E5 在 M7 后。

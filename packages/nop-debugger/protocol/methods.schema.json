@@ -1,0 +1,262 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://nop-chaos.dev/schemas/devtools/methods.schema.json",
+  "title": "Flux DevTools RPC method registry v1 (frozen)",
+  "description": "Method list v1 per roadmap M0 task 2: session.attach/detach/heartbeat, log.emit, intercept.register/resolve, capture.upload, baseline.get/put. Binary payloads are transported as base64 strings with an explicit encoding field (see protocol README).",
+  "type": "object",
+  "definitions": {
+    "devLogEntry": {
+      "type": "object",
+      "required": ["id", "kind", "label", "status", "startedAt"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "parentId": { "type": "string" },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "action",
+            "api",
+            "render",
+            "eval",
+            "state",
+            "assertion",
+            "capture",
+            "error",
+            "intercept",
+            "lifecycle"
+          ]
+        },
+        "label": { "type": "string" },
+        "status": { "type": "string", "enum": ["pending", "passed", "failed", "skipped"] },
+        "startedAt": { "type": "number" },
+        "endedAt": { "type": "number" },
+        "refs": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "interactionId": { "type": "string" },
+            "cid": { "type": "string" },
+            "nodeId": { "type": "string" },
+            "epoch": { "type": "number" },
+            "snapshotId": { "type": "string" },
+            "screenshotId": { "type": "string" },
+            "spanId": { "type": "string" }
+          }
+        },
+        "display": { "type": "object" }
+      }
+    },
+    "fetcherMatcher": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "url": { "type": "string", "minLength": 1 },
+        "method": { "type": "string" },
+        "service": { "type": "string" }
+      }
+    },
+    "sessionAttachParams": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "sessionId": { "type": "string" },
+        "appVersion": { "type": "string" },
+        "schemaFingerprint": { "type": "string" },
+        "capabilities": { "type": "array", "items": { "type": "string" } },
+        "userAgent": { "type": "string" },
+        "locale": { "type": "string" }
+      }
+    },
+    "sessionAttachResult": {
+      "type": "object",
+      "required": ["sessionId"],
+      "additionalProperties": false,
+      "properties": {
+        "sessionId": { "type": "string", "minLength": 1 },
+        "capabilities": { "type": "array", "items": { "type": "string" } },
+        "heartbeatIntervalMs": { "type": "number" }
+      }
+    },
+    "sessionDetachParams": {
+      "type": "object",
+      "required": ["sessionId"],
+      "additionalProperties": false,
+      "properties": {
+        "sessionId": { "type": "string", "minLength": 1 },
+        "reason": { "type": "string" }
+      }
+    },
+    "sessionHeartbeatParams": {
+      "type": "object",
+      "required": ["sessionId", "ts"],
+      "additionalProperties": false,
+      "properties": {
+        "sessionId": { "type": "string", "minLength": 1 },
+        "ts": { "type": "number" }
+      }
+    },
+    "sessionHeartbeatResult": {
+      "type": "object",
+      "required": ["ok", "ts"],
+      "additionalProperties": false,
+      "properties": {
+        "ok": { "const": true },
+        "ts": { "type": "number" }
+      }
+    },
+    "logEmitParams": {
+      "type": "object",
+      "required": ["log"],
+      "additionalProperties": false,
+      "properties": {
+        "log": { "$ref": "#/definitions/devLogEntry" }
+      }
+    },
+    "logEmitResult": {
+      "type": "object",
+      "required": ["ok"],
+      "additionalProperties": false,
+      "properties": { "ok": { "const": true } }
+    },
+    "interceptRegisterParams": {
+      "type": "object",
+      "required": ["eventId", "matcher"],
+      "additionalProperties": false,
+      "properties": {
+        "eventId": { "type": "string", "minLength": 1 },
+        "matcher": { "$ref": "#/definitions/fetcherMatcher" }
+      }
+    },
+    "interceptRegisterResult": {
+      "type": "object",
+      "required": ["registered"],
+      "additionalProperties": false,
+      "properties": { "registered": { "const": true } }
+    },
+    "interceptResolveParams": {
+      "type": "object",
+      "required": ["eventId", "action"],
+      "additionalProperties": false,
+      "properties": {
+        "eventId": { "type": "string", "minLength": 1 },
+        "action": { "type": "string", "enum": ["continue", "modify", "shortCircuit"] },
+        "patch": {
+          "description": "JSON Patch (RFC 6902) — only with action=modify",
+          "type": "array",
+          "items": { "type": "object" }
+        },
+        "response": { "description": "Stubbed response — only with action=shortCircuit" }
+      }
+    },
+    "interceptResolveResult": {
+      "type": "object",
+      "required": ["ok"],
+      "additionalProperties": false,
+      "properties": { "ok": { "const": true } }
+    },
+    "captureUploadParams": {
+      "type": "object",
+      "required": ["id", "kind", "encoding", "bytes", "mime"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "kind": { "type": "string", "enum": ["screenshot", "video", "session"] },
+        "encoding": { "const": "base64" },
+        "bytes": {
+          "type": "string",
+          "contentEncoding": "base64",
+          "description": "Media bytes transported as base64 string (Decision: no binary frames on the v1 JSON channel)."
+        },
+        "mime": { "type": "string", "minLength": 1 },
+        "refs": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "epoch": { "type": "number" },
+            "cid": { "type": "string" },
+            "interactionId": { "type": "string" },
+            "tag": { "type": "string" },
+            "sessionId": { "type": "string" }
+          }
+        },
+        "redactionProof": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "maskApplied": { "type": "boolean" },
+            "ruleSetVersion": { "type": "string" }
+          }
+        }
+      }
+    },
+    "captureUploadResult": {
+      "type": "object",
+      "required": ["mediaId", "url"],
+      "additionalProperties": false,
+      "properties": {
+        "mediaId": { "type": "string", "minLength": 1 },
+        "url": { "type": "string", "minLength": 1 }
+      }
+    },
+    "baselineGetParams": {
+      "type": "object",
+      "required": ["key"],
+      "additionalProperties": false,
+      "properties": { "key": { "type": "string", "minLength": 1 } }
+    },
+    "baselineGetResult": {
+      "type": "object",
+      "required": ["baseline"],
+      "additionalProperties": false,
+      "properties": {
+        "baseline": {
+          "oneOf": [
+            { "$ref": "https://nop-chaos.dev/schemas/devtools/visual-baseline.schema.json" },
+            { "type": "null" }
+          ]
+        }
+      }
+    },
+    "baselinePutParams": {
+      "type": "object",
+      "required": ["baseline"],
+      "additionalProperties": false,
+      "properties": {
+        "baseline": { "$ref": "https://nop-chaos.dev/schemas/devtools/visual-baseline.schema.json" }
+      }
+    },
+    "baselinePutResult": {
+      "type": "object",
+      "required": ["ok"],
+      "additionalProperties": false,
+      "properties": { "ok": { "const": true } }
+    }
+  },
+  "type": "object",
+  "required": ["protocol", "version", "methods"],
+  "additionalProperties": false,
+  "properties": {
+    "protocol": { "const": "devtools" },
+    "version": { "const": 1 },
+    "methods": {
+      "type": "array",
+      "minItems": 9,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "enum": [
+          "session.attach",
+          "session.detach",
+          "session.heartbeat",
+          "log.emit",
+          "intercept.register",
+          "intercept.resolve",
+          "capture.upload",
+          "baseline.get",
+          "baseline.put"
+        ]
+      }
+    }
+  }
+}

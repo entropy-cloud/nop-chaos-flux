@@ -1450,6 +1450,9 @@ importers:
       '@nop-chaos/flux-renderers-form':
         specifier: workspace:*
         version: link:../flux-renderers-form
+      ajv:
+        specifier: ^8.20.0
+        version: 8.20.0
       lucide-react:
         specifier: ^1.17.0
         version: 1.17.0(react@19.2.4)

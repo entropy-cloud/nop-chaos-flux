@@ -28,6 +28,7 @@
     "@nop-chaos/flux-renderers-basic": "workspace:*",
     "@nop-chaos/flux-renderers-data": "workspace:*",
     "@nop-chaos/flux-renderers-form": "workspace:*",
+    "ajv": "^8.20.0",
     "lucide-react": "^1.17.0",
     "react": "^19.0.0"
   },

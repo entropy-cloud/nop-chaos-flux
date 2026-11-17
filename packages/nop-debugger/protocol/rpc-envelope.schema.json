@@ -1,0 +1,47 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://nop-chaos.dev/schemas/devtools/rpc-envelope.schema.json",
+  "title": "Flux DevTools RPC envelope (frozen v1)",
+  "description": "Frontend kernel <-> Java gateway message envelopes. Design: docs/research/2026-11-17-flux-devtools-design.md §10.2. Any change must return to this schema and update both ends' conformance tests.",
+  "type": "object",
+  "definitions": {
+    "rpcRequest": {
+      "type": "object",
+      "required": ["id", "method"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "method": { "type": "string", "minLength": 1 },
+        "params": {}
+      }
+    },
+    "rpcResponse": {
+      "type": "object",
+      "required": ["id"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "result": {},
+        "error": {
+          "type": "object",
+          "required": ["code", "message"],
+          "additionalProperties": false,
+          "properties": {
+            "code": { "type": "string", "minLength": 1 },
+            "message": { "type": "string" }
+          }
+        }
+      },
+      "oneOf": [{ "required": ["result"] }, { "required": ["error"] }]
+    },
+    "rpcEvent": {
+      "type": "object",
+      "required": ["event", "payload"],
+      "additionalProperties": false,
+      "properties": {
+        "event": { "type": "string", "minLength": 1 },
+        "payload": {}
+      }
+    }
+  }
+}
