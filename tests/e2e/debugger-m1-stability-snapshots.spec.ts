@@ -34,9 +34,12 @@ function getApi(page: import('@playwright/test').Page) {
   });
 }
 
-test('automation V2 exposes stability probes and reports stable after settling', async ({ page }) => {
+test('automation V2 exposes stability probes and reports stable after settling (M3: waits via waitFor stability)', async ({ page }) => {
   await openFluxBasicPage(page);
-  await page.waitForTimeout(500);
+  await page.evaluate(async () => {
+    const api = (window as unknown as { __NOP_DEBUGGER_API__?: { waitFor?: (p: unknown, o?: object) => Promise<unknown> } }).__NOP_DEBUGGER_API__;
+    await api?.waitFor?.({ type: 'stability' }, { timeoutMs: 5000, stableGate: false });
+  });
 
   const api = await getApi(page);
   expect(api).not.toBeNull();
@@ -52,7 +55,10 @@ test('automation V2 exposes stability probes and reports stable after settling',
 
 test('forest snapshots are collected on scope writes and getSnapshotAt resolves them', async ({ page }) => {
   await openDebuggerLab(page);
-  await page.waitForTimeout(500);
+  await page.evaluate(async () => {
+    const api = (window as unknown as { __NOP_DEBUGGER_API__?: { waitFor?: (p: unknown, o?: object) => Promise<unknown> } }).__NOP_DEBUGGER_API__;
+    await api?.waitFor?.({ type: 'stability' }, { timeoutMs: 5000, stableGate: false });
+  });
 
   // trigger a real scope write through the runtime (lab demo button)
   await page.evaluate(() => {
@@ -82,16 +88,22 @@ test('forest snapshots are collected on scope writes and getSnapshotAt resolves 
   expect(Object.values(result.snapshot!.revisions).some((rev) => rev > 0)).toBe(true);
 });
 
-test('stability indicator renders on the lab page', async ({ page }) => {
+test('stability indicator renders on the lab page (M3: stability waitFor)', async ({ page }) => {
   await openDebuggerLab(page);
-  await page.waitForTimeout(500);
+  await page.evaluate(async () => {
+    const api = (window as unknown as { __NOP_DEBUGGER_API__?: { waitFor?: (p: unknown, o?: object) => Promise<unknown> } }).__NOP_DEBUGGER_API__;
+    await api?.waitFor?.({ type: 'stability' }, { timeoutMs: 5000, stableGate: false });
+  });
   const indicator = page.getByTestId('debugger-lab-stability');
   await expect(indicator).toContainText(/stable|busy|n\/a/);
 });
 
 test('M2: screenshot automation produces a content hash and reuses unchanged DOM', async ({ page }) => {
   await openDebuggerLab(page);
-  await page.waitForTimeout(500);
+  await page.evaluate(async () => {
+    const api = (window as unknown as { __NOP_DEBUGGER_API__?: { waitFor?: (p: unknown, o?: object) => Promise<unknown> } }).__NOP_DEBUGGER_API__;
+    await api?.waitFor?.({ type: 'stability' }, { timeoutMs: 5000, stableGate: false });
+  });
 
   const capture = await page.evaluate(async () => {
     const api = (window as unknown as { __NOP_DEBUGGER_API__?: V2Api & { screenshot?: (o?: object) => Promise<{ hash: string; reused?: boolean }> } }).__NOP_DEBUGGER_API__;
@@ -190,4 +202,55 @@ test('M2: masked password field renders as uniform mask color in rasterized pixe
   expect(outside[0]).toBeGreaterThan(200);
   expect(outside[1]).toBeGreaterThan(200);
   expect(outside[2]).toBeGreaterThan(200);
+});
+
+test('M3: visual diff detects 1px change and cid ignore region clears it', async ({ page }) => {
+  await openDebuggerLab(page);
+  const outcome = await page.evaluate(async () => {
+    const api = (window as unknown as {
+      __NOP_DEBUGGER_API__?: {
+        screenshot?: (o?: object) => Promise<{ bytes: string; width: number; height: number; hash: string }>;
+        putBaseline?: (o?: { ignoreRegions?: Array<{ x: number; y: number; width: number; height: number; reason?: string }> }) => Promise<{ key: string } | null>;
+        compareScreenshot?: (key: string, o?: { maxDiffRatio?: number }) => Promise<{ match: boolean; diffRatio: number; missing?: boolean }>;
+        waitFor?: (p: unknown, o?: object) => Promise<unknown>;
+      };
+    }).__NOP_DEBUGGER_API__;
+    if (!api?.screenshot || !api.putBaseline || !api.compareScreenshot) return { wired: false };
+    // deterministic fixture: 40x40 solid white box with a 10x10 black square at (0,0)
+    const host = document.createElement('div');
+    host.id = 'm3-visual-fixture';
+    host.style.cssText = 'position:fixed;top:0;left:0;width:40px;height:40px;background:#ffffff;';
+    const square = document.createElement('div');
+    square.style.cssText = 'position:absolute;left:0;top:0;width:10px;height:10px;background:#000000;';
+    host.appendChild(square);
+    document.body.appendChild(host);
+
+    const baselineShot = await api.screenshot({ selector: '#m3-visual-fixture', format: 'png', scale: 1 });
+    await api.putBaseline();
+
+    // 1px change: grow the black square by one pixel row (10x11)
+    square.style.height = '11px';
+    const changedShot = await api.screenshot({ selector: '#m3-visual-fixture', format: 'png', scale: 1, fresh: true });
+    if (changedShot.hash === baselineShot.hash) return { wired: true, changed: false };
+    const changedComparison = await api.compareScreenshot('default:40x40', { maxDiffRatio: 0 });
+    // restore then confirm ignore region over the changed strip clears the diff
+    square.style.height = '10px';
+    await api.screenshot({ selector: '#m3-visual-fixture', format: 'png', scale: 1 });
+    await api.putBaseline({
+      ignoreRegions: [{ x: 0, y: 0, width: 10, height: 11, reason: 'xui:visual-ignore' }],
+    });
+    square.style.height = '11px';
+    await api.screenshot({ selector: '#m3-visual-fixture', format: 'png', scale: 1, fresh: true });
+    const ignoredComparison = await api.compareScreenshot('default:40x40', { maxDiffRatio: 0 });
+    host.remove();
+    return { wired: true, changed: true, changedComparison, ignoredComparison };
+  });
+
+  expect(outcome.wired).toBe(true);
+  expect((outcome as { changed: boolean }).changed).toBe(true);
+  const changedComparison = (outcome as { changedComparison?: { diffRatio: number } }).changedComparison!;
+  expect(changedComparison.diffRatio).toBeGreaterThan(0);
+  expect(changedComparison.diffRatio).toBeLessThan(0.1);
+  const ignoredComparison = (outcome as { ignoredComparison?: { diffRatio: number } }).ignoredComparison!;
+  expect(ignoredComparison.diffRatio).toBe(0);
 });

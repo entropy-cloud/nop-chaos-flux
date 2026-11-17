@@ -124,6 +124,8 @@
 
 ## M3 断言与等待 API + 视觉基线对比（自动化面）
 
+> 落地状态（2026-11-18 勘误附注，plan `docs/plans/2026-11-18-m3-assertions-visual-baseline-plan.md`）：**前端侧收敛**——waitFor 四类谓词 + assertion:retry 日志 + stableGate、dispatch 二分、YIQ 像素 diff + diffRatio + cid 聚合 + xui:visual-ignore 忽略区（1px 注入判别与忽略区归零均为程序化断言）、2–3 个既有 e2e sleep 改写为 waitFor(stability)。deferred：WaitResult.trace 归 M4（表达式采样开启后）、fake-clock 归 M5（回放时钟需求）；基线网关版本化归 M6。
+
 **目标**：flux 版 retry-ability + 内置视觉回归（schema 感知）。（总体 §6 · 采集 §8）
 
 任务：

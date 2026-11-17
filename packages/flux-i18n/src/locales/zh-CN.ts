@@ -720,6 +720,7 @@ export const zhCN: Resource = {
     },
     debugger: {
       title: '框架调试器',
+      assertionEvents: '断言事件',
       timeTravel: '时间旅行',
       pin: '固定',
       pinned: '已固定',

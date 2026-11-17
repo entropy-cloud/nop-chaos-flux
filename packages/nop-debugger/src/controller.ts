@@ -56,6 +56,7 @@ import {
 } from './explanations.js';
 import { normalizeRedactionOptions, redactData } from './redaction.js';
 import { createForestSnapshotCollector } from './snapshot-repository.js';
+import { createAssertionBridge } from './assertion-bridge.js';
 import { createPreviewController, type PreviewController } from './preview-controller.js';
 import { createIncrementalCapturer, CaptureError } from './capture/screenshot.js';
 import { createDebuggerStore } from './store.js';
@@ -193,9 +194,16 @@ export function createNopDebugger(options: NopDebuggerOptions = {}): NopDebugger
   let latestDomShadow: ReturnType<typeof import('./dom-shadow.js').captureDomShadow> | undefined;
   const incrementalCapturer = createIncrementalCapturer();
   let autoScreenshotMode: 'on-step' | 'on-change' | 'off' = 'off';
-
   const getRuntime = () => runtime;
   let currentInspectByCid = buildInspectByCid(componentRegistry, getRuntime);
+
+  const assertionBridge = createAssertionBridge({
+    getRuntime,
+    store,
+    inspectByCid: (cid: number) => currentInspectByCid(cid),
+    getLatestSnapshotScopes: () => snapshotCollector?.getLatest()?.scopes ?? null,
+    incrementalCapturer,
+  });
   let currentInspectByElement = buildInspectByElement(componentRegistry, getRuntime);
   let currentGetComponentTree = buildGetComponentTree(componentRegistry, getRuntime);
   let currentEvaluateNodeExpression = buildEvaluateNodeExpression(currentInspectByCid);
@@ -331,7 +339,7 @@ export function createNopDebugger(options: NopDebuggerOptions = {}): NopDebugger
     leavePreview: () => previewController?.leavePreview(),
     setPreviewPinned: (pin: boolean) => previewController?.setPinned(pin),
     isPreviewActive: () => previewController?.isActive() ?? false,
-    screenshot: async (options?: { cid?: string; selector?: string; format?: 'png' | 'webp'; scale?: number; tag?: string }) => {
+    screenshot: async (options?: { cid?: string; selector?: string; format?: 'png' | 'webp'; scale?: number; tag?: string; fresh?: boolean }) => {
       if (typeof document === 'undefined') {
         throw new CaptureError('capture-unavailable', 'document unavailable');
       }
@@ -340,7 +348,7 @@ export function createNopDebugger(options: NopDebuggerOptions = {}): NopDebugger
         (options?.selector && document.querySelector(options.selector)) ||
         document.body;
       const rect = target.getBoundingClientRect();
-      const result = await incrementalCapturer.capture({
+      const input = {
         root: target,
         width: rect.width,
         height: rect.height,
@@ -348,12 +356,34 @@ export function createNopDebugger(options: NopDebuggerOptions = {}): NopDebugger
         scale: options?.scale,
         redactionRules: [{ matches: (element: Element) => element.getAttribute('type') === 'password' }],
         refs: { tag: options?.tag, cid: options?.cid },
-      });
+      };
+      if (options?.fresh) {
+        const freshResult = await assertionBridge.screenshotFresh({
+          root: input.root,
+          width: input.width,
+          height: input.height,
+          format: input.format,
+          scale: input.scale,
+          tag: options?.tag,
+          cid: options?.cid,
+        });
+        assertionBridge.recordCapture(freshResult);
+        return { ...freshResult, reused: false };
+      }
+      const result = await incrementalCapturer.capture(input);
+      assertionBridge.recordCapture(result.result);
       return { ...result.result, reused: result.reused };
     },
     setAutoScreenshotMode: (mode: 'on-step' | 'on-change' | 'off') => {
       autoScreenshotMode = mode;
     },
+    waitFor: (predicate: never, options?: { timeoutMs?: number; intervalMs?: number; stableGate?: boolean }) =>
+      assertionBridge.waitFor(predicate, options),
+    waitForScopePath: (predicate: { scopeId?: string; path: string; op: 'eq' | 'ne' | 'truthy' | 'defined'; value?: unknown }, options?: { timeoutMs?: number; intervalMs?: number; stableGate?: boolean }) =>
+      assertionBridge.waitForScopePath(predicate, options),
+    dispatch: (action: unknown, ctx?: Record<string, unknown>) => assertionBridge.dispatch(action, ctx),
+    compareScreenshot: (baselineKey: string, options?: { maxDiffRatio?: number }) => assertionBridge.compareScreenshot(baselineKey, options),
+    putBaseline: (options?: { ignoreRegions?: Array<{ x: number; y: number; width: number; height: number; reason?: string }> }) => assertionBridge.putBaseline(options),
     // [WA-debugger-002] mutation 面单源：引用 controller 同名成员，避免
     // 「store 调用 + persist 调用」方法体在 automation/controller 双面逐字双写；
     // controller 于下方构建，此处闭包仅在构造完成后被调用。

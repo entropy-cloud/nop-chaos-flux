@@ -120,7 +120,7 @@ export function createController(snapshot: NopDebuggerSnapshot): NopDebuggerCont
   const emptyOverview: NopDebuggerOverview = {
     errorCount: 0,
     totalEvents: 0,
-    countsByGroup: { render: 0, action: 0, api: 0, compile: 0, notify: 0, error: 0, node: 0 },
+    countsByGroup: { assertion: 0, render: 0, action: 0, api: 0, compile: 0, notify: 0, error: 0, node: 0 },
     renderCommitCount: 0,
     renderBurstCount: 0,
     renderUniqueNodeCount: 0,
@@ -162,7 +162,7 @@ export function createController(snapshot: NopDebuggerSnapshot): NopDebuggerCont
     overview: {
       errorCount: 1,
       totalEvents: 4,
-      countsByGroup: { render: 1, action: 1, api: 1, compile: 0, notify: 0, error: 1, node: 0 },
+      countsByGroup: { assertion: 0, render: 1, action: 1, api: 1, compile: 0, notify: 0, error: 1, node: 0 },
       renderCommitCount: 1,
       renderBurstCount: 0,
       renderUniqueNodeCount: 1,

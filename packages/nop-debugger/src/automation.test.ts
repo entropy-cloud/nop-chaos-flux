@@ -110,7 +110,8 @@ describe('debugger automation helpers', () => {
       errorCount: 0,
       totalEvents: 0,
       countsByGroup: {
-        render: 0,
+        assertion: 0,
+  render: 0,
         action: 0,
         api: 0,
         compile: 0,
@@ -314,7 +315,8 @@ describe('debugger automation helpers', () => {
     const overview: NopDebuggerOverview = {
       errorCount: 0,
       totalEvents: 0,
-      countsByGroup: { render: 0, action: 0, api: 0, compile: 0, notify: 0, error: 0, node: 0 },
+      countsByGroup: { assertion: 0,
+  render: 0, action: 0, api: 0, compile: 0, notify: 0, error: 0, node: 0 },
       renderCommitCount: 0,
       renderBurstCount: 0,
       renderUniqueNodeCount: 0,

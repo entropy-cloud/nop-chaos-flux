@@ -228,3 +228,23 @@ export function createIncrementalCapturer() {
     },
   };
 }
+
+/** Browser-only: decode base64 image bytes to RGBA pixels (for visual diff). */
+export async function decodeImageBytesToRgba(bytes: string, width: number, height: number): Promise<Uint8ClampedArray> {
+  if (typeof document === 'undefined') {
+    throw new CaptureError('capture-unavailable', 'image decoding requires a browser document');
+  }
+  const image = new Image();
+  image.src = `data:image/png;base64,${bytes}`;
+  await new Promise<void>((resolve, reject) => {
+    image.onload = () => resolve();
+    image.onerror = () => reject(new CaptureError('decode-failed', 'image failed to decode'));
+  });
+  const canvas = document.createElement('canvas');
+  canvas.width = width;
+  canvas.height = height;
+  const context = canvas.getContext('2d');
+  if (!context) throw new CaptureError('canvas-unavailable', '2d context unavailable');
+  context.drawImage(image, 0, 0, width, height);
+  return context.getImageData(0, 0, width, height).data;
+}

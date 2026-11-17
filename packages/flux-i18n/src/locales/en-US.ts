@@ -725,6 +725,7 @@ export const enUS: Resource = {
     },
     debugger: {
       title: 'Framework Debugger',
+      assertionEvents: 'Assertion events',
       timeTravel: 'Time Travel',
       pin: 'Pin',
       pinned: 'Pinned',

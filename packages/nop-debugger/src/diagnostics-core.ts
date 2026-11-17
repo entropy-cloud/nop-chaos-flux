@@ -194,7 +194,8 @@ export function buildOverview(events: NopDebugEvent[]): NopDebuggerOverview {
       return acc;
     },
     {
-      render: 0,
+      assertion: 0,
+  render: 0,
       action: 0,
       api: 0,
       compile: 0,

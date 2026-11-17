@@ -1212,3 +1212,11 @@ Field classification（design-renderer.md §5，I15.2 D-1 同步）: `config`（
 `__NOP_DEBUGGER_API__` V2 新增（全部可选，向后兼容）：`enterPreview(epoch): boolean`（活 DOM 覆盖层挂目标 DOM 影子 + "预览中"横幅，状态层只读不回写 store；捕获阶段 keydown/pointerdown 自动退出，pin 除外）、`leavePreview()`、`setPreviewPinned(pin)`（pin 跨事件保持）、`isPreviewActive()`、`screenshot(options?: {cid, selector, format: 'png'|'webp', scale, tag})`（S2 foreignObject 管线 → `ScreenshotResultWire`，sha-256 内容哈希，跨域/零尺寸经 `CaptureError{code}` 拒绝或 degraded）、`setAutoScreenshotMode('on-step'|'on-change'|'off')`（默认 off；on-step 挂 `action:end` 事件 `screenshotId`，DOM 签名未变复用上帧零二次光栅化）。
 
 内核 API：`createPreviewController`（preview-controller.ts）、`captureScreenshotFromClone` / `createIncrementalCapturer` / `computeDomSignature` / `applyRedactionMask` / `CaptureError`（capture/screenshot.ts）、`diffForestSnapshots`（snapshot-repository.ts）。面板：timeline-tab scrub（`ndbg-timeline-scrub`/`ndbg-preview-range`/`ndbg-snapshot-diff`）。Suspense 计数：flux-react `registerSuspenseStabilityTracker(provider)`（host-global provider，playground 接线 runtime tracker；Suspense fallback 挂起期间持 `acquire('suspense')`）。
+
+### DevTools 断言与视觉对比（M3，plan 2026-11-18-m3）
+
+**效果/查询二分**：`dispatch(action)`（一次执行、不重试；`__NOP_DEBUGGER_API__.dispatch`）vs `waitFor(predicate)`（纯查询、可重试；默认 stableGate 每次重试前 whenStable）。每次失败重试发 `assertion` kind 日志（面板 timeline 可见 retry 次数 + 失败原因），超时 resolve `{ok:false, attempts, lastError}`（不 reject）。
+
+`waitFor` 谓词（进程内 API，谓词函数不可跨窗口）：`{type:'cid', cid:number, state(inspect)=>bool}`（inspect = `NopComponentInspectResult`）、`{type:'scope', scopeId?, selector, until}`、`{type:'event', kind, match?}`、`{type:'stability'}`。跨窗口（e2e page.evaluate）用确定性 DSL：`waitForScopePath({path, op:'eq'|'ne'|'truthy'|'defined', value?})`（getIn 路径解析，不支持任意表达式）。`waitForVisual({baselineKey, maxDiffRatio})` 走异步对比。
+
+视觉基线（capture/visual-diff.ts）：`yiqPixelDiffWithSize`（pixelmatch YIQ 算法自实现，threshold 0.1）；`createVisualDiffEngine`：`putBaseline({ignoreRegions})`（内存 Map；xui:visual-ignore 区域为内联 x/y/w/h 或 {cid}）、`compare` → `{match, diffRatio, regions(cid 聚合)} | {missing}`；尺寸不一致抛 `CaptureError{code:'size-mismatch'}`。automation 面：`compareScreenshot(key,{maxDiffRatio})`、`putBaseline({ignoreRegions})`（基于最近一次 `screenshot()` 产物，`fresh:true` 绕过增量复用）。

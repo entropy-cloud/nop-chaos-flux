@@ -93,6 +93,11 @@ export function createAutomationApi(input: {
   isPreviewActive?(): boolean;
   screenshot?(options?: unknown): Promise<unknown>;
   setAutoScreenshotMode?(mode: 'on-step' | 'on-change' | 'off'): void;
+  waitFor?(predicate: unknown, options?: { timeoutMs?: number; intervalMs?: number; stableGate?: boolean }): Promise<{ ok: boolean; attempts: number; durationMs: number; lastError?: string }>;
+  waitForScopePath?(predicate: { scopeId?: string; path: string; op: 'eq' | 'ne' | 'truthy' | 'defined'; value?: unknown }, options?: { timeoutMs?: number; intervalMs?: number; stableGate?: boolean }): Promise<{ ok: boolean; attempts: number; durationMs: number; lastError?: string }>;
+  dispatch?(action: unknown, ctx?: Record<string, unknown>): Promise<unknown>;
+  compareScreenshot?(baselineKey: string, options?: { maxDiffRatio?: number }): Promise<{ match: boolean; diffRatio: number; missing?: boolean }>;
+  putBaseline?(options?: { ignoreRegions?: Array<{ x: number; y: number; width: number; height: number; reason?: string }> }): Promise<{ key: string } | null>;
 }): NopDebuggerAutomationApi {
   return {
     controllerId: input.controllerId,
@@ -140,6 +145,11 @@ export function createAutomationApi(input: {
     isPreviewActive: input.isPreviewActive,
     screenshot: input.screenshot,
     setAutoScreenshotMode: input.setAutoScreenshotMode,
+    waitFor: input.waitFor,
+    waitForScopePath: input.waitForScopePath,
+    dispatch: input.dispatch,
+    compareScreenshot: input.compareScreenshot,
+    putBaseline: input.putBaseline,
     inspectByCid: input.inspectByCid,
     inspectByElement: input.inspectByElement,
     evaluateNodeExpression: input.evaluateNodeExpression,

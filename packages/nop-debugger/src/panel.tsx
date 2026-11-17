@@ -83,6 +83,7 @@ function chromeBoxStyle(docked: boolean, position: { x: number; y: number }): Re
 
 function getFilterLabels(): Record<NopDebuggerFilterKind, string> {
   return {
+    assertion: t('flux.debugger.assertionEvents'),
     render: t('flux.debugger.renderEvents'),
     action: t('flux.debugger.actionEvents'),
     api: t('flux.debugger.apiEvents'),

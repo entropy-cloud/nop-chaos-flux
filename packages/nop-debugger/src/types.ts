@@ -123,6 +123,7 @@ export interface NopSchemaPatchApplier {
 }
 
 export type NopDebugEventKind =
+  | 'assertion'
   | 'compile:start'
   | 'compile:end'
   | 'render:start'
@@ -139,6 +140,7 @@ export type NopDebugEventKind =
 export type NopDebugEventLevel = 'info' | 'success' | 'warning' | 'error';
 
 export type NopDebuggerFilterKind =
+  | 'assertion'
   | 'render'
   | 'action'
   | 'api'
@@ -441,6 +443,12 @@ export interface NopDebuggerAutomationApi {
   leavePreview?(): void;
   setPreviewPinned?(pin: boolean): void;
   isPreviewActive?(): boolean;
+  /** M3 V2: retry-ability queries (in-process predicates) + effect dispatch. */
+  waitFor?(predicate: unknown, options?: { timeoutMs?: number; intervalMs?: number; stableGate?: boolean }): Promise<{ ok: boolean; attempts: number; durationMs: number; lastError?: string }>;
+  waitForScopePath?(predicate: { scopeId?: string; path: string; op: 'eq' | 'ne' | 'truthy' | 'defined'; value?: unknown }, options?: { timeoutMs?: number; intervalMs?: number; stableGate?: boolean }): Promise<{ ok: boolean; attempts: number; durationMs: number; lastError?: string }>;
+  dispatch?(action: unknown, ctx?: Record<string, unknown>): Promise<unknown>;
+  compareScreenshot?(baselineKey: string, options?: { maxDiffRatio?: number }): Promise<{ match: boolean; diffRatio: number; missing?: boolean }>;
+  putBaseline?(options?: { ignoreRegions?: Array<{ x: number; y: number; width: number; height: number; reason?: string }> }): Promise<{ key: string } | null>;
   /** M2 V2: S2 screenshot channel; rejects with CaptureError on invalid targets. */
   screenshot?(options?: ScreenshotAutomationOptions): Promise<unknown>;
   setAutoScreenshotMode?(mode: 'on-step' | 'on-change' | 'off'): void;

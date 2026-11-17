@@ -205,6 +205,7 @@ describe('diagnostics helpers', () => {
       totalEvents: 6,
     });
     expect(overview.countsByGroup).toEqual({
+      assertion: 0,
       render: 1,
       action: 1,
       api: 1,
