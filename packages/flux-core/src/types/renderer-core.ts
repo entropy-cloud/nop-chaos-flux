@@ -272,6 +272,10 @@ export interface RendererRuntime {
     state?: NodeRuntimeState,
   ): ResolvedNodeProps;
   createChildScope(parent: ScopeRef, patch?: object, options?: CreateScopeOptions): ScopeRef;
+  getStabilityTracker(): import('./stability.js').StabilityTracker;
+  registerStoreWriteObserver(observer: import('./stability.js').StoreWriteObserver): () => void;
+  getLiveScopeIds(): string[];
+  getActionRootScope(): ScopeRef;
   disposeScope(scopeId: string): void;
   createHostProjectionScope(input: {
     parentScope: ScopeRef;

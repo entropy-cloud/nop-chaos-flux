@@ -1,22 +1,16 @@
 import type {
   ActionContext,
   ActionScope,
-  ActionResult,
   ActionSchema,
   ComponentHandleRegistry,
   ExpressionCompiler,
   PageRuntime,
-  PageStoreApi,
   RendererEnv,
-  RendererMonitor,
-  RendererPlugin,
-  RendererRegistry,
   RendererRuntime,
-  SchemaCompiler,
   ScopeRef,
+  StabilityTracker,
+  StoreWriteObserver,
   SurfaceRuntime,
-  SourceSchema,
-  ModuleCache,
   PreparedImportSpec,
   ValidationScopeRuntime,
   FormRuntime,
@@ -25,7 +19,6 @@ import type {
 import { createSchemaCompiler } from '@nop-chaos/flux-compiler';
 import { createCompiledCidState } from '@nop-chaos/flux-core';
 import { createExpressionCompiler, createFormulaCompiler } from '@nop-chaos/flux-formula';
-import type { FormulaRegistry } from '@nop-chaos/flux-formula';
 import { createActionDispatcher } from '@nop-chaos/flux-action-core';
 import { compileActions } from '@nop-chaos/flux-compiler';
 import { createActionRuntimeAdapter } from './action-adapter.js';
@@ -49,26 +42,18 @@ import { createRuntimeReactionRegistry } from './async-data/reaction-runtime.js'
 import { createRendererReactionHandle } from './renderer-reaction-handle.js';
 import { createApiRequestExecutor } from './async-data/request-runtime.js';
 import { createRuntimeEvalHelpers } from './runtime-eval-helpers.js';
-import { createRuntimeOwnedFactories } from './runtime-owned-factories.js';
+import { wireRuntimeOwnedFactories } from './runtime-owned-factories-wiring.js';
 import { sortRendererPlugins } from './runtime-plugins.js';
 import { createModuleCache } from './module-cache.js';
 import { createScopeRef, createScopeStore, toRecord } from './scope.js';
+import { createRuntimeDebugInstrumentation } from './debug-instrumentation.js';
+import type { CreateRendererRuntimeInput } from './runtime-factory-input.js';
+import type { ActionDispatcherRef, ExecuteSourceRef } from './runtime-owned-factories-wiring.js';
 import { createRuntimeSourceRegistry } from './async-data/source-registry.js';
 import { createBuiltInValidationRegistry } from './validation/index.js';
 
-export function createRendererRuntime(input: {
-  registry: RendererRegistry;
-  env: RendererEnv;
-  expressionCompiler?: ExpressionCompiler;
-  schemaCompiler?: SchemaCompiler;
-  plugins?: RendererPlugin[];
-  pageStore?: PageStoreApi;
-  moduleCache?: ModuleCache;
-  formulaRegistry?: FormulaRegistry;
-  strictMode?: boolean;
-  onActionError?: (error: unknown, ctx: ActionContext) => void;
-  monitor?: RendererMonitor;
-}): RendererRuntime {
+
+export function createRendererRuntime(input: CreateRendererRuntimeInput): RendererRuntime {
     // Deliberately not flux-core genId: no timestamp, prefixed 8-char random.
   const runtimeId = `runtime-${Math.random().toString(36).slice(2, 10)}`;
   const plugins = sortRendererPlugins(input.plugins);
@@ -192,40 +177,38 @@ export function createRendererRuntime(input: {
     initialData: {},
   });
 
-  const actionDispatcherRef: {
-    current?: (action: ActionSchema, ctx?: Partial<ActionContext>) => Promise<ActionResult>;
-  } = {};
-  const runtimeOwnedFactories = createRuntimeOwnedFactories({
-    pageStore: input.pageStore,
-    getEnv,
-    ownedPages,
-    ownedSurfaceRuntimes,
-    ownedValidationScopes,
-    ownedFormRuntimes,
-    createValidationScopeRuntime: (inputValue) =>
-      runtimeOwnedFactories.createValidationScopeRuntime(inputValue),
-    dispatchAction: (action, ctx) => {
-      if (!actionDispatcherRef.current) {
-        throw new Error('Action dispatcher not initialized');
-      }
-
-      return actionDispatcherRef.current(action, ctx);
-    },
-    validationRegistry,
-    disposeScope: disposeOwnedScope,
-    disposeScopeTree: (scopeId) => {
-      sourceRegistryRef.current?.disposeScopeTree(scopeId);
-      reactionRegistryRef.current?.disposeScopeTree(scopeId);
-    },
+  const debug = createRuntimeDebugInstrumentation({
+    plugins,
+    actionRootScope,
+    debugExpressionSamplingRate: input.debugExpressionSamplingRate,
+    debugScopeDebounceMs: input.debugScopeDebounceMs,
   });
+  const { stabilityTracker } = debug;
+  const resolveNodePropsWithSpan = debug.resolveNodePropsWithSpan(nodeRuntime.resolveNodeProps);
+  const evaluateWithSamplingFn = debug.evaluateWithSampling(evaluate);
 
-  const executeSourceRef: {
-    current?: (
-      source: SourceSchema,
-      scope: ScopeRef,
-      ctx?: Partial<ActionContext>,
-    ) => Promise<ActionResult>;
-  } = {};
+  const actionDispatcherRef: ActionDispatcherRef = {};
+  const runtimeOwnedFactories = wireRuntimeOwnedFactories(
+    {
+      pageStore: input.pageStore,
+      getEnv,
+      ownedPages,
+      ownedSurfaceRuntimes,
+      ownedValidationScopes,
+      ownedFormRuntimes,
+      validationRegistry,
+      disposeScope: disposeOwnedScope,
+    },
+    {
+      actionDispatcherRef,
+      sourceRegistryRef,
+      reactionRegistryRef,
+      createValidationScopeRuntime: (inputValue) =>
+        runtimeOwnedFactories.createValidationScopeRuntime(inputValue),
+    },
+  );
+
+  const executeSourceRef = {} as ExecuteSourceRef;
 
   const runtime: RendererRuntime = {
     runtimeId,
@@ -315,7 +298,7 @@ export function createRendererRuntime(input: {
 
       return { preparedImports: new Map(preparedEntries) };
     },
-    evaluate,
+    evaluate: evaluateWithSamplingFn,
     evaluateCompiled,
     allocateMountedCid() {
       nextMountedCid += 1;
@@ -329,7 +312,19 @@ export function createRendererRuntime(input: {
       return runtimeNodeResolverRef.current.resolveTarget(target, ctx);
     },
     resolveNodeMeta: nodeRuntime.resolveNodeMeta,
-    resolveNodeProps: nodeRuntime.resolveNodeProps,
+    resolveNodeProps: resolveNodePropsWithSpan,
+    getStabilityTracker(): StabilityTracker {
+      return stabilityTracker;
+    },
+    registerStoreWriteObserver(observer: StoreWriteObserver): () => void {
+      return debug.registerStoreWriteObserver(observer);
+    },
+    getLiveScopeIds(): string[] {
+      return debug.getLiveScopeIds();
+    },
+    getActionRootScope(): ScopeRef {
+      return debug.getActionRootScope();
+    },
     createChildScope(parent, patch, options) {
       const data = toRecord(patch);
       const store = createScopeStore(data);
@@ -356,8 +351,11 @@ export function createRendererRuntime(input: {
           : {}),
         onDispose: () => {
           ownedScopeDisposers.delete(scopeId);
+          debug.unregisterScopeStore(scopeId);
         },
       });
+
+      debug.registerScopeStore(scopeId, scope.store ?? store);
 
       ownedScopeDisposers.set(scopeId, () => {
         (scope as ScopeRef & { dispose?: () => void }).dispose?.();

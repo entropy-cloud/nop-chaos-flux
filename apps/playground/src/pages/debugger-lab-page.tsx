@@ -81,6 +81,8 @@ export function DebuggerLabPage({ debuggerController, onBack }: DebuggerLabPageP
   const demoSchemaRef = useRef(demoSchema);
   demoSchemaRef.current = demoSchema;
   const extensionRef = useRef<AiDebuggerExtension | null>(null);
+  const runtimeRef = useRef<Parameters<NonNullable<React.ComponentProps<typeof DemoSchemaRenderer>['onRuntimeChange']>>[0] | null>(null);
+
   const unregisterApplierRef = useRef<(() => void) | null>(null);
 
   const env = useMemo(
@@ -361,6 +363,41 @@ export function DebuggerLabPage({ debuggerController, onBack }: DebuggerLabPageP
                     )
                   }
                 />
+                <ActionButton
+                  label="Trigger Scope Write"
+                  onClick={() => {
+                    const runtime = runtimeRef.current;
+                    if (!runtime?.createChildScope) {
+                      handleShowOutput('ScopeWrite (API)', () => 'runtime not ready');
+                      return;
+                    }
+                    const child = runtime.createChildScope(
+                      runtime.getActionRootScope(),
+                      { m1Demo: 'initial' },
+                      { scopeKey: 'm1-demo' },
+                    );
+                    child.update('m1Demo', `written-${Date.now()}`);
+                    handleShowOutput('ScopeWrite (API)', () => ({ scopeId: child.id, value: child.store?.getSnapshot?.() ?? null }));
+                  }}
+                />
+                <ActionButton
+                  label="Stability"
+                  onClick={() => handleShowOutput('Stability (API)', () => api?.getStability?.() ?? 'no tracker wired')}
+                />
+                <ActionButton
+                  label="Snapshot Epochs"
+                  onClick={() => handleShowOutput('SnapshotEpochs (API)', () => api?.getSnapshotEpochs?.() ?? 'no collector wired')}
+                />
+                <ActionButton
+                  label="Latest Snapshot"
+                  onClick={() => handleShowOutput('LatestSnapshot (API)', () => api?.getSnapshotAt?.(api.getSnapshotEpochs?.().at(-1) ?? -1) ?? 'no snapshot')}
+                />
+              </div>
+              <div
+                data-testid="debugger-lab-stability"
+                className="mt-2 text-[11px] font-mono text-white/50"
+              >
+                stability: {api?.getStability ? `${api.getStability().stable ? 'stable' : 'busy'}` : 'n/a'}
               </div>
             </SectionCard>
 
@@ -410,7 +447,10 @@ export function DebuggerLabPage({ debuggerController, onBack }: DebuggerLabPageP
                   env={demoEnv}
                   registry={demoRegistry}
                   formulaCompiler={demoFormulaCompiler}
-                  onRuntimeChange={(runtime) => debuggerController.setRuntime(runtime)}
+                  onRuntimeChange={(runtime) => {
+                    runtimeRef.current = runtime;
+                    debuggerController.setRuntime(runtime);
+                  }}
                   onComponentRegistryChange={(componentRegistry) =>
                     debuggerController.setComponentRegistry(componentRegistry)
                   }

@@ -55,6 +55,7 @@ import {
   explainNodeValue,
 } from './explanations.js';
 import { normalizeRedactionOptions, redactData } from './redaction.js';
+import { createForestSnapshotCollector } from './snapshot-repository.js';
 import { createDebuggerStore } from './store.js';
 import type {
   NopComponentInspectResult,
@@ -170,6 +171,8 @@ export function createNopDebugger(options: NopDebuggerOptions = {}): NopDebugger
   const nextRequestInstanceId = createRequestInstanceIdFactory();
   let componentRegistry: ComponentHandleRegistry | undefined;
   let runtime: RendererRuntime | undefined;
+  let snapshotCollector: ReturnType<typeof createForestSnapshotCollector> | undefined;
+  let snapshotObserverDisposer: (() => void) | undefined;
 
   const getRuntime = () => runtime;
   let currentInspectByCid = buildInspectByCid(componentRegistry, getRuntime);
@@ -296,6 +299,14 @@ export function createNopDebugger(options: NopDebuggerOptions = {}): NopDebugger
     createDiagnosticReport: createReport,
     exportSession,
     waitForEvent,
+    getStability: () => {
+      const tracker = runtime?.getStabilityTracker?.();
+      if (!tracker) return { stable: true, counters: {} };
+      const snapshot = tracker.getSnapshot();
+      return { stable: snapshot.stable, degraded: snapshot.degraded, counters: { ...snapshot.counters } };
+    },
+    getSnapshotAt: (epoch: number) => snapshotCollector?.getSnapshotAt(epoch) ?? null,
+    getSnapshotEpochs: () => snapshotCollector?.getEpochs() ?? [],
     // [WA-debugger-002] mutation 面单源：引用 controller 同名成员，避免
     // 「store 调用 + persist 调用」方法体在 automation/controller 双面逐字双写；
     // controller 于下方构建，此处闭包仅在构造完成后被调用。
@@ -351,6 +362,7 @@ export function createNopDebugger(options: NopDebuggerOptions = {}): NopDebugger
           redaction,
         requestState,
         nextRequestInstanceId,
+        getStabilityTracker: () => runtime?.getStabilityTracker?.(),
       });
     },
     onActionError(error: unknown, ctx: ActionContext) {
@@ -514,6 +526,14 @@ export function createNopDebugger(options: NopDebuggerOptions = {}): NopDebugger
     explainNodeAsync: explainAsyncSummary,
     setRuntime(nextRuntime: RendererRuntime | null) {
       runtime = nextRuntime ?? undefined;
+      snapshotObserverDisposer?.();
+      snapshotObserverDisposer = undefined;
+      if (runtime?.registerStoreWriteObserver && runtime.getLiveScopeIds) {
+        snapshotCollector ??= createForestSnapshotCollector({
+          pruneScopeIds: () => runtime?.getLiveScopeIds?.() ?? [],
+        });
+        snapshotObserverDisposer = runtime.registerStoreWriteObserver({ onWrite: snapshotCollector.observe });
+      }
       currentInspectByCid = buildInspectByCid(componentRegistry, getRuntime);
       currentInspectByElement = buildInspectByElement(componentRegistry, getRuntime);
       currentEvaluateNodeExpression = buildEvaluateNodeExpression(currentInspectByCid);

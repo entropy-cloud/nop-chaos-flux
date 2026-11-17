@@ -2,6 +2,7 @@ import type {
   ActionContext,
   ActionResult,
   ActionSchema,
+  ActionOutcome,
   CompiledActionNode,
   CompiledActionProgram,
 } from '@nop-chaos/flux-core';
@@ -194,6 +195,41 @@ async function runParallelActions(
 }
 
 async function runSingleAction(
+  ctx: ActionDispatcherContext,
+  action: CompiledActionNode,
+  actionCtx: ActionContext,
+  signal?: AbortSignal,
+): Promise<ActionResult> {
+  const startedAt = Date.now();
+  const result = await executeSingleAction(ctx, action, actionCtx, signal);
+  emitAfterAction(ctx, action, actionCtx, result, startedAt);
+  return result;
+}
+
+function emitAfterAction(
+  ctx: ActionDispatcherContext,
+  action: CompiledActionNode,
+  actionCtx: ActionContext,
+  result: ActionResult,
+  startedAt: number,
+): void {
+  const plugins = ctx.plugins;
+  if (!plugins || plugins.length === 0) {
+    return;
+  }
+  const outcome: ActionOutcome = {
+    action: action.source,
+    status: result.ok ? 'success' : 'failed',
+    durationMs: Math.max(0, Date.now() - startedAt),
+    ...(result.ok ? {} : { error: { message: result.error instanceof Error ? result.error.message : String(result.error) } }),
+    ...(actionCtx.interactionId ? { interactionId: actionCtx.interactionId } : {}),
+  };
+  for (const plugin of plugins) {
+    plugin.afterAction?.(outcome);
+  }
+}
+
+async function executeSingleAction(
   ctx: ActionDispatcherContext,
   action: CompiledActionNode,
   actionCtx: ActionContext,

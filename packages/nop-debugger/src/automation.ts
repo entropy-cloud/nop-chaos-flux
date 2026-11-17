@@ -84,6 +84,9 @@ export function createAutomationApi(input: {
   explainNodeMeta(query: NopNodeMetaExplanationQuery): NopNodeMetaExplanation;
   explainNodeFailure(query?: NopNodeFailureExplanationQuery): NopNodeFailureExplanation;
   explainNodeAsync(query?: NopNodeAsyncExplanationQuery): NopNodeAsyncExplanation;
+  getStability?(): { stable: boolean; degraded?: boolean; counters: Record<string, number> };
+  getSnapshotAt?(epoch: number): unknown | null;
+  getSnapshotEpochs?(): number[];
 }): NopDebuggerAutomationApi {
   return {
     controllerId: input.controllerId,
@@ -122,6 +125,9 @@ export function createAutomationApi(input: {
     unminimize: input.unminimize,
     setActiveTab: input.setActiveTab,
     setPanelPosition: input.setPanelPosition,
+    getStability: input.getStability,
+    getSnapshotAt: input.getSnapshotAt,
+    getSnapshotEpochs: input.getSnapshotEpochs,
     inspectByCid: input.inspectByCid,
     inspectByElement: input.inspectByElement,
     evaluateNodeExpression: input.evaluateNodeExpression,

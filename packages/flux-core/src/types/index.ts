@@ -10,3 +10,4 @@ export * from './runtime.js';
 export * from './renderer.js';
 export * from './actions.js';
 export * from './scope.js';
+export * from './stability.js';

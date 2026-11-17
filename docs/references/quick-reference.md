@@ -1188,3 +1188,21 @@ Field classification（design-renderer.md §5，I15.2 D-1 同步）: `config`（
 | print       | editor-core（豁免②）       | 豁免         | 豁免      | 豁免       | props 契约档 |
 
 契约权威：`docs/architecture/editor-designer-standard.md`（§2 八层 + §5 豁免登记表）；守卫：`pnpm check:designer-conformance`（scripts/check-designer-conformance.mjs，新家族接入即检查）。
+
+### DevTools 插桩契约（M1，plan 2026-11-18-m1）
+
+`RendererPlugin` 新钩子（flux-core `types/renderer-plugin.ts`，全部可选，无实现=零成本）：
+
+- `afterAction?(outcome: ActionOutcome)` — flux-action-core dispatch settle 路径调用（成功/失败均回调）
+- `onRender?(span: RenderSpan)` — flux-runtime resolveNodeProps resolve 段计时发射（有监听者才包装）
+- `onExpressionEval?(trace: EvalTrace)` — runtime.evaluate 采样发射（`debugExpressionSamplingRate` 默认 0=关）
+
+`RendererRuntime` 新方法：
+
+| 方法                                         | 语义                                                                                                                                                                                                           |
+| -------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `getStabilityTracker()`                      | StabilityTracker：`isStable()` / `whenStable(timeoutMs?)`（超时 resolve + degraded）/ `onChange(cb)` / `acquire(counter)`（fetch/stream/transition/suspense/scopeDebounce）/ `noteScopeWrite()`（50ms 去抖窗） |
+| `registerStoreWriteObserver(obs)`            | 每次 `ScopeStore.setSnapshot` 广播 `{scopeId, revision, snapshot, change}`；注册表挂 host global（`__NOP_FLUX_STORE_WRITE_REGISTRY__`），多模块副本共享；返回取消函数；observer 抛错被吞 + console.error       |
+| `getLiveScopeIds()` / `getActionRootScope()` | live scope 注册表（createChildScope 登记 / dispose 注销）与根 ScopeRef（ForestSnapshot 枚举用）                                                                                                                |
+
+工厂输入新可选参数：`debugExpressionSamplingRate`、`debugScopeDebounceMs`。nop-debugger 消费：`ForestSnapshotCollector`（环形 200 + 结构共享）、`captureDomShadow`/`attachDomShadow`（M1 dom-shadow.ts）、store 日志总线（`updateEvent` diff + 4ms 尾帧合并、`getDisplayEvents`/`getFullEvent`、`buildLogTree`）、`__NOP_DEBUGGER_API__` V2（`getStability`/`getSnapshotAt`/`getSnapshotEpochs`，向后兼容可选方法）。契约权威：`docs/references/quick-reference.md` 本节 + `docs/research/2026-11-17-flux-devtools-design.md` §3/§4。

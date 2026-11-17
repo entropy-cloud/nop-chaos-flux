@@ -1,4 +1,5 @@
 import { DEFAULT_FILTERS } from './diagnostics.js';
+import { toDisplayProjection } from './log-tree.js';
 import type { DebuggerWindowDock, NopDebugEvent, NopDebuggerAnyTab, NopDebuggerSnapshot, NopDebuggerTab } from './types.js';
 
 export interface NopDebuggerStore {
@@ -7,6 +8,10 @@ export interface NopDebuggerStore {
   append(
     event: Omit<NopDebugEvent, 'id' | 'sessionId' | 'timestamp'> & { timestamp?: number },
   ): void;
+  /** M1 log bus: diff-based update of an existing event; no-op when nothing changed. */
+  updateEvent(id: number, patch: Partial<Omit<NopDebugEvent, 'id' | 'sessionId'>>): boolean;
+  getFullEvent(id: number): NopDebugEvent | undefined;
+  getDisplayEvents(): ReturnType<typeof import('./log-tree.js').toDisplayProjection>[];
   clear(): void;
   show(): void;
   hide(): void;
@@ -105,6 +110,8 @@ export function createDebuggerStore(input: {
 
   const lastRenderStartTimestamp = new Map<string, number>();
   const RENDER_THROTTLE_MS = 100;
+  const LOG_THROTTLE_MS = 4;
+  const pendingUpdates = new Map<number, { firstAt: number; patch: Record<string, unknown> }>();
 
   let positionPersistTimerId: ReturnType<typeof setTimeout> | undefined;
 
@@ -160,6 +167,52 @@ export function createDebuggerStore(input: {
           pinnedErrors: newPinnedErrors,
         };
       });
+    },
+    updateEvent(id, patch) {
+      const currentEvent = snapshot.events.find((candidate) => candidate.id === id);
+      if (!currentEvent) {
+        return false;
+      }
+      let changed = false;
+      for (const key of Object.keys(patch) as Array<keyof typeof patch>) {
+        if (currentEvent[key] !== patch[key]) {
+          changed = true;
+          break;
+        }
+      }
+      if (!changed) {
+        return false;
+      }
+      const applyUpdate = (mergedPatch: Record<string, unknown>) => {
+        setSnapshot((current) => ({
+          ...current,
+          events: current.events.map((candidate) =>
+            candidate.id === id ? { ...candidate, ...mergedPatch } : candidate,
+          ),
+        }));
+      };
+      // 4ms trailing merge per event id: collapse rapid status flips into one notify
+      const pending = pendingUpdates.get(id);
+      const now = Date.now();
+      if (pending && now - pending.firstAt < LOG_THROTTLE_MS) {
+        pending.patch = { ...pending.patch, ...patch };
+        return true;
+      }
+      pendingUpdates.set(id, { firstAt: now, patch: { ...patch } });
+      setTimeout(() => {
+        const queued = pendingUpdates.get(id);
+        pendingUpdates.delete(id);
+        if (queued) {
+          applyUpdate(queued.patch);
+        }
+      }, LOG_THROTTLE_MS);
+      return true;
+    },
+    getFullEvent(id) {
+      return snapshot.events.find((candidate) => candidate.id === id);
+    },
+    getDisplayEvents() {
+      return snapshot.events.map(toDisplayProjection);
     },
     clear() {
       setSnapshot((current) => ({

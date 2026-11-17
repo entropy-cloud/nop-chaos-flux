@@ -1,6 +1,41 @@
 import { createStore } from 'zustand/vanilla';
-import type { ScopeChange, ScopeRef, ScopeStore } from '@nop-chaos/flux-core';
+import type { ScopeChange, ScopeRef, ScopeStore, StoreWriteObserver } from '@nop-chaos/flux-core';
 import { getIn, isPlainObject, parsePath, setIn } from '@nop-chaos/flux-core';
+
+// Host-global registry: host pages can load multiple copies of this module
+// (different bundler module records); the observer registry must stay shared.
+interface StoreWriteObserverRegistry {
+  observers: Set<StoreWriteObserver>;
+}
+const STORE_WRITE_REGISTRY_KEY = '__NOP_FLUX_STORE_WRITE_REGISTRY__';
+
+function getStoreWriteRegistry(): StoreWriteObserverRegistry {
+  const host = globalThis as { [STORE_WRITE_REGISTRY_KEY]?: StoreWriteObserverRegistry };
+  host[STORE_WRITE_REGISTRY_KEY] ??= { observers: new Set<StoreWriteObserver>() };
+  return host[STORE_WRITE_REGISTRY_KEY]!;
+}
+
+export function registerStoreWriteObserver(observer: StoreWriteObserver): () => void {
+  const { observers } = getStoreWriteRegistry();
+  observers.add(observer);
+  return () => {
+    observers.delete(observer);
+  };
+}
+
+function notifyStoreWriteObservers(scopeId: string | undefined, revision: number, snapshot: Record<string, any>, change: ScopeChange): void {
+  const { observers } = getStoreWriteRegistry();
+  if (observers.size === 0) {
+    return;
+  }
+  for (const observer of observers) {
+    try {
+      observer.onWrite({ scopeId, revision, snapshot, change });
+    } catch (error) {
+      console.error('[flux-runtime] store write observer failed', error);
+    }
+  }
+}
 
 function createDefaultChange(scopeId?: string): ScopeChange {
   return {
@@ -41,13 +76,15 @@ export function createScopeStore(
     },
     setSnapshot(next, change) {
       revision += 1;
+      const normalizedChange: ScopeChange = {
+        ...normalizeScopeChange(change, scopeId),
+        revision,
+      };
       store.setState({
         snapshot: next,
-        lastChange: {
-          ...normalizeScopeChange(change, scopeId),
-          revision,
-        },
+        lastChange: normalizedChange,
       });
+      notifyStoreWriteObservers(scopeId, revision, next, normalizedChange);
     },
     subscribe(listener) {
       return store.subscribe((state, previousState) => {

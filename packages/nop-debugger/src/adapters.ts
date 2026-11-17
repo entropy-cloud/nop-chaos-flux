@@ -108,6 +108,7 @@ export function decorateDebuggerEnv(input: {
   env: RendererEnv;
   store: NopDebuggerStore;
   redaction: NormalizedRedactionOptions;
+  getStabilityTracker?: () => import('@nop-chaos/flux-core').StabilityTracker | undefined;
   requestState: Map<
     string,
     {
@@ -131,6 +132,7 @@ export function decorateDebuggerEnv(input: {
   ): Promise<ApiResponse<T>> => {
     const requestKey = createRequestKey(api);
     const startedAt = Date.now();
+    const releaseFetch = input.getStabilityTracker?.()?.acquire('fetch');
     const requestInstanceId = ctx.requestInstanceId ?? input.nextRequestInstanceId();
     const existingRequest = input.requestState.get(requestInstanceId);
     input.requestState.set(requestInstanceId, {
@@ -179,6 +181,7 @@ export function decorateDebuggerEnv(input: {
         }),
       });
       input.requestState.delete(requestInstanceId);
+      releaseFetch?.();
       return response;
     } catch (error) {
       const aborted = isAbortLikeError(error);
@@ -199,6 +202,7 @@ export function decorateDebuggerEnv(input: {
         }),
       });
       input.requestState.delete(requestInstanceId);
+      releaseFetch?.();
       throw error;
     }
   };

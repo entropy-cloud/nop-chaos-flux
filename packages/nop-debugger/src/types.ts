@@ -429,6 +429,11 @@ export interface NopDebuggerAutomationApi {
   readonly sessionId: string;
   readonly version: '1';
   getSnapshot(): NopDebuggerSnapshot;
+  /** M1 V2 (back-compatible): stability probe; undefined when no tracker is wired. */
+  getStability?(): { stable: boolean; degraded?: boolean; counters: Record<string, number> };
+  /** M1 V2 (back-compatible): forest snapshot by epoch; undefined when no collector is wired. */
+  getSnapshotAt?(epoch: number): unknown | null;
+  getSnapshotEpochs?(): number[];
   getOverview(): NopDebuggerOverview;
   queryEvents(query?: NopDebugEventQuery): NopDebugEvent[];
   getLatestEvent(query?: NopDebugEventQuery): NopDebugEvent | undefined;
