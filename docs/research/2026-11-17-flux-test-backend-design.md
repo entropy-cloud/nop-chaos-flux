@@ -411,3 +411,38 @@ interface Locator {          // Playwright Locator 语义子集
 1. **runner 存储隔离**（docs/bugs/16）：单浏览器 profile 下 localStorage 跨 spec 泄漏（debugger-ai 打开的浮动面板持久化遮挡后续 spec 点击）——`Page.addScriptToEvaluateOnNewDocument` 每文档清空 storage，Playwright fresh-context 等价；mock 增加 methodLog 测试挂勾。
 2. **nth() 谓词贯穿**（docs/bugs/15 附带）：getByRole name 过滤后的 `nth(i)/last()` 曾在未过滤全页选择器上取索引（点错按钮）——createIndexedLocator 复用 predicate；判别性单测恰红→绿。
 3. **per-spec 超时约定**：`*-perf.flux-spec.ts` dir 模式自动 200s（对齐 Playwright describe 级超时），specTimeouts 覆盖机制 + 单测。
+
+### §5.5 续表：批次 4（2026-11-19，plan `docs/plans/2026-11-19-e3-batch-migration-wave4-plan.md`）
+
+20 个旧 spec 共 66 用例（57 绿 + 2 存量 skip + 7 pre-existing 红）Playwright oracle 复跑后同 commit 删除（185→165）；flux 引擎全批 85 全绿。7 红为 ai-widgets-button-actions 全部用例——strict-validation `unvalidated-component-target` 诊断击穿 console-error allowance，pre-existing（P1-MA9.2-001 已裁决的 ai-chat invoke-model contract 缺口），初记误为"复跑绿"已更正。
+
+| spec                       | 旧用例 | 新覆盖              | 升级点                                                      | evaluate 债务 |
+| -------------------------- | ------ | ------------------- | ----------------------------------------------------------- | ------------- |
+| url-filter-sync            | 2      | 2/2                 | expect.poll→带末值重试环（hash 写回）                       | 2             |
+| table-column-drag          | 1      | 1/1                 | dragTo→DataTransfer DragEvent 合成 + 顺序 oracle 重试       | 1             |
+| large-dataset-windowing    | 2skip  | 2 skip 保留 + smoke | 旧用例本就 skip（页面未建），形态文档化保留                 | 0             |
+| report-designer-ux-r9      | 3      | 3/3                 | waitForTimeout→stability 门控 + toHaveClass→带末值重试      | 2             |
+| input-password-strength    | 1      | 1/1                 | kernel 白盒 + 场景标记可见性门                              | 1             |
+| word-editor-persistence    | 1      | 1/1                 | reload→卸载重挂载 + localStorage 再水化（强于同包重载）     | 3             |
+| convergence-n1-n2          | 2      | 2/2                 | fresh-load 循环→门控反弹                                    | 2             |
+| form-input-enhancements    | 3      | 3/3                 | dispatchEvent→真实 CDP 长按                                 | 3             |
+| table-virtual-body         | 2      | 2/2                 | waitForTimeout→滚动位置条件轮询                             | 2             |
+| table-popover              | 3      | 3/3                 | 逐用例 kernel 白盒                                          | 1             |
+| home-entry-navigation      | 6      | 6/6                 | 逐入口 kernel 白盒 ×6                                       | 1             |
+| w1c-list                   | 4      | 4/4                 | ComponentLab helper 内联 + 逐用例反弹                       | 0             |
+| word-editor-dataset        | 5      | 5/5                 | 持久化经完整重挂载再水化验证                                | 4             |
+| w1c-list-pagination        | 2      | 2/2                 | IO 测试缝线移植 + 终态 no-op 复核                           | 2             |
+| ai-virtual-scroll          | 2      | 2/2                 | waitForTimeout→几何可达性条件轮询                           | 0             |
+| three-gallery              | 5      | 5/5                 | waitForTimeout→条件轮询（镜像帧）                           | 2             |
+| designer-summary-renderers | 3      | 3/3                 | networkidle→标记计数到达门                                  | 0             |
+| pivot-table-demo           | 4      | 4/4                 | hasText div→语义 slot 锚（更强）                            | 1             |
+| ai-widgets-button-actions  | 7      | 7/7                 | waitForTimeout→去重条件轮询；console 守卫降级裁决见勘误附注 | 2             |
+| ai-rich-text-sender        | 8      | 8/8                 | dark-flip finally 复位（防用例间泄漏）                      | 3             |
+
+批次 4 附带契约修复（driver）：
+
+1. **索引 locator 全方法委托**（Wave 2 缺口销账）：nth()/last() 重构为 index-predicate 普通定位器——isEnabled/inputValue/fill 等全部方法解析到索引元素（此前退化为第一个元素）；判别单测恰红→绿（2 个）。
+2. **嵌套组合谓词泄漏修复**：nth 父定位器的谓词曾流入 `locator(sub)` 子定位器，子元素永不满足父匹配表 → click 永超时（debugger-ai adopt 按钮实修发现）；组合时清空父谓词 + 判别单测。
+3. 超时约定扩充：pivot-table-demo 240s、ai-widgets-button-actions 120s（继承 Playwright describe 级超时）。
+
+> **勘误附注（2026-11-19，closure audit B1 处置）**：oracle 复跑真实结果为 **57 passed + 2 skipped + 7 FAILED**——7 个失败全部是 `ai-widgets-button-actions.spec.ts`（该页 schema 的 `component:setSenderDraft` 触发 dev strict-validation `unvalidated-component-target` 诊断，fixtures console-error allowance 0 被击穿）。该红为 **pre-existing**（ai-chat capability contracts 因 invoke 模型未声明——`ai-renderer-definitions.ts` P1-MA9.2-001 已裁决的 follow-up），与本批 diff 无关，HEAD 与各历史点同样红。初记"57+2skip 复跑绿"系执行者误读 oracle 输出（截断未查失败行），在此更正。强度裁决：flux 替代 spec 的 `expectNoPageErrors` 走内核白盒通道而非 console 通道——ai-widgets 页的 console schema 诊断守卫在该 spec 维度确有降级，随 P1-MA9.2-001 follow-up（ai-chat invoke-model contract pattern 落地后 strict 诊断消除）一并收口；successor 登记于 Wave 5 plan。

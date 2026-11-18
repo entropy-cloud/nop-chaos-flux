@@ -40,12 +40,13 @@
       "2026-11-18 plan 2026-11-18-e2-test-console-v1-plan (E2 Test Console v1 + T0 试点): discover-audit-suspects 810 -> 826 / find-async-without-failure-path 359 -> 369 / find-performance-suspects 33 -> 39。全部新增命中仍来自两个测试基建包 @nop-chaos/flux-test-server 与 @nop-chaos/flux-test-driver 的 E2 新增面：console-server（run 编排 fire-and-forget startRun、CLI/静态服务终端输出）、console/app.tsx（React Console 页）、gateway run 广播/log.emit 转发、driver kernel log.emit 1s tick 轮询与限频、expect/locator 轮询 sleep 循环——同 E1 注册理由：测试后端消息通道失败统一经 runner 超时/peer-lost 聚合，不在每个 send/loop 上挂失败分支；CLI/Console 页终端输出为本职。",
       "2026-11-19 plan 2026-11-18-e3-batch-migration-wave1-plan (E3 Wave 1): discover-audit-suspects 826 -> 834 / find-test-global-leaks 116 -> 118 / find-async-without-failure-path 369 -> 372 / find-performance-suspects 39 -> 42。新增命中仍集中在测试基建面：flux-test-server console-server/cli/watch 轮询（fire-and-forget startRun、CLI 终端输出、watch setInterval）、flux-test-driver expect-web/input（轮询 sleep 循环、真实输入桥接）、flux-bundle-built-dist.spec（test-global-leaks 为既有 spec 新增 2 处——本批未改动的存量文件，波动来自扫描面扩大）。同 E1/E2 注册理由：测试后端消息通道失败统一经 runner 超时聚合，轮询/终端输出为本职。",
       "2026-11-19 plan 2026-11-18-e3-batch-migration-wave3-plan (E3 Wave 3): discover-audit-suspects 834 -> 835 / find-async-without-failure-path 372 -> 373。新增命中来自 playground App.tsx devtoolsReady.then 后台交付（fire-and-forget；失败统一经 runner 超时聚合）与 flux-test-server CLI watch 提示——同既有测试基建注册理由。",
-      "2026-11-19 Wave 3 收口追加：discover-audit-suspects 835 -> 837 / find-async-without-failure-path 373 -> 375——App.tsx devtoolsReady 后台交付与 devtools-host effect fire-and-forget（kernel 缺失时静默返回，错误统一经 runner 聚合）。"
+      "2026-11-19 Wave 3 收口追加：discover-audit-suspects 835 -> 837 / find-async-without-failure-path 373 -> 375——App.tsx devtoolsReady 后台交付与 devtools-host effect fire-and-forget（kernel 缺失时静默返回，错误统一经 runner 聚合）。",
+      "2026-11-19 Wave 4 收口追加：discover-audit-suspects 837 -> 838 / find-performance-suspects 42 -> 43——locator.ts 索引谓词闭包（每查询重算过滤列表，性能敏感定位路径+1，功能正确性优先）与 cli.ts 慢规格注册表遍历。"
     ]
   },
   "scanners": {
     "find-styling-suspects": 254,
-    "discover-audit-suspects": 837,
+    "discover-audit-suspects": 838,
     "find-test-global-leaks": 118,
     "find-todo-exitless": 0,
     "find-as-any-casts": 31,
@@ -56,7 +57,7 @@
     "find-missing-renderer-markers": 15,
     "find-fieldframe-bypasses": 12,
     "find-reactive-render-reads": 21,
-    "find-performance-suspects": 42,
+    "find-performance-suspects": 43,
     "find-non-retained-renderer-references": 161
   }
 }

@@ -189,3 +189,45 @@ describe('nth() carries the getByRole predicate', () => {
     await expect(inspect.last().text()).resolves.toBe('Inspect');
   });
 });
+
+describe('indexed locator full-method delegation', () => {
+  it('nth(i) resolves isEnabled/inputValue/fill on the indexed element, not the first', async () => {
+    doc.body.innerHTML = `
+      <input id="i1" value="first" disabled>
+      <input id="i2" value="second">`;
+    const inputs = locator('input');
+    await expect(inputs.nth(1).inputValue()).resolves.toBe('second');
+    await expect(inputs.nth(1).isEnabled()).resolves.toBe(true);
+    await expect(inputs.nth(0).isEnabled()).resolves.toBe(false);
+    await inputs.nth(1).fill('changed');
+    await expect((doc.querySelector('#i2') as HTMLInputElement).value).toBe('changed');
+    await expect((doc.querySelector('#i1') as HTMLInputElement).value).toBe('first');
+    await expect(inputs.last().inputValue()).resolves.toBe('changed');
+  });
+
+  it('last() on a getByRole-filtered locator tracks the filtered set', async () => {
+    doc.body.innerHTML = `
+      <button id="ok1">Inspect</button>
+      <button id="no">Cancel</button>
+      <button id="ok2">Inspect</button>`;
+    const inspects = createLocator(() => doc, 'button', { timeoutMs: 300, intervalMs: 20, predicate: (el) => matchesAccessibleName(el, 'Inspect') }, () => makeApi(true));
+    const last = inspects.last();
+    await expect(last.text()).resolves.toBe('Inspect');
+    (doc.querySelector('#ok2') as HTMLButtonElement).disabled = true;
+    await expect(last.isEnabled()).resolves.toBe(false);
+  });
+});
+
+describe('nested locator under an indexed parent', () => {
+  it('child locator is not constrained by the parent nth predicate', async () => {
+    doc.body.innerHTML = `
+      <div class="card"><button id="b1">Inspect</button></div>
+      <div class="card"><button id="b2">Inspect</button><span id="child2">meta</span></div>`;
+    const card = locator('div.card').nth(1);
+    const child = card.locator('span');
+    await expect(child.text()).resolves.toBe('meta');
+    await expect(child.count()).resolves.toBe(1);
+    const childBtn = card.locator('button');
+    await expect(childBtn.text()).resolves.toBe('Inspect');
+  });
+});

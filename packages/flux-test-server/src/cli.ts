@@ -95,6 +95,10 @@ export async function runCli(argv: string[]): Promise<number> {
   for (const specPath of specs) {
     const name = path.basename(specPath);
     if (name.endsWith('-perf.flux-spec.ts')) specTimeouts[name] = 200_000;
+    // convention: specs with multiple long-budget measurement windows (inherited
+    // from Playwright describe-level timeouts) — keep names in one place.
+    if (name === 'pivot-table-demo.flux-spec.ts') specTimeouts[name] = 240_000;
+    if (name === 'ai-widgets-button-actions.flux-spec.ts') specTimeouts[name] = 120_000;
   }
   const summary: RunSummary = await runSpecs({
     specPaths: specs,

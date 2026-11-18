@@ -169,7 +169,7 @@ interface PivotTableSchema extends BaseSchema {
 - `pivot-option.test.ts`（32 用例）：三要素映射/聚合映射/totals 逐字段/corner/排序/过滤谓词语义/降级路径/theme 映射（failing-first 先红后绿）。
 - `pivot-renderer.test.tsx`（18 用例）：mock VTable 类——挂载（正确 option + 实例暴露）/setRecords 无 remount/updateOption 全量/卸载 release/空态不建实例/构造抛错占位/事件桥接五事件 + 回调抛错隔离/loading 态。
 - `pivot-renderer-definitions.test.ts`（4 用例）：propContracts shape 校验（合法 schema 零 diagnostics；非法聚合/角标/维度 emit diagnostics 而非抛错；example.json 零 diagnostics）——回归 propContracts `optional` 契约（编译期 shape 校验失败会导致 prop 被整体丢弃）。
-- e2e `tests/e2e/pivot-table-demo.spec.ts`（3 用例）：Sales Pivot + Filtered 双卡片 canvas 渲染 + `__flux_pivot_<id>` 锚点；空卡片 empty slot；暗色主题切换实例存活。
+- e2e `tests/e2e/flux/pivot-table-demo.flux-spec.ts`（4 用例）：Sales Pivot + Filtered 双卡片 canvas 渲染 + `__flux_pivot_<id>` 锚点；空卡片 empty slot；暗色主题切换实例存活。
 
 ## 12. Non-Goals / 后续候选
 

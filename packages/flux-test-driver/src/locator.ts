@@ -203,7 +203,10 @@ export function createLocator(getDoc: DocGetter, selector: string, options: Loca
       return createIndexedLocator(getDoc, selector, -1, options, getApi);
     },
     locator(sub: string) {
-      return createLocator(getDoc, `${selector} ${sub}`, options, getApi);
+      // descendant composition starts a fresh element set: the parent's
+      // index/name predicate must NOT flow into the child (a nth()'d parent's
+      // predicate tests elements against the parent's own match list).
+      return createLocator(getDoc, `${selector} ${sub}`, { ...options, predicate: undefined }, getApi);
     },
     async boundingBox(opts) {
       await retry(() => (queryOne() ? queryOne() : null), opts?.timeoutMs ?? defaultTimeoutMs());
@@ -251,67 +254,20 @@ export function createLocator(getDoc: DocGetter, selector: string, options: Loca
 }
 
 function createIndexedLocator(getDoc: DocGetter, selector: string, index: number, options: LocatorOptions, getApi: () => DebuggerApiView | undefined): Locator {
-  const base = createLocator(getDoc, selector, options, getApi);
-  const defaultTimeoutMs = () => options.timeoutMs ?? 5_000;
-  // nth() indexes the SAME element set the base locator matches — the
-  // predicate (getByRole name matching) must carry through, otherwise nth(i)
-  // silently indexes the unfiltered page-wide selector.
-  const predicate = options.predicate;
-  const queryIndexed = (): Element | null => {
-    const list = Array.from(getDoc().querySelectorAll(selector));
-    const filtered = predicate ? list.filter(predicate) : list;
-    if (filtered.length === 0) return null;
+  // nth()/last() are modeled as an index PREDICATE over the same filtered set
+  // the base locator matches — so every base method (click/fill/isEnabled/
+  // inputValue/text/…) resolves the indexed element, not the first match.
+  // The previous predicate (getByRole name matching, or a chained nth) carries
+  // through; the index resolves against the live filtered list on every query.
+  const basePredicate = options.predicate;
+  const baseMatches = (element: Element): boolean => (basePredicate ? basePredicate(element) : true);
+  const indexedPredicate = (element: Element): boolean => {
+    const filtered = Array.from(getDoc().querySelectorAll(selector)).filter(baseMatches);
+    if (filtered.length === 0) return false;
     const resolved = index < 0 ? filtered.length + index : index;
-    return filtered[resolved] ?? null;
+    return filtered[resolved] === element;
   };
-
-  return {
-    ...base,
-    click(opts) {
-      return actOnIndexed(queryIndexed, opts?.timeoutMs ?? defaultTimeoutMs(), (element) => element.click(), () => base.click(opts));
-    },
-    async text(opts) {
-      await retryIndexed(queryIndexed, opts?.timeoutMs ?? defaultTimeoutMs(), options);
-      const element = queryIndexed() as HTMLElement;
-      return element.innerText ?? element.textContent ?? '';
-    },
-    async innerHTML(opts) {
-      await retryIndexed(queryIndexed, opts?.timeoutMs ?? defaultTimeoutMs(), options);
-      return (queryIndexed() as Element).innerHTML;
-    },
-    async attr(name, opts) {
-      await retryIndexed(queryIndexed, opts?.timeoutMs ?? defaultTimeoutMs(), options);
-      return queryIndexed()?.getAttribute(name) ?? null;
-    },
-  };
-}
-
-function actOnIndexed(queryIndexed: () => Element | null, timeoutMs: number, perform: (element: HTMLElement) => void, fallback: () => Promise<void>): Promise<void> {
-  const deadline = Date.now() + timeoutMs;
-  const attempt = async (): Promise<void> => {
-    const element = queryIndexed();
-    if (element instanceof HTMLElement) {
-      perform(element);
-      return;
-    }
-    if (Date.now() >= deadline) {
-      await fallback();
-      return;
-    }
-    await sleep(50);
-    await attempt();
-  };
-  return attempt();
-}
-
-async function retryIndexed(queryIndexed: () => Element | null, timeoutMs: number, options: LocatorOptions): Promise<void> {
-  const deadline = Date.now() + timeoutMs;
-  while (!queryIndexed() && Date.now() < deadline) {
-    await sleep(options.intervalMs ?? 50);
-  }
-  if (!queryIndexed()) {
-    throw new Error(`locator timeout: nth element missing within ${timeoutMs}ms`);
-  }
+  return createLocator(getDoc, selector, { ...options, predicate: indexedPredicate }, getApi);
 }
 
 function sleep(ms: number): Promise<void> {

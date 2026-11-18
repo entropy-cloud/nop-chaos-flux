@@ -176,7 +176,7 @@ When this document changes or related constraints change, review:
 1. `virtualThreshold` only activates the VirtualBody path when pagination is
    explicitly disabled (`pagination: { enabled: false }`) and the source exceeds
    the threshold. This combination was historically never exercised end-to-end;
-   the performance-table harness `virtualized` mode (1000 rows, scrollHeight 640) is its regression surface — `tests/e2e/table-virtual-body.spec.ts` is
+   the performance-table harness `virtualized` mode (1000 rows, scrollHeight 640) is its regression surface — `tests/e2e/flux/table-virtual-body.flux-spec.ts` is
    the binding compiled-build guard (happy-dom cannot reproduce
    compiler-interaction defects).
 
