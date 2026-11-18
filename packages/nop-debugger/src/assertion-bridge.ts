@@ -40,6 +40,15 @@ interface WaitResultLike {
   lastError?: string;
 }
 
+interface CaptureRunOptions {
+  cid?: string;
+  selector?: string;
+  format?: 'png' | 'webp';
+  scale?: number;
+  tag?: string;
+  fresh?: boolean;
+}
+
 export function createAssertionBridge(deps: AssertionBridgeDeps) {
   const visualDiffEngine = createVisualDiffEngine();
   let lastCaptureResult: ScreenshotResultWire | null = null;
@@ -70,7 +79,36 @@ export function createAssertionBridge(deps: AssertionBridgeDeps) {
 
   const maskRules = [{ matches: (element: Element) => element.getAttribute('type') === 'password' }];
 
+  const captureScreenshot = async (options?: CaptureRunOptions): Promise<ScreenshotResultWire & { reused?: boolean }> => {
+    if (typeof document === 'undefined') {
+      throw new CaptureError('capture-unavailable', 'document unavailable');
+    }
+    const target =
+      (options?.cid && document.querySelector(`[data-cid="${options.cid}"]`)) ||
+      (options?.selector && document.querySelector(options.selector)) ||
+      document.body;
+    const rect = target.getBoundingClientRect();
+    const input = {
+      root: target,
+      width: rect.width,
+      height: rect.height,
+      format: options?.format,
+      scale: options?.scale,
+      redactionRules: maskRules,
+      refs: { tag: options?.tag, cid: options?.cid },
+    };
+    if (options?.fresh) {
+      const freshResult = await captureScreenshotFromClone(input);
+      lastCaptureResult = freshResult;
+      return { ...freshResult, reused: false };
+    }
+    const result = await deps.incrementalCapturer.capture(input);
+    lastCaptureResult = result.result;
+    return { ...result.result, reused: result.reused };
+  };
+
   return {
+    captureScreenshot,
     recordCapture(result: ScreenshotResultWire): void {
       lastCaptureResult = result;
     },

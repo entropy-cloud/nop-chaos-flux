@@ -726,6 +726,10 @@ export const enUS: Resource = {
     debugger: {
       title: 'Framework Debugger',
       assertionEvents: 'Assertion events',
+      whySection: 'Why',
+      whyCidPlaceholder: 'CID',
+      whyRun: 'Why?',
+      whySelector: 'Selector',
       timeTravel: 'Time Travel',
       pin: 'Pin',
       pinned: 'Pinned',

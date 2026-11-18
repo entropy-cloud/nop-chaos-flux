@@ -464,6 +464,12 @@ export function NopDebuggerPanel(props: { controller: NopDebuggerController }) {
 
         <TabsContent value="node">
           <NodeTab
+            whyApi={props.controller.automation.why ? {
+              why: props.controller.automation.why,
+              suggestSelector: props.controller.automation.suggestSelector!,
+              getSnapshotAt: props.controller.automation.getSnapshotAt!,
+              inspectByCid: (cid: number) => props.controller.automation.inspectByCid(cid),
+            } : undefined}
             componentTree={componentTree}
             scanComponentTree={scanComponentTree}
             inspectMode={inspectMode}

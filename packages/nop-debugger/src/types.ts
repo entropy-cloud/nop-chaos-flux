@@ -449,6 +449,10 @@ export interface NopDebuggerAutomationApi {
   dispatch?(action: unknown, ctx?: Record<string, unknown>): Promise<unknown>;
   compareScreenshot?(baselineKey: string, options?: { maxDiffRatio?: number }): Promise<{ match: boolean; diffRatio: number; missing?: boolean }>;
   putBaseline?(options?: { ignoreRegions?: Array<{ x: number; y: number; width: number; height: number; reason?: string }> }): Promise<{ key: string } | null>;
+  /** M4 V2: unified Why attribution + dependency graph + selector suggestion. */
+  why?(cid: number): Promise<{ verdict: string; confidence: string; parts: Array<{ category: string; verdict: string }>; evidence: Array<{ type: string; target: string; label: string }>; screenshotTag?: string }>;
+  queryDependencyImpact?(path: string): Promise<{ cids: string[]; paths: string[]; degradedToPathQuery: boolean }>;
+  suggestSelector?(cid: string): Promise<{ selector: string; tier: string; unique: boolean } | null>;
   /** M2 V2: S2 screenshot channel; rejects with CaptureError on invalid targets. */
   screenshot?(options?: ScreenshotAutomationOptions): Promise<unknown>;
   setAutoScreenshotMode?(mode: 'on-step' | 'on-change' | 'off'): void;

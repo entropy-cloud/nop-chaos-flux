@@ -8,12 +8,13 @@ export interface ForestSnapshot {
   changedScopeIds: string[];
 }
 
-interface ForestSnapshotCollector {
+export interface ForestSnapshotCollector {
   observe(event: StoreWriteObserverEvent): void;
   flush(): ForestSnapshot | null;
   getLatest(): ForestSnapshot | null;
   getSnapshotAt(epoch: number): ForestSnapshot | null;
   getEpochs(): number[];
+  getRing(): readonly ForestSnapshot[];
   dispose(): void;
 }
 
@@ -93,6 +94,7 @@ export function createForestSnapshotCollector(input: {
       return ring.find((snapshot) => snapshot.epoch === epoch) ?? null;
     },
     getEpochs: () => ring.map((snapshot) => snapshot.epoch),
+    getRing: () => ring,
     dispose: () => {
       disposed = true;
       ring.length = 0;
@@ -131,4 +133,33 @@ export function diffForestSnapshots(prev: ForestSnapshot | null, next: ForestSna
     }
   }
   return changes;
+}
+
+interface FirstWriteEpochResult {
+  found: boolean;
+  reason?: 'scope' | 'path';
+  epoch?: number;
+  value?: unknown;
+}
+
+/** Reverse lookup: the earliest epoch in the ring whose snapshot contains `path` in `scopeId`. */
+export function findFirstWriteEpoch(ring: readonly ForestSnapshot[], scopeId: string, path: string): FirstWriteEpochResult {
+  const scopeEverPresent = ring.some((snapshot) => snapshot.scopes[scopeId] !== undefined);
+  if (!scopeEverPresent) return { found: false, reason: 'scope' };
+  for (const snapshot of ring) {
+    const scopes = snapshot.scopes[scopeId];
+    if (scopes === undefined) continue;
+    let current: unknown = scopes;
+    let exists = true;
+    for (const segment of path.split('.')) {
+      if (current === null || typeof current !== 'object') {
+        exists = false;
+        break;
+      }
+      current = (current as Record<string, unknown>)[segment];
+    }
+    if (!exists || current === undefined) continue;
+    return { found: true, epoch: snapshot.epoch, value: current };
+  }
+  return { found: false, reason: 'path' };
 }

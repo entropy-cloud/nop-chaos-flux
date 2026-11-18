@@ -102,7 +102,8 @@ function evaluateOnce(predicate: WaitForPredicate, deps: WaitForDeps): { ok: boo
       }
     }
   } catch (error) {
-    return { ok: false, reason: error instanceof Error ? error.message : String(error) };
+    const message = error instanceof Error ? error.message : String(error);
+    return { ok: false, reason: `${message} cause: predicate evaluation failed` };
   }
 }
 

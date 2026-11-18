@@ -1220,3 +1220,11 @@ Field classification（design-renderer.md §5，I15.2 D-1 同步）: `config`（
 `waitFor` 谓词（进程内 API，谓词函数不可跨窗口）：`{type:'cid', cid:number, state(inspect)=>bool}`（inspect = `NopComponentInspectResult`）、`{type:'scope', scopeId?, selector, until}`、`{type:'event', kind, match?}`、`{type:'stability'}`。跨窗口（e2e page.evaluate）用确定性 DSL：`waitForScopePath({path, op:'eq'|'ne'|'truthy'|'defined', value?})`（getIn 路径解析，不支持任意表达式）。`waitForVisual({baselineKey, maxDiffRatio})` 走异步对比。
 
 视觉基线（capture/visual-diff.ts）：`yiqPixelDiffWithSize`（pixelmatch YIQ 算法自实现，threshold 0.1）；`createVisualDiffEngine`：`putBaseline({ignoreRegions})`（内存 Map；xui:visual-ignore 区域为内联 x/y/w/h 或 {cid}）、`compare` → `{match, diffRatio, regions(cid 聚合)} | {missing}`；尺寸不一致抛 `CaptureError{code:'size-mismatch'}`。automation 面：`compareScreenshot(key,{maxDiffRatio})`、`putBaseline({ignoreRegions})`（基于最近一次 `screenshot()` 产物，`fresh:true` 绕过增量复用）。
+
+### DevTools Why 归因 + 依赖图 + 选择器（M4，plan 2026-11-18-m4）
+
+`__NOP_DEBUGGER_API__.why(cid)` → `WhyResult`：`{verdict, confidence, parts[{category: meta|props|notRendered|reaction|data, verdict, confidence, limitations?}], evidence[{type:'epoch'|'cid'|'expression', target, label}], screenshotTag:'why:<verdict>'}`。五类编排：meta 复用 explainNodeMeta；props 走 explainNodeValue（field 表达式求值）、notRendered（visible=false / error boundary onError 日志）、reaction（`getReactionDebugSnapshot` 只读面）、data（`findFirstWriteEpoch({ring}, scopeId, path)` ForestSnapshot 历史反查——getIn 语义路径，淘汰返回 low+limitation）。why 返回带 `screenshotTag:'why:<verdict>'`，内核随后台发起 fresh 截图证据（失败 console.error 降级）。
+
+依赖图（dependency-graph.ts）：`recordWriteEdge`（M1 写观察者 paths 逐条登记）/`recordReadEdge`（demand-time：explain dependencyPaths 在 why/inspect 时登记——span 级完整收集器 Deferred）/`recordDeriveEdge`；边 >2k → `degradedToPathQuery=true`（增量边清除，queryImpact 返回空 + 降级标记；Failure Path：无读边时仅遍历写边）。`queryDependencyImpact(path)` → `{cids, paths, degradedToPathQuery}`。
+
+选择器（selector-suggest.ts）：`suggestSelector(cid)` 三级优先 `data-testid`（仓库实际产物）> `data-cid` > 最短唯一 CSS（id → tag.classes → nth-of-type 链），均做 document 级唯一性验证。面板 node-tab Why 区块（`ndbg-why-section`）输入 cid 触发归因/选择器展示。

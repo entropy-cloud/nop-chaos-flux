@@ -57,8 +57,11 @@ import {
 import { normalizeRedactionOptions, redactData } from './redaction.js';
 import { createForestSnapshotCollector } from './snapshot-repository.js';
 import { createAssertionBridge } from './assertion-bridge.js';
+import { createWhyBridge } from './why-bridge.js';
+import { createDependencyGraph } from './dependency-graph.js';
+import { suggestSelector } from './selector-suggest.js';
 import { createPreviewController, type PreviewController } from './preview-controller.js';
-import { createIncrementalCapturer, CaptureError } from './capture/screenshot.js';
+import { createIncrementalCapturer } from './capture/screenshot.js';
 import { createDebuggerStore } from './store.js';
 import type {
   NopComponentInspectResult,
@@ -165,8 +168,11 @@ export function createNopDebugger(options: NopDebuggerOptions = {}): NopDebugger
         const rect = document.body.getBoundingClientRect();
         const { result } = await incrementalCapturer.capture({ root: document.body, width: rect.width, height: rect.height });
         store.updateEvent(latest.id, { screenshotId: result.id });
-      } catch {
-        // auto screenshots are best-effort; failures stay silent
+      } catch (error) {
+        // auto screenshots are best-effort; record the failure cause on the event
+        store.updateEvent(latest.id, {
+          detail: `auto screenshot failed cause: ${error instanceof Error ? error.message : String(error)}`,
+        });
       }
     })();
   });
@@ -197,6 +203,17 @@ export function createNopDebugger(options: NopDebuggerOptions = {}): NopDebugger
   const getRuntime = () => runtime;
   let currentInspectByCid = buildInspectByCid(componentRegistry, getRuntime);
 
+  const dependencyGraph = createDependencyGraph();
+  const whyBridge = createWhyBridge({
+    getRuntime,
+    explainValue: (cid: number, expression: string) => explainValue({ cid, field: expression }) as never,
+    store,
+    inspectByCid: (cid: number) => currentInspectByCid(cid),
+    explainMeta: (cid: number, field) => explainMeta({ cid, field }) as never,
+    getSnapshotCollector: () => snapshotCollector ?? null,
+    dependencyGraph,
+    captureEvidence: (options) => assertionBridge.captureScreenshot({ tag: options.tag, fresh: options.fresh }),
+  });
   const assertionBridge = createAssertionBridge({
     getRuntime,
     store,
@@ -339,41 +356,7 @@ export function createNopDebugger(options: NopDebuggerOptions = {}): NopDebugger
     leavePreview: () => previewController?.leavePreview(),
     setPreviewPinned: (pin: boolean) => previewController?.setPinned(pin),
     isPreviewActive: () => previewController?.isActive() ?? false,
-    screenshot: async (options?: { cid?: string; selector?: string; format?: 'png' | 'webp'; scale?: number; tag?: string; fresh?: boolean }) => {
-      if (typeof document === 'undefined') {
-        throw new CaptureError('capture-unavailable', 'document unavailable');
-      }
-      const target =
-        (options?.cid && document.querySelector(`[data-cid="${options.cid}"]`)) ||
-        (options?.selector && document.querySelector(options.selector)) ||
-        document.body;
-      const rect = target.getBoundingClientRect();
-      const input = {
-        root: target,
-        width: rect.width,
-        height: rect.height,
-        format: options?.format,
-        scale: options?.scale,
-        redactionRules: [{ matches: (element: Element) => element.getAttribute('type') === 'password' }],
-        refs: { tag: options?.tag, cid: options?.cid },
-      };
-      if (options?.fresh) {
-        const freshResult = await assertionBridge.screenshotFresh({
-          root: input.root,
-          width: input.width,
-          height: input.height,
-          format: input.format,
-          scale: input.scale,
-          tag: options?.tag,
-          cid: options?.cid,
-        });
-        assertionBridge.recordCapture(freshResult);
-        return { ...freshResult, reused: false };
-      }
-      const result = await incrementalCapturer.capture(input);
-      assertionBridge.recordCapture(result.result);
-      return { ...result.result, reused: result.reused };
-    },
+    screenshot: (options?: { cid?: string; selector?: string; format?: 'png' | 'webp'; scale?: number; tag?: string; fresh?: boolean }) => assertionBridge.captureScreenshot(options),
     setAutoScreenshotMode: (mode: 'on-step' | 'on-change' | 'off') => {
       autoScreenshotMode = mode;
     },
@@ -384,6 +367,9 @@ export function createNopDebugger(options: NopDebuggerOptions = {}): NopDebugger
     dispatch: (action: unknown, ctx?: Record<string, unknown>) => assertionBridge.dispatch(action, ctx),
     compareScreenshot: (baselineKey: string, options?: { maxDiffRatio?: number }) => assertionBridge.compareScreenshot(baselineKey, options),
     putBaseline: (options?: { ignoreRegions?: Array<{ x: number; y: number; width: number; height: number; reason?: string }> }) => assertionBridge.putBaseline(options),
+    why: (cid: number) => whyBridge.why(cid),
+    queryDependencyImpact: async (path: string) => dependencyGraph.queryImpact(path),
+    suggestSelector: async (cid: string) => suggestSelector(cid),
     // [WA-debugger-002] mutation 面单源：引用 controller 同名成员，避免
     // 「store 调用 + persist 调用」方法体在 automation/controller 双面逐字双写；
     // controller 于下方构建，此处闭包仅在构造完成后被调用。
@@ -609,7 +595,15 @@ export function createNopDebugger(options: NopDebuggerOptions = {}): NopDebugger
         snapshotCollector ??= createForestSnapshotCollector({
           pruneScopeIds: () => runtime?.getLiveScopeIds?.() ?? [],
         });
-        snapshotObserverDisposer = runtime.registerStoreWriteObserver({ onWrite: snapshotCollector.observe });
+        snapshotObserverDisposer = runtime.registerStoreWriteObserver({
+          onWrite: (event) => {
+            snapshotCollector!.observe(event);
+            for (const path of event.change.paths) {
+              dependencyGraph.recordWriteEdge(event.scopeId ?? '__anonymous__', path);
+            }
+
+          },
+        });
         previewController ??= createPreviewController({
           getSnapshotAt: (epoch) => snapshotCollector?.getSnapshotAt(epoch) ?? null,
           getLatestShadow: () => latestDomShadow ?? null,

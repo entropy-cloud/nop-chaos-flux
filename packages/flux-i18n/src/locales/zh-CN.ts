@@ -721,6 +721,10 @@ export const zhCN: Resource = {
     debugger: {
       title: '框架调试器',
       assertionEvents: '断言事件',
+      whySection: 'Why 归因',
+      whyCidPlaceholder: 'CID',
+      whyRun: '为什么',
+      whySelector: '选择器',
       timeTravel: '时间旅行',
       pin: '固定',
       pinned: '已固定',

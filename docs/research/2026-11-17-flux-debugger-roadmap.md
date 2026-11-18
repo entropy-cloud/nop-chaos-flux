@@ -142,13 +142,15 @@
 
 ## M4 语义层 Why 面板 + 依赖图（低代码差异化）
 
+> 落地状态（2026-11-18 勘误附注，plan `docs/plans/2026-11-18-m4-why-dependency-graph-plan.md`）：**前端侧收敛**——统一 why(cid) 归因（五类 + EvidenceLink + why:<verdict> 自动截图）、依赖图写边（M1 观察者）/派生边/读边（demand-time 检查记录；span 级完整收集器 Deferred）、queryImpact + 2k 降级、selector 三级建议（data-testid 优先）、面板 node-tab Why 区块、demo e2e（归因文本 + evidence 可达 + selector 解析）。deferred：写读竞态检查、writer 身份归因、完整 ScopeDependencyCollector、依赖图可视化——均入 Non-Goals/Deferred 记账。
+
 **目标**：选中节点回答"为什么"。（总体 §7）
 
 任务：
 
 1. Why 归因（§7.1）：五类归因链——meta 归因（disabled/visible）、props 归因、不渲染归因（visible/region/error boundary）、reaction 归因、数据归因（反查快照历史首写 epoch）；产出 `WhyReport` + 可点击 `EvidenceLink`（跳时间轴/cid/表达式）。底座扩展 `explanations.ts`。
 2. 依赖图（§7.2）：写边（快照 diff）/读边（依赖收集器）/派生边（region）；>2k 边退化为路径查询。
-3. cid 选择器（§7.3）：点选元素 → `data-cid` 直达；附传统 selector 建议（`data-test` > `data-cid` > 最短唯一 CSS）。
+3. cid 选择器（§7.3）：点选元素 → `data-cid` 直达；附传统 selector 建议（`data-test` > `data-cid` > 最短唯一 CSS）。（2026-11-18 勘误：仓库产物实际为 `data-testid`，M4 落地按 `data-testid` 优先。）
 4. Why verdict 自动附截图证据（复用 M2 capture：`tag: 'why:<verdict>'`）。
 
 验收：demo 页构造"disabled 之谜/不渲染之谜"用例，Why 面板给出正确归因（e2e 程序化断言归因文本与 evidence 链接可达）。

@@ -98,6 +98,9 @@ export function createAutomationApi(input: {
   dispatch?(action: unknown, ctx?: Record<string, unknown>): Promise<unknown>;
   compareScreenshot?(baselineKey: string, options?: { maxDiffRatio?: number }): Promise<{ match: boolean; diffRatio: number; missing?: boolean }>;
   putBaseline?(options?: { ignoreRegions?: Array<{ x: number; y: number; width: number; height: number; reason?: string }> }): Promise<{ key: string } | null>;
+  why?(cid: number): Promise<{ verdict: string; confidence: string; parts: Array<{ category: string; verdict: string }>; evidence: Array<{ type: string; target: string; label: string }>; screenshotTag?: string }>;
+  queryDependencyImpact?(path: string): Promise<{ cids: string[]; paths: string[]; degradedToPathQuery: boolean }>;
+  suggestSelector?(cid: string): Promise<{ selector: string; tier: string; unique: boolean } | null>;
 }): NopDebuggerAutomationApi {
   return {
     controllerId: input.controllerId,
@@ -150,6 +153,9 @@ export function createAutomationApi(input: {
     dispatch: input.dispatch,
     compareScreenshot: input.compareScreenshot,
     putBaseline: input.putBaseline,
+    why: input.why,
+    queryDependencyImpact: input.queryDependencyImpact,
+    suggestSelector: input.suggestSelector,
     inspectByCid: input.inspectByCid,
     inspectByElement: input.inspectByElement,
     evaluateNodeExpression: input.evaluateNodeExpression,

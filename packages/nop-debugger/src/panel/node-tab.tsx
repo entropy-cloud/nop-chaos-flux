@@ -1,4 +1,4 @@
-import type { ChangeEvent, KeyboardEvent } from 'react';
+import { useState, type ChangeEvent, type KeyboardEvent } from 'react';
 import { Button, Input, cn } from '@nop-chaos/ui';
 import { t } from '@nop-chaos/flux-i18n';
 import type { NopComponentInspectResult, NopComponentTreeItem, NopNodeDiagnostics } from '../types.js';
@@ -25,8 +25,15 @@ export function NodeTab(props: {
   setEvalInput(value: string): void;
   evalResult: string | null;
   handleEvalExpression(): void;
+  whyApi?: {
+    why(cid: number): Promise<{ verdict: string; confidence: string; parts: Array<{ category: string; verdict: string }>; evidence: Array<{ type: string; target: string; label: string }>; screenshotTag?: string }>;
+    suggestSelector(cid: string): Promise<{ selector: string; tier: string; unique: boolean } | null>;
+    getSnapshotAt?(epoch: number): unknown | null;
+    inspectByCid?(cid: number): unknown;
+  };
 }) {
   const {
+    whyApi,
     componentTree,
     scanComponentTree,
     inspectMode,
@@ -46,6 +53,56 @@ export function NodeTab(props: {
     evalResult,
     handleEvalExpression,
   } = props;
+  const [whyReport, setWhyReport] = useState<string | null>(null);
+  const [whyBusy, setWhyBusy] = useState(false);
+  const [selectorSuggestion, setSelectorSuggestion] = useState<string | null>(null);
+  const [whyCidInput, setWhyCidInput] = useState('');
+  const [whyEvidenceLinks, setWhyEvidenceLinks] = useState<Array<{ type: string; target: string; label: string }>>([]);
+
+  const [whyEvidenceResolved, setWhyEvidenceResolved] = useState<string | null>(null);
+
+  const followEvidenceLink = async (link: { type: string; target: string }) => {
+    if (!whyApi) return;
+    if (link.type === 'epoch' && whyApi.getSnapshotAt) {
+      const snapshot = whyApi.getSnapshotAt(Number(link.target));
+      setWhyEvidenceResolved(`epoch ${link.target}: ${snapshot ? '快照存在' : '快照不存在'}`);
+      return;
+    }
+    if (link.type === 'cid' && whyApi.inspectByCid) {
+      const inspect = whyApi.inspectByCid(Number(link.target));
+      setWhyEvidenceResolved(`cid ${link.target}: ${inspect ? '节点可检视' : '节点不可检视'}`);
+      return;
+    }
+    setWhyEvidenceResolved(`${link.type}: ${link.target}（表达式，可用 Evaluate 面板求值）`);
+  };
+
+  const runWhy = async (cid: number) => {
+    if (!whyApi) return;
+    setWhyBusy(true);
+    try {
+      const report = await whyApi.why(cid);
+      const lines = [`verdict: ${report.verdict} (${report.confidence})`];
+      for (const part of report.parts) lines.push(`${part.category}: ${part.verdict}`);
+      if (report.screenshotTag) lines.push(`screenshot: ${report.screenshotTag}`);
+      setWhyReport(lines.join('\n'));
+      setWhyEvidenceLinks(report.evidence);
+    } catch (error) {
+      setWhyReport(`why failed cause: ${error instanceof Error ? error.message : String(error)}`);
+    } finally {
+      setWhyBusy(false);
+    }
+  };
+
+  const runSelector = async (cid: number) => {
+    if (!whyApi) return;
+    try {
+      const suggestion = await whyApi.suggestSelector(String(cid));
+      setSelectorSuggestion(suggestion ? `${suggestion.tier}: ${suggestion.selector}${suggestion.unique ? '' : ' (非唯一)'}` : '未找到节点');
+    } catch (error) {
+      setSelectorSuggestion(`selector failed cause: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  };
+
   const formTabLabels = {
     values: t('flux.debugger.formTabValues'),
     errors: t('flux.debugger.formTabErrors'),
@@ -404,6 +461,58 @@ export function NodeTab(props: {
           {evalResult !== null ? <div className="ndbg-eval-result">{evalResult}</div> : null}
         </div>
       ) : null}
+      {whyApi && (
+        <section className="ndbg-why" data-testid="ndbg-why-section">
+          <p className="mt-3 text-[11px] uppercase tracking-[0.12em] text-white/40 font-bold">
+            {t('flux.debugger.whySection')}
+          </p>
+          <div className="flex items-center gap-2 mt-1">
+            <Input
+              size="sm"
+              placeholder={t('flux.debugger.whyCidPlaceholder')}
+              className="ndbg-why-cid-input w-24"
+              value={whyCidInput}
+              onChange={(event: ChangeEvent<HTMLInputElement>) => setWhyCidInput(event.target.value)}
+              data-testid="ndbg-why-cid-input"
+            />
+            <Button variant="ghost" size="sm" data-testid="ndbg-why-run" onClick={() => runWhy(Number(whyCidInput))} disabled={whyBusy || !whyCidInput}>
+              {whyBusy ? '…' : t('flux.debugger.whyRun')}
+            </Button>
+            <Button variant="ghost" size="sm" data-testid="ndbg-selector-run" onClick={() => runSelector(Number(whyCidInput))} disabled={!whyCidInput}>
+              {t('flux.debugger.whySelector')}
+            </Button>
+          </div>
+          {whyReport && (
+            <pre className="mt-2 p-2 rounded-[8px] bg-black/30 text-[11px] font-mono text-white/70 whitespace-pre-wrap" data-testid="ndbg-why-report">
+              {whyReport}
+            </pre>
+          )}
+          {whyEvidenceLinks.length > 0 && (
+            <div className="mt-1 flex flex-wrap gap-1.5" data-testid="ndbg-why-evidence">
+              {whyEvidenceLinks.map((link) => (
+                <Button
+                  key={`${link.type}:${link.target}`}
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => void followEvidenceLink(link)}
+                >
+                  {link.label} ({link.type}:{link.target})
+                </Button>
+              ))}
+            </div>
+          )}
+          {whyEvidenceResolved && (
+            <div className="mt-1 text-[11px] font-mono text-white/50" data-testid="ndbg-why-evidence-resolved">
+              {whyEvidenceResolved}
+            </div>
+          )}
+          {selectorSuggestion && (
+            <pre className="mt-1 p-2 rounded-[8px] bg-black/30 text-[11px] font-mono text-white/70" data-testid="ndbg-selector-suggestion">
+              {selectorSuggestion}
+            </pre>
+          )}
+        </section>
+      )}
     </>
   );
 }
