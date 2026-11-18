@@ -1,7 +1,7 @@
 {
   "_header": {
     "description": "Numeric baselines for the high-risk advisory scanners listed in BASELINED_SCANNERS (check-scanner-baselines.mjs). A count above the baseline fails check:scanner-baselines (new suspects must be fixed or the baseline consciously re-registered).",
-    "lastUpdated": "2026-11-18",
+    "lastUpdated": "2026-11-19",
     "reRegistrationNotes": [
       "2026-11-18 plan 2026-11-18-e1-flux-test-backend-foundation-plan (E1 flux 测试后端骨架): discover-audit-suspects 794 -> 810 / find-test-global-leaks 115 -> 116 / find-async-without-failure-path 347 -> 359 / find-performance-suspects 30 -> 33。全部新增命中均来自两个新测试基建包 @nop-chaos/flux-test-server 与 @nop-chaos/flux-test-driver（E 轨道 E1，替代 Playwright 的自研测试后端骨架）:(1) async-without-failure-path：ws send/notify 的 fire-and-forget（gateway.broadcast/peer.notify/断连清理）、locator 轮询 sleep 循环、cdp-client 事件分发——测试后端消息通道的失败统一经 runner 超时/peer-lost 聚合，不在每个 send 上挂失败分支；(2) discover-audit-suspects：同上来源 + cli.ts 的 no-console 终端报告输出（CLI 本职）；(3) test-global-leaks：locator.test.ts 为 jsdom 语义测试注入 globalThis.document/window（带 @vitest-environment jsdom pragma，已登记 jsdom-pragma-whitelist）；(4) performance-suspects：mock-cdp.ts/locator 的 setTimeout 轮询——测试基建的确定性等待原语，非生产热路径。两包均 private、不进生产 bundle，按 AGENTS '新增命中需拆分或登记' 规则做有意再登记。",
       "2026-11-10 plan 861 (navigation URL & external key safety): find-async-without-failure-path 346 -> 347 / discover-audit-suspects 793 -> 794 (+1 each, same source — the two bare catches in the plan-861 fix surface are the intentional failure paths themselves). (1) packages/flux-core/src/utils/url.ts:54 isSafeNavigationUrl catch { return false }: fail-closed semantics ARE the contract (R3 — any input new URL cannot resolve is judged unsafe, plan Phase 2 item + url.test.ts unparseable-input assertion); (2) packages/nop-debugger/src/panel-search.ts:18 parseRegexLiteral catch { return null }: refused/invalid regex literals fall back to literal text matching per R7 gate semantics (plan 861 adjudication ④; null return IS the structured refusal signal). Same intentional-shape family as the plan-769/772/528 registrations. Surgical hand-edit per 09ed6e5b6 precedent; no --update-baselines.",
@@ -37,23 +37,24 @@
       "2026-10-20 plan 667 (M9 图像与手写): find-react19-optimization-candidates 656 -> 657 (+1 = image-viewer.tsx 受控 effect 对 window.innerWidth/innerHeight 的读取，exhaustive-deps 语义下保留；其余 6 处 useCallback 候选已按 redundant-use-callback 指引改普通函数回落)。无未处理异步失败路径；R2 补记：image-viewer 字面色迁包 CSS 后 find-styling-suspects 247 -> 249 (+2 = image-viewer bg/indicator 调色板规则)、discover-audit-suspects 757 -> 759 (+2 同源双计)。无未处理异步失败路径；R2 补记：plan 668 index-bar 落地后 react19 657 -> 661 (+4 = index-bar locate 链 useCallback 候选，同族)；R2 补记：index-bar 字面色迁包 CSS 后 find-styling-suspects 249 -> 252 (+3 = index-bar key/active/bubble 调色板规则)、discover-audit-suspects 759 -> 762 (+3 同源双计含 data-selected/data-index-key 属性选择器)。无未处理异步失败路径。\"",
       "2026-10-20 plan 669 (M11 安全输入组): find-react19-optimization-candidates 661 -> 663 (+2 = number-keyboard 受控 open 同步 effect 与乱序洗牌 effect 的信息级候选，语义必要保留)。无未处理异步失败路径；R2 补记：number-keyboard 锌字面 key 类改包 CSS data-slot 规则后 find-styling-suspects 252 -> 255 (+3 = key fg/divider 规则)、discover-audit-suspects 762 -> 765 (+3 同源双计)。无未处理异步失败路径。\"",
       "R2.5 cycle (2026-10-24): discover-audit-suspects 765->772 (+7) / find-test-global-leaks 108->115 (+7) — 同源同族：plan 727 新增两测试文件的测试基建形态命中（carousel-autoplay-lifecycle.test.tsx 可变模块级 mock 槽（intervalCalls/clearedIds/intervalCallback/reducedMotionChangeListeners 等 harness 控制面，与既有 carousel-autoplay.test.tsx 同构但既有文件已在基数内）+ three-canvas-lifecycle 新 describe 的 buildProps 就地对象；test-global-leaks 按模块级 let 计数）。纯测试 harness 面，零产品代码新增 suspect。surgical 手改单值，未走 --update-baselines（09ed6e5b6 先例）。",
-      "2026-11-18 plan 2026-11-18-e2-test-console-v1-plan (E2 Test Console v1 + T0 试点): discover-audit-suspects 810 -> 826 / find-async-without-failure-path 359 -> 369 / find-performance-suspects 33 -> 39。全部新增命中仍来自两个测试基建包 @nop-chaos/flux-test-server 与 @nop-chaos/flux-test-driver 的 E2 新增面：console-server（run 编排 fire-and-forget startRun、CLI/静态服务终端输出）、console/app.tsx（React Console 页）、gateway run 广播/log.emit 转发、driver kernel log.emit 1s tick 轮询与限频、expect/locator 轮询 sleep 循环——同 E1 注册理由：测试后端消息通道失败统一经 runner 超时/peer-lost 聚合，不在每个 send/loop 上挂失败分支；CLI/Console 页终端输出为本职。"
+      "2026-11-18 plan 2026-11-18-e2-test-console-v1-plan (E2 Test Console v1 + T0 试点): discover-audit-suspects 810 -> 826 / find-async-without-failure-path 359 -> 369 / find-performance-suspects 33 -> 39。全部新增命中仍来自两个测试基建包 @nop-chaos/flux-test-server 与 @nop-chaos/flux-test-driver 的 E2 新增面：console-server（run 编排 fire-and-forget startRun、CLI/静态服务终端输出）、console/app.tsx（React Console 页）、gateway run 广播/log.emit 转发、driver kernel log.emit 1s tick 轮询与限频、expect/locator 轮询 sleep 循环——同 E1 注册理由：测试后端消息通道失败统一经 runner 超时/peer-lost 聚合，不在每个 send/loop 上挂失败分支；CLI/Console 页终端输出为本职。",
+      "2026-11-19 plan 2026-11-18-e3-batch-migration-wave1-plan (E3 Wave 1): discover-audit-suspects 826 -> 834 / find-test-global-leaks 116 -> 118 / find-async-without-failure-path 369 -> 372 / find-performance-suspects 39 -> 42。新增命中仍集中在测试基建面：flux-test-server console-server/cli/watch 轮询（fire-and-forget startRun、CLI 终端输出、watch setInterval）、flux-test-driver expect-web/input（轮询 sleep 循环、真实输入桥接）、flux-bundle-built-dist.spec（test-global-leaks 为既有 spec 新增 2 处——本批未改动的存量文件，波动来自扫描面扩大）。同 E1/E2 注册理由：测试后端消息通道失败统一经 runner 超时聚合，轮询/终端输出为本职。"
     ]
   },
   "scanners": {
     "find-styling-suspects": 254,
-    "discover-audit-suspects": 826,
-    "find-test-global-leaks": 116,
+    "discover-audit-suspects": 834,
+    "find-test-global-leaks": 118,
     "find-todo-exitless": 0,
     "find-as-any-casts": 31,
-    "find-async-without-failure-path": 369,
+    "find-async-without-failure-path": 372,
     "find-react19-optimization-candidates": 668,
     "find-canvas-wrapper-a11y-gaps": 0,
     "find-hardcoded-type-dispatch": 0,
     "find-missing-renderer-markers": 15,
     "find-fieldframe-bypasses": 12,
     "find-reactive-render-reads": 21,
-    "find-performance-suspects": 39,
+    "find-performance-suspects": 42,
     "find-non-retained-renderer-references": 161
   }
 }

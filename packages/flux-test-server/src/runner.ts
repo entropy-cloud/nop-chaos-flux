@@ -51,16 +51,37 @@ export async function runSpecs(options: RunnerOptions): Promise<RunSummary> {
   const gateway = options.overrides?.gateway ?? new TestGateway();
   const gatewayPort = options.overrides?.gatewayPort ?? (options.overrides?.gateway ? 0 : await gateway.listen());
   const browser: BrowserHandle = options.overrides?.browser ?? await launchBrowser(options.launcher);
+  let lastMouse: { x: number; y: number } | null = null;
   gateway.onRequest(async (method, params) => {
+    if (!activePage) throw new Error('input channel: no active page');
     if (method === 'input.move' || method === 'input.hover' || method === 'input.click') {
-      if (!activePage) throw new Error('input channel: no active page');
       const x = Number(params.x);
       const y = Number(params.y);
+      lastMouse = { x, y };
       if (method === 'input.click') {
         await activePage.mouseClick(x, y);
       } else {
         await activePage.mouseMove(x, y);
       }
+      return { ok: true };
+    }
+    if (method === 'input.mousedown' || method === 'input.mouseup') {
+      const x = Number(params.x ?? lastMouse?.x ?? 0);
+      const y = Number(params.y ?? lastMouse?.y ?? 0);
+      if (method === 'input.mousedown') await activePage.mouseDown(x, y);
+      else await activePage.mouseUp(x, y);
+      return { ok: true };
+    }
+    if (method === 'input.wheel') {
+      await activePage.mouseWheel(Number(params.x ?? 0), Number(params.y ?? 0), Number(params.deltaX ?? 0), Number(params.deltaY ?? 0));
+      return { ok: true };
+    }
+    if (method === 'input.key') {
+      await activePage.keyPress(String(params.key ?? ''), Number(params.modifiers ?? 0));
+      return { ok: true };
+    }
+    if (method === 'emulation.viewport') {
+      await activePage.setViewport(Number(params.width), Number(params.height));
       return { ok: true };
     }
     throw new Error(`input channel: unknown method ${method}`);

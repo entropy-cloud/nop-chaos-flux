@@ -1,7 +1,7 @@
 {
-  "clones": 534,
+  "clones": 535,
   "percentage": "2.3",
   "thresholdPct": 8,
-  "updated": "2026-11-05",
-  "_note": "2026-08-08 registered 454/3.04%; count grew +31% undetected by ratio-only gating (CQ-T2). 2026-09-30 reregistered 597. 2026-11-05 plan 856 (deep-audit-1105 gate baseline honesty) shrink 597 -> 534: fresh live recount at the audit gate run (534 clones, 7251/315626 duplicated lines, 2.3%) — the gap accumulated after the 2026-09-30 registration (natural debt reduction + the 2026-10-30 mall-mobile retirement, dc4d8bf97, whose clone surface left the baseline untouched). Hand-edit per registry precedent; thresholdPct 8 unchanged (ratio-gating semantics out of plan-856 scope)."
+  "updated": "2026-11-19",
+  "_note": "2026-08-08 registered 454/3.04%; count grew +31% undetected by ratio-only gating (CQ-T2). 2026-09-30 reregistered 597. 2026-11-05 plan 856 (deep-audit-1105 gate baseline honesty) shrink 597 -> 534: fresh live recount at the audit gate run (534 clones, 7251/315626 duplicated lines, 2.3%) — the gap accumulated after the 2026-09-30 registration (natural debt reduction + the 2026-10-30 mall-mobile retirement, dc4d8bf97, whose clone surface left the baseline untouched). Hand-edit per registry precedent; thresholdPct 8 unchanged (ratio-gating semantics out of plan-856 scope). 2026-11-19 plan 2026-11-18-e3-batch-migration-wave1-plan (E3 Wave 1) re-registered 534 -> 535: 新增克隆为 flux-test-driver input.ts↔types.ts KeyboardApi/MouseApi 声明镜像（接口与实现并置的既有模式），+1 克隆随测试基建包扩展进入扫描面。"
 }

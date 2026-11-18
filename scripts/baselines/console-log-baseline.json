@@ -184,6 +184,12 @@
       "line": 74,
       "text": "console.log(`flux-test console: http://127.0.0.1:${console_.port}/__flux_test__`);",
       "reason": "flux-test CLI --open 模式（E2 Console v1）的终端提示输出：告知开发者 Console 管控页地址，CLI 本职；private 包不进生产 bundle，非浏览器运行时。"
+    },
+    {
+      "file": "packages/flux-test-server/src/cli.ts",
+      "line": 69,
+      "text": "console.log('flux-test watch: spec 变更将自动重跑（500ms debounce）');",
+      "reason": "flux-test CLI --watch 模式（E3 Wave 1）的终端提示输出：告知开发者 watch 已开启，CLI 本职；private 包不进生产 bundle，非浏览器运行时。"
     }
   ]
 }

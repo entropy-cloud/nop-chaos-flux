@@ -1,4 +1,5 @@
 import type { DebuggerApiView, FtGlobal } from './types.js';
+import { getRealInput as getBridge } from './real-input.js';
 import { buildFtGlobal } from './ft.js';
 
 declare global {
@@ -16,6 +17,8 @@ export interface KernelAttachResult {
   sessionId?: string;
   gatewayConnected: boolean;
 }
+
+export type { RealInputFn } from './real-input.js';
 
 let gatewaySocket: WebSocket | null = null;
 let logTimer: ReturnType<typeof setInterval> | null = null;
@@ -110,14 +113,15 @@ export function installFt(options: { gateway?: boolean; waitForKernelMs?: number
       result.gatewayConnected = connectGateway(window.__FLUX_TEST_GATEWAY_PORT__, targetId, result.controllerId ?? 'no-kernel');
       if (result.gatewayConnected) {
         startLogEmit(getApi);
-        // real-input bridge: Locator hover/click prefer CDP trust events when
-        // the gateway can relay them (CSS :hover is unreachable synthetically)
+        // real-input bridge: Locator/keyboard/mouse prefer CDP trust events when
+        // the gateway can relay them (CSS :hover and OS-level keys are
+        // unreachable synthetically)
         let nextId = 1;
-        (window as unknown as { __fluxTestRealInput?: (method: string, x: number, y: number) => Promise<void> }).__fluxTestRealInput = async (method, x, y) => {
+        (window as unknown as { __fluxTestRealInput?: ReturnType<typeof getBridge> }).__fluxTestRealInput = async (method, params) => {
           const socket = gatewaySocket;
           if (!socket || socket.readyState !== WebSocket.OPEN) throw new Error('gateway not open');
           const id = nextId++;
-          socket.send(JSON.stringify({ id, method, params: { x, y } }));
+          socket.send(JSON.stringify({ id, method, params }));
           await new Promise<void>((resolve, reject) => {
             const timer = setTimeout(() => reject(new Error('real-input timeout')), 5_000);
             const onMessage = (event: MessageEvent) => {

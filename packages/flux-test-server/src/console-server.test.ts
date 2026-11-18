@@ -130,3 +130,96 @@ describe('gateway external-server attach', () => {
     ws.close();
   });
 });
+
+describe('Console watch mode', () => {
+  it('debounces file churn into a single re-run and stops on toggle-off', async () => {
+    const { mkdtempSync, writeFileSync, rmSync } = await import('node:fs');
+    const { tmpdir } = await import('node:os');
+    const { join } = await import('node:path');
+    const dir = mkdtempSync(join(tmpdir(), 'flux-watch-'));
+    cleanups.push(async () => rmSync(dir, { recursive: true, force: true }));
+    writeFileSync(join(dir, 'demo.flux-spec.ts'), 'export default async () => {};\n');
+
+    const runs: string[] = [];
+    const handle = await register(await startConsoleServer({
+      specsDir: dir,
+      baseUrl: 'http://127.0.0.1:59998',
+      timeoutMs: 5_000,
+      runOverride: async (specFullPath) => {
+        runs.push(specFullPath);
+        return { results: [], exitCode: 0 };
+      },
+    }));
+
+    const watchOn = await fetch(`http://127.0.0.1:${handle.port}/__flux_test__/api/watch`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ on: true }),
+    });
+    expect(((await watchOn.json()) as { watching: boolean }).watching).toBe(true);
+
+    // churn: three rapid saves of the same spec → debounce collapses to one run
+    for (let i = 0; i < 3; i += 1) {
+      writeFileSync(join(dir, 'demo.flux-spec.ts'), `export default async () => { return ${i}; };\n`);
+    }
+    // unrelated file must not trigger
+    writeFileSync(join(dir, 'notes.txt'), 'x\n');
+    await new Promise((resolve) => setTimeout(resolve, 1_200));
+    expect(runs.length).toBe(1);
+    expect(runs[0]).toContain('demo.flux-spec.ts');
+
+    const watchOff = await fetch(`http://127.0.0.1:${handle.port}/__flux_test__/api/watch`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ on: false }),
+    });
+    expect(((await watchOff.json()) as { watching: boolean }).watching).toBe(false);
+    writeFileSync(join(dir, 'demo.flux-spec.ts'), 'export default async () => { return 9; };\n');
+    await new Promise((resolve) => setTimeout(resolve, 900));
+    expect(runs.length).toBe(1);
+  });
+
+  it('skips the run when a debounced change lands while a run is in flight', async () => {
+    const { mkdtempSync, writeFileSync, rmSync } = await import('node:fs');
+    const { tmpdir } = await import('node:os');
+    const { join } = await import('node:path');
+    const dir = mkdtempSync(join(tmpdir(), 'flux-watch-2-'));
+    cleanups.push(async () => rmSync(dir, { recursive: true, force: true }));
+    writeFileSync(join(dir, 'busy.flux-spec.ts'), 'export default async () => {};\n');
+
+    let release: (() => void) | null = null;
+    const gate = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    let inFlight = false;
+    const handle = await register(await startConsoleServer({
+      specsDir: dir,
+      baseUrl: 'http://127.0.0.1:59998',
+      timeoutMs: 5_000,
+      runOverride: async () => {
+        inFlight = true;
+        await gate;
+        inFlight = false;
+        return { results: [], exitCode: 0 };
+      },
+    }));
+    void inFlight;
+
+    await fetch(`http://127.0.0.1:${handle.port}/__flux_test__/api/watch`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ on: true }),
+    });
+    // occupy the single-flight slot
+    writeFileSync(join(dir, 'busy.flux-spec.ts'), 'export default async () => { return 1; };\n');
+    await new Promise((resolve) => setTimeout(resolve, 900));
+    expect(inFlight).toBe(true);
+    // change during the in-flight run must be dropped, not queued
+    writeFileSync(join(dir, 'busy.flux-spec.ts'), 'export default async () => { return 2; };\n');
+    await new Promise((resolve) => setTimeout(resolve, 900));
+    release!();
+    await new Promise((resolve) => setTimeout(resolve, 900));
+    // run finished; no queued re-run fired
+    expect(inFlight).toBe(false);
+  });
+});

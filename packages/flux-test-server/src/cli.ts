@@ -15,6 +15,7 @@ export interface CliArgs {
   expectedFailures: string[];
   noDriver?: boolean;
   open?: boolean;
+  watch?: boolean;
   malformed?: boolean;
 }
 
@@ -30,6 +31,7 @@ function parseArgs(argv: string[]): CliArgs {
     else if (arg === '--timeout') args.timeoutMs = Number(argv[++i]);
     else if (arg === '--report') args.report = argv[++i];
     else if (arg === '--open') args.open = true;
+    else if (arg === '--watch') args.watch = true;
     else if (arg === '--expected-fail') {
       const value = argv[++i];
       if (!value || value.startsWith('--')) {
@@ -57,6 +59,15 @@ export async function runCli(argv: string[]): Promise<number> {
       reportPath: args.report ?? 'tests/e2e/artifacts/flux-test-report.json',
       driverEntryPath: args.noDriver ? undefined : path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../flux-test-driver/src/index.ts'),
     });
+    if (args.watch) {
+      await fetch(`http://127.0.0.1:${console_.port}/__flux_test__/api/watch`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ on: true }),
+      });
+      // eslint-disable-next-line no-console -- CLI 本职：Watch 模式提示
+      console.log('flux-test watch: spec 变更将自动重跑（500ms debounce）');
+    }
     // eslint-disable-next-line no-console -- CLI 本职：Console 入口地址
     console.log(`flux-test console: http://127.0.0.1:${console_.port}/__flux_test__`);
     return await new Promise<number>((resolve) => {

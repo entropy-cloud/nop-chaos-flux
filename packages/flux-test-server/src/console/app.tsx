@@ -12,6 +12,8 @@ interface RunResult {
   status: string;
   durationMs: number;
   error?: string;
+  /** Command Log tail captured at run finish (assertion detail drawer). */
+  logTail?: KernelLogEntry[];
 }
 
 interface KernelLogEntry {
@@ -28,7 +30,13 @@ export function ConsoleApp(): React.ReactElement {
   const [logs, setLogs] = useState<KernelLogEntry[]>([]);
   const [dropped, setDropped] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  const [watching, setWatching] = useState(false);
+  const [expandedId, setExpandedId] = useState<number | null>(null);
   const nextIdRef = useRef(1);
+  const logsRef = useRef<KernelLogEntry[]>([]);
+  useEffect(() => {
+    logsRef.current = logs;
+  }, [logs]);
 
   useEffect(() => {
     void fetch('/__flux_test__/api/specs')
@@ -48,11 +56,14 @@ export function ConsoleApp(): React.ReactElement {
         setRunningSpec(null);
         const summary = msg.params.summary as { results: RunResult[] } | undefined;
         if (summary) {
+          const logTail = logsRef.current.slice(-20);
           setResults((prev) => [
-            ...summary.results.map((result) => ({ ...result, id: nextIdRef.current++ })),
+            ...summary.results.map((result) => ({ ...result, id: nextIdRef.current++, logTail })),
             ...prev,
           ]);
         }
+      } else if (msg.method === 'console.watch.state') {
+        setWatching(Boolean(msg.params.on));
       } else if (msg.method === 'console.log') {
         const payload = msg.params.payload as { entries?: Array<{ seq: number; kind: string; summary: string }>; dropped?: number } | undefined;
         if (payload?.entries) {
@@ -78,6 +89,21 @@ export function ConsoleApp(): React.ReactElement {
     else if (!res.ok) setError(`run 请求失败：HTTP ${res.status}`);
   };
 
+  const toggleWatch = async (): Promise<void> => {
+    setError(null);
+    const res = await fetch('/__flux_test__/api/watch', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ on: !watching }),
+    });
+    if (res.ok) {
+      const data = (await res.json()) as { watching: boolean };
+      setWatching(data.watching);
+    } else {
+      setError(`watch 切换失败：HTTP ${res.status}`);
+    }
+  };
+
   return (
     <div style={{ display: 'flex', width: '100%', color: '#e7e9ea' }}>
       <aside style={{ width: 300, borderRight: '1px solid #2a2d31', padding: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -100,7 +126,12 @@ export function ConsoleApp(): React.ReactElement {
       </aside>
       <main style={{ flex: 1, padding: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
         {error ? <Badge variant="destructive">{error}</Badge> : null}
-        {runningSpec ? <Badge>Runner · {runningSpec} in progress</Badge> : <Badge variant="secondary">Runner · idle</Badge>}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          {runningSpec ? <Badge>Runner · {runningSpec} in progress</Badge> : <Badge variant="secondary">Runner · idle</Badge>}
+          <Button size="sm" variant={watching ? 'default' : 'outline'} onClick={() => void toggleWatch()}>
+            {watching ? 'Watch: on' : 'Watch: off'}
+          </Button>
+        </div>
         <section style={{ minHeight: 120 }}>
           <h2 style={{ fontSize: 13, margin: '0 0 6px' }}>Results</h2>
           {results.length === 0 ? (
@@ -108,8 +139,30 @@ export function ConsoleApp(): React.ReactElement {
           ) : (
             results.map((result) => (
               <div key={result.id} style={{ fontSize: 12, padding: '4px 0' }}>
-                <Badge variant={result.status === 'passed' ? 'secondary' : 'destructive'}>{result.status}</Badge>{' '}
-                {result.spec} ({result.durationMs}ms){result.error ? ` — ${result.error}` : ''}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  style={{ padding: 0, justifyContent: 'flex-start' }}
+                  onClick={() => setExpandedId((prev) => (prev === result.id ? null : result.id))}
+                >
+                  <Badge variant={result.status === 'passed' ? 'secondary' : 'destructive'}>{result.status}</Badge>{' '}
+                  {result.spec} ({result.durationMs}ms){result.error ? ' — ⚠' : ''}
+                </Button>
+                {expandedId === result.id ? (
+                  <div style={{ margin: '4px 0 4px 12px', padding: 8, border: '1px solid #2a2d31', borderRadius: 4 }}>
+                    <div style={{ opacity: 0.9, whiteSpace: 'pre-wrap' }}>
+                      {result.error ?? '（无错误详情）'}
+                    </div>
+                    <div style={{ marginTop: 6, opacity: 0.7 }}>
+                      Command Log 尾部（≤20 条）:
+                      {result.logTail && result.logTail.length > 0 ? result.logTail.map((entry) => (
+                        <div key={entry.id} style={{ fontFamily: 'ui-monospace, monospace', fontSize: 11 }}>
+                          [{entry.kind}] {entry.summary}
+                        </div>
+                      )) : <div>（无内核事件）</div>}
+                    </div>
+                  </div>
+                ) : null}
               </div>
             ))
           )}

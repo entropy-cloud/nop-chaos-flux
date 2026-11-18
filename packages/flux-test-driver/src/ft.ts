@@ -2,6 +2,9 @@ import { escapeAttr } from './escape-attr.js';
 import type { AssertCheck, DebuggerApiView, FtGlobal, WaitForPredicate, WaitForResult } from './types.js';
 import { createExpect } from './expect.js';
 import { createLocator } from './locator.js';
+import { createWebExpect } from './expect-web.js';
+import { createKeyboard, createMouse } from './input.js';
+import { buildRoleSelector, createRoleLocator } from './roles.js';
 
 export function requireKernel(api: DebuggerApiView | undefined): DebuggerApiView {
   if (!api) {
@@ -73,8 +76,17 @@ export function buildFtGlobal(getApi: () => DebuggerApiView | undefined): FtGlob
       return kernel.getSnapshotAt(epoch);
     },
     async evaluate<T>(expression: string): Promise<T> {
-      // eslint-disable-next-line no-new-func -- 兼容层兜底 API：语义等价 page.evaluate 的存量迁移逃生口
-      return new Function(`return (${expression});`)() as T;
+      // 兼容层兜底 API：语义等价 page.evaluate 的存量迁移逃生口
+      const compile = (body: string) =>
+        // eslint-disable-next-line no-new-func -- 同上
+        new Function(body) as () => T;
+      try {
+        return compile(`return (${expression});`)();
+      } catch (err) {
+        if (!(err instanceof SyntaxError)) throw err;
+        // statement form: wrap in an IIFE so multi-statement snippets work like page.evaluate fn bodies
+        return compile(`return (() => {\n${expression}\n})();`)();
+      }
     },
     async screenshot(options?: unknown) {
       const kernel = requireKernel(api);
@@ -82,11 +94,31 @@ export function buildFtGlobal(getApi: () => DebuggerApiView | undefined): FtGlob
       return kernel.screenshot(options);
     },
     expect: createExpect(getApi, notifyAssertSafe),
+    expectWeb: createWebExpect(notifyAssertSafe),
     locator(selector: string, options?) {
       return createLocator(() => document, selector, options, getApi);
     },
     getByTestId(testId: string, options?) {
       return createLocator(() => document, `[data-testid="${testId}"]`, options, getApi);
+    },
+    getByRole(role, options) {
+      const selector = buildRoleSelector(role, options?.level);
+      if (options?.name === undefined) {
+        return createLocator(() => document, selector, {}, getApi);
+      }
+      return createRoleLocator(() => document, selector, options.name, {});
+    },
+    keyboard: createKeyboard(),
+    mouse: createMouse(),
+    async setViewportSize(width, height) {
+      const real = (globalThis as { __fluxTestRealInput?: (m: string, p: Record<string, unknown>) => Promise<void> }).__fluxTestRealInput;
+      if (!real) throw new Error('viewport: real-input bridge unavailable (gateway not connected)');
+      await real('emulation.viewport', { width, height });
+    },
+    errors() {
+      const kernel = requireKernel(api);
+      const latest = kernel.getLatestErrors?.() ?? [];
+      return latest.map((event) => ({ kind: String((event as { kind?: string }).kind ?? 'error'), message: String((event as { message?: string }).message ?? (event as { summary?: string }).summary ?? '') }));
     },
     kernel: {
       attached: Boolean(api),

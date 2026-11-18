@@ -25,6 +25,11 @@ export interface PageHandle {
   /** Real OS-level input (trust events): CDP Input domain. */
   mouseMove(x: number, y: number): Promise<void>;
   mouseClick(x: number, y: number): Promise<void>;
+  mouseDown(x: number, y: number): Promise<void>;
+  mouseUp(x: number, y: number): Promise<void>;
+  mouseWheel(x: number, y: number, deltaX: number, deltaY: number): Promise<void>;
+  /** Single key press: down + (printable) char insertion + up, CDP Input.dispatchKeyEvent. */
+  keyPress(key: string, modifiers?: number): Promise<void>;
   close(): Promise<void>;
 }
 
@@ -197,6 +202,23 @@ function buildHandle(client: CdpClient, wsEndpoint: string, kill: (() => Promise
           await sessionSend('Input.dispatchMouseEvent', { type: 'mousePressed', x, y, button: 'left', clickCount: 1 });
           await sessionSend('Input.dispatchMouseEvent', { type: 'mouseReleased', x, y, button: 'left', clickCount: 1 });
         },
+        mouseDown: async (x, y) => {
+          await sessionSend('Input.dispatchMouseEvent', { type: 'mousePressed', x, y, button: 'left', clickCount: 1 });
+        },
+        mouseUp: async (x, y) => {
+          await sessionSend('Input.dispatchMouseEvent', { type: 'mouseReleased', x, y, button: 'left', clickCount: 1 });
+        },
+        mouseWheel: async (x, y, deltaX, deltaY) => {
+          await sessionSend('Input.dispatchMouseEvent', { type: 'mouseWheel', x, y, deltaX, deltaY });
+        },
+        keyPress: async (key, modifiers = 0) => {
+          const descriptor = resolveKeyDescriptor(key);
+          await sessionSend('Input.dispatchKeyEvent', { type: 'keyDown', modifiers, ...descriptor });
+          if (descriptor.text !== undefined) {
+            await sessionSend('Input.dispatchKeyEvent', { type: 'char', modifiers, ...descriptor });
+          }
+          await sessionSend('Input.dispatchKeyEvent', { type: 'keyUp', modifiers, ...descriptor });
+        },
         close: async () => {
           await sessionSend('Target.closeTarget', { targetId });
         },
@@ -233,4 +255,40 @@ export async function waitForHttpReady(url: string, timeoutMs = 60_000): Promise
     }
   }
   throw new FluxTestError('page-load-timeout', `base URL never became reachable`, { url, lastError: String(lastError) });
+}
+
+const SPECIAL_KEYS: Record<string, { code: string; vk: number }> = {
+  Enter: { code: 'Enter', vk: 13 },
+  Tab: { code: 'Tab', vk: 9 },
+  Escape: { code: 'Escape', vk: 27 },
+  Backspace: { code: 'Backspace', vk: 8 },
+  Delete: { code: 'Delete', vk: 46 },
+  ArrowUp: { code: 'ArrowUp', vk: 38 },
+  ArrowDown: { code: 'ArrowDown', vk: 40 },
+  ArrowLeft: { code: 'ArrowLeft', vk: 37 },
+  ArrowRight: { code: 'ArrowRight', vk: 39 },
+  Home: { code: 'Home', vk: 36 },
+  End: { code: 'End', vk: 35 },
+  PageUp: { code: 'PageUp', vk: 33 },
+  PageDown: { code: 'PageDown', vk: 34 },
+  Space: { code: 'Space', vk: 32 },
+  Control: { code: 'ControlLeft', vk: 17 },
+  Alt: { code: 'AltLeft', vk: 18 },
+  Shift: { code: 'ShiftLeft', vk: 16 },
+  Meta: { code: 'MetaLeft', vk: 91 },
+};
+
+/** CDP Input.dispatchKeyEvent params for a logical key name (single character or special key). */
+export function resolveKeyDescriptor(key: string): { key: string; code: string; windowsVirtualKeyCode: number; text?: string } {
+  const special = SPECIAL_KEYS[key];
+  if (special) {
+    return { key, code: special.code, windowsVirtualKeyCode: special.vk, ...(key === 'Space' ? { text: ' ' } : {}) };
+  }
+  if (key.length === 1) {
+    const upper = key.toUpperCase();
+    const vk = upper.charCodeAt(0);
+    const isLetterOrDigit = /[a-zA-Z0-9]/.test(key);
+    return { key, code: isLetterOrDigit ? `Key${upper}` : '', windowsVirtualKeyCode: vk, text: key };
+  }
+  return { key, code: '', windowsVirtualKeyCode: 0 };
 }

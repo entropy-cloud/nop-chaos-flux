@@ -1,5 +1,7 @@
 import { build } from 'esbuild';
 import { readFileSync } from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { FluxTestError } from './errors.js';
 
 export interface BundledSpec {
@@ -29,12 +31,16 @@ export async function bundleStandalone(entryPath: string, globalName: string): P
 
 export async function bundleSpec(specPath: string): Promise<BundledSpec> {
   const entry = readFileSync(specPath, 'utf8');
+  const driverEntry = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../flux-test-driver/src/index.ts');
   const result = await build({
     stdin: {
       contents: entry,
       resolveDir: specPath.replace(/[/\\][^/\\]+$/, ''),
       sourcefile: specPath,
       loader: 'ts',
+    },
+    alias: {
+      '@nop-chaos/flux-test-driver': driverEntry,
     },
     bundle: true,
     write: false,

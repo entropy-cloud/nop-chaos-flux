@@ -129,7 +129,7 @@ Exit Criteria:
 - Classification: `moved to explicit successor ownership`
 - Why Not Blocking Closure: M2 预览协议（enterPreview/DOM 影子）挂接 Console 需要被测页 iframe 投影 + 跨 frame 网关通道，属 E3 Console 增强工作面；E2 的 Launchpad+Runner+Command Log 树已构成 Console v1 的可用管控闭环，T0 试点的验证目标（全链路真实迁移）不依赖预览/scrub。
 - Successor Required: `yes`
-- Successor Path: E3 plan（Console 增强：Watch 模式、断言详情抽屉 + 预览/scrub 接线）
+- Successor Path: ~~E3 plan~~ **勘误（2026-11-19）**：Watch 模式与断言详情抽屉已随 E3 Wave 1（`docs/plans/2026-11-18-e3-batch-migration-wave1-plan.md` Phase 2）落地；预览 iframe 投影 + 时间旅行 scrub 最终归 **E4 Console v2**（与历史 run/DevSession 回放共用投影与跨 frame 网关底座，避免重复建设）。
 
 ## Non-Blocking Follow-ups
 

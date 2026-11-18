@@ -1,11 +1,10 @@
 import type { DebuggerApiView, Locator, LocatorOptions } from './types.js';
+import { getRealInput, type RealInputFn } from './real-input.js';
 
 type DocGetter = () => Document;
 
-type RealInput = ((method: string, x: number, y: number) => Promise<void>) | undefined;
-
-function realInput(): RealInput {
-  return (globalThis as { __fluxTestRealInput?: RealInput }).__fluxTestRealInput;
+function realInput(): RealInputFn | undefined {
+  return getRealInput();
 }
 
 async function centerOf(element: Element): Promise<{ x: number; y: number }> {
@@ -18,8 +17,10 @@ async function centerOf(element: Element): Promise<{ x: number; y: number }> {
 
 export function createLocator(getDoc: DocGetter, selector: string, options: LocatorOptions = {}, getApi: () => DebuggerApiView | undefined = () => undefined): Locator {
   const defaultTimeoutMs = () => options.timeoutMs ?? 5_000;
-  const queryAll = (): Element[] => Array.from(getDoc().querySelectorAll(selector));
-  const queryOne = (): Element | null => getDoc().querySelector(selector);
+  const predicate = options.predicate;
+  const matches = (element: Element): boolean => (predicate ? predicate(element) : true);
+  const queryAll = (): Element[] => Array.from(getDoc().querySelectorAll(selector)).filter(matches);
+  const queryOne = (): Element | null => Array.from(getDoc().querySelectorAll(selector)).find(matches) ?? null;
 
   const retry = async <T>(probe: () => T | null, timeoutMs: number): Promise<T> => {
     const deadline = Date.now() + timeoutMs;
@@ -45,18 +46,20 @@ export function createLocator(getDoc: DocGetter, selector: string, options: Loca
     }
   };
 
-  const isElementVisible = (element: HTMLElement): boolean => {
+  const isElementVisible = (element: Element): boolean => {
     // Style-based check: works identically in real browsers and jsdom
     // (jsdom has no layout engine, so bounding rects are always 0).
+    // Element-based (not HTMLElement): SVG shapes (rect/path/g) are visible
+    // targets too — Playwright treats them as visible.
     const style = element.ownerDocument.defaultView?.getComputedStyle(element);
     if (style && (style.display === 'none' || style.visibility === 'hidden')) return false;
-    return element.checkVisibility?.() !== false;
+    return (element as HTMLElement).checkVisibility?.() !== false;
   };
 
-  const actionability = async (timeoutMs: number): Promise<HTMLElement> => {
+  const actionability = async (timeoutMs: number): Promise<Element> => {
     return retry(() => {
       const element = queryOne();
-      return element instanceof HTMLElement && isElementVisible(element) ? element : null;
+      return element && isElementVisible(element) ? element : null;
     }, timeoutMs);
   };
 
@@ -64,7 +67,7 @@ export function createLocator(getDoc: DocGetter, selector: string, options: Loca
     return element.dispatchEvent(new MouseEvent(type, init));
   };
 
-  const act = async (timeoutMs: number, perform: (element: HTMLElement) => void | Promise<void>): Promise<void> => {
+  const act = async (timeoutMs: number, perform: (element: Element) => void | Promise<void>): Promise<void> => {
     const element = await actionability(timeoutMs);
     await perform(element);
     await stabilityGate();
@@ -76,7 +79,7 @@ export function createLocator(getDoc: DocGetter, selector: string, options: Loca
         const real = realInput();
         if (real) {
           const { x, y } = await centerOf(element);
-          await real('input.click', x, y);
+          await real('input.click', { x, y });
           return;
         }
         fire(element, 'pointerover');
@@ -85,7 +88,8 @@ export function createLocator(getDoc: DocGetter, selector: string, options: Loca
         fire(element, 'mousedown');
         fire(element, 'pointerup');
         fire(element, 'mouseup');
-        element.click();
+        if (element instanceof HTMLElement) element.click();
+        else element.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
       });
     },
     async dblclick(opts) {
@@ -133,7 +137,7 @@ export function createLocator(getDoc: DocGetter, selector: string, options: Loca
         const real = realInput();
         if (real) {
           const { x, y } = await centerOf(element);
-          await real('input.hover', x, y);
+          await real('input.hover', { x, y });
           return;
         }
         fire(element, 'pointerover');
@@ -150,6 +154,14 @@ export function createLocator(getDoc: DocGetter, selector: string, options: Loca
     async innerHTML(opts) {
       await retry(() => (queryOne() ? queryOne() : null), opts?.timeoutMs ?? defaultTimeoutMs());
       return (queryOne() as Element).innerHTML;
+    },
+    async inputValue(opts) {
+      await retry(() => (queryOne() ? queryOne() : null), opts?.timeoutMs ?? defaultTimeoutMs());
+      const element = queryOne();
+      if (element instanceof HTMLInputElement || element instanceof HTMLTextAreaElement || element instanceof HTMLSelectElement) {
+        return element.value;
+      }
+      return element?.getAttribute('value') ?? '';
     },
     async attr(name, opts) {
       await retry(() => queryOne(), opts?.timeoutMs ?? defaultTimeoutMs());
@@ -187,6 +199,37 @@ export function createLocator(getDoc: DocGetter, selector: string, options: Loca
     first() {
       return this.nth(0);
     },
+    last() {
+      return createIndexedLocator(getDoc, selector, -1, options, getApi);
+    },
+    locator(sub: string) {
+      return createLocator(getDoc, `${selector} ${sub}`, options, getApi);
+    },
+    async boundingBox(opts) {
+      await retry(() => (queryOne() ? queryOne() : null), opts?.timeoutMs ?? defaultTimeoutMs());
+      const rect = (queryOne() as Element).getBoundingClientRect();
+      return { x: rect.x, y: rect.y, width: rect.width, height: rect.height };
+    },
+    async selectOption(values, opts) {
+      const timeoutMs = opts?.timeoutMs ?? defaultTimeoutMs();
+      const element = await actionability(timeoutMs);
+      if (!(element instanceof HTMLSelectElement)) {
+        throw new Error(`locator selectOption: element is not a select: ${selector}`);
+      }
+      const wanted = Array.isArray(values) ? values : [values];
+      for (const option of Array.from(element.options)) {
+        option.selected = wanted.includes(option.value) || wanted.includes(option.label);
+      }
+      element.dispatchEvent(new Event('input', { bubbles: true }));
+      element.dispatchEvent(new Event('change', { bubbles: true }));
+      await stabilityGate();
+    },
+    async check(opts) {
+      await setChecked(selector, opts?.timeoutMs ?? defaultTimeoutMs(), actionability, stabilityGate, true);
+    },
+    async uncheck(opts) {
+      await setChecked(selector, opts?.timeoutMs ?? defaultTimeoutMs(), actionability, stabilityGate, false);
+    },
     async waitFor(state, opts) {
       const timeoutMs = opts?.timeoutMs ?? defaultTimeoutMs();
       await retry(() => {
@@ -196,12 +239,12 @@ export function createLocator(getDoc: DocGetter, selector: string, options: Loca
         }
         if (state === 'visible') {
           const element = elements[0];
-          return element instanceof HTMLElement && isElementVisible(element) ? element : null;
+          return element && isElementVisible(element) ? element : null;
         }
         // hidden: either absent or not visible
         const element = elements[0];
         if (!element) return document.body;
-        return element instanceof HTMLElement && !isElementVisible(element) ? document.body : null;
+        return !isElementVisible(element) ? document.body : null;
       }, timeoutMs);
     },
   };
@@ -210,7 +253,12 @@ export function createLocator(getDoc: DocGetter, selector: string, options: Loca
 function createIndexedLocator(getDoc: DocGetter, selector: string, index: number, options: LocatorOptions, getApi: () => DebuggerApiView | undefined): Locator {
   const base = createLocator(getDoc, selector, options, getApi);
   const defaultTimeoutMs = () => options.timeoutMs ?? 5_000;
-  const queryIndexed = (): Element | null => getDoc().querySelectorAll(selector)[index] ?? null;
+  const queryIndexed = (): Element | null => {
+    const list = getDoc().querySelectorAll(selector);
+    if (list.length === 0) return null;
+    const resolved = index < 0 ? list.length + index : index;
+    return list[resolved] ?? null;
+  };
 
   return {
     ...base,
@@ -263,4 +311,21 @@ async function retryIndexed(queryIndexed: () => Element | null, timeoutMs: numbe
 
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function setChecked(
+  selector: string,
+  timeoutMs: number,
+  actionability: (timeoutMs: number) => Promise<Element>,
+  stabilityGate: () => Promise<void>,
+  checked: boolean,
+): Promise<void> {
+  const element = await actionability(timeoutMs);
+  if (!(element instanceof HTMLInputElement)) {
+    throw new Error(`locator check: element is not checkable: ${selector}`);
+  }
+  element.checked = checked;
+  element.dispatchEvent(new Event('input', { bubbles: true }));
+  element.dispatchEvent(new Event('change', { bubbles: true }));
+  await stabilityGate();
 }

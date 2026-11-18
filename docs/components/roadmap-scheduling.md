@@ -618,13 +618,13 @@ graph TD
 
 ### 测试策略
 
-| 组件      | 单元测试                          | 集成测试                | E2E                            | Playground 测试页面   | E2E 测试文件                                |
-| --------- | --------------------------------- | ----------------------- | ------------------------------ | --------------------- | ------------------------------------------- |
-| Gantt     | store + 坐标 + 缩放 + 日历 + redo | 渲染 + 拖拽 + editor    | Playwright 拖拽/缩放/键盘/同步 | S10.1 `gantt-demo`    | `tests/e2e/gantt-demo.spec.ts` (6 tests)    |
-| Kanban    | 纯函数 helpers + 过滤             | 渲染 + 拖拽 + configMap | Playwright 拖拽跨列 ✅         | S10.3 `kanban-demo`   | `tests/e2e/kanban-demo.spec.ts` (6 tests)   |
-| Calendar  | 日期 + 定位 + 冲突检测            | 渲染 + 虚拟滚动         | Playwright 视图切换 ✅         | S10.2 `calendar-demo` | `tests/e2e/calendar-demo.spec.ts` (6 tests) |
-| Barcode   | WASM + 相机 mock + 解码           | 渲染 + overlay          | —（需摄像头 mock）             | S10.4 `barcode-demo`  | —                                           |
-| Diff-view | 解析 + inline-diff + 高亮         | 渲染 + 虚拟滚动         | Playwright split/unified       | S10.5 `diff-demo`     | `tests/e2e/diff-perf.spec.ts` (1 test)      |
+| 组件      | 单元测试                          | 集成测试                | E2E                            | Playground 测试页面   | E2E 测试文件                                                                    |
+| --------- | --------------------------------- | ----------------------- | ------------------------------ | --------------------- | ------------------------------------------------------------------------------- |
+| Gantt     | store + 坐标 + 缩放 + 日历 + redo | 渲染 + 拖拽 + editor    | Playwright 拖拽/缩放/键盘/同步 | S10.1 `gantt-demo`    | `tests/e2e/gantt-demo.spec.ts` (6 tests)                                        |
+| Kanban    | 纯函数 helpers + 过滤             | 渲染 + 拖拽 + configMap | Playwright 拖拽跨列 ✅         | S10.3 `kanban-demo`   | `tests/e2e/kanban-demo.spec.ts` (6 tests)                                       |
+| Calendar  | 日期 + 定位 + 冲突检测            | 渲染 + 虚拟滚动         | Playwright 视图切换 ✅         | S10.2 `calendar-demo` | `tests/e2e/flux/calendar-demo.flux-spec.ts`（6 用例，E3 批次 1 迁移 flux 引擎） |
+| Barcode   | WASM + 相机 mock + 解码           | 渲染 + overlay          | —（需摄像头 mock）             | S10.4 `barcode-demo`  | —                                                                               |
+| Diff-view | 解析 + inline-diff + 高亮         | 渲染 + 虚拟滚动         | Playwright split/unified       | S10.5 `diff-demo`     | `tests/e2e/diff-perf.spec.ts` (1 test)                                          |
 
 **Test coverage status (2026-07-21):** Kanban 和 Calendar 的 Playwright E2E 测试已通过，覆盖搜索、过滤、视图切换、导航、事件渲染等。Kanban 纯函数 helper 新增快照式测试。性能基线脚本已创建。参见 `docs/plans/2026-07-21-2100-1-scheduling-test-coverage-plan.md`。
 

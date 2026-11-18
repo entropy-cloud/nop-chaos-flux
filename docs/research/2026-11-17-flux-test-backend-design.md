@@ -313,3 +313,39 @@ interface Locator {          // Playwright Locator 语义子集
 | E5   | T4 语义清零：删兼容层与 DOM 白名单；语义重写随开发持续                                                                                               | E4 + M4 全量落地                |
 
 > 与主 Roadmap 的关系：E1–E2 依赖 DevTools 主线 M1–M2 交付物；E3 可与 M4/M5 并行；E5 在 M7 后。
+
+## 5.5 E3 批次 1 双引擎对照台账（2026-11-19，plan `docs/plans/2026-11-18-e3-batch-migration-wave1-plan.md`）
+
+判定结论对照（非像素比对）：每 spec 新旧引擎均跑通、结论一致（全绿）后方同 commit 删除旧 spec；迁移时 20 个旧 spec 共 55 用例在 Playwright 上复跑绿（oracle），flux 引擎同批全绿。
+
+| spec                        | 旧用例 | 新覆盖 | 升级点（判别性）                                                 | evaluate 债务              |
+| --------------------------- | ------ | ------ | ---------------------------------------------------------------- | -------------------------- |
+| table-density               | 1      | 1/1    | boundingBox ±2px 显式断言 + kernel 白盒错误检查替代 console 捕获 | 0                          |
+| kanban-card-template        | 1      | 1/1    | getByText→toContainText 重试轮询                                 | 0                          |
+| calendar-grid-shape         | 1      | 1/1    | toHaveCount 重试 + kernel 白盒                                   | 0                          |
+| ai-tools                    | 1      | 1/1    | kernel 白盒错误检查                                              | 0                          |
+| ai-citations                | 2      | 2/2    | kernel 白盒逐用例                                                | 0                          |
+| ai-hitl                     | 2      | 2/2    | attr 显式等价检查 + 路由反弹隔离                                 | 0                          |
+| ai-p4-widgets               | 3      | 3/3    | expectWeb 重试 + SVG 附着断言                                    | 0                          |
+| scada-editor-panel-collapse | 2      | 2/2    | 显式 1280×800 viewport（runner 默认 756px 低于 md 断点）         | 0                          |
+| form-atoms-input-color      | 3      | 3/3    | computed style 重试探针                                          | 1（toHaveCSS 缺口）        |
+| form-atoms-rating           | 3      | 3/3    | 真实 CDP 鼠标偏移点半星                                          | 0                          |
+| ai-attachments              | 2      | 2/2    | DataTransfer 真实选档                                            | 1（setInputFiles 缺口）    |
+| ai-branches-linkage         | 3      | 3/3    | 稳定门控路由反弹隔离                                             | 0                          |
+| w1b-feedback-family         | 5      | 5/5    | expectWeb 重试 + kernel 白盒                                     | 0                          |
+| input-city                  | 3      | 3/3    | 视口 set/restore + 隔离反弹                                      | 0                          |
+| org-select-department       | 2      | 2/2    | toContainText 等价替代 regex toHaveText                          | 0                          |
+| nop-report-profile          | 3      | 3/3    | per-assertion timeoutMs + 显式视口                               | 0                          |
+| calendar-demo               | 6      | 6/6    | toHaveText/not.toHaveText 重试导航断言                           | 0                          |
+| three-industrial-demo       | 2      | 2/2    | expect.poll→重试谓词 helper                                      | 0                          |
+| gantt-states                | 8      | 8/8    | SVG 可见性 helper（附着+非空 bbox）                              | 1（locator.evaluate 缺口） |
+| w3d-upload-family           | 2      | 2/2    | expectWeb 重试 + 错误检查                                        | 1（setInputFiles 缺口）    |
+
+批次 1 实测新增兼容层缺口（回灌 §5.1，E3 Wave 2 处置）：
+
+1. SVG 可见性——driver `isElementVisible` 曾按 HTMLElement 判定，SVG rect 永不可见；本批已在 driver 侧修复（Element 判定 + checkVisibility）。
+2. `nth(i).locator(sub)` 退化为后代选择器 `sel sub`、丢失索引——现以唯一属性选择器绕行；Wave 2 需要时实现 scoped-nth。
+3. `toHaveText` 不接受 RegExp；`locator.getByText` / `locator.getByRole`（scoped）不存在——以页级 getByRole/toContainText 绕行。
+4. `setInputFiles` / `locator.evaluate` / `allTextContents` 无对应——evaluate 债务 4 处登记（上表），语义重写期清偿。
+5. `ft.reload()` 中途重载会摧毁 CDP 求值上下文（runner 每 spec 单次 evaluate 无上下文重试）——以稳定门控的 hash 路由反弹替代；runner 侧上下文重试列为 Wave 2 候选。
+6. runner 默认视口 756×469 低于 Playwright 桌面断点——依赖桌面布局的 spec 须显式 `ft.setViewportSize`（或将 runner 默认视口提到 1280×800，Wave 2 裁定）。

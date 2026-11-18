@@ -1,5 +1,5 @@
 import { createServer } from 'node:http';
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync, statSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { TestGateway } from './gateway.js';
@@ -22,6 +22,9 @@ export interface ConsoleHandle {
   port: number;
   close(): Promise<void>;
 }
+
+const WATCH_DEBOUNCE_MS = 500;
+const WATCH_POLL_INTERVAL_MS = 300;
 
 const CONSOLE_HTML_SHELL = `<!doctype html>
 <html>
@@ -86,9 +89,73 @@ export async function startConsoleServer(options: ConsoleServerOptions): Promise
       });
       return;
     }
+    if (url.pathname === '/__flux_test__/api/watch' && req.method === 'POST') {
+      let body = '';
+      req.on('data', (chunk: Buffer) => {
+        body += chunk.toString();
+      });
+      req.on('end', () => {
+        const { on } = JSON.parse(body || '{}') as { on?: boolean };
+        if (on === true && !watcher) startWatch();
+        else if (on === false && watcher) {
+          stopWatch();
+          gateway.notifyConsole('console.watch.state', { on: false });
+        }
+        res.writeHead(200, { 'content-type': 'application/json' });
+        res.end(JSON.stringify({ watching: watcher !== null }));
+      });
+      return;
+    }
     res.writeHead(404);
     res.end();
   });
+
+  let watcher: ReturnType<typeof setInterval> | null = null;
+  let watchDebounce: ReturnType<typeof setTimeout> | null = null;
+  let lastMtimeMs = 0;
+  const stopWatch = (): void => {
+    if (watchDebounce) clearTimeout(watchDebounce);
+    watchDebounce = null;
+    if (watcher) clearInterval(watcher);
+    watcher = null;
+  };
+  const scanSpecMtimes = (): { file: string; mtimeMs: number } | null => {
+    let latest: { file: string; mtimeMs: number } | null = null;
+    for (const entry of readdirSync(options.specsDir)) {
+      if (!entry.endsWith('.flux-spec.ts')) continue;
+      try {
+        const mtimeMs = statSync(path.join(options.specsDir, entry)).mtimeMs;
+        if (!latest || mtimeMs > latest.mtimeMs) latest = { file: entry, mtimeMs };
+      } catch {
+        // file deleted mid-scan — ignore until next tick
+      }
+    }
+    return latest && latest.mtimeMs > lastMtimeMs ? latest : null;
+  };
+  const startWatch = (): void => {
+    if (watcher) return;
+    lastMtimeMs = 0;
+    scanSpecMtimes();
+    watcher = setInterval(() => {
+      try {
+        const changed = scanSpecMtimes();
+        if (!changed) return;
+        // debounce: editors fire multiple saves; coalesce to the last change.
+        // Advance the watermark on every observed change so the reschedule
+        // window settles instead of re-arming forever.
+        lastMtimeMs = changed.mtimeMs;
+        if (watchDebounce) clearTimeout(watchDebounce);
+        watchDebounce = setTimeout(() => {
+          watchDebounce = null;
+          if (running) return;
+          void startRun(path.resolve(options.specsDir, changed.file));
+        }, WATCH_DEBOUNCE_MS);
+      } catch {
+        // scan errors must never take the console down
+      }
+    }, WATCH_POLL_INTERVAL_MS);
+    gateway.notifyConsole('console.watch.state', { on: true });
+  };
 
   gateway.on('log.emit', (arg) => {
     // fan the kernel event stream out to the console peer verbatim
@@ -129,6 +196,7 @@ export async function startConsoleServer(options: ConsoleServerOptions): Promise
   return {
     port,
     close: async () => {
+      stopWatch();
       await gateway.close();
       await new Promise<void>((resolve) => server.close(() => resolve()));
     },
