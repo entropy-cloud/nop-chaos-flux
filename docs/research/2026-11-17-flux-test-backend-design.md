@@ -349,3 +349,32 @@ interface Locator {          // Playwright Locator 语义子集
 4. `setInputFiles` / `locator.evaluate` / `allTextContents` 无对应——evaluate 债务 4 处登记（上表），语义重写期清偿。
 5. `ft.reload()` 中途重载会摧毁 CDP 求值上下文（runner 每 spec 单次 evaluate 无上下文重试）——以稳定门控的 hash 路由反弹替代；runner 侧上下文重试列为 Wave 2 候选。
 6. runner 默认视口 756×469 低于 Playwright 桌面断点——依赖桌面布局的 spec 须显式 `ft.setViewportSize`（或将 runner 默认视口提到 1280×800，Wave 2 裁定）。
+
+### §5.5 续表：批次 2（2026-11-19，plan `docs/plans/2026-11-19-e3-batch-migration-wave2-plan.md`）
+
+20 个旧 spec 共 101 用例 Playwright oracle 复跑绿后同 commit 删除（225→205）；flux 引擎全批绿。
+
+| spec                      | 旧用例 | 新覆盖 | 升级点                                             | evaluate 债务 |
+| ------------------------- | ------ | ------ | -------------------------------------------------- | ------------- |
+| table-column-width-layout | 2      | 2/2    | resetRoute 隔离 + 显式 heading 门                  | 2             |
+| ai-conversations          | 5      | 5/5    | kernel 白盒逐用例                                  | 0             |
+| map-demo                  | 2      | 2/2    | OL 锚点暴露轮询 + kernel 白盒                      | 1             |
+| m2-touch                  | 9      | 9/9    | 视口切换 matchMedia 门控（desktop 负断言重试轮询） | 0             |
+| org-select-user           | 4      | 4/4    | 双变体全文本显式检查（强于单 regex）               | 0             |
+| scada-size-consistency    | 2      | 2/2    | expect.poll→显式重试环 + 引擎白盒                  | 1             |
+| w3d-markdown-editor       | 5      | 5/5    | computed style 精确串比较 + resetRoute             | 0             |
+| gantt-editor-fields       | 9      | 9/9    | 逐用例 kernel 白盒                                 | 0             |
+| tree-display-ux           | 6      | 6/6    | getByText.count→树级 toContainText 等价            | 0             |
+| ai-persistence            | 2      | 2/2    | 存储引导 mount 重放 reload 路径                    | 1             |
+| w2a-data-composition      | 6      | 6/6    | store 向导状态按序消费 + 稳定门                    | 0             |
+| word-editor-template-expr | 7      | 7/7    | kernel 白盒 + 弹层卸载探针                         | 3             |
+| m3-layout                 | 7      | 7/7    | waitForFunction→带末值报错显式轮询                 | 1             |
+| w4a-multimedia-family     | 9      | 9/9    | 公共指示器复位替代重挂载                           | 2             |
+| gantt-splitter-scroll     | 4      | 4/4    | expect.poll→带末值报错轮询 + 分步拖拽              | 3             |
+| w3c-value-mapping         | 10+    | 11 块  | 一次性 evaluate→重试轮询类检查                     | 0             |
+| ai-widgets-showcase       | 5      | 5/5    | 遮挡规避（fill+Enter 替代被覆盖点击）              | 1             |
+| cron-editor               | 5      | 5/5    | roving tabindex 键盘走查保留                       | 2             |
+| w4c-composite-form-family | 7      | 8 块   | kernel 白盒逐用例                                  | 0             |
+| scada-pressure-demo       | 3      | 3/3    | assertScadaCanvasRendered 同强度重实现             | 1             |
+
+批次 2 新增缺口回灌（Wave 3 处置候选）：Locator.focus()/toBeFocused 缺失（cron-editor 键盘走查兜底 evaluate）；真实点击遮挡检测（playground 固定 overlay 覆盖目标中心——driver 可加 elementFromPoint 命中断言）；CDP 逐字符 keyDown text+char 双插入（keyboard.type 对 React 受控输入不可用——fill 兜底）；`getByRole` string name 全匹配语义与 Playwright 的默认子串不匹配不一致（文档化即可）。
