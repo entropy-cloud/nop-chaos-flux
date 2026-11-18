@@ -253,4 +253,10 @@ export const workspacePackageAliases: Record<string, string> = {
   '@nop-chaos/word-editor-renderers/styles.css': fileURLToPath(
     new URL('./packages/word-editor-renderers/src/styles.css', import.meta.url),
   ),
+  '@nop-chaos/flux-test-server': fileURLToPath(
+    new URL('./packages/flux-test-server/src/index.ts', import.meta.url),
+  ),
+  '@nop-chaos/flux-test-driver': fileURLToPath(
+    new URL('./packages/flux-test-driver/src/index.ts', import.meta.url),
+  ),
 };

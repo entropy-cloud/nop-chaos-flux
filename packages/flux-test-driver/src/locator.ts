@@ -1,0 +1,240 @@
+import type { DebuggerApiView, Locator, LocatorOptions } from './types.js';
+
+type DocGetter = () => Document;
+
+export function createLocator(getDoc: DocGetter, selector: string, options: LocatorOptions = {}, getApi: () => DebuggerApiView | undefined = () => undefined): Locator {
+  const defaultTimeoutMs = () => options.timeoutMs ?? 5_000;
+  const queryAll = (): Element[] => Array.from(getDoc().querySelectorAll(selector));
+  const queryOne = (): Element | null => getDoc().querySelector(selector);
+
+  const retry = async <T>(probe: () => T | null, timeoutMs: number): Promise<T> => {
+    const deadline = Date.now() + timeoutMs;
+    const intervalMs = options.intervalMs ?? 50;
+    let result = probe();
+    while (result === null || result === false) {
+      if (Date.now() >= deadline) break;
+      await sleep(intervalMs);
+      result = probe();
+    }
+    if (result === null || result === false) {
+      throw new Error(`locator timeout: ${selector} did not satisfy condition within ${timeoutMs}ms`);
+    }
+    return result as T;
+  };
+
+  const stabilityGate = async (): Promise<void> => {
+    const tracker = getApi()?.getStability;
+    if (!tracker) return;
+    const deadline = Date.now() + 2_000;
+    while (!tracker().stable && Date.now() < deadline) {
+      await sleep(50);
+    }
+  };
+
+  const isElementVisible = (element: HTMLElement): boolean => {
+    // Style-based check: works identically in real browsers and jsdom
+    // (jsdom has no layout engine, so bounding rects are always 0).
+    const style = element.ownerDocument.defaultView?.getComputedStyle(element);
+    if (style && (style.display === 'none' || style.visibility === 'hidden')) return false;
+    return element.checkVisibility?.() !== false;
+  };
+
+  const actionability = async (timeoutMs: number): Promise<HTMLElement> => {
+    return retry(() => {
+      const element = queryOne();
+      return element instanceof HTMLElement && isElementVisible(element) ? element : null;
+    }, timeoutMs);
+  };
+
+  const fire = (element: Element, type: string, init: EventInit = { bubbles: true, cancelable: true }): boolean => {
+    return element.dispatchEvent(new MouseEvent(type, init));
+  };
+
+  const act = async (timeoutMs: number, perform: (element: HTMLElement) => void): Promise<void> => {
+    const element = await actionability(timeoutMs);
+    perform(element);
+    await stabilityGate();
+  };
+
+  return {
+    async click(opts) {
+      await act(opts?.timeoutMs ?? defaultTimeoutMs(), (element) => {
+        fire(element, 'pointerover');
+        fire(element, 'mouseover');
+        fire(element, 'pointerdown');
+        fire(element, 'mousedown');
+        fire(element, 'pointerup');
+        fire(element, 'mouseup');
+        element.click();
+      });
+    },
+    async dblclick(opts) {
+      await act(opts?.timeoutMs ?? defaultTimeoutMs(), (element) => {
+        fire(element, 'dblclick');
+      });
+    },
+    async fill(text, opts) {
+      const timeoutMs = opts?.timeoutMs ?? defaultTimeoutMs();
+      const element = await actionability(timeoutMs);
+      if (!(element instanceof HTMLInputElement) && !(element instanceof HTMLTextAreaElement)) {
+        throw new Error(`locator fill: element is not fillable: ${selector}`);
+      }
+      element.focus();
+      const setter = Object.getOwnPropertyDescriptor(element instanceof HTMLInputElement ? HTMLInputElement.prototype : HTMLTextAreaElement.prototype, 'value')?.set;
+      setter?.call(element, text);
+      element.dispatchEvent(new Event('input', { bubbles: true }));
+      element.dispatchEvent(new Event('change', { bubbles: true }));
+      await stabilityGate();
+    },
+    async type(text, opts) {
+      const timeoutMs = opts?.timeoutMs ?? defaultTimeoutMs();
+      const element = await actionability(timeoutMs);
+      if (!(element instanceof HTMLInputElement) && !(element instanceof HTMLTextAreaElement)) {
+        throw new Error(`locator type: element is not typable: ${selector}`);
+      }
+      element.focus();
+      for (const char of text) {
+        element.value += char;
+        element.dispatchEvent(new KeyboardEvent('keydown', { key: char, bubbles: true }));
+        element.dispatchEvent(new Event('input', { bubbles: true }));
+        element.dispatchEvent(new KeyboardEvent('keyup', { key: char, bubbles: true }));
+      }
+      await stabilityGate();
+    },
+    async press(key, opts) {
+      await act(opts?.timeoutMs ?? defaultTimeoutMs(), (element) => {
+        element.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true }));
+        element.dispatchEvent(new KeyboardEvent('keypress', { key, bubbles: true }));
+        element.dispatchEvent(new KeyboardEvent('keyup', { key, bubbles: true }));
+      });
+    },
+    async hover(opts) {
+      await act(opts?.timeoutMs ?? defaultTimeoutMs(), (element) => {
+        fire(element, 'pointerover');
+        fire(element, 'mouseover');
+        fire(element, 'pointerenter', { bubbles: false });
+        fire(element, 'mouseenter', { bubbles: false });
+      });
+    },
+    async text(opts) {
+      await retry(() => queryOne(), opts?.timeoutMs ?? defaultTimeoutMs());
+      const element = queryOne() as HTMLElement;
+      return element.innerText ?? element.textContent ?? '';
+    },
+    async innerHTML(opts) {
+      await retry(() => (queryOne() ? queryOne() : null), opts?.timeoutMs ?? defaultTimeoutMs());
+      return (queryOne() as Element).innerHTML;
+    },
+    async attr(name, opts) {
+      await retry(() => queryOne(), opts?.timeoutMs ?? defaultTimeoutMs());
+      return queryOne()?.getAttribute(name) ?? null;
+    },
+    async isVisible(opts) {
+      try {
+        await retry(() => {
+          const element = queryOne();
+          return element instanceof HTMLElement && isElementVisible(element) ? element : null;
+        }, opts?.timeoutMs ?? Math.min(defaultTimeoutMs(), 1_000));
+        return true;
+      } catch {
+        return false;
+      }
+    },
+    async isEnabled(opts) {
+      try {
+        await retry(() => queryOne(), opts?.timeoutMs ?? Math.min(defaultTimeoutMs(), 1_000));
+        const element = queryOne();
+        if (element instanceof HTMLInputElement || element instanceof HTMLTextAreaElement || element instanceof HTMLSelectElement || element instanceof HTMLButtonElement) {
+          return !element.disabled;
+        }
+        return true;
+      } catch {
+        return false;
+      }
+    },
+    async count() {
+      return queryAll().length;
+    },
+    nth(index: number) {
+      return createIndexedLocator(getDoc, selector, index, options, getApi);
+    },
+    first() {
+      return this.nth(0);
+    },
+    async waitFor(state, opts) {
+      const timeoutMs = opts?.timeoutMs ?? defaultTimeoutMs();
+      await retry(() => {
+        const elements = queryAll();
+        if (state === 'attached') {
+          return elements.length > 0 ? elements[0]! : null;
+        }
+        if (state === 'visible') {
+          const element = elements[0];
+          return element instanceof HTMLElement && isElementVisible(element) ? element : null;
+        }
+        // hidden: either absent or not visible
+        const element = elements[0];
+        if (!element) return document.body;
+        return element instanceof HTMLElement && !isElementVisible(element) ? document.body : null;
+      }, timeoutMs);
+    },
+  };
+}
+
+function createIndexedLocator(getDoc: DocGetter, selector: string, index: number, options: LocatorOptions, getApi: () => DebuggerApiView | undefined): Locator {
+  const base = createLocator(getDoc, selector, options, getApi);
+  const defaultTimeoutMs = () => options.timeoutMs ?? 5_000;
+  const queryIndexed = (): Element | null => getDoc().querySelectorAll(selector)[index] ?? null;
+
+  return {
+    ...base,
+    click(opts) {
+      return actOnIndexed(queryIndexed, opts?.timeoutMs ?? defaultTimeoutMs(), (element) => element.click(), () => base.click(opts));
+    },
+    async text(opts) {
+      await retryIndexed(queryIndexed, opts?.timeoutMs ?? defaultTimeoutMs(), options);
+      const element = queryIndexed() as HTMLElement;
+      return element.innerText ?? element.textContent ?? '';
+    },
+    async innerHTML(opts) {
+      await retryIndexed(queryIndexed, opts?.timeoutMs ?? defaultTimeoutMs(), options);
+      return (queryIndexed() as Element).innerHTML;
+    },
+    async attr(name, opts) {
+      await retryIndexed(queryIndexed, opts?.timeoutMs ?? defaultTimeoutMs(), options);
+      return queryIndexed()?.getAttribute(name) ?? null;
+    },
+  };
+}
+
+function actOnIndexed(queryIndexed: () => Element | null, timeoutMs: number, perform: (element: HTMLElement) => void, fallback: () => Promise<void>): Promise<void> {
+  const deadline = Date.now() + timeoutMs;
+  const attempt = async (): Promise<void> => {
+    const element = queryIndexed();
+    if (element instanceof HTMLElement) {
+      perform(element);
+      return;
+    }
+    if (Date.now() >= deadline) {
+      await fallback();
+      return;
+    }
+    await sleep(50);
+    await attempt();
+  };
+  return attempt();
+}
+
+async function retryIndexed(queryIndexed: () => Element | null, timeoutMs: number, options: LocatorOptions): Promise<void> {
+  const deadline = Date.now() + timeoutMs;
+  while (!queryIndexed() && Date.now() < deadline) {
+    await sleep(options.intervalMs ?? 50);
+  }
+  if (!queryIndexed()) {
+    throw new Error(`locator timeout: nth element missing within ${timeoutMs}ms`);
+  }
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}

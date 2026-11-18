@@ -1,0 +1,25 @@
+{
+  "name": "@nop-chaos/flux-test-driver",
+  "version": "0.1.0",
+  "private": true,
+  "sideEffects": false,
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "devDependencies": {
+    "jsdom": "^26.0.0"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "vitest run",
+    "lint": "eslint src --ext .ts --cache --cache-location node_modules/.cache/eslint"
+  },
+  "description": "In-page test driver for Flux e2e: ft global, semantic assertions, Locator compat layer"
+}

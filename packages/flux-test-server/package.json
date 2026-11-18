@@ -1,0 +1,36 @@
+{
+  "name": "@nop-chaos/flux-test-server",
+  "version": "0.1.0",
+  "private": true,
+  "sideEffects": false,
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./cli": {
+      "types": "./dist/cli.d.ts",
+      "default": "./dist/cli.js"
+    }
+  },
+  "bin": {
+    "flux-test": "./dist/cli.js"
+  },
+  "dependencies": {
+    "esbuild": "^0.27.0",
+    "ws": "^8.18.0"
+  },
+  "devDependencies": {
+    "@types/ws": "^8.18.0"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "vitest run",
+    "lint": "eslint src --ext .ts --cache --cache-location node_modules/.cache/eslint"
+  },
+  "description": "Self-hosted e2e test backend for Flux: bare-CDP launcher, local gateway, runner, reporter"
+}

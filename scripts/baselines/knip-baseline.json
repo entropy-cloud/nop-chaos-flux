@@ -2,7 +2,7 @@
   "_header": {
     "description": "knip baseline: registered dead-code inventory. New hits fail check:knip-baseline; shrink via surgical hand-edit (do NOT run --update-baselines: full re-snapshot absorbs parallel churn — see 09ed6e5b6).",
     "knipVersion": "6.9.0",
-    "lastUpdated": "2026-10-30",
+    "lastUpdated": "2026-11-18",
     "counts": {
       "files": 16,
       "exports": 341,
@@ -14,6 +14,7 @@
     "unlistedReconciliation": "CQ-S17 reconciled 2026-09-30: check-workspace-manifest-deps forward check scans packages/*/src only (apps/ and scripts/ are out of scope), so the two tools are complementary, not contradictory. unlisted=35 (plan 624 sync 2026-10-17, was 30 at 2026-09-30 reconciliation): apps/playground 11 (graph/pivot/industrial imports incl. tests+demo pages), scripts/visual-quality 18 (root-manifest renderer imports + playwright), flux-renderers-data test jsdom 1 (workspace-scoping quirk; package devDeps declares jsdom). All resolve via pnpm workspace hoisting today. Cleanup transferred to cq-6 Phase 5 (declare playground graph/pivot/industrial deps).",
     "plan595Note": "2026-10-15 plan 595 closure: +1 file (flux-guide docs-components setup module — CLI --setup loaded, invisible to knip), +1 export (mergeAriaSpace — internal-only after input.tsx MUST-split), +1 type (SchemaDiagnosticReporter — factory used, type over-export), +1 inherited type (FormLoadState — landed by plan 593, disclosed by CX-17/598 isolated gates before registration).",
     "reRegistrationNotes": [
+      "E1 测试基建： files：tests/e2e/flux/*.flux-spec.ts 是自研 flux-test 引擎（pnpm test:flux）的 spec 入口，Playwright/gulp 均不引用，knip 静态图不可见；types：test-server/driver 的导出类型出现在公开函数签名（声明发射要求导出），nop-debugger 三项为 M7 收口（diagnostic bundle 迁 session-bridge 后消费面收窄为文件内）。devDependencies 修复：根 @types/ws 移除（类型由 flux-test-server 包内声明），driver 的 @nop-chaos/nop-debugger devDep 移除（driver 为框架无关运行时绑定）。",
       "plan 624 (2026-10-17): surgical shrink to live knip identities (exports -85, types -18, dep -1 [flux-renderers-mobile#@nop-chaos/flux-react — false-positive erratum, consumed via src/test-support.ts since c11731169], devDeps -2 [flux-bundle#@nop-chaos/flux-i18n removed from manifest; one stale entry]; +5 peer-backing devDeps registered (flux-bundle i18next/react-i18next, scheduling ical.js/jspdf/xlsx — isolation-install backing with zero src imports by design, plan 624 D2); counts.exports corrected 430->list length (off-by-one since 2026-10-15); narrative unlisted 30->35 synced. NOT updated via --update-baselines (09ed6e5b6 precedent). Open hit left unregistered: apps/playground#@nop-chaos/flux-xlang-lang — concurrent plan 621 session ownership.",
       "plan 624 D5 (2026-10-17): root devDeps i18next/react-i18next removed (zero refs repo-wide) — their baseline entries shrunk in the same pass; three/@types/three KEPT (sole consumer scripts/three-perf/bench-scene-graph.mjs manual benchmark — script disposition is separate follow-up); @stryker-mutator/vitest-runner KEPT (audit:mutants loads it via stryker.runtime.conf.mjs --plugins).",
       "plan 624 D2 Decision amendment (2026-10-17): flux-bundle @nop-chaos/ui peer RESTORED (it is a pinned host-owned-peer contract asserted by src/index.test.tsx toMatchObject — removal flipped the contract test red) and given devDep workspace:* backing; the backing devDep itself registers here (zero src imports by design). Peer-backing registrations now total 6.",
@@ -40,7 +41,9 @@
     "stryker.runtime.conf.mjs",
     "tests/e2e/_debug-lab.mjs",
     "tests/e2e/flux-bundle-built-dist/main.tsx",
-    "tests/e2e/xlang-debug-mock-server.mjs"
+    "tests/e2e/xlang-debug-mock-server.mjs",
+    "tests/e2e/flux/demo-must-fail.flux-spec.ts",
+    "tests/e2e/flux/demo-smoke.flux-spec.ts"
   ],
   "exports": [
     "flux-guide/scripts/shared.mjs#REGISTER_PACKAGES",
@@ -951,7 +954,15 @@
     "tests/e2e/helpers/visual-contrast.ts#DecodedPng",
     "tests/e2e/helpers/visual-contrast.ts#Rect",
     "tests/e2e/helpers/visual-contrast.ts#RegionContrast",
-    "tests/e2e/helpers/visual-theme.ts#ThemeMode"
+    "tests/e2e/helpers/visual-theme.ts#ThemeMode",
+    "packages/flux-test-driver/src/types.ts#CidExpectation",
+    "packages/flux-test-server/src/cdp-client.ts#CdpMessage",
+    "packages/flux-test-server/src/gateway.ts#GatewayOptions",
+    "packages/flux-test-server/src/mock-cdp.ts#MockCdpOptions",
+    "packages/nop-debugger/src/ai-repair-input.ts#AiRepairInput",
+    "packages/nop-debugger/src/ai-repair-input.ts#AiRepairInputEvidence",
+    "packages/nop-debugger/src/diagnostic-bundle.ts#ReplayBundleDeps",
+    "packages/nop-debugger/src/diagnostic-bundle.ts#ReplayRuntimeLike"
   ],
   "dependencies": [],
   "devDependencies": [

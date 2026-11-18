@@ -83,27 +83,31 @@ let debuggerController: NopDebuggerController = __FLUX_DEVTOOLS__
   ? trimmedControllerStub
   : trimmedControllerStub;
 
-if (__FLUX_DEVTOOLS__) {
-  void import('@nop-chaos/nop-debugger').then((module) => {
-    debuggerController = module.createNopDebugger({
-      id: 'playground-main',
-      capturePerformance: false,
-      exposeAutomationApi: true,
-    });
-  });
-}
+// Single readiness promise: the kernel must be assigned BEFORE the panel can
+// mount — a panel rendered against trimmedControllerStub crashes on its first
+// store read (stub returns undefined). One import, one ordering guarantee.
+const devtoolsReady: Promise<((props: { controller: NopDebuggerController }) => ReactNode) | null> = __FLUX_DEVTOOLS__
+  ? import('@nop-chaos/nop-debugger').then((module) => {
+      debuggerController = module.createNopDebugger({
+        id: 'playground-main',
+        capturePerformance: false,
+        exposeAutomationApi: true,
+      });
+      return module.NopDebuggerPanel;
+    })
+  : Promise.resolve(null);
 
 /** Lazily mounts the debugger panel once the kernel module loads (dev/test only). */
-function DevToolsHost({ controller }: { controller: NopDebuggerController }) {
+function DevToolsHost() {
   const [Panel, setPanel] = useState<((props: { controller: NopDebuggerController }) => ReactNode) | null>(null);
   useEffect(() => {
     if (!__FLUX_DEVTOOLS__) return;
-    void import('@nop-chaos/nop-debugger').then((module) => {
-      setPanel(() => module.NopDebuggerPanel);
+    void devtoolsReady.then((PanelComponent) => {
+      if (PanelComponent) setPanel(() => PanelComponent);
     });
   }, []);
   if (!Panel) return null;
-  return <Panel controller={controller} />;
+  return <Panel controller={debuggerController} />;
 }
 
 function PageFallback() {
@@ -270,7 +274,7 @@ export function App() {
         <Suspense fallback={<PageFallback />}>{renderPage(route, navigate)}</Suspense>
       </RouteErrorBoundary>
       <ThemeSwitcher />
-      <DevToolsHost controller={debuggerController} />
+      <DevToolsHost />
       {/* Host-channels contract (plan 512 L3.4): the app shell owns the ONLY
          persistent <Toaster/> — route swaps must not kill in-flight toasts.
          Page/host components must not mount their own. */}

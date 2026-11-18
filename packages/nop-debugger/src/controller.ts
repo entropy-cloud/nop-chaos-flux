@@ -13,12 +13,7 @@ import {
   validateSchemaPatchShape,
   type PatchTargetResolvers,
 } from './schema-patch.js';
-import {
-  createAutomationApi,
-  getNopDebuggerAutomationApi as getAutomationApi,
-  installNopDebuggerWindowFlag,
-  registerAutomationApi,
-} from './automation.js';
+import { createAutomationApi, registerAutomationApi } from './automation.js';
 import {
   buildGetComponentTree,
   buildInspectByCid,
@@ -60,7 +55,7 @@ import { createAssertionBridge } from './assertion-bridge.js';
 import { createWhyBridge } from './why-bridge.js';
 import { createSessionBridge } from './session-bridge.js';
 import type { DevSession } from './protocol/types.js';
-import type { DiagnosticBundle } from './diagnostic-bundle.js';
+import type { DiagnosticBundle } from './types.js';
 import { createDependencyGraph } from './dependency-graph.js';
 import { suggestSelector } from './selector-suggest.js';
 import { createPreviewController, type PreviewController } from './preview-controller.js';
@@ -79,7 +74,6 @@ import type {
   NopSchemaPatch,
   NopSchemaPatchApplier,
   NopSchemaPatchAuditEntry,
-  NopDiagnosticReport,
   NopDiagnosticReportOptions,
   NopInteractionTraceQuery,
   NopNodeDiagnosticsOptions,
@@ -687,17 +681,4 @@ export function createNopDebugger(options: NopDebuggerOptions = {}): NopDebugger
   return controller;
 }
 
-export function getNopDebuggerAutomationApi(
-  controllerId?: string,
-): NopDebuggerAutomationApi | undefined {
-  return getAutomationApi(controllerId);
-}
-
-export { installNopDebuggerWindowFlag };
-
-export function createNopDiagnosticReport(
-  controller: NopDebuggerController,
-  options?: NopDiagnosticReportOptions,
-): NopDiagnosticReport {
-  return controller.createDiagnosticReport(options);
-}
+export { getNopDebuggerAutomationApi, installNopDebuggerWindowFlag, createNopDiagnosticReport } from './controller-public-api.js';

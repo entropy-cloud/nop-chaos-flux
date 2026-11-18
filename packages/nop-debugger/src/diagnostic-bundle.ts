@@ -1,19 +1,10 @@
 import type { DevSession } from './protocol/types.js';
-import type { NopDebugEvent } from './types.js';
+import type { DiagnosticBundle, NopDebugEvent } from './types.js';
 import type { NopDebuggerStore } from './store.js';
 import type { ForestSnapshotCollector } from './snapshot-repository.js';
 import { replaySession } from './replayer.js';
 import { CaptureError } from './capture/screenshot.js';
 
-export interface DiagnosticBundle {
-  version: 1;
-  sessionId: string;
-  createdAt: number;
-  session: DevSession;
-  keyframes: Array<{ tag: string; screenshotId?: string }>;
-  patchAudit: Array<{ at: number; summary: string }>;
-  uploadPath: 'gateway' | 'local';
-}
 
 export interface DiagnosticBundleDeps {
   sessionId: string;

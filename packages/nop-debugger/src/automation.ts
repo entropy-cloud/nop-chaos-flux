@@ -1,5 +1,5 @@
 import type { DevSession } from './protocol/types.js';
-import type { DiagnosticBundle } from './diagnostic-bundle.js';
+import type { DiagnosticBundle } from './types.js';
 import type { AsyncOwnerDebugSnapshot, FormStoreDiagnosticsOptions, FormStoreDiagnosticsOwnerQuery, FormStoreDiagnosticsOwnerSummary, FormStoreDiagnosticsSnapshot } from '@nop-chaos/flux-core';
 import type {
   NopComponentInspectResult,

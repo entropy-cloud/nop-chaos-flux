@@ -45,6 +45,8 @@
     { "path": "./packages/word-editor-core" },
     { "path": "./packages/word-editor-renderers" },
     { "path": "./packages/nop-debugger" },
+    { "path": "./packages/flux-test-server" },
+    { "path": "./packages/flux-test-driver" },
     { "path": "./packages/nop-debugger-ai" },
     { "path": "./apps/playground" }
   ]

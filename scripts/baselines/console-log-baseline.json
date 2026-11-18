@@ -1,8 +1,8 @@
 {
   "_header": {
     "description": "console.log/debug baseline for non-test src under packages/ and apps/. New hits fail check:console-baseline; shrink via --update-baselines after removing hits. Every entry carries an adjudicated reason; regeneration preserves reasons (merge by file+text) and refuses to write entries without one.",
-    "lastUpdated": "2026-11-10",
-    "count": 27
+    "lastUpdated": "2026-11-18",
+    "count": 29
   },
   "entries": [
     {
@@ -166,6 +166,18 @@
       "line": 26,
       "text": "notify: (level, message) => console.log('[three-gallery] notify', level, message),",
       "reason": "playground 画廊共享 demo notify 通道：多个 three 画廊页共用，控制台即观察面。"
+    },
+    {
+      "file": "packages/flux-test-server/src/cli.ts",
+      "line": 64,
+      "text": "console.log(reportToTerminal(summary));",
+      "reason": "flux-test CLI（E1 自研测试后端，pnpm test:flux 入口）的终端报告输出：CLI 的本职就是向开发者终端打印 per-spec 结果与 JSON 报告（对齐 Playwright list reporter 形态）；private 包不进生产 bundle，非浏览器运行时。"
+    },
+    {
+      "file": "packages/flux-test-server/src/cli.ts",
+      "line": 67,
+      "text": "console.log(reportToJson(summary));",
+      "reason": "flux-test CLI（E1 自研测试后端，pnpm test:flux 入口）的终端报告输出：CLI 的本职就是向开发者终端打印 per-spec 结果与 JSON 报告（对齐 Playwright list reporter 形态）；private 包不进生产 bundle，非浏览器运行时。"
     }
   ]
 }

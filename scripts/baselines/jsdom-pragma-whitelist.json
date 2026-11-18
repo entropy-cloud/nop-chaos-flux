@@ -11,6 +11,7 @@
     "packages/flux-renderers-content/src/markdown-src.test.tsx",
     "packages/flux-renderers-content/src/markdown.test.tsx",
     "packages/flux-renderers-content/src/sanitize.test.ts",
-    "packages/flux-renderers-data/src/__tests__/table-quick-edit-savebar-order.test.tsx"
+    "packages/flux-renderers-data/src/__tests__/table-quick-edit-savebar-order.test.tsx",
+    "packages/flux-test-driver/src/locator.test.ts"
   ]
 }

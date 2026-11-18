@@ -1,5 +1,4 @@
 import type { DevSession } from './protocol/types.js';
-import type { DiagnosticBundle } from './diagnostic-bundle.js';
 import type {
   ActionContext,
   ActionScope,
@@ -428,6 +427,16 @@ export interface NopNodeAnomalySummary {
   path?: string;
   recentEvents: NopDebugEvent[];
   hints: string[];
+}
+
+export interface DiagnosticBundle {
+  version: 1;
+  sessionId: string;
+  createdAt: number;
+  session: DevSession;
+  keyframes: Array<{ tag: string; screenshotId?: string }>;
+  patchAudit: Array<{ at: number; summary: string }>;
+  uploadPath: 'gateway' | 'local';
 }
 
 export interface NopDebuggerAutomationApi {

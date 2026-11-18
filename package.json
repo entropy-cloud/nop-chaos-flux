@@ -80,6 +80,7 @@
     "prepare": "husky",
     "test": "turbo run test --concurrency=2",
     "test:coverage": "turbo run test --concurrency=2 -- --coverage",
+    "test:flux": "pnpm --filter @nop-chaos/flux-test-server build && node packages/flux-test-server/dist/cli.js",
     "test:e2e": "playwright test",
     "test:e2e:headed": "playwright test --headed",
     "test:scripts": "vitest run --config vitest.scripts.config.ts",

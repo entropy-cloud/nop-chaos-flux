@@ -25,13 +25,15 @@
 
 设计：[测试后端设计](./2026-11-17-flux-test-backend-design.md)。目标：`tests/e2e/` 全部 244 个 spec 迁移到自研测试后端（真实浏览器 + 页内内核驱动，Cypress 模式但无代理/扩展/driver 层），并全面转向 `ft.expect` 业务语义断言（终态无 DOM 判断），最终删除 `@playwright/test` 依赖与 `playwright.config.ts`。
 
-| 阶段 | 主题                                                                                                                                                           | 依赖             |
-| ---- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------- |
-| E1   | flux-test-server 骨架（裸 CDP launcher / 本地网关 / runner / reporter）+ 页内驱动 + `ft.expect` 语义断言骨架 + Locator 兼容层（迁移脚手架）                    | M0、M1           |
-| E2   | **Test Console v1**（Launchpad spec 选择 + Runner：Command Log 树/页面预览/时间旅行 scrub）+ 试点 2 spec + 缺口清单回灌                                        | E1、M2           |
-| E3   | 双引擎 CI（Playwright 为 oracle 对照）+ 批量迁移（4–6 批，每批 ≤20 spec，"引擎替换→语义重写"两步）                                                             | E2、M3–M4        |
-| E4   | 收尾：删 Playwright 依赖/config + DOM 断言门禁（白名单只减不增）+ 迁移 handbook 定稿；**Console v2**（会话/诊断页：历史 run、DevSession 回放、视觉 diff 画廊） | E3 全绿、M5      |
-| E5   | T4 语义清零：删兼容层与 DOM 白名单，`ft.expect` 成为唯一断言写法                                                                                               | E4 + M4 全量落地 |
+| 阶段 | 主题                                                                                                                                        | 依赖   |
+| ---- | ------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
+| E1   | flux-test-server 骨架（裸 CDP launcher / 本地网关 / runner / reporter）+ 页内驱动 + `ft.expect` 语义断言骨架 + Locator 兼容层（迁移脚手架） | M0、M1 |
+
+> 落地状态（2026-11-18 勘误附注，plan `docs/plans/2026-11-18-e1-flux-test-backend-foundation-plan.md`）：**收敛**——`@nop-chaos/flux-test-server`（裸 CDP launcher/本地网关/runner/reporter/spec-loader/CLI，36 单测）+ `@nop-chaos/flux-test-driver`（installFt 绑定 `window.__NOP_DEBUGGER_API__`、ft 全局、ft.expect 骨架 meta/prop/rendered/scope/event/snapshotPath、Locator 兼容子集，43 单测）落地；真实 Chrome 冒烟链路绿（playground 首页 → 内核 attach → stability → Locator → kernel 语义检查），fail-as-expected 判别通路绿（标记=exit 0 / 无标记=exit 1）。deferred：ft.expect reaction()/visual() 断言与 JUnit reporter（归 E3）；Console UI 归 E2；存量 247 spec 迁移未动。附带修复：playground App.tsx DevToolsHost 面板挂载早于内核 assignment 的竞态崩溃（判别性回归测试 `app-devtools-host.test.tsx` 恰红→绿）。
+> | E2 | **Test Console v1**（Launchpad spec 选择 + Runner：Command Log 树/页面预览/时间旅行 scrub）+ 试点 2 spec + 缺口清单回灌 | E1、M2 |
+> | E3 | 双引擎 CI（Playwright 为 oracle 对照）+ 批量迁移（4–6 批，每批 ≤20 spec，"引擎替换→语义重写"两步） | E2、M3–M4 |
+> | E4 | 收尾：删 Playwright 依赖/config + DOM 断言门禁（白名单只减不增）+ 迁移 handbook 定稿；**Console v2**（会话/诊断页：历史 run、DevSession 回放、视觉 diff 画廊） | E3 全绿、M5 |
+> | E5 | T4 语义清零：删兼容层与 DOM 白名单，`ft.expect` 成为唯一断言写法 | E4 + M4 全量落地 |
 
 迁移铁律：双引擎期每个 spec "新全绿 + 旧删除"同 commit；断言强度不得降级；终态无 DOM 判断（例外仅视觉截图/axe/真输入/跨 tab 白名单）；失败 spec 自动产出 DevSession 诊断包（复用 M5）。
 

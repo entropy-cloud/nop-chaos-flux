@@ -1,8 +1,9 @@
 {
   "_header": {
     "description": "Numeric baselines for the high-risk advisory scanners listed in BASELINED_SCANNERS (check-scanner-baselines.mjs). A count above the baseline fails check:scanner-baselines (new suspects must be fixed or the baseline consciously re-registered).",
-    "lastUpdated": "2026-11-10",
+    "lastUpdated": "2026-11-18",
     "reRegistrationNotes": [
+      "2026-11-18 plan 2026-11-18-e1-flux-test-backend-foundation-plan (E1 flux 测试后端骨架): discover-audit-suspects 794 -> 810 / find-test-global-leaks 115 -> 116 / find-async-without-failure-path 347 -> 359 / find-performance-suspects 30 -> 33。全部新增命中均来自两个新测试基建包 @nop-chaos/flux-test-server 与 @nop-chaos/flux-test-driver（E 轨道 E1，替代 Playwright 的自研测试后端骨架）:(1) async-without-failure-path：ws send/notify 的 fire-and-forget（gateway.broadcast/peer.notify/断连清理）、locator 轮询 sleep 循环、cdp-client 事件分发——测试后端消息通道的失败统一经 runner 超时/peer-lost 聚合，不在每个 send 上挂失败分支；(2) discover-audit-suspects：同上来源 + cli.ts 的 no-console 终端报告输出（CLI 本职）；(3) test-global-leaks：locator.test.ts 为 jsdom 语义测试注入 globalThis.document/window（带 @vitest-environment jsdom pragma，已登记 jsdom-pragma-whitelist）；(4) performance-suspects：mock-cdp.ts/locator 的 setTimeout 轮询——测试基建的确定性等待原语，非生产热路径。两包均 private、不进生产 bundle，按 AGENTS '新增命中需拆分或登记' 规则做有意再登记。",
       "2026-11-10 plan 861 (navigation URL & external key safety): find-async-without-failure-path 346 -> 347 / discover-audit-suspects 793 -> 794 (+1 each, same source — the two bare catches in the plan-861 fix surface are the intentional failure paths themselves). (1) packages/flux-core/src/utils/url.ts:54 isSafeNavigationUrl catch { return false }: fail-closed semantics ARE the contract (R3 — any input new URL cannot resolve is judged unsafe, plan Phase 2 item + url.test.ts unparseable-input assertion); (2) packages/nop-debugger/src/panel-search.ts:18 parseRegexLiteral catch { return null }: refused/invalid regex literals fall back to literal text matching per R7 gate semantics (plan 861 adjudication ④; null return IS the structured refusal signal). Same intentional-shape family as the plan-769/772/528 registrations. Surgical hand-edit per 09ed6e5b6 precedent; no --update-baselines.",
       "2026-11-06 plan 860 (form publication ownership): find-async-without-failure-path 351 -> 346 / discover-audit-suspects 798 -> 793. Scanner false-positive fix in scripts/audit/rules.mjs: the catch-without-structured-failure-path heuristic now recognizes reportRuntimeHostIssue (the repo's canonical structured host-reporting channel; regression test scripts/__tests__/async-failure-rules.test.ts). Effect: plan 860's new catch in packages/flux-renderers-form/src/renderers/form.tsx (deliverToSubmitTarget) is not flagged, and 5 pre-existing false positives clear — flux-runtime action-adapter.ts:108, async-data/api-data-source-controller-runtime.ts:70, api-data-source-controller-state.ts:142, api-data-source-controller.ts:36, report-designer-renderers report-designer-toolbar.tsx:58 (each catch body verified to call reportRuntimeHostIssue). Net -5 per scanner. Surgical hand-edit per 09ed6e5b6 precedent; no --update-baselines.",
       "2026-11-05 plan 858 (core test debt): find-test-global-leaks 114 -> 115 / discover-audit-suspects 797 -> 798 (+1 aggregate). The +1 is the module-level `let container` in the NEW colocated file packages/flux-renderers-industrial/src/editor/renderer/editor-engine-editor-targets.test.ts — plan 858 split four editor-target/mode suites out of editor-engine.test.ts (which already carries the same shape inside the 114 base) to stay under the 700-line oversized gate; the split necessarily duplicates the fixture holder. Same test-infra family as the plan-727/R2.5 registrations. Zero product-code suspects. Surgical hand-edit per 09ed6e5b6 precedent.",
@@ -40,18 +41,18 @@
   },
   "scanners": {
     "find-styling-suspects": 254,
-    "discover-audit-suspects": 794,
-    "find-test-global-leaks": 115,
+    "discover-audit-suspects": 810,
+    "find-test-global-leaks": 116,
     "find-todo-exitless": 0,
     "find-as-any-casts": 31,
-    "find-async-without-failure-path": 347,
+    "find-async-without-failure-path": 359,
     "find-react19-optimization-candidates": 668,
     "find-canvas-wrapper-a11y-gaps": 0,
     "find-hardcoded-type-dispatch": 0,
     "find-missing-renderer-markers": 15,
     "find-fieldframe-bypasses": 12,
     "find-reactive-render-reads": 21,
-    "find-performance-suspects": 30,
+    "find-performance-suspects": 33,
     "find-non-retained-renderer-references": 161
   }
 }
