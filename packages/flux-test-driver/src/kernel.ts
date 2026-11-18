@@ -119,7 +119,16 @@ export function installFt(options: { gateway?: boolean; waitForKernelMs?: number
         let nextId = 1;
         (window as unknown as { __fluxTestRealInput?: ReturnType<typeof getBridge> }).__fluxTestRealInput = async (method, params) => {
           const socket = gatewaySocket;
-          if (!socket || socket.readyState !== WebSocket.OPEN) throw new Error('gateway not open');
+          if (!socket) throw new Error('gateway not open');
+          // installFt may return while the WS handshake is still CONNECTING
+          // (spec's first real-input call can race it) — wait for open.
+          if (socket.readyState !== WebSocket.OPEN) {
+            await new Promise<void>((resolve, reject) => {
+              const timer = setTimeout(() => reject(new Error('gateway open timeout')), 5_000);
+              socket.addEventListener('open', () => { clearTimeout(timer); resolve(); }, { once: true });
+              socket.addEventListener('close', () => { clearTimeout(timer); reject(new Error('gateway closed during connect')); }, { once: true });
+            });
+          }
           const id = nextId++;
           socket.send(JSON.stringify({ id, method, params }));
           await new Promise<void>((resolve, reject) => {

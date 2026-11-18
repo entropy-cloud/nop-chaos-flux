@@ -253,11 +253,16 @@ export function createLocator(getDoc: DocGetter, selector: string, options: Loca
 function createIndexedLocator(getDoc: DocGetter, selector: string, index: number, options: LocatorOptions, getApi: () => DebuggerApiView | undefined): Locator {
   const base = createLocator(getDoc, selector, options, getApi);
   const defaultTimeoutMs = () => options.timeoutMs ?? 5_000;
+  // nth() indexes the SAME element set the base locator matches — the
+  // predicate (getByRole name matching) must carry through, otherwise nth(i)
+  // silently indexes the unfiltered page-wide selector.
+  const predicate = options.predicate;
   const queryIndexed = (): Element | null => {
-    const list = getDoc().querySelectorAll(selector);
-    if (list.length === 0) return null;
-    const resolved = index < 0 ? list.length + index : index;
-    return list[resolved] ?? null;
+    const list = Array.from(getDoc().querySelectorAll(selector));
+    const filtered = predicate ? list.filter(predicate) : list;
+    if (filtered.length === 0) return null;
+    const resolved = index < 0 ? filtered.length + index : index;
+    return filtered[resolved] ?? null;
   };
 
   return {

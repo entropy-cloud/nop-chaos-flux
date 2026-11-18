@@ -97,6 +97,18 @@ describe('runSpecs', () => {
     expect(summary.exitCode).toBe(1);
   });
 
+  it('specTimeouts override wins over the global timeoutMs', async () => {
+    const spec = writeTempSpec('slow-perf.flux-spec.ts', 'export default async () => {}');
+    const summary = await runSpecs({
+      specPaths: [spec],
+      baseUrl: 'http://127.0.0.1:59998',
+      timeoutMs: 60,
+      specTimeouts: { 'slow-perf.flux-spec.ts': 1_000 },
+      overrides: { browser: fakeBrowser({ resolveWith: 'late', delayMs: 300 }), skipHttpReady: true },
+    });
+    expect(summary.results[0]).toMatchObject({ status: 'passed' });
+  });
+
   it('treats expected-failure specs as non-blocking and passed specs under that flag as failures', async () => {
     const okSpec = writeTempSpec('unexpectedly-ok.flux-spec.ts', 'export default async () => {}');
     const summary = await runSpecs({
@@ -168,3 +180,4 @@ describe('runSpecs', () => {
     await gateway.close();
   });
 });
+

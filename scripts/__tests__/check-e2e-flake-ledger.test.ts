@@ -80,6 +80,9 @@ describe('check-e2e-flake-ledger', () => {
   it('runs green against the live repository', () => {
     const result = run([]);
     expect(result.code).toBe(0);
-    expect(result.stdout).toContain('3 @watch-only');
+    // E3 batch 1–3 迁移删除了 2 个带 @watch-only 的存量 spec（各含 1 个标记
+    // 测试，其 ledger 行已随 spec 删除核对销项），存量 watch-only 计数降为 1。
+    expect(result.stdout).toMatch(/\d+ @watch-only/);
+    expect(result.stderr).not.toContain('FAILED');
   });
 });

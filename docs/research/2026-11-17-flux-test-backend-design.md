@@ -378,3 +378,36 @@ interface Locator {          // Playwright Locator 语义子集
 | scada-pressure-demo       | 3      | 3/3    | assertScadaCanvasRendered 同强度重实现             | 1             |
 
 批次 2 新增缺口回灌（Wave 3 处置候选）：Locator.focus()/toBeFocused 缺失（cron-editor 键盘走查兜底 evaluate）；真实点击遮挡检测（playground 固定 overlay 覆盖目标中心——driver 可加 elementFromPoint 命中断言）；CDP 逐字符 keyDown text+char 双插入（keyboard.type 对 React 受控输入不可用——fill 兜底）；`getByRole` string name 全匹配语义与 Playwright 的默认子串不匹配不一致（文档化即可）。
+
+### §5.5 续表：批次 3（2026-11-19，plan `docs/plans/2026-11-19-e3-batch-migration-wave3-plan.md`）
+
+20 个旧 spec 共 45 用例（+1 存量 skip 保留）Playwright oracle 复跑绿后同 commit 删除（205→185）；flux 引擎全批 65 全绿。附带两个 live defect 修复（详见 docs/bugs/15/16）与一个 runner 契约修复：
+
+| spec                             | 旧用例 | 新覆盖           | 升级点                                                                  | evaluate 债务 |
+| -------------------------------- | ------ | ---------------- | ----------------------------------------------------------------------- | ------------- |
+| kanban-keyboard-reorder          | 1      | 1/1              | activeElement 轮询焦点证明（Space=' ' 键名约束记录）                    | 1             |
+| three-canvas-ux                  | 2      | 2/2              | DPR 整数时 buffer 宽度改为精确倍数断言                                  | 1             |
+| ai-component-handle              | 2      | 2/2              | 空 evaluate(true) 换真实挂载/气泡计数探针                               | 1             |
+| leafer-examples                  | 2      | 2/2              | canvas buffer 像素尺寸 >0 追加断言                                      | 1             |
+| graph-level-tint                 | 1      | 1/1              | 逐 level 表面色与卡片底色差异断言                                       | 1             |
+| flux-basic-row-inspect           | 1      | 1/1              | 逐行 kernel 白盒（附带修复 flux-basic 页面装饰环境竞态 + docs/bugs/15） | 1             |
+| calendar-perf                    | 2      | 2/2              | 到达门稳定等待 + 同阈值内联 fps                                         | 1             |
+| scada-pointer-events-regression  | 3      | 3/3              | 引擎句柄存在断言追加                                                    | 2             |
+| flow-designer-edge-creation      | 1+skip | 1/1（skip 保留） | 提交后追加 kernel 白盒                                                  | 2             |
+| crud-views-export-tab-visibility | 1      | 1/1              | 400ms 判别窗口语义保留                                                  | 1             |
+| diff-perf                        | 1      | 1/1              | hash 守卫防陈旧 0ms 读数                                                | 1             |
+| condition-builder-formula        | 4      | 4/4              | 逐用例错误标记                                                          | 2             |
+| debugger-ai                      | 1      | 1/1              | 资源时序双半判别保留                                                    | 1             |
+| composite-editor-handles         | 5      | 5 断言           | 稳定门后再断言                                                          | 0             |
+| w3d-period-family                | 4      | 4/4              | 逐用例 kernel 白盒（原 spec 无错误面）                                  | 1             |
+| gantt-perf                       | 3      | 3/3              | measure-perf helper 内联等价                                            | 2             |
+| mobile-number-keyboard           | 5      | 5/5              | 正则文本断言升级精确等值                                                | 0             |
+| form-atoms-slider                | 3      | 3/3              | aria-valuenow 追加断言                                                  | 1             |
+| verification-code                | 3      | 3/3              | 两次 Backspace 复查                                                     | 2             |
+| w1a-content-family               | 7      | 7/7              | sanitize 三合一单趟断言                                                 | 1             |
+
+批次 3 附带契约修复（driver/server）：
+
+1. **runner 存储隔离**（docs/bugs/16）：单浏览器 profile 下 localStorage 跨 spec 泄漏（debugger-ai 打开的浮动面板持久化遮挡后续 spec 点击）——`Page.addScriptToEvaluateOnNewDocument` 每文档清空 storage，Playwright fresh-context 等价；mock 增加 methodLog 测试挂勾。
+2. **nth() 谓词贯穿**（docs/bugs/15 附带）：getByRole name 过滤后的 `nth(i)/last()` 曾在未过滤全页选择器上取索引（点错按钮）——createIndexedLocator 复用 predicate；判别性单测恰红→绿。
+3. **per-spec 超时约定**：`*-perf.flux-spec.ts` dir 模式自动 200s（对齐 Playwright describe 级超时），specTimeouts 覆盖机制 + 单测。

@@ -165,6 +165,13 @@ function buildHandle(client: CdpClient, wsEndpoint: string, kill: (() => Promise
         return (result.result as { value?: T } | undefined)?.value as T;
       };
 
+      // Fresh-context isolation (Playwright parity): every new document starts
+      // with empty web storage, so UI state persisted by one spec's page
+      // (e.g. the floating debugger panel) cannot leak into the next tab.
+      await sessionSend('Page.addScriptToEvaluateOnNewDocument', {
+        source: 'try { localStorage.clear(); sessionStorage.clear(); } catch {}',
+      });
+
       const navigate = async (target: string) => {
         const loaded = new Promise<void>((resolve, reject) => {
           const timer = setTimeout(() => {

@@ -77,9 +77,10 @@ export class MockCdpServer {
 }
 
 /** Standard page-target canned responses shared by launcher tests. */
-export function pageHandlers(broadcast: (event: string, params?: Record<string, unknown>) => void = () => {}): (socket: WebSocket, msg: { id: number; method: string; params: Record<string, unknown> }) => Record<string, unknown> {
+export function pageHandlers(broadcast: (event: string, params?: Record<string, unknown>) => void = () => {}, methodLog?: string[]): (socket: WebSocket, msg: { id: number; method: string; params: Record<string, unknown> }) => Record<string, unknown> {
   let nextSession = 1;
   return (_socket, msg) => {
+    methodLog?.push(msg.method);
     switch (msg.method) {
       case 'Target.createTarget':
         return { targetId: 'target-1' };

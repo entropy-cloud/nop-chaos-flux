@@ -88,10 +88,19 @@ export async function runCli(argv: string[]): Promise<number> {
   const conventionFailures = specs
     .filter((specPath) => path.basename(specPath).includes('-must-fail.flux-spec.ts'))
     .map((specPath) => path.basename(specPath).replace(/\.flux-spec\.ts$/, ''));
+  // convention: *-perf.flux-spec.ts measure sustained interaction (fps/rAF loops)
+  // and legitimately exceed the default spec timeout — 200s like the old
+  // Playwright describe-level timeouts.
+  const specTimeouts: Record<string, number> = {};
+  for (const specPath of specs) {
+    const name = path.basename(specPath);
+    if (name.endsWith('-perf.flux-spec.ts')) specTimeouts[name] = 200_000;
+  }
   const summary: RunSummary = await runSpecs({
     specPaths: specs,
     baseUrl: args.baseUrl,
     timeoutMs: args.timeoutMs,
+    specTimeouts,
     expectedFailures: [...new Set([...args.expectedFailures, ...conventionFailures])],
     reportPath: args.report ?? 'tests/e2e/artifacts/flux-test-report.json',
     driverEntryPath: args.noDriver ? undefined : path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../flux-test-driver/src/index.ts'),

@@ -5,6 +5,7 @@ import { FluxTestError } from './errors.js';
 import { MockCdpServer, pageHandlers } from './mock-cdp.js';
 
 const servers: MockCdpServer[] = [];
+const clients: Array<{ close(): void }> = [];
 async function startPageServer(opts: { stuckNavigations?: boolean } = {}) {
   const server = new MockCdpServer({ handler: pageHandlers(), stuckNavigations: opts.stuckNavigations });
   const info = await server.listen();
@@ -14,6 +15,7 @@ async function startPageServer(opts: { stuckNavigations?: boolean } = {}) {
 
 afterEach(async () => {
   await Promise.all(servers.splice(0).map((s) => s.close()));
+  for (const client of clients.splice(0)) client.close();
 });
 
 describe('discoverBrowserExecutable', () => {
@@ -83,4 +85,22 @@ describe('createBrowserHandle (mock CDP)', () => {
     }
     await handle.close();
   }, 5_000);
+});
+
+
+describe('fresh-context storage isolation', () => {
+  it('registers the storage-clearing new-document script before navigation', async () => {
+    const methods: string[] = [];
+    const server = new MockCdpServer({ handler: pageHandlers(() => {}, methods) });
+    const info = await server.listen();
+    servers.push(server);
+    const client = await CdpClient.connect(info.wsEndpoint);
+    const handle = createBrowserHandle(client, info.wsEndpoint, undefined, { pageLoadTimeoutMs: 300 });
+    const page = await handle.newPage('http://127.0.0.1:59998/');
+    const initIndex = methods.indexOf('Page.addScriptToEvaluateOnNewDocument');
+    const navIndex = methods.indexOf('Page.navigate');
+    expect(initIndex).toBeGreaterThanOrEqual(0);
+    expect(navIndex).toBeGreaterThan(initIndex);
+    await page.close();
+  });
 });

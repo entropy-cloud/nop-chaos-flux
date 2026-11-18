@@ -591,7 +591,7 @@ graph TD
 
 #### 当前实测值
 
-> 以下数据由 `tests/e2e/kanban-perf.spec.ts`、`tests/e2e/calendar-perf.spec.ts` 和 `tests/e2e/gantt-perf.spec.ts` 在 Playwright headless Chromium 环境中采集，2026-07-23。高规格场景使用专用性能测试页面 `calendar-perf-scale`、`kanban-perf-scale` 和 `gantt-perf-scale`。
+> 以下数据由 `tests/e2e/flux/calendar-perf.flux-spec.ts` 和 `tests/e2e/flux/gantt-perf.flux-spec.ts`（E3 批次 3 迁移 flux 引擎；kanban-perf 未建，见该行表格） 在 Playwright headless Chromium 环境中采集，2026-07-23。高规格场景使用专用性能测试页面 `calendar-perf-scale`、`kanban-perf-scale` 和 `gantt-perf-scale`。
 
 | 组件      | 场景                                   | 实测值               | 目标值         | 达标？ | 备注                                                                                |
 | --------- | -------------------------------------- | -------------------- | -------------- | ------ | ----------------------------------------------------------------------------------- |
@@ -612,9 +612,9 @@ graph TD
 
 - `tests/e2e/helpers/measure-perf.ts` — FPS 捕获（`requestAnimationFrame` delta）和 timing 工具函数
 - `tests/e2e/kanban-perf.spec.ts` — Kanban idle + drag FPS 基线（硬断言：idle > 30fps, drag > 60fps）
-- `tests/e2e/calendar-perf.spec.ts` — Calendar 首次加载时间（硬断言：demo < 500ms, scale < 10s）
-- `tests/e2e/gantt-perf.spec.ts` — Gantt idle + scroll + drag FPS 基线（硬断言：idle > 30fps, scroll+drag > 50fps）
-- `tests/e2e/diff-perf.spec.ts` — Diff-view 首屏渲染时间硬断言（< 200ms, 1000+ diff lines）
+- `tests/e2e/flux/calendar-perf.flux-spec.ts` — Calendar 首次加载时间（硬断言：demo < 500ms, scale < 10s；E3 批次 3 迁移 flux 引擎）
+- `tests/e2e/flux/gantt-perf.flux-spec.ts` — Gantt idle + scroll + drag FPS 基线（硬断言：idle > 30fps, scroll+drag > 50fps；E3 批次 3 迁移 flux 引擎）
+- `tests/e2e/flux/diff-perf.flux-spec.ts` — Diff-view 首屏渲染时间硬断言（< 200ms, 1000+ diff lines；E3 批次 3 迁移 flux 引擎）
 
 ### 测试策略
 
@@ -624,7 +624,7 @@ graph TD
 | Kanban    | 纯函数 helpers + 过滤             | 渲染 + 拖拽 + configMap | Playwright 拖拽跨列 ✅         | S10.3 `kanban-demo`   | `tests/e2e/kanban-demo.spec.ts` (6 tests)                                       |
 | Calendar  | 日期 + 定位 + 冲突检测            | 渲染 + 虚拟滚动         | Playwright 视图切换 ✅         | S10.2 `calendar-demo` | `tests/e2e/flux/calendar-demo.flux-spec.ts`（6 用例，E3 批次 1 迁移 flux 引擎） |
 | Barcode   | WASM + 相机 mock + 解码           | 渲染 + overlay          | —（需摄像头 mock）             | S10.4 `barcode-demo`  | —                                                                               |
-| Diff-view | 解析 + inline-diff + 高亮         | 渲染 + 虚拟滚动         | Playwright split/unified       | S10.5 `diff-demo`     | `tests/e2e/diff-perf.spec.ts` (1 test)                                          |
+| Diff-view | 解析 + inline-diff + 高亮         | 渲染 + 虚拟滚动         | Playwright split/unified       | S10.5 `diff-demo`     | `tests/e2e/flux/diff-perf.flux-spec.ts`（E3 批次 3 迁移 flux 引擎）             |
 
 **Test coverage status (2026-07-21):** Kanban 和 Calendar 的 Playwright E2E 测试已通过，覆盖搜索、过滤、视图切换、导航、事件渲染等。Kanban 纯函数 helper 新增快照式测试。性能基线脚本已创建。参见 `docs/plans/2026-07-21-2100-1-scheduling-test-coverage-plan.md`。
 

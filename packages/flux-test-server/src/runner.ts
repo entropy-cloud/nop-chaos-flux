@@ -21,6 +21,8 @@ export interface RunnerOptions {
   launcher?: LauncherOptions;
   /** Basename (no ext) of specs expected to fail; they report 'expected-failure' and don't flip exit code. */
   expectedFailures?: string[];
+  /** Per-spec timeout override keyed by basename (with ext); wins over timeoutMs. */
+  specTimeouts?: Record<string, number>;
   reportPath?: string;
   onResult?: (result: SpecResult) => void;
   /** In-page driver entry (flux-test-driver index.ts); bundled and injected before each spec. */
@@ -95,7 +97,8 @@ export async function runSpecs(options: RunnerOptions): Promise<RunSummary> {
       const expectFail = expected.has(name.replace(/\.flux-spec\.ts$/, '')) || expected.has(name);
       let result: SpecResult;
       try {
-        await runSingleSpec({ specPath, baseUrl: options.baseUrl, browser, gatewayPort, timeoutMs, viewport: options.viewport, driverCode });
+        const specTimeout = options.specTimeouts?.[name] ?? timeoutMs;
+        await runSingleSpec({ specPath, baseUrl: options.baseUrl, browser, gatewayPort, timeoutMs: specTimeout, viewport: options.viewport, driverCode });
         result = { spec: name, status: expectFail ? 'failed' : 'passed', durationMs: Date.now() - started };
         if (expectFail) {
           result.error = { message: 'spec passed but was marked expected-failure' };

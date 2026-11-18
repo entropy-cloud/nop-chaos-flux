@@ -140,12 +140,13 @@ describe('App diagnostics routing', () => {
     expect(readDiagnosticsEnabled('diagnostics=1')).toBe(true);
   });
 
-  it('keeps ordinary performance-table route lightweight by default', () => {
+  it('keeps ordinary performance-table route lightweight by default', async () => {
     window.history.replaceState({}, '', '/#/performance-table');
 
     render(<App />);
 
-    expect(screen.getByTestId('performance-table-page')).toBeTruthy();
+    // 内核异步加载：RouteHost 就绪后才挂载路由页（见 App.tsx RouteHost 注释）
+    expect(await screen.findByTestId('performance-table-page')).toBeTruthy();
     expect(performanceTablePageSpy).toHaveBeenCalledTimes(1);
     expect(performanceTablePageSpy.mock.calls[0][0]).toMatchObject({
       diagnosticsEnabled: false,
@@ -153,12 +154,12 @@ describe('App diagnostics routing', () => {
     });
   });
 
-  it('enters the same page in diagnostics mode for query-before-hash URLs', () => {
+  it('enters the same page in diagnostics mode for query-before-hash URLs', async () => {
     window.history.replaceState({}, '', '/?diagnostics=1#/performance-table');
 
     render(<App />);
 
-    expect(screen.getByTestId('performance-table-page')).toBeTruthy();
+    expect(await screen.findByTestId('performance-table-page')).toBeTruthy();
     expect(performanceTablePageSpy).toHaveBeenCalledTimes(1);
     expect(performanceTablePageSpy.mock.calls[0][0]).toMatchObject({
       diagnosticsEnabled: true,

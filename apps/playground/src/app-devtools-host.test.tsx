@@ -1,6 +1,6 @@
 import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
-import { render, waitFor, cleanup } from '@testing-library/react';
+import { render, waitFor, cleanup, act } from '@testing-library/react';
 
 // Regression test (E1 smoke, 2026-11-18): NopDebuggerPanel must never mount
 // against the M7 trimmedControllerStub — the stub's getSnapshot() returns
@@ -61,6 +61,7 @@ describe('DevToolsHost kernel/panel ordering', () => {
   it('mounts NopDebuggerPanel with the real kernel controller, never the trimmed stub', async () => {
     const { App } = await import('./App.js');
     render(<App />);
+    await act(async () => {});
     try {
       await waitFor(() => expect(capturedPanelProps.length).toBeGreaterThan(0), { timeout: 3_000 });
     const received = capturedPanelProps.at(-1)?.controller as { id?: string } | undefined;

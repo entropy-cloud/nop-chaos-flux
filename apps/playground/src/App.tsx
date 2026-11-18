@@ -70,44 +70,59 @@ if (__FLUX_DEVTOOLS__ && typeof window !== 'undefined' && typeof window.__NOP_DE
   };
 }
 
-// M7 production diagnostics: trimmed mode exposes a same-shape no-op controller
-// (Proxy) so route-page consumers keep working without the kernel in the bundle.
-const trimmedControllerStub = new Proxy({}, {
-  get: (_target, prop) => {
-    if (prop === 'then') return undefined;
-    return () => undefined;
-  },
-}) as unknown as NopDebuggerController;
+// M7 production diagnostics: in trimmed bundles `__FLUX_DEVTOOLS__` is false,
+// `devtoolsReady` resolves null, and route pages simply do not render (the
+// shell owns the only user-visible chrome) — no same-shape stub is needed
+// because nothing consumes a controller before the kernel lands.
 
-let debuggerController: NopDebuggerController = __FLUX_DEVTOOLS__
-  ? trimmedControllerStub
-  : trimmedControllerStub;
-
-// Single readiness promise: the kernel must be assigned BEFORE the panel can
-// mount — a panel rendered against trimmedControllerStub crashes on its first
-// store read (stub returns undefined). One import, one ordering guarantee.
-const devtoolsReady: Promise<((props: { controller: NopDebuggerController }) => ReactNode) | null> = __FLUX_DEVTOOLS__
+// The real controller is delivered through `devtoolsReady` — a mutable module
+// `let` re-assigned in an import callback is invisible to React's render model
+// and to the React Compiler's memoization (treated as an immutable module
+// binding), so consumers reading the variable after the load would still see
+// the stub. The promise payload is the only trustworthy handoff channel.
+const devtoolsReady: Promise<{ panel: (props: { controller: NopDebuggerController }) => ReactNode; controller: NopDebuggerController } | null> = __FLUX_DEVTOOLS__
   ? import('@nop-chaos/nop-debugger').then((module) => {
-      debuggerController = module.createNopDebugger({
+      const controller = module.createNopDebugger({
         id: 'playground-main',
         capturePerformance: false,
         exposeAutomationApi: true,
       });
-      return module.NopDebuggerPanel;
+      return { panel: module.NopDebuggerPanel, controller };
     })
   : Promise.resolve(null);
 
 /** Lazily mounts the debugger panel once the kernel module loads (dev/test only). */
 function DevToolsHost() {
-  const [Panel, setPanel] = useState<((props: { controller: NopDebuggerController }) => ReactNode) | null>(null);
+  const [panelState, setPanelState] = useState<{ panel: (props: { controller: NopDebuggerController }) => ReactNode; controller: NopDebuggerController } | null>(null);
   useEffect(() => {
     if (!__FLUX_DEVTOOLS__) return;
-    void devtoolsReady.then((PanelComponent) => {
-      if (PanelComponent) setPanel(() => PanelComponent);
+    void devtoolsReady.then((ready) => {
+      if (ready) setPanelState(ready);
     });
   }, []);
-  if (!Panel) return null;
-  return <Panel controller={debuggerController} />;
+  if (!panelState) return null;
+  return <panelState.panel controller={panelState.controller} />;
+}
+
+// Route pages receive the controller as a prop captured at render time. The
+// kernel loads asynchronously, so the route host renders NOTHING until the
+// readiness promise lands: pages mount exactly once, directly with the real
+// controller. Two shapes are explicitly wrong here — (1) mounting pages on the
+// stub and re-rendering later is an interaction race (pages may have focused /
+// clicked / built fixture DOM when the tree re-renders under them); (2) React
+// `use(devtoolsReady)` suspension does not settle reliably under the RTL/jsdom
+// test environment (minimal `use(promise)` repro times out), so the handoff
+// must be plain state + effect.
+function RouteHost({ route, navigate }: { route: RouteSpec; navigate: (spec: RouteSpec) => void }) {
+  const [controller, setController] = useState<NopDebuggerController | null>(null);
+  useEffect(() => {
+    if (!__FLUX_DEVTOOLS__) return;
+    void devtoolsReady.then((ready) => {
+      if (ready) setController(ready.controller);
+    });
+  }, []);
+  if (!controller) return null;
+  return <>{renderPage(route, navigate, controller)}</>;
 }
 
 function PageFallback() {
@@ -180,7 +195,7 @@ function DomainNotFound({ domainId, onBack }: { domainId: string; onBack: () => 
   );
 }
 
-function renderPage(route: RouteSpec, navigate: (spec: RouteSpec) => void) {
+function renderPage(route: RouteSpec, navigate: (spec: RouteSpec) => void, debuggerController: NopDebuggerController) {
   const goHome = () => navigate({ kind: 'home' });
   const diagnosticsEnabled =
     typeof window !== 'undefined' ? readDiagnosticsEnabled(window.location.search) : false;
@@ -271,7 +286,9 @@ export function App() {
   return (
     <div className="nop-theme-root">
       <RouteErrorBoundary routeKey={routeKey}>
-        <Suspense fallback={<PageFallback />}>{renderPage(route, navigate)}</Suspense>
+        <Suspense fallback={<PageFallback />}>
+          <RouteHost route={route} navigate={navigate} />
+        </Suspense>
       </RouteErrorBoundary>
       <ThemeSwitcher />
       <DevToolsHost />

@@ -3,6 +3,7 @@
 // delayed mount); jsdom provides the event pipeline without a browser.
 import { beforeEach, describe, expect, it } from 'vitest';
 import { createLocator } from './locator.js';
+import { matchesAccessibleName } from './roles.js';
 import type { DebuggerApiView } from './types.js';
 
 let doc: Document;
@@ -168,5 +169,23 @@ describe('Locator compat layer', () => {
   it('waitFor visible rejects on timeout when element stays hidden', async () => {
     mountButton({ style: 'display:none' });
     await expect(locator('button').waitFor('visible', { timeoutMs: 150 })).rejects.toThrow(/locator timeout/);
+  });
+});
+
+describe('nth() carries the getByRole predicate', () => {
+  it('nth(i) indexes filtered matches, not the raw page-wide selector', async () => {
+    doc.body.innerHTML = `
+      <button id="a">Inspect</button>
+      <span id="noise">noise</span>
+      <button id="b">Inspect</button>
+      <button id="c">Cancel</button>`;
+    const inspect = createLocator(() => doc, 'button', { timeoutMs: 300, intervalMs: 20, predicate: (el) => matchesAccessibleName(el, 'Inspect') }, () => makeApi(true));
+    await expect(inspect.count()).resolves.toBe(2);
+    await expect(inspect.nth(0).text()).resolves.toBe('Inspect');
+    await expect(inspect.nth(1).text()).resolves.toBe('Inspect');
+    // index 2 does not exist among filtered matches (raw selector's nth(2) is Cancel)
+    const third = inspect.nth(2);
+    await expect(third.text()).rejects.toThrow(/timeout/);
+    await expect(inspect.last().text()).resolves.toBe('Inspect');
   });
 });

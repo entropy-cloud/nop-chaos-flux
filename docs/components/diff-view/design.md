@@ -161,12 +161,12 @@ packages/flux-renderers-content/src/diff-view/
 - 差异行使用预渲染 HTML 模板（参考 git-diff-view 的 `plainTemplate`/`syntaxTemplate`），通过 `dangerouslySetInnerHTML` 插入（内容经 `escapeHtml()` 全转义，仅在高亮 `<span>` 等安全位置插入受控结构），避免 React JSX 处理大量行节点。
 - 语法高亮作为可插拔适配器（`syntax-highlight.ts`），默认使用 `lowlight`（基于 refractor/Prism，轻量），带 50 条 LRU 缓存。
 - inline diff 使用 `diff-match-patch` 计算字符级变更，在模板中生成带背景色的 `<span data-diff-inline="add|delete">`。
-- **行级渲染**：当前为 full-line 全量渲染（无虚拟滚动——`diff-perf-scale` 1500+ 行首屏 <5000ms 为性能门禁，见 `tests/e2e/diff-perf.spec.ts`）。行组件使用 React.memo + 自定义 comparator（hunk index/引用身份比较），视图容器 useMemo 缓存 parse + inline diff + 语法高亮结果，仅 oldContent/newContent/language 引用变化时重建。首版规划中的 virtualizationThreshold=500 虚拟化策略未落地（性能门禁已按实际渲染路径校准）。
+- **行级渲染**：当前为 full-line 全量渲染（无虚拟滚动——`diff-perf-scale` 1500+ 行首屏 <5000ms 为性能门禁，见 `tests/e2e/flux/diff-perf.flux-spec.ts`（E3 批次 3 迁移 flux 引擎））。行组件使用 React.memo + 自定义 comparator（hunk index/引用身份比较），视图容器 useMemo 缓存 parse + inline diff + 语法高亮结果，仅 oldContent/newContent/language 引用变化时重建。首版规划中的 virtualizationThreshold=500 虚拟化策略未落地（性能门禁已按实际渲染路径校准）。
 
 ## 12. 风险、取舍与后续阶段
 
 - **大 diff 性能**（风险）：1000 行以上的大 diff，React 渲染和重排压力显著。后续阶段需引入虚拟滚动（virtual scrolling），仅渲染可视区域的 diff 行。
-- 虚拟化状态：首版规划的动态虚拟化策略（virtualizationThreshold=500 行 + 固定行高 24px 测量规避 + 二阶段渲染）**当前未落地**——实际为 full-line 全量渲染；性能门禁为 `diff-perf-scale` 1500+ 行首屏 <5000ms（`tests/e2e/diff-perf.spec.ts`，C5.1 按 calendar-perf 先例校准）。超 5000ms 时优先引入虚拟滚动。
+- 虚拟化状态：首版规划的动态虚拟化策略（virtualizationThreshold=500 行 + 固定行高 24px 测量规避 + 二阶段渲染）**当前未落地**——实际为 full-line 全量渲染；性能门禁为 `diff-perf-scale` 1500+ 行首屏 <5000ms（`tests/e2e/flux/diff-perf.flux-spec.ts`，C5.1 按 calendar-perf 先例校准）。超 5000ms 时优先引入虚拟滚动。
 - **语法高亮依赖体积**（取舍）：`lowlight` + 语言包约 50KB gzip，`shiki` 更大。首版采用 `lowlight` 为默认，语法高亮作为可选能力（`language` 非空时启用）；不期望用户为纯文本 diff 承担高亮库代价。
 - **diff 库选择**（取舍）：`diff-match-patch` 算法准确（字符级差异精确到删除和插入），但实现较重（Google 维护的 Java 移植版）。`fast-diff` 更轻量但精度略低。首版使用 `diff-match-patch` 保证准确性，后续若发现性能瓶颈可替换为 `fast-diff`（接口层抽象隔离后可互换）。
 - **模板注入 XSS**（风险）：`dangerouslySetInnerHTML` 使用预渲染模板时必须确保内容经 HTML 转义处理（`&` → `&amp;`、`<` → `&lt;`、`>` → `&gt;`），只在差异高亮 `<span>` 等安全位置插入受控 HTML 结构。

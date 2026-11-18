@@ -38,7 +38,7 @@ Ownership neighbors:
 - `scripts/__tests__/ai-debugger-local-qwen.optional.test.ts` — optional local-model probe (contract seed; not the production contract)
 - `apps/playground/src/ai/debugger-ai-demo.ts` — host reference integration (scripted demo connector + minimal snapshot applier)
 - `apps/playground/src/pages/debugger-lab-page.tsx` — opt-in enablement path (default-off, dynamic `@nop-chaos/nop-debugger-ai/panel` import)
-- `tests/e2e/debugger-ai.spec.ts` — programmatic e2e chain (zero-load network assertion, propose→adopt→rollback)
+- `tests/e2e/flux/debugger-ai.flux-spec.ts` — programmatic e2e chain (zero-load 资源时序判别、propose→adopt→rollback；E3 批次 3 迁移 flux 引擎)
 
 ## Package Boundary And Naming
 

@@ -38,16 +38,18 @@
       "2026-10-20 plan 669 (M11 安全输入组): find-react19-optimization-candidates 661 -> 663 (+2 = number-keyboard 受控 open 同步 effect 与乱序洗牌 effect 的信息级候选，语义必要保留)。无未处理异步失败路径；R2 补记：number-keyboard 锌字面 key 类改包 CSS data-slot 规则后 find-styling-suspects 252 -> 255 (+3 = key fg/divider 规则)、discover-audit-suspects 762 -> 765 (+3 同源双计)。无未处理异步失败路径。\"",
       "R2.5 cycle (2026-10-24): discover-audit-suspects 765->772 (+7) / find-test-global-leaks 108->115 (+7) — 同源同族：plan 727 新增两测试文件的测试基建形态命中（carousel-autoplay-lifecycle.test.tsx 可变模块级 mock 槽（intervalCalls/clearedIds/intervalCallback/reducedMotionChangeListeners 等 harness 控制面，与既有 carousel-autoplay.test.tsx 同构但既有文件已在基数内）+ three-canvas-lifecycle 新 describe 的 buildProps 就地对象；test-global-leaks 按模块级 let 计数）。纯测试 harness 面，零产品代码新增 suspect。surgical 手改单值，未走 --update-baselines（09ed6e5b6 先例）。",
       "2026-11-18 plan 2026-11-18-e2-test-console-v1-plan (E2 Test Console v1 + T0 试点): discover-audit-suspects 810 -> 826 / find-async-without-failure-path 359 -> 369 / find-performance-suspects 33 -> 39。全部新增命中仍来自两个测试基建包 @nop-chaos/flux-test-server 与 @nop-chaos/flux-test-driver 的 E2 新增面：console-server（run 编排 fire-and-forget startRun、CLI/静态服务终端输出）、console/app.tsx（React Console 页）、gateway run 广播/log.emit 转发、driver kernel log.emit 1s tick 轮询与限频、expect/locator 轮询 sleep 循环——同 E1 注册理由：测试后端消息通道失败统一经 runner 超时/peer-lost 聚合，不在每个 send/loop 上挂失败分支；CLI/Console 页终端输出为本职。",
-      "2026-11-19 plan 2026-11-18-e3-batch-migration-wave1-plan (E3 Wave 1): discover-audit-suspects 826 -> 834 / find-test-global-leaks 116 -> 118 / find-async-without-failure-path 369 -> 372 / find-performance-suspects 39 -> 42。新增命中仍集中在测试基建面：flux-test-server console-server/cli/watch 轮询（fire-and-forget startRun、CLI 终端输出、watch setInterval）、flux-test-driver expect-web/input（轮询 sleep 循环、真实输入桥接）、flux-bundle-built-dist.spec（test-global-leaks 为既有 spec 新增 2 处——本批未改动的存量文件，波动来自扫描面扩大）。同 E1/E2 注册理由：测试后端消息通道失败统一经 runner 超时聚合，轮询/终端输出为本职。"
+      "2026-11-19 plan 2026-11-18-e3-batch-migration-wave1-plan (E3 Wave 1): discover-audit-suspects 826 -> 834 / find-test-global-leaks 116 -> 118 / find-async-without-failure-path 369 -> 372 / find-performance-suspects 39 -> 42。新增命中仍集中在测试基建面：flux-test-server console-server/cli/watch 轮询（fire-and-forget startRun、CLI 终端输出、watch setInterval）、flux-test-driver expect-web/input（轮询 sleep 循环、真实输入桥接）、flux-bundle-built-dist.spec（test-global-leaks 为既有 spec 新增 2 处——本批未改动的存量文件，波动来自扫描面扩大）。同 E1/E2 注册理由：测试后端消息通道失败统一经 runner 超时聚合，轮询/终端输出为本职。",
+      "2026-11-19 plan 2026-11-18-e3-batch-migration-wave3-plan (E3 Wave 3): discover-audit-suspects 834 -> 835 / find-async-without-failure-path 372 -> 373。新增命中来自 playground App.tsx devtoolsReady.then 后台交付（fire-and-forget；失败统一经 runner 超时聚合）与 flux-test-server CLI watch 提示——同既有测试基建注册理由。",
+      "2026-11-19 Wave 3 收口追加：discover-audit-suspects 835 -> 837 / find-async-without-failure-path 373 -> 375——App.tsx devtoolsReady 后台交付与 devtools-host effect fire-and-forget（kernel 缺失时静默返回，错误统一经 runner 聚合）。"
     ]
   },
   "scanners": {
     "find-styling-suspects": 254,
-    "discover-audit-suspects": 834,
+    "discover-audit-suspects": 837,
     "find-test-global-leaks": 118,
     "find-todo-exitless": 0,
     "find-as-any-casts": 31,
-    "find-async-without-failure-path": 372,
+    "find-async-without-failure-path": 375,
     "find-react19-optimization-candidates": 668,
     "find-canvas-wrapper-a11y-gaps": 0,
     "find-hardcoded-type-dispatch": 0,

@@ -184,3 +184,5 @@ Use `docs/bugs/` for numbered bug histories that should still be understandable 
 - `docs/bugs/169-empty-depends-on-reaction-fail-open-loop.md`
 - `docs/bugs/170-combobox-option-scoping-trap-consumer-side-fix.md`
 - `docs/bugs/172-raw-hsl-component-token-var-usage-invalid.md`——裸 HSL 分量令牌直用 var() 渲染失效（复刻页透明/恒 light 三处实证；var() fallback 不防"定义了但无效"；renderers 三通道修复+判别单测）
+- `docs/bugs/15-flux-basic-decorate-env-stub-race.md`——playground 路由页永久持有 trimmedControllerStub（React Compiler 视模块级 let 为不可变绑定；E1 stub→real 交接只修了面板半边）；devtoolsReady promise 载荷 + RouteHost use() 挂起，页面单次挂载即持真控制器（flux-basic-row-inspect 恰红→绿）。
+- `docs/bugs/16-flux-test-runner-storage-leak.md`——flux-test runner 单浏览器 profile localStorage 跨 spec 泄漏（浮动面板持久化遮挡后续 spec 真实点击，14 个 dir 模式 spec 顺序性失败）；CDP addScriptToEvaluateOnNewDocument 每文档清 storage（Playwright fresh-context 等价，判别：65/65 复绿 + mock methodLog 单测）。
