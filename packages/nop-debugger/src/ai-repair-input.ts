@@ -37,9 +37,9 @@ function summarizeDivergence(divergence: Divergence): AiRepairInputEvidence {
   };
 }
 
-function summarizeVisualDiff(visualDiff: { diffRatio: number; regions?: Array<{ cid?: string; diffRatio: number }> } | undefined): AiRepairInputEvidence | null {
+function summarizeVisualDiff(visualDiff: { diffRatio: number; diffAreas?: Array<{ cid?: string; diffRatio: number }> } | undefined): AiRepairInputEvidence | null {
   if (!visualDiff) return null;
-  const regions = visualDiff.regions?.map((region) => `${region.cid ?? '?'}=${region.diffRatio.toFixed(4)}`).join(',') ?? '';
+  const regions = visualDiff.diffAreas?.map((area) => `${area.cid ?? '?'}=${area.diffRatio.toFixed(4)}`).join(',') ?? '';
   return {
     kind: 'visual-diff',
     summary: `visual diffRatio=${visualDiff.diffRatio.toFixed(4)}${regions ? ` regions=[${regions}]` : ''}`,
@@ -50,7 +50,7 @@ function summarizeVisualDiff(visualDiff: { diffRatio: number; regions?: Array<{ 
 export function buildAiRepairInput(input: {
   whyReport?: WhyReport;
   divergences?: Divergence[];
-  visualDiff?: { diffRatio: number; regions?: Array<{ cid?: string; diffRatio: number }> };
+  visualDiff?: { diffRatio: number; diffAreas?: Array<{ cid?: string; diffRatio: number }> };
   suggestedPatchArea?: string;
 }): AiRepairInput {
   const evidence: AiRepairInputEvidence[] = [];

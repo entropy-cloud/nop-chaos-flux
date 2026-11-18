@@ -1,4 +1,5 @@
 import type { DevSession } from './protocol/types.js';
+import type { DiagnosticBundle } from './diagnostic-bundle.js';
 import type { AsyncOwnerDebugSnapshot, FormStoreDiagnosticsOptions, FormStoreDiagnosticsOwnerQuery, FormStoreDiagnosticsOwnerSummary, FormStoreDiagnosticsSnapshot } from '@nop-chaos/flux-core';
 import type {
   NopComponentInspectResult,
@@ -107,8 +108,8 @@ export function createAutomationApi(input: {
   replaySession?(session: DevSession): Promise<{ steps: number; divergences: Array<{ step: number; path: string; expected: unknown; actual: unknown }> }>;
   recordVideo?(options?: { fps?: number }): void;
   stopRecordingVideo?(): Promise<{ mode: string; bytesBase64: string; byteLength: number; frameCount: number }>;
-  collectDiagnosticBundle?(): Promise<unknown>;
-  replayDiagnosticBundle?(bundle: unknown): Promise<{ steps: number; divergences: Array<{ step: number; path: string; expected: unknown; actual: unknown }> }>;
+  collectDiagnosticBundle?(session: DevSession): Promise<unknown>;
+  replayDiagnosticBundle?(bundle: DiagnosticBundle): Promise<{ steps: number; divergences: Array<{ step: number; path: string; expected: unknown; actual: unknown }> }>;
   buildAiRepairInput?(input: unknown): unknown;
 }): NopDebuggerAutomationApi {
   return {

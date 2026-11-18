@@ -5,6 +5,8 @@ import { createSessionCache, type SessionCache } from './session-cache.js';
 import { replaySession } from './replayer.js';
 import { createFakeClock } from './fake-clock.js';
 import { createVideoRecorder } from './capture/video.js';
+import { collectDiagnosticBundle as collectBundleBase, replayDiagnosticBundle as replayBundleBase, type DiagnosticBundle } from './diagnostic-bundle.js';
+import { buildAiRepairInput as buildAiRepairInputBase } from './ai-repair-input.js';
 import { CaptureError } from './capture/screenshot.js';
 import type { NormalizedRedactionOptions } from './redaction.js';
 
@@ -14,6 +16,7 @@ interface ReplayRuntimeLike {
 }
 
 interface SessionBridgeDeps {
+  sessionId: string;
   redaction: NormalizedRedactionOptions;
   store: Parameters<typeof createRecorder>[0]['store'];
   getCollector(): ForestSnapshotCollector | null;
@@ -95,6 +98,31 @@ export function createSessionBridge(deps: SessionBridgeDeps) {
     },
     recordVideo(options?: { fps?: number }): void {
       videoRecorder = createVideoRecorder(options?.fps ?? 5);
+    },
+    async collectDiagnosticBundle(session: DevSession): Promise<unknown> {
+      return collectBundleBase({
+        sessionId: deps.sessionId,
+        store: deps.store,
+        collector: deps.getCollector(),
+        buildSession: () => session,
+        screenshotTagRefs: () => [],
+        redact: (value) => value,
+      });
+    },
+    async replayDiagnosticBundle(bundle: DiagnosticBundle): Promise<{ steps: number; divergences: Array<{ step: number; path: string; expected: unknown; actual: unknown }> }> {
+      if (!deps.getRuntime()) {
+        return { steps: 0, divergences: [{ step: 0, path: 'runtime', expected: 'wired', actual: 'missing' }] };
+      }
+      return replayBundleBase(bundle, {
+        runtime: deps.getRuntime() as never,
+        getScopes: () => deps.getCollector()?.getLatest()?.scopes ?? {},
+        waitForStable: async () => {
+          await deps.getRuntime()?.getStabilityTracker?.()?.whenStable(2000);
+        },
+      });
+    },
+    buildAiRepairInput(input: never): unknown {
+      return buildAiRepairInputBase(input as never);
     },
     isVideoRecording(): boolean {
       return videoRecorder !== null;

@@ -86,7 +86,7 @@ describe('buildAiRepairInput (M7)', () => {
         parts: [],
       },
       divergences: [{ step: 5, path: 'root.form', expected: 'h5', actual: 'h6' }],
-      visualDiff: { diffRatio: 0.02, regions: [{ cid: 'c-1', diffRatio: 0.02 }] },
+      visualDiff: { diffRatio: 0.02, diffAreas: [{ cid: 'c-1', diffRatio: 0.02 }] },
     });
     expect(input.kind).toBe('ai-repair-input');
     expect(input.evidence).toHaveLength(3);
