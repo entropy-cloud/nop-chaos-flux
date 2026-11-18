@@ -91,11 +91,12 @@ export default async function formInputEnhancements(ft: FtGlobal): Promise<{ cas
   await resetRoute(ft);
 
   const moveUpButtons = ft.locator('[data-slot="array-editor-move-up"]');
-  // TODO(migrate-debt): driver gap workaround — the indexed locator (nth/last)
-  // only overrides click/text/innerHTML/attr; isEnabled/inputValue still resolve
-  // the FIRST match, so per-row button state and multi-row input values are
-  // asserted via explicit ft.evaluate reads (same assertions, explicit retry
-  // with last-actual) while the reorder CLICK still goes through nth().click().
+  // NOTE: indexed locators (nth/last) are full-method locators since batch 4
+  // (index-predicate refactor, discriminative unit tests in
+  // flux-test-driver/src/locator.test.ts) — isEnabled/inputValue DO resolve the
+  // indexed element now. The ft.evaluate reads below are a retained style
+  // choice (explicit retry with last-actual), not a workaround; simplify to
+  // locator assertions during semantic rewrite. No driver gap remains.
   await pollButtonStates(
     ft,
     '[data-slot="array-editor-move-up"]',

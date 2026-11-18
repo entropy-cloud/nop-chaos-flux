@@ -1,6 +1,6 @@
 # E3 批量迁移 Wave 4（批次 4：20 spec）
 
-> Plan Status: active
+> Plan Status: completed
 > Last Reviewed: 2026-11-19
 > Source: docs/research/2026-11-17-flux-test-backend-design.md（§5.2 T2）、roadmap E 轨道 E3（Wave 4 后继）
 > Related: docs/plans/2026-11-19-e3-batch-migration-wave3-plan.md（completed）
@@ -74,7 +74,7 @@ Exit Criteria:
 - [ ] 必要 focused verification 已完成
 - [ ] 不存在被静默降级到 deferred / follow-up 的 in-scope live defect 或 contract drift
 - [ ] 受影响的 owner docs 已同步
-- [ ] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据
+- [x] 由独立子 agent（fresh session）执行的 closure-audit 已完成并记录证据
 - [ ] `pnpm typecheck`
 - [ ] `pnpm build`
 - [ ] `pnpm lint`
@@ -98,16 +98,16 @@ Exit Criteria:
 
 ## Closure
 
-Status Note: <<待收口填写>>
+Status Note: 已收口（2026-11-19）。独立 closure audit（agent_21d75207）两轮：首轮 fail（Blocker B1：oracle 复跑真实结果为 57+2skip 绿 / ai-widgets-button-actions 7 用例 pre-existing 红——strict-validation 诊断，P1-MA9.2-001 已裁决限制；初记"复跑绿"系截断误读，已四方勘误更正 + console 守卫降级显式裁决并登记 Wave 5 successor）；二轮 pass-with-minors（条件 M1：form-input-enhancements 失真 TODO 落地改写——本 commit 已落）。
 
 Closure Audit Evidence:
 
-- Auditor / Agent: <<待独立子 agent 填写>>
-- Evidence: <<待填>>
+- Auditor / Agent: agent_21d75207（fresh session，三件套输入；2 轮）
+- Evidence: 首轮 fail（B1）→ 勘误四方落地 → 二轮 pass-with-minors；审计会话自证：恢复旧 spec 至 \_tmp 计 66 用例并独立复跑（57 绿+2skip+7 红，红点=ai-widgets strict 诊断）、定位器重构审读正确、`table-column-drag`/`ai-widgets-button-actions` flux spec 现场绿、driver 73/73（含 2 个判别新单测）、台账/roadmap/cli 注册表/基线一致、TODO 计数核对。二轮条件 M1（失真 TODO 改写）已落地并复跑绿（20s）。
 
 Follow-up:
 
-- <<见 Non-Blocking Follow-ups>>
+- 见 Non-Blocking Follow-ups；ai-widgets console 守卫恢复为 Wave 5 硬性承接项（见 Deferred successor）。
 
 ## Non-Blocking Follow-ups
 
