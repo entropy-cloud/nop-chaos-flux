@@ -1,4 +1,4 @@
-export { installFt, getFt, notifyAssert, type KernelAttachResult } from './kernel.js';
+export { installFt, getFt, notifyAssert, collectLogBatch, type KernelAttachResult, type KernelEventView } from './kernel.js';
 export { buildFtGlobal, requireKernel } from './ft.js';
 export { createExpect } from './expect.js';
 export { createLocator } from './locator.js';

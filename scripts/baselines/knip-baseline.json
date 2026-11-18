@@ -32,6 +32,7 @@
     "flux-guide/scripts/validate-pages-setup-docs-components.mjs",
     "packages/flux-renderers-form-advanced/src/detail-view/detail-view-transform.test-support.tsx",
     "packages/flux-renderers-industrial/src/test-support/editor-mock.ts",
+    "packages/flux-test-server/src/console/app.tsx",
     "scripts/analyze-variant-vocabulary.mjs",
     "scripts/code-stats.mjs",
     "scripts/scada-expression-codemod.mjs",
@@ -41,9 +42,11 @@
     "stryker.runtime.conf.mjs",
     "tests/e2e/_debug-lab.mjs",
     "tests/e2e/flux-bundle-built-dist/main.tsx",
-    "tests/e2e/xlang-debug-mock-server.mjs",
+    "tests/e2e/flux/ai-chat-ux-visual.flux-spec.ts",
+    "tests/e2e/flux/boolean-control-value-contract.flux-spec.ts",
     "tests/e2e/flux/demo-must-fail.flux-spec.ts",
-    "tests/e2e/flux/demo-smoke.flux-spec.ts"
+    "tests/e2e/flux/demo-smoke.flux-spec.ts",
+    "tests/e2e/xlang-debug-mock-server.mjs"
   ],
   "exports": [
     "flux-guide/scripts/shared.mjs#REGISTER_PACKAGES",
@@ -962,7 +965,9 @@
     "packages/nop-debugger/src/ai-repair-input.ts#AiRepairInput",
     "packages/nop-debugger/src/ai-repair-input.ts#AiRepairInputEvidence",
     "packages/nop-debugger/src/diagnostic-bundle.ts#ReplayBundleDeps",
-    "packages/nop-debugger/src/diagnostic-bundle.ts#ReplayRuntimeLike"
+    "packages/nop-debugger/src/diagnostic-bundle.ts#ReplayRuntimeLike",
+    "packages/flux-test-server/src/gateway.ts#GatewayRequestHandler",
+    "packages/flux-test-server/src/spec-discovery.ts#SpecDiscoveryArgs"
   ],
   "dependencies": [],
   "devDependencies": [
@@ -982,6 +987,11 @@
     "packages/flux-renderers-scheduling/package.json#ical.js",
     "packages/flux-renderers-scheduling/package.json#jspdf",
     "packages/flux-renderers-scheduling/package.json#xlsx",
+    "packages/flux-test-server/package.json#@nop-chaos/ui",
+    "packages/flux-test-server/package.json#@types/react",
+    "packages/flux-test-server/package.json#@types/react-dom",
+    "packages/flux-test-server/package.json#react",
+    "packages/flux-test-server/package.json#react-dom",
     "packages/word-editor-renderers/package.json#@nop-chaos/flux-runtime",
     "packages/word-editor-renderers/package.json#@testing-library/jest-dom"
   ]

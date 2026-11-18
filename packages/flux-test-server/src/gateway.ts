@@ -2,6 +2,9 @@ import { EventEmitter } from 'node:events';
 import WebSocket, { WebSocketServer } from 'ws';
 import { FluxTestError } from './errors.js';
 
+/** Reserved gateway peer id for the Test Console page (not a browser target). */
+export const CONSOLE_PEER_ID = '__console__';
+
 /** M0 protocol local subset event names (page → Node). */
 export type GatewayPageEvent = 'session.attach' | 'session.detach' | 'log.emit' | 'assert.result' | 'capture.upload';
 
@@ -40,10 +43,40 @@ interface IncomingMessage {
   payload?: unknown;
 }
 
+export type GatewayRequestHandler = (method: string, params: Record<string, unknown>, targetId: string) => Promise<Record<string, unknown>>;
+
 export class TestGateway {
   private wss: WebSocketServer | null = null;
   private events = new EventEmitter();
   private peers = new Map<string, PeerRecord>();
+
+  /**
+   * Attach to an external HTTP server (noServer mode): WebSocket upgrades for
+   * gateway paths are routed here, other paths belong to the HTTP handler
+   * (e.g. the Console page). Returns the reserved console peer id.
+   */
+  attachToServer(server: { on: (event: 'upgrade', handler: (...args: never[]) => void) => void }): string {
+    this.wss = new WebSocketServer({ noServer: true });
+    this.wss.on('connection', (ws: WebSocket, req: { url?: string }) => {
+      this.registerConnection(ws, req);
+    });
+    server.on('upgrade', ((req: { url?: string; headers: Record<string, string | undefined> }, socket: unknown, head: Buffer) => {
+      const url = new URL(req.url ?? '/', 'http://127.0.0.1');
+      if (url.pathname !== '/gateway') return;
+      this.wss!.handleUpgrade(req as never, socket as never, head, (ws: WebSocket) => {
+        this.wss!.emit('connection', ws, req);
+      });
+    }) as never);
+    return CONSOLE_PEER_ID;
+  }
+
+  /** Send a notify frame to the console peer (no-op if detached). */
+  notifyConsole(method: string, params: Record<string, unknown> = {}): void {
+    const peer = this.peers.get(CONSOLE_PEER_ID);
+    if (peer && peer.ws.readyState === WebSocket.OPEN) {
+      peer.ws.send(JSON.stringify({ method, params }));
+    }
+  }
 
   /** Listen and return the actual bound port. */
   async listen(options: GatewayOptions = {}): Promise<number> {
@@ -55,26 +88,37 @@ export class TestGateway {
       });
       this.wss.on('error', reject);
       this.wss.on('connection', (ws: WebSocket, req: { url?: string }) => {
-        const url = new URL(req.url ?? '/', 'http://127.0.0.1');
-        const targetId = url.searchParams.get('targetId') ?? '';
-        if (!targetId) {
-          ws.close(4000, 'missing targetId');
-          return;
-        }
-        const peer: PeerRecord = { targetId, ws, pending: new Map(), nextId: 1 };
-        this.peers.set(targetId, peer);
-        this.events.emit('attach', { targetId, payload: undefined });
-        ws.on('message', (data: WebSocket.RawData) => this.handlePeerMessage(peer, String(data)));
-        ws.on('close', () => {
-          this.peers.delete(targetId);
-          for (const [, entry] of peer.pending) {
-            clearTimeout(entry.timer);
-            entry.reject(new FluxTestError('gateway-peer-lost', `peer ${targetId} disconnected with pending request`));
-          }
-          this.events.emit('detach', { targetId, payload: undefined });
-        });
+        this.registerConnection(ws, req);
       });
     });
+  }
+
+  private registerConnection(ws: WebSocket, req: { url?: string }): void {
+    const url = new URL(req.url ?? '/', 'http://127.0.0.1');
+    const targetId = url.searchParams.get('targetId') ?? '';
+    if (!targetId) {
+      ws.close(4000, 'missing targetId');
+      return;
+    }
+    const peer: PeerRecord = { targetId, ws, pending: new Map(), nextId: 1 };
+    this.peers.set(targetId, peer);
+    this.events.emit('attach', { targetId, payload: undefined });
+    ws.on('message', (data: WebSocket.RawData) => this.handlePeerMessage(peer, String(data)));
+    ws.on('close', () => {
+      this.peers.delete(targetId);
+      for (const [, entry] of peer.pending) {
+        clearTimeout(entry.timer);
+        entry.reject(new FluxTestError('gateway-peer-lost', `peer ${targetId} disconnected with pending request`));
+      }
+      this.events.emit('detach', { targetId, payload: undefined });
+    });
+  }
+
+  private requestHandler: GatewayRequestHandler | null = null;
+
+  /** Register the handler for page→Node requests ({method,params,id} frames). */
+  onRequest(handler: GatewayRequestHandler): void {
+    this.requestHandler = handler;
   }
 
   private handlePeerMessage(peer: PeerRecord, raw: string): void {
@@ -82,6 +126,18 @@ export class TestGateway {
     try {
       msg = JSON.parse(raw) as IncomingMessage;
     } catch {
+      return;
+    }
+    if (typeof msg.method === 'string' && typeof msg.id === 'number' && msg.event === undefined) {
+      // page→Node request
+      const id = msg.id;
+      if (!this.requestHandler) {
+        peer.ws.send(JSON.stringify({ id, error: { message: 'no request handler registered' } }));
+        return;
+      }
+      this.requestHandler(msg.method, msg.params ?? {}, peer.targetId)
+        .then((result) => peer.ws.send(JSON.stringify({ id, result })))
+        .catch((err: Error) => peer.ws.send(JSON.stringify({ id, error: { message: String(err.message ?? err) } })));
       return;
     }
     if (typeof msg.id === 'number') {

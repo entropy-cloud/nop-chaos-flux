@@ -31,6 +31,8 @@
 
 > 落地状态（2026-11-18 勘误附注，plan `docs/plans/2026-11-18-e1-flux-test-backend-foundation-plan.md`）：**收敛**——`@nop-chaos/flux-test-server`（裸 CDP launcher/本地网关/runner/reporter/spec-loader/CLI，36 单测）+ `@nop-chaos/flux-test-driver`（installFt 绑定 `window.__NOP_DEBUGGER_API__`、ft 全局、ft.expect 骨架 meta/prop/rendered/scope/event/snapshotPath、Locator 兼容子集，43 单测）落地；真实 Chrome 冒烟链路绿（playground 首页 → 内核 attach → stability → Locator → kernel 语义检查），fail-as-expected 判别通路绿（标记=exit 0 / 无标记=exit 1）。deferred：ft.expect reaction()/visual() 断言与 JUnit reporter（归 E3）；Console UI 归 E2；存量 247 spec 迁移未动。附带修复：playground App.tsx DevToolsHost 面板挂载早于内核 assignment 的竞态崩溃（判别性回归测试 `app-devtools-host.test.tsx` 恰红→绿）。
 > | E2 | **Test Console v1**（Launchpad spec 选择 + Runner：Command Log 树/页面预览/时间旅行 scrub）+ 试点 2 spec + 缺口清单回灌 | E1、M2 |
+
+> 落地状态（2026-11-18 勘误附注，plan `docs/plans/2026-11-18-e2-test-console-v1-plan.md`）：**收敛（范围裁决收窄）**——Console v1 交付 Launchpad（spec 列表 + 单飞 run 409）+ Runner 结果流 + 内核 Command Log 树（driver log.emit 20 条/秒限频、丢弃计数入 payload）；T0 试点 2 spec 迁移完成（boolean-control-value-contract + ai-chat-ux-visual，新全绿 + 旧 Playwright spec 同 commit 删除，247→245，断言强度不降级：poll→stability 门控升级、真实输入 hover）；缺口清单 6 条回灌设计文档 §5.2。**范围裁决**：页面预览 iframe 投影与时间旅行 scrub 裁定为 E3 Console 增强工作面（需被测页 iframe 投影 + 跨 frame 网关通道），不阻塞 E2 收口——上表 E2 行原文"页面预览/时间旅行 scrub"按此勘误，归 E3。
 > | E3 | 双引擎 CI（Playwright 为 oracle 对照）+ 批量迁移（4–6 批，每批 ≤20 spec，"引擎替换→语义重写"两步） | E2、M3–M4 |
 > | E4 | 收尾：删 Playwright 依赖/config + DOM 断言门禁（白名单只减不增）+ 迁移 handbook 定稿；**Console v2**（会话/诊断页：历史 run、DevSession 回放、视觉 diff 画廊） | E3 全绿、M5 |
 > | E5 | T4 语义清零：删兼容层与 DOM 白名单，`ft.expect` 成为唯一断言写法 | E4 + M4 全量落地 |

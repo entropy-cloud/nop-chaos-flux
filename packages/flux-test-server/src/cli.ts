@@ -1,9 +1,10 @@
 #!/usr/bin/env node
-import { readdirSync, statSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { reportToJson, reportToTerminal } from './reporter.js';
 import { runSpecs, type RunSummary } from './runner.js';
+import { startConsoleServer } from './console-server.js';
+import { collectSpecFiles } from './spec-discovery.js';
 
 export interface CliArgs {
   spec?: string;
@@ -13,8 +14,11 @@ export interface CliArgs {
   report?: string;
   expectedFailures: string[];
   noDriver?: boolean;
+  open?: boolean;
   malformed?: boolean;
 }
+
+export { collectSpecFiles } from './spec-discovery.js';
 
 function parseArgs(argv: string[]): CliArgs {
   const args: CliArgs = { baseUrl: 'http://127.0.0.1:4175', timeoutMs: 30_000, expectedFailures: [] };
@@ -25,6 +29,7 @@ function parseArgs(argv: string[]): CliArgs {
     else if (arg === '--base-url') args.baseUrl = argv[++i]!;
     else if (arg === '--timeout') args.timeoutMs = Number(argv[++i]);
     else if (arg === '--report') args.report = argv[++i];
+    else if (arg === '--open') args.open = true;
     else if (arg === '--expected-fail') {
       const value = argv[++i];
       if (!value || value.startsWith('--')) {
@@ -39,36 +44,44 @@ function parseArgs(argv: string[]): CliArgs {
   return args;
 }
 
-export function collectSpecFiles(args: CliArgs): string[] {
-  if (args.spec) return [path.resolve(args.spec)];
-  const dir = path.resolve(args.dir ?? 'tests/e2e/flux');
-  const out: string[] = [];
-  const walk = (d: string) => {
-    for (const name of readdirSync(d)) {
-      const full = path.join(d, name);
-      if (statSync(full).isDirectory()) walk(full);
-      else if (name.endsWith('.flux-spec.ts')) out.push(full);
-    }
-  };
-  walk(dir);
-  return out.sort();
-}
-
 export async function runCli(argv: string[]): Promise<number> {
   const args = parseArgs(argv);
   if (args.malformed) {
     return 2;
+  }
+  if (args.open) {
+    const console_ = await startConsoleServer({
+      specsDir: path.resolve(args.dir ?? 'tests/e2e/flux'),
+      baseUrl: args.baseUrl,
+      timeoutMs: args.timeoutMs,
+      reportPath: args.report ?? 'tests/e2e/artifacts/flux-test-report.json',
+      driverEntryPath: args.noDriver ? undefined : path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../flux-test-driver/src/index.ts'),
+    });
+    // eslint-disable-next-line no-console -- CLI 本职：Console 入口地址
+    console.log(`flux-test console: http://127.0.0.1:${console_.port}/__flux_test__`);
+    return await new Promise<number>((resolve) => {
+      const shutdown = () => {
+        void console_.close().then(() => resolve(0));
+      };
+      process.on('SIGINT', shutdown);
+      process.on('SIGTERM', shutdown);
+    });
   }
   const specs = collectSpecFiles(args);
   if (specs.length === 0) {
     console.error('flux-test: no *.flux-spec.ts found');
     return 2;
   }
+  // convention: *-must-fail.flux-spec.ts are deliberate-failure discriminators —
+  // auto-registered as expected-failure in dir mode so the suite stays green.
+  const conventionFailures = specs
+    .filter((specPath) => path.basename(specPath).includes('-must-fail.flux-spec.ts'))
+    .map((specPath) => path.basename(specPath).replace(/\.flux-spec\.ts$/, ''));
   const summary: RunSummary = await runSpecs({
     specPaths: specs,
     baseUrl: args.baseUrl,
     timeoutMs: args.timeoutMs,
-    expectedFailures: args.expectedFailures,
+    expectedFailures: [...new Set([...args.expectedFailures, ...conventionFailures])],
     reportPath: args.report ?? 'tests/e2e/artifacts/flux-test-report.json',
     driverEntryPath: args.noDriver ? undefined : path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../flux-test-driver/src/index.ts'),
   });

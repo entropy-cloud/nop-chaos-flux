@@ -43,6 +43,8 @@ function fakeBrowser(script: FakePageScript): BrowserHandle {
         navigate: async () => {},
         screenshot: async () => Buffer.from(''),
         setViewport: async () => {},
+        mouseMove: async () => {},
+        mouseClick: async () => {},
         close: async () => {},
       };
       pages.push(page);

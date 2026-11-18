@@ -242,7 +242,17 @@ interface Locator {          // Playwright Locator 语义子集
 | `test.describe/step`         | 保留同名结构（runner 解析）                                                      | 报告结构对齐                                                |
 | `expect` 断言                | 引入 `@nop-chaos/flux-test-assert`（基于现有 strict helpers 风格）+ 内建重试断言 |                                                             |
 
-### 5.2 分阶段迁移
+#> 落地状态（2026-11-18 勘误附注，E2 T0 试点实测，plan `docs/plans/2026-11-18-e2-test-console-v1-plan.md`）：**T0 完成**——交互试点 `boolean-control-value-contract`（4 用例）与 visual 试点 `ai-chat-ux-visual`（5 用例）已迁 flux 引擎全绿，旧 spec 同 commit 删除。**试点实测兼容层缺口与绕行**（回灌 §3.2/§5.1，E3 处置）：
+
+> 1. 嵌套 `locator.locator()`——试点用平铺后代 CSS 选择器绕行（`[a] [b]` 形态等价）；
+> 2. 元素级 `evaluate`——用整页 `ft.evaluate` 兜底（evaluate 债务 2 处登记：getBoundingClientRect 高度、computed opacity）；
+> 3. `getByRole`（含 name 过滤）——试点用 `[role=...]` 属性选择器 + nth 绕行；name 语义过滤待 E3 补；
+> 4. CSS `:hover` 不可合成——已实现 §5.4 真实输入通道：driver 经 gateway `input.hover/click` 请求 → runner CDP `Input.dispatchMouseEvent`（trust 事件），Locator hover/click 自动 scrollIntoView + 真实坐标；合成事件仅在通道不可用时兜底；
+> 5. 键盘组合键（ControlOrMeta 等 Chord）与 `page.mouse` 拖拽序列——试点未触及，E3 迁移 keyboard 密集 spec 时补 CDP `Input.dispatchKeyEvent` 序列；
+> 6. `viewport` 由 runner CDP `Emulation.setDeviceMetricsOverride` 承接（E1 已有），Console 页面预览另需投影（E3）。
+>    另：`waitForValue`（input value 轮询）以 `ft.evaluate` 读原生 value 兜底；E3 语义重写目标为 `ft.expect.prop/scope` 白盒断言。
+
+## 5.2 分阶段迁移
 
 - **T0 试点**（选 2 个 spec：1 个纯交互 + 1 个 visual）：验证 runner/兼容层/截图/CI 报告全链路。产出兼容层缺口清单回灌设计。
 - **T1 双引擎期**：`pnpm test:e2e` 同时跑 Playwright（存量）与 flux-test（已迁移），CI 比对两份报告；**禁止删旧 spec 先于新 spec 全绿**（每个 spec 迁移 = 新 spec 全绿 + 旧 spec 删除，同一 commit）。

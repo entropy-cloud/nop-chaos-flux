@@ -22,6 +22,9 @@ export interface PageHandle {
   navigate(url: string): Promise<void>;
   screenshot(): Promise<Buffer>;
   setViewport(width: number, height: number): Promise<void>;
+  /** Real OS-level input (trust events): CDP Input domain. */
+  mouseMove(x: number, y: number): Promise<void>;
+  mouseClick(x: number, y: number): Promise<void>;
   close(): Promise<void>;
 }
 
@@ -186,6 +189,13 @@ function buildHandle(client: CdpClient, wsEndpoint: string, kill: (() => Promise
         },
         setViewport: async (width, height) => {
           await sessionSend('Emulation.setDeviceMetricsOverride', { width, height, deviceScaleFactor: 1, mobile: false });
+        },
+        mouseMove: async (x, y) => {
+          await sessionSend('Input.dispatchMouseEvent', { type: 'mouseMoved', x, y });
+        },
+        mouseClick: async (x, y) => {
+          await sessionSend('Input.dispatchMouseEvent', { type: 'mousePressed', x, y, button: 'left', clickCount: 1 });
+          await sessionSend('Input.dispatchMouseEvent', { type: 'mouseReleased', x, y, button: 'left', clickCount: 1 });
         },
         close: async () => {
           await sessionSend('Target.closeTarget', { targetId });

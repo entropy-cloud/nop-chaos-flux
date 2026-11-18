@@ -2,6 +2,20 @@ import type { DebuggerApiView, Locator, LocatorOptions } from './types.js';
 
 type DocGetter = () => Document;
 
+type RealInput = ((method: string, x: number, y: number) => Promise<void>) | undefined;
+
+function realInput(): RealInput {
+  return (globalThis as { __fluxTestRealInput?: RealInput }).__fluxTestRealInput;
+}
+
+async function centerOf(element: Element): Promise<{ x: number; y: number }> {
+  element.scrollIntoView({ block: 'center', behavior: 'instant' as ScrollBehavior });
+  // allow layout to settle after the scroll
+  await new Promise((resolve) => setTimeout(resolve, 120));
+  const rect = element.getBoundingClientRect();
+  return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
+}
+
 export function createLocator(getDoc: DocGetter, selector: string, options: LocatorOptions = {}, getApi: () => DebuggerApiView | undefined = () => undefined): Locator {
   const defaultTimeoutMs = () => options.timeoutMs ?? 5_000;
   const queryAll = (): Element[] => Array.from(getDoc().querySelectorAll(selector));
@@ -50,15 +64,21 @@ export function createLocator(getDoc: DocGetter, selector: string, options: Loca
     return element.dispatchEvent(new MouseEvent(type, init));
   };
 
-  const act = async (timeoutMs: number, perform: (element: HTMLElement) => void): Promise<void> => {
+  const act = async (timeoutMs: number, perform: (element: HTMLElement) => void | Promise<void>): Promise<void> => {
     const element = await actionability(timeoutMs);
-    perform(element);
+    await perform(element);
     await stabilityGate();
   };
 
   return {
     async click(opts) {
-      await act(opts?.timeoutMs ?? defaultTimeoutMs(), (element) => {
+      await act(opts?.timeoutMs ?? defaultTimeoutMs(), async (element) => {
+        const real = realInput();
+        if (real) {
+          const { x, y } = await centerOf(element);
+          await real('input.click', x, y);
+          return;
+        }
         fire(element, 'pointerover');
         fire(element, 'mouseover');
         fire(element, 'pointerdown');
@@ -109,7 +129,13 @@ export function createLocator(getDoc: DocGetter, selector: string, options: Loca
       });
     },
     async hover(opts) {
-      await act(opts?.timeoutMs ?? defaultTimeoutMs(), (element) => {
+      await act(opts?.timeoutMs ?? defaultTimeoutMs(), async (element) => {
+        const real = realInput();
+        if (real) {
+          const { x, y } = await centerOf(element);
+          await real('input.hover', x, y);
+          return;
+        }
         fire(element, 'pointerover');
         fire(element, 'mouseover');
         fire(element, 'pointerenter', { bubbles: false });

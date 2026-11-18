@@ -178,6 +178,12 @@
       "line": 67,
       "text": "console.log(reportToJson(summary));",
       "reason": "flux-test CLI（E1 自研测试后端，pnpm test:flux 入口）的终端报告输出：CLI 的本职就是向开发者终端打印 per-spec 结果与 JSON 报告（对齐 Playwright list reporter 形态）；private 包不进生产 bundle，非浏览器运行时。"
+    },
+    {
+      "file": "packages/flux-test-server/src/cli.ts",
+      "line": 74,
+      "text": "console.log(`flux-test console: http://127.0.0.1:${console_.port}/__flux_test__`);",
+      "reason": "flux-test CLI --open 模式（E2 Console v1）的终端提示输出：告知开发者 Console 管控页地址，CLI 本职；private 包不进生产 bundle，非浏览器运行时。"
     }
   ]
 }

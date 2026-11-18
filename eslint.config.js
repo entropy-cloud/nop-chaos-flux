@@ -225,6 +225,9 @@ export default [
       '**/test/**',
       '**/*.spec.{ts,tsx}',
       '**/test-support*.{ts,tsx}',
+      // flux-test Console（E2）：开发者测试管控页，与 playground 同类（规则本注释即声明
+      // "排除 playground、test、apps"）——纯开发者工具、不上生产、不做用户侧翻译。
+      'packages/flux-test-server/src/console/**',
     ],
     plugins: {
       i18next,

@@ -24,10 +24,16 @@
     "ws": "^8.18.0"
   },
   "devDependencies": {
-    "@types/ws": "^8.18.0"
+    "@nop-chaos/ui": "workspace:*",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@types/ws": "^8.18.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
   },
   "scripts": {
-    "build": "tsc -p tsconfig.build.json",
+    "build": "tsc -p tsconfig.build.json && pnpm build:console",
+    "build:console": "node build-console.mjs",
     "typecheck": "tsc -p tsconfig.json",
     "test": "vitest run",
     "lint": "eslint src --ext .ts --cache --cache-location node_modules/.cache/eslint"

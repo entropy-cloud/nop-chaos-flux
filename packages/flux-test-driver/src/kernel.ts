@@ -18,10 +18,48 @@ export interface KernelAttachResult {
 }
 
 let gatewaySocket: WebSocket | null = null;
+let logTimer: ReturnType<typeof setInterval> | null = null;
+
+const LOG_EMIT_MAX_PER_TICK = 20;
+
+export interface KernelEventView { seq: number; kind: string; summary: string }
+
+/** Pure rate limiter: at most 20 newest events per tick; excess counted as dropped. */
+export function collectLogBatch(events: KernelEventView[], lastSeq: number, max = LOG_EMIT_MAX_PER_TICK): { entries: KernelEventView[]; dropped: number; nextSeq: number } {
+  const fresh = events.filter((event) => event.seq > lastSeq);
+  if (fresh.length === 0) {
+    return { entries: [], dropped: 0, nextSeq: lastSeq };
+  }
+  const nextSeq = Math.max(...events.map((event) => event.seq));
+  if (fresh.length > max) {
+    return { entries: fresh.slice(fresh.length - max), dropped: fresh.length - max, nextSeq };
+  }
+  return { entries: fresh, dropped: 0, nextSeq };
+}
+
+/** 1s tick: ship at most 20 new kernel events per tick; excess counted as dropped. */
+function startLogEmit(api: () => DebuggerApiView | undefined): void {
+  if (logTimer) return;
+  let lastSeq = 0;
+  logTimer = setInterval(() => {
+    if (!gatewaySocket || gatewaySocket.readyState !== WebSocket.OPEN) return;
+    try {
+      const raw = api()?.queryEvents?.() as Array<{ id: number; kind: string; summary: string }> | undefined;
+      if (!raw || raw.length === 0) return;
+      const events: KernelEventView[] = raw.map((event) => ({ seq: event.id, kind: String(event.kind), summary: String(event.summary) }));
+      const batch = collectLogBatch(events, lastSeq);
+      if (batch.entries.length === 0) return;
+      lastSeq = batch.nextSeq;
+      gatewaySocket.send(JSON.stringify({ event: 'log.emit', payload: { entries: batch.entries, dropped: batch.dropped } }));
+    } catch {
+      // log streaming must never take the spec run down
+    }
+  }, 1_000);
+}
 
 function connectGateway(port: number, targetId: string, controllerId: string): boolean {
   try {
-    gatewaySocket = new WebSocket(`ws://127.0.0.1:${port}/?targetId=${encodeURIComponent(targetId)}`);
+    gatewaySocket = new WebSocket(`ws://127.0.0.1:${port}/gateway?targetId=${encodeURIComponent(targetId)}`);
     gatewaySocket.addEventListener('open', () => {
       gatewaySocket?.send(JSON.stringify({ event: 'session.attach', payload: { targetId, controllerId } }));
     });
@@ -70,6 +108,30 @@ export function installFt(options: { gateway?: boolean; waitForKernelMs?: number
     if (options.gateway && window.__FLUX_TEST_GATEWAY_PORT__) {
       const targetId = window.__FLUX_TEST_TARGET_ID__ ?? 'unknown';
       result.gatewayConnected = connectGateway(window.__FLUX_TEST_GATEWAY_PORT__, targetId, result.controllerId ?? 'no-kernel');
+      if (result.gatewayConnected) {
+        startLogEmit(getApi);
+        // real-input bridge: Locator hover/click prefer CDP trust events when
+        // the gateway can relay them (CSS :hover is unreachable synthetically)
+        let nextId = 1;
+        (window as unknown as { __fluxTestRealInput?: (method: string, x: number, y: number) => Promise<void> }).__fluxTestRealInput = async (method, x, y) => {
+          const socket = gatewaySocket;
+          if (!socket || socket.readyState !== WebSocket.OPEN) throw new Error('gateway not open');
+          const id = nextId++;
+          socket.send(JSON.stringify({ id, method, params: { x, y } }));
+          await new Promise<void>((resolve, reject) => {
+            const timer = setTimeout(() => reject(new Error('real-input timeout')), 5_000);
+            const onMessage = (event: MessageEvent) => {
+              const msg = JSON.parse(String(event.data)) as { id?: number; error?: { message: string } };
+              if (msg.id !== id) return;
+              clearTimeout(timer);
+              socket.removeEventListener('message', onMessage);
+              if (msg.error) reject(new Error(msg.error.message));
+              else resolve();
+            };
+            socket.addEventListener('message', onMessage);
+          });
+        };
+      }
     }
     return result;
   };

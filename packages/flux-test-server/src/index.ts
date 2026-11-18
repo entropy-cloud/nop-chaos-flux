@@ -6,3 +6,5 @@ export { bundleSpec, specEvaluateExpression, type BundledSpec } from './spec-loa
 export { runSpecs, type RunSummary, type SpecResult, type RunnerOptions } from './runner.js';
 export { reportToTerminal, reportToJson } from './reporter.js';
 export { runCli, collectSpecFiles, type CliArgs } from './cli.js';
+export { startConsoleServer, type ConsoleHandle, type ConsoleServerOptions } from './console-server.js';
+export { CONSOLE_PEER_ID } from './gateway.js';

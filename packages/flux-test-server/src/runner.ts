@@ -1,7 +1,7 @@
 import { mkdirSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { TestGateway } from './gateway.js';
-import { launchBrowser, waitForHttpReady, type BrowserHandle, type LauncherOptions } from './launcher.js';
+import { launchBrowser, waitForHttpReady, type BrowserHandle, type LauncherOptions, type PageHandle } from './launcher.js';
 import { bundleSpec, bundleStandalone, specEvaluateExpression } from './spec-loader.js';
 
 export interface SpecResult {
@@ -26,8 +26,11 @@ export interface RunnerOptions {
   /** In-page driver entry (flux-test-driver index.ts); bundled and injected before each spec. */
   driverEntryPath?: string;
   /** Test hooks: inject browser/gateway instead of launching real ones; skips base-URL canary. */
-  overrides?: { browser?: BrowserHandle; gateway?: TestGateway; skipHttpReady?: boolean };
+  overrides?: { browser?: BrowserHandle; gateway?: TestGateway; gatewayPort?: number; skipHttpReady?: boolean };
 }
+
+/** Real-input relay target: the page of the currently running spec. */
+let activePage: PageHandle | null = null;
 
 export interface RunSummary {
   results: SpecResult[];
@@ -46,8 +49,22 @@ export async function runSpecs(options: RunnerOptions): Promise<RunSummary> {
   }
 
   const gateway = options.overrides?.gateway ?? new TestGateway();
-  const gatewayPort = options.overrides?.gateway ? 0 : await gateway.listen();
+  const gatewayPort = options.overrides?.gatewayPort ?? (options.overrides?.gateway ? 0 : await gateway.listen());
   const browser: BrowserHandle = options.overrides?.browser ?? await launchBrowser(options.launcher);
+  gateway.onRequest(async (method, params) => {
+    if (method === 'input.move' || method === 'input.hover' || method === 'input.click') {
+      if (!activePage) throw new Error('input channel: no active page');
+      const x = Number(params.x);
+      const y = Number(params.y);
+      if (method === 'input.click') {
+        await activePage.mouseClick(x, y);
+      } else {
+        await activePage.mouseMove(x, y);
+      }
+      return { ok: true };
+    }
+    throw new Error(`input channel: unknown method ${method}`);
+  });
   const driverCode = options.driverEntryPath ? (await bundleStandalone(options.driverEntryPath, 'flux_test_driver')).code : undefined;
 
   try {
@@ -77,7 +94,9 @@ export async function runSpecs(options: RunnerOptions): Promise<RunSummary> {
     }
   } finally {
     await browser.close();
-    await gateway.close();
+    if (!options.overrides?.gateway) {
+      await gateway.close();
+    }
   }
 
   const failed = results.filter((r) => r.status === 'failed' || r.status === 'timeout').length;
@@ -101,6 +120,7 @@ interface SingleSpecOptions {
 async function runSingleSpec(options: SingleSpecOptions): Promise<void> {
   const { browser, gatewayPort, timeoutMs, baseUrl } = options;
   const page = await browser.newPage(baseUrl, options.viewport);
+  activePage = page;
 
   try {
     await page.evaluate(`window.__FLUX_TEST_GATEWAY_PORT__ = ${gatewayPort}; window.__FLUX_TEST_TARGET_ID__ = ${JSON.stringify(page.targetId)}; true`);
