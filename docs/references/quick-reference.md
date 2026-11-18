@@ -1228,3 +1228,11 @@ Field classification（design-renderer.md §5，I15.2 D-1 同步）: `config`（
 依赖图（dependency-graph.ts）：`recordWriteEdge`（M1 写观察者 paths 逐条登记）/`recordReadEdge`（demand-time：explain dependencyPaths 在 why/inspect 时登记——span 级完整收集器 Deferred）/`recordDeriveEdge`；边 >2k → `degradedToPathQuery=true`（增量边清除，queryImpact 返回空 + 降级标记；Failure Path：无读边时仅遍历写边）。`queryDependencyImpact(path)` → `{cids, paths, degradedToPathQuery}`。
 
 选择器（selector-suggest.ts）：`suggestSelector(cid)` 三级优先 `data-testid`（仓库实际产物）> `data-cid` > 最短唯一 CSS（id → tag.classes → nth-of-type 链），均做 document 级唯一性验证。面板 node-tab Why 区块（`ndbg-why-section`）输入 cid 触发归因/选择器展示。
+
+### DevTools 录制回放 + 视频（M5，plan 2026-11-18-m5）
+
+- 录制：`startRecording()` / `stopRecording()` → `DevSession` v1（M0 `dev-session.schema.json`）。输入源 = flux-action-core `ActionOutcome.event`（M5 起附带，白名单归一化：type + 可序列化自定义键，nativeEvent/target 等剥离）；envFrames 由 fetcher 装饰捕获（onApiFrame→recorder.recordApiFrame，requestInstanceId→schema requestId）；checkpoint 每 5 步（revisions + `stableStringify` 哈希，runtime 前缀 scopeKey 归一化以跨刷新比较）。
+- 回放：`replaySession(session)` → `{steps, divergences[{step, path, expected, actual}]}`；确定性核心 = 逐输入 dispatch（bridge 合成 signal+scope ctx，回放进当前 live runtime——隔离回放 runtime 归 Deferred）+ checkpoint 哈希比对（分歧停驻，step=输入序号）+ 回放前 env coverage 校验（envFrame miss → step 0 divergence）；副作用 stub（navigate/dialog/print 记录不执行）。
+- fake-clock（`fake-clock.ts`）：session.clock.events 非空时随回放 install→tick→uninstall（不常驻；live 录制的会话 clock.events 为空——fake-clock 录制接线归后续）。
+- 视频：`recordVideo({fps})` / `stopRecordingVideo()` → `{mode:'media-recorder'|'keyframes', bytesBase64}`；逐帧解码截图回绘录制 canvas（bridge captureScreenshot 在 recordVideo 激活期间自动 onFrame→addFrame，`stopRecordingVideo` 返回 frameCount；低 fps 建议）；MediaRecorder/captureStream 不可用降级关键帧序列。
+- 缓存：IndexedDB LRU <200MB（session-cache.ts，可注入存储适配器）。

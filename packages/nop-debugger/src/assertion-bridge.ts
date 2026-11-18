@@ -8,14 +8,19 @@ import { waitFor as runWaitFor, waitForVisual } from './wait-for.js';
 interface RuntimeLike {
   getStabilityTracker?(): { whenStable(timeoutMs?: number): Promise<{ stable: boolean }> } | undefined;
   dispatch?(action: unknown, ctx?: unknown): Promise<unknown>;
+  getActionRootScope?(): unknown;
 }
 
 interface AssertionBridgeDeps {
+  onDispatched?(action: unknown, ctx?: unknown): void;
   getRuntime(): RuntimeLike | undefined;
   store: NopDebuggerStore;
   inspectByCid(cid: number): unknown;
   getLatestSnapshotScopes(): Record<string, Record<string, any>> | null;
   incrementalCapturer: ReturnType<typeof createIncrementalCapturer>;
+  /** M5: feed each capture's base64 bytes into the active video recorder. */
+  onFrame?(bytesBase64: string): void;
+  isVideoRecording?(): boolean;
 }
 
 interface WaitDepsInput {
@@ -100,10 +105,12 @@ export function createAssertionBridge(deps: AssertionBridgeDeps) {
     if (options?.fresh) {
       const freshResult = await captureScreenshotFromClone(input);
       lastCaptureResult = freshResult;
+      if (deps.isVideoRecording?.()) deps.onFrame?.(freshResult.bytes);
       return { ...freshResult, reused: false };
     }
     const result = await deps.incrementalCapturer.capture(input);
     lastCaptureResult = result.result;
+    if (deps.isVideoRecording?.()) deps.onFrame?.(result.result.bytes);
     return { ...result.result, reused: result.reused };
   };
 
@@ -145,7 +152,13 @@ export function createAssertionBridge(deps: AssertionBridgeDeps) {
       if (!runtime?.dispatch) {
         throw new CaptureError('dispatch-unavailable', 'runtime not wired');
       }
-      return runtime.dispatch(action, ctx);
+      const effectiveCtx = {
+        signal: typeof AbortController !== 'undefined' ? new AbortController().signal : undefined,
+        scope: runtime.getActionRootScope?.(),
+        ...(ctx ?? {}),
+      };
+      deps.onDispatched?.(action, effectiveCtx);
+      return runtime.dispatch(action, effectiveCtx);
     },
     async compareScreenshot(baselineKey: string, options?: { maxDiffRatio?: number }): Promise<{ match: boolean; diffRatio: number; missing?: boolean }> {
       const comparison = await compareBaseline(baselineKey);

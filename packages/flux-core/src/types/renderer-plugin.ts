@@ -25,6 +25,8 @@ export interface ActionOutcome {
   error?: { message: string };
   nodeId?: string;
   interactionId?: string;
+  /** Normalized serializable user-event payload (M5 recorder input; non-serializable keys stripped). */
+  event?: { type: string; payload: Record<string, unknown> };
 }
 
 export interface RenderSpan {

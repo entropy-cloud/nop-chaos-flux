@@ -157,6 +157,8 @@
 
 ## M5 录制与确定性回放 + 视频录制
 
+> 落地状态（2026-11-18 勘误附注，plan `docs/plans/2026-11-18-m5-record-replay-video-plan.md`）：**前端侧收敛**——DevSession 采集过 M0 schema 校验、确定性回放（checkpoint 哈希分歧检测 + 停驻）、副作用 stub、fake-clock（M3 Deferred 收口）、视频 MediaRecorder/关键帧降级、IndexedDB LRU 缓存、30 步录制→刷新→重放一致 e2e。deferred：UI 事件路径录制（需 action-dispatcher 层 afterAction 录制回调接线，当前录制面为 automation dispatch）、回放 UI 检查器（E4 Console v2）、半真模式、转码/缩略图（M6）。
+
 **目标**：用户会话可录制、可在新 runtime 确定性重放；会话可出视频。（总体 §8 · 采集 §7）
 
 任务：

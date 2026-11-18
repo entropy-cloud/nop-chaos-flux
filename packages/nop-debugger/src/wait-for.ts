@@ -1,5 +1,6 @@
 import type { NopDebugEvent } from './types.js';
 import type { NopDebuggerStore } from './store.js';
+import { getPathValue as walkPath } from './path-walk.js';
 
 interface WaitForOptions {
   timeoutMs?: number;
@@ -41,19 +42,12 @@ export interface WaitForDeps {
   sleep?: (ms: number) => Promise<void>;
 }
 
-function getInPath(data: Record<string, unknown>, path: string): unknown {
-  let current: unknown = data;
-  for (const segment of path.split('.')) {
-    if (current === null || typeof current !== 'object') return undefined;
-    current = (current as Record<string, unknown>)[segment];
-  }
-  return current;
-}
+
 
 function evaluateScopePathPredicate(predicate: Extract<WaitForPredicate, { type: 'scope-path' }>, deps: WaitForDeps): boolean {
   const data = deps.getScopeData(predicate.scopeId);
   if (!data) return false;
-  const value = getInPath(data, predicate.path);
+  const value = walkPath(data, predicate.path);
   switch (predicate.op) {
     case 'eq': return value === predicate.value;
     case 'ne': return value !== predicate.value;

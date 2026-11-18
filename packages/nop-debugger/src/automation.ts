@@ -1,3 +1,4 @@
+import type { DevSession } from './protocol/types.js';
 import type { AsyncOwnerDebugSnapshot, FormStoreDiagnosticsOptions, FormStoreDiagnosticsOwnerQuery, FormStoreDiagnosticsOwnerSummary, FormStoreDiagnosticsSnapshot } from '@nop-chaos/flux-core';
 import type {
   NopComponentInspectResult,
@@ -101,6 +102,11 @@ export function createAutomationApi(input: {
   why?(cid: number): Promise<{ verdict: string; confidence: string; parts: Array<{ category: string; verdict: string }>; evidence: Array<{ type: string; target: string; label: string }>; screenshotTag?: string }>;
   queryDependencyImpact?(path: string): Promise<{ cids: string[]; paths: string[]; degradedToPathQuery: boolean }>;
   suggestSelector?(cid: string): Promise<{ selector: string; tier: string; unique: boolean } | null>;
+  startRecording?(): void;
+  stopRecording?(): Promise<DevSession>;
+  replaySession?(session: DevSession): Promise<{ steps: number; divergences: Array<{ step: number; path: string; expected: unknown; actual: unknown }> }>;
+  recordVideo?(options?: { fps?: number }): void;
+  stopRecordingVideo?(): Promise<{ mode: string; bytesBase64: string; byteLength: number; frameCount: number }>;
 }): NopDebuggerAutomationApi {
   return {
     controllerId: input.controllerId,
@@ -156,6 +162,11 @@ export function createAutomationApi(input: {
     why: input.why,
     queryDependencyImpact: input.queryDependencyImpact,
     suggestSelector: input.suggestSelector,
+    startRecording: input.startRecording,
+    stopRecording: input.stopRecording,
+    replaySession: input.replaySession,
+    recordVideo: input.recordVideo,
+    stopRecordingVideo: input.stopRecordingVideo,
     inspectByCid: input.inspectByCid,
     inspectByElement: input.inspectByElement,
     evaluateNodeExpression: input.evaluateNodeExpression,

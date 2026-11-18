@@ -109,6 +109,7 @@ export function decorateDebuggerEnv(input: {
   store: NopDebuggerStore;
   redaction: NormalizedRedactionOptions;
   getStabilityTracker?: () => import('@nop-chaos/flux-core').StabilityTracker | undefined;
+  onApiFrame?: (frame: { requestKey: string; api: unknown; response: unknown; status: number }) => void;
   requestState: Map<
     string,
     {
@@ -181,6 +182,12 @@ export function decorateDebuggerEnv(input: {
         }),
       });
       input.requestState.delete(requestInstanceId);
+      input.onApiFrame?.({
+        requestKey,
+        api,
+        response: response.data,
+        status: response.status === 0 ? 0 : response.status,
+      });
       releaseFetch?.();
       return response;
     } catch (error) {

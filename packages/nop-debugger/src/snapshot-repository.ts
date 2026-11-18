@@ -1,4 +1,5 @@
 import type { StoreWriteObserver, StoreWriteObserverEvent } from '@nop-chaos/flux-core';
+import { getPathValue } from './path-walk.js';
 
 export interface ForestSnapshot {
   epoch: number;
@@ -149,16 +150,8 @@ export function findFirstWriteEpoch(ring: readonly ForestSnapshot[], scopeId: st
   for (const snapshot of ring) {
     const scopes = snapshot.scopes[scopeId];
     if (scopes === undefined) continue;
-    let current: unknown = scopes;
-    let exists = true;
-    for (const segment of path.split('.')) {
-      if (current === null || typeof current !== 'object') {
-        exists = false;
-        break;
-      }
-      current = (current as Record<string, unknown>)[segment];
-    }
-    if (!exists || current === undefined) continue;
+    const current = getPathValue(scopes, path);
+    if (current === undefined) continue;
     return { found: true, epoch: snapshot.epoch, value: current };
   }
   return { found: false, reason: 'path' };

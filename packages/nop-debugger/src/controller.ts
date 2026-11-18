@@ -58,6 +58,8 @@ import { normalizeRedactionOptions, redactData } from './redaction.js';
 import { createForestSnapshotCollector } from './snapshot-repository.js';
 import { createAssertionBridge } from './assertion-bridge.js';
 import { createWhyBridge } from './why-bridge.js';
+import { createSessionBridge } from './session-bridge.js';
+import type { DevSession } from './protocol/types.js';
 import { createDependencyGraph } from './dependency-graph.js';
 import { suggestSelector } from './selector-suggest.js';
 import { createPreviewController, type PreviewController } from './preview-controller.js';
@@ -204,6 +206,14 @@ export function createNopDebugger(options: NopDebuggerOptions = {}): NopDebugger
   let currentInspectByCid = buildInspectByCid(componentRegistry, getRuntime);
 
   const dependencyGraph = createDependencyGraph();
+  const sessionBridge = createSessionBridge({
+    redaction,
+    store,
+    getCollector: () => snapshotCollector ?? null,
+    getRuntime: () => runtime,
+    dispatchViaBridge: (action, ctx) => assertionBridge.dispatch(action, ctx),
+    getStabilityTracker: () => runtime?.getStabilityTracker?.() ?? undefined,
+  });
   const whyBridge = createWhyBridge({
     getRuntime,
     explainValue: (cid: number, expression: string) => explainValue({ cid, field: expression }) as never,
@@ -215,6 +225,9 @@ export function createNopDebugger(options: NopDebuggerOptions = {}): NopDebugger
     captureEvidence: (options) => assertionBridge.captureScreenshot({ tag: options.tag, fresh: options.fresh }),
   });
   const assertionBridge = createAssertionBridge({
+    onDispatched: (action: unknown, ctx?: unknown) => sessionBridge.recordDispatch(action, ctx),
+    onFrame: (bytesBase64: string) => sessionBridge.addVideoFrame(bytesBase64),
+    isVideoRecording: () => sessionBridge.isVideoRecording(),
     getRuntime,
     store,
     inspectByCid: (cid: number) => currentInspectByCid(cid),
@@ -360,14 +373,17 @@ export function createNopDebugger(options: NopDebuggerOptions = {}): NopDebugger
     setAutoScreenshotMode: (mode: 'on-step' | 'on-change' | 'off') => {
       autoScreenshotMode = mode;
     },
-    waitFor: (predicate: never, options?: { timeoutMs?: number; intervalMs?: number; stableGate?: boolean }) =>
-      assertionBridge.waitFor(predicate, options),
-    waitForScopePath: (predicate: { scopeId?: string; path: string; op: 'eq' | 'ne' | 'truthy' | 'defined'; value?: unknown }, options?: { timeoutMs?: number; intervalMs?: number; stableGate?: boolean }) =>
-      assertionBridge.waitForScopePath(predicate, options),
+    waitFor: (predicate: never, options?: { timeoutMs?: number; intervalMs?: number; stableGate?: boolean }) => assertionBridge.waitFor(predicate, options),
+    waitForScopePath: (predicate: { scopeId?: string; path: string; op: 'eq' | 'ne' | 'truthy' | 'defined'; value?: unknown }, options?: { timeoutMs?: number; intervalMs?: number; stableGate?: boolean }) => assertionBridge.waitForScopePath(predicate, options),
     dispatch: (action: unknown, ctx?: Record<string, unknown>) => assertionBridge.dispatch(action, ctx),
     compareScreenshot: (baselineKey: string, options?: { maxDiffRatio?: number }) => assertionBridge.compareScreenshot(baselineKey, options),
     putBaseline: (options?: { ignoreRegions?: Array<{ x: number; y: number; width: number; height: number; reason?: string }> }) => assertionBridge.putBaseline(options),
     why: (cid: number) => whyBridge.why(cid),
+    startRecording: () => sessionBridge.startRecording(),
+    stopRecording: () => sessionBridge.stopRecording(),
+    replaySession: (session: DevSession) => sessionBridge.replaySession(session),
+    recordVideo: (options?: { fps?: number }) => sessionBridge.recordVideo(options),
+    stopRecordingVideo: () => sessionBridge.stopRecordingVideo(),
     queryDependencyImpact: async (path: string) => dependencyGraph.queryImpact(path),
     suggestSelector: async (cid: string) => suggestSelector(cid),
     // [WA-debugger-002] mutation 面单源：引用 controller 同名成员，避免
@@ -426,6 +442,7 @@ export function createNopDebugger(options: NopDebuggerOptions = {}): NopDebugger
         requestState,
         nextRequestInstanceId,
         getStabilityTracker: () => runtime?.getStabilityTracker?.(),
+        onApiFrame: (frame) => sessionBridge.recordApiFrame(frame),
       });
     },
     onActionError(error: unknown, ctx: ActionContext) {

@@ -206,6 +206,18 @@ async function runSingleAction(
   return result;
 }
 
+function normalizeOutcomeEvent(event: ActionContext['event']): { event?: { type: string; payload: Record<string, unknown> } } {
+  if (!event || typeof event.type !== 'string') return {};
+  const payload: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(event)) {
+    if (['type', 'nativeEvent', 'currentTarget', 'target', 'preventDefault', 'stopPropagation'].includes(key)) continue;
+    if (value === null || ['string', 'number', 'boolean'].includes(typeof value)) {
+      payload[key] = value;
+    }
+  }
+  return { event: { type: event.type, payload } };
+}
+
 function emitAfterAction(
   ctx: ActionDispatcherContext,
   action: CompiledActionNode,
@@ -223,6 +235,7 @@ function emitAfterAction(
     durationMs: Math.max(0, Date.now() - startedAt),
     ...(result.ok ? {} : { error: { message: result.error instanceof Error ? result.error.message : String(result.error) } }),
     ...(actionCtx.interactionId ? { interactionId: actionCtx.interactionId } : {}),
+    ...normalizeOutcomeEvent(actionCtx.event),
   };
   for (const plugin of plugins) {
     plugin.afterAction?.(outcome);

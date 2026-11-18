@@ -1,3 +1,4 @@
+import type { DevSession } from './protocol/types.js';
 import type {
   ActionContext,
   ActionScope,
@@ -453,6 +454,12 @@ export interface NopDebuggerAutomationApi {
   why?(cid: number): Promise<{ verdict: string; confidence: string; parts: Array<{ category: string; verdict: string }>; evidence: Array<{ type: string; target: string; label: string }>; screenshotTag?: string }>;
   queryDependencyImpact?(path: string): Promise<{ cids: string[]; paths: string[]; degradedToPathQuery: boolean }>;
   suggestSelector?(cid: string): Promise<{ selector: string; tier: string; unique: boolean } | null>;
+  /** M5 V2: session recording / deterministic replay / video. */
+  startRecording?(): void;
+  stopRecording?(): Promise<DevSession>;
+  replaySession?(session: DevSession): Promise<{ steps: number; divergences: Array<{ step: number; path: string; expected: unknown; actual: unknown }> }>;
+  recordVideo?(options?: { fps?: number }): void;
+  stopRecordingVideo?(): Promise<{ mode: string; bytesBase64: string; byteLength: number; frameCount: number }>;
   /** M2 V2: S2 screenshot channel; rejects with CaptureError on invalid targets. */
   screenshot?(options?: ScreenshotAutomationOptions): Promise<unknown>;
   setAutoScreenshotMode?(mode: 'on-step' | 'on-change' | 'off'): void;
