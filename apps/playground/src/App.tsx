@@ -1,5 +1,5 @@
-import { Component, Suspense, type ReactNode } from 'react';
-import { NopDebuggerPanel, createNopDebugger } from '@nop-chaos/nop-debugger';
+import { Component, Suspense, useEffect, useState, type ReactNode } from 'react';
+import type { NopDebuggerController } from '@nop-chaos/nop-debugger';
 import { createDefaultRegistry } from '@nop-chaos/flux-react';
 import { DOMAIN_ROUTE_PAGES } from './domain-route-pages.js';
 import { HomePage } from './pages/home-page';
@@ -60,7 +60,7 @@ registerPivotRenderers(registry);
 registerScadaRenderers(registry);
 registerScadaEditorRenderers(registry);
 
-if (typeof window !== 'undefined' && typeof window.__NOP_DEBUGGER__ === 'undefined') {
+if (__FLUX_DEVTOOLS__ && typeof window !== 'undefined' && typeof window.__NOP_DEBUGGER__ === 'undefined') {
   window.__NOP_DEBUGGER__ = {
     enabled: true,
     defaultOpen: false,
@@ -70,11 +70,41 @@ if (typeof window !== 'undefined' && typeof window.__NOP_DEBUGGER__ === 'undefin
   };
 }
 
-const debuggerController = createNopDebugger({
-  id: 'playground-main',
-  capturePerformance: false,
-  exposeAutomationApi: true,
-});
+// M7 production diagnostics: trimmed mode exposes a same-shape no-op controller
+// (Proxy) so route-page consumers keep working without the kernel in the bundle.
+const trimmedControllerStub = new Proxy({}, {
+  get: (_target, prop) => {
+    if (prop === 'then') return undefined;
+    return () => undefined;
+  },
+}) as unknown as NopDebuggerController;
+
+let debuggerController: NopDebuggerController = __FLUX_DEVTOOLS__
+  ? trimmedControllerStub
+  : trimmedControllerStub;
+
+if (__FLUX_DEVTOOLS__) {
+  void import('@nop-chaos/nop-debugger').then((module) => {
+    debuggerController = module.createNopDebugger({
+      id: 'playground-main',
+      capturePerformance: false,
+      exposeAutomationApi: true,
+    });
+  });
+}
+
+/** Lazily mounts the debugger panel once the kernel module loads (dev/test only). */
+function DevToolsHost({ controller }: { controller: NopDebuggerController }) {
+  const [Panel, setPanel] = useState<((props: { controller: NopDebuggerController }) => ReactNode) | null>(null);
+  useEffect(() => {
+    if (!__FLUX_DEVTOOLS__) return;
+    void import('@nop-chaos/nop-debugger').then((module) => {
+      setPanel(() => module.NopDebuggerPanel);
+    });
+  }, []);
+  if (!Panel) return null;
+  return <Panel controller={controller} />;
+}
 
 function PageFallback() {
   return (
@@ -240,7 +270,7 @@ export function App() {
         <Suspense fallback={<PageFallback />}>{renderPage(route, navigate)}</Suspense>
       </RouteErrorBoundary>
       <ThemeSwitcher />
-      <NopDebuggerPanel controller={debuggerController} />
+      <DevToolsHost controller={debuggerController} />
       {/* Host-channels contract (plan 512 L3.4): the app shell owns the ONLY
          persistent <Toaster/> — route swaps must not kill in-flight toasts.
          Page/host components must not mount their own. */}
@@ -248,3 +278,8 @@ export function App() {
     </div>
   );
 }
+
+// M7 production diagnostics: `__FLUX_DEVTOOLS__` is a vite define macro —
+// production builds replace it with `false`, trimming the full debugger kernel
+// to a same-shape no-op controller (see scripts/check-devtools-tree-shake.mjs).
+declare const __FLUX_DEVTOOLS__: boolean;

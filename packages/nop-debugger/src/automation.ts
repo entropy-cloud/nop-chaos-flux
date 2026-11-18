@@ -107,6 +107,9 @@ export function createAutomationApi(input: {
   replaySession?(session: DevSession): Promise<{ steps: number; divergences: Array<{ step: number; path: string; expected: unknown; actual: unknown }> }>;
   recordVideo?(options?: { fps?: number }): void;
   stopRecordingVideo?(): Promise<{ mode: string; bytesBase64: string; byteLength: number; frameCount: number }>;
+  collectDiagnosticBundle?(): Promise<unknown>;
+  replayDiagnosticBundle?(bundle: unknown): Promise<{ steps: number; divergences: Array<{ step: number; path: string; expected: unknown; actual: unknown }> }>;
+  buildAiRepairInput?(input: unknown): unknown;
 }): NopDebuggerAutomationApi {
   return {
     controllerId: input.controllerId,
@@ -167,6 +170,9 @@ export function createAutomationApi(input: {
     replaySession: input.replaySession,
     recordVideo: input.recordVideo,
     stopRecordingVideo: input.stopRecordingVideo,
+    collectDiagnosticBundle: input.collectDiagnosticBundle,
+    replayDiagnosticBundle: input.replayDiagnosticBundle,
+    buildAiRepairInput: input.buildAiRepairInput,
     inspectByCid: input.inspectByCid,
     inspectByElement: input.inspectByElement,
     evaluateNodeExpression: input.evaluateNodeExpression,

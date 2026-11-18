@@ -176,6 +176,8 @@
 
 ## M6 Java 网关与全栈拦截 + 媒体归档（nop-entropy 侧）
 
+> 状态（2026-11-18 勘误附注）：**BLOCKED——nop-entropy 仓库不在本机工作区**（~/sources 无 nop-entropy 目录；本仓库为 flux 前端 monorepo）。M6 为跨仓库人工门禁项（见"里程碑节奏建议"末条），需 nop-entropy 平台侧排期后按 M0 冻结协议实现；前端消费面（GatewayClient、capture.upload/replay 对接点）已在 M0 协议与 M2 capture 管线中预留。
+
 **目标**：Cypress net-stubbing 的全栈版 + 媒体/会话服务端归档。（总体 §10 · 采集 §9）
 
 任务（nop-entropy 平台工程，Java，模块划分见总体 §10.1）：
@@ -194,6 +196,8 @@
 - 截图/视频上传经网关二次脱敏校验（漏配规则被拦截的负向用例）。
 
 ## M7 生产诊断模式 + AI 深化
+
+> 落地状态（2026-11-18 勘误附注，plan `docs/plans/2026-11-18-m7-production-diagnostics-plan.md`）：**前端侧收敛**——`__FLUX_DEVTOOLS__` 宏裁剪（生产 bundle 内核不可达 + `check:devtools-tree-shake` 门禁入 check 链，静态验证；运行时探针经 no-op controller stub 同形状保证）、诊断包采集/脱敏终检/重放、AI 修复输入聚合（类型定义在 nop-debugger 侧，nop-debugger-ai 消费）。deferred/blocked：CDP 通道 A 与 gateway 上传归 M6（BLOCKED——nop-entropy 仓库不在本机）；AI 建议 schema-patch 完整对接归 nop-debugger-ai 侧。
 
 **目标**：调试能力反哺生产支持与 AI 辅助（`nop-debugger-ai` 已有底座）。（总体 §9 · 采集 §2.1）
 

@@ -1,7 +1,7 @@
 import type { DevSession, SessionCheckpoint } from './protocol/types.js';
 import { computeCheckpointHashes, normalizeScopeKey, computeWrittenPathHashes } from './recorder.js';
 
-interface Divergence {
+export interface Divergence {
   step: number;
   path: string;
   expected: unknown;

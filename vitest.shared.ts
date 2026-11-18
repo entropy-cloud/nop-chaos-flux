@@ -8,12 +8,14 @@ interface SharedVitestConfigOptions {
   environment: VitestEnvironment;
   includeWorkspaceAliases?: boolean;
   coverage?: Record<string, unknown>;
+  define?: Record<string, string>;
 }
 
 export function createSharedVitestConfig(options: SharedVitestConfigOptions) {
   const isHappyDOM = options.environment === 'happy-dom';
 
   return defineConfig({
+    define: options.define,
     ...(options.includeWorkspaceAliases === false
       ? {}
       : {

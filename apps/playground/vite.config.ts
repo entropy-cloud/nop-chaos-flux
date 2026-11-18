@@ -6,6 +6,11 @@ import { visualizer } from 'rollup-plugin-visualizer';
 import { workspacePackageAliases } from '../../vite.workspace-alias';
 
 export default defineConfig(({ mode }) => ({
+  // M7: production builds trim the debugger kernel to the minimal collector
+  // (`__VUE_OPTIONS_API__`-style literal replacement; dev/test stay true)
+  define: {
+    __FLUX_DEVTOOLS__: mode === 'production' ? 'false' : 'true',
+  },
   resolve: {
     alias: workspacePackageAliases,
   },

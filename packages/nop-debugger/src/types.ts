@@ -460,6 +460,10 @@ export interface NopDebuggerAutomationApi {
   replaySession?(session: DevSession): Promise<{ steps: number; divergences: Array<{ step: number; path: string; expected: unknown; actual: unknown }> }>;
   recordVideo?(options?: { fps?: number }): void;
   stopRecordingVideo?(): Promise<{ mode: string; bytesBase64: string; byteLength: number; frameCount: number }>;
+  /** M7 V2: production diagnostic bundle + AI repair input. */
+  collectDiagnosticBundle?(): Promise<unknown>;
+  replayDiagnosticBundle?(bundle: unknown): Promise<{ steps: number; divergences: Array<{ step: number; path: string; expected: unknown; actual: unknown }> }>;
+  buildAiRepairInput?(input: unknown): unknown;
   /** M2 V2: S2 screenshot channel; rejects with CaptureError on invalid targets. */
   screenshot?(options?: ScreenshotAutomationOptions): Promise<unknown>;
   setAutoScreenshotMode?(mode: 'on-step' | 'on-change' | 'off'): void;

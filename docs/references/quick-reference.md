@@ -1236,3 +1236,9 @@ Field classification（design-renderer.md §5，I15.2 D-1 同步）: `config`（
 - fake-clock（`fake-clock.ts`）：session.clock.events 非空时随回放 install→tick→uninstall（不常驻；live 录制的会话 clock.events 为空——fake-clock 录制接线归后续）。
 - 视频：`recordVideo({fps})` / `stopRecordingVideo()` → `{mode:'media-recorder'|'keyframes', bytesBase64}`；逐帧解码截图回绘录制 canvas（bridge captureScreenshot 在 recordVideo 激活期间自动 onFrame→addFrame，`stopRecordingVideo` 返回 frameCount；低 fps 建议）；MediaRecorder/captureStream 不可用降级关键帧序列。
 - 缓存：IndexedDB LRU <200MB（session-cache.ts，可注入存储适配器）。
+
+### DevTools 生产诊断 + AI 修复输入（M7，plan 2026-11-18-m7）
+
+`__FLUX_DEVTOOLS__` 构建宏（playground vite `({mode})` define：production=false 裁剪全量内核为同形状 no-op controller stub，dev/test=true；包级测试走 typeof 守卫 falsy=裁剪语义）。裁剪门禁：`check:devtools-tree-shake`（扫描 dist/assets 内核标记，dist 缺失 fail-loud；构建由 CI/发布流程先行）。
+
+诊断包：`collectDiagnosticBundle()` → `{version, sessionId, session(脱敏 DevSession), keyframes(断言失败/why verdict/首末帧), patchAudit, uploadPath:'local'}`；`replayDiagnosticBundle(bundle)` → 复用 M5 replaySession（损坏包抛 `CaptureError{code:'bundle-invalid'}`）。AI 修复输入：`buildAiRepairInput({whyReport?, divergences?, visualDiff?, suggestedPatchArea?})` → `{kind:'ai-repair-input', evidence[]}`——**patch 建议类型定义在 nop-debugger 侧**（nop-debugger-ai 消费；ai-boundary 扫描标记串 + 反向依赖成环，方向不可反）。CDP 通道 A 与 gateway 上传 Deferred→M6。

@@ -59,6 +59,8 @@ import { createForestSnapshotCollector } from './snapshot-repository.js';
 import { createAssertionBridge } from './assertion-bridge.js';
 import { createWhyBridge } from './why-bridge.js';
 import { createSessionBridge } from './session-bridge.js';
+import { collectDiagnosticBundle as collectBundle, replayDiagnosticBundle as replayBundle } from './diagnostic-bundle.js';
+import { buildAiRepairInput } from './ai-repair-input.js';
 import type { DevSession } from './protocol/types.js';
 import { createDependencyGraph } from './dependency-graph.js';
 import { suggestSelector } from './selector-suggest.js';
@@ -384,6 +386,31 @@ export function createNopDebugger(options: NopDebuggerOptions = {}): NopDebugger
     replaySession: (session: DevSession) => sessionBridge.replaySession(session),
     recordVideo: (options?: { fps?: number }) => sessionBridge.recordVideo(options),
     stopRecordingVideo: () => sessionBridge.stopRecordingVideo(),
+    collectDiagnosticBundle: async () => {
+      const session = await sessionBridge.stopRecording();
+      return collectBundle({
+        sessionId,
+        store,
+        collector: snapshotCollector ?? null,
+        buildSession: () => session,
+        screenshotTagRefs: () => [],
+        redact: (value) => value,
+      });
+    },
+    replayDiagnosticBundle: async (bundle: never) => {
+      const replayRuntime = getRuntime();
+      if (!replayRuntime) {
+        return { steps: 0, divergences: [{ step: 0, path: 'runtime', expected: 'wired', actual: 'missing' }] };
+      }
+      return replayBundle(bundle as never, {
+        runtime: replayRuntime as never,
+        getScopes: () => snapshotCollector?.getLatest()?.scopes ?? {},
+        waitForStable: async () => {
+          await replayRuntime.getStabilityTracker?.()?.whenStable(2000);
+        },
+      });
+    },
+    buildAiRepairInput: (input: never) => buildAiRepairInput(input as never),
     queryDependencyImpact: async (path: string) => dependencyGraph.queryImpact(path),
     suggestSelector: async (cid: string) => suggestSelector(cid),
     // [WA-debugger-002] mutation 面单源：引用 controller 同名成员，避免
